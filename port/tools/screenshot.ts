@@ -11,22 +11,24 @@ page.on("console", (m) => logs.push(m.text()));
 page.on("pageerror", (e) => logs.push("PAGEERROR: " + e.message));
 
 await page.goto(URL, { waitUntil: "networkidle" });
-await page.waitForTimeout(800);
+await page.waitForTimeout(500);
 
-// drive the player right + down for a bit so we see movement + animation
-await page.keyboard.down("ArrowRight");
-await page.keyboard.down("ArrowDown");
-await page.waitForTimeout(700);
-await page.keyboard.up("ArrowRight");
-await page.keyboard.up("ArrowDown");
-await page.waitForTimeout(200);
+// let the orcs close in and start attacking the player
+await page.waitForTimeout(1800);
+// player swings back a couple of times
+for (let i = 0; i < 4; i++) { await page.keyboard.press("Space"); await page.waitForTimeout(120); }
+await page.waitForTimeout(300);
 
-const pos = await page.evaluate(() => {
-  const g = (window as any).__game;
-  return g ? { x: Math.round(g.player.x), y: Math.round(g.player.y) } : null;
-});
+const state = await page.evaluate(`(() => {
+  const g = window.__game;
+  if (!g) return null;
+  return g.entities.map((e) => {
+    const m = e.comps.find((c) => "vx" in c);
+    return { type: e.type, x: Math.round(m.x), y: Math.round(m.y), dead: e.send("isDead"), hp: Math.round(e.send("energyFrac") * 100) };
+  });
+})()`);
 
 await page.screenshot({ path: "slice.png" });
 await browser.close();
-console.log("console:", logs.join(" | "));
-console.log("player pos after input:", JSON.stringify(pos));
+console.log("console:", logs.filter((l) => !l.includes("404")).join(" | "));
+console.log("entities:", JSON.stringify(state));

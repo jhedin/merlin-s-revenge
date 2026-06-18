@@ -38,17 +38,18 @@ for (const [sym, prefix] of [
   tilesets[sym] = { file: copy(b), w: b.w, h: b.h, cols: Math.floor(b.w / TILE), tile: TILE };
 }
 
-// --- player animations: anm_mer_* grouped by action ---
+// --- character animations: grouped by <char>_<action> for each bundled character ---
+const CHARS = ["mer", "blackOrc"];
 interface Frame { file: string; w: number; h: number; reg: [number, number]; }
 const anims: Record<string, { delay: number; frames: Frame[] }> = {};
 const frameNo = (tok: string): number => parseInt(/^\d+/.exec(tok)?.[0] ?? "0", 10);
-for (const b of bitmaps.filter((x) => x.name.startsWith("anm_mer_"))) {
+for (const b of bitmaps.filter((x) => CHARS.some((c) => x.name.startsWith(`anm_${c}_`)))) {
   const t = b.name.split("_");
+  const char = t[1] ?? "?";
   const action = t[2] ?? "?";
   const delay = Number.isFinite(Number(t[3])) ? Number(t[3]) : 1;
-  const key = "mer_" + action;
+  const key = `${char}_${action}`;
   (anims[key] ??= { delay, frames: [] }).frames.push({ file: copy(b), w: b.w, h: b.h, reg: b.reg });
-  // record frame index for sort
   (anims[key].frames.at(-1) as any)._n = frameNo(t.at(-1) ?? "0");
 }
 for (const k of Object.keys(anims)) {
