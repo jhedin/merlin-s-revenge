@@ -12,18 +12,20 @@ page.on("pageerror", (e) => logs.push("PAGEERROR: " + e.message));
 
 await page.goto(URL, { waitUntil: "networkidle" });
 await page.waitForTimeout(400);
-const startRoom = await page.evaluate(`window.__rooms.loc.x`);
-// walk right across rooms, firing along the way
-await page.keyboard.down("ArrowRight");
-for (let i = 0; i < 30; i++) { await page.keyboard.press("Space"); await page.waitForTimeout(70); }
-await page.keyboard.up("ArrowRight");
+// walk right two rooms, save there
+await page.keyboard.down("ArrowRight"); await page.waitForTimeout(900); await page.keyboard.up("ArrowRight");
+const savedRoom = await page.evaluate(`window.__rooms.loc.x`);
+await page.keyboard.press("Digit1"); // save
+await page.waitForTimeout(100);
+// walk back left, then load
+await page.keyboard.down("ArrowLeft"); await page.waitForTimeout(900); await page.keyboard.up("ArrowLeft");
+const leftRoom = await page.evaluate(`window.__rooms.loc.x`);
+await page.keyboard.press("Digit2"); // load
 await page.waitForTimeout(150);
 
 const state = await page.evaluate(`(() => {
-  const g = window.__game;
-  const counts = { player: 0, enemy: 0, bullet: 0 };
-  for (const e of g.entities) counts[e.type] = (counts[e.type] || 0) + 1;
-  return { counts, startRoom: ${startRoom}, room: window.__rooms.loc, mapSize: window.__rooms ? null : null };
+  const r = window.__rooms.loc.x;
+  return { savedRoom: ${savedRoom}, afterWalkingBack: ${leftRoom}, afterLoad: r };
 })()`);
 
 await page.screenshot({ path: "slice.png" });

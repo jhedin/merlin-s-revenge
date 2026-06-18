@@ -17,6 +17,10 @@ import { Experience } from "./components/experience";
 import { Movement } from "./components/movement";
 import { Projectile } from "./components/projectile";
 import { sweepBullets, bulletPoolStats } from "./systems/bullets";
+import { saveGame, loadSave } from "./systems/save";
+
+let flashMsg = ""; let flashUntil = 0;
+const flash = (m: string) => { flashMsg = m; flashUntil = Date.now() + 1200; };
 
 async function main() {
   const canvas = document.getElementById("game") as HTMLCanvasElement;
@@ -46,6 +50,11 @@ async function main() {
   const loop = new GameLoop(
     () => {
       game.tick++;
+      if (input.pressed("1")) { saveGame(player, rooms.loc); flash("game saved"); }
+      if (input.pressed("2")) {
+        const s = loadSave();
+        if (s) { rooms.enter(s.room); player.send("restoreFromSave", s.player); flash("game loaded"); }
+      }
       const snapshot = game.entities.slice();
       for (const e of snapshot) e.send("update");
       sweepBullets();
@@ -85,6 +94,8 @@ function drawHud(renderer: Renderer, player: import("./engine/dispatch").Entity)
   ctx.fillStyle = "#fff"; ctx.font = "8px monospace";
   ctx.fillText("HP", 114, 14);
   ctx.fillText("Lv " + xp.level, 114, 23);
+  ctx.fillText("1:save 2:load", 6, 36);
+  if (Date.now() < flashUntil) { ctx.fillStyle = "#ff4"; ctx.fillText(flashMsg, 90, 36); }
 }
 
 function drawBullets(renderer: Renderer) {
