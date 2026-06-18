@@ -6,11 +6,15 @@
 import type { Layer } from "./map";
 import { solidTileNums, type TileKey } from "../data/tlk";
 
+export interface OpenEdges { left: boolean; right: boolean; up: boolean; down: boolean; }
+
 export class CollisionGrid {
   readonly cols: number;
   readonly rows: number;
   readonly tilePx: number;
   private solid: Uint8Array;
+  /** edges that lead to an adjacent room are passable (the player exits through them) */
+  open: OpenEdges = { left: false, right: false, up: false, down: false };
 
   constructor(cols: number, rows: number, tilePx: number) {
     this.cols = cols; this.rows = rows; this.tilePx = tilePx;
@@ -36,9 +40,16 @@ export class CollisionGrid {
     this.solid[r * this.cols + c] = v ? 1 : 0;
   }
 
-  /** Out-of-bounds is solid (the original pads a 2-tile solid border). */
+  /** Out-of-bounds is solid (2-tile border in the original) unless the edge is an open exit. */
   solidCell(c: number, r: number): boolean {
-    if (c < 0 || r < 0 || c >= this.cols || r >= this.rows) return true;
+    if (c < 0 || c >= this.cols) {
+      const exit = c < 0 ? this.open.left : this.open.right;
+      return !(exit && r >= 0 && r < this.rows);
+    }
+    if (r < 0 || r >= this.rows) {
+      const exit = r < 0 ? this.open.up : this.open.down;
+      return !(exit && c >= 0 && c < this.cols);
+    }
     return this.solid[r * this.cols + c] === 1;
   }
 

@@ -6,11 +6,11 @@ import { Assets } from "./render/assets";
 import { Renderer, type Sprite } from "./render/renderer";
 import { Input } from "./systems/input";
 import { GameLoop } from "./engine/loop";
-import { parseMap } from "./world/map";
+import { parseMap, type GameMap, type Vec2i } from "./world/map";
 import { parseTileKey } from "./data/tlk";
-import { CollisionGrid } from "./world/collision";
+import { RoomManager } from "./world/rooms";
 import { game, initContext } from "./game/context";
-import { spawnPlayer, spawnEnemy } from "./entities/archetypes";
+import { spawnPlayer } from "./entities/archetypes";
 import { Anim } from "./components/anim";
 import { Energy } from "./components/combat";
 import { Experience } from "./components/experience";
@@ -21,62 +21,56 @@ import { sweepBullets, bulletPoolStats } from "./systems/bullets";
 async function main() {
   const canvas = document.getElementById("game") as HTMLCanvasElement;
   const assets = await Assets.load();
-  const [mapSrc, keySrc] = await Promise.all([
+  const [mapSrc, keySrc, objSrc] = await Promise.all([
     fetch("/assets/map.txt").then((r) => r.text()),
     fetch("/assets/active_key.txt").then((r) => r.text()),
+    fetch("/assets/objects_key.txt").then((r) => r.text()),
   ]);
   const map = parseMap(mapSrc);
   const activeKey = parseTileKey(keySrc);
+  const objectsKey = parseTileKey(objSrc);
   const tile = map.tilePx;
   const viewW = map.roomSize.x * tile, viewH = map.roomSize.y * tile;
   const renderer = new Renderer(canvas, viewW, viewH, 2);
 
-  const room = map.roomAt(map.startRoom) ?? map.rooms.get(1)!;
-  const passive = room.layer("#backgroundPassive");
-  const active = room.layer("#backgroundActive");
-  const grid = active ? CollisionGrid.fromActiveLayer(active, activeKey, tile)
-                      : new CollisionGrid(map.roomSize.x, map.roomSize.y, tile);
-  const sheets = {
-    passive: passive && tileSheet(assets, "#merlin4Passive"),
-    active: active && tileSheet(assets, "#merlin4Active"),
-  };
-
   const input = new Input();
-  initContext({ grid, input, assets, tilePx: tile, entities: [], player: null, tick: 0 });
+  initContext({ input, assets, tilePx: tile, entities: [], player: null, tick: 0 });
 
   const player = spawnPlayer(viewW / 2, viewH / 2);
-  const enemies = [
-    spawnEnemy("dwarf", 80, 80),                             // real data: energy 250
-    spawnEnemy("dwarf", viewW - 80, 80, { ranged: true }),  // real data: energy 250, ranged
-    spawnEnemy("blackOrc", viewW - 80, viewH - 80),         // real data: energy 1200 (the tank)
-  ];
   game.player = player;
-  game.entities = [player, ...enemies];
+  game.entities = [player];
+
+  const rooms = new RoomManager(map, assets, activeKey, objectsKey, viewW, viewH, player);
+  rooms.enter(map.startRoom); // positions player at the #player tile + spawns room actors
 
   const loop = new GameLoop(
     () => {
       game.tick++;
-      // iterate a snapshot so bullets spawned this tick don't update until next tick
       const snapshot = game.entities.slice();
       for (const e of snapshot) e.send("update");
       sweepBullets();
+      rooms.update(); // room transition on edge crossing
       input.endTick();
     },
     () => {
       renderer.clear();
-      if (passive && sheets.passive) renderer.drawTileLayer(passive, sheets.passive);
-      if (active && sheets.active) renderer.drawTileLayer(active, sheets.active);
+      const passive = rooms.room.layer("#backgroundPassive");
+      const active = rooms.room.layer("#backgroundActive");
+      if (passive && rooms.passiveSheet) renderer.drawTileLayer(passive, rooms.passiveSheet);
+      if (active && rooms.activeSheet) renderer.drawTileLayer(active, rooms.activeSheet);
       const sprites = game.entities
         .filter((e) => e.type !== "bullet")
         .map((e) => e.get(Anim).sprite()).filter((s): s is Sprite => s !== null);
       renderer.drawSprites(sprites);
       drawBullets(renderer);
-      for (const e of enemies) drawEnemyBar(renderer, e);
+      for (const e of game.entities) if (e.type === "enemy") drawEnemyBar(renderer, e);
       drawHud(renderer, player);
+      drawMinimap(renderer, map, rooms.loc, viewW);
     },
   );
   loop.start();
   (window as any).__game = game;
+  (window as any).__rooms = rooms;
   (window as any).__bulletStats = bulletPoolStats;
   console.log("slice running:", game.entities.length, "entities on a", map.roomSize.x + "x" + map.roomSize.y, "room");
 }
@@ -112,10 +106,19 @@ function drawEnemyBar(renderer: Renderer, e: import("./engine/dispatch").Entity)
   ctx.fillStyle = "#e44"; ctx.fillRect(p.x - 10, p.y - 25, 20 * frac, 2);
 }
 
-function tileSheet(assets: Assets, sym: string) {
-  const t = assets.index.tilesets[sym];
-  if (!t) return undefined;
-  return { img: assets.img(t.file), cols: t.cols, tile: t.tile };
+function drawMinimap(renderer: Renderer, map: GameMap, loc: Vec2i, viewW: number) {
+  const ctx = renderer.ctx;
+  const cell = 5;
+  const w = map.mapSize.x * cell, h = map.mapSize.y * cell;
+  const ox = viewW - w - 6, oy = 6;
+  ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.fillRect(ox - 2, oy - 2, w + 4, h + 4);
+  for (let y = 0; y < map.mapSize.y; y++) {
+    for (let x = 0; x < map.mapSize.x; x++) {
+      const here = x + 1 === loc.x && y + 1 === loc.y;
+      ctx.fillStyle = here ? "#fff" : map.roomAt({ x: x + 1, y: y + 1 }) ? "#69a" : "#333";
+      ctx.fillRect(ox + x * cell, oy + y * cell, cell - 1, cell - 1);
+    }
+  }
 }
 
 main().catch((e) => { console.error(e); document.body.append(Object.assign(document.createElement("pre"), { textContent: String(e), style: "color:#f88" })); });

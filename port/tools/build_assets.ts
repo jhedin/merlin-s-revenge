@@ -57,10 +57,11 @@ for (const k of Object.keys(anims)) {
   anims[k]!.frames.forEach((f) => delete (f as any)._n);
 }
 
-// --- stage a real map + its active-layer collision key for the runtime ---
+// --- stage a real map + its tile keys for the runtime (10-room horizontal dungeon) ---
 const MAPS = join(here, "../../casts/data");
-copyFileSync(join(here, "../../maps/works/teamtest.txt"), join(OUT_ASSETS, "map.txt"));
+copyFileSync(join(here, "../../maps/works/descent_into_darkness-megaman4ever.txt"), join(OUT_ASSETS, "map.txt"));
 copyFileSync(join(MAPS, "tlk_merlin4Active_key.txt"), join(OUT_ASSETS, "active_key.txt"));
+copyFileSync(join(MAPS, "tlk_merlin4Objects_key.txt"), join(OUT_ASSETS, "objects_key.txt"));
 
 writeFileSync(join(OUT_GEN, "assets.json"), JSON.stringify({ tile: TILE, tilesets, anims }, null, 1));
 console.log(`assets: ${Object.keys(tilesets).length} tilesets, ${Object.keys(anims).length} animations`);

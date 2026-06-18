@@ -52,4 +52,14 @@ describe("world: collision grid + AABB resolve", () => {
     expect(g.solidCell(4, 0)).toBe(true);
     expect(g.solidCell(0, 0)).toBe(false);
   });
+  it("open edges are passable so the player can exit to an adjacent room", () => {
+    const g = new CollisionGrid(4, 1, 32);
+    g.open.right = true;
+    expect(g.solidCell(4, 0)).toBe(false); // open right edge -> passable
+    expect(g.solidCell(-1, 0)).toBe(true); // left still closed
+    // a box at the right edge moving further right is no longer blocked
+    const r = g.moveBox(96, 0, 16, 16, 30, 0);
+    expect(r.hitX).toBe(false);
+    expect(r.x).toBe(126);
+  });
 });
