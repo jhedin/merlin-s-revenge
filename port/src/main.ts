@@ -40,29 +40,44 @@ async function main() {
   const input = new Input();
   initContext({ input, assets, tilePx: tile, entities: [], player: null, tick: 0 });
 
-  const player = spawnPlayer(viewW / 2, viewH / 2);
-  game.player = player;
-  game.entities = [player];
+  // scene state machine (scenes.json): title -> playing -> gameover (PORTING_PLAN §4)
+  let mode: "title" | "playing" | "gameover" = "title";
+  let player!: import("./engine/dispatch").Entity;
+  let rooms!: RoomManager;
 
-  const rooms = new RoomManager(map, assets, activeKey, objectsKey, viewW, viewH, player);
-  rooms.enter(map.startRoom); // positions player at the #player tile + spawns room actors
+  function startGame() {
+    player = spawnPlayer(viewW / 2, viewH / 2);
+    game.player = player;
+    game.entities = [player];
+    rooms = new RoomManager(map, assets, activeKey, objectsKey, viewW, viewH, player);
+    rooms.enter(map.startRoom);
+    mode = "playing";
+  }
 
   const loop = new GameLoop(
     () => {
       game.tick++;
-      if (input.pressed("1")) { saveGame(player, rooms.loc); flash("game saved"); }
-      if (input.pressed("2")) {
-        const s = loadSave();
-        if (s) { rooms.enter(s.room); player.send("restoreFromSave", s.player); flash("game loaded"); }
+      if (mode === "title") {
+        if (input.pressed(" ") || input.pressed("enter")) startGame();
+      } else if (mode === "playing") {
+        if (input.pressed("1")) { saveGame(player, rooms.loc); flash("game saved"); }
+        if (input.pressed("2")) {
+          const s = loadSave();
+          if (s) { rooms.enter(s.room); player.send("restoreFromSave", s.player); flash("game loaded"); }
+        }
+        const snapshot = game.entities.slice();
+        for (const e of snapshot) e.send("update");
+        sweepBullets();
+        rooms.update();
+        if (player.send("isDead")) mode = "gameover";
+      } else if (mode === "gameover") {
+        if (input.pressed(" ") || input.pressed("enter")) startGame();
       }
-      const snapshot = game.entities.slice();
-      for (const e of snapshot) e.send("update");
-      sweepBullets();
-      rooms.update(); // room transition on edge crossing
       input.endTick();
     },
     () => {
       renderer.clear();
+      if (mode === "title") { drawTitle(renderer, viewW, viewH); return; }
       const passive = rooms.room.layer("#backgroundPassive");
       const active = rooms.room.layer("#backgroundActive");
       if (passive && rooms.passiveSheet) renderer.drawTileLayer(passive, rooms.passiveSheet);
@@ -75,13 +90,42 @@ async function main() {
       for (const e of game.entities) if (e.type === "enemy") drawEnemyBar(renderer, e);
       drawHud(renderer, player);
       drawMinimap(renderer, map, rooms.loc, viewW);
+      if (mode === "gameover") drawGameOver(renderer, viewW, viewH);
     },
   );
   loop.start();
   (window as any).__game = game;
-  (window as any).__rooms = rooms;
+  (window as any).__startGame = startGame;
+  (window as any).__rooms = () => rooms;
+  (window as any).__mode = () => mode;
   (window as any).__bulletStats = bulletPoolStats;
-  console.log("slice running:", game.entities.length, "entities on a", map.roomSize.x + "x" + map.roomSize.y, "room");
+  console.log("Merlin's Revenge —", map.mapSize.x + "x" + map.mapSize.y, "room dungeon ready (title screen)");
+}
+
+function drawTitle(renderer: Renderer, w: number, h: number) {
+  const ctx = renderer.ctx;
+  ctx.fillStyle = "#0a1020"; ctx.fillRect(0, 0, w, h);
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#fc4"; ctx.font = "bold 28px serif";
+  ctx.fillText("MERLIN'S REVENGE", w / 2, h / 2 - 24);
+  ctx.fillStyle = "#9cf"; ctx.font = "10px monospace";
+  ctx.fillText("a TypeScript/HTML5 port", w / 2, h / 2 - 4);
+  ctx.fillStyle = (Math.floor(Date.now() / 400) % 2) ? "#fff" : "#888";
+  ctx.fillText("press SPACE to begin", w / 2, h / 2 + 28);
+  ctx.fillStyle = "#566"; ctx.font = "8px monospace";
+  ctx.fillText("move: WASD/arrows   attack: space   save/load: 1/2", w / 2, h - 16);
+  ctx.textAlign = "left";
+}
+
+function drawGameOver(renderer: Renderer, w: number, h: number) {
+  const ctx = renderer.ctx;
+  ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(0, 0, w, h);
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#e44"; ctx.font = "bold 24px serif";
+  ctx.fillText("YOU HAVE FALLEN", w / 2, h / 2 - 6);
+  ctx.fillStyle = "#fff"; ctx.font = "9px monospace";
+  ctx.fillText("press SPACE to try again", w / 2, h / 2 + 18);
+  ctx.textAlign = "left";
 }
 
 function drawHud(renderer: Renderer, player: import("./engine/dispatch").Entity) {

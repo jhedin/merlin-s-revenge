@@ -12,21 +12,26 @@ page.on("pageerror", (e) => logs.push("PAGEERROR: " + e.message));
 
 await page.goto(URL, { waitUntil: "networkidle" });
 await page.waitForTimeout(400);
-// walk right two rooms, save there
+const titleMode = await page.evaluate(`window.__mode()`);
+await page.screenshot({ path: "title.png" }); // capture the title screen
+// start the game
+await page.keyboard.press("Space");
+await page.waitForTimeout(400);
+// walk right two rooms, save, walk back, load
 await page.keyboard.down("ArrowRight"); await page.waitForTimeout(900); await page.keyboard.up("ArrowRight");
-const savedRoom = await page.evaluate(`window.__rooms.loc.x`);
-await page.keyboard.press("Digit1"); // save
+const savedRoom = await page.evaluate(`window.__rooms().loc.x`);
+await page.keyboard.press("Digit1");
 await page.waitForTimeout(100);
-// walk back left, then load
 await page.keyboard.down("ArrowLeft"); await page.waitForTimeout(900); await page.keyboard.up("ArrowLeft");
-const leftRoom = await page.evaluate(`window.__rooms.loc.x`);
-await page.keyboard.press("Digit2"); // load
+await page.keyboard.press("Digit2");
 await page.waitForTimeout(150);
 
-const state = await page.evaluate(`(() => {
-  const r = window.__rooms.loc.x;
-  return { savedRoom: ${savedRoom}, afterWalkingBack: ${leftRoom}, afterLoad: r };
-})()`);
+const state = await page.evaluate(`(() => ({
+  titleMode: ${JSON.stringify(titleMode)},
+  mode: window.__mode(),
+  savedRoom: ${savedRoom},
+  afterLoad: window.__rooms().loc.x,
+}))()`);
 
 await page.screenshot({ path: "slice.png" });
 await browser.close();

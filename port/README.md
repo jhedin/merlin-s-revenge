@@ -6,9 +6,14 @@ and `../docs/PLAN_REVIEW.md`). Game data and assets come from `../casts`, `../ma
 
 ## Status
 
-Playable **vertical slice**: a real map renders with tile collision, and a player + AI enemies
-(chase, melee, HP/death) run at a fixed 30 Hz — all gameplay flowing through the component
-dispatch system. Controls: **arrows/WASD** to move, **space** to attack.
+Playable through **Phases 0–7** of the roadmap: title screen → a real 10-room dungeon with tile
+collision and per-room spawn tables, a player + AI enemies (chase, melee & ranged, HP/death),
+projectiles with object pooling, XP/leveling, save/load, and a game-over/restart flow — all at a
+fixed 30 Hz through the component dispatch. Controls: **WASD/arrows** move, **space** attack,
+**1/2** save/load.
+
+Still unported (Phases 6 cutscenes / 8 content): the cutscene engine, construction/army economy,
+status effects, summoning, full menus, and the remaining ~115 actor types' sprites/behaviors.
 
 ## Run
 
