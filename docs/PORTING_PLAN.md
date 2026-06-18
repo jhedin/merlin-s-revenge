@@ -1,9 +1,13 @@
 # Merlin's Revenge — Lingo → TypeScript/HTML5 Porting Plan
 
-Status: **planning**. This document is the master plan and roadmap for porting the
-Director/Lingo engine to a modern TypeScript/HTML5 game. It is synthesized from a full
-read of the runtime Lingo source (`casts/`), the decompiled engine (`extracted/engine/scripts/`),
-and the extracted assets/scene model (`extracted/`).
+Status: **planning** (revised after adversarial review). This document is the master plan and
+roadmap for porting the Director/Lingo engine to a modern TypeScript/HTML5 game. It is synthesized
+from a full read of the runtime Lingo source (`casts/`), the decompiled engine
+(`extracted/engine/scripts/`), and the extracted assets/scene model (`extracted/`).
+
+> **Read `PLAN_REVIEW.md` alongside this.** An adversarial audit (dispatch correctness, performance,
+> data pipeline) corrected several load-bearing assumptions — the dispatch model (§2.2), the
+> performance rules (§2.5), and grammar/format/regpoint gaps (§3–5) reflect those corrections.
 
 ---
 
@@ -85,28 +89,44 @@ at construction. It encodes two separable things — collapse them differently:
 - **AI** (`objAi*`) stays **composition by reference** — an AIController component holding a back-ref
   to its character (it already works this way in Lingo).
 
-### 2.2 Dispatch — port BOTH patterns faithfully (highest-risk detail)
+### 2.2 Dispatch — FOUR primitives, generated from the real chain (highest-risk area)
 
-Lingo "send a message; first handler up the chain wins; many handlers re-broadcast via
-`ancestor.foo()`" splits into two distinct TS patterns. **Classify every ported handler as one:**
+> Revised after adversarial audit (see `PLAN_REVIEW.md` §1). An earlier draft used just two helpers
+> (`broadcast`=call-everyone, `query`=first-match). **That is too coarse and silently corrupts
+> combat/FSM/animation/save.** The Lingo chain is a *forwardable, transformable, shadowable,
+> order-sensitive pipeline*, not a component sweep.
 
-1. **Broadcast / lifecycle hooks** — `update`, `paws`, `unpaws`, `start`, `finish`,
-   `internalEvent`, `goMode`, `restoreFromSave`, `addSaveData`, `takeHit`: every component reacts.
-   ```ts
-   broadcast(msg, ...args) { for (const c of this.comps.values()) (c as any)[msg]?.(...args); }
-   ```
-2. **Single-responder queries** — `getInvinceActive`, `isDwelling`, `getMode`, `getWalkSpeed`:
-   exactly one component answers; the catcher supplies the default.
-   ```ts
-   query<T>(msg, dflt: T): T { for (const c of this.comps.values()) if (typeof (c as any)[msg]==='function') return (c as any)[msg](); return dflt; }
-   ```
-3. **`me.big` re-entry** — a component calling a sibling/leaf method → explicit
-   `entity.get(OtherComponent).method()`.
+The message set is **closed and static** (Lingo has no reflection). At port time, build the
+**message → ordered-handler index** for each archetype — order is **leaf `obj*` handlers → base
+services → modules in `addModule` order → catcher** (NOT generic component-map order; in Lingo the
+leaf runs before any module, and base state-commits like `pMode` run *last*). Then **precompile a
+per-archetype array of bound method refs per message** (only handlers that exist) so dispatch is a
+tight monomorphic loop, never a `(c as any)[msg]` string scan (see perf §2.5). Classify **every**
+message into one of four kinds:
 
-Because Lingo had no reflection, the message set is **closed and static** — build a
-**message → owning-component(s) index** at port time (it both documents the system and lets us turn
-the dynamic chain walk into direct calls). **Component order within an entity must match the
-`addModule` order**, or query winners silently change.
+1. **Ordered chain walk** (`update`, `goMode`, `takeHit`, `internalEvent`, `finish`, `paws/start`):
+   run handlers in chain order; each may do work + forward or **shadow** (stop). Honor real
+   shadows (`objWeapon.goMode` sets `pMode` and never forwards; `modSplashDamage.internalEvent`
+   consumes; `objModuleCatcher` blocks `paws/start` from infra) and **fixed state-commit points**
+   (e.g. `pMode` written once at the base position, after leaf/module inspection). Ordering is a
+   contract — `modExperience.takeHit` MUST precede `modEnergy.takeHit`.
+2. **First-match query with a pinned winner** (`getMode`, `getInvinceActive`, `isDwelling`,
+   `getAttack`…): index the *actual* winning handler per archetype. The winner is often a **base
+   service, not a module** (`getAttack`→`objAiGameObject`) — so base-service handlers must be
+   ordered **before** modules. Catcher default last.
+3. **Fold / pipeline** (`getAnimSym`, `checkCollisions`, `getParams`, `addSaveData`): thread a value
+   through the ordered handlers, each transforming it (`sym = next.getAnimSym(sym)`). Neither
+   broadcast nor first-match reproduces this.
+4. **Full re-entry** for `me.big.foo()` / `me.ID.bigMe.foo()`: dispatch **restarts at the top** of
+   the ordered list — a *different, larger* handler set than mid-chain `ancestor.foo()`. Do not
+   collapse the two.
+
+Separately, `call(#sym, listOfObjects, …)` is a **cross-entity** fan-out over *separate* entities
+(e.g. a room iterating its actors) — a system loop, not intra-entity dispatch.
+
+**Reproduce original semantics first, then fix bugs deliberately** — e.g. `modRotator.unpaws`
+calls `ancestor.paws()` (a real copy-paste bug); a naive sweep would silently "fix" it and diverge.
+Add golden replay tests on `takeHit`/`goMode`.
 
 ### 2.3 Construction → two-phase init
 
@@ -121,8 +141,10 @@ for (const c of e.comps.values()) c.init?.(cfg);
 ```
 
 Param keys live in **one shared namespace** today — keep a registry of which component owns which
-key to catch collisions. Drop the Lingo object **pool** unless GC pressure demands it (it was a
-2011 Director optimization); if kept, components need explicit `reset()`.
+key to catch collisions. **Object pooling is MANDATORY for high-churn classes, not optional**
+(audit §2.2): `objBullet`/spell-bullets and `objStar` see 200–500 create+destroy/sec (hundreds in a
+single frame on magic bursts / level-up cascades) — un-pooled that is guaranteed GC-hitch territory
+at 30 Hz. Ship `reset()` on those archetypes from day one; pooling characters/effects is optional.
 
 ### 2.4 The loop & scheduler
 
@@ -137,6 +159,24 @@ Port the `general_functions/` helper library (`Geom*`, `Point*`, `Rect*`, `List*
 `Counter*`, `String*`) **1:1** — they're pure and underpin everything. **Never** port the
 `frameTimer` busy-wait.
 
+### 2.5 Performance rules (non-negotiable — audit §2 / `PLAN_REVIEW.md`)
+
+At realistic counts (~26 updating characters + bullets/stars, ~28–36-link chains):
+- **Dispatch via precompiled per-archetype bound-method arrays**, never `(c as any)[msg]?.()` over
+  all components — the naive version is ~550k megamorphic string lookups/sec and JIT-deopts. Build
+  this in **Phase 1** (it's the same message→owner index §2.2 needs), not "later".
+- **Allocation-free hot paths.** `objMoveXY.update` allocates 8–15 `Point`s/call in Lingo; ×26
+  ×30 Hz ≈ 6–12k Points/sec. The movement integrator uses **packed numeric fields** (`x,y,vx,vy`)
+  or a scratch-vector pool; the allocating pure `Point*` API is for cold code only.
+- **Pool bullets/stars** (§2.3).
+- **Canvas2D tint** (`sprite.color` glow/hit-flash, any actor) via offscreen
+  `globalCompositeOperation='multiply'` + `'destination-in'` mask, **keyed on a quantized tint
+  color** so the per-frame tween reuses cached tinted bitmaps. **`getImageData`/`putImageData` per
+  frame is BANNED** (GPU→CPU readback stall). This does not force WebGL day one, but the `Renderer`
+  interface keeps a Pixi/WebGL swap cheap.
+- Collision/targeting is already cheap (4-corner broad-phase, tile-bucketed hash, retarget throttled
+  to ~30 frames) — **don't** regress it to per-frame target search.
+
 ---
 
 ## 3. Data pipeline
@@ -146,11 +186,18 @@ drive everything. Pipeline:
 
 1. **Build-time tokenizer/parser** for the Lingo literal grammar → JSON. Support: prop-lists
    `[#k: v]`, lists `[...]`, `[:]`/`[]`, symbols `#sym`, strings, ints, floats (incl. leading-dot),
-   `true/false`, `point(x,y)`, `rgb(r,g,b)`. **Critical gotcha:** a few records embed Lingo
-   *expressions* evaluated by `value()` — keep these as **tagged nodes**, don't try to evaluate:
-   - `member("x","gfx")` → `{ $member: ["x","gfx"] }`
-   - `gGameObjectLayer` → `{ $global: "gGameObjectLayer" }`
-   - `random(450)` → `{ $expr: "random(450)" }`
+   `true/false`, `point(x,y)`, `rgb(r,g,b)`, **and `rect(t,l,b,r)`** (22 uses, all with negatives —
+   was missing from the first draft). Notes verified by audit (`PLAN_REVIEW.md` §3):
+   - **Each data file has TWO top-level values** — line 1 header `[#name…,#type…]`, line 2+ payload.
+     Parse a *sequence*; the record is the 2nd value.
+   - **String-aware comma splitting** (literal `", "` values exist) and negative numbers in
+     `point`/`rect` args.
+   - **Critical gotcha:** a few records embed Lingo *expressions* evaluated by `value()` — keep these
+     as **tagged nodes**, and **recurse into `point()`/`rect()` args** (`point(random(450),300)`):
+     - `member("x","gfx")` → `{ $member: ["x","gfx"] }`  (41 uses)
+     - bare global → `{ $global: "gGameObjectLayer" }`  (**4 globals**: `gGameObjectLayer`,
+       `gGameBulletLayer`, `gPlayerLayer`×2)
+     - `random(450)` → `{ $expr: "random(450)" }`  (1 use, nested in a `point`)
 2. **Two extra grammars** (not Lingo literals): the `tlk_*` tileset-key (`prop | value` + symbol
    list) and the `scr_*`/`cut_scenes` cutscene DSL (`characters` + `lines` with verbs).
 3. **Runtime registry** mirroring `collectionsMaster`: `Map<typePrefix, Map<name, Record>>`
@@ -177,10 +224,13 @@ Keep `#inherit` resolution at runtime (or memoized build-time) so content stays 
   draw or sprites drift). Use the Z-layer globals (`gMapLayer=1 … gGridSelectorLayer=250`) as draw order.
   Reserve a small **WebGL/Pixi** path only for the animated per-sprite `color` tint
   (`modColourTransform` glow) which Canvas2D can't do cheaply per frame.
-- **Animation:** pre-bake atlases + a JSON manifest at build time from the
-  `anm_<char>_<action>_<delay>_<frame>` cast-member naming; export per-frame regPoints; convert
-  delays to **ticks** (not ms). Runtime is a tick-driven frame player keyed off the character
-  **mode FSM** (`getAnimSym`: mode→strip, walk→stand if idle, etc.).
+- **Animation:** pre-bake atlases + a JSON manifest at build time. **Per-frame regpoints are now
+  extracted** (`extracted/.../bitmaps.meta.json` + `manifest.json`, `reg:[x,y]`; 1,509/3,104 are
+  off-center — essential, was a bug). The baker must **mirror `animStripMaster.extractData`**, not a
+  fixed field pattern: tokens `[2]=char,[3]=action,[4]=delay`; **no separate frame token** (frame
+  order = numeric prefix of the last token; trailing letter = sheet marker); handle 4-token
+  (no-delay) members. Convert delays to **ticks** (not ms). Runtime is a tick-driven frame player
+  keyed off the character **mode FSM** (`getAnimSym`: mode→strip, walk→stand if idle, etc.).
 - **Scenes (`extracted/engine/scenes.json`):** a small **Scene/state machine** — title → key-config →
   intro cutscene → `gameScreen` ⇄ pause → game-over/victory → credits. The Score is a *layout
   container, not a timeline*; reconstruct each screen from `objMenu` text-definitions + extracted
@@ -196,11 +246,16 @@ Keep `#inherit` resolution at runtime (or memoized build-time) so content stays 
 (tile-number grid + tileset) → `objTileSet`/`objTileSetKey` (sheet slice + tile→symbol key) →
 `objCollisionMap`/`objCollisionTile` (derived per-room collision grid).
 
-- **No scrolling camera** — flip-screen, one 18×9-tile (576×288) room fills the play area; cross an
-  open edge → `objMap.moveRoom(dir)`, reposition to opposite edge. 128px boundary frame (`gMapBoundary`).
-- **Map format** = single-line Lingo prop-list (`#mapSize`, `#roomSize`, `#layerDefinitions`,
-  `#rooms[].layers[].map = 9 rows × 18 ints`). The `#objects` layer **doubles as the spawn table**
-  (tile symbol → actor/player/item via `activateActors`). Parse to JSON with the data pipeline.
+- **No scrolling camera** — flip-screen, one room fills the play area; cross an open edge →
+  `objMap.moveRoom(dir)`, reposition to opposite edge. 128px boundary frame (`gMapBoundary`).
+- **Room size is per-map, NOT a constant** (audit §3): the shipped game is 18×9 (576×288) but maps
+  range `16×9 … 35×18 … 64×64` and `#mapSize` up to 30×30. The loader/renderer must read
+  `#roomSize`/`#mapSize`/`#roomMapScale` from each map — do not hard-code 18×9.
+- **Map format** = single-line Lingo prop-list (`#mapSize`, `#roomSize`, `#roomMapScale`,
+  `#layerDefinitions`, `#rooms[].layers[].map`). **Tilesets are per-layer**; the `#objects` layer
+  **doubles as the spawn table** and resolves tile numbers through a *different* `tlk_` key than the
+  background layers. **`tlk_` keys interleave `--` comments that must be stripped before positional
+  tile indexing** (else off-by-N spawn/collision bugs). Parse to JSON with the data pipeline.
 - **Collision** is rect/tile, no pixel masks: object-vs-background via the collision tile solver
   (broad-phase "magic rect" → 1–4 tiles → per-edge push-out); object-vs-object via `teamMaster`
   unit-tile-map broad-phase + `point.inside(rect)` narrow. **The tile solver is bespoke and the
@@ -233,9 +288,12 @@ Each phase builds on the previous. ★ marks the first playable milestone.
 
 **Phase 0 — Tooling & scaffold**
 - Vite+TS project scaffold; `Renderer`/`AudioEngine` interfaces.
-- Lingo data parser CLI → JSON (incl. tagged-node handling) + generated TS types.
-- Asset pipeline: sprite atlases + animation manifest from `anm_*` naming (regpoints, tick delays);
-  audio transcode; map → JSON.
+- Lingo data parser CLI → JSON (incl. `rect()`, two-top-level-values, recursive tagged nodes) +
+  generated TS types; validate against all 321 `data/` records.
+- Asset pipeline: sprite atlases + animation manifest mirroring `animStripMaster` (regpoints already
+  extracted; tick delays); audio transcode; map → JSON (per-map room sizes; `tlk_` comment strip).
+- Per-binding-file Mac-vkey→`KeyboardEvent.code` table (+ round-trip test on all 4 `bnd_*`).
+- Enumerate the full cutscene-DSL verb set from all `scr_`/`cut_scenes/` files.
 
 **Phase 1 — Engine kernel**
 - Entity/Component + `broadcast`/`query` dispatch + message-owner index + catcher defaults.
@@ -280,11 +338,12 @@ Each phase builds on the previous. ★ marks the first playable milestone.
 
 | Risk | Impact | Mitigation |
 |---|---|---|
-| **Module dispatch-order fidelity** (touches everything) | behavior drift everywhere | build the static message→component index; preserve `addModule` order; unit-test broadcast vs query winners |
+| **Module dispatch-order fidelity** (touches everything) | silent behavior drift everywhere | the **four-primitive** dispatch (§2.2): ordered chain walk + pinned-winner query + fold + full re-entry, generated from a static message→handler index; honor shadows & leaf-before-module order; golden replay tests on `takeHit`/`goMode` |
+| **GC churn / allocation** (bullets, stars, Point math) | frame hitches at 30 Hz | mandatory pooling + allocation-free hot path (§2.5) |
 | **Collision tile solver** (bespoke, partly not understood) | gameplay-breaking | port literally first; golden tests replaying known positions; refactor only after parity |
 | **damage == knockback semantics** | wrong combat feel | encode `power: point` faithfully; parity tests on `takeHit`/`modEnergy` math |
 | **Lingo `value()` expressions in data** | parse failures | tagged nodes resolved at runtime against a constants/asset registry |
-| **Determinism** (tick-based + RNG) | desyncs, save bugs | fixed-timestep; seedable RNG mirroring Lingo `random()`; integer counters |
+| **Determinism** (tick-based + RNG) | desyncs, save bugs | fixed-timestep + seedable PRNG + integer counters give *internal* determinism. **Lingo's RNG is not reproducible** — golden tests vs the original only work on deterministic paths (collision, damage, leveling, data resolution), not RNG/trig-dependent behavior (audit §4) |
 | **Save/restore multi-phase rebuild** | corrupt loads | implement last; per-component serialize keyed by component name (reuse `pInstalledModules` as manifest); replay tests |
 | **Scope** (~660 scripts, ~120 actors) | stall | vertical slice first; data-driven content means breadth is mostly data, not code |
 
