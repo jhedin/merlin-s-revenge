@@ -3,21 +3,29 @@
 // (e.g. experience) would be ordered before energy so they see the attacker first.
 
 import { Component, type NextFn } from "../engine/dispatch";
+import { game } from "../game/context";
 
 export class Energy extends Component {
   static handles = ["takeHit", "isDead", "energyFrac"];
-  energy = 100; max = 100; dead = false;
+  energy = 100; max = 100; dead = false; xpReward = 10;
 
   override init(cfg: Record<string, any>): void {
     this.max = this.energy = typeof cfg["energy"] === "number" ? cfg["energy"] : 100;
+    this.xpReward = typeof cfg["xpReward"] === "number" ? cfg["xpReward"] : Math.max(5, Math.ceil(this.max / 12));
     this.dead = false;
   }
 
-  takeHit(next: NextFn, dmg: number): void {
+  takeHit(next: NextFn, dmg: number, attackerId = -1): void {
     if (this.dead) return;
     this.energy -= dmg;
-    if (this.energy <= 0) { this.energy = 0; this.dead = true; }
-    next(dmg);
+    if (this.energy <= 0) {
+      this.energy = 0; this.dead = true;
+      if (attackerId >= 0) {                       // award XP to the killer
+        const killer = game.entities.find((e) => e.id === attackerId && !e.send("isDead"));
+        killer?.send("gainXp", this.xpReward);
+      }
+    }
+    next(dmg, attackerId);
   }
   isDead(): boolean { return this.dead; }       // query
   energyFrac(): number { return this.max > 0 ? this.energy / this.max : 0; }

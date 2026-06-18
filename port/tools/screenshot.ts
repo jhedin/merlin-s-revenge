@@ -11,24 +11,22 @@ page.on("console", (m) => logs.push(m.text()));
 page.on("pageerror", (e) => logs.push("PAGEERROR: " + e.message));
 
 await page.goto(URL, { waitUntil: "networkidle" });
-await page.waitForTimeout(500);
-
-// let the orcs close in and start attacking the player
-await page.waitForTimeout(1800);
-// player swings back a couple of times
-for (let i = 0; i < 4; i++) { await page.keyboard.press("Space"); await page.waitForTimeout(120); }
-await page.waitForTimeout(300);
+await page.waitForTimeout(400);
+// fire steadily for a while: kill enemies, gain XP, level up
+for (let i = 0; i < 60; i++) { await page.keyboard.press("Space"); await page.waitForTimeout(45); }
 
 const state = await page.evaluate(`(() => {
   const g = window.__game;
-  if (!g) return null;
-  return g.entities.map((e) => {
-    const m = e.comps.find((c) => "vx" in c);
-    return { type: e.type, x: Math.round(m.x), y: Math.round(m.y), dead: e.send("isDead"), hp: Math.round(e.send("energyFrac") * 100) };
-  });
+  const counts = { player: 0, enemy: 0, bullet: 0, deadEnemies: 0 };
+  for (const e of g.entities) {
+    counts[e.type] = (counts[e.type] || 0) + 1;
+    if (e.type === "enemy" && e.send("isDead")) counts.deadEnemies++;
+  }
+  const xp = g.player.comps.find((c) => "level" in c);
+  return { counts, level: xp.level, xp: xp.xp, playerHp: Math.round(g.player.send("energyFrac")*100), pool: window.__bulletStats() };
 })()`);
 
 await page.screenshot({ path: "slice.png" });
 await browser.close();
 console.log("console:", logs.filter((l) => !l.includes("404")).join(" | "));
-console.log("entities:", JSON.stringify(state));
+console.log("state:", JSON.stringify(state));
