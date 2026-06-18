@@ -20,7 +20,7 @@ export function spawnPlayer(x: number, y: number): Entity {
 }
 
 /** Spawn an enemy from real act_*.txt data (resolved #inherit/#attack), e.g. "blackOrc". */
-export function spawnEnemy(actorName: string, x: number, y: number, animChar = actorName): Entity {
+export function spawnEnemy(actorName: string, x: number, y: number, opts: { animChar?: string; ranged?: boolean } = {}): Entity {
   const d = registry.resolveActor(actorName) ?? {};
   const num = (k: string, dflt: number) => (typeof d[k] === "number" ? (d[k] as number) : dflt);
   const str = (k: string, dflt: string) => (typeof d[k] === "string" ? (d[k] as string) : dflt);
@@ -32,6 +32,7 @@ export function spawnEnemy(actorName: string, x: number, y: number, animChar = a
     energy: num("energy", 40),
     strength: num("strength", 5),
     team: str("team", "#monsters"),
-    animChar, box: 14,
+    animChar: opts.animChar ?? actorName, box: 14,
+    ranged: opts.ranged === true,
   });
 }

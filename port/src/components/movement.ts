@@ -14,12 +14,18 @@ export class Movement extends Component {
   intentX = 0; intentY = 0;
   accel = 1.4; friction = 0.6; maxSpeed = 4; box = 12;
   facingLeft = false;
+  hitX = false; hitY = false;  // wall contact this tick (projectiles read these)
 
   override init(cfg: Record<string, any>): void {
     this.x = cfg["x"] ?? 0; this.y = cfg["y"] ?? 0;
+    this.vx = 0; this.vy = 0; this.intentX = 0; this.intentY = 0;
+    this.accel = 1.4; this.friction = 0.6; this.maxSpeed = 4;
     if (typeof cfg["walkSpeed"] === "number") this.maxSpeed = cfg["walkSpeed"];
+    if (typeof cfg["accel"] === "number") this.accel = cfg["accel"];
+    if (typeof cfg["friction"] === "number") this.friction = cfg["friction"];
     if (typeof cfg["box"] === "number") this.box = cfg["box"];
   }
+  override reset(): void { this.vx = this.vy = this.intentX = this.intentY = 0; this.hitX = this.hitY = false; }
 
   moving(): boolean { return this.vx !== 0 || this.vy !== 0; }
   getPos(): Pos { return { x: this.x, y: this.y }; } // query
@@ -37,6 +43,7 @@ export class Movement extends Component {
 
     const b = this.box;
     const r = game.grid.moveBox(this.x - b / 2, this.y - b / 2, b, b, this.vx, this.vy);
+    this.hitX = r.hitX; this.hitY = r.hitY;
     if (r.hitX) this.vx = 0;
     if (r.hitY) this.vy = 0;
     this.x = r.x + b / 2; this.y = r.y + b / 2;

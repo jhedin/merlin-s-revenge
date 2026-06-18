@@ -11,24 +11,18 @@ page.on("console", (m) => logs.push(m.text()));
 page.on("pageerror", (e) => logs.push("PAGEERROR: " + e.message));
 
 await page.goto(URL, { waitUntil: "networkidle" });
-await page.waitForTimeout(500);
-
-// let the orcs close in and start attacking the player
-await page.waitForTimeout(1800);
-// player swings back a couple of times
-for (let i = 0; i < 4; i++) { await page.keyboard.press("Space"); await page.waitForTimeout(120); }
-await page.waitForTimeout(300);
+// capture during the approach: enemies still crossing the room, so bullets are visibly in transit
+await page.waitForTimeout(350);
+for (let i = 0; i < 6; i++) { await page.keyboard.press("Space"); await page.waitForTimeout(70); }
 
 const state = await page.evaluate(`(() => {
   const g = window.__game;
-  if (!g) return null;
-  return g.entities.map((e) => {
-    const m = e.comps.find((c) => "vx" in c);
-    return { type: e.type, x: Math.round(m.x), y: Math.round(m.y), dead: e.send("isDead"), hp: Math.round(e.send("energyFrac") * 100) };
-  });
+  const counts = { player: 0, enemy: 0, bullet: 0 };
+  for (const e of g.entities) counts[e.type] = (counts[e.type] || 0) + 1;
+  return { counts, pool: window.__bulletStats ? window.__bulletStats() : null };
 })()`);
 
 await page.screenshot({ path: "slice.png" });
 await browser.close();
 console.log("console:", logs.filter((l) => !l.includes("404")).join(" | "));
-console.log("entities:", JSON.stringify(state));
+console.log("state:", JSON.stringify(state));
