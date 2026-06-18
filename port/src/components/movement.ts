@@ -8,7 +8,7 @@ import { game } from "../game/context";
 export interface Pos { x: number; y: number; }
 
 export class Movement extends Component {
-  static handles = ["update", "getPos"];
+  static handles = ["update", "getPos", "addSaveData", "restoreFromSave"];
   x = 0; y = 0;
   vx = 0; vy = 0;
   intentX = 0; intentY = 0;
@@ -29,6 +29,17 @@ export class Movement extends Component {
 
   moving(): boolean { return this.vx !== 0 || this.vy !== 0; }
   getPos(): Pos { return { x: this.x, y: this.y }; } // query
+
+  // save/restore are ordered fold messages: each component writes a namespaced sub-dict.
+  addSaveData(next: NextFn, sd: Record<string, any>): Record<string, any> {
+    sd["move"] = { x: this.x, y: this.y, vx: this.vx, vy: this.vy };
+    return next(sd);
+  }
+  restoreFromSave(next: NextFn, sd: Record<string, any>): Record<string, any> {
+    const s = sd["move"];
+    if (s) { this.x = s.x; this.y = s.y; this.vx = s.vx; this.vy = s.vy; }
+    return next(sd);
+  }
 
   update(next: NextFn): void {
     this.vx += this.intentX * this.accel;

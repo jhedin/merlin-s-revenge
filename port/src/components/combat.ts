@@ -6,7 +6,7 @@ import { Component, type NextFn } from "../engine/dispatch";
 import { game } from "../game/context";
 
 export class Energy extends Component {
-  static handles = ["takeHit", "isDead", "energyFrac"];
+  static handles = ["takeHit", "isDead", "energyFrac", "addSaveData", "restoreFromSave"];
   energy = 100; max = 100; dead = false; xpReward = 10;
 
   override init(cfg: Record<string, any>): void {
@@ -29,6 +29,16 @@ export class Energy extends Component {
   }
   isDead(): boolean { return this.dead; }       // query
   energyFrac(): number { return this.max > 0 ? this.energy / this.max : 0; }
+
+  addSaveData(next: NextFn, sd: Record<string, any>): Record<string, any> {
+    sd["energy"] = { energy: this.energy, max: this.max, dead: this.dead };
+    return next(sd);
+  }
+  restoreFromSave(next: NextFn, sd: Record<string, any>): Record<string, any> {
+    const s = sd["energy"];
+    if (s) { this.energy = s.energy; this.max = s.max; this.dead = s.dead; }
+    return next(sd);
+  }
 }
 
 export class Team extends Component {
