@@ -27,7 +27,7 @@ export const STRUCT_ATTACK: Record_ = {
   targetRoles: [["#teamMembers", "#teamBuildings"]], type: "#auto", volume: 150,
 };
 
-const isPlainObject = (v: Lingo): v is Record_ =>
+const isPlainObject = (v: Lingo | undefined): v is Record_ =>
   v != null && typeof v === "object" && !Array.isArray(v) &&
   !("$member" in v) && !("$global" in v) && !("$call" in v) &&
   !("x" in v) && !("r" in v) && !("left" in v);
