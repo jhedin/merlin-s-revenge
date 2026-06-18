@@ -6,14 +6,14 @@
 import type { Layer } from "../world/map";
 
 export interface Sprite {
-  img: HTMLImageElement;
+  img: CanvasImageSource;
   x: number; y: number;      // world position of the registration point
   regX: number; regY: number;
   z: number;
   visible?: boolean;
 }
 
-export interface TileSheet { img: HTMLImageElement; cols: number; tile: number; }
+export interface TileSheet { img: CanvasImageSource; cols: number; tile: number; }
 
 export class Renderer {
   readonly ctx: CanvasRenderingContext2D;
