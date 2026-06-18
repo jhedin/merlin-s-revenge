@@ -41,7 +41,11 @@ async function main() {
   initContext({ grid, input, assets, tilePx: tile, entities: [], player: null, tick: 0 });
 
   const player = spawnPlayer(viewW / 2, viewH / 2);
-  const enemies = [spawnEnemy(80, 80), spawnEnemy(viewW - 80, 80), spawnEnemy(viewW - 80, viewH - 80)];
+  const enemies = [
+    spawnEnemy("blackOrc", 80, 80),                 // real data: energy 1200, walkSpeed 6
+    spawnEnemy("dwarf", viewW - 80, 80),            // real data: energy 250
+    spawnEnemy("blackOrc", viewW - 80, viewH - 80),
+  ];
   game.player = player;
   game.entities = [player, ...enemies];
 
@@ -57,6 +61,7 @@ async function main() {
       if (active && sheets.active) renderer.drawTileLayer(active, sheets.active);
       const sprites = game.entities.map((e) => e.get(Anim).sprite()).filter((s): s is Sprite => s !== null);
       renderer.drawSprites(sprites);
+      for (const e of enemies) drawEnemyBar(renderer, e);
       drawHud(renderer, player);
     },
   );
@@ -71,6 +76,15 @@ function drawHud(renderer: Renderer, player: import("./engine/dispatch").Entity)
   ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(6, 6, 104, 12);
   ctx.fillStyle = frac > 0.3 ? "#3c9" : "#e44"; ctx.fillRect(8, 8, 100 * frac, 8);
   ctx.fillStyle = "#fff"; ctx.font = "8px monospace"; ctx.fillText("HP", 114, 15);
+}
+
+function drawEnemyBar(renderer: Renderer, e: import("./engine/dispatch").Entity) {
+  if (e.send("isDead")) return;
+  const p = e.send("getPos") as { x: number; y: number };
+  const frac = e.get(Energy).energyFrac();
+  const ctx = renderer.ctx;
+  ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(p.x - 11, p.y - 26, 22, 4);
+  ctx.fillStyle = "#e44"; ctx.fillRect(p.x - 10, p.y - 25, 20 * frac, 2);
 }
 
 function tileSheet(assets: Assets, sym: string) {

@@ -39,7 +39,7 @@ for (const [sym, prefix] of [
 }
 
 // --- character animations: grouped by <char>_<action> for each bundled character ---
-const CHARS = ["mer", "blackOrc"];
+const CHARS = ["mer", "blackOrc", "dwarf"];
 interface Frame { file: string; w: number; h: number; reg: [number, number]; }
 const anims: Record<string, { delay: number; frames: Frame[] }> = {};
 const frameNo = (tok: string): number => parseInt(/^\d+/.exec(tok)?.[0] ?? "0", 10);
