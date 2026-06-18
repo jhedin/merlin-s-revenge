@@ -1,0 +1,60 @@
+on CastAddGPLHeaderToLinkedScripts theCast
+  [  0] getparam 0 .............................. <theCast>
+  [  2] pushint8 2 .............................. <2>
+  [  4] get 8 ................................... <the number of castMembers of castLib theCast>
+  [  6] setlocal 0 .............................. nummem = the number of castMembers of castLib theCast
+  [  8] pusharglist 0 ........................... <>
+  [ 10] extcall 14 .............................. <GPLGetHeaderAsRem()>
+  [ 12] setlocal 1 .............................. GPLHeader = GPLGetHeaderAsRem()
+  [ 14] pushint8 1 .............................. <1>
+  [ 16] setlocal 2
+  [ 18] getlocal 2
+  [ 20] getlocal 0 .............................. <nummem>
+  [ 22] lteq
+  [ 23] jmpifz [115] ............................ repeat with i = 1 to nummem
+  [ 26] getlocal 2 .............................. <i>
+  [ 28] getparam 0 .............................. <theCast>
+  [ 30] pusharglist 2 ........................... <i, theCast>
+  [ 32] extcall 1 ............................... <member(i, theCast)>
+  [ 34] setlocal 3 .............................. nMem = member(i, theCast)
+  [ 36] getlocal 3 .............................. <nMem>
+  [ 38] getobjprop 3 ............................ <nMem.fileName>
+  [ 40] pushcons 0 .............................. <EMPTY>
+  [ 42] eq ...................................... <nMem.fileName = EMPTY>
+  [ 43] jmpifz [ 49] ............................ if nMem.fileName = EMPTY then
+  [ 46] jmp [106] ............................... next repeat
+  [ 49] getlocal 3 .............................. <nMem>
+  [ 51] getobjprop 4 ............................ <nMem.scriptText>
+  [ 53] setlocal 4 .............................. nScriptText = nMem.scriptText
+  [ 55] getlocal 4 .............................. <nScriptText>
+  [ 57] pushcons 0 .............................. <EMPTY>
+  [ 59] eq ...................................... <nScriptText = EMPTY>
+  [ 60] jmpifz [ 66] ............................ if nScriptText = EMPTY then
+  [ 63] jmp [106] ............................... next repeat
+  [ 66] getlocal 1 .............................. <GPLHeader>
+  [ 68] pushsymb 5 .............................. <#line>
+  [ 70] pushint8 1 .............................. <1>
+  [ 72] pusharglist 3 ........................... <GPLHeader, #line, 1>
+  [ 74] objcall 6 ............................... <GPLHeader.line[1]>
+  [ 76] getlocal 4 .............................. <nScriptText>
+  [ 78] pushsymb 5 .............................. <#line>
+  [ 80] pushint8 1 .............................. <1>
+  [ 82] pusharglist 3 ........................... <nScriptText, #line, 1>
+  [ 84] objcall 6 ............................... <nScriptText.line[1]>
+  [ 86] eq ...................................... <GPLHeader.line[1] = nScriptText.line[1]>
+  [ 87] jmpifz [ 93] ............................ if GPLHeader.line[1] = nScriptText.line[1] then
+  [ 90] jmp [106] ............................... next repeat
+  [ 93] getlocal 1 .............................. <GPLHeader>
+  [ 95] getlocal 4 .............................. <nScriptText>
+  [ 97] joinstr ................................. <GPLHeader & nScriptText>
+  [ 98] setlocal 4 .............................. nScriptText = GPLHeader & nScriptText
+  [100] getlocal 3 .............................. <nMem>
+  [102] getlocal 4 .............................. <nScriptText>
+  [104] setobjprop 4 ............................ nMem.scriptText = nScriptText
+  [106] pushint8 1
+  [108] getlocal 2
+  [110] add
+  [111] setlocal 2
+  [113] endrepeat [ 18]
+  [115] ret
+end

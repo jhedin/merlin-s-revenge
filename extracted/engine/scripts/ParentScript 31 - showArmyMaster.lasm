@@ -1,0 +1,721 @@
+property pDisplayRect, pPageNum, pPages, pRows, pUnitDisplayers, pXGap, pYGap
+global g
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 3 ............................... return me
+  [  6] ret
+end
+
+on init me
+  [  0] pushsymb 103 ............................ <#none>
+  [  2] setprop 1175 ............................ pDisplayRect = #none
+  [  5] pusharglist 0 ........................... <[]>
+  [  7] pushlist ................................ <[]>
+  [  8] setprop 1367 ............................ pPages = []
+  [ 11] pushint8 1 .............................. <1>
+  [ 13] setprop 1368 ............................ pPageNum = 1
+  [ 16] pusharglist 0 ........................... <[]>
+  [ 18] pushlist ................................ <[]>
+  [ 19] setprop 1369 ............................ pRows = []
+  [ 22] pushint8 4 .............................. <4>
+  [ 24] setprop 1370 ............................ pXGap = 4
+  [ 27] pushint8 8 .............................. <8>
+  [ 29] setprop 1371 ............................ pYGap = 8
+  [ 32] pusharglist 0 ........................... <[]>
+  [ 34] pushlist ................................ <[]>
+  [ 35] setprop 1372 ............................ pUnitDisplayers = []
+  [ 38] ret
+end
+
+on finish me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 1354 ............................ me.finishUnitDisplayers()
+  [  7] pusharglist 0 ........................... <[]>
+  [  9] pushlist ................................ <[]>
+  [ 10] setprop 1367 ............................ pPages = []
+  [ 13] pusharglist 0 ........................... <[]>
+  [ 15] pushlist ................................ <[]>
+  [ 16] setprop 1369 ............................ pRows = []
+  [ 19] ret
+end
+
+on finishUnitDisplayers me
+  [  0] getprop 1372 ............................ <pUnitDisplayers>
+  [  3] pusharglist 1 ........................... <pUnitDisplayers>
+  [  5] extcall 350 ............................. <ilk(pUnitDisplayers)>
+  [  8] pushsymb 388 ............................ <#void>
+  [ 11] nteq .................................... <ilk(pUnitDisplayers) <> #void>
+  [ 12] getprop 1372 ............................ <pUnitDisplayers>
+  [ 15] pusharglist 0 ........................... <[]>
+  [ 17] pushlist ................................ <[]>
+  [ 18] nteq .................................... <pUnitDisplayers <> []>
+  [ 19] and ..................................... <(ilk(pUnitDisplayers) <> #void) and (pUnitDisplayers <> [])>
+  [ 20] jmpifz [ 73] ............................ if (ilk(pUnitDisplayers) <> #void) and (pUnitDisplayers <> []) then
+  [ 23] getprop 1372 ............................ <pUnitDisplayers>
+  [ 26] peek 0
+  [ 28] pusharglist 1
+  [ 30] extcall 348
+  [ 33] pushint8 1
+  [ 35] peek 0
+  [ 37] peek 2
+  [ 39] lteq
+  [ 40] jmpifz [ 65] ............................ repeat with unitDisp in pUnitDisplayers
+  [ 43] peek 2
+  [ 45] peek 1
+  [ 47] pusharglist 2
+  [ 49] extcall 301
+  [ 52] setlocal 0
+  [ 54] getlocal 0 .............................. <unitDisp>
+  [ 56] pusharglistnoret 1 ...................... <unitDisp>
+  [ 58] objcall 239 ............................. unitDisp.finish()
+  [ 60] pushint8 1
+  [ 62] add
+  [ 63] endrepeat [ 35]
+  [ 65] pop 3
+  [ 67] pusharglist 0 ........................... <[]>
+  [ 69] pushlist ................................ <[]>
+  [ 70] setprop 1372 ............................ pUnitDisplayers = []
+  [ 73] ret
+end
+
+on changePage me, theOption
+  [  0] getparam 1 .............................. <theOption>
+  [  2] peek 0 .................................. case theOption of
+  [  4] pushsymb 1374 ........................... <#nextPage>
+  [  7] eq
+  [  8] jmpifz [ 23] ............................ (case) #nextPage:
+  [ 11] getprop 1368 ............................ <pPageNum>
+  [ 14] pushint8 1 .............................. <1>
+  [ 16] add ..................................... <pPageNum + 1>
+  [ 17] setprop 1368 ............................ pPageNum = pPageNum + 1
+  [ 20] jmp [ 41]
+  [ 23] peek 0
+  [ 25] pushsymb 1375 ........................... <#previousPage>
+  [ 28] eq
+  [ 29] jmpifz [ 41] ............................ (case) #previousPage:
+  [ 32] getprop 1368 ............................ <pPageNum>
+  [ 35] pushint8 1 .............................. <1>
+  [ 37] sub ..................................... <pPageNum - 1>
+  [ 38] setprop 1368 ............................ pPageNum = pPageNum - 1
+  [ 41] pop 1 ................................... end case
+  [ 43] ret
+end
+
+on displayReserveArmy me, armies
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 1354 ............................ me.finishUnitDisplayers()
+  [  7] getglobal 191 ........................... <g>
+  [  9] getchainedprop 674 ...................... <g.armyMaster>
+  [ 12] pusharglist 1 ........................... <g.armyMaster>
+  [ 14] objcall 1376 ............................ <g.armyMaster.getTeamToDisplay()>
+  [ 17] setlocal 0 .............................. teamToDisplay = g.armyMaster.getTeamToDisplay()
+  [ 19] getparam 1 .............................. <armies>
+  [ 21] getlocal 0 .............................. <teamToDisplay>
+  [ 23] pusharglist 2 ........................... <armies, teamToDisplay>
+  [ 25] objcall 301 ............................. <armies[teamToDisplay]>
+  [ 28] setlocal 1 .............................. army = armies[teamToDisplay]
+  [ 30] getparam 0 .............................. <me>
+  [ 32] getlocal 1 .............................. <army>
+  [ 34] pusharglistnoret 2 ...................... <me, army>
+  [ 36] objcall 1366 ............................ me.setupDisplay(army)
+  [ 39] getprop 1368 ............................ <pPageNum>
+  [ 42] getprop 1367 ............................ <pPages>
+  [ 45] getobjprop 348 .......................... <pPages.count>
+  [ 48] gt ...................................... <pPageNum > pPages.count>
+  [ 49] jmpifz [ 57] ............................ if pPageNum > pPages.count then
+  [ 52] pushint8 1 .............................. <1>
+  [ 54] setprop 1368 ............................ pPageNum = 1
+  [ 57] getparam 0 .............................. <me>
+  [ 59] getprop 1368 ............................ <pPageNum>
+  [ 62] pusharglistnoret 2 ...................... <me, pPageNum>
+  [ 64] objcall 1357 ............................ me.displayPage(pPageNum)
+  [ 67] ret
+end
+
+on displayPage me, pageNum
+  [  0] getprop 1367 ............................ <pPages>
+  [  3] getparam 1 .............................. <pageNum>
+  [  5] pusharglist 2 ........................... <pPages, pageNum>
+  [  7] objcall 301 ............................. <pPages[pageNum]>
+  [ 10] setlocal 0 .............................. currentPage = pPages[pageNum]
+  [ 12] getlocal 0 .............................. <currentPage>
+  [ 14] getobjprop 244 .......................... <currentPage.startRow>
+  [ 16] setlocal 1 .............................. rowNum = currentPage.startRow
+  [ 18] getparam 0 .............................. <me>
+  [ 20] getlocal 0 .............................. <currentPage>
+  [ 22] getlocal 1 .............................. <rowNum>
+  [ 24] pusharglist 3 ........................... <me, currentPage, rowNum>
+  [ 26] objcall 1361 ............................ <me.isPageFinished(currentPage, rowNum)>
+  [ 29] pushzero ................................ <0>
+  [ 30] eq ...................................... <me.isPageFinished(currentPage, rowNum) = 0>
+  [ 31] jmpifz [ 67] ............................ repeat while me.isPageFinished(currentPage, rowNum) = 0
+  [ 34] getprop 1369 ............................ <pRows>
+  [ 37] getobjprop 348 .......................... <pRows.count>
+  [ 40] getlocal 1 .............................. <rowNum>
+  [ 42] lt ...................................... <pRows.count < rowNum>
+  [ 43] jmpifz [ 49] ............................ if pRows.count < rowNum then
+  [ 46] jmp [ 67] ............................... exit repeat
+  [ 49] getparam 0 .............................. <me>
+  [ 51] getlocal 1 .............................. <rowNum>
+  [ 53] pusharglistnoret 2 ...................... <me, rowNum>
+  [ 55] objcall 1358 ............................ me.displayRow(rowNum)
+  [ 58] getlocal 1 .............................. <rowNum>
+  [ 60] pushint8 1 .............................. <1>
+  [ 62] add ..................................... <rowNum + 1>
+  [ 63] setlocal 1 .............................. rowNum = rowNum + 1
+  [ 65] endrepeat [ 18]
+  [ 67] ret
+end
+
+on displayRow me, rowNum
+  [  0] getprop 1369 ............................ <pRows>
+  [  3] getparam 1 .............................. <rowNum>
+  [  5] pusharglist 2 ........................... <pRows, rowNum>
+  [  7] objcall 301 ............................. <pRows[rowNum]>
+  [ 10] setlocal 0 .............................. currentRow = pRows[rowNum]
+  [ 12] getlocal 0 .............................. <currentRow>
+  [ 14] getobjprop 264 .......................... <currentRow.startUnit>
+  [ 17] setlocal 1 .............................. unitNum = currentRow.startUnit
+  [ 19] getprop 1175 ............................ <pDisplayRect>
+  [ 22] getobjprop 170 .......................... <pDisplayRect.left>
+  [ 24] setlocal 2 .............................. xLoc = pDisplayRect.left
+  [ 26] getparam 0 .............................. <me>
+  [ 28] getlocal 0 .............................. <currentRow>
+  [ 30] getlocal 1 .............................. <unitNum>
+  [ 32] pusharglist 3 ........................... <me, currentRow, unitNum>
+  [ 34] objcall 1362 ............................ <me.isRowFinished(currentRow, unitNum)>
+  [ 37] pushzero ................................ <0>
+  [ 38] eq ...................................... <me.isRowFinished(currentRow, unitNum) = 0>
+  [ 39] jmpifz [ 84] ............................ repeat while me.isRowFinished(currentRow, unitNum) = 0
+  [ 42] getprop 1372 ............................ <pUnitDisplayers>
+  [ 45] getobjprop 348 .......................... <pUnitDisplayers.count>
+  [ 48] getlocal 1 .............................. <unitNum>
+  [ 50] lt ...................................... <pUnitDisplayers.count < unitNum>
+  [ 51] jmpifz [ 57] ............................ if pUnitDisplayers.count < unitNum then
+  [ 54] jmp [ 84] ............................... exit repeat
+  [ 57] getparam 0 .............................. <me>
+  [ 59] getlocal 1 .............................. <unitNum>
+  [ 61] getlocal 2 .............................. <xLoc>
+  [ 63] getlocal 0 .............................. <currentRow>
+  [ 65] getobjprop 262 .......................... <currentRow.floor>
+  [ 68] pusharglist 4 ........................... <me, unitNum, xLoc, currentRow.floor>
+  [ 70] objcall 1359 ............................ <me.displayUnit(unitNum, xLoc, currentRow.floor)>
+  [ 73] setlocal 2 .............................. xLoc = me.displayUnit(unitNum, xLoc, currentRow.floor)
+  [ 75] getlocal 1 .............................. <unitNum>
+  [ 77] pushint8 1 .............................. <1>
+  [ 79] add ..................................... <unitNum + 1>
+  [ 80] setlocal 1 .............................. unitNum = unitNum + 1
+  [ 82] endrepeat [ 26]
+  [ 84] ret
+end
+
+on displayUnit me, unitNum, xLoc, floorLoc
+  [  0] getprop 1372 ............................ <pUnitDisplayers>
+  [  3] getparam 1 .............................. <unitNum>
+  [  5] pusharglist 2 ........................... <pUnitDisplayers, unitNum>
+  [  7] objcall 301 ............................. <pUnitDisplayers[unitNum]>
+  [ 10] setlocal 0 .............................. unit = pUnitDisplayers[unitNum]
+  [ 12] getlocal 0 .............................. <unit>
+  [ 14] pusharglist 1 ........................... <unit>
+  [ 16] objcall 1386 ............................ <unit.getBoundingRect()>
+  [ 19] setlocal 1 .............................. boundingRect = unit.getBoundingRect()
+  [ 21] getlocal 0 .............................. <unit>
+  [ 23] getparam 2 .............................. <xLoc>
+  [ 25] getparam 3 .............................. <floorLoc>
+  [ 27] pusharglist 2 ........................... <xLoc, floorLoc>
+  [ 29] extcall 122 ............................. <point(xLoc, floorLoc)>
+  [ 31] pusharglistnoret 2 ...................... <unit, point(xLoc, floorLoc)>
+  [ 33] objcall 1359 ............................ unit.displayUnit(point(xLoc, floorLoc))
+  [ 36] getparam 2 .............................. <xLoc>
+  [ 38] getlocal 1 .............................. <boundingRect>
+  [ 40] getobjprop 325 .......................... <boundingRect.width>
+  [ 43] add ..................................... <xLoc + boundingRect.width>
+  [ 44] getprop 1370 ............................ <pXGap>
+  [ 47] add ..................................... <xLoc + boundingRect.width + pXGap>
+  [ 48] setparam 2 .............................. xLoc = xLoc + boundingRect.width + pXGap
+  [ 50] getparam 2 .............................. <xLoc>
+  [ 52] pusharglistnoret 1 ...................... <xLoc>
+  [ 54] extcall 3 ............................... return xLoc
+  [ 56] ret
+end
+
+on displayUnits me
+  [  0] pushint8 1 .............................. <1>
+  [  2] setlocal 0 .............................. rowNum = 1
+  [  4] pushint8 1 .............................. <1>
+  [  6] setlocal 1 .............................. unitNum = 1
+  [  8] getprop 1369 ............................ <pRows>
+  [ 11] getlocal 0 .............................. <rowNum>
+  [ 13] pusharglist 2 ........................... <pRows, rowNum>
+  [ 15] objcall 301 ............................. <pRows[rowNum]>
+  [ 18] setlocal 2 .............................. currentRow = pRows[rowNum]
+  [ 20] getprop 1175 ............................ <pDisplayRect>
+  [ 23] getobjprop 170 .......................... <pDisplayRect.left>
+  [ 25] setlocal 3 .............................. xLoc = pDisplayRect.left
+  [ 27] getprop 1372 ............................ <pUnitDisplayers>
+  [ 30] peek 0
+  [ 32] pusharglist 1
+  [ 34] extcall 348
+  [ 37] pushint8 1
+  [ 39] peek 0
+  [ 41] peek 2
+  [ 43] lteq
+  [ 44] jmpifz [151] ............................ repeat with unit in pUnitDisplayers
+  [ 47] peek 2
+  [ 49] peek 1
+  [ 51] pusharglist 2
+  [ 53] extcall 301
+  [ 56] setlocal 4
+  [ 58] getparam 0 .............................. <me>
+  [ 60] getlocal 2 .............................. <currentRow>
+  [ 62] getlocal 1 .............................. <unitNum>
+  [ 64] pusharglist 3 ........................... <me, currentRow, unitNum>
+  [ 66] objcall 1390 ............................ <me.checkEndOfRow(currentRow, unitNum)>
+  [ 69] jmpifz [ 98] ............................ if me.checkEndOfRow(currentRow, unitNum) then
+  [ 72] getlocal 0 .............................. <rowNum>
+  [ 74] pushint8 1 .............................. <1>
+  [ 76] add ..................................... <rowNum + 1>
+  [ 77] setlocal 0 .............................. rowNum = rowNum + 1
+  [ 79] getprop 1369 ............................ <pRows>
+  [ 82] getlocal 0 .............................. <rowNum>
+  [ 84] pusharglist 2 ........................... <pRows, rowNum>
+  [ 86] objcall 301 ............................. <pRows[rowNum]>
+  [ 89] setlocal 2 .............................. currentRow = pRows[rowNum]
+  [ 91] getprop 1175 ............................ <pDisplayRect>
+  [ 94] getobjprop 170 .......................... <pDisplayRect.left>
+  [ 96] setlocal 3 .............................. xLoc = pDisplayRect.left
+  [ 98] getlocal 4 .............................. <unit>
+  [100] pusharglist 1 ........................... <unit>
+  [102] objcall 1386 ............................ <unit.getBoundingRect()>
+  [105] setlocal 5 .............................. boundingRect = unit.getBoundingRect()
+  [107] getlocal 4 .............................. <unit>
+  [109] getlocal 3 .............................. <xLoc>
+  [111] getlocal 2 .............................. <currentRow>
+  [113] getobjprop 262 .......................... <currentRow.floor>
+  [116] pusharglist 2 ........................... <xLoc, currentRow.floor>
+  [118] extcall 122 ............................. <point(xLoc, currentRow.floor)>
+  [120] pusharglistnoret 2 ...................... <unit, point(xLoc, currentRow.floor)>
+  [122] objcall 1359 ............................ unit.displayUnit(point(xLoc, currentRow.floor))
+  [125] getlocal 3 .............................. <xLoc>
+  [127] getlocal 5 .............................. <boundingRect>
+  [129] getobjprop 325 .......................... <boundingRect.width>
+  [132] add ..................................... <xLoc + boundingRect.width>
+  [133] getprop 1370 ............................ <pXGap>
+  [136] add ..................................... <xLoc + boundingRect.width + pXGap>
+  [137] setlocal 3 .............................. xLoc = xLoc + boundingRect.width + pXGap
+  [139] getlocal 1 .............................. <unitNum>
+  [141] pushint8 1 .............................. <1>
+  [143] add ..................................... <unitNum + 1>
+  [144] setlocal 1 .............................. unitNum = unitNum + 1
+  [146] pushint8 1
+  [148] add
+  [149] endrepeat [ 39]
+  [151] pop 3
+  [153] ret
+end
+
+on isMenuItemShadowed me, theComm
+  [  0] pushint8 1 .............................. <1>
+  [  2] setlocal 0 .............................. shadowed = 1
+  [  4] getprop 1368 ............................ <pPageNum>
+  [  7] getprop 1367 ............................ <pPages>
+  [ 10] getobjprop 348 .......................... <pPages.count>
+  [ 13] gt ...................................... <pPageNum > pPages.count>
+  [ 14] jmpifz [ 22] ............................ if pPageNum > pPages.count then
+  [ 17] pushint8 1 .............................. <1>
+  [ 19] setprop 1368 ............................ pPageNum = 1
+  [ 22] getparam 1 .............................. <theComm>
+  [ 24] peek 0 .................................. case theComm of
+  [ 26] pushsymb 1374 ........................... <#nextPage>
+  [ 29] eq
+  [ 30] jmpifz [ 52] ............................ (case) #nextPage:
+  [ 33] getprop 1368 ............................ <pPageNum>
+  [ 36] getprop 1367 ............................ <pPages>
+  [ 39] getobjprop 348 .......................... <pPages.count>
+  [ 42] lt ...................................... <pPageNum < pPages.count>
+  [ 43] jmpifz [ 49] ............................ if pPageNum < pPages.count then
+  [ 46] pushzero ................................ <0>
+  [ 47] setlocal 0 .............................. shadowed = 0
+  [ 49] jmp [ 73]
+  [ 52] peek 0
+  [ 54] pushsymb 1375 ........................... <#previousPage>
+  [ 57] eq
+  [ 58] jmpifz [ 73] ............................ (case) #previousPage:
+  [ 61] getprop 1368 ............................ <pPageNum>
+  [ 64] pushint8 1 .............................. <1>
+  [ 66] gt ...................................... <pPageNum > 1>
+  [ 67] jmpifz [ 73] ............................ if pPageNum > 1 then
+  [ 70] pushzero ................................ <0>
+  [ 71] setlocal 0 .............................. shadowed = 0
+  [ 73] pop 1 ................................... end case
+  [ 75] getlocal 0 .............................. <shadowed>
+  [ 77] pusharglistnoret 1 ...................... <shadowed>
+  [ 79] extcall 3 ............................... return shadowed
+  [ 81] ret
+end
+
+on isPageFinished me, thePage, rowNum
+  [  0] getparam 1 .............................. <thePage>
+  [  2] getobjprop 243 .......................... <thePage.endRow>
+  [  4] pushsymb 103 ............................ <#none>
+  [  6] eq ...................................... <thePage.endRow = #none>
+  [  7] jmpifz [ 15] ............................ if thePage.endRow = #none then
+  [ 10] pushzero ................................ <0>
+  [ 11] pusharglistnoret 1 ...................... <0>
+  [ 13] extcall 3 ............................... return 0
+  [ 15] getparam 1 .............................. <thePage>
+  [ 17] getobjprop 243 .......................... <thePage.endRow>
+  [ 19] getparam 2 .............................. <rowNum>
+  [ 21] lteq .................................... <thePage.endRow <= rowNum>
+  [ 22] jmpifz [ 31] ............................ if thePage.endRow <= rowNum then
+  [ 25] pushint8 1 .............................. <1>
+  [ 27] pusharglistnoret 1 ...................... <1>
+  [ 29] extcall 3 ............................... return 1
+  [ 31] pushzero ................................ <0>
+  [ 32] pusharglistnoret 1 ...................... <0>
+  [ 34] extcall 3 ............................... return 0
+  [ 36] ret
+end
+
+on isRowFinished me, currentRow, unitNum
+  [  0] getparam 1 .............................. <currentRow>
+  [  2] getobjprop 263 .......................... <currentRow.endUnit>
+  [  5] setlocal 0 .............................. rEnd = currentRow.endUnit
+  [  7] getlocal 0 .............................. <rEnd>
+  [  9] pushsymb 103 ............................ <#none>
+  [ 11] eq ...................................... <rEnd = #none>
+  [ 12] jmpifz [ 20] ............................ if rEnd = #none then
+  [ 15] pushzero ................................ <0>
+  [ 16] pusharglistnoret 1 ...................... <0>
+  [ 18] extcall 3 ............................... return 0
+  [ 20] getlocal 0 .............................. <rEnd>
+  [ 22] getparam 2 .............................. <unitNum>
+  [ 24] lteq .................................... <rEnd <= unitNum>
+  [ 25] jmpifz [ 34] ............................ if rEnd <= unitNum then
+  [ 28] pushint8 1 .............................. <1>
+  [ 30] pusharglistnoret 1 ...................... <1>
+  [ 32] extcall 3 ............................... return 1
+  [ 34] pushzero ................................ <0>
+  [ 35] pusharglistnoret 1 ...................... <0>
+  [ 37] extcall 3 ............................... return 0
+  [ 39] ret
+end
+
+on newPage me, rowNum
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 192 ...................... <g.structMaster>
+  [  4] pushsymb 73 ............................. <#page>
+  [  6] pusharglist 2 ........................... <g.structMaster, #page>
+  [  8] objcall 51 .............................. <g.structMaster.getStruct(#page)>
+  [ 10] setlocal 0 .............................. newPage = g.structMaster.getStruct(#page)
+  [ 12] getlocal 0 .............................. <newPage>
+  [ 14] getparam 1 .............................. <rowNum>
+  [ 16] setobjprop 244 .......................... newPage.startRow = rowNum
+  [ 18] getprop 1367 ............................ <pPages>
+  [ 21] getlocal 0 .............................. <newPage>
+  [ 23] pusharglistnoret 2 ...................... <pPages, newPage>
+  [ 25] objcall 506 ............................. pPages.append(newPage)
+  [ 28] getlocal 0 .............................. <newPage>
+  [ 30] pusharglistnoret 1 ...................... <newPage>
+  [ 32] extcall 3 ............................... return newPage
+  [ 34] ret
+end
+
+on newRow me, unitNum
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 192 ...................... <g.structMaster>
+  [  4] pushsymb 81 ............................. <#row>
+  [  6] pusharglist 2 ........................... <g.structMaster, #row>
+  [  8] objcall 51 .............................. <g.structMaster.getStruct(#row)>
+  [ 10] setlocal 0 .............................. newRow = g.structMaster.getStruct(#row)
+  [ 12] getlocal 0 .............................. <newRow>
+  [ 14] getparam 1 .............................. <unitNum>
+  [ 16] setobjprop 264 .......................... newRow.startUnit = unitNum
+  [ 19] getlocal 0 .............................. <newRow>
+  [ 21] getprop 1175 ............................ <pDisplayRect>
+  [ 24] getobjprop 168 .......................... <pDisplayRect.top>
+  [ 26] setobjprop 262 .......................... newRow.floor = pDisplayRect.top
+  [ 29] getprop 1369 ............................ <pRows>
+  [ 32] getlocal 0 .............................. <newRow>
+  [ 34] pusharglistnoret 2 ...................... <pRows, newRow>
+  [ 36] objcall 506 ............................. pRows.append(newRow)
+  [ 39] getlocal 0 .............................. <newRow>
+  [ 41] pusharglistnoret 1 ...................... <newRow>
+  [ 43] extcall 3 ............................... return newRow
+  [ 45] ret
+end
+
+on newUnitDisplayer me
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 336 ...................... <g.objectMaster>
+  [  5] pushsymb 1393 ........................... <#objUnitDisplayer>
+  [  8] pusharglist 2 ........................... <g.objectMaster, #objUnitDisplayer>
+  [ 10] objcall 338 ............................. <g.objectMaster.requestObject(#objUnitDisplayer)>
+  [ 13] setlocal 0 .............................. unitDisplayer = g.objectMaster.requestObject(#objUnitDisplayer)
+  [ 15] getlocal 0 .............................. <unitDisplayer>
+  [ 17] pushsymb 1 .............................. <#init>
+  [ 19] pusharglist 2 ........................... <unitDisplayer, #init>
+  [ 21] objcall 339 ............................. <unitDisplayer.getParams(#init)>
+  [ 24] setlocal 1 .............................. params = unitDisplayer.getParams(#init)
+  [ 26] getlocal 0 .............................. <unitDisplayer>
+  [ 28] getlocal 1 .............................. <params>
+  [ 30] pusharglistnoret 2 ...................... <unitDisplayer, params>
+  [ 32] objcall 1 ............................... unitDisplayer.init(params)
+  [ 34] getlocal 0 .............................. <unitDisplayer>
+  [ 36] pusharglistnoret 1 ...................... <unitDisplayer>
+  [ 38] extcall 3 ............................... return unitDisplayer
+  [ 40] ret
+end
+
+on menuOptionSelected me, theOption, theMenu
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 557 ...................... <g.screenMaster>
+  [  5] pushsymb 649 ............................ <#showArmy>
+  [  8] pusharglistnoret 2 ...................... <g.screenMaster, #showArmy>
+  [ 10] objcall 470 ............................. g.screenMaster.screenOff(#showArmy)
+  [ 13] getparam 1 .............................. <theOption>
+  [ 15] peek 0 .................................. case theOption of
+  [ 17] pushsymb 1395 ........................... <#backToGameMenu>
+  [ 20] eq
+  [ 21] jmpifz [ 45] ............................ (case) #backToGameMenu:
+  [ 24] getglobal 191 ........................... <g>
+  [ 26] getchainedprop 557 ...................... <g.screenMaster>
+  [ 29] pushsymb 628 ............................ <#ingameMenu>
+  [ 32] getglobal 191 ........................... <g>
+  [ 34] getobjprop 735 .......................... <g.gamemaster>
+  [ 37] pusharglistnoret 3 ...................... <g.screenMaster, #ingameMenu, g.gamemaster>
+  [ 39] objcall 468 ............................. g.screenMaster.screenOn(#ingameMenu, g.gamemaster)
+  [ 42] jmp [116]
+  [ 45] peek 0
+  [ 47] pushsymb 1374 ........................... <#nextPage>
+  [ 50] nteq
+  [ 51] jmpifz [ 63] ............................ (case) #nextPage, ...
+  [ 54] peek 0
+  [ 56] pushsymb 1375 ........................... <#previousPage>
+  [ 59] eq
+  [ 60] jmpifz [ 93] ............................ (case) ..., #previousPage:
+  [ 63] getglobal 191 ........................... <g>
+  [ 65] getchainedprop 650 ...................... <g.showArmyMaster>
+  [ 68] getparam 1 .............................. <theOption>
+  [ 70] pusharglistnoret 2 ...................... <g.showArmyMaster, theOption>
+  [ 72] objcall 1355 ............................ g.showArmyMaster.changePage(theOption)
+  [ 75] getglobal 191 ........................... <g>
+  [ 77] getchainedprop 557 ...................... <g.screenMaster>
+  [ 80] pushsymb 649 ............................ <#showArmy>
+  [ 83] getparam 0 .............................. <me>
+  [ 85] pusharglistnoret 3 ...................... <g.screenMaster, #showArmy, me>
+  [ 87] objcall 468 ............................. g.screenMaster.screenOn(#showArmy, me)
+  [ 90] jmp [116]
+  [ 93] peek 0
+  [ 95] pushsymb 607 ............................ <#resumeGame>
+  [ 98] eq
+  [ 99] jmpifz [116] ............................ (case) #resumeGame:
+  [102] getglobal 191 ........................... <g>
+  [104] getchainedprop 735 ...................... <g.gamemaster>
+  [107] getparam 1 .............................. <theOption>
+  [109] getparam 2 .............................. <theMenu>
+  [111] pusharglistnoret 3 ...................... <g.gamemaster, theOption, theMenu>
+  [113] objcall 525 ............................. g.gamemaster.menuOptionSelected(theOption, theMenu)
+  [116] pop 1 ................................... end case
+  [118] ret
+end
+
+on setupDisplay me, army
+  [  0] getprop 1175 ............................ <pDisplayRect>
+  [  3] getobjprop 170 .......................... <pDisplayRect.left>
+  [  5] setlocal 0 .............................. xLoc = pDisplayRect.left
+  [  7] getprop 1175 ............................ <pDisplayRect>
+  [ 10] getobjprop 168 .......................... <pDisplayRect.top>
+  [ 12] setlocal 1 .............................. yLoc = pDisplayRect.top
+  [ 14] pushint8 1 .............................. <1>
+  [ 16] setlocal 2 .............................. unitNum = 1
+  [ 18] pushint8 1 .............................. <1>
+  [ 20] setlocal 3 .............................. rowNum = 1
+  [ 22] getparam 0 .............................. <me>
+  [ 24] getlocal 2 .............................. <unitNum>
+  [ 26] pusharglist 2 ........................... <me, unitNum>
+  [ 28] objcall 1364 ............................ <me.newRow(unitNum)>
+  [ 31] setlocal 4 .............................. currentRow = me.newRow(unitNum)
+  [ 33] getparam 0 .............................. <me>
+  [ 35] getlocal 3 .............................. <rowNum>
+  [ 37] pusharglist 2 ........................... <me, rowNum>
+  [ 39] objcall 1363 ............................ <me.newPage(rowNum)>
+  [ 42] setlocal 5 .............................. currentPage = me.newPage(rowNum)
+  [ 44] getparam 1 .............................. <army>
+  [ 46] peek 0
+  [ 48] pusharglist 1
+  [ 50] extcall 348
+  [ 53] pushint8 1
+  [ 55] peek 0
+  [ 57] peek 2
+  [ 59] lteq
+  [ 60] jmpifz [358] ............................ repeat with unitList in army
+  [ 63] peek 2
+  [ 65] peek 1
+  [ 67] pusharglist 2
+  [ 69] extcall 301
+  [ 72] setlocal 6
+  [ 74] getlocal 6 .............................. <unitList>
+  [ 76] peek 0
+  [ 78] pusharglist 1
+  [ 80] extcall 348
+  [ 83] pushint8 1
+  [ 85] peek 0
+  [ 87] peek 2
+  [ 89] lteq
+  [ 90] jmpifz [350] ............................ repeat with unit in unitList
+  [ 93] peek 2
+  [ 95] peek 1
+  [ 97] pusharglist 2
+  [ 99] extcall 301
+  [102] setlocal 7
+  [104] getparam 0 .............................. <me>
+  [106] pusharglist 1 ........................... <me>
+  [108] objcall 1365 ............................ <me.newUnitDisplayer()>
+  [111] setlocal 8 .............................. unitDisplayer = me.newUnitDisplayer()
+  [113] getlocal 8 .............................. <unitDisplayer>
+  [115] getlocal 7 .............................. <unit>
+  [117] getlocal 0 .............................. <xLoc>
+  [119] getlocal 1 .............................. <yLoc>
+  [121] pusharglist 2 ........................... <xLoc, yLoc>
+  [123] extcall 122 ............................. <point(xLoc, yLoc)>
+  [125] pusharglist 3 ........................... <unitDisplayer, unit, point(xLoc, yLoc)>
+  [127] objcall 1396 ............................ <unitDisplayer.calcBoundingRect(unit, point(xLoc, yLoc))>
+  [130] setlocal 9 .............................. boundingRect = unitDisplayer.calcBoundingRect(unit, point(xLoc, yLoc))
+  [132] getlocal 9 .............................. <boundingRect>
+  [134] getobjprop 171 .......................... <boundingRect.right>
+  [136] getprop 1175 ............................ <pDisplayRect>
+  [139] getobjprop 171 .......................... <pDisplayRect.right>
+  [141] gt ...................................... <boundingRect.right > pDisplayRect.right>
+  [142] jmpifz [214] ............................ if boundingRect.right > pDisplayRect.right then
+  [145] getlocal 4 .............................. <currentRow>
+  [147] getlocal 2 .............................. <unitNum>
+  [149] setobjprop 263 .......................... currentRow.endUnit = unitNum
+  [152] getlocal 4 .............................. <currentRow>
+  [154] getobjprop 262 .......................... <currentRow.floor>
+  [157] getprop 1371 ............................ <pYGap>
+  [160] add ..................................... <currentRow.floor + pYGap>
+  [161] setlocal 1 .............................. yLoc = currentRow.floor + pYGap
+  [163] getprop 1175 ............................ <pDisplayRect>
+  [166] getobjprop 170 .......................... <pDisplayRect.left>
+  [168] setlocal 0 .............................. xLoc = pDisplayRect.left
+  [170] getparam 0 .............................. <me>
+  [172] getlocal 2 .............................. <unitNum>
+  [174] pusharglist 2 ........................... <me, unitNum>
+  [176] objcall 1364 ............................ <me.newRow(unitNum)>
+  [179] setlocal 4 .............................. currentRow = me.newRow(unitNum)
+  [181] getlocal 4 .............................. <currentRow>
+  [183] getlocal 1 .............................. <yLoc>
+  [185] setobjprop 262 .......................... currentRow.floor = yLoc
+  [188] getlocal 3 .............................. <rowNum>
+  [190] pushint8 1 .............................. <1>
+  [192] add ..................................... <rowNum + 1>
+  [193] setlocal 3 .............................. rowNum = rowNum + 1
+  [195] getlocal 8 .............................. <unitDisplayer>
+  [197] getlocal 7 .............................. <unit>
+  [199] getlocal 0 .............................. <xLoc>
+  [201] getlocal 1 .............................. <yLoc>
+  [203] pusharglist 2 ........................... <xLoc, yLoc>
+  [205] extcall 122 ............................. <point(xLoc, yLoc)>
+  [207] pusharglist 3 ........................... <unitDisplayer, unit, point(xLoc, yLoc)>
+  [209] objcall 1396 ............................ <unitDisplayer.calcBoundingRect(unit, point(xLoc, yLoc))>
+  [212] setlocal 9 .............................. boundingRect = unitDisplayer.calcBoundingRect(unit, point(xLoc, yLoc))
+  [214] getlocal 9 .............................. <boundingRect>
+  [216] getobjprop 169 .......................... <boundingRect.bottom>
+  [218] getlocal 4 .............................. <currentRow>
+  [220] getobjprop 262 .......................... <currentRow.floor>
+  [223] gt ...................................... <boundingRect.bottom > currentRow.floor>
+  [224] jmpifz [236] ............................ if boundingRect.bottom > currentRow.floor then
+  [227] getlocal 4 .............................. <currentRow>
+  [229] getlocal 9 .............................. <boundingRect>
+  [231] getobjprop 169 .......................... <boundingRect.bottom>
+  [233] setobjprop 262 .......................... currentRow.floor = boundingRect.bottom
+  [236] getlocal 4 .............................. <currentRow>
+  [238] getobjprop 262 .......................... <currentRow.floor>
+  [241] getprop 1175 ............................ <pDisplayRect>
+  [244] getobjprop 169 .......................... <pDisplayRect.bottom>
+  [246] gt ...................................... <currentRow.floor > pDisplayRect.bottom>
+  [247] jmpifz [313] ............................ if currentRow.floor > pDisplayRect.bottom then
+  [250] getlocal 5 .............................. <currentPage>
+  [252] getlocal 3 .............................. <rowNum>
+  [254] setobjprop 243 .......................... currentPage.endRow = rowNum
+  [256] getlocal 4 .............................. <currentRow>
+  [258] getobjprop 262 .......................... <currentRow.floor>
+  [261] getlocal 1 .............................. <yLoc>
+  [263] sub ..................................... <currentRow.floor - yLoc>
+  [264] setlocal 10 ............................. floorDistance = currentRow.floor - yLoc
+  [266] getprop 1175 ............................ <pDisplayRect>
+  [269] getobjprop 168 .......................... <pDisplayRect.top>
+  [271] setlocal 1 .............................. yLoc = pDisplayRect.top
+  [273] getparam 0 .............................. <me>
+  [275] getlocal 3 .............................. <rowNum>
+  [277] pusharglist 2 ........................... <me, rowNum>
+  [279] objcall 1363 ............................ <me.newPage(rowNum)>
+  [282] setlocal 5 .............................. currentPage = me.newPage(rowNum)
+  [284] getlocal 8 .............................. <unitDisplayer>
+  [286] getlocal 7 .............................. <unit>
+  [288] getlocal 0 .............................. <xLoc>
+  [290] getlocal 1 .............................. <yLoc>
+  [292] pusharglist 2 ........................... <xLoc, yLoc>
+  [294] extcall 122 ............................. <point(xLoc, yLoc)>
+  [296] pusharglist 3 ........................... <unitDisplayer, unit, point(xLoc, yLoc)>
+  [298] objcall 1396 ............................ <unitDisplayer.calcBoundingRect(unit, point(xLoc, yLoc))>
+  [301] setlocal 9 .............................. boundingRect = unitDisplayer.calcBoundingRect(unit, point(xLoc, yLoc))
+  [303] getlocal 4 .............................. <currentRow>
+  [305] getlocal 1 .............................. <yLoc>
+  [307] getlocal 10 ............................. <floorDistance>
+  [309] add ..................................... <yLoc + floorDistance>
+  [310] setobjprop 262 .......................... currentRow.floor = yLoc + floorDistance
+  [313] getprop 1372 ............................ <pUnitDisplayers>
+  [316] getlocal 8 .............................. <unitDisplayer>
+  [318] pusharglistnoret 2 ...................... <pUnitDisplayers, unitDisplayer>
+  [320] objcall 506 ............................. pUnitDisplayers.append(unitDisplayer)
+  [323] getlocal 0 .............................. <xLoc>
+  [325] getlocal 9 .............................. <boundingRect>
+  [327] getobjprop 325 .......................... <boundingRect.width>
+  [330] add ..................................... <xLoc + boundingRect.width>
+  [331] getprop 1370 ............................ <pXGap>
+  [334] add ..................................... <xLoc + boundingRect.width + pXGap>
+  [335] setlocal 0 .............................. xLoc = xLoc + boundingRect.width + pXGap
+  [337] getlocal 2 .............................. <unitNum>
+  [339] pushint8 1 .............................. <1>
+  [341] add ..................................... <unitNum + 1>
+  [342] setlocal 2 .............................. unitNum = unitNum + 1
+  [344] pushint8 1
+  [346] add
+  [347] endrepeat [ 85]
+  [350] pop 3
+  [352] pushint8 1
+  [354] add
+  [355] endrepeat [ 55]
+  [358] pop 3
+  [360] ret
+end
+
+on start me, theloc, theMark
+  [  0] getparam 2 .............................. <theMark>
+  [  2] pusharglist 1 ........................... <theMark>
+  [  4] extcall 1400 ............................ <RectCalcFromMark(theMark)>
+  [  7] setprop 1175 ............................ pDisplayRect = RectCalcFromMark(theMark)
+  [ 10] getglobal 191 ........................... <g>
+  [ 12] getchainedprop 674 ...................... <g.armyMaster>
+  [ 15] pusharglist 1 ........................... <g.armyMaster>
+  [ 17] objcall 1401 ............................ <g.armyMaster.getReserveArmy()>
+  [ 20] setlocal 0 .............................. reserveArmy = g.armyMaster.getReserveArmy()
+  [ 22] getparam 0 .............................. <me>
+  [ 24] getlocal 0 .............................. <reserveArmy>
+  [ 26] pusharglistnoret 2 ...................... <me, reserveArmy>
+  [ 28] objcall 1356 ............................ me.displayReserveArmy(reserveArmy)
+  [ 31] ret
+end
+
+on stop me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 239 ............................. me.finish()
+  [  6] ret
+end

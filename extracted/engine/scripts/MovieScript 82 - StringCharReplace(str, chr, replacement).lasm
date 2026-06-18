@@ -1,0 +1,68 @@
+on StringCharReplace theString, theChar, replacement
+  [  0] getparam 2 .............................. <replacement>
+  [  2] pushcons 0 .............................. <EMPTY>
+  [  4] eq ...................................... <replacement = EMPTY>
+  [  5] jmpifz [ 21] ............................ if replacement = EMPTY then
+  [  8] getparam 0 .............................. <theString>
+  [ 10] getparam 1 .............................. <theChar>
+  [ 12] pusharglist 2 ........................... <theString, theChar>
+  [ 14] extcall 414 ............................. <StringEliminateChars(theString, theChar)>
+  [ 17] pusharglistnoret 1 ...................... <StringEliminateChars(theString, theChar)>
+  [ 19] extcall 3 ............................... return StringEliminateChars(theString, theChar)
+  [ 21] getparam 0 .............................. <theString>
+  [ 23] pushsymb 406 ............................ <#chars>
+  [ 26] pusharglist 2 ........................... <theString, #chars>
+  [ 28] objcall 17 .............................. <theString.chars.count>
+  [ 30] setlocal 0 .............................. strLen = theString.chars.count
+  [ 32] getparam 1 .............................. <theChar>
+  [ 34] pushsymb 284 ............................ <#char>
+  [ 37] pushint8 1 .............................. <1>
+  [ 39] pusharglist 3 ........................... <theChar, #char, 1>
+  [ 41] objcall 123 ............................. <theChar.char[1]>
+  [ 43] setparam 1 .............................. theChar = theChar.char[1]
+  [ 45] pushint8 1 .............................. <1>
+  [ 47] setlocal 1
+  [ 49] getlocal 1
+  [ 51] getlocal 0 .............................. <strLen>
+  [ 53] lteq
+  [ 54] jmpifz [125] ............................ repeat with i = 1 to strLen
+  [ 57] getparam 0 .............................. <theString>
+  [ 59] pushsymb 284 ............................ <#char>
+  [ 62] getlocal 1 .............................. <i>
+  [ 64] pusharglist 3 ........................... <theString, #char, i>
+  [ 66] objcall 123 ............................. <theString.char[i]>
+  [ 68] setlocal 2 .............................. nChar = theString.char[i]
+  [ 70] getlocal 2 .............................. <nChar>
+  [ 72] getparam 1 .............................. <theChar>
+  [ 74] eq ...................................... <nChar = theChar>
+  [ 75] jmpifz [116] ............................ if nChar = theChar then
+  [ 78] getparam 0 .............................. <theString>
+  [ 80] pushsymb 284 ............................ <#char>
+  [ 83] pushint8 1 .............................. <1>
+  [ 85] getlocal 1 .............................. <i>
+  [ 87] pushint8 1 .............................. <1>
+  [ 89] sub ..................................... <i - 1>
+  [ 90] pusharglist 4 ........................... <theString, #char, 1, i - 1>
+  [ 92] objcall 123 ............................. <theString.char[1..i - 1]>
+  [ 94] getparam 2 .............................. <replacement>
+  [ 96] joinstr ................................. <theString.char[1..i - 1] & replacement>
+  [ 97] getparam 0 .............................. <theString>
+  [ 99] pushsymb 284 ............................ <#char>
+  [102] getlocal 1 .............................. <i>
+  [104] pushint8 1 .............................. <1>
+  [106] add ..................................... <i + 1>
+  [107] pushint8 99 ............................. <99>
+  [109] pusharglist 4 ........................... <theString, #char, i + 1, 99>
+  [111] objcall 123 ............................. <theString.char[i + 1..99]>
+  [113] joinstr ................................. <theString.char[1..i - 1] & replacement & theString.char[i + 1..99]>
+  [114] setparam 0 .............................. theString = theString.char[1..i - 1] & replacement & theString.char[i + 1..99]
+  [116] pushint8 1
+  [118] getlocal 1
+  [120] add
+  [121] setlocal 1
+  [123] endrepeat [ 49]
+  [125] getparam 0 .............................. <theString>
+  [127] pusharglistnoret 1 ...................... <theString>
+  [129] extcall 3 ............................... return theString
+  [131] ret
+end

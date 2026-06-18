@@ -1,0 +1,732 @@
+property pCopyProtectionStatus, pScriptPerformer
+global g, gFrameNum, gGameCompleteEvent, gGameCompleteSound, gGameName, gGameOverScript
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 3 ............................... return me
+  [  6] ret
+end
+
+on init me
+  [  0] pushsymb 614 ............................ <#Ok>
+  [  3] setprop 613 ............................. pCopyProtectionStatus = #Ok
+  [  6] pushsymb 103 ............................ <#none>
+  [  8] setprop 615 ............................. pScriptPerformer = #none
+  [ 11] ret
+end
+
+on buttClicked me, theButt
+  [  0] getparam 1 .............................. <theButt>
+  [  2] peek 0 .................................. case theButt of
+  [  4] pushsymb 616 ............................ <#butt_resumeGame>
+  [  7] eq
+  [  8] jmpifz [ 21] ............................ (case) #butt_resumeGame:
+  [ 11] getparam 0 .............................. <me>
+  [ 13] pusharglistnoret 1 ...................... <me>
+  [ 15] objcall 607 ............................. me.resumeGame()
+  [ 18] jmp [ 44]
+  [ 21] peek 0
+  [ 23] pushsymb 617 ............................ <#butt_mr3Link>
+  [ 26] eq
+  [ 27] jmpifz [ 44] ............................ (case) #butt_mr3Link:
+  [ 30] pushcons 0 .............................. <"http://www.themetalbox.com/?page=merlin_3">
+  [ 32] pusharglistnoret 1 ...................... <"http://www.themetalbox.com/?page=merlin_3">
+  [ 34] extcall 542 ............................. gotoNetPage("http://www.themetalbox.com/?page=merlin_3")
+  [ 37] pushcons 1 .............................. <"merlin 3 button pressed">
+  [ 39] pusharglistnoret 1 ...................... <"merlin 3 button pressed">
+  [ 41] extcall 414 ............................. put "merlin 3 button pressed"
+  [ 44] pop 1 ................................... end case
+  [ 46] ret
+end
+
+on cheat me, theCheat
+  [  0] getparam 1 .............................. <theCheat>
+  [  2] peek 0 .................................. case theCheat of
+  [  4] pushsymb 618 ............................ <#invincibility>
+  [  7] eq
+  [  8] jmpifz [ 33] ............................ (case) #invincibility:
+  [ 11] getglobal 191 ........................... <g>
+  [ 13] getchainedprop 619 ...................... <g.actorMaster>
+  [ 16] pusharglist 1 ........................... <g.actorMaster>
+  [ 18] objcall 620 ............................. <g.actorMaster.getPlayer()>
+  [ 21] setlocal 0 .............................. thePlayer = g.actorMaster.getPlayer()
+  [ 23] getlocal 0 .............................. <thePlayer>
+  [ 25] pusharglistnoret 1 ...................... <thePlayer>
+  [ 27] objcall 621 ............................. thePlayer.invinceToggle()
+  [ 30] jmp [ 80]
+  [ 33] peek 0
+  [ 35] pushsymb 601 ............................ <#killall>
+  [ 38] eq
+  [ 39] jmpifz [ 52] ............................ (case) #killall:
+  [ 42] getparam 0 .............................. <me>
+  [ 44] pusharglistnoret 1 ...................... <me>
+  [ 46] objcall 601 ............................. me.killall()
+  [ 49] jmp [ 80]
+  [ 52] peek 0
+  [ 54] pushsymb 622 ............................ <#medikit>
+  [ 57] eq
+  [ 58] jmpifz [ 80] ............................ (case) #medikit:
+  [ 61] getglobal 191 ........................... <g>
+  [ 63] getchainedprop 619 ...................... <g.actorMaster>
+  [ 66] pusharglist 1 ........................... <g.actorMaster>
+  [ 68] objcall 620 ............................. <g.actorMaster.getPlayer()>
+  [ 71] setlocal 0 .............................. thePlayer = g.actorMaster.getPlayer()
+  [ 73] getlocal 0 .............................. <thePlayer>
+  [ 75] pusharglistnoret 1 ...................... <thePlayer>
+  [ 77] objcall 623 ............................. thePlayer.medikitCollected()
+  [ 80] pop 1 ................................... end case
+  [ 82] ret
+end
+
+on displayInstructions me
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 557 ...................... <g.screenMaster>
+  [  5] pushsymb 585 ............................ <#instructions>
+  [  8] getparam 0 .............................. <me>
+  [ 10] pusharglistnoret 3 ...................... <g.screenMaster, #instructions, me>
+  [ 12] objcall 468 ............................. g.screenMaster.screenOn(#instructions, me)
+  [ 15] ret
+end
+
+on displayChooseKeys me
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 557 ...................... <g.screenMaster>
+  [  5] pushsymb 584 ............................ <#chooseKeysScreen>
+  [  8] getparam 0 .............................. <me>
+  [ 10] pusharglistnoret 3 ...................... <g.screenMaster, #chooseKeysScreen, me>
+  [ 12] objcall 468 ............................. g.screenMaster.screenOn(#chooseKeysScreen, me)
+  [ 15] ret
+end
+
+on enemyDied me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 598 ............................. <me.getCurrentRoom()>
+  [  7] setlocal 0 .............................. currentRoom = me.getCurrentRoom()
+  [  9] getlocal 0 .............................. <currentRoom>
+  [ 11] pusharglistnoret 1 ...................... <currentRoom>
+  [ 13] objcall 626 ............................. currentRoom.attemptOpenExits()
+  [ 16] ret
+end
+
+on escapePressed me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 604 ............................. me.pauseGame()
+  [  7] getglobal 191 ........................... <g>
+  [  9] getchainedprop 557 ...................... <g.screenMaster>
+  [ 12] pushsymb 628 ............................ <#ingameMenu>
+  [ 15] getparam 0 .............................. <me>
+  [ 17] pusharglistnoret 3 ...................... <g.screenMaster, #ingameMenu, me>
+  [ 19] objcall 468 ............................. g.screenMaster.screenOn(#ingameMenu, me)
+  [ 22] ret
+end
+
+on finishGame me
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 619 ...................... <g.actorMaster>
+  [  5] pusharglistnoret 1 ...................... <g.actorMaster>
+  [  7] objcall 629 ............................. g.actorMaster.finishActors()
+  [ 10] getglobal 191 ........................... <g>
+  [ 12] getchainedprop 630 ...................... <g.EnemyEnergyMaster>
+  [ 15] pusharglistnoret 1 ...................... <g.EnemyEnergyMaster>
+  [ 17] objcall 239 ............................. g.EnemyEnergyMaster.finish()
+  [ 19] getparam 0 .............................. <me>
+  [ 21] pusharglist 1 ........................... <me>
+  [ 23] objcall 597 ............................. <me.getCurrentMap()>
+  [ 26] setlocal 0 .............................. currentMap = me.getCurrentMap()
+  [ 28] getlocal 0 .............................. <currentMap>
+  [ 30] pushsymb 103 ............................ <#none>
+  [ 32] nteq .................................... <currentMap <> #none>
+  [ 33] jmpifz [ 42] ............................ if currentMap <> #none then
+  [ 36] getlocal 0 .............................. <currentMap>
+  [ 38] pusharglistnoret 1 ...................... <currentMap>
+  [ 40] objcall 239 ............................. currentMap.finish()
+  [ 42] ret
+end
+
+on gameComplete me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 595 ............................. me.finishGame()
+  [  7] getglobal 191 ........................... <g>
+  [  9] getchainedprop 632 ...................... <g.movieMaster>
+  [ 12] pusharglistnoret 1 ...................... <g.movieMaster>
+  [ 14] objcall 521 ............................. g.movieMaster.gameComplete()
+  [ 17] getglobal 565 ........................... <gGameName>
+  [ 20] pushsymb 566 ............................ <#rapunzel>
+  [ 23] eq ...................................... <gGameName = #rapunzel>
+  [ 24] jmpifz [ 34] ............................ if gGameName = #rapunzel then
+  [ 27] getparam 0 .............................. <me>
+  [ 29] pusharglistnoret 1 ...................... <me>
+  [ 31] objcall 608 ............................. me.runRapunzelEndSequence()
+  [ 34] getglobal 633 ........................... <gGameCompleteSound>
+  [ 37] pushsymb 103 ............................ <#none>
+  [ 39] nteq .................................... <gGameCompleteSound <> #none>
+  [ 40] jmpifz [ 56] ............................ if gGameCompleteSound <> #none then
+  [ 43] getglobal 191 ........................... <g>
+  [ 45] getchainedprop 634 ...................... <g.soundmaster>
+  [ 48] getglobal 633 ........................... <gGameCompleteSound>
+  [ 51] pusharglistnoret 2 ...................... <g.soundmaster, gGameCompleteSound>
+  [ 53] objcall 635 ............................. g.soundmaster.PlaySound(gGameCompleteSound)
+  [ 56] ret
+end
+
+on gameEvent me, theEvent
+  [  0] getglobal 636 ........................... <gGameCompleteEvent>
+  [  3] getparam 1 .............................. <theEvent>
+  [  5] eq ...................................... <gGameCompleteEvent = theEvent>
+  [  6] jmpifz [ 16] ............................ if gGameCompleteEvent = theEvent then
+  [  9] getparam 0 .............................. <me>
+  [ 11] pusharglistnoret 1 ...................... <me>
+  [ 13] objcall 521 ............................. me.gameComplete()
+  [ 16] ret
+end
+
+on gameOver me
+  [  0] getglobal 553 ........................... <gGameOverScript>
+  [  3] pushsymb 103 ............................ <#none>
+  [  5] eq ...................................... <gGameOverScript = #none>
+  [  6] jmpifz [ 20] ............................ if gGameOverScript = #none then
+  [  9] getparam 0 .............................. <me>
+  [ 11] pusharglistnoret 1 ...................... <me>
+  [ 13] objcall 606 ............................. me.quitToTitle()
+  [ 16] pusharglistnoret 0 ...................... <>
+  [ 18] extcall 3 ............................... return 
+  [ 20] getparam 0 .............................. <me>
+  [ 22] pusharglistnoret 1 ...................... <me>
+  [ 24] objcall 595 ............................. me.finishGame()
+  [ 27] getglobal 191 ........................... <g>
+  [ 29] getchainedprop 632 ...................... <g.movieMaster>
+  [ 32] pushsymb 638 ............................ <#animScreenGameOver>
+  [ 35] pushsymb 562 ............................ <#gameOver>
+  [ 38] pusharglistnoret 3 ...................... <g.movieMaster, #animScreenGameOver, #gameOver>
+  [ 40] objcall 461 ............................. g.movieMaster.goScreen(#animScreenGameOver, #gameOver)
+  [ 43] ret
+end
+
+on getCurrentMap me
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 639 ...................... <g.controllerMaster>
+  [  5] pushsymb 166 ............................ <#map>
+  [  7] pusharglist 2 ........................... <g.controllerMaster, #map>
+  [  9] objcall 640 ............................. <g.controllerMaster.getController(#map)>
+  [ 12] setlocal 0 .............................. mapController = g.controllerMaster.getController(#map)
+  [ 14] getlocal 0 .............................. <mapController>
+  [ 16] pusharglist 1 ........................... <mapController>
+  [ 18] objcall 424 ............................. <mapController.getObject()>
+  [ 21] setlocal 1 .............................. themap = mapController.getObject()
+  [ 23] getlocal 1 .............................. <themap>
+  [ 25] pusharglistnoret 1 ...................... <themap>
+  [ 27] extcall 3 ............................... return themap
+  [ 29] ret
+end
+
+on getCurrentRoom me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 597 ............................. <me.getCurrentMap()>
+  [  7] setlocal 0 .............................. themap = me.getCurrentMap()
+  [  9] getlocal 0 .............................. <themap>
+  [ 11] pushsymb 103 ............................ <#none>
+  [ 13] nteq .................................... <themap <> #none>
+  [ 14] jmpifz [ 31] ............................ if themap <> #none then / else
+  [ 17] getlocal 0 .............................. <themap>
+  [ 19] pusharglist 1 ........................... <themap>
+  [ 21] objcall 598 ............................. <themap.getCurrentRoom()>
+  [ 24] pusharglistnoret 1 ...................... <themap.getCurrentRoom()>
+  [ 26] extcall 3 ............................... return themap.getCurrentRoom()
+  [ 28] jmp [ 37]
+  [ 31] pushsymb 103 ............................ <#none>
+  [ 33] pusharglistnoret 1 ...................... <#none>
+  [ 35] extcall 3 ............................... return #none
+  [ 37] ret
+end
+
+on goNavMode me
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 619 ...................... <g.actorMaster>
+  [  5] pusharglist 1 ........................... <g.actorMaster>
+  [  7] objcall 620 ............................. <g.actorMaster.getPlayer()>
+  [ 10] pusharglistnoret 1 ...................... <g.actorMaster.getPlayer()>
+  [ 12] objcall 599 ............................. g.actorMaster.getPlayer().goNavMode()
+  [ 15] getparam 0 .............................. <me>
+  [ 17] pusharglist 1 ........................... <me>
+  [ 19] objcall 597 ............................. <me.getCurrentMap()>
+  [ 22] pusharglistnoret 1 ...................... <me.getCurrentMap()>
+  [ 24] objcall 599 ............................. me.getCurrentMap().goNavMode()
+  [ 27] ret
+end
+
+on goScreen me, theScreen
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 557 ...................... <g.screenMaster>
+  [  5] pushsymb 461 ............................ <#goScreen>
+  [  8] pusharglist 2 ........................... <g.screenMaster, #goScreen>
+  [ 10] objcall 339 ............................. <g.screenMaster.getParams(#goScreen)>
+  [ 13] setlocal 0 .............................. params = g.screenMaster.getParams(#goScreen)
+  [ 15] getlocal 0 .............................. <params>
+  [ 17] getparam 0 .............................. <me>
+  [ 19] setobjprop 205 .......................... params.caller = me
+  [ 21] getlocal 0 .............................. <params>
+  [ 23] getparam 1 .............................. <theScreen>
+  [ 25] setobjprop 476 .......................... params.screenSym = theScreen
+  [ 28] getlocal 0 .............................. <params>
+  [ 30] pushsymb 558 ............................ <#fade>
+  [ 33] setobjprop 477 .......................... params.transition = #fade
+  [ 36] getglobal 191 ........................... <g>
+  [ 38] getchainedprop 557 ...................... <g.screenMaster>
+  [ 41] getlocal 0 .............................. <params>
+  [ 43] pusharglistnoret 2 ...................... <g.screenMaster, params>
+  [ 45] objcall 461 ............................. g.screenMaster.goScreen(params)
+  [ 48] ret
+end
+
+on goScreenFinished me
+  [  0] ret
+end
+
+on isMenuItemShadowed me, theComm
+  [  0] getparam 1 .............................. <theComm>
+  [  2] pushsymb 643 ............................ <#saveGame>
+  [  5] eq ...................................... <theComm = #saveGame>
+  [  6] jmpifz [ 28] ............................ if theComm = #saveGame then
+  [  9] getglobal 191 ........................... <g>
+  [ 11] getchainedprop 534 ...................... <g.cutSceneMaster>
+  [ 14] pusharglist 1 ........................... <g.cutSceneMaster>
+  [ 16] objcall 644 ............................. <g.cutSceneMaster.isScriptBeingPerformed()>
+  [ 19] jmpifz [ 28] ............................ if g.cutSceneMaster.isScriptBeingPerformed() then
+  [ 22] pushint8 1 .............................. <1>
+  [ 24] pusharglistnoret 1 ...................... <1>
+  [ 26] extcall 3 ............................... return 1
+  [ 28] pushzero ................................ <0>
+  [ 29] pusharglistnoret 1 ...................... <0>
+  [ 31] extcall 3 ............................... return 0
+  [ 33] ret
+end
+
+on killall me
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 645 ...................... <g.teamMaster>
+  [  5] pushsymb 246 ............................ <#aldevar>
+  [  7] pusharglistnoret 2 ...................... <g.teamMaster, #aldevar>
+  [  9] objcall 646 ............................. g.teamMaster.killEnemyTeams(#aldevar)
+  [ 12] ret
+end
+
+on leaveNavMode me
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 647 ...................... <g.characterEnergyRollOverMaster>
+  [  5] pusharglistnoret 1 ...................... <g.characterEnergyRollOverMaster>
+  [  7] objcall 602 ............................. g.characterEnergyRollOverMaster.leaveNavMode()
+  [ 10] getparam 0 .............................. <me>
+  [ 12] pusharglist 1 ........................... <me>
+  [ 14] objcall 597 ............................. <me.getCurrentMap()>
+  [ 17] pusharglistnoret 1 ...................... <me.getCurrentMap()>
+  [ 19] objcall 602 ............................. me.getCurrentMap().leaveNavMode()
+  [ 22] ret
+end
+
+on menuOptionSelected me, theOption, theMenu
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 557 ...................... <g.screenMaster>
+  [  5] pushsymb 628 ............................ <#ingameMenu>
+  [  8] pusharglistnoret 2 ...................... <g.screenMaster, #ingameMenu>
+  [ 10] objcall 470 ............................. g.screenMaster.screenOff(#ingameMenu)
+  [ 13] getparam 1 .............................. <theOption>
+  [ 15] peek 0 .................................. case theOption of
+  [ 17] pushsymb 582 ............................ <#back>
+  [ 20] eq
+  [ 21] jmpifz [ 37] ............................ (case) #back:
+  [ 24] getglobal 191 ........................... <g>
+  [ 26] getchainedprop 557 ...................... <g.screenMaster>
+  [ 29] pusharglistnoret 1 ...................... <g.screenMaster>
+  [ 31] objcall 460 ............................. g.screenMaster.backAScreen()
+  [ 34] jmp [280]
+  [ 37] peek 0
+  [ 39] pushsymb 585 ............................ <#instructions>
+  [ 42] eq
+  [ 43] jmpifz [ 56] ............................ (case) #instructions:
+  [ 46] getparam 0 .............................. <me>
+  [ 48] pusharglistnoret 1 ...................... <me>
+  [ 50] objcall 591 ............................. me.displayInstructions()
+  [ 53] jmp [280]
+  [ 56] peek 0
+  [ 58] pushsymb 583 ............................ <#chooseKeys>
+  [ 61] eq
+  [ 62] jmpifz [ 75] ............................ (case) #chooseKeys:
+  [ 65] getparam 0 .............................. <me>
+  [ 67] pusharglistnoret 1 ...................... <me>
+  [ 69] objcall 592 ............................. me.displayChooseKeys()
+  [ 72] jmp [280]
+  [ 75] peek 0
+  [ 77] pushsymb 547 ............................ <#loadGame>
+  [ 80] eq
+  [ 81] jmpifz [ 97] ............................ (case) #loadGame:
+  [ 84] getglobal 191 ........................... <g>
+  [ 86] getchainedprop 560 ...................... <g.saveMaster>
+  [ 89] pusharglistnoret 1 ...................... <g.saveMaster>
+  [ 91] objcall 547 ............................. g.saveMaster.loadGame()
+  [ 94] jmp [280]
+  [ 97] peek 0
+  [ 99] pushsymb 648 ............................ <#options>
+  [102] eq
+  [103] jmpifz [109] ............................ (case) #options:
+  [106] jmp [280]
+  [109] peek 0
+  [111] pushsymb 606 ............................ <#quitToTitle>
+  [114] eq
+  [115] jmpifz [128] ............................ (case) #quitToTitle:
+  [118] getparam 0 .............................. <me>
+  [120] pusharglistnoret 1 ...................... <me>
+  [122] objcall 606 ............................. me.quitToTitle()
+  [125] jmp [280]
+  [128] peek 0
+  [130] pushsymb 607 ............................ <#resumeGame>
+  [133] eq
+  [134] jmpifz [147] ............................ (case) #resumeGame:
+  [137] getparam 0 .............................. <me>
+  [139] pusharglistnoret 1 ...................... <me>
+  [141] objcall 607 ............................. me.resumeGame()
+  [144] jmp [280]
+  [147] peek 0
+  [149] pushsymb 643 ............................ <#saveGame>
+  [152] eq
+  [153] jmpifz [176] ............................ (case) #saveGame:
+  [156] getglobal 191 ........................... <g>
+  [158] getchainedprop 560 ...................... <g.saveMaster>
+  [161] pusharglistnoret 1 ...................... <g.saveMaster>
+  [163] objcall 643 ............................. g.saveMaster.saveGame()
+  [166] getparam 0 .............................. <me>
+  [168] pusharglistnoret 1 ...................... <me>
+  [170] objcall 607 ............................. me.resumeGame()
+  [173] jmp [280]
+  [176] peek 0
+  [178] pushsymb 649 ............................ <#showArmy>
+  [181] eq
+  [182] jmpifz [206] ............................ (case) #showArmy:
+  [185] getglobal 191 ........................... <g>
+  [187] getchainedprop 557 ...................... <g.screenMaster>
+  [190] pushsymb 649 ............................ <#showArmy>
+  [193] getglobal 191 ........................... <g>
+  [195] getobjprop 650 .......................... <g.showArmyMaster>
+  [198] pusharglistnoret 3 ...................... <g.screenMaster, #showArmy, g.showArmyMaster>
+  [200] objcall 468 ............................. g.screenMaster.screenOn(#showArmy, g.showArmyMaster)
+  [203] jmp [280]
+  [206] peek 0
+  [208] pushsymb 651 ............................ <#soundOff>
+  [211] eq
+  [212] jmpifz [244] ............................ (case) #soundOff:
+  [215] getglobal 191 ........................... <g>
+  [217] getchainedprop 634 ...................... <g.soundmaster>
+  [220] pushzero ................................ <0>
+  [221] pusharglistnoret 2 ...................... <g.soundmaster, 0>
+  [223] objcall 652 ............................. g.soundmaster.toggle(0)
+  [226] getglobal 191 ........................... <g>
+  [228] getchainedprop 557 ...................... <g.screenMaster>
+  [231] pushsymb 628 ............................ <#ingameMenu>
+  [234] getparam 0 .............................. <me>
+  [236] pusharglistnoret 3 ...................... <g.screenMaster, #ingameMenu, me>
+  [238] objcall 468 ............................. g.screenMaster.screenOn(#ingameMenu, me)
+  [241] jmp [280]
+  [244] peek 0
+  [246] pushsymb 653 ............................ <#soundOn>
+  [249] eq
+  [250] jmpifz [280] ............................ (case) #soundOn:
+  [253] getglobal 191 ........................... <g>
+  [255] getchainedprop 634 ...................... <g.soundmaster>
+  [258] pushint8 1 .............................. <1>
+  [260] pusharglistnoret 2 ...................... <g.soundmaster, 1>
+  [262] objcall 652 ............................. g.soundmaster.toggle(1)
+  [265] getglobal 191 ........................... <g>
+  [267] getchainedprop 557 ...................... <g.screenMaster>
+  [270] pushsymb 628 ............................ <#ingameMenu>
+  [273] getparam 0 .............................. <me>
+  [275] pusharglistnoret 3 ...................... <g.screenMaster, #ingameMenu, me>
+  [277] objcall 468 ............................. g.screenMaster.screenOn(#ingameMenu, me)
+  [280] pop 1 ................................... end case
+  [282] ret
+end
+
+on newMapStarted me
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 655 ...................... <g.collisionMaster>
+  [  5] pusharglistnoret 1 ...................... <g.collisionMaster>
+  [  7] objcall 656 ............................. g.collisionMaster.initPlayArea()
+  [ 10] ret
+end
+
+on pauseGame me
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 619 ...................... <g.actorMaster>
+  [  5] pusharglistnoret 1 ...................... <g.actorMaster>
+  [  7] objcall 657 ............................. g.actorMaster.pauseGameObjects()
+  [ 10] ret
+end
+
+on performScript me, scriptSym
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 658 ...................... <g.collectionsMaster>
+  [  5] pushsymb 432 ............................ <#objScript>
+  [  8] getparam 1 .............................. <scriptSym>
+  [ 10] pusharglist 3 ........................... <g.collectionsMaster, #objScript, scriptSym>
+  [ 12] objcall 423 ............................. <g.collectionsMaster.getObj(#objScript, scriptSym)>
+  [ 15] setlocal 0 .............................. theScript = g.collectionsMaster.getObj(#objScript, scriptSym)
+  [ 17] getglobal 191 ........................... <g>
+  [ 19] getchainedprop 336 ...................... <g.objectMaster>
+  [ 22] pushsymb 659 ............................ <#objScriptPerformer>
+  [ 25] pusharglist 2 ........................... <g.objectMaster, #objScriptPerformer>
+  [ 27] objcall 338 ............................. <g.objectMaster.requestObject(#objScriptPerformer)>
+  [ 30] setlocal 1 .............................. scriptPerformer = g.objectMaster.requestObject(#objScriptPerformer)
+  [ 32] getlocal 1 .............................. <scriptPerformer>
+  [ 34] pushsymb 1 .............................. <#init>
+  [ 36] pusharglist 2 ........................... <scriptPerformer, #init>
+  [ 38] objcall 339 ............................. <scriptPerformer.getParams(#init)>
+  [ 41] setlocal 2 .............................. params = scriptPerformer.getParams(#init)
+  [ 43] getlocal 2 .............................. <params>
+  [ 45] getparam 0 .............................. <me>
+  [ 47] setobjprop 205 .......................... params.caller = me
+  [ 49] getlocal 2 .............................. <params>
+  [ 51] getlocal 0 .............................. <theScript>
+  [ 53] setobjprop 660 .......................... params.theScript = theScript
+  [ 56] getlocal 1 .............................. <scriptPerformer>
+  [ 58] getlocal 2 .............................. <params>
+  [ 60] pusharglistnoret 2 ...................... <scriptPerformer, params>
+  [ 62] objcall 1 ............................... scriptPerformer.init(params)
+  [ 64] getlocal 1 .............................. <scriptPerformer>
+  [ 66] pusharglistnoret 1 ...................... <scriptPerformer>
+  [ 68] objcall 661 ............................. scriptPerformer.startPerformance()
+  [ 71] getlocal 1 .............................. <scriptPerformer>
+  [ 73] setprop 615 ............................. pScriptPerformer = scriptPerformer
+  [ 76] ret
+end
+
+on quitToTitle me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 595 ............................. me.finishGame()
+  [  7] getglobal 191 ........................... <g>
+  [  9] getchainedprop 632 ...................... <g.movieMaster>
+  [ 12] pushsymb 529 ............................ <#titleScreen>
+  [ 15] pusharglistnoret 2 ...................... <g.movieMaster, #titleScreen>
+  [ 17] objcall 461 ............................. g.movieMaster.goScreen(#titleScreen)
+  [ 20] ret
+end
+
+on resumeGame me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 611 ............................. me.unpauseGame()
+  [  7] ret
+end
+
+on runRapunzelEndSequence me
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 336 ...................... <g.objectMaster>
+  [  5] pushsymb 568 ............................ <#objScreenSequencer>
+  [  8] pusharglist 2 ........................... <g.objectMaster, #objScreenSequencer>
+  [ 10] objcall 338 ............................. <g.objectMaster.requestObject(#objScreenSequencer)>
+  [ 13] setlocal 0 .............................. screenSeq = g.objectMaster.requestObject(#objScreenSequencer)
+  [ 15] getlocal 0 .............................. <screenSeq>
+  [ 17] pushsymb 1 .............................. <#init>
+  [ 19] pusharglist 2 ........................... <screenSeq, #init>
+  [ 21] objcall 339 ............................. <screenSeq.getParams(#init)>
+  [ 24] setlocal 1 .............................. params = screenSeq.getParams(#init)
+  [ 26] getlocal 1 .............................. <params>
+  [ 28] getobjprop 569 .......................... <params.backButtonTextParams>
+  [ 31] setlocal 2 .............................. b = params.backButtonTextParams
+  [ 33] getlocal 2 .............................. <b>
+  [ 35] pushsymb 170 ............................ <#left>
+  [ 37] setobjprop 377 .......................... b.alignment = #left
+  [ 40] getlocal 2 .............................. <b>
+  [ 42] pushcons 2 .............................. <"Dauphin *">
+  [ 44] setobjprop 379 .......................... b.font = "Dauphin *"
+  [ 47] getlocal 2 .............................. <b>
+  [ 49] pushint8 16 ............................. <16>
+  [ 51] setobjprop 380 .......................... b.fontSize = 16
+  [ 54] getlocal 2 .............................. <b>
+  [ 56] pushint8 50 ............................. <50>
+  [ 58] setobjprop 325 .......................... b.width = 50
+  [ 61] getlocal 1 .............................. <params>
+  [ 63] getobjprop 570 .......................... <params.nextButtonTextParams>
+  [ 66] setlocal 3 .............................. n = params.nextButtonTextParams
+  [ 68] getlocal 3 .............................. <n>
+  [ 70] pushsymb 171 ............................ <#right>
+  [ 72] setobjprop 377 .......................... n.alignment = #right
+  [ 75] getlocal 3 .............................. <n>
+  [ 77] pushcons 2 .............................. <"Dauphin *">
+  [ 79] setobjprop 379 .......................... n.font = "Dauphin *"
+  [ 82] getlocal 3 .............................. <n>
+  [ 84] pushint8 16 ............................. <16>
+  [ 86] setobjprop 380 .......................... n.fontSize = 16
+  [ 89] getlocal 3 .............................. <n>
+  [ 91] pushint8 50 ............................. <50>
+  [ 93] setobjprop 325 .......................... n.width = 50
+  [ 96] getlocal 1 .............................. <params>
+  [ 98] getobjprop 571 .......................... <params.returnButtonTextParams>
+  [101] setlocal 3 .............................. n = params.returnButtonTextParams
+  [103] getlocal 3 .............................. <n>
+  [105] pushsymb 378 ............................ <#center>
+  [108] setobjprop 377 .......................... n.alignment = #center
+  [111] getlocal 3 .............................. <n>
+  [113] pushcons 2 .............................. <"Dauphin *">
+  [115] setobjprop 379 .......................... n.font = "Dauphin *"
+  [118] getlocal 3 .............................. <n>
+  [120] pushint8 16 ............................. <16>
+  [122] setobjprop 380 .......................... n.fontSize = 16
+  [125] getlocal 3 .............................. <n>
+  [127] pushint16 150 ........................... <150>
+  [130] setobjprop 325 .......................... n.width = 150
+  [133] getlocal 1 .............................. <params>
+  [135] getparam 0 .............................. <me>
+  [137] setobjprop 236 .......................... params.callingPrg = me
+  [139] getlocal 1 .............................. <params>
+  [141] pushint16 600 ........................... <600>
+  [144] setobjprop 572 .......................... params.delayCount = 600
+  [147] getlocal 1 .............................. <params>
+  [149] pushsymb 529 ............................ <#titleScreen>
+  [152] setobjprop 573 .......................... params.returnScreen = #titleScreen
+  [155] getlocal 1 .............................. <params>
+  [157] pushcons 3 .............................. <"Quit to Title Screen">
+  [159] setobjprop 574 .......................... params.returnButtonText = "Quit to Title Screen"
+  [162] getlocal 1 .............................. <params>
+  [164] pushsymb 664 ............................ <#outroScreen_01>
+  [167] pushsymb 665 ............................ <#outroScreen_02>
+  [170] pushsymb 666 ............................ <#outroScreen_03>
+  [173] pushsymb 667 ............................ <#outroScreen_04>
+  [176] pushsymb 668 ............................ <#outroScreen_05>
+  [179] pushsymb 669 ............................ <#outroScreen_06>
+  [182] pushsymb 670 ............................ <#outroScreen_07>
+  [185] pushsymb 671 ............................ <#outroScreen_08>
+  [188] pusharglist 8 ........................... <[#outroScreen_01, #outroScreen_02, #outroScreen_03, #outroScreen_04, #outroScreen_05, #outroScreen_06, #outroScreen_07, #outroScreen_08]>
+  [190] pushlist ................................ <[#outroScreen_01, #outroScreen_02, #outroScreen_03, #outroScreen_04, #outroScreen_05, #outroScreen_06, #outroScreen_07, #outroScreen_08]>
+  [191] setobjprop 484 .......................... params.screenList = [#outroScreen_01, #outroScreen_02, #outroScreen_03, #outroScreen_04, #outroScreen_05, #outroScreen_06, #outroScreen_07, #outroScreen_08]
+  [194] getlocal 0 .............................. <screenSeq>
+  [196] getlocal 1 .............................. <params>
+  [198] pusharglistnoret 2 ...................... <screenSeq, params>
+  [200] objcall 1 ............................... screenSeq.init(params)
+  [202] getlocal 0 .............................. <screenSeq>
+  [204] pusharglistnoret 1 ...................... <screenSeq>
+  [206] objcall 398 ............................. screenSeq.start()
+  [209] getlocal 0 .............................. <screenSeq>
+  [211] setlocal 4 .............................. pScreenSequencer = screenSeq
+  [213] ret
+end
+
+on scriptFinished me
+  [  0] pushsymb 103 ............................ <#none>
+  [  2] setlocal 0 .............................. pScripPerformer = #none
+  [  4] ret
+end
+
+on start me
+  [  0] getprop 613 ............................. <pCopyProtectionStatus>
+  [  3] pushsymb 673 ............................ <#invalid>
+  [  6] eq ...................................... <pCopyProtectionStatus = #invalid>
+  [  7] jmpifz [ 24] ............................ if pCopyProtectionStatus = #invalid then
+  [ 10] getglobal 191 ........................... <g>
+  [ 12] getchainedprop 632 ...................... <g.movieMaster>
+  [ 15] pusharglistnoret 1 ...................... <g.movieMaster>
+  [ 17] objcall 526 ............................. g.movieMaster.redirectMovie()
+  [ 20] pusharglistnoret 0 ...................... <>
+  [ 22] extcall 3 ............................... return 
+  [ 24] getglobal 191 ........................... <g>
+  [ 26] getchainedprop 674 ...................... <g.armyMaster>
+  [ 29] pusharglistnoret 1 ...................... <g.armyMaster>
+  [ 31] objcall 675 ............................. g.armyMaster.clearArmy()
+  [ 34] pushzero ................................ <0>
+  [ 35] setglobal 676 ........................... gFrameNum = 0
+  [ 38] getglobal 191 ........................... <g>
+  [ 40] getchainedprop 655 ...................... <g.collisionMaster>
+  [ 43] pusharglistnoret 1 ...................... <g.collisionMaster>
+  [ 45] objcall 656 ............................. g.collisionMaster.initPlayArea()
+  [ 48] getglobal 191 ........................... <g>
+  [ 50] getchainedprop 619 ...................... <g.actorMaster>
+  [ 53] pusharglistnoret 1 ...................... <g.actorMaster>
+  [ 55] objcall 398 ............................. g.actorMaster.start()
+  [ 58] getglobal 191 ........................... <g>
+  [ 60] getchainedprop 677 ...................... <g.updater>
+  [ 63] getparam 0 .............................. <me>
+  [ 65] pushsymb 678 ............................ <#med>
+  [ 68] pusharglistnoret 3 ...................... <g.updater, me, #med>
+  [ 70] objcall 679 ............................. g.updater.addPrg(me, #med)
+  [ 73] ret
+end
+
+on teamDied me, teamName
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 598 ............................. <me.getCurrentRoom()>
+  [  7] setlocal 0 .............................. currentRoom = me.getCurrentRoom()
+  [  9] getlocal 0 .............................. <currentRoom>
+  [ 11] pushsymb 103 ............................ <#none>
+  [ 13] nteq .................................... <currentRoom <> #none>
+  [ 14] jmpifz [ 72] ............................ if currentRoom <> #none then
+  [ 17] getlocal 0 .............................. <currentRoom>
+  [ 19] pusharglist 1 ........................... <currentRoom>
+  [ 21] objcall 626 ............................. <currentRoom.attemptOpenExits()>
+  [ 24] setlocal 1 .............................. exitsOpen = currentRoom.attemptOpenExits()
+  [ 26] getlocal 1 .............................. <exitsOpen>
+  [ 28] jmpifz [ 72] ............................ if exitsOpen then
+  [ 31] getparam 0 .............................. <me>
+  [ 33] pusharglist 1 ........................... <me>
+  [ 35] objcall 597 ............................. <me.getCurrentMap()>
+  [ 38] setlocal 2 .............................. currentMap = me.getCurrentMap()
+  [ 40] getlocal 2 .............................. <currentMap>
+  [ 42] pushsymb 103 ............................ <#none>
+  [ 44] nteq .................................... <currentMap <> #none>
+  [ 45] jmpifz [ 72] ............................ if currentMap <> #none then
+  [ 48] getlocal 2 .............................. <currentMap>
+  [ 50] pusharglist 1 ........................... <currentMap>
+  [ 52] objcall 680 ............................. <currentMap.isEndRoom()>
+  [ 55] setlocal 3 .............................. isEndRoom = currentMap.isEndRoom()
+  [ 57] getlocal 3 .............................. <isEndRoom>
+  [ 59] jmpifz [ 72] ............................ if isEndRoom then
+  [ 62] getparam 0 .............................. <me>
+  [ 64] pushsymb 681 ............................ <#mapClear>
+  [ 67] pusharglistnoret 2 ...................... <me, #mapClear>
+  [ 69] objcall 596 ............................. me.gameEvent(#mapClear)
+  [ 72] ret
+end
+
+on unpauseGame me
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 619 ...................... <g.actorMaster>
+  [  5] pusharglistnoret 1 ...................... <g.actorMaster>
+  [  7] objcall 683 ............................. g.actorMaster.unpauseGameObjects()
+  [ 10] ret
+end
+
+on update me
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 684 ...................... <g.keyMaster>
+  [  5] pusharglistnoret 1 ...................... <g.keyMaster>
+  [  7] objcall 685 ............................. g.keyMaster.checkKeys()
+  [ 10] getglobal 191 ........................... <g>
+  [ 12] getchainedprop 686 ...................... <g.mouseMaster>
+  [ 15] pusharglistnoret 1 ...................... <g.mouseMaster>
+  [ 17] objcall 687 ............................. g.mouseMaster.checkMouse()
+  [ 20] ret
+end
+
+on updateCopyProtectionStatus me, newStatus
+  [  0] getparam 1 .............................. <newStatus>
+  [  2] setprop 613 ............................. pCopyProtectionStatus = newStatus
+  [  5] getparam 1 .............................. <newStatus>
+  [  7] pushsymb 673 ............................ <#invalid>
+  [ 10] eq ...................................... <newStatus = #invalid>
+  [ 11] jmpifz [ 31] ............................ if newStatus = #invalid then
+  [ 14] getparam 0 .............................. <me>
+  [ 16] pusharglistnoret 1 ...................... <me>
+  [ 18] objcall 595 ............................. me.finishGame()
+  [ 21] getparam 0 .............................. <me>
+  [ 23] pushsymb 688 ............................ <#licence>
+  [ 26] pusharglistnoret 2 ...................... <me, #licence>
+  [ 28] objcall 461 ............................. me.goScreen(#licence)
+  [ 31] ret
+end
+
+on stop me
+  [  0] ret
+end

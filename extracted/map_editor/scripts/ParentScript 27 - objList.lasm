@@ -1,0 +1,127 @@
+property ancestor, p
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushcons 0 .............................. <"objBasic">
+  [  4] pusharglist 1 ........................... <"objBasic">
+  [  6] extcall 27 .............................. <script("objBasic")>
+  [  8] pusharglist 1 ........................... <script("objBasic")>
+  [ 10] extcall 0 ............................... <new(script("objBasic"))>
+  [ 12] setobjprop 77 ........................... me.ancestor = new(script("objBasic"))
+  [ 14] getparam 0 .............................. <me>
+  [ 16] pusharglistnoret 1 ...................... <me>
+  [ 18] extcall 17 .............................. return me
+  [ 20] ret
+end
+
+on init me, values
+  [  0] pusharglist 0 ........................... <[:]>
+  [  2] pushproplist ............................ <[:]>
+  [  3] setprop 203 ............................. p = [:]
+  [  5] getprop 203 ............................. <p>
+  [  7] pushsymb 132 ............................ <#counter>
+  [  9] pusharglist 0 ........................... <>
+  [ 11] extcall 120 ............................. <CounterNew()>
+  [ 13] pusharglistnoret 3 ...................... <p, #counter, CounterNew()>
+  [ 15] objcall 37 .............................. p[#counter] = CounterNew()
+  [ 17] getprop 203 ............................. <p>
+  [ 19] pushsymb 204 ............................ <#values>
+  [ 21] pusharglist 0 ........................... <[]>
+  [ 23] pushlist ................................ <[]>
+  [ 24] pusharglistnoret 3 ...................... <p, #values, []>
+  [ 26] objcall 37 .............................. p[#values] = []
+  [ 28] getparam 0 .............................. <me>
+  [ 30] getparam 1 .............................. <values>
+  [ 32] pusharglistnoret 2 ...................... <me, values>
+  [ 34] objcall 202 ............................. me.setValues(values)
+  [ 36] ret
+end
+
+on setValues me, values
+  [  0] getparam 1 .............................. <values>
+  [  2] pusharglist 1 ........................... <values>
+  [  4] extcall 205 ............................. <ilk(values)>
+  [  6] pushsymb 206 ............................ <#list>
+  [  8] eq ...................................... <ilk(values) = #list>
+  [  9] jmpifz [ 53] ............................ if ilk(values) = #list then / else
+  [ 12] getprop 203 ............................. <p>
+  [ 14] getparam 1 .............................. <values>
+  [ 16] pusharglist 1 ........................... <values>
+  [ 18] objcall 48 .............................. <values.duplicate()>
+  [ 20] setobjprop 204 .......................... p.values = values.duplicate()
+  [ 22] getprop 203 ............................. <p>
+  [ 24] getchainedprop 132 ...................... <p.counter>
+  [ 26] pushsymb 123 ............................ <#tim>
+  [ 28] pushint8 2 .............................. <2>
+  [ 30] getprop 203 ............................. <p>
+  [ 32] pushsymb 204 ............................ <#values>
+  [ 34] pusharglist 2 ........................... <p, #values>
+  [ 36] objcall 28 .............................. <p.values.count>
+  [ 38] pusharglistnoret 4 ...................... <p.counter, #tim, 2, p.values.count>
+  [ 40] objcall 124 ............................. p.counter.tim[2] = p.values.count
+  [ 42] getprop 203 ............................. <p>
+  [ 44] getobjprop 132 .......................... <p.counter>
+  [ 46] pusharglistnoret 1 ...................... <p.counter>
+  [ 48] extcall 133 ............................. CounterReset(p.counter)
+  [ 50] jmp [ 59]
+  [ 53] pushcons 1 .............................. <"objList.setValues: values not a list">
+  [ 55] pusharglistnoret 1 ...................... <"objList.setValues: values not a list">
+  [ 57] extcall 57 .............................. put "objList.setValues: values not a list"
+  [ 59] ret
+end
+
+on getFin me
+  [  0] getprop 203 ............................. <p>
+  [  2] getchainedprop 132 ...................... <p.counter>
+  [  4] getobjprop 130 .......................... <p.counter.fin>
+  [  6] pusharglistnoret 1 ...................... <p.counter.fin>
+  [  8] extcall 17 .............................. return p.counter.fin
+  [ 10] ret
+end
+
+on getLooped me
+  [  0] getprop 203 ............................. <p>
+  [  2] getchainedprop 132 ...................... <p.counter>
+  [  4] getobjprop 207 .......................... <p.counter.looped>
+  [  6] pusharglistnoret 1 ...................... <p.counter.looped>
+  [  8] extcall 17 .............................. return p.counter.looped
+  [ 10] ret
+end
+
+on getIndex me
+  [  0] getprop 203 ............................. <p>
+  [  2] getchainedprop 132 ...................... <p.counter>
+  [  4] getobjprop 208 .......................... <p.counter.theCount>
+  [  6] pushint8 1 .............................. <1>
+  [  8] sub ..................................... <p.counter.theCount - 1>
+  [  9] pusharglistnoret 1 ...................... <p.counter.theCount - 1>
+  [ 11] extcall 17 .............................. return p.counter.theCount - 1
+  [ 13] ret
+end
+
+on nextValue me
+  [  0] getprop 203 ............................. <p>
+  [  2] pushsymb 204 ............................ <#values>
+  [  4] getprop 203 ............................. <p>
+  [  6] getchainedprop 132 ...................... <p.counter>
+  [  8] getobjprop 208 .......................... <p.counter.theCount>
+  [ 10] pusharglist 3 ........................... <p, #values, p.counter.theCount>
+  [ 12] objcall 209 ............................. <p.values[p.counter.theCount]>
+  [ 14] setlocal 0 .............................. nValue = p.values[p.counter.theCount]
+  [ 16] getprop 203 ............................. <p>
+  [ 18] getobjprop 132 .......................... <p.counter>
+  [ 20] pusharglistnoret 1 ...................... <p.counter>
+  [ 22] extcall 132 ............................. counter(p.counter)
+  [ 24] getlocal 0 .............................. <nValue>
+  [ 26] pusharglistnoret 1 ...................... <nValue>
+  [ 28] extcall 17 .............................. return nValue
+  [ 30] ret
+end
+
+on reset me
+  [  0] getprop 203 ............................. <p>
+  [  2] getobjprop 132 .......................... <p.counter>
+  [  4] pusharglistnoret 1 ...................... <p.counter>
+  [  6] extcall 133 ............................. CounterReset(p.counter)
+  [  8] ret
+end

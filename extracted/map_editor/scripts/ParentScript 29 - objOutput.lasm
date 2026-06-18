@@ -1,0 +1,61 @@
+property ancestor, pLastMsg, pSpr
+global g
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushcons 0 .............................. <"objBasic">
+  [  4] pusharglist 1 ........................... <"objBasic">
+  [  6] extcall 27 .............................. <script("objBasic")>
+  [  8] pusharglist 1 ........................... <script("objBasic")>
+  [ 10] extcall 0 ............................... <new(script("objBasic"))>
+  [ 12] setobjprop 77 ........................... me.ancestor = new(script("objBasic"))
+  [ 14] getparam 0 .............................. <me>
+  [ 16] pusharglistnoret 1 ...................... <me>
+  [ 18] objcall 1 ............................... me.init()
+  [ 20] getparam 0 .............................. <me>
+  [ 22] pusharglistnoret 1 ...................... <me>
+  [ 24] extcall 17 .............................. return me
+  [ 26] ret
+end
+
+on init me
+  [  0] getglobal 101 ........................... <g>
+  [  2] getchainedprop 155 ...................... <g.spriteMaster>
+  [  4] pusharglist 1 ........................... <g.spriteMaster>
+  [  6] objcall 156 ............................. <g.spriteMaster.requestSprite()>
+  [  8] setprop 79 .............................. pSpr = g.spriteMaster.requestSprite()
+  [ 10] getprop 79 .............................. <pSpr>
+  [ 12] pushcons 1 .............................. <"output">
+  [ 14] pushcons 2 .............................. <"gfx">
+  [ 16] pusharglist 2 ........................... <"output", "gfx">
+  [ 18] extcall 158 ............................. <member("output", "gfx")>
+  [ 20] setobjprop 158 .......................... pSpr.member = member("output", "gfx")
+  [ 22] getprop 79 .............................. <pSpr>
+  [ 24] pushzero ................................ <0>
+  [ 25] pushzero ................................ <0>
+  [ 26] pusharglist 2 ........................... <0, 0>
+  [ 28] extcall 215 ............................. <point(0, 0)>
+  [ 30] setobjprop 216 .......................... pSpr.loc = point(0, 0)
+  [ 32] getprop 79 .............................. <pSpr>
+  [ 34] pushint16 999 ........................... <999>
+  [ 37] setobjprop 217 .......................... pSpr.locZ = 999
+  [ 39] ret
+end
+
+on msg me, theMsg
+  [  0] getparam 1 .............................. <theMsg>
+  [  2] pusharglist 1 ........................... <theMsg>
+  [  4] extcall 61 .............................. <string(theMsg)>
+  [  6] setparam 1 .............................. theMsg = string(theMsg)
+  [  8] getparam 1 .............................. <theMsg>
+  [ 10] getprop 218 ............................. <pLastMsg>
+  [ 12] nteq .................................... <theMsg <> pLastMsg>
+  [ 13] jmpifz [ 24] ............................ if theMsg <> pLastMsg then
+  [ 16] getprop 79 .............................. <pSpr>
+  [ 18] getchainedprop 158 ...................... <pSpr.member>
+  [ 20] getparam 1 .............................. <theMsg>
+  [ 22] setobjprop 219 .......................... pSpr.member.text = theMsg
+  [ 24] getparam 1 .............................. <theMsg>
+  [ 26] setprop 218 ............................. pLastMsg = theMsg
+  [ 28] ret
+end

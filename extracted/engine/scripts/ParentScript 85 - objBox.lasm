@@ -1,0 +1,362 @@
+property ancestor, pcolor, player, pLineWidth, pMember, pmode, pOffscreenRect, prect, pSprites
+global g, gGridSelectorLayer
+
+on new me
+  [  0] pushcons 0 .............................. <"objParams">
+  [  2] pusharglist 1 ........................... <"objParams">
+  [  4] extcall 34 .............................. <script("objParams")>
+  [  6] pusharglist 1 ........................... <script("objParams")>
+  [  8] extcall 0 ............................... <new(script("objParams"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objParams"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 437 ............................ <#color>
+  [ 27] pushint16 255 ........................... <255>
+  [ 30] pushint16 255 ........................... <255>
+  [ 33] pushzero ................................ <0>
+  [ 34] pusharglist 3 ........................... <255, 255, 0>
+  [ 36] extcall 436 ............................. <rgb(255, 255, 0)>
+  [ 39] pusharglistnoret 3 ...................... <i, #color, rgb(255, 255, 0)>
+  [ 41] objcall 48 .............................. i[#color] = rgb(255, 255, 0)
+  [ 43] getlocal 0 .............................. <i>
+  [ 45] pushsymb 438 ............................ <#initialRect>
+  [ 48] pushsymb 49 ............................. <#none>
+  [ 50] pusharglistnoret 3 ...................... <i, #initialRect, #none>
+  [ 52] objcall 48 .............................. i[#initialRect] = #none
+  [ 54] getlocal 0 .............................. <i>
+  [ 56] pushsymb 1352 ........................... <#layer>
+  [ 59] getglobal 2098 .......................... <gGridSelectorLayer>
+  [ 62] pusharglistnoret 3 ...................... <i, #layer, gGridSelectorLayer>
+  [ 64] objcall 48 .............................. i[#layer] = gGridSelectorLayer
+  [ 66] getlocal 0 .............................. <i>
+  [ 68] pushsymb 2099 ........................... <#linewidth>
+  [ 71] pushint8 1 .............................. <1>
+  [ 73] pusharglistnoret 3 ...................... <i, #linewidth, 1>
+  [ 75] objcall 48 .............................. i[#linewidth] = 1
+  [ 77] getlocal 0 .............................. <i>
+  [ 79] pushsymb 99 ............................. <#member>
+  [ 81] pushsymb 49 ............................. <#none>
+  [ 83] pusharglistnoret 3 ...................... <i, #member, #none>
+  [ 85] objcall 48 .............................. i[#member] = #none
+  [ 87] getparam 0 .............................. <me>
+  [ 89] pusharglistnoret 1 ...................... <me>
+  [ 91] extcall 35 .............................. return me
+  [ 93] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pushint8 1 .............................. <1>
+  [ 10] inv ..................................... <-1>
+  [ 11] pushint8 1 .............................. <1>
+  [ 13] inv ..................................... <-1>
+  [ 14] pushzero ................................ <0>
+  [ 15] pushzero ................................ <0>
+  [ 16] pusharglist 4 ........................... <-1, -1, 0, 0>
+  [ 18] extcall 263 ............................. <rect(-1, -1, 0, 0)>
+  [ 21] setprop 2100 ............................ pOffscreenRect = rect(-1, -1, 0, 0)
+  [ 24] getparam 1 .............................. <params>
+  [ 26] getobjprop 437 .......................... <params.color>
+  [ 29] setprop 2101 ............................ pcolor = params.color
+  [ 32] getglobal 2098 .......................... <gGridSelectorLayer>
+  [ 35] setprop 1478 ............................ player = gGridSelectorLayer
+  [ 38] getparam 1 .............................. <params>
+  [ 40] getobjprop 2099 ......................... <params.linewidth>
+  [ 43] setprop 2102 ............................ pLineWidth = params.linewidth
+  [ 46] getparam 1 .............................. <params>
+  [ 48] getobjprop 99 ........................... <params.member>
+  [ 50] setprop 813 ............................. pMember = params.member
+  [ 53] pushsymb 49 ............................. <#none>
+  [ 55] setprop 2103 ............................ pSprites = #none
+  [ 58] getprop 813 ............................. <pMember>
+  [ 61] pushsymb 49 ............................. <#none>
+  [ 63] eq ...................................... <pMember = #none>
+  [ 64] jmpifz [ 76] ............................ if pMember = #none then / else
+  [ 67] pushsymb 2104 ........................... <#drawLines>
+  [ 70] setprop 312 ............................. pmode = #drawLines
+  [ 73] jmp [ 82]
+  [ 76] pushsymb 2105 ........................... <#drawBitmap>
+  [ 79] setprop 312 ............................. pmode = #drawBitmap
+  [ 82] getparam 0 .............................. <me>
+  [ 84] pusharglistnoret 1 ...................... <me>
+  [ 86] objcall 2096 ............................ me.requestSprites()
+  [ 89] getparam 1 .............................. <params>
+  [ 91] getobjprop 438 .......................... <params.initialRect>
+  [ 94] pushsymb 49 ............................. <#none>
+  [ 96] nteq .................................... <params.initialRect <> #none>
+  [ 97] jmpifz [112] ............................ if params.initialRect <> #none then
+  [100] getparam 0 .............................. <me>
+  [102] getparam 1 .............................. <params>
+  [104] getobjprop 438 .......................... <params.initialRect>
+  [107] pusharglistnoret 2 ...................... <me, params.initialRect>
+  [109] objcall 1344 ............................ me.setRect(params.initialRect)
+  [112] ret
+end
+
+on display me
+  [  0] getprop 312 ............................. <pmode>
+  [  3] peek 0 .................................. case pmode of
+  [  5] pushsymb 2104 ........................... <#drawLines>
+  [  8] eq
+  [  9] jmpifz [246] ............................ (case) #drawLines:
+  [ 12] getprop 2103 ............................ <pSprites>
+  [ 15] pushsymb 265 ............................ <#top>
+  [ 18] pusharglist 2 ........................... <pSprites, #top>
+  [ 20] objcall 109 ............................. <pSprites[#top]>
+  [ 22] getprop 2106 ............................ <prect>
+  [ 25] pushint8 1 .............................. <1>
+  [ 27] pusharglist 2 ........................... <prect, 1>
+  [ 29] objcall 109 ............................. <prect[1]>
+  [ 31] getprop 2106 ............................ <prect>
+  [ 34] pushint8 2 .............................. <2>
+  [ 36] pusharglist 2 ........................... <prect, 2>
+  [ 38] objcall 109 ............................. <prect[2]>
+  [ 40] getprop 2106 ............................ <prect>
+  [ 43] pushint8 3 .............................. <3>
+  [ 45] pusharglist 2 ........................... <prect, 3>
+  [ 47] objcall 109 ............................. <prect[3]>
+  [ 49] getprop 2106 ............................ <prect>
+  [ 52] pushint8 2 .............................. <2>
+  [ 54] pusharglist 2 ........................... <prect, 2>
+  [ 56] objcall 109 ............................. <prect[2]>
+  [ 58] getprop 2102 ............................ <pLineWidth>
+  [ 61] add ..................................... <prect[2] + pLineWidth>
+  [ 62] pusharglist 4 ........................... <prect[1], prect[2], prect[3], prect[2] + pLineWidth>
+  [ 64] extcall 263 ............................. <rect(prect[1], prect[2], prect[3], prect[2] + pLineWidth)>
+  [ 67] setobjprop 263 .......................... pSprites[#top].rect = rect(prect[1], prect[2], prect[3], prect[2] + pLineWidth)
+  [ 70] getprop 2103 ............................ <pSprites>
+  [ 73] pushsymb 114 ............................ <#bottom>
+  [ 75] pusharglist 2 ........................... <pSprites, #bottom>
+  [ 77] objcall 109 ............................. <pSprites[#bottom]>
+  [ 79] getprop 2106 ............................ <prect>
+  [ 82] pushint8 1 .............................. <1>
+  [ 84] pusharglist 2 ........................... <prect, 1>
+  [ 86] objcall 109 ............................. <prect[1]>
+  [ 88] getprop 2106 ............................ <prect>
+  [ 91] pushint8 4 .............................. <4>
+  [ 93] pusharglist 2 ........................... <prect, 4>
+  [ 95] objcall 109 ............................. <prect[4]>
+  [ 97] getprop 2102 ............................ <pLineWidth>
+  [100] sub ..................................... <prect[4] - pLineWidth>
+  [101] getprop 2106 ............................ <prect>
+  [104] pushint8 3 .............................. <3>
+  [106] pusharglist 2 ........................... <prect, 3>
+  [108] objcall 109 ............................. <prect[3]>
+  [110] getprop 2106 ............................ <prect>
+  [113] pushint8 4 .............................. <4>
+  [115] pusharglist 2 ........................... <prect, 4>
+  [117] objcall 109 ............................. <prect[4]>
+  [119] pusharglist 4 ........................... <prect[1], prect[4] - pLineWidth, prect[3], prect[4]>
+  [121] extcall 263 ............................. <rect(prect[1], prect[4] - pLineWidth, prect[3], prect[4])>
+  [124] setobjprop 263 .......................... pSprites[#bottom].rect = rect(prect[1], prect[4] - pLineWidth, prect[3], prect[4])
+  [127] getprop 2103 ............................ <pSprites>
+  [130] pushsymb 264 ............................ <#left>
+  [133] pusharglist 2 ........................... <pSprites, #left>
+  [135] objcall 109 ............................. <pSprites[#left]>
+  [137] getprop 2106 ............................ <prect>
+  [140] pushint8 1 .............................. <1>
+  [142] pusharglist 2 ........................... <prect, 1>
+  [144] objcall 109 ............................. <prect[1]>
+  [146] getprop 2106 ............................ <prect>
+  [149] pushint8 2 .............................. <2>
+  [151] pusharglist 2 ........................... <prect, 2>
+  [153] objcall 109 ............................. <prect[2]>
+  [155] getprop 2106 ............................ <prect>
+  [158] pushint8 1 .............................. <1>
+  [160] pusharglist 2 ........................... <prect, 1>
+  [162] objcall 109 ............................. <prect[1]>
+  [164] getprop 2102 ............................ <pLineWidth>
+  [167] add ..................................... <prect[1] + pLineWidth>
+  [168] getprop 2106 ............................ <prect>
+  [171] pushint8 4 .............................. <4>
+  [173] pusharglist 2 ........................... <prect, 4>
+  [175] objcall 109 ............................. <prect[4]>
+  [177] pusharglist 4 ........................... <prect[1], prect[2], prect[1] + pLineWidth, prect[4]>
+  [179] extcall 263 ............................. <rect(prect[1], prect[2], prect[1] + pLineWidth, prect[4])>
+  [182] setobjprop 263 .......................... pSprites[#left].rect = rect(prect[1], prect[2], prect[1] + pLineWidth, prect[4])
+  [185] getprop 2103 ............................ <pSprites>
+  [188] pushsymb 266 ............................ <#right>
+  [191] pusharglist 2 ........................... <pSprites, #right>
+  [193] objcall 109 ............................. <pSprites[#right]>
+  [195] getprop 2106 ............................ <prect>
+  [198] pushint8 3 .............................. <3>
+  [200] pusharglist 2 ........................... <prect, 3>
+  [202] objcall 109 ............................. <prect[3]>
+  [204] getprop 2102 ............................ <pLineWidth>
+  [207] sub ..................................... <prect[3] - pLineWidth>
+  [208] getprop 2106 ............................ <prect>
+  [211] pushint8 2 .............................. <2>
+  [213] pusharglist 2 ........................... <prect, 2>
+  [215] objcall 109 ............................. <prect[2]>
+  [217] getprop 2106 ............................ <prect>
+  [220] pushint8 3 .............................. <3>
+  [222] pusharglist 2 ........................... <prect, 3>
+  [224] objcall 109 ............................. <prect[3]>
+  [226] getprop 2106 ............................ <prect>
+  [229] pushint8 4 .............................. <4>
+  [231] pusharglist 2 ........................... <prect, 4>
+  [233] objcall 109 ............................. <prect[4]>
+  [235] pusharglist 4 ........................... <prect[3] - pLineWidth, prect[2], prect[3], prect[4]>
+  [237] extcall 263 ............................. <rect(prect[3] - pLineWidth, prect[2], prect[3], prect[4])>
+  [240] setobjprop 263 .......................... pSprites[#right].rect = rect(prect[3] - pLineWidth, prect[2], prect[3], prect[4])
+  [243] jmp [274]
+  [246] peek 0
+  [248] pushsymb 2105 ........................... <#drawBitmap>
+  [251] eq
+  [252] jmpifz [274] ............................ (case) #drawBitmap:
+  [255] getprop 2103 ............................ <pSprites>
+  [258] pushint8 1 .............................. <1>
+  [260] pusharglist 2 ........................... <pSprites, 1>
+  [262] objcall 109 ............................. <pSprites[1]>
+  [264] getprop 2106 ............................ <prect>
+  [267] pusharglist 1 ........................... <prect>
+  [269] objcall 175 ............................. <prect.duplicate()>
+  [271] setobjprop 263 .......................... pSprites[1].rect = prect.duplicate()
+  [274] pop 1 ................................... end case
+  [276] ret
+end
+
+on finish me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 2095 ............................ me.freeSprites()
+  [  7] getprop 33 .............................. <ancestor>
+  [  9] pusharglistnoret 1 ...................... <ancestor>
+  [ 11] objcall 3 ............................... ancestor.finish()
+  [ 13] ret
+end
+
+on freeSprites me
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 254 ...................... <g.spriteMaster>
+  [  4] getprop 2103 ............................ <pSprites>
+  [  7] pusharglistnoret 2 ...................... <g.spriteMaster, pSprites>
+  [  9] objcall 2095 ............................ g.spriteMaster.freeSprites(pSprites)
+  [ 12] ret
+end
+
+on offscreen me
+  [  0] getparam 0 .............................. <me>
+  [  2] getprop 2100 ............................ <pOffscreenRect>
+  [  5] pusharglistnoret 2 ...................... <me, pOffscreenRect>
+  [  7] objcall 1344 ............................ me.setRect(pOffscreenRect)
+  [ 10] ret
+end
+
+on requestSprites me
+  [  0] getprop 312 ............................. <pmode>
+  [  3] peek 0 .................................. case pmode of
+  [  5] pushsymb 2104 ........................... <#drawLines>
+  [  8] eq
+  [  9] jmpifz [103] ............................ (case) #drawLines:
+  [ 12] getglobal 40 ............................ <g>
+  [ 14] getchainedprop 1168 ..................... <g.structMaster>
+  [ 17] pushsymb 2107 ........................... <#boxSprites>
+  [ 20] pusharglist 2 ........................... <g.structMaster, #boxSprites>
+  [ 22] objcall 1170 ............................ <g.structMaster.getStruct(#boxSprites)>
+  [ 25] setprop 2103 ............................ pSprites = g.structMaster.getStruct(#boxSprites)
+  [ 28] pushint8 1 .............................. <1>
+  [ 30] setlocal 0
+  [ 32] getlocal 0
+  [ 34] getprop 2103 ............................ <pSprites>
+  [ 37] getobjprop 257 .......................... <pSprites.count>
+  [ 40] lteq
+  [ 41] jmpifz [100] ............................ repeat with i = 1 to pSprites.count
+  [ 44] getprop 2103 ............................ <pSprites>
+  [ 47] getlocal 0 .............................. <i>
+  [ 49] getglobal 40 ............................ <g>
+  [ 51] getchainedprop 254 ...................... <g.spriteMaster>
+  [ 53] pusharglist 1 ........................... <g.spriteMaster>
+  [ 55] objcall 255 ............................. <g.spriteMaster.requestSprite()>
+  [ 57] pusharglistnoret 3 ...................... <pSprites, i, g.spriteMaster.requestSprite()>
+  [ 59] objcall 48 .............................. pSprites[i] = g.spriteMaster.requestSprite()
+  [ 61] getprop 2103 ............................ <pSprites>
+  [ 64] getlocal 0 .............................. <i>
+  [ 66] pusharglist 2 ........................... <pSprites, i>
+  [ 68] objcall 109 ............................. <pSprites[i]>
+  [ 70] getprop 2101 ............................ <pcolor>
+  [ 73] setobjprop 437 .......................... pSprites[i].color = pcolor
+  [ 76] getprop 2103 ............................ <pSprites>
+  [ 79] getlocal 0 .............................. <i>
+  [ 81] pusharglist 2 ........................... <pSprites, i>
+  [ 83] objcall 109 ............................. <pSprites[i]>
+  [ 85] getprop 1478 ............................ <player>
+  [ 88] setobjprop 259 .......................... pSprites[i].locZ = player
+  [ 91] pushint8 1
+  [ 93] getlocal 0
+  [ 95] add
+  [ 96] setlocal 0
+  [ 98] endrepeat [ 32]
+  [100] jmp [165]
+  [103] peek 0
+  [105] pushsymb 2105 ........................... <#drawBitmap>
+  [108] eq
+  [109] jmpifz [165] ............................ (case) #drawBitmap:
+  [112] pusharglist 0 ........................... <[]>
+  [114] pushlist ................................ <[]>
+  [115] setprop 2103 ............................ pSprites = []
+  [118] getprop 2103 ............................ <pSprites>
+  [121] getglobal 40 ............................ <g>
+  [123] getchainedprop 254 ...................... <g.spriteMaster>
+  [125] pusharglist 1 ........................... <g.spriteMaster>
+  [127] objcall 255 ............................. <g.spriteMaster.requestSprite()>
+  [129] pusharglistnoret 2 ...................... <pSprites, g.spriteMaster.requestSprite()>
+  [131] objcall 256 ............................. pSprites.append(g.spriteMaster.requestSprite())
+  [134] getprop 2103 ............................ <pSprites>
+  [137] pushint8 1 .............................. <1>
+  [139] pusharglist 2 ........................... <pSprites, 1>
+  [141] objcall 109 ............................. <pSprites[1]>
+  [143] getprop 813 ............................. <pMember>
+  [146] pusharglistnoret 2 ...................... <pSprites[1], pMember>
+  [148] extcall 96 .............................. SpriteSetMember(pSprites[1], pMember)
+  [150] getprop 2103 ............................ <pSprites>
+  [153] pushint8 1 .............................. <1>
+  [155] pusharglist 2 ........................... <pSprites, 1>
+  [157] objcall 109 ............................. <pSprites[1]>
+  [159] getprop 1478 ............................ <player>
+  [162] setobjprop 259 .......................... pSprites[1].locZ = player
+  [165] pop 1 ................................... end case
+  [167] ret
+end
+
+on setColor me, theColor
+  [  0] getparam 1 .............................. <theColor>
+  [  2] setprop 2101 ............................ pcolor = theColor
+  [  5] pushint8 1 .............................. <1>
+  [  7] setlocal 0
+  [  9] getlocal 0
+  [ 11] getprop 2103 ............................ <pSprites>
+  [ 14] getobjprop 257 .......................... <pSprites.count>
+  [ 17] lteq
+  [ 18] jmpifz [ 45] ............................ repeat with i = 1 to pSprites.count
+  [ 21] getprop 2103 ............................ <pSprites>
+  [ 24] getlocal 0 .............................. <i>
+  [ 26] pusharglist 2 ........................... <pSprites, i>
+  [ 28] objcall 109 ............................. <pSprites[i]>
+  [ 30] getprop 2101 ............................ <pcolor>
+  [ 33] setobjprop 437 .......................... pSprites[i].color = pcolor
+  [ 36] pushint8 1
+  [ 38] getlocal 0
+  [ 40] add
+  [ 41] setlocal 0
+  [ 43] endrepeat [  9]
+  [ 45] ret
+end
+
+on setRect me, therect
+  [  0] getparam 1 .............................. <therect>
+  [  2] pusharglist 1 ........................... <therect>
+  [  4] objcall 175 ............................. <therect.duplicate()>
+  [  6] setprop 2106 ............................ prect = therect.duplicate()
+  [  9] getparam 0 .............................. <me>
+  [ 11] pusharglistnoret 1 ...................... <me>
+  [ 13] objcall 1665 ............................ me.display()
+  [ 16] ret
+end

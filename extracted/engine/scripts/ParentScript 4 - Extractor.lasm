@@ -1,0 +1,746 @@
+property castsToExtract, clipStart, exFolder, fxObj, fioObj, maxFilePathLength, typesToExtract
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 282 ............................. me.setDefaults()
+  [  7] getparam 0 .............................. <me>
+  [  9] pusharglistnoret 1 ...................... <me>
+  [ 11] extcall 90 .............................. return me
+  [ 13] ret
+end
+
+on addNewLines me, scrText
+  [  0] pushcons 0 .............................. <EMPTY>
+  [  2] setlocal 0 .............................. outText = EMPTY
+  [  4] pushint8 1 .............................. <1>
+  [  6] setlocal 1
+  [  8] getlocal 1
+  [ 10] getparam 1 .............................. <scrText>
+  [ 12] pushsymb 234 ............................ <#lines>
+  [ 14] pusharglist 2 ........................... <scrText, #lines>
+  [ 16] objcall 105 ............................. <scrText.lines.count>
+  [ 18] lteq
+  [ 19] jmpifz [ 53] ............................ repeat with l = 1 to scrText.lines.count
+  [ 22] getlocal 0 .............................. <outText>
+  [ 24] getparam 1 .............................. <scrText>
+  [ 26] pushsymb 171 ............................ <#line>
+  [ 28] getlocal 1 .............................. <l>
+  [ 30] pusharglist 3 ........................... <scrText, #line, l>
+  [ 32] objcall 166 ............................. <scrText.line[l]>
+  [ 34] joinstr ................................. <outText & scrText.line[l]>
+  [ 35] pushint8 10 ............................. <10>
+  [ 37] pusharglist 1 ........................... <10>
+  [ 39] extcall 175 ............................. <numToChar(10)>
+  [ 41] joinstr ................................. <outText & scrText.line[l] & numToChar(10)>
+  [ 42] setlocal 0 .............................. outText = outText & scrText.line[l] & numToChar(10)
+  [ 44] pushint8 1
+  [ 46] getlocal 1
+  [ 48] add
+  [ 49] setlocal 1
+  [ 51] endrepeat [  8]
+  [ 53] getlocal 0 .............................. <outText>
+  [ 55] pusharglistnoret 1 ...................... <outText>
+  [ 57] extcall 90 .............................. return outText
+  [ 59] ret
+end
+
+on clipFilePath me, filePath
+  [  0] getparam 1 .............................. <filePath>
+  [  2] pushsymb 154 ............................ <#chars>
+  [  4] pusharglist 2 ........................... <filePath, #chars>
+  [  6] objcall 105 ............................. <filePath.chars.count>
+  [  8] setlocal 0 .............................. filePathLength = filePath.chars.count
+  [ 10] getlocal 0 .............................. <filePathLength>
+  [ 12] getparam 0 .............................. <me>
+  [ 14] getobjprop 289 .......................... <me.maxFilePathLength>
+  [ 17] gt ...................................... <filePathLength > me.maxFilePathLength>
+  [ 18] jmpifz [ 83] ............................ if filePathLength > me.maxFilePathLength then
+  [ 21] getlocal 0 .............................. <filePathLength>
+  [ 23] getparam 0 .............................. <me>
+  [ 25] getobjprop 289 .......................... <me.maxFilePathLength>
+  [ 28] sub ..................................... <filePathLength - me.maxFilePathLength>
+  [ 29] setlocal 1 .............................. overrun = filePathLength - me.maxFilePathLength
+  [ 31] getparam 1 .............................. <filePath>
+  [ 33] pushint8 1 .............................. <1>
+  [ 35] getprop 290 ............................. <clipStart>
+  [ 38] pusharglist 3 ........................... <filePath, 1, clipStart>
+  [ 40] extcall 154 ............................. <chars(filePath, 1, clipStart)>
+  [ 42] setlocal 2 .............................. firstPart = chars(filePath, 1, clipStart)
+  [ 44] getprop 290 ............................. <clipStart>
+  [ 47] getlocal 1 .............................. <overrun>
+  [ 49] add ..................................... <clipStart + overrun>
+  [ 50] pushint8 2 .............................. <2>
+  [ 52] add ..................................... <clipStart + overrun + 2>
+  [ 53] setlocal 3 .............................. clipContinue = clipStart + overrun + 2
+  [ 55] getparam 1 .............................. <filePath>
+  [ 57] getlocal 3 .............................. <clipContinue>
+  [ 59] getlocal 0 .............................. <filePathLength>
+  [ 61] pusharglist 3 ........................... <filePath, clipContinue, filePathLength>
+  [ 63] extcall 154 ............................. <chars(filePath, clipContinue, filePathLength)>
+  [ 65] setlocal 4 .............................. lastPart = chars(filePath, clipContinue, filePathLength)
+  [ 67] getlocal 2 .............................. <firstPart>
+  [ 69] pushcons 1 .............................. <"_">
+  [ 71] joinstr ................................. <firstPart & "_">
+  [ 72] getlocal 4 .............................. <lastPart>
+  [ 74] joinstr ................................. <firstPart & "_" & lastPart>
+  [ 75] setparam 1 .............................. filePath = firstPart & "_" & lastPart
+  [ 77] getparam 1 .............................. <filePath>
+  [ 79] getobjprop 177 .......................... <filePath.length>
+  [ 81] setlocal 5 .............................. newFilePathLength = filePath.length
+  [ 83] getparam 1 .............................. <filePath>
+  [ 85] pusharglistnoret 1 ...................... <filePath>
+  [ 87] extcall 90 .............................. return filePath
+  [ 89] ret
+end
+
+on createFile me, fName
+  [  0] getparam 0 .............................. <me>
+  [  2] getobjprop 297 .......................... <me.exFolder>
+  [  5] getparam 1 .............................. <fName>
+  [  7] joinstr ................................. <me.exFolder & fName>
+  [  8] setlocal 0 .............................. filePath = me.exFolder & fName
+  [ 10] getprop 204 ............................. <fioObj>
+  [ 12] getlocal 0 .............................. <filePath>
+  [ 14] pushzero ................................ <0>
+  [ 15] pusharglistnoret 3 ...................... <fioObj, filePath, 0>
+  [ 17] extcall 207 ............................. openfile(fioObj, filePath, 0)
+  [ 19] getprop 204 ............................. <fioObj>
+  [ 21] pusharglistnoret 1 ...................... <fioObj>
+  [ 23] extcall 298 ............................. delete(fioObj)
+  [ 26] getprop 204 ............................. <fioObj>
+  [ 28] getlocal 0 .............................. <filePath>
+  [ 30] pusharglistnoret 2 ...................... <fioObj, filePath>
+  [ 32] localcall 3 ............................. createFile(fioObj, filePath)
+  [ 34] ret
+end
+
+on createInfoLine me, mem
+  [  0] pusharglist 0 ........................... <[:]>
+  [  2] pushproplist ............................ <[:]>
+  [  3] setlocal 0 .............................. infoLine = [:]
+  [  5] getlocal 0 .............................. <infoLine>
+  [  7] pushsymb 219 ............................ <#name>
+  [  9] getparam 1 .............................. <mem>
+  [ 11] getobjprop 219 .......................... <mem.name>
+  [ 13] pusharglistnoret 3 ...................... <infoLine, #name, mem.name>
+  [ 15] objcall 97 .............................. infoLine[#name] = mem.name
+  [ 17] getparam 1 .............................. <mem>
+  [ 19] getobjprop 158 .......................... <mem.type>
+  [ 21] pushsymb 11 ............................. <#script>
+  [ 23] eq ...................................... <mem.type = #script>
+  [ 24] jmpifz [ 39] ............................ if mem.type = #script then
+  [ 27] getlocal 0 .............................. <infoLine>
+  [ 29] pushsymb 220 ............................ <#scriptType>
+  [ 31] getparam 1 .............................. <mem>
+  [ 33] getobjprop 220 .......................... <mem.scriptType>
+  [ 35] pusharglistnoret 3 ...................... <infoLine, #scriptType, mem.scriptType>
+  [ 37] objcall 97 .............................. infoLine[#scriptType] = mem.scriptType
+  [ 39] getlocal 0 .............................. <infoLine>
+  [ 41] pushsymb 158 ............................ <#type>
+  [ 43] getparam 1 .............................. <mem>
+  [ 45] getobjprop 158 .......................... <mem.type>
+  [ 47] pusharglistnoret 3 ...................... <infoLine, #type, mem.type>
+  [ 49] objcall 97 .............................. infoLine[#type] = mem.type
+  [ 51] getlocal 0 .............................. <infoLine>
+  [ 53] pusharglist 1 ........................... <infoLine>
+  [ 55] extcall 126 ............................. <string(infoLine)>
+  [ 57] setlocal 0 .............................. infoLine = string(infoLine)
+  [ 59] getlocal 0 .............................. <infoLine>
+  [ 61] pusharglistnoret 1 ...................... <infoLine>
+  [ 63] extcall 90 .............................. return infoLine
+  [ 65] ret
+end
+
+on createOrderFile me, castname
+  [  0] getparam 1 .............................. <castname>
+  [  2] pushcons 2 .............................. <"_order.txt">
+  [  4] joinstr ................................. <castname & "_order.txt">
+  [  5] setlocal 0 .............................. orderFileName = castname & "_order.txt"
+  [  7] pusharglist 0 ........................... <[]>
+  [  9] pushlist ................................ <[]>
+  [ 10] setlocal 1 .............................. fileList = []
+  [ 12] getparam 1 .............................. <castname>
+  [ 14] pushint8 2 .............................. <2>
+  [ 16] get 8 ................................... <the number of castMembers of castLib castname>
+  [ 18] setlocal 2 .............................. numMembers = the number of castMembers of castLib castname
+  [ 20] pushint8 1 .............................. <1>
+  [ 22] setlocal 3
+  [ 24] getlocal 3
+  [ 26] getlocal 2 .............................. <numMembers>
+  [ 28] lteq
+  [ 29] jmpifz [ 73] ............................ repeat with mem = 1 to numMembers
+  [ 32] getlocal 3 .............................. <mem>
+  [ 34] getparam 1 .............................. <castname>
+  [ 36] pusharglist 2 ........................... <mem, castname>
+  [ 38] extcall 48 .............................. <member(mem, castname)>
+  [ 40] setlocal 4 .............................. nMem = member(mem, castname)
+  [ 42] getlocal 4 .............................. <nMem>
+  [ 44] getobjprop 219 .......................... <nMem.name>
+  [ 46] setlocal 5 .............................. nName = nMem.name
+  [ 48] getlocal 5 .............................. <nName>
+  [ 50] pushcons 3 .............................. <".txt">
+  [ 52] joinstr ................................. <nName & ".txt">
+  [ 53] setlocal 6 .............................. nFileName = nName & ".txt"
+  [ 55] getlocal 1 .............................. <fileList>
+  [ 57] getlocal 6 .............................. <nFileName>
+  [ 59] pusharglistnoret 2 ...................... <fileList, nFileName>
+  [ 61] objcall 301 ............................. fileList.append(nFileName)
+  [ 64] pushint8 1
+  [ 66] getlocal 3
+  [ 68] add
+  [ 69] setlocal 3
+  [ 71] endrepeat [ 24]
+  [ 73] getparam 0 .............................. <me>
+  [ 75] getlocal 1 .............................. <fileList>
+  [ 77] pusharglist 2 ........................... <me, fileList>
+  [ 79] objcall 278 ............................. <me.formatListForHumans(fileList)>
+  [ 82] setlocal 1 .............................. fileList = me.formatListForHumans(fileList)
+  [ 84] getparam 0 .............................. <me>
+  [ 86] getobjprop 297 .......................... <me.exFolder>
+  [ 89] getlocal 0 .............................. <orderFileName>
+  [ 91] joinstr ................................. <me.exFolder & orderFileName>
+  [ 92] setlocal 7 .............................. filePath = me.exFolder & orderFileName
+  [ 94] getparam 0 .............................. <me>
+  [ 96] getlocal 0 .............................. <orderFileName>
+  [ 98] pusharglistnoret 2 ...................... <me, orderFileName>
+  [100] objcall 272 ............................. me.createFile(orderFileName)
+  [103] getparam 0 .............................. <me>
+  [105] getlocal 0 .............................. <orderFileName>
+  [107] getlocal 1 .............................. <fileList>
+  [109] pusharglistnoret 3 ...................... <me, orderFileName, fileList>
+  [111] objcall 285 ............................. me.writeToFile(orderFileName, fileList)
+  [114] ret
+end
+
+on extractAllCasts me
+  [  0] pushint8 4 .............................. <4>
+  [  2] get 8 ................................... <the number of castLibs>
+  [  4] setlocal 0 .............................. numCasts = the number of castLibs
+  [  6] pushint8 1 .............................. <1>
+  [  8] setlocal 1
+  [ 10] getlocal 1
+  [ 12] getlocal 0 .............................. <numCasts>
+  [ 14] lteq
+  [ 15] jmpifz [ 46] ............................ repeat with c = 1 to numCasts
+  [ 18] getlocal 1 .............................. <c>
+  [ 20] pusharglist 1 ........................... <c>
+  [ 22] extcall 218 ............................. <castLib(c)>
+  [ 24] getobjprop 219 .......................... <castLib(c).name>
+  [ 26] setlocal 2 .............................. castname = castLib(c).name
+  [ 28] getparam 0 .............................. <me>
+  [ 30] getlocal 2 .............................. <castname>
+  [ 32] pusharglistnoret 2 ...................... <me, castname>
+  [ 34] objcall 276 ............................. me.extractCast(castname)
+  [ 37] pushint8 1
+  [ 39] getlocal 1
+  [ 41] add
+  [ 42] setlocal 1
+  [ 44] endrepeat [ 10]
+  [ 46] ret
+end
+
+on extractCast me, castname
+  [  0] getprop 202 ............................. <fxObj>
+  [  2] getparam 0 .............................. <me>
+  [  4] getobjprop 297 .......................... <me.exFolder>
+  [  7] getparam 1 .............................. <castname>
+  [  9] joinstr ................................. <me.exFolder & castname>
+  [ 10] pusharglistnoret 2 ...................... <fxObj, me.exFolder & castname>
+  [ 12] objcall 306 ............................. fxObj.fx_FolderCreate(me.exFolder & castname)
+  [ 15] getparam 1 .............................. <castname>
+  [ 17] pushcons 4 .............................. <"master_objects">
+  [ 19] eq ...................................... <castname = "master_objects">
+  [ 20] jmpifz [ 32] ............................ if castname = "master_objects" then
+  [ 23] getparam 0 .............................. <me>
+  [ 25] getparam 1 .............................. <castname>
+  [ 27] pusharglistnoret 2 ...................... <me, castname>
+  [ 29] objcall 274 ............................. me.createOrderFile(castname)
+  [ 32] getparam 1 .............................. <castname>
+  [ 34] pushint8 2 .............................. <2>
+  [ 36] get 8 ................................... <the number of castMembers of castLib castname>
+  [ 38] setlocal 0 .............................. nummem = the number of castMembers of castLib castname
+  [ 40] pushint8 1 .............................. <1>
+  [ 42] setlocal 1
+  [ 44] getlocal 1
+  [ 46] getlocal 0 .............................. <nummem>
+  [ 48] lteq
+  [ 49] jmpifz [351] ............................ repeat with mem = 1 to nummem
+  [ 52] getlocal 1 .............................. <mem>
+  [ 54] getparam 1 .............................. <castname>
+  [ 56] pusharglist 2 ........................... <mem, castname>
+  [ 58] extcall 48 .............................. <member(mem, castname)>
+  [ 60] setlocal 2 .............................. nextMem = member(mem, castname)
+  [ 62] getlocal 2 .............................. <nextMem>
+  [ 64] getobjprop 158 .......................... <nextMem.type>
+  [ 66] pushsymb 307 ............................ <#empty>
+  [ 69] eq ...................................... <nextMem.type = #empty>
+  [ 70] jmpifz [ 76] ............................ if nextMem.type = #empty then
+  [ 73] jmp [341] ............................... next repeat
+  [ 76] getlocal 2 .............................. <nextMem>
+  [ 78] getobjprop 219 .......................... <nextMem.name>
+  [ 80] pushcons 5 .............................. <"Palette 329">
+  [ 82] eq ...................................... <nextMem.name = "Palette 329">
+  [ 83] jmpifz [ 91] ............................ if nextMem.name = "Palette 329" then
+  [ 86] pusharglistnoret 0 ...................... <>
+  [ 88] extcall 308 ............................. nothing()
+  [ 91] getparam 0 .............................. <me>
+  [ 93] getlocal 2 .............................. <nextMem>
+  [ 95] getobjprop 158 .......................... <nextMem.type>
+  [ 97] pusharglist 2 ........................... <me, nextMem.type>
+  [ 99] objcall 281 ............................. <me.typeIsSkip(nextMem.type)>
+  [102] jmpifz [108] ............................ if me.typeIsSkip(nextMem.type) then
+  [105] jmp [341] ............................... next repeat
+  [108] pushcons 0 .............................. <EMPTY>
+  [110] setlocal 3 .............................. ext = EMPTY
+  [112] getlocal 2 .............................. <nextMem>
+  [114] getobjprop 158 .......................... <nextMem.type>
+  [116] pushsymb 11 ............................. <#script>
+  [118] eq ...................................... <nextMem.type = #script>
+  [119] getlocal 2 .............................. <nextMem>
+  [121] getobjprop 158 .......................... <nextMem.type>
+  [123] pushsymb 221 ............................ <#field>
+  [125] eq ...................................... <nextMem.type = #field>
+  [126] or ...................................... <(nextMem.type = #script) or (nextMem.type = #field)>
+  [127] jmpifz [137] ............................ if (nextMem.type = #script) or (nextMem.type = #field) then
+  [130] getlocal 3 .............................. <ext>
+  [132] pushcons 3 .............................. <".txt">
+  [134] joinstr ................................. <ext & ".txt">
+  [135] setlocal 3 .............................. ext = ext & ".txt"
+  [137] getparam 0 .............................. <me>
+  [139] getobjprop 297 .......................... <me.exFolder>
+  [142] getparam 1 .............................. <castname>
+  [144] joinstr ................................. <me.exFolder & castname>
+  [145] pushcons 6 .............................. <"\\">
+  [147] joinstr ................................. <me.exFolder & castname & "\\">
+  [148] getlocal 2 .............................. <nextMem>
+  [150] getobjprop 219 .......................... <nextMem.name>
+  [152] joinstr ................................. <me.exFolder & castname & "\\" & nextMem.name>
+  [153] getlocal 3 .............................. <ext>
+  [155] joinstr ................................. <me.exFolder & castname & "\\" & nextMem.name & ext>
+  [156] setlocal 4 .............................. longFilePath = me.exFolder & castname & "\\" & nextMem.name & ext
+  [158] getparam 0 .............................. <me>
+  [160] getlocal 4 .............................. <longFilePath>
+  [162] pusharglist 2 ........................... <me, longFilePath>
+  [164] objcall 279 ............................. <me.omitFunctionParams(longFilePath)>
+  [167] setlocal 4 .............................. longFilePath = me.omitFunctionParams(longFilePath)
+  [169] getparam 0 .............................. <me>
+  [171] getlocal 4 .............................. <longFilePath>
+  [173] pusharglist 2 ........................... <me, longFilePath>
+  [175] objcall 271 ............................. <me.clipFilePath(longFilePath)>
+  [178] setlocal 5 .............................. filePath = me.clipFilePath(longFilePath)
+  [180] getprop 204 ............................. <fioObj>
+  [182] getlocal 5 .............................. <filePath>
+  [184] pushzero ................................ <0>
+  [185] pusharglistnoret 3 ...................... <fioObj, filePath, 0>
+  [187] extcall 207 ............................. openfile(fioObj, filePath, 0)
+  [189] getprop 204 ............................. <fioObj>
+  [191] pusharglistnoret 1 ...................... <fioObj>
+  [193] extcall 298 ............................. delete(fioObj)
+  [196] getprop 204 ............................. <fioObj>
+  [198] getlocal 5 .............................. <filePath>
+  [200] pusharglistnoret 2 ...................... <fioObj, filePath>
+  [202] localcall 3 ............................. createFile(fioObj, filePath)
+  [204] getlocal 2 .............................. <nextMem>
+  [206] getobjprop 158 .......................... <nextMem.type>
+  [208] pushsymb 221 ............................ <#field>
+  [210] eq ...................................... <nextMem.type = #field>
+  [211] getlocal 2 .............................. <nextMem>
+  [213] getobjprop 158 .......................... <nextMem.type>
+  [215] pushsymb 11 ............................. <#script>
+  [217] eq ...................................... <nextMem.type = #script>
+  [218] or ...................................... <(nextMem.type = #field) or (nextMem.type = #script)>
+  [219] jmpifz [341] ............................ if (nextMem.type = #field) or (nextMem.type = #script) then
+  [222] getprop 204 ............................. <fioObj>
+  [224] getlocal 5 .............................. <filePath>
+  [226] pushzero ................................ <0>
+  [227] pusharglistnoret 3 ...................... <fioObj, filePath, 0>
+  [229] extcall 207 ............................. openfile(fioObj, filePath, 0)
+  [231] pushcons 7 .............................. <"error">
+  [233] setlocal 6 .............................. mySaveString = "error"
+  [235] getlocal 2 .............................. <nextMem>
+  [237] getobjprop 158 .......................... <nextMem.type>
+  [239] peek 0 .................................. case nextMem.type of
+  [241] pushsymb 221 ............................ <#field>
+  [243] eq
+  [244] jmpifz [256] ............................ (case) #field:
+  [247] getlocal 2 .............................. <nextMem>
+  [249] getobjprop 208 .......................... <nextMem.text>
+  [251] setlocal 6 .............................. mySaveString = nextMem.text
+  [253] jmp [270]
+  [256] peek 0
+  [258] pushsymb 11 ............................. <#script>
+  [260] eq
+  [261] jmpifz [270] ............................ (case) #script:
+  [264] getlocal 2 .............................. <nextMem>
+  [266] getobjprop 222 .......................... <nextMem.scriptText>
+  [268] setlocal 6 .............................. mySaveString = nextMem.scriptText
+  [270] pop 1 ................................... end case
+  [272] getlocal 6 .............................. <mySaveString>
+  [274] pushcons 0 .............................. <EMPTY>
+  [276] eq ...................................... <mySaveString = EMPTY>
+  [277] jmpifz [294] ............................ if mySaveString = EMPTY then
+  [280] pushcons 8 .............................. <"empty save string for member ">
+  [282] getlocal 2 .............................. <nextMem>
+  [284] getobjprop 219 .......................... <nextMem.name>
+  [286] joinstr ................................. <"empty save string for member " & nextMem.name>
+  [287] pusharglistnoret 1 ...................... <"empty save string for member " & nextMem.name>
+  [289] extcall 21 .............................. put "empty save string for member " & nextMem.name
+  [291] jmp [341] ............................... next repeat
+  [294] getparam 0 .............................. <me>
+  [296] getlocal 2 .............................. <nextMem>
+  [298] pusharglist 2 ........................... <me, nextMem>
+  [300] objcall 273 ............................. <me.createInfoLine(nextMem)>
+  [303] setlocal 7 .............................. infoLine = me.createInfoLine(nextMem)
+  [305] getlocal 7 .............................. <infoLine>
+  [307] pushcons 9 .............................. <RETURN>
+  [309] joinstr ................................. <infoLine & RETURN>
+  [310] getlocal 6 .............................. <mySaveString>
+  [312] joinstr ................................. <infoLine & RETURN & mySaveString>
+  [313] setlocal 6 .............................. mySaveString = infoLine & RETURN & mySaveString
+  [315] getparam 0 .............................. <me>
+  [317] getlocal 6 .............................. <mySaveString>
+  [319] pusharglist 2 ........................... <me, mySaveString>
+  [321] objcall 270 ............................. <me.addNewLines(mySaveString)>
+  [324] setlocal 6 .............................. mySaveString = me.addNewLines(mySaveString)
+  [326] getprop 204 ............................. <fioObj>
+  [328] getlocal 6 .............................. <mySaveString>
+  [330] pusharglistnoret 2 ...................... <fioObj, mySaveString>
+  [332] extcall 309 ............................. writeString(fioObj, mySaveString)
+  [335] getprop 204 ............................. <fioObj>
+  [337] pusharglistnoret 1 ...................... <fioObj>
+  [339] extcall 217 ............................. closeFile(fioObj)
+  [341] pushint8 1
+  [343] getlocal 1
+  [345] add
+  [346] setlocal 1
+  [348] endrepeat [ 44]
+  [351] ret
+end
+
+on extractSelectedCasts me
+  [  0] getparam 0 .............................. <me>
+  [  2] getobjprop 314 .......................... <me.castsToExtract>
+  [  5] peek 0
+  [  7] pusharglist 1
+  [  9] extcall 105
+  [ 11] pushint8 1
+  [ 13] peek 0
+  [ 15] peek 2
+  [ 17] lteq
+  [ 18] jmpifz [ 45] ............................ repeat with castname in me.castsToExtract
+  [ 21] peek 2
+  [ 23] peek 1
+  [ 25] pusharglist 2
+  [ 27] extcall 106
+  [ 29] setlocal 0
+  [ 31] getparam 0 .............................. <me>
+  [ 33] getlocal 0 .............................. <castname>
+  [ 35] pusharglistnoret 2 ...................... <me, castname>
+  [ 37] objcall 276 ............................. me.extractCast(castname)
+  [ 40] pushint8 1
+  [ 42] add
+  [ 43] endrepeat [ 13]
+  [ 45] pop 3
+  [ 47] ret
+end
+
+on formatListForHumans me, thelist
+  [  0] getparam 1 .............................. <thelist>
+  [  2] pusharglist 1 ........................... <thelist>
+  [  4] extcall 126 ............................. <string(thelist)>
+  [  6] setparam 1 .............................. thelist = string(thelist)
+  [  8] pushcons 0 .............................. <EMPTY>
+  [ 10] setlocal 0 .............................. newlist = EMPTY
+  [ 12] getparam 1 .............................. <thelist>
+  [ 14] pushsymb 154 ............................ <#chars>
+  [ 16] pusharglist 2 ........................... <thelist, #chars>
+  [ 18] objcall 105 ............................. <thelist.chars.count>
+  [ 20] setlocal 1 .............................. numChars = thelist.chars.count
+  [ 22] pushint8 1 .............................. <1>
+  [ 24] setlocal 2
+  [ 26] getlocal 2
+  [ 28] getlocal 1 .............................. <numChars>
+  [ 30] lteq
+  [ 31] jmpifz [107] ............................ repeat with chr = 1 to numChars
+  [ 34] getparam 1 .............................. <thelist>
+  [ 36] pushsymb 165 ............................ <#char>
+  [ 38] getlocal 2 .............................. <chr>
+  [ 40] pusharglist 3 ........................... <thelist, #char, chr>
+  [ 42] objcall 166 ............................. <thelist.char[chr]>
+  [ 44] setlocal 3 .............................. nChar = thelist.char[chr]
+  [ 46] getlocal 3 .............................. <nChar>
+  [ 48] peek 0 .................................. case nChar of
+  [ 50] pushcons 10 ............................. <",">
+  [ 52] nteq
+  [ 53] jmpifz [ 64] ............................ (case) ",", ...
+  [ 56] peek 0
+  [ 58] pushcons 11 ............................. <"[">
+  [ 60] eq
+  [ 61] jmpifz [ 74] ............................ (case) ..., "[":
+  [ 64] getlocal 3 .............................. <nChar>
+  [ 66] pushcons 9 .............................. <RETURN>
+  [ 68] joinstr ................................. <nChar & RETURN>
+  [ 69] setlocal 3 .............................. nChar = nChar & RETURN
+  [ 71] jmp [ 89]
+  [ 74] peek 0
+  [ 76] pushcons 12 ............................. <"]">
+  [ 78] eq
+  [ 79] jmpifz [ 89] ............................ (case) "]":
+  [ 82] pushcons 9 .............................. <RETURN>
+  [ 84] getlocal 3 .............................. <nChar>
+  [ 86] joinstr ................................. <RETURN & nChar>
+  [ 87] setlocal 3 .............................. nChar = RETURN & nChar
+  [ 89] pop 1 ................................... end case
+  [ 91] getlocal 0 .............................. <newlist>
+  [ 93] getlocal 3 .............................. <nChar>
+  [ 95] joinstr ................................. <newlist & nChar>
+  [ 96] setlocal 0 .............................. newlist = newlist & nChar
+  [ 98] pushint8 1
+  [100] getlocal 2
+  [102] add
+  [103] setlocal 2
+  [105] endrepeat [ 26]
+  [107] getlocal 0 .............................. <newlist>
+  [109] pusharglistnoret 1 ...................... <newlist>
+  [111] extcall 90 .............................. return newlist
+  [113] ret
+end
+
+on omitFunctionParams me, filePath
+  [  0] getparam 0 .............................. <me>
+  [  2] pushcons 13 ............................. <"(">
+  [  4] getparam 1 .............................. <filePath>
+  [  6] pusharglist 3 ........................... <me, "(", filePath>
+  [  8] objcall 280 ............................. <me.strPos("(", filePath)>
+  [ 11] setlocal 0 .............................. firstBracketPos = me.strPos("(", filePath)
+  [ 13] getlocal 0 .............................. <firstBracketPos>
+  [ 15] pushsymb 39 ............................. <#none>
+  [ 17] eq ...................................... <firstBracketPos = #none>
+  [ 18] jmpifz [ 27] ............................ if firstBracketPos = #none then
+  [ 21] getparam 1 .............................. <filePath>
+  [ 23] pusharglistnoret 1 ...................... <filePath>
+  [ 25] extcall 90 .............................. return filePath
+  [ 27] getparam 1 .............................. <filePath>
+  [ 29] pushint8 1 .............................. <1>
+  [ 31] getlocal 0 .............................. <firstBracketPos>
+  [ 33] pusharglist 3 ........................... <filePath, 1, firstBracketPos>
+  [ 35] extcall 154 ............................. <chars(filePath, 1, firstBracketPos)>
+  [ 37] setparam 1 .............................. filePath = chars(filePath, 1, firstBracketPos)
+  [ 39] getparam 1 .............................. <filePath>
+  [ 41] pushcons 14 ............................. <").txt">
+  [ 43] joinstr ................................. <filePath & ").txt">
+  [ 44] setparam 1 .............................. filePath = filePath & ").txt"
+  [ 46] getparam 1 .............................. <filePath>
+  [ 48] pusharglistnoret 1 ...................... <filePath>
+  [ 50] extcall 90 .............................. return filePath
+  [ 52] ret
+end
+
+on strPos me, needle, haystack
+  [  0] getparam 2 .............................. <haystack>
+  [  2] pushsymb 154 ............................ <#chars>
+  [  4] pusharglist 2 ........................... <haystack, #chars>
+  [  6] objcall 105 ............................. <haystack.chars.count>
+  [  8] setlocal 0 .............................. numChars = haystack.chars.count
+  [ 10] pushint8 1 .............................. <1>
+  [ 12] setlocal 1
+  [ 14] getlocal 1
+  [ 16] getlocal 0 .............................. <numChars>
+  [ 18] lteq
+  [ 19] jmpifz [ 57] ............................ repeat with chr = 1 to numChars
+  [ 22] getparam 2 .............................. <haystack>
+  [ 24] pushsymb 165 ............................ <#char>
+  [ 26] getlocal 1 .............................. <chr>
+  [ 28] pusharglist 3 ........................... <haystack, #char, chr>
+  [ 30] objcall 166 ............................. <haystack.char[chr]>
+  [ 32] setlocal 2 .............................. nChar = haystack.char[chr]
+  [ 34] getlocal 2 .............................. <nChar>
+  [ 36] getparam 1 .............................. <needle>
+  [ 38] eq ...................................... <nChar = needle>
+  [ 39] jmpifz [ 48] ............................ if nChar = needle then
+  [ 42] getlocal 1 .............................. <chr>
+  [ 44] pusharglistnoret 1 ...................... <chr>
+  [ 46] extcall 90 .............................. return chr
+  [ 48] pushint8 1
+  [ 50] getlocal 1
+  [ 52] add
+  [ 53] setlocal 1
+  [ 55] endrepeat [ 14]
+  [ 57] pushsymb 39 ............................. <#none>
+  [ 59] pusharglistnoret 1 ...................... <#none>
+  [ 61] extcall 90 .............................. return #none
+  [ 63] ret
+end
+
+on typeIsSkip me, memberType
+  [  0] pushint8 1 .............................. <1>
+  [  2] setlocal 0 .............................. typeIsSkip = 1
+  [  4] getparam 0 .............................. <me>
+  [  6] getobjprop 321 .......................... <me.typesToExtract>
+  [  9] pushsymb 39 ............................. <#none>
+  [ 11] eq ...................................... <me.typesToExtract = #none>
+  [ 12] jmpifz [ 21] ............................ if me.typesToExtract = #none then / else
+  [ 15] pushzero ................................ <0>
+  [ 16] setlocal 0 .............................. typeIsSkip = 0
+  [ 18] jmp [ 70]
+  [ 21] getparam 0 .............................. <me>
+  [ 23] getobjprop 321 .......................... <me.typesToExtract>
+  [ 26] peek 0
+  [ 28] pusharglist 1
+  [ 30] extcall 105
+  [ 32] pushint8 1
+  [ 34] peek 0
+  [ 36] peek 2
+  [ 38] lteq
+  [ 39] jmpifz [ 68] ............................ repeat with typ in me.typesToExtract
+  [ 42] peek 2
+  [ 44] peek 1
+  [ 46] pusharglist 2
+  [ 48] extcall 106
+  [ 50] setlocal 1
+  [ 52] getlocal 1 .............................. <typ>
+  [ 54] getparam 1 .............................. <memberType>
+  [ 56] eq ...................................... <typ = memberType>
+  [ 57] jmpifz [ 63] ............................ if typ = memberType then
+  [ 60] pushzero ................................ <0>
+  [ 61] setlocal 0 .............................. typeIsSkip = 0
+  [ 63] pushint8 1
+  [ 65] add
+  [ 66] endrepeat [ 34]
+  [ 68] pop 3
+  [ 70] getlocal 0 .............................. <typeIsSkip>
+  [ 72] pusharglistnoret 1 ...................... <typeIsSkip>
+  [ 74] extcall 90 .............................. return typeIsSkip
+  [ 76] ret
+end
+
+on setCasts me, newVal
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <newVal>
+  [  4] setobjprop 314 .......................... me.castsToExtract = newVal
+  [  7] ret
+end
+
+on setDefaults me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 39 ............................. <#none>
+  [  4] setobjprop 314 .......................... me.castsToExtract = #none
+  [  7] getparam 0 .............................. <me>
+  [  9] pushint8 100 ............................ <100>
+  [ 11] setobjprop 290 .......................... me.clipStart = 100
+  [ 14] getparam 0 .............................. <me>
+  [ 16] pusharglist 0 ........................... <>
+  [ 18] extcall 117 ............................. <VOID>
+  [ 20] setobjprop 297 .......................... me.exFolder = VOID
+  [ 23] getparam 0 .............................. <me>
+  [ 25] pushint8 127 ............................ <127>
+  [ 27] setobjprop 289 .......................... me.maxFilePathLength = 127
+  [ 30] getparam 0 .............................. <me>
+  [ 32] pushsymb 39 ............................. <#none>
+  [ 34] setobjprop 321 .......................... me.typesToExtract = #none
+  [ 37] ret
+end
+
+on setExFolder me, newVal
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <newVal>
+  [  4] setobjprop 297 .......................... me.exFolder = newVal
+  [  7] ret
+end
+
+on setTypesToExtract me, newVal
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <newVal>
+  [  4] setobjprop 321 .......................... me.typesToExtract = newVal
+  [  7] ret
+end
+
+on start me
+  [  0] pushcons 15 ............................. <"FileXtra4">
+  [  2] pusharglist 1 ........................... <"FileXtra4">
+  [  4] extcall 203 ............................. <xtra("FileXtra4")>
+  [  6] pusharglist 1 ........................... <xtra("FileXtra4")>
+  [  8] objcall 16 .............................. <xtra("FileXtra4").new()>
+  [ 10] setprop 202 ............................. fxObj = xtra("FileXtra4").new()
+  [ 12] pushcons 16 ............................. <"FileIO">
+  [ 14] pusharglist 1 ........................... <"FileIO">
+  [ 16] extcall 203 ............................. <xtra("FileIO")>
+  [ 18] pusharglist 1 ........................... <xtra("FileIO")>
+  [ 20] extcall 16 .............................. <new(xtra("FileIO"))>
+  [ 22] setprop 204 ............................. fioObj = new(xtra("FileIO"))
+  [ 24] pushcons 17 ............................. <"Extracting movie">
+  [ 26] pusharglistnoret 1 ...................... <"Extracting movie">
+  [ 28] extcall 21 .............................. put "Extracting movie"
+  [ 30] getparam 0 .............................. <me>
+  [ 32] getobjprop 297 .......................... <me.exFolder>
+  [ 35] pushsymb 117 ............................ <#void>
+  [ 37] pusharglist 2 ........................... <me.exFolder, #void>
+  [ 39] extcall 325 ............................. <ilk(me.exFolder, #void)>
+  [ 42] jmpifz [ 62] ............................ if ilk(me.exFolder, #void) then / else
+  [ 45] getparam 0 .............................. <me>
+  [ 47] getprop 202 ............................. <fxObj>
+  [ 49] pushcons 18 ............................. <"Please select a folder to Extract into">
+  [ 51] pusharglist 2 ........................... <fxObj, "Please select a folder to Extract into">
+  [ 53] objcall 326 ............................. <fxObj.fx_FolderSelectDialog("Please select a folder to Extract into")>
+  [ 56] setobjprop 297 .......................... me.exFolder = fxObj.fx_FolderSelectDialog("Please select a folder to Extract into")
+  [ 59] jmp [ 74]
+  [ 62] getprop 202 ............................. <fxObj>
+  [ 64] getparam 0 .............................. <me>
+  [ 66] getobjprop 297 .......................... <me.exFolder>
+  [ 69] pusharglistnoret 2 ...................... <fxObj, me.exFolder>
+  [ 71] objcall 306 ............................. fxObj.fx_FolderCreate(me.exFolder)
+  [ 74] pushcons 19 ............................. <"Chosen folder is ">
+  [ 76] getprop 297 ............................. <exFolder>
+  [ 79] joinstr ................................. <"Chosen folder is " & exFolder>
+  [ 80] pusharglistnoret 1 ...................... <"Chosen folder is " & exFolder>
+  [ 82] extcall 21 .............................. put "Chosen folder is " & exFolder
+  [ 84] getparam 0 .............................. <me>
+  [ 86] getobjprop 297 .......................... <me.exFolder>
+  [ 89] pushcons 0 .............................. <EMPTY>
+  [ 91] eq ...................................... <me.exFolder = EMPTY>
+  [ 92] jmpifz [105] ............................ if me.exFolder = EMPTY then
+  [ 95] pushcons 20 ............................. <"No folder chosen, extractor will quit now.">
+  [ 97] pusharglistnoret 1 ...................... <"No folder chosen, extractor will quit now.">
+  [ 99] extcall 21 .............................. put "No folder chosen, extractor will quit now."
+  [101] pusharglistnoret 0 ...................... <>
+  [103] extcall 90 .............................. return 
+  [105] getparam 0 .............................. <me>
+  [107] getobjprop 314 .......................... <me.castsToExtract>
+  [110] pushsymb 39 ............................. <#none>
+  [112] eq ...................................... <me.castsToExtract = #none>
+  [113] jmpifz [126] ............................ if me.castsToExtract = #none then / else
+  [116] getparam 0 .............................. <me>
+  [118] pusharglistnoret 1 ...................... <me>
+  [120] objcall 275 ............................. me.extractAllCasts()
+  [123] jmp [133]
+  [126] getparam 0 .............................. <me>
+  [128] pusharglistnoret 1 ...................... <me>
+  [130] objcall 277 ............................. me.extractSelectedCasts()
+  [133] pushzero ................................ <0>
+  [134] setprop 202 ............................. fxObj = 0
+  [136] pushzero ................................ <0>
+  [137] setprop 204 ............................. fioObj = 0
+  [139] ret
+end
+
+on writeToFile me, fName, contents
+  [  0] getparam 0 .............................. <me>
+  [  2] getobjprop 297 .......................... <me.exFolder>
+  [  5] getparam 1 .............................. <fName>
+  [  7] joinstr ................................. <me.exFolder & fName>
+  [  8] setlocal 0 .............................. filePath = me.exFolder & fName
+  [ 10] getprop 204 ............................. <fioObj>
+  [ 12] getlocal 0 .............................. <filePath>
+  [ 14] pushzero ................................ <0>
+  [ 15] pusharglistnoret 3 ...................... <fioObj, filePath, 0>
+  [ 17] extcall 207 ............................. openfile(fioObj, filePath, 0)
+  [ 19] getprop 204 ............................. <fioObj>
+  [ 21] getparam 2 .............................. <contents>
+  [ 23] pusharglistnoret 2 ...................... <fioObj, contents>
+  [ 25] extcall 309 ............................. writeString(fioObj, contents)
+  [ 28] getprop 204 ............................. <fioObj>
+  [ 30] pusharglistnoret 1 ...................... <fioObj>
+  [ 32] extcall 217 ............................. closeFile(fioObj)
+  [ 34] ret
+end

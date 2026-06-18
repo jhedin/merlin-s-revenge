@@ -1,0 +1,24 @@
+on CastDeleteAll theCast
+  [  0] getparam 0 .............................. <theCast>
+  [  2] pushint8 2 .............................. <2>
+  [  4] get 8 ................................... <the number of castMembers of castLib theCast>
+  [  6] setlocal 0 .............................. numMems = the number of castMembers of castLib theCast
+  [  8] pushint8 1 .............................. <1>
+  [ 10] setlocal 1
+  [ 12] getlocal 1
+  [ 14] getlocal 0 .............................. <numMems>
+  [ 16] lteq
+  [ 17] jmpifz [ 41] ............................ repeat with mem = 1 to numMems
+  [ 20] getlocal 1 .............................. <mem>
+  [ 22] getparam 0 .............................. <theCast>
+  [ 24] pusharglist 2 ........................... <mem, theCast>
+  [ 26] extcall 34 .............................. <member(mem, theCast)>
+  [ 28] pusharglistnoret 1 ...................... <member(mem, theCast)>
+  [ 30] extcall 68 .............................. erase(member(mem, theCast))
+  [ 32] pushint8 1
+  [ 34] getlocal 1
+  [ 36] add
+  [ 37] setlocal 1
+  [ 39] endrepeat [ 12]
+  [ 41] ret
+end

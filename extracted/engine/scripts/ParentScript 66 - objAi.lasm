@@ -1,0 +1,204 @@
+property ancestor, pCharacterPrg, pmode, pMoveVector, pPreviousMode, pSpr
+
+on new me
+  [  0] pushcons 0 .............................. <"objModules">
+  [  2] pusharglist 1 ........................... <"objModules">
+  [  4] extcall 34 .............................. <script("objModules")>
+  [  6] pusharglist 1 ........................... <script("objModules")>
+  [  8] extcall 0 ............................... <new(script("objModules"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objModules"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushcons 1 .............................. <"modRelationships">
+  [ 16] pusharglistnoret 2 ...................... <me, "modRelationships">
+  [ 18] objcall 1717 ............................ me.addModule("modRelationships")
+  [ 21] getparam 0 .............................. <me>
+  [ 23] pusharglistnoret 1 ...................... <me>
+  [ 25] extcall 35 .............................. return me
+  [ 27] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getparam 0 .............................. <me>
+  [ 10] pushzero ................................ <0>
+  [ 11] pushzero ................................ <0>
+  [ 12] pusharglist 2 ........................... <0, 0>
+  [ 14] extcall 197 ............................. <point(0, 0)>
+  [ 16] pusharglistnoret 2 ...................... <me, point(0, 0)>
+  [ 18] objcall 923 ............................. me.recordMoveVector(point(0, 0))
+  [ 21] pushsymb 49 ............................. <#none>
+  [ 23] setprop 312 ............................. pmode = #none
+  [ 26] ret
+end
+
+on initCharacterInfo me, characterPrg, spr
+  [  0] getparam 1 .............................. <characterPrg>
+  [  2] getchainedprop 57 ....................... <characterPrg.id>
+  [  4] getobjprop 58 ........................... <characterPrg.id.bigMe>
+  [  6] setprop 147 ............................. pCharacterPrg = characterPrg.id.bigMe
+  [  8] getparam 2 .............................. <spr>
+  [ 10] setprop 173 ............................. pSpr = spr
+  [ 12] ret
+end
+
+on addSaveData me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 4 ............................... ancestor.addSaveData(sd)
+  [  8] getparam 1 .............................. <sd>
+  [ 10] pushsymb 312 ............................ <#pmode>
+  [ 13] getprop 312 ............................. <pmode>
+  [ 16] pusharglistnoret 3 ...................... <sd, #pmode, pmode>
+  [ 18] objcall 48 .............................. sd[#pmode] = pmode
+  [ 20] ret
+end
+
+on characterModeChanged me, newMode
+  [  0] ret
+end
+
+on ensureMode me, newMode
+  [  0] getprop 312 ............................. <pmode>
+  [  3] getparam 1 .............................. <newMode>
+  [  5] nteq .................................... <pmode <> newMode>
+  [  6] jmpifz [ 22] ............................ if pmode <> newMode then
+  [  9] getparam 0 .............................. <me>
+  [ 11] getchainedprop 57 ....................... <me.id>
+  [ 13] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 15] getparam 1 .............................. <newMode>
+  [ 17] pusharglistnoret 2 ...................... <me.id.bigMe, newMode>
+  [ 19] objcall 278 ............................. me.id.bigMe.goMode(newMode)
+  [ 22] ret
+end
+
+on getCharacter me
+  [  0] getprop 147 ............................. <pCharacterPrg>
+  [  2] pusharglist 1 ........................... <pCharacterPrg>
+  [  4] objcall 1722 ............................ <pCharacterPrg.getCharacter()>
+  [  7] pusharglistnoret 1 ...................... <pCharacterPrg.getCharacter()>
+  [  9] extcall 35 .............................. return pCharacterPrg.getCharacter()
+  [ 11] ret
+end
+
+on getLoc me
+  [  0] getprop 147 ............................. <pCharacterPrg>
+  [  2] pusharglist 1 ........................... <pCharacterPrg>
+  [  4] objcall 111 ............................. <pCharacterPrg.getLoc()>
+  [  6] pusharglistnoret 1 ...................... <pCharacterPrg.getLoc()>
+  [  8] extcall 35 .............................. return pCharacterPrg.getLoc()
+  [ 10] ret
+end
+
+on getFlip me
+  [  0] getprop 147 ............................. <pCharacterPrg>
+  [  2] pusharglist 1 ........................... <pCharacterPrg>
+  [  4] objcall 1723 ............................ <pCharacterPrg.getFlip()>
+  [  7] pusharglistnoret 1 ...................... <pCharacterPrg.getFlip()>
+  [  9] extcall 35 .............................. return pCharacterPrg.getFlip()
+  [ 11] ret
+end
+
+on getMode me
+  [  0] getprop 312 ............................. <pmode>
+  [  3] pusharglistnoret 1 ...................... <pmode>
+  [  5] extcall 35 .............................. return pmode
+  [  7] ret
+end
+
+on getOwner me
+  [  0] getprop 147 ............................. <pCharacterPrg>
+  [  2] pusharglistnoret 1 ...................... <pCharacterPrg>
+  [  4] extcall 35 .............................. return pCharacterPrg
+  [  6] ret
+end
+
+on getPlatformDrop me
+  [  0] getprop 1727 ............................ <pMoveVector>
+  [  3] pushint8 2 .............................. <2>
+  [  5] pusharglist 2 ........................... <pMoveVector, 2>
+  [  7] objcall 109 ............................. <pMoveVector[2]>
+  [  9] pushint8 1 .............................. <1>
+  [ 11] eq ...................................... <pMoveVector[2] = 1>
+  [ 12] pusharglistnoret 1 ...................... <pMoveVector[2] = 1>
+  [ 14] extcall 35 .............................. return pMoveVector[2] = 1
+  [ 16] ret
+end
+
+on getTeam me
+  [  0] getprop 147 ............................. <pCharacterPrg>
+  [  2] pusharglist 1 ........................... <pCharacterPrg>
+  [  4] objcall 238 ............................. <pCharacterPrg.getTeam()>
+  [  6] pusharglistnoret 1 ...................... <pCharacterPrg.getTeam()>
+  [  8] extcall 35 .............................. return pCharacterPrg.getTeam()
+  [ 10] ret
+end
+
+on goMode me, newMode
+  [  0] getparam 1 .............................. <newMode>
+  [  2] setprop 312 ............................. pmode = newMode
+  [  5] ret
+end
+
+on goThespianMode me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 52 .............................. <me.getMode()>
+  [  6] setprop 1728 ............................ pPreviousMode = me.getMode()
+  [  9] getparam 0 .............................. <me>
+  [ 11] pushsymb 1729 ........................... <#freeze>
+  [ 14] pusharglistnoret 2 ...................... <me, #freeze>
+  [ 16] objcall 278 ............................. me.goMode(#freeze)
+  [ 19] ret
+end
+
+on leaveThespianMode me
+  [  0] getparam 0 .............................. <me>
+  [  2] getprop 1728 ............................ <pPreviousMode>
+  [  5] pusharglistnoret 2 ...................... <me, pPreviousMode>
+  [  7] objcall 278 ............................. me.goMode(pPreviousMode)
+  [ 10] ret
+end
+
+on unpaws me
+  [  0] ret
+end
+
+on recordMoveVector me, newVal
+  [  0] getparam 1 .............................. <newVal>
+  [  2] pusharglist 1 ........................... <newVal>
+  [  4] objcall 175 ............................. <newVal.duplicate()>
+  [  6] setprop 1727 ............................ pMoveVector = newVal.duplicate()
+  [  9] ret
+end
+
+on restoreFromSave me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 26 .............................. ancestor.restoreFromSave(sd)
+  [  8] getparam 1 .............................. <sd>
+  [ 10] getobjprop 312 .......................... <sd.pmode>
+  [ 13] setprop 312 ............................. pmode = sd.pmode
+  [ 16] ret
+end
+
+on setMode me, theMode
+  [  0] getparam 1 .............................. <theMode>
+  [  2] setprop 312 ............................. pmode = theMode
+  [  5] ret
+end
+
+on start me
+  [  0] ret
+end
+
+on walkToLoc me, targetloc
+  [  0] getprop 147 ............................. <pCharacterPrg>
+  [  2] pusharglistnoret 1 ...................... <pCharacterPrg>
+  [  4] objcall 1725 ............................ pCharacterPrg.walkToLoc()
+  [  7] ret
+end

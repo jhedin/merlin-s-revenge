@@ -1,0 +1,53 @@
+on CollisionCalcVect attackLoc, targetloc, attackPower
+  [  0] getparam 0 .............................. <attackLoc>
+  [  2] getparam 1 .............................. <targetloc>
+  [  4] pusharglist 2 ........................... <attackLoc, targetloc>
+  [  6] extcall 96 .............................. <SineDist(attackLoc, targetloc)>
+  [  8] setlocal 0 .............................. dist = SineDist(attackLoc, targetloc)
+  [ 10] getparam 1 .............................. <targetloc>
+  [ 12] getparam 0 .............................. <attackLoc>
+  [ 14] sub ..................................... <targetloc - attackLoc>
+  [ 15] setlocal 1 .............................. distxy = targetloc - attackLoc
+  [ 17] getlocal 0 .............................. <dist>
+  [ 19] pushzero ................................ <0>
+  [ 20] eq ...................................... <dist = 0>
+  [ 21] jmpifz [ 40] ............................ if dist = 0 then
+  [ 24] pushfloat32 1.0 ......................... <1.0>
+  [ 29] setlocal 0 .............................. dist = 1.0
+  [ 31] pushzero ................................ <0>
+  [ 32] pushint8 1 .............................. <1>
+  [ 34] pusharglist 2 ........................... <0, 1>
+  [ 36] extcall 97 .............................. <point(0, 1)>
+  [ 38] setlocal 1 .............................. distxy = point(0, 1)
+  [ 40] getparam 2 .............................. <attackPower>
+  [ 42] getlocal 0 .............................. <dist>
+  [ 44] sub ..................................... <attackPower - dist>
+  [ 45] setlocal 2 .............................. outputPower = attackPower - dist
+  [ 47] getlocal 2 .............................. <outputPower>
+  [ 49] pushzero ................................ <0>
+  [ 50] lteq .................................... <outputPower <= 0>
+  [ 51] jmpifz [ 65] ............................ if outputPower <= 0 then / else
+  [ 54] pushzero ................................ <0>
+  [ 55] pushzero ................................ <0>
+  [ 56] pusharglist 2 ........................... <0, 0>
+  [ 58] extcall 97 .............................. <point(0, 0)>
+  [ 60] setlocal 3 .............................. collisionVect = point(0, 0)
+  [ 62] jmp [ 89]
+  [ 65] getlocal 0 .............................. <dist>
+  [ 67] getlocal 2 .............................. <outputPower>
+  [ 69] div ..................................... <dist / outputPower>
+  [ 70] setlocal 4 .............................. numOfFrames = dist / outputPower
+  [ 72] getlocal 1 .............................. <distxy>
+  [ 74] getlocal 4 .............................. <numOfFrames>
+  [ 76] getlocal 4 .............................. <numOfFrames>
+  [ 78] pusharglist 2 ........................... <numOfFrames, numOfFrames>
+  [ 80] extcall 97 .............................. <point(numOfFrames, numOfFrames)>
+  [ 82] div ..................................... <distxy / point(numOfFrames, numOfFrames)>
+  [ 83] setlocal 5 .............................. initialFrameMove = distxy / point(numOfFrames, numOfFrames)
+  [ 85] getlocal 5 .............................. <initialFrameMove>
+  [ 87] setlocal 3 .............................. collisionVect = initialFrameMove
+  [ 89] getlocal 3 .............................. <collisionVect>
+  [ 91] pusharglistnoret 1 ...................... <collisionVect>
+  [ 93] extcall 3 ............................... return collisionVect
+  [ 95] ret
+end

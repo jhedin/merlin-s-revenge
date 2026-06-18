@@ -1,0 +1,611 @@
+global g, r
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 12 .............................. return me
+  [  6] ret
+end
+
+on init me
+  [  0] ret
+end
+
+on interpretPropList me, thePropList
+  [  0] getparam 1 .............................. <thePropList>
+  [  2] pusharglist 1 ........................... <thePropList>
+  [  4] extcall 49 .............................. <string(thePropList)>
+  [  6] setlocal 0 .............................. XML = string(thePropList)
+  [  8] getlocal 0 .............................. <XML>
+  [ 10] pusharglistnoret 1 ...................... <XML>
+  [ 12] extcall 12 .............................. return XML
+  [ 14] ret
+end
+
+on interpretXML me, theTxt
+  [  0] getparam 1 .............................. <theTxt>
+  [  2] pushsymb 36 ............................. <#char>
+  [  4] pushint8 1 .............................. <1>
+  [  6] pusharglist 3 ........................... <theTxt, #char, 1>
+  [  8] objcall 37 .............................. <theTxt.char[1]>
+  [ 10] pushcons 0 .............................. <"[">
+  [ 12] eq ...................................... <theTxt.char[1] = "[">
+  [ 13] jmpifz [ 28] ............................ if theTxt.char[1] = "[" then / else
+  [ 16] getparam 1 .............................. <theTxt>
+  [ 18] pusharglist 1 ........................... <theTxt>
+  [ 20] extcall 699 ............................. <value(theTxt)>
+  [ 23] setlocal 0 .............................. thePropList = value(theTxt)
+  [ 25] jmp [ 81]
+  [ 28] getparam 0 .............................. <me>
+  [ 30] getparam 1 .............................. <theTxt>
+  [ 32] pusharglist 2 ........................... <me, theTxt>
+  [ 34] objcall 687 ............................. <me.cleanText(theTxt)>
+  [ 37] setparam 1 .............................. theTxt = me.cleanText(theTxt)
+  [ 39] getparam 0 .............................. <me>
+  [ 41] getparam 1 .............................. <theTxt>
+  [ 43] pusharglist 2 ........................... <me, theTxt>
+  [ 45] objcall 692 ............................. <me.extractValue(theTxt)>
+  [ 48] setlocal 1 .............................. folders = me.extractValue(theTxt)
+  [ 50] pusharglist 0 ........................... <[:]>
+  [ 52] pushproplist ............................ <[:]>
+  [ 53] setlocal 0 .............................. thePropList = [:]
+  [ 55] getlocal 0 .............................. <thePropList>
+  [ 57] getlocal 1 .............................. <folders>
+  [ 59] pusharglist 1 ........................... <folders>
+  [ 61] objcall 700 ............................. <folders.getSymbol()>
+  [ 64] getlocal 1 .............................. <folders>
+  [ 66] pusharglist 1 ........................... <folders>
+  [ 68] objcall 701 ............................. <folders.convertContents()>
+  [ 71] pusharglistnoret 3 ...................... <thePropList, folders.getSymbol(), folders.convertContents()>
+  [ 73] objcall 83 .............................. thePropList[folders.getSymbol()] = folders.convertContents()
+  [ 75] getlocal 1 .............................. <folders>
+  [ 77] pusharglistnoret 1 ...................... <folders>
+  [ 79] objcall 2 ............................... folders.finish()
+  [ 81] getlocal 0 .............................. <thePropList>
+  [ 83] pusharglistnoret 1 ...................... <thePropList>
+  [ 85] extcall 12 .............................. return thePropList
+  [ 87] ret
+end
+
+on cleanText me, theTxt
+  [  0] pushcons 1 .............................. <EMPTY>
+  [  2] setlocal 0 .............................. cleanText = EMPTY
+  [  4] getparam 1 .............................. <theTxt>
+  [  6] pushsymb 266 ............................ <#lines>
+  [  9] pusharglist 2 ........................... <theTxt, #lines>
+  [ 11] objcall 33 .............................. <theTxt.lines.count>
+  [ 13] setlocal 1 .............................. numLines = theTxt.lines.count
+  [ 15] pushint8 1 .............................. <1>
+  [ 17] setlocal 2
+  [ 19] getlocal 2
+  [ 21] getlocal 1 .............................. <numLines>
+  [ 23] lteq
+  [ 24] jmpifz [ 70] ............................ repeat with i = 1 to numLines
+  [ 27] getparam 1 .............................. <theTxt>
+  [ 29] pushsymb 417 ............................ <#line>
+  [ 32] getlocal 2 .............................. <i>
+  [ 34] pusharglist 3 ........................... <theTxt, #line, i>
+  [ 36] objcall 37 .............................. <theTxt.line[i]>
+  [ 38] setlocal 3 .............................. nLine = theTxt.line[i]
+  [ 40] getparam 0 .............................. <me>
+  [ 42] getlocal 3 .............................. <nLine>
+  [ 44] pusharglist 2 ........................... <me, nLine>
+  [ 46] objcall 696 ............................. <me.removeLeadingSpaces(nLine)>
+  [ 49] setlocal 3 .............................. nLine = me.removeLeadingSpaces(nLine)
+  [ 51] getlocal 0 .............................. <cleanText>
+  [ 53] getlocal 3 .............................. <nLine>
+  [ 55] joinstr ................................. <cleanText & nLine>
+  [ 56] pushcons 2 .............................. <RETURN>
+  [ 58] joinstr ................................. <cleanText & nLine & RETURN>
+  [ 59] setlocal 0 .............................. cleanText = cleanText & nLine & RETURN
+  [ 61] pushint8 1
+  [ 63] getlocal 2
+  [ 65] add
+  [ 66] setlocal 2
+  [ 68] endrepeat [ 19]
+  [ 70] getlocal 0 .............................. <cleanText>
+  [ 72] pusharglistnoret 1 ...................... <cleanText>
+  [ 74] extcall 12 .............................. return cleanText
+  [ 76] ret
+end
+
+on constructEndString me, theSym
+  [  0] pushcons 3 .............................. <"</">
+  [  2] getparam 1 .............................. <theSym>
+  [  4] pusharglist 1 ........................... <theSym>
+  [  6] extcall 49 .............................. <string(theSym)>
+  [  8] joinstr ................................. <"</" & string(theSym)>
+  [  9] pushcons 4 .............................. <">">
+  [ 11] joinstr ................................. <"</" & string(theSym) & ">">
+  [ 12] setlocal 0 .............................. endString = "</" & string(theSym) & ">"
+  [ 14] getlocal 0 .............................. <endString>
+  [ 16] pusharglistnoret 1 ...................... <endString>
+  [ 18] extcall 12 .............................. return endString
+  [ 20] ret
+end
+
+on constructStartString me, theSym
+  [  0] pushcons 5 .............................. <"<">
+  [  2] getparam 1 .............................. <theSym>
+  [  4] joinstr ................................. <"<" & theSym>
+  [  5] pushcons 4 .............................. <">">
+  [  7] joinstr ................................. <"<" & theSym & ">">
+  [  8] setlocal 0 .............................. startString = "<" & theSym & ">"
+  [ 10] getlocal 0 .............................. <startString>
+  [ 12] pusharglistnoret 1 ...................... <startString>
+  [ 14] extcall 12 .............................. return startString
+  [ 16] ret
+end
+
+on extractFirstSymbol me, theTxt
+  [  0] getparam 1 .............................. <theTxt>
+  [  2] pushcons 5 .............................. <"<">
+  [  4] pusharglist 2 ........................... <theTxt, "<">
+  [  6] extcall 708 ............................. <StringGetPos(theTxt, "<")>
+  [  9] pushint8 1 .............................. <1>
+  [ 11] add ..................................... <StringGetPos(theTxt, "<") + 1>
+  [ 12] setlocal 0 .............................. symStart = StringGetPos(theTxt, "<") + 1
+  [ 14] getparam 1 .............................. <theTxt>
+  [ 16] pushcons 4 .............................. <">">
+  [ 18] pusharglist 2 ........................... <theTxt, ">">
+  [ 20] extcall 708 ............................. <StringGetPos(theTxt, ">")>
+  [ 23] pushint8 1 .............................. <1>
+  [ 25] add ..................................... <StringGetPos(theTxt, ">") + 1>
+  [ 26] setlocal 1 .............................. symEnd = StringGetPos(theTxt, ">") + 1
+  [ 28] getparam 1 .............................. <theTxt>
+  [ 30] pushsymb 36 ............................. <#char>
+  [ 32] getlocal 0 .............................. <symStart>
+  [ 34] getlocal 1 .............................. <symEnd>
+  [ 36] pusharglist 4 ........................... <theTxt, #char, symStart, symEnd>
+  [ 38] objcall 37 .............................. <theTxt.char[symStart..symEnd]>
+  [ 40] pusharglist 1 ........................... <theTxt.char[symStart..symEnd]>
+  [ 42] extcall 216 ............................. <symbol(theTxt.char[symStart..symEnd])>
+  [ 44] setlocal 2 .............................. theSym = symbol(theTxt.char[symStart..symEnd])
+  [ 46] getlocal 2 .............................. <theSym>
+  [ 48] pusharglistnoret 1 ...................... <theSym>
+  [ 50] extcall 12 .............................. return theSym
+  [ 52] ret
+end
+
+on extractTextBetween me, theTxt, theSym
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 2 .............................. <theSym>
+  [  4] pusharglist 2 ........................... <me, theSym>
+  [  6] objcall 689 ............................. <me.constructStartString(theSym)>
+  [  9] setlocal 0 .............................. startString = me.constructStartString(theSym)
+  [ 11] getparam 0 .............................. <me>
+  [ 13] getparam 2 .............................. <theSym>
+  [ 15] pusharglist 2 ........................... <me, theSym>
+  [ 17] objcall 688 ............................. <me.constructEndString(theSym)>
+  [ 20] setlocal 1 .............................. endString = me.constructEndString(theSym)
+  [ 22] pushzero ................................ <0>
+  [ 23] setlocal 2 .............................. lineCopy = 0
+  [ 25] pushcons 1 .............................. <EMPTY>
+  [ 27] setlocal 3 .............................. extractedText = EMPTY
+  [ 29] getparam 1 .............................. <theTxt>
+  [ 31] pushsymb 266 ............................ <#lines>
+  [ 34] pusharglist 2 ........................... <theTxt, #lines>
+  [ 36] objcall 33 .............................. <theTxt.lines.count>
+  [ 38] setlocal 4 .............................. numLines = theTxt.lines.count
+  [ 40] pushint8 1 .............................. <1>
+  [ 42] setlocal 5
+  [ 44] getlocal 5
+  [ 46] getlocal 4 .............................. <numLines>
+  [ 48] lteq
+  [ 49] jmpifz [125] ............................ repeat with i = 1 to numLines
+  [ 52] getparam 1 .............................. <theTxt>
+  [ 54] pushsymb 417 ............................ <#line>
+  [ 57] getlocal 5 .............................. <i>
+  [ 59] pusharglist 3 ........................... <theTxt, #line, i>
+  [ 61] objcall 37 .............................. <theTxt.line[i]>
+  [ 63] setlocal 6 .............................. nLine = theTxt.line[i]
+  [ 65] getlocal 6 .............................. <nLine>
+  [ 67] pushsymb 421 ............................ <#word>
+  [ 70] pushint8 1 .............................. <1>
+  [ 72] pusharglist 3 ........................... <nLine, #word, 1>
+  [ 74] objcall 37 .............................. <nLine.word[1]>
+  [ 76] setlocal 7 .............................. nWord = nLine.word[1]
+  [ 78] getlocal 7 .............................. <nWord>
+  [ 80] getlocal 1 .............................. <endString>
+  [ 82] eq ...................................... <nWord = endString>
+  [ 83] jmpifz [ 89] ............................ if nWord = endString then
+  [ 86] pushzero ................................ <0>
+  [ 87] setlocal 2 .............................. lineCopy = 0
+  [ 89] getlocal 2 .............................. <lineCopy>
+  [ 91] jmpifz [104] ............................ if lineCopy then
+  [ 94] getlocal 3 .............................. <extractedText>
+  [ 96] getlocal 6 .............................. <nLine>
+  [ 98] joinstr ................................. <extractedText & nLine>
+  [ 99] pushcons 2 .............................. <RETURN>
+  [101] joinstr ................................. <extractedText & nLine & RETURN>
+  [102] setlocal 3 .............................. extractedText = extractedText & nLine & RETURN
+  [104] getlocal 7 .............................. <nWord>
+  [106] getlocal 0 .............................. <startString>
+  [108] eq ...................................... <nWord = startString>
+  [109] jmpifz [116] ............................ if nWord = startString then
+  [112] pushint8 1 .............................. <1>
+  [114] setlocal 2 .............................. lineCopy = 1
+  [116] pushint8 1
+  [118] getlocal 5
+  [120] add
+  [121] setlocal 5
+  [123] endrepeat [ 44]
+  [125] getlocal 3 .............................. <extractedText>
+  [127] pusharglistnoret 1 ...................... <extractedText>
+  [129] extcall 12 .............................. return extractedText
+  [131] ret
+end
+
+on extractValue me, theText
+  [  0] getglobal 21 ............................ <g>
+  [  2] getchainedprop 213 ...................... <g.objectMaster>
+  [  4] pushsymb 714 ............................ <#objFolder>
+  [  7] pusharglist 2 ........................... <g.objectMaster, #objFolder>
+  [  9] objcall 214 ............................. <g.objectMaster.requestObject(#objFolder)>
+  [ 11] setlocal 0 .............................. rootFolder = g.objectMaster.requestObject(#objFolder)
+  [ 13] getlocal 0 .............................. <rootFolder>
+  [ 15] pushsymb 1 .............................. <#init>
+  [ 17] pusharglist 2 ........................... <rootFolder, #init>
+  [ 19] objcall 215 ............................. <rootFolder.getParams(#init)>
+  [ 21] setlocal 1 .............................. params = rootFolder.getParams(#init)
+  [ 23] getlocal 1 .............................. <params>
+  [ 25] pushsymb 15 ............................. <#none>
+  [ 27] setobjprop 715 .......................... params.parentFolder = #none
+  [ 30] getlocal 1 .............................. <params>
+  [ 32] pushsymb 716 ............................ <#ROOT>
+  [ 35] setobjprop 216 .......................... params.symbol = #ROOT
+  [ 37] getlocal 0 .............................. <rootFolder>
+  [ 39] getlocal 1 .............................. <params>
+  [ 41] pusharglistnoret 2 ...................... <rootFolder, params>
+  [ 43] objcall 1 ............................... rootFolder.init(params)
+  [ 45] getlocal 0 .............................. <rootFolder>
+  [ 47] setlocal 2 .............................. currentFolder = rootFolder
+  [ 49] getparam 1 .............................. <theText>
+  [ 51] pushsymb 266 ............................ <#lines>
+  [ 54] pusharglist 2 ........................... <theText, #lines>
+  [ 56] objcall 33 .............................. <theText.lines.count>
+  [ 58] pushint8 1 .............................. <1>
+  [ 60] sub ..................................... <theText.lines.count - 1>
+  [ 61] setlocal 3 .............................. numLines = theText.lines.count - 1
+  [ 63] pushint8 1 .............................. <1>
+  [ 65] setlocal 4
+  [ 67] getlocal 4
+  [ 69] getlocal 3 .............................. <numLines>
+  [ 71] lteq
+  [ 72] jmpifz [234] ............................ repeat with i = 1 to numLines
+  [ 75] getparam 1 .............................. <theText>
+  [ 77] pushsymb 417 ............................ <#line>
+  [ 80] getlocal 4 .............................. <i>
+  [ 82] pusharglist 3 ........................... <theText, #line, i>
+  [ 84] objcall 37 .............................. <theText.line[i]>
+  [ 86] setlocal 5 .............................. nLine = theText.line[i]
+  [ 88] getlocal 5 .............................. <nLine>
+  [ 90] pushsymb 36 ............................. <#char>
+  [ 92] pushint8 1 .............................. <1>
+  [ 94] pusharglist 3 ........................... <nLine, #char, 1>
+  [ 96] objcall 37 .............................. <nLine.char[1]>
+  [ 98] setlocal 6 .............................. firstChar = nLine.char[1]
+  [100] getlocal 6 .............................. <firstChar>
+  [102] pushcons 5 .............................. <"<">
+  [104] eq ...................................... <firstChar = "<">
+  [105] jmpifz [211] ............................ if firstChar = "<" then
+  [108] getlocal 5 .............................. <nLine>
+  [110] pushsymb 36 ............................. <#char>
+  [112] pushint8 2 .............................. <2>
+  [114] pusharglist 3 ........................... <nLine, #char, 2>
+  [116] objcall 37 .............................. <nLine.char[2]>
+  [118] setlocal 7 .............................. secondChar = nLine.char[2]
+  [120] getlocal 7 .............................. <secondChar>
+  [122] pushcons 6 .............................. <"/">
+  [124] eq ...................................... <secondChar = "/">
+  [125] jmpifz [140] ............................ if secondChar = "/" then
+  [128] getlocal 2 .............................. <currentFolder>
+  [130] pusharglist 1 ........................... <currentFolder>
+  [132] objcall 717 ............................. <currentFolder.getParentFolder()>
+  [135] setlocal 2 .............................. currentFolder = currentFolder.getParentFolder()
+  [137] jmp [225] ............................... next repeat
+  [140] getparam 0 .............................. <me>
+  [142] getlocal 5 .............................. <nLine>
+  [144] pusharglist 2 ........................... <me, nLine>
+  [146] objcall 690 ............................. <me.extractFirstSymbol(nLine)>
+  [149] setlocal 8 .............................. nSymbol = me.extractFirstSymbol(nLine)
+  [151] getglobal 21 ............................ <g>
+  [153] getchainedprop 213 ...................... <g.objectMaster>
+  [155] pushsymb 714 ............................ <#objFolder>
+  [158] pusharglist 2 ........................... <g.objectMaster, #objFolder>
+  [160] objcall 214 ............................. <g.objectMaster.requestObject(#objFolder)>
+  [162] setlocal 9 .............................. newFolder = g.objectMaster.requestObject(#objFolder)
+  [164] getlocal 9 .............................. <newFolder>
+  [166] pushsymb 1 .............................. <#init>
+  [168] pusharglist 2 ........................... <newFolder, #init>
+  [170] objcall 215 ............................. <newFolder.getParams(#init)>
+  [172] setlocal 1 .............................. params = newFolder.getParams(#init)
+  [174] getlocal 1 .............................. <params>
+  [176] getlocal 2 .............................. <currentFolder>
+  [178] setobjprop 715 .......................... params.parentFolder = currentFolder
+  [181] getlocal 1 .............................. <params>
+  [183] getlocal 8 .............................. <nSymbol>
+  [185] setobjprop 216 .......................... params.symbol = nSymbol
+  [187] getlocal 9 .............................. <newFolder>
+  [189] getlocal 1 .............................. <params>
+  [191] pusharglistnoret 2 ...................... <newFolder, params>
+  [193] objcall 1 ............................... newFolder.init(params)
+  [195] getlocal 2 .............................. <currentFolder>
+  [197] getlocal 9 .............................. <newFolder>
+  [199] pusharglistnoret 2 ...................... <currentFolder, newFolder>
+  [201] objcall 718 ............................. currentFolder.addContents(newFolder)
+  [204] getlocal 9 .............................. <newFolder>
+  [206] setlocal 2 .............................. currentFolder = newFolder
+  [208] jmp [225] ............................... next repeat
+  [211] getlocal 2 .............................. <currentFolder>
+  [213] getlocal 5 .............................. <nLine>
+  [215] pusharglist 1 ........................... <nLine>
+  [217] extcall 699 ............................. <value(nLine)>
+  [220] pusharglistnoret 2 ...................... <currentFolder, value(nLine)>
+  [222] objcall 718 ............................. currentFolder.addContents(value(nLine))
+  [225] pushint8 1
+  [227] getlocal 4
+  [229] add
+  [230] setlocal 4
+  [232] endrepeat [ 67]
+  [234] getlocal 0 .............................. <rootFolder>
+  [236] pusharglistnoret 1 ...................... <rootFolder>
+  [238] extcall 12 .............................. return rootFolder
+  [240] ret
+end
+
+on XMLFromPropList me, thePropList
+  [  0] pushcons 1 .............................. <EMPTY>
+  [  2] setlocal 0 .............................. XML = EMPTY
+  [  4] pushint8 1 .............................. <1>
+  [  6] setlocal 1
+  [  8] getlocal 1
+  [ 10] getparam 1 .............................. <thePropList>
+  [ 12] getobjprop 33 ........................... <thePropList.count>
+  [ 14] lteq
+  [ 15] jmpifz [133] ............................ repeat with i = 1 to thePropList.count
+  [ 18] getparam 1 .............................. <thePropList>
+  [ 20] getlocal 1 .............................. <i>
+  [ 22] pusharglist 2 ........................... <thePropList, i>
+  [ 24] objcall 232 ............................. <thePropList.getPropAt(i)>
+  [ 26] setlocal 2 .............................. nProp = thePropList.getPropAt(i)
+  [ 28] getparam 1 .............................. <thePropList>
+  [ 30] getlocal 1 .............................. <i>
+  [ 32] pusharglist 2 ........................... <thePropList, i>
+  [ 34] objcall 34 .............................. <thePropList[i]>
+  [ 36] setlocal 3 .............................. nValue = thePropList[i]
+  [ 38] getlocal 2 .............................. <nProp>
+  [ 40] pusharglist 1 ........................... <nProp>
+  [ 42] extcall 49 .............................. <string(nProp)>
+  [ 44] setlocal 4 .............................. nTag = string(nProp)
+  [ 46] getlocal 0 .............................. <XML>
+  [ 48] pushcons 5 .............................. <"<">
+  [ 50] joinstr ................................. <XML & "<">
+  [ 51] getlocal 4 .............................. <nTag>
+  [ 53] joinstr ................................. <XML & "<" & nTag>
+  [ 54] pushcons 4 .............................. <">">
+  [ 56] joinstr ................................. <XML & "<" & nTag & ">">
+  [ 57] getglobal 67 ............................ <r>
+  [ 59] joinstr ................................. <XML & "<" & nTag & ">" & r>
+  [ 60] setlocal 0 .............................. XML = XML & "<" & nTag & ">" & r
+  [ 62] getlocal 3 .............................. <nValue>
+  [ 64] pushsymb 727 ............................ <#propList>
+  [ 67] pusharglist 2 ........................... <nValue, #propList>
+  [ 69] extcall 726 ............................. <ilk(nValue, #propList)>
+  [ 72] jmpifz [ 92] ............................ if ilk(nValue, #propList) then / else
+  [ 75] getlocal 0 .............................. <XML>
+  [ 77] getparam 0 .............................. <me>
+  [ 79] getlocal 3 .............................. <nValue>
+  [ 81] pusharglist 2 ........................... <me, nValue>
+  [ 83] objcall 693 ............................. <me.XMLFromPropList(nValue)>
+  [ 86] joinstr ................................. <XML & me.XMLFromPropList(nValue)>
+  [ 87] setlocal 0 .............................. XML = XML & me.XMLFromPropList(nValue)
+  [ 89] jmp [108]
+  [ 92] getlocal 0 .............................. <XML>
+  [ 94] getparam 0 .............................. <me>
+  [ 96] getlocal 3 .............................. <nValue>
+  [ 98] getlocal 4 .............................. <nTag>
+  [100] pusharglist 3 ........................... <me, nValue, nTag>
+  [102] objcall 695 ............................. <me.XMLValue(nValue, nTag)>
+  [105] joinstr ................................. <XML & me.XMLValue(nValue, nTag)>
+  [106] setlocal 0 .............................. XML = XML & me.XMLValue(nValue, nTag)
+  [108] getlocal 0 .............................. <XML>
+  [110] pushcons 3 .............................. <"</">
+  [112] joinstr ................................. <XML & "</">
+  [113] getlocal 4 .............................. <nTag>
+  [115] joinstr ................................. <XML & "</" & nTag>
+  [116] pushcons 4 .............................. <">">
+  [118] joinstr ................................. <XML & "</" & nTag & ">">
+  [119] getglobal 67 ............................ <r>
+  [121] joinstr ................................. <XML & "</" & nTag & ">" & r>
+  [122] setlocal 0 .............................. XML = XML & "</" & nTag & ">" & r
+  [124] pushint8 1
+  [126] getlocal 1
+  [128] add
+  [129] setlocal 1
+  [131] endrepeat [  8]
+  [133] getlocal 0 .............................. <XML>
+  [135] pusharglistnoret 1 ...................... <XML>
+  [137] extcall 12 .............................. return XML
+  [139] ret
+end
+
+on XMLItem me, theItem
+  [  0] pushcons 1 .............................. <EMPTY>
+  [  2] setlocal 0 .............................. XML = EMPTY
+  [  4] getparam 1 .............................. <theItem>
+  [  6] pusharglist 1 ........................... <theItem>
+  [  8] extcall 726 ............................. <ilk(theItem)>
+  [ 11] peek 0 .................................. case ilk(theItem) of
+  [ 13] pushsymb 216 ............................ <#symbol>
+  [ 15] eq
+  [ 16] jmpifz [ 33] ............................ (case) #symbol:
+  [ 19] pushcons 7 .............................. <"#">
+  [ 21] getparam 1 .............................. <theItem>
+  [ 23] pusharglist 1 ........................... <theItem>
+  [ 25] extcall 49 .............................. <string(theItem)>
+  [ 27] joinstr ................................. <"#" & string(theItem)>
+  [ 28] setlocal 1 .............................. itmStr = "#" & string(theItem)
+  [ 30] jmp [ 41] ............................... (case) otherwise:
+  [ 33] getparam 1 .............................. <theItem>
+  [ 35] pusharglist 1 ........................... <theItem>
+  [ 37] extcall 49 .............................. <string(theItem)>
+  [ 39] setlocal 1 .............................. itmStr = string(theItem)
+  [ 41] pop 1 ................................... end case
+  [ 43] getlocal 0 .............................. <XML>
+  [ 45] getlocal 1 .............................. <itmStr>
+  [ 47] joinstr ................................. <XML & itmStr>
+  [ 48] getglobal 67 ............................ <r>
+  [ 50] joinstr ................................. <XML & itmStr & r>
+  [ 51] setlocal 0 .............................. XML = XML & itmStr & r
+  [ 53] getlocal 0 .............................. <XML>
+  [ 55] pusharglistnoret 1 ...................... <XML>
+  [ 57] extcall 12 .............................. return XML
+  [ 59] ret
+end
+
+on XMLValue me, theValue, theTag
+  [  0] pushcons 1 .............................. <EMPTY>
+  [  2] setlocal 0 .............................. XML = EMPTY
+  [  4] getparam 1 .............................. <theValue>
+  [  6] pushsymb 733 ............................ <#linearList>
+  [  9] pusharglist 2 ........................... <theValue, #linearList>
+  [ 11] extcall 726 ............................. <ilk(theValue, #linearList)>
+  [ 14] jmpifz [150] ............................ if ilk(theValue, #linearList) then / else
+  [ 17] pushint8 1 .............................. <1>
+  [ 19] setlocal 1 .............................. i = 1
+  [ 21] getparam 1 .............................. <theValue>
+  [ 23] peek 0
+  [ 25] pusharglist 1
+  [ 27] extcall 33
+  [ 29] pushint8 1
+  [ 31] peek 0
+  [ 33] peek 2
+  [ 35] lteq
+  [ 36] jmpifz [145] ............................ repeat with itm in theValue
+  [ 39] peek 2
+  [ 41] peek 1
+  [ 43] pusharglist 2
+  [ 45] extcall 34
+  [ 47] setlocal 2
+  [ 49] getlocal 2 .............................. <itm>
+  [ 51] pushsymb 727 ............................ <#propList>
+  [ 54] pusharglist 2 ........................... <itm, #propList>
+  [ 56] extcall 726 ............................. <ilk(itm, #propList)>
+  [ 59] jmpifz [119] ............................ if ilk(itm, #propList) then / else
+  [ 62] getlocal 1 .............................. <i>
+  [ 64] pushint8 1 .............................. <1>
+  [ 66] gt ...................................... <i > 1>
+  [ 67] jmpifz [102] ............................ if i > 1 then
+  [ 70] getlocal 0 .............................. <XML>
+  [ 72] pushcons 3 .............................. <"</">
+  [ 74] joinstr ................................. <XML & "</">
+  [ 75] getparam 2 .............................. <theTag>
+  [ 77] joinstr ................................. <XML & "</" & theTag>
+  [ 78] pushcons 4 .............................. <">">
+  [ 80] joinstr ................................. <XML & "</" & theTag & ">">
+  [ 81] getglobal 67 ............................ <r>
+  [ 83] joinstr ................................. <XML & "</" & theTag & ">" & r>
+  [ 84] setlocal 0 .............................. XML = XML & "</" & theTag & ">" & r
+  [ 86] getlocal 0 .............................. <XML>
+  [ 88] pushcons 5 .............................. <"<">
+  [ 90] joinstr ................................. <XML & "<">
+  [ 91] getparam 2 .............................. <theTag>
+  [ 93] joinstr ................................. <XML & "<" & theTag>
+  [ 94] pushcons 4 .............................. <">">
+  [ 96] joinstr ................................. <XML & "<" & theTag & ">">
+  [ 97] getglobal 67 ............................ <r>
+  [ 99] joinstr ................................. <XML & "<" & theTag & ">" & r>
+  [100] setlocal 0 .............................. XML = XML & "<" & theTag & ">" & r
+  [102] getlocal 0 .............................. <XML>
+  [104] getparam 0 .............................. <me>
+  [106] getlocal 2 .............................. <itm>
+  [108] pusharglist 2 ........................... <me, itm>
+  [110] objcall 693 ............................. <me.XMLFromPropList(itm)>
+  [113] joinstr ................................. <XML & me.XMLFromPropList(itm)>
+  [114] setlocal 0 .............................. XML = XML & me.XMLFromPropList(itm)
+  [116] jmp [133]
+  [119] getlocal 0 .............................. <XML>
+  [121] getparam 0 .............................. <me>
+  [123] getlocal 2 .............................. <itm>
+  [125] pusharglist 2 ........................... <me, itm>
+  [127] objcall 694 ............................. <me.XMLItem(itm)>
+  [130] joinstr ................................. <XML & me.XMLItem(itm)>
+  [131] setlocal 0 .............................. XML = XML & me.XMLItem(itm)
+  [133] getlocal 1 .............................. <i>
+  [135] pushint8 1 .............................. <1>
+  [137] add ..................................... <i + 1>
+  [138] setlocal 1 .............................. i = i + 1
+  [140] pushint8 1
+  [142] add
+  [143] endrepeat [ 31]
+  [145] pop 3
+  [147] jmp [164]
+  [150] getlocal 0 .............................. <XML>
+  [152] getparam 0 .............................. <me>
+  [154] getparam 1 .............................. <theValue>
+  [156] pusharglist 2 ........................... <me, theValue>
+  [158] objcall 694 ............................. <me.XMLItem(theValue)>
+  [161] joinstr ................................. <XML & me.XMLItem(theValue)>
+  [162] setlocal 0 .............................. XML = XML & me.XMLItem(theValue)
+  [164] getlocal 0 .............................. <XML>
+  [166] pusharglistnoret 1 ...................... <XML>
+  [168] extcall 12 .............................. return XML
+  [170] ret
+end
+
+on removeLeadingSpaces me, theLine
+  [  0] getparam 1 .............................. <theLine>
+  [  2] pushsymb 737 ............................ <#chars>
+  [  5] pusharglist 2 ........................... <theLine, #chars>
+  [  7] objcall 33 .............................. <theLine.chars.count>
+  [  9] setlocal 0 .............................. numChars = theLine.chars.count
+  [ 11] pushzero ................................ <0>
+  [ 12] setlocal 1 .............................. lastSpace = 0
+  [ 14] pushint8 1 .............................. <1>
+  [ 16] setlocal 2
+  [ 18] getlocal 2
+  [ 20] getlocal 0 .............................. <numChars>
+  [ 22] lteq
+  [ 23] jmpifz [ 65] ............................ repeat with i = 1 to numChars
+  [ 26] getparam 1 .............................. <theLine>
+  [ 28] pushsymb 36 ............................. <#char>
+  [ 30] getlocal 2 .............................. <i>
+  [ 32] pusharglist 3 ........................... <theLine, #char, i>
+  [ 34] objcall 37 .............................. <theLine.char[i]>
+  [ 36] setlocal 3 .............................. nChar = theLine.char[i]
+  [ 38] getlocal 3 .............................. <nChar>
+  [ 40] pushcons 8 .............................. <" ">
+  [ 42] eq ...................................... <nChar = " ">
+  [ 43] jmpifz [ 53] ............................ if nChar = " " then
+  [ 46] getlocal 2 .............................. <i>
+  [ 48] setlocal 1 .............................. lastSpace = i
+  [ 50] jmp [ 56] ............................... next repeat
+  [ 53] jmp [ 65] ............................... exit repeat
+  [ 56] pushint8 1
+  [ 58] getlocal 2
+  [ 60] add
+  [ 61] setlocal 2
+  [ 63] endrepeat [ 18]
+  [ 65] getlocal 1 .............................. <lastSpace>
+  [ 67] pushzero ................................ <0>
+  [ 68] gt ...................................... <lastSpace > 0>
+  [ 69] jmpifz [ 89] ............................ if lastSpace > 0 then
+  [ 72] getparam 1 .............................. <theLine>
+  [ 74] pushsymb 36 ............................. <#char>
+  [ 76] getlocal 1 .............................. <lastSpace>
+  [ 78] pushint8 1 .............................. <1>
+  [ 80] add ..................................... <lastSpace + 1>
+  [ 81] pushint8 99 ............................. <99>
+  [ 83] pusharglist 4 ........................... <theLine, #char, lastSpace + 1, 99>
+  [ 85] objcall 37 .............................. <theLine.char[lastSpace + 1..99]>
+  [ 87] setparam 1 .............................. theLine = theLine.char[lastSpace + 1..99]
+  [ 89] getparam 1 .............................. <theLine>
+  [ 91] pusharglistnoret 1 ...................... <theLine>
+  [ 93] extcall 12 .............................. return theLine
+  [ 95] ret
+end
+
+on stop me
+  [  0] ret
+end

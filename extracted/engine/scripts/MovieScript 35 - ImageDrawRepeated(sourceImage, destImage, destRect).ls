@@ -1,0 +1,14 @@
+on ImageDrawRepeated sourceImage, destImage, destRect
+  sourceSize = point(sourceImage.width, sourceImage.height)
+  destSize = point(destRect.width, destRect.height)
+  repeats = destSize / sourceSize
+  repeat with y = 1 to repeats[2]
+    repeat with x = 1 to repeats[1]
+      posMod = point(x - 1, y - 1) * sourceSize
+      toRectStart = point(destRect.left, destRect.top) + posMod
+      toRectEnd = toRectStart + sourceSize
+      torect = rect(toRectStart, toRectEnd)
+      destImage.copyPixels(sourceImage, torect, sourceImage.rect, [#useFastQuads: 1, #ink: 36])
+    end repeat
+  end repeat
+end

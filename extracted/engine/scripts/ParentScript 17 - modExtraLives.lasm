@@ -1,0 +1,206 @@
+property ancestor, pExtraLifeSound, pExtraLives, pExtraLivesTextMember, pLifePowerUp, pLifePowerUpsCollected, pLifePowerTextMember, pNumPowerUpsPerLife, pRespawnPoint
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getlocal 0 .............................. <i>
+  [ 12] pushsymb 654 ............................ <#extraLifeSound>
+  [ 15] pushsymb 49 ............................. <#none>
+  [ 17] pusharglistnoret 3 ...................... <i, #extraLifeSound, #none>
+  [ 19] objcall 48 .............................. i[#extraLifeSound] = #none
+  [ 21] getlocal 0 .............................. <i>
+  [ 23] pushsymb 655 ............................ <#extraLives>
+  [ 26] pushzero ................................ <0>
+  [ 27] pusharglistnoret 3 ...................... <i, #extraLives, 0>
+  [ 29] objcall 48 .............................. i[#extraLives] = 0
+  [ 31] getlocal 0 .............................. <i>
+  [ 33] pushsymb 656 ............................ <#lifePowerUp>
+  [ 36] pushsymb 657 ............................ <#hairGem>
+  [ 39] pusharglistnoret 3 ...................... <i, #lifePowerUp, #hairGem>
+  [ 41] objcall 48 .............................. i[#lifePowerUp] = #hairGem
+  [ 43] getlocal 0 .............................. <i>
+  [ 45] pushsymb 658 ............................ <#numPowerUpsPerLife>
+  [ 48] pushint8 100 ............................ <100>
+  [ 50] pusharglistnoret 3 ...................... <i, #numPowerUpsPerLife, 100>
+  [ 52] objcall 48 .............................. i[#numPowerUpsPerLife] = 100
+  [ 54] getprop 33 .............................. <ancestor>
+  [ 56] pusharglistnoret 1 ...................... <ancestor>
+  [ 58] objcall 2 ............................... ancestor.addModParams()
+  [ 60] ret
+end
+
+on init me, params
+  [  0] getparam 1 .............................. <params>
+  [  2] getobjprop 654 .......................... <params.extraLifeSound>
+  [  5] setprop 659 ............................. pExtraLifeSound = params.extraLifeSound
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 655 .......................... <params.extraLives>
+  [ 13] setprop 660 ............................. pExtraLives = params.extraLives
+  [ 16] getparam 1 .............................. <params>
+  [ 18] getobjprop 656 .......................... <params.lifePowerUp>
+  [ 21] setprop 661 ............................. pLifePowerUp = params.lifePowerUp
+  [ 24] pushzero ................................ <0>
+  [ 25] setprop 662 ............................. pLifePowerUpsCollected = 0
+  [ 28] getparam 1 .............................. <params>
+  [ 30] getobjprop 658 .......................... <params.numPowerUpsPerLife>
+  [ 33] setprop 663 ............................. pNumPowerUpsPerLife = params.numPowerUpsPerLife
+  [ 36] pushzero ................................ <0>
+  [ 37] pushzero ................................ <0>
+  [ 38] pusharglist 2 ........................... <0, 0>
+  [ 40] extcall 197 ............................. <point(0, 0)>
+  [ 42] setprop 664 ............................. pRespawnPoint = point(0, 0)
+  [ 45] pushcons 1 .............................. <"extraLives_text">
+  [ 47] pushcons 2 .............................. <"gfx">
+  [ 49] pusharglist 2 ........................... <"extraLives_text", "gfx">
+  [ 51] extcall 99 .............................. <member("extraLives_text", "gfx")>
+  [ 53] setprop 665 ............................. pExtraLivesTextMember = member("extraLives_text", "gfx")
+  [ 56] getprop 661 ............................. <pLifePowerUp>
+  [ 59] pusharglist 1 ........................... <pLifePowerUp>
+  [ 61] extcall 667 ............................. <string(pLifePowerUp)>
+  [ 64] pushcons 3 .............................. <"_text">
+  [ 66] joinstr ................................. <string(pLifePowerUp) & "_text">
+  [ 67] pushcons 2 .............................. <"gfx">
+  [ 69] pusharglist 2 ........................... <string(pLifePowerUp) & "_text", "gfx">
+  [ 71] extcall 99 .............................. <member(string(pLifePowerUp) & "_text", "gfx")>
+  [ 73] setprop 666 ............................. pLifePowerTextMember = member(string(pLifePowerUp) & "_text", "gfx")
+  [ 76] getparam 0 .............................. <me>
+  [ 78] pusharglistnoret 1 ...................... <me>
+  [ 80] objcall 652 ............................. me.updateExtraLivesDisplay()
+  [ 83] getparam 0 .............................. <me>
+  [ 85] pusharglistnoret 1 ...................... <me>
+  [ 87] objcall 653 ............................. me.updateLifePowerUpsDisplay()
+  [ 90] getprop 33 .............................. <ancestor>
+  [ 92] getparam 1 .............................. <params>
+  [ 94] pusharglistnoret 2 ...................... <ancestor, params>
+  [ 96] objcall 1 ............................... ancestor.init(params)
+  [ 98] ret
+end
+
+on finish me
+  [  0] pushzero ................................ <0>
+  [  1] setprop 660 ............................. pExtraLives = 0
+  [  4] pushzero ................................ <0>
+  [  5] setprop 662 ............................. pLifePowerUpsCollected = 0
+  [  8] getparam 0 .............................. <me>
+  [ 10] pusharglistnoret 1 ...................... <me>
+  [ 12] objcall 652 ............................. me.updateExtraLivesDisplay()
+  [ 15] getparam 0 .............................. <me>
+  [ 17] pusharglistnoret 1 ...................... <me>
+  [ 19] objcall 653 ............................. me.updateLifePowerUpsDisplay()
+  [ 22] getprop 33 .............................. <ancestor>
+  [ 24] pusharglistnoret 1 ...................... <ancestor>
+  [ 26] objcall 3 ............................... ancestor.finish()
+  [ 28] ret
+end
+
+on attemptRespawn me
+  [  0] getprop 660 ............................. <pExtraLives>
+  [  3] pushzero ................................ <0>
+  [  4] gt ...................................... <pExtraLives > 0>
+  [  5] jmpifz [ 25] ............................ if pExtraLives > 0 then / else
+  [  8] getparam 0 .............................. <me>
+  [ 10] getchainedprop 57 ....................... <me.id>
+  [ 12] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 14] pusharglistnoret 1 ...................... <me.id.bigMe>
+  [ 16] objcall 651 ............................. me.id.bigMe.respawn()
+  [ 19] pushzero ................................ <0>
+  [ 20] setlocal 0 .............................. gameOver = 0
+  [ 22] jmp [ 29]
+  [ 25] pushint8 1 .............................. <1>
+  [ 27] setlocal 0 .............................. gameOver = 1
+  [ 29] getlocal 0 .............................. <gameOver>
+  [ 31] pusharglistnoret 1 ...................... <gameOver>
+  [ 33] extcall 35 .............................. return gameOver
+  [ 35] ret
+end
+
+on lifePowerUpCollected me
+  [  0] getprop 662 ............................. <pLifePowerUpsCollected>
+  [  3] pushint8 1 .............................. <1>
+  [  5] add ..................................... <pLifePowerUpsCollected + 1>
+  [  6] setprop 662 ............................. pLifePowerUpsCollected = pLifePowerUpsCollected + 1
+  [  9] getprop 662 ............................. <pLifePowerUpsCollected>
+  [ 12] getprop 663 ............................. <pNumPowerUpsPerLife>
+  [ 15] eq ...................................... <pLifePowerUpsCollected = pNumPowerUpsPerLife>
+  [ 16] jmpifz [ 49] ............................ if pLifePowerUpsCollected = pNumPowerUpsPerLife then
+  [ 19] getprop 660 ............................. <pExtraLives>
+  [ 22] pushint8 1 .............................. <1>
+  [ 24] add ..................................... <pExtraLives + 1>
+  [ 25] setprop 660 ............................. pExtraLives = pExtraLives + 1
+  [ 28] pushzero ................................ <0>
+  [ 29] setprop 662 ............................. pLifePowerUpsCollected = 0
+  [ 32] getparam 0 .............................. <me>
+  [ 34] pusharglistnoret 1 ...................... <me>
+  [ 36] objcall 652 ............................. me.updateExtraLivesDisplay()
+  [ 39] getparam 0 .............................. <me>
+  [ 41] getprop 659 ............................. <pExtraLifeSound>
+  [ 44] pusharglistnoret 2 ...................... <me, pExtraLifeSound>
+  [ 46] objcall 551 ............................. me.PlaySound(pExtraLifeSound)
+  [ 49] getparam 0 .............................. <me>
+  [ 51] pusharglistnoret 1 ...................... <me>
+  [ 53] objcall 445 ............................. me.flashWhite()
+  [ 56] getparam 0 .............................. <me>
+  [ 58] pusharglistnoret 1 ...................... <me>
+  [ 60] objcall 653 ............................. me.updateLifePowerUpsDisplay()
+  [ 63] ret
+end
+
+on recordRespawnPoint me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 111 ............................. <me.getLoc()>
+  [  6] setprop 664 ............................. pRespawnPoint = me.getLoc()
+  [  9] ret
+end
+
+on respawn me
+  [  0] getparam 0 .............................. <me>
+  [  2] getprop 664 ............................. <pRespawnPoint>
+  [  5] pusharglistnoret 2 ...................... <me, pRespawnPoint>
+  [  7] objcall 669 ............................. me.setLoc(pRespawnPoint)
+  [ 10] getparam 0 .............................. <me>
+  [ 12] pusharglistnoret 1 ...................... <me>
+  [ 14] objcall 513 ............................. me.restoreEnergy()
+  [ 17] getprop 660 ............................. <pExtraLives>
+  [ 20] pushint8 1 .............................. <1>
+  [ 22] sub ..................................... <pExtraLives - 1>
+  [ 23] setprop 660 ............................. pExtraLives = pExtraLives - 1
+  [ 26] getparam 0 .............................. <me>
+  [ 28] pusharglistnoret 1 ...................... <me>
+  [ 30] objcall 652 ............................. me.updateExtraLivesDisplay()
+  [ 33] ret
+end
+
+on updateExtraLivesDisplay me
+  [  0] getprop 665 ............................. <pExtraLivesTextMember>
+  [  3] getprop 660 ............................. <pExtraLives>
+  [  6] pusharglist 1 ........................... <pExtraLives>
+  [  8] extcall 667 ............................. <string(pExtraLives)>
+  [ 11] setobjprop 670 .......................... pExtraLivesTextMember.text = string(pExtraLives)
+  [ 14] ret
+end
+
+on updateLifePowerUpsDisplay me
+  [  0] getprop 666 ............................. <pLifePowerTextMember>
+  [  3] getprop 662 ............................. <pLifePowerUpsCollected>
+  [  6] pusharglist 1 ........................... <pLifePowerUpsCollected>
+  [  8] extcall 667 ............................. <string(pLifePowerUpsCollected)>
+  [ 11] setobjprop 670 .......................... pLifePowerTextMember.text = string(pLifePowerUpsCollected)
+  [ 14] ret
+end

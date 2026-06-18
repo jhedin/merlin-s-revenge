@@ -1,0 +1,371 @@
+property ancestor, pAttack, pmode, pOwner, pType
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"objGameObject">
+  [  2] pusharglist 1 ........................... <"objGameObject">
+  [  4] extcall 34 .............................. <script("objGameObject")>
+  [  6] pusharglist 1 ........................... <script("objGameObject")>
+  [  8] extcall 0 ............................... <new(script("objGameObject"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objGameObject"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 145 ............................ <#attack>
+  [ 26] getglobal 40 ............................ <g>
+  [ 28] getchainedprop 1168 ..................... <g.structMaster>
+  [ 31] pushsymb 145 ............................ <#attack>
+  [ 33] pusharglist 2 ........................... <g.structMaster, #attack>
+  [ 35] objcall 1170 ............................ <g.structMaster.getStruct(#attack)>
+  [ 38] pusharglistnoret 3 ...................... <i, #attack, g.structMaster.getStruct(#attack)>
+  [ 40] objcall 48 .............................. i[#attack] = g.structMaster.getStruct(#attack)
+  [ 42] getparam 0 .............................. <me>
+  [ 44] pushcons 1 .............................. <"modAnimSet">
+  [ 46] pusharglistnoret 2 ...................... <me, "modAnimSet">
+  [ 48] objcall 1717 ............................ me.addModule("modAnimSet")
+  [ 51] getparam 0 .............................. <me>
+  [ 53] pushcons 2 .............................. <"modRotator">
+  [ 55] pusharglistnoret 2 ...................... <me, "modRotator">
+  [ 57] objcall 1717 ............................ me.addModule("modRotator")
+  [ 60] getparam 0 .............................. <me>
+  [ 62] pusharglistnoret 1 ...................... <me>
+  [ 64] extcall 35 .............................. return me
+  [ 66] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 145 .......................... <params.attack>
+  [ 12] setprop 149 ............................. pAttack = params.attack
+  [ 14] pushsymb 49 ............................. <#none>
+  [ 16] setprop 4105 ............................ pOwner = #none
+  [ 19] getparam 1 .............................. <params>
+  [ 21] getobjprop 44 ........................... <params.name>
+  [ 23] pusharglist 1 ........................... <params.name>
+  [ 25] extcall 1417 ............................ <symbol(params.name)>
+  [ 28] setprop 3939 ............................ pType = symbol(params.name)
+  [ 31] getglobal 40 ............................ <g>
+  [ 33] getchainedprop 1939 ..................... <g.weaponMaster>
+  [ 36] getprop 3939 ............................ <pType>
+  [ 39] getparam 0 .............................. <me>
+  [ 41] pusharglistnoret 3 ...................... <g.weaponMaster, pType, me>
+  [ 43] objcall 4106 ............................ g.weaponMaster.register(pType, me)
+  [ 46] getparam 0 .............................. <me>
+  [ 48] pushsymb 64 ............................. <#fall>
+  [ 50] pusharglistnoret 2 ...................... <me, #fall>
+  [ 52] objcall 278 ............................. me.goMode(#fall)
+  [ 55] getparam 0 .............................. <me>
+  [ 57] pusharglistnoret 1 ...................... <me>
+  [ 59] objcall 32 .............................. me.updateAnim()
+  [ 61] ret
+end
+
+on finish me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 3 .............................. <#finish>
+  [  4] pusharglistnoret 2 ...................... <me, #finish>
+  [  6] objcall 278 ............................. me.goMode(#finish)
+  [  9] getglobal 40 ............................ <g>
+  [ 11] getchainedprop 1939 ..................... <g.weaponMaster>
+  [ 14] getprop 3939 ............................ <pType>
+  [ 17] getparam 0 .............................. <me>
+  [ 19] pusharglistnoret 3 ...................... <g.weaponMaster, pType, me>
+  [ 21] objcall 4107 ............................ g.weaponMaster.unRegister(pType, me)
+  [ 24] getprop 33 .............................. <ancestor>
+  [ 26] pusharglistnoret 1 ...................... <ancestor>
+  [ 28] objcall 3 ............................... ancestor.finish()
+  [ 30] ret
+end
+
+on AiModeChanged me, newAiMode
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 1937 ............................ <me.isCarried()>
+  [  7] jmpifz [ 84] ............................ if me.isCarried() then
+  [ 10] getparam 1 .............................. <newAiMode>
+  [ 12] peek 0 .................................. case newAiMode of
+  [ 14] pushsymb 145 ............................ <#attack>
+  [ 16] eq
+  [ 17] jmpifz [ 42] ............................ (case) #attack:
+  [ 20] getparam 0 .............................. <me>
+  [ 22] pushsymb 145 ............................ <#attack>
+  [ 24] pusharglistnoret 2 ...................... <me, #attack>
+  [ 26] objcall 278 ............................. me.goMode(#attack)
+  [ 29] getparam 0 .............................. <me>
+  [ 31] getchainedprop 39 ....................... <me.pAnimSet>
+  [ 33] pushsymb 145 ............................ <#attack>
+  [ 35] pusharglistnoret 2 ...................... <me.pAnimSet, #attack>
+  [ 37] objcall 24 .............................. me.pAnimSet.resetAnim(#attack)
+  [ 39] jmp [ 82]
+  [ 42] peek 0
+  [ 44] pushsymb 1373 ........................... <#dazed>
+  [ 47] eq
+  [ 48] jmpifz [ 63] ............................ (case) #dazed:
+  [ 51] getparam 0 .............................. <me>
+  [ 53] pushsymb 64 ............................. <#fall>
+  [ 55] pusharglistnoret 2 ...................... <me, #fall>
+  [ 57] objcall 1721 ............................ me.ensureMode(#fall)
+  [ 60] jmp [ 82]
+  [ 63] peek 0
+  [ 65] pushsymb 1815 ........................... <#moveToAttack>
+  [ 68] eq
+  [ 69] jmpifz [ 82] ............................ (case) #moveToAttack:
+  [ 72] getparam 0 .............................. <me>
+  [ 74] pushsymb 4108 ........................... <#carried>
+  [ 77] pusharglistnoret 2 ...................... <me, #carried>
+  [ 79] objcall 1721 ............................ me.ensureMode(#carried)
+  [ 82] pop 1 ................................... end case
+  [ 84] ret
+end
+
+on checkCollisions me, newLoc
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 1937 ............................ <me.isCarried()>
+  [  7] jmpifz [ 19] ............................ if me.isCarried() then / else
+  [ 10] getparam 1 .............................. <newLoc>
+  [ 12] pusharglistnoret 1 ...................... <newLoc>
+  [ 14] extcall 35 .............................. return newLoc
+  [ 16] jmp [ 32]
+  [ 19] getprop 33 .............................. <ancestor>
+  [ 21] getparam 1 .............................. <newLoc>
+  [ 23] pusharglist 2 ........................... <ancestor, newLoc>
+  [ 25] objcall 1716 ............................ <ancestor.checkCollisions(newLoc)>
+  [ 28] pusharglistnoret 1 ...................... <ancestor.checkCollisions(newLoc)>
+  [ 30] extcall 35 .............................. return ancestor.checkCollisions(newLoc)
+  [ 32] ret
+end
+
+on collisionPlatform me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 2134 ............................ ancestor.collisionPlatform()
+  [  7] getparam 0 .............................. <me>
+  [  9] pushsymb 66 ............................. <#landed>
+  [ 11] pusharglistnoret 2 ...................... <me, #landed>
+  [ 13] objcall 278 ............................. me.goMode(#landed)
+  [ 16] ret
+end
+
+on drop me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 57 ....................... <me.id>
+  [  4] getchainedprop 58 ....................... <me.id.bigMe>
+  [  6] pushsymb 64 ............................. <#fall>
+  [  8] pusharglistnoret 2 ...................... <me.id.bigMe, #fall>
+  [ 10] objcall 278 ............................. me.id.bigMe.goMode(#fall)
+  [ 13] ret
+end
+
+on ensureMode me, theMode
+  [  0] getprop 312 ............................. <pmode>
+  [  3] getparam 1 .............................. <theMode>
+  [  5] nteq .................................... <pmode <> theMode>
+  [  6] jmpifz [ 18] ............................ if pmode <> theMode then
+  [  9] getparam 0 .............................. <me>
+  [ 11] getparam 1 .............................. <theMode>
+  [ 13] pusharglistnoret 2 ...................... <me, theMode>
+  [ 15] objcall 278 ............................. me.goMode(theMode)
+  [ 18] ret
+end
+
+on getAttack me
+  [  0] getprop 149 ............................. <pAttack>
+  [  2] pusharglist 1 ........................... <pAttack>
+  [  4] objcall 175 ............................. <pAttack.duplicate()>
+  [  6] pusharglistnoret 1 ...................... <pAttack.duplicate()>
+  [  8] extcall 35 .............................. return pAttack.duplicate()
+  [ 10] ret
+end
+
+on goMode me, newMode
+  [  0] getprop 312 ............................. <pmode>
+  [  3] peek 0 .................................. case pmode of
+  [  5] pushsymb 4108 ........................... <#carried>
+  [  8] nteq
+  [  9] jmpifz [ 20] ............................ (case) #carried, ...
+  [ 12] peek 0
+  [ 14] pushsymb 145 ............................ <#attack>
+  [ 16] eq
+  [ 17] jmpifz [ 68] ............................ (case) ..., #attack:
+  [ 20] getparam 1 .............................. <newMode>
+  [ 22] peek 0 .................................. case newMode of
+  [ 24] pushsymb 4108 ........................... <#carried>
+  [ 27] nteq
+  [ 28] jmpifz [ 39] ............................ (case) #carried, ...
+  [ 31] peek 0
+  [ 33] pushsymb 145 ............................ <#attack>
+  [ 35] eq
+  [ 36] jmpifz [ 46] ............................ (case) ..., #attack:
+  [ 39] pusharglistnoret 0 ...................... <>
+  [ 41] extcall 185 ............................. nothing()
+  [ 43] jmp [ 63] ............................... (case) otherwise:
+  [ 46] getprop 4105 ............................ <pOwner>
+  [ 49] pushsymb 49 ............................. <#none>
+  [ 51] nteq .................................... <pOwner <> #none>
+  [ 52] jmpifz [ 63] ............................ if pOwner <> #none then
+  [ 55] getprop 4105 ............................ <pOwner>
+  [ 58] pusharglistnoret 1 ...................... <pOwner>
+  [ 60] objcall 1929 ............................ pOwner.droppedWeapon()
+  [ 63] pop 1 ................................... end case
+  [ 65] jmp [ 83]
+  [ 68] peek 0
+  [ 70] pushsymb 64 ............................. <#fall>
+  [ 72] eq
+  [ 73] jmpifz [ 83] ............................ (case) #fall:
+  [ 76] getparam 0 .............................. <me>
+  [ 78] pusharglistnoret 1 ...................... <me>
+  [ 80] objcall 1183 ............................ me.cancelRotator()
+  [ 83] pop 1 ................................... end case
+  [ 85] getparam 1 .............................. <newMode>
+  [ 87] peek 0 .................................. case newMode of
+  [ 89] pushsymb 64 ............................. <#fall>
+  [ 91] eq
+  [ 92] jmpifz [112] ............................ (case) #fall:
+  [ 95] getparam 0 .............................. <me>
+  [ 97] pusharglistnoret 1 ...................... <me>
+  [ 99] objcall 1059 ............................ me.frictionXOff()
+  [102] getparam 0 .............................. <me>
+  [104] pusharglistnoret 1 ...................... <me>
+  [106] objcall 1184 ............................ me.startRotator()
+  [109] jmp [127]
+  [112] peek 0
+  [114] pushsymb 66 ............................. <#landed>
+  [116] eq
+  [117] jmpifz [127] ............................ (case) #landed:
+  [120] getparam 0 .............................. <me>
+  [122] pusharglistnoret 1 ...................... <me>
+  [124] objcall 2419 ............................ me.frictionXOn()
+  [127] pop 1 ................................... end case
+  [129] getparam 1 .............................. <newMode>
+  [131] setprop 312 ............................. pmode = newMode
+  [134] ret
+end
+
+on isCarried me
+  [  0] getprop 312 ............................. <pmode>
+  [  3] peek 0 .................................. case pmode of
+  [  5] pushsymb 64 ............................. <#fall>
+  [  7] nteq
+  [  8] jmpifz [ 19] ............................ (case) #fall, ...
+  [ 11] peek 0
+  [ 13] pushsymb 66 ............................. <#landed>
+  [ 15] eq
+  [ 16] jmpifz [ 29] ............................ (case) ..., #landed:
+  [ 19] pop 1
+  [ 21] pushzero ................................ <0>
+  [ 22] pusharglistnoret 1 ...................... <0>
+  [ 24] extcall 35 .............................. return 0
+  [ 26] jmp [ 37] ............................... (case) otherwise:
+  [ 29] pop 1
+  [ 31] pushint8 1 .............................. <1>
+  [ 33] pusharglistnoret 1 ...................... <1>
+  [ 35] extcall 35 .............................. return 1
+  [ 37] pop 1 ................................... end case
+  [ 39] ret
+end
+
+on pickedUp me, byWhom
+  [  0] getparam 1 .............................. <byWhom>
+  [  2] setprop 4105 ............................ pOwner = byWhom
+  [  5] getparam 0 .............................. <me>
+  [  7] getchainedprop 57 ....................... <me.id>
+  [  9] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 11] pushsymb 4108 ........................... <#carried>
+  [ 14] pusharglistnoret 2 ...................... <me.id.bigMe, #carried>
+  [ 16] objcall 278 ............................. me.id.bigMe.goMode(#carried)
+  [ 19] ret
+end
+
+on takeHit me, collideVect
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <collideVect>
+  [  4] pusharglistnoret 2 ...................... <ancestor, collideVect>
+  [  6] objcall 516 ............................. ancestor.takeHit(collideVect)
+  [  9] getparam 0 .............................. <me>
+  [ 11] pushsymb 64 ............................. <#fall>
+  [ 13] pusharglistnoret 2 ...................... <me, #fall>
+  [ 15] objcall 278 ............................. me.goMode(#fall)
+  [ 18] ret
+end
+
+on transformFin me
+  [  0] pusharglistnoret 0 ...................... <>
+  [  2] extcall 185 ............................. nothing()
+  [  4] ret
+end
+
+on update me
+  [  0] getprop 312 ............................. <pmode>
+  [  3] peek 0 .................................. case pmode of
+  [  5] pushsymb 145 ............................ <#attack>
+  [  7] nteq
+  [  8] jmpifz [ 20] ............................ (case) #attack, ...
+  [ 11] peek 0
+  [ 13] pushsymb 4108 ........................... <#carried>
+  [ 16] eq
+  [ 17] jmpifz [ 27] ............................ (case) ..., #carried:
+  [ 20] getparam 0 .............................. <me>
+  [ 22] pusharglistnoret 1 ...................... <me>
+  [ 24] objcall 4104 ............................ me.updateCarried()
+  [ 27] pop 1
+  [ 29] getparam 0 .............................. <me>
+  [ 31] pusharglistnoret 1 ...................... <me>
+  [ 33] objcall 32 .............................. me.updateAnim()
+  [ 35] getprop 33 .............................. <ancestor>
+  [ 37] pusharglistnoret 1 ...................... <ancestor>
+  [ 39] objcall 31 .............................. ancestor.update()
+  [ 41] ret
+end
+
+on updateAI me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 2056 ............................ me.checkCollisionsWithHair()
+  [  7] ret
+end
+
+on updateAnim me
+  [  0] getprop 312 ............................. <pmode>
+  [  3] setlocal 0 .............................. sym = pmode
+  [  5] getlocal 0 .............................. <sym>
+  [  7] peek 0 .................................. case sym of
+  [  9] pushsymb 66 ............................. <#landed>
+  [ 11] eq
+  [ 12] jmpifz [ 20] ............................ (case) #landed:
+  [ 15] pushsymb 4108 ........................... <#carried>
+  [ 18] setlocal 0 .............................. sym = #carried
+  [ 20] pop 1
+  [ 22] getprop 33 .............................. <ancestor>
+  [ 24] getlocal 0 .............................. <sym>
+  [ 26] pusharglistnoret 2 ...................... <ancestor, sym>
+  [ 28] objcall 32 .............................. ancestor.updateAnim(sym)
+  [ 30] ret
+end
+
+on updateCarried me
+  [  0] getprop 4105 ............................ <pOwner>
+  [  3] pusharglist 1 ........................... <pOwner>
+  [  5] objcall 111 ............................. <pOwner.getLoc()>
+  [  7] setlocal 0 .............................. ownerLoc = pOwner.getLoc()
+  [  9] getprop 4105 ............................ <pOwner>
+  [ 12] pusharglist 1 ........................... <pOwner>
+  [ 14] objcall 1723 ............................ <pOwner.getFlip()>
+  [ 17] setlocal 1 .............................. ownerFlip = pOwner.getFlip()
+  [ 19] getparam 0 .............................. <me>
+  [ 21] getlocal 0 .............................. <ownerLoc>
+  [ 23] pusharglistnoret 2 ...................... <me, ownerLoc>
+  [ 25] objcall 669 ............................. me.setLoc(ownerLoc)
+  [ 28] getparam 0 .............................. <me>
+  [ 30] getlocal 1 .............................. <ownerFlip>
+  [ 32] pusharglistnoret 2 ...................... <me, ownerFlip>
+  [ 34] objcall 2739 ............................ me.setFlip(ownerFlip)
+  [ 37] ret
+end

@@ -1,0 +1,39 @@
+on CastGetRegpoints memname, castname
+  [  0] pusharglist 0 ........................... <[]>
+  [  2] pushlist ................................ <[]>
+  [  3] setlocal 0 .............................. thelist = []
+  [  5] getparam 1 .............................. <castname>
+  [  7] pushint8 2 .............................. <2>
+  [  9] get 8 ................................... <the number of castMembers of castLib castname>
+  [ 11] setlocal 1 .............................. nummem = the number of castMembers of castLib castname
+  [ 13] pushint8 1 .............................. <1>
+  [ 15] setlocal 2
+  [ 17] getlocal 2
+  [ 19] getlocal 1 .............................. <nummem>
+  [ 21] lteq
+  [ 22] jmpifz [ 64] ............................ repeat with mem = 1 to nummem
+  [ 25] getlocal 2 .............................. <mem>
+  [ 27] getparam 1 .............................. <castname>
+  [ 29] pusharglist 2 ........................... <mem, castname>
+  [ 31] extcall 34 .............................. <member(mem, castname)>
+  [ 33] setlocal 3 .............................. nextMem = member(mem, castname)
+  [ 35] getlocal 3 .............................. <nextMem>
+  [ 37] getobjprop 35 ........................... <nextMem.name>
+  [ 39] getparam 0 .............................. <memname>
+  [ 41] containsstr ............................. <nextMem.name contains memname>
+  [ 42] jmpifz [ 55] ............................ if nextMem.name contains memname then
+  [ 45] getlocal 0 .............................. <thelist>
+  [ 47] getlocal 3 .............................. <nextMem>
+  [ 49] getobjprop 36 ........................... <nextMem.regPoint>
+  [ 51] pusharglistnoret 2 ...................... <thelist, nextMem.regPoint>
+  [ 53] objcall 83 .............................. thelist.append(nextMem.regPoint)
+  [ 55] pushint8 1
+  [ 57] getlocal 2
+  [ 59] add
+  [ 60] setlocal 2
+  [ 62] endrepeat [ 17]
+  [ 64] getlocal 0 .............................. <thelist>
+  [ 66] pusharglistnoret 1 ...................... <thelist>
+  [ 68] extcall 3 ............................... return thelist
+  [ 70] ret
+end

@@ -1,0 +1,286 @@
+property pWeapons
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 12 .............................. return me
+  [  6] ret
+end
+
+on init me
+  [  0] pusharglist 0 ........................... <[:]>
+  [  2] pushproplist ............................ <[:]>
+  [  3] setprop 636 ............................. pWeapons = [:]
+  [  6] ret
+end
+
+on assignWeapon me, weapon, enemyRef
+  [  0] getparam 1 .............................. <weapon>
+  [  2] getparam 2 .............................. <enemyRef>
+  [  4] setobjprop 637 .......................... weapon.owner = enemyRef
+  [  7] ret
+end
+
+on getWeapon me, enemyRef, weaponTypes
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <enemyRef>
+  [  4] getparam 2 .............................. <weaponTypes>
+  [  6] pusharglist 3 ........................... <me, enemyRef, weaponTypes>
+  [  8] objcall 631 ............................. <me.getNearestAvailableWeapon(enemyRef, weaponTypes)>
+  [ 11] pusharglistnoret 1 ...................... <me.getNearestAvailableWeapon(enemyRef, weaponTypes)>
+  [ 13] extcall 12 .............................. return me.getNearestAvailableWeapon(enemyRef, weaponTypes)
+  [ 15] ret
+end
+
+on getNearestAvailableWeapon me, enemyRef, weaponTypes
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <enemyRef>
+  [  4] getparam 2 .............................. <weaponTypes>
+  [  6] pusharglist 3 ........................... <me, enemyRef, weaponTypes>
+  [  8] objcall 633 ............................. <me.getWeaponsInOrderOfNearness(enemyRef, weaponTypes)>
+  [ 11] setlocal 0 .............................. weapons = me.getWeaponsInOrderOfNearness(enemyRef, weaponTypes)
+  [ 13] getparam 0 .............................. <me>
+  [ 15] getlocal 0 .............................. <weapons>
+  [ 17] getparam 1 .............................. <enemyRef>
+  [ 19] pusharglist 3 ........................... <me, weapons, enemyRef>
+  [ 21] objcall 632 ............................. <me.getWeaponFirstAvailable(weapons, enemyRef)>
+  [ 24] setlocal 1 .............................. weapon = me.getWeaponFirstAvailable(weapons, enemyRef)
+  [ 26] getlocal 1 .............................. <weapon>
+  [ 28] pushsymb 15 ............................. <#none>
+  [ 30] nteq .................................... <weapon <> #none>
+  [ 31] jmpifz [ 55] ............................ if weapon <> #none then / else
+  [ 34] getparam 0 .............................. <me>
+  [ 36] getlocal 1 .............................. <weapon>
+  [ 38] getparam 1 .............................. <enemyRef>
+  [ 40] pusharglistnoret 3 ...................... <me, weapon, enemyRef>
+  [ 42] objcall 629 ............................. me.assignWeapon(weapon, enemyRef)
+  [ 45] getlocal 1 .............................. <weapon>
+  [ 47] getobjprop 640 .......................... <weapon.objRef>
+  [ 50] setlocal 2 .............................. weaponRef = weapon.objRef
+  [ 52] jmp [ 59]
+  [ 55] pushsymb 15 ............................. <#none>
+  [ 57] setlocal 2 .............................. weaponRef = #none
+  [ 59] getlocal 2 .............................. <weaponRef>
+  [ 61] pusharglistnoret 1 ...................... <weaponRef>
+  [ 63] extcall 12 .............................. return weaponRef
+  [ 65] ret
+end
+
+on getWeaponFirstAvailable me, weapons, enemyRef
+  [  0] getparam 1 .............................. <weapons>
+  [  2] peek 0
+  [  4] pusharglist 1
+  [  6] extcall 33
+  [  8] pushint8 1
+  [ 10] peek 0
+  [ 12] peek 2
+  [ 14] lteq
+  [ 15] jmpifz [131] ............................ repeat with weapon in weapons
+  [ 18] peek 2
+  [ 20] peek 1
+  [ 22] pusharglist 2
+  [ 24] extcall 34
+  [ 26] setlocal 0
+  [ 28] getlocal 0 .............................. <weapon>
+  [ 30] getobjprop 637 .......................... <weapon.owner>
+  [ 33] pushsymb 15 ............................. <#none>
+  [ 35] eq ...................................... <weapon.owner = #none>
+  [ 36] getlocal 0 .............................. <weapon>
+  [ 38] getobjprop 637 .......................... <weapon.owner>
+  [ 41] getparam 2 .............................. <enemyRef>
+  [ 43] eq ...................................... <weapon.owner = enemyRef>
+  [ 44] or ...................................... <(weapon.owner = #none) or (weapon.owner = enemyRef)>
+  [ 45] jmpifz [ 57] ............................ if (weapon.owner = #none) or (weapon.owner = enemyRef) then
+  [ 48] getlocal 0 .............................. <weapon>
+  [ 50] pusharglistnoret 1 ...................... <weapon>
+  [ 52] extcall 12 .............................. return weapon
+  [ 54] jmp [126] ............................... next repeat
+  [ 57] getlocal 0 .............................. <weapon>
+  [ 59] getchainedprop 640 ...................... <weapon.objRef>
+  [ 62] pusharglist 1 ........................... <weapon.objRef>
+  [ 64] objcall 643 ............................. <weapon.objRef.isCarried()>
+  [ 67] pushzero ................................ <0>
+  [ 68] eq ...................................... <weapon.objRef.isCarried() = 0>
+  [ 69] jmpifz [126] ............................ if weapon.objRef.isCarried() = 0 then
+  [ 72] getlocal 0 .............................. <weapon>
+  [ 74] getchainedprop 637 ...................... <weapon.owner>
+  [ 77] pusharglist 1 ........................... <weapon.owner>
+  [ 79] objcall 645 ............................. <weapon.owner.getLoc()>
+  [ 82] getlocal 0 .............................. <weapon>
+  [ 84] getchainedprop 640 ...................... <weapon.objRef>
+  [ 87] pusharglist 1 ........................... <weapon.objRef>
+  [ 89] objcall 645 ............................. <weapon.objRef.getLoc()>
+  [ 92] pusharglist 2 ........................... <weapon.owner.getLoc(), weapon.objRef.getLoc()>
+  [ 94] extcall 644 ............................. <geomPixelDist(weapon.owner.getLoc(), weapon.objRef.getLoc())>
+  [ 97] setlocal 1 .............................. ownerDist = geomPixelDist(weapon.owner.getLoc(), weapon.objRef.getLoc())
+  [ 99] getlocal 1 .............................. <ownerDist>
+  [101] getlocal 0 .............................. <weapon>
+  [103] getobjprop 646 .......................... <weapon.dist>
+  [106] gt ...................................... <ownerDist > weapon.dist>
+  [107] jmpifz [126] ............................ if ownerDist > weapon.dist then
+  [110] getlocal 0 .............................. <weapon>
+  [112] getchainedprop 637 ...................... <weapon.owner>
+  [115] pusharglistnoret 1 ...................... <weapon.owner>
+  [117] objcall 647 ............................. weapon.owner.lostWeapon()
+  [120] getlocal 0 .............................. <weapon>
+  [122] pusharglistnoret 1 ...................... <weapon>
+  [124] extcall 12 .............................. return weapon
+  [126] pushint8 1
+  [128] add
+  [129] endrepeat [ 10]
+  [131] pop 3
+  [133] pushsymb 15 ............................. <#none>
+  [135] pusharglistnoret 1 ...................... <#none>
+  [137] extcall 12 .............................. return #none
+  [139] ret
+end
+
+on getWeaponsInOrderOfNearness me, enemyRef, weaponTypes
+  [  0] pusharglist 0 ........................... <[]>
+  [  2] pushlist ................................ <[]>
+  [  3] setlocal 0 .............................. weapons = []
+  [  5] getparam 2 .............................. <weaponTypes>
+  [  7] peek 0
+  [  9] pusharglist 1
+  [ 11] extcall 33
+  [ 13] pushint8 1
+  [ 15] peek 0
+  [ 17] peek 2
+  [ 19] lteq
+  [ 20] jmpifz [145] ............................ repeat with weaponType in weaponTypes
+  [ 23] peek 2
+  [ 25] peek 1
+  [ 27] pusharglist 2
+  [ 29] extcall 34
+  [ 31] setlocal 1
+  [ 33] getprop 636 ............................. <pWeapons>
+  [ 36] getlocal 1 .............................. <weaponType>
+  [ 38] pusharglist 2 ........................... <pWeapons, weaponType>
+  [ 40] objcall 34 .............................. <pWeapons[weaponType]>
+  [ 42] setlocal 2 .............................. nWeaponList = pWeapons[weaponType]
+  [ 44] getlocal 2 .............................. <nWeaponList>
+  [ 46] pusharglist 0 ........................... <>
+  [ 48] extcall 194 ............................. <VOID>
+  [ 50] nteq .................................... <nWeaponList <> VOID>
+  [ 51] jmpifz [140] ............................ if nWeaponList <> VOID then
+  [ 54] getlocal 2 .............................. <nWeaponList>
+  [ 56] peek 0
+  [ 58] pusharglist 1
+  [ 60] extcall 33
+  [ 62] pushint8 1
+  [ 64] peek 0
+  [ 66] peek 2
+  [ 68] lteq
+  [ 69] jmpifz [138] ............................ repeat with nWeapon in nWeaponList
+  [ 72] peek 2
+  [ 74] peek 1
+  [ 76] pusharglist 2
+  [ 78] extcall 34
+  [ 80] setlocal 3
+  [ 82] getparam 1 .............................. <enemyRef>
+  [ 84] pusharglist 1 ........................... <enemyRef>
+  [ 86] objcall 645 ............................. <enemyRef.getLoc()>
+  [ 89] setlocal 4 .............................. enemyLoc = enemyRef.getLoc()
+  [ 91] getlocal 3 .............................. <nWeapon>
+  [ 93] getchainedprop 640 ...................... <nWeapon.objRef>
+  [ 96] pusharglist 1 ........................... <nWeapon.objRef>
+  [ 98] objcall 645 ............................. <nWeapon.objRef.getLoc()>
+  [101] setlocal 5 .............................. weaponLoc = nWeapon.objRef.getLoc()
+  [103] getlocal 4 .............................. <enemyLoc>
+  [105] getlocal 5 .............................. <weaponLoc>
+  [107] pusharglist 2 ........................... <enemyLoc, weaponLoc>
+  [109] extcall 644 ............................. <geomPixelDist(enemyLoc, weaponLoc)>
+  [112] setlocal 6 .............................. dist = geomPixelDist(enemyLoc, weaponLoc)
+  [114] getlocal 3 .............................. <nWeapon>
+  [116] pushsymb 646 ............................ <#dist>
+  [119] getlocal 6 .............................. <dist>
+  [121] pusharglistnoret 3 ...................... <nWeapon, #dist, dist>
+  [123] objcall 83 .............................. nWeapon[#dist] = dist
+  [125] getlocal 0 .............................. <weapons>
+  [127] getlocal 3 .............................. <nWeapon>
+  [129] pusharglistnoret 2 ...................... <weapons, nWeapon>
+  [131] objcall 38 .............................. weapons.append(nWeapon)
+  [133] pushint8 1
+  [135] add
+  [136] endrepeat [ 64]
+  [138] pop 3
+  [140] pushint8 1
+  [142] add
+  [143] endrepeat [ 15]
+  [145] pop 3
+  [147] getlocal 0 .............................. <weapons>
+  [149] pushsymb 646 ............................ <#dist>
+  [152] pusharglist 2 ........................... <weapons, #dist>
+  [154] extcall 649 ............................. <ListSortByProp(weapons, #dist)>
+  [157] setlocal 0 .............................. weapons = ListSortByProp(weapons, #dist)
+  [159] getlocal 0 .............................. <weapons>
+  [161] pusharglistnoret 1 ...................... <weapons>
+  [163] extcall 12 .............................. return weapons
+  [165] ret
+end
+
+on register me, objType, objRef
+  [  0] getprop 636 ............................. <pWeapons>
+  [  3] getparam 1 .............................. <objType>
+  [  5] pusharglist 2 ........................... <pWeapons, objType>
+  [  7] objcall 34 .............................. <pWeapons[objType]>
+  [  9] pusharglist 0 ........................... <>
+  [ 11] extcall 194 ............................. <VOID>
+  [ 13] eq ...................................... <pWeapons[objType] = VOID>
+  [ 14] jmpifz [ 29] ............................ if pWeapons[objType] = VOID then
+  [ 17] getprop 636 ............................. <pWeapons>
+  [ 20] getparam 1 .............................. <objType>
+  [ 22] pusharglist 0 ........................... <[]>
+  [ 24] pushlist ................................ <[]>
+  [ 25] pusharglistnoret 3 ...................... <pWeapons, objType, []>
+  [ 27] objcall 83 .............................. pWeapons[objType] = []
+  [ 29] getprop 636 ............................. <pWeapons>
+  [ 32] getparam 1 .............................. <objType>
+  [ 34] pusharglist 2 ........................... <pWeapons, objType>
+  [ 36] objcall 34 .............................. <pWeapons[objType]>
+  [ 38] pushsymb 640 ............................ <#objRef>
+  [ 41] getparam 2 .............................. <objRef>
+  [ 43] pushsymb 654 ............................ <#myType>
+  [ 46] getparam 1 .............................. <objType>
+  [ 48] pushsymb 637 ............................ <#owner>
+  [ 51] pushsymb 15 ............................. <#none>
+  [ 53] pusharglist 6 ........................... <[#objRef: objRef, #myType: objType, #owner: #none]>
+  [ 55] pushproplist ............................ <[#objRef: objRef, #myType: objType, #owner: #none]>
+  [ 56] pusharglistnoret 2 ...................... <pWeapons[objType], [#objRef: objRef, #myType: objType, #owner: #none]>
+  [ 58] objcall 38 .............................. pWeapons[objType].append([#objRef: objRef, #myType: objType, #owner: #none])
+  [ 60] getprop 636 ............................. <pWeapons>
+  [ 63] pusharglistnoret 1 ...................... <pWeapons>
+  [ 65] extcall 229 ............................. ListPrint(pWeapons)
+  [ 67] ret
+end
+
+on unRegister me, objType, objRef
+  [  0] getprop 636 ............................. <pWeapons>
+  [  3] getparam 1 .............................. <objType>
+  [  5] pusharglist 2 ........................... <pWeapons, objType>
+  [  7] objcall 34 .............................. <pWeapons[objType]>
+  [  9] getparam 2 .............................. <objRef>
+  [ 11] pusharglist 2 ........................... <pWeapons[objType], objRef>
+  [ 13] objcall 227 ............................. <pWeapons[objType].getPos(objRef)>
+  [ 15] setlocal 0 .............................. weaponPos = pWeapons[objType].getPos(objRef)
+  [ 17] getlocal 0 .............................. <weaponPos>
+  [ 19] pushzero ................................ <0>
+  [ 20] gt ...................................... <weaponPos > 0>
+  [ 21] jmpifz [ 34] ............................ if weaponPos > 0 then
+  [ 24] getprop 636 ............................. <pWeapons>
+  [ 27] getlocal 0 .............................. <weaponPos>
+  [ 29] pusharglistnoret 2 ...................... <pWeapons, weaponPos>
+  [ 31] objcall 489 ............................. pWeapons.deleteAt(weaponPos)
+  [ 34] getprop 636 ............................. <pWeapons>
+  [ 37] pusharglistnoret 1 ...................... <pWeapons>
+  [ 39] extcall 229 ............................. ListPrint(pWeapons)
+  [ 41] ret
+end
+
+on start me
+  [  0] ret
+end
+
+on stop me
+  [  0] ret
+end

@@ -1,0 +1,34 @@
+global g
+
+on testPropertyDialogue
+  [  0] getglobal 7 ............................. <g>
+  [  2] getchainedprop 31 ....................... <g.objectMaster>
+  [  4] pushsymb 49 ............................. <#objMenuController>
+  [  6] pusharglist 2 ........................... <g.objectMaster, #objMenuController>
+  [  8] objcall 37 .............................. <g.objectMaster.requestObject(#objMenuController)>
+  [ 10] setlocal 0 .............................. menCon = g.objectMaster.requestObject(#objMenuController)
+  [ 12] getlocal 0 .............................. <menCon>
+  [ 14] pushsymb 35 ............................. <#init>
+  [ 16] pusharglist 2 ........................... <menCon, #init>
+  [ 18] objcall 50 .............................. <menCon.getParams(#init)>
+  [ 20] setlocal 1 .............................. params = menCon.getParams(#init)
+  [ 22] getlocal 0 .............................. <menCon>
+  [ 24] getlocal 1 .............................. <params>
+  [ 26] pusharglistnoret 2 ...................... <menCon, params>
+  [ 28] objcall 35 .............................. menCon.init(params)
+  [ 30] getlocal 0 .............................. <menCon>
+  [ 32] pushcons 0 .............................. <"Edit Details">
+  [ 34] pushsymb 51 ............................. <#name>
+  [ 36] pushcons 1 .............................. <"Steve">
+  [ 38] pushsymb 52 ............................. <#age>
+  [ 40] pushint8 29 ............................. <29>
+  [ 42] pusharglist 4 ........................... <[#name: "Steve", #age: 29]>
+  [ 44] pushproplist ............................ <[#name: "Steve", #age: 29]>
+  [ 45] pushint16 290 ........................... <290>
+  [ 48] pushint8 64 ............................. <64>
+  [ 50] pusharglist 2 ........................... <290, 64>
+  [ 52] extcall 21 .............................. <point(290, 64)>
+  [ 54] pusharglistnoret 4 ...................... <menCon, "Edit Details", [#name: "Steve", #age: 29], point(290, 64)>
+  [ 56] objcall 53 .............................. menCon.newPropertyDialogue("Edit Details", [#name: "Steve", #age: 29], point(290, 64))
+  [ 58] ret
+end

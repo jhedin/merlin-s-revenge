@@ -1,0 +1,7 @@
+on MemberExtractLocZ mem
+  nam = mem.name
+  pos = offset("locz", nam)
+  num = nam.char[pos + 4..99]
+  num = value(num)
+  return num
+end

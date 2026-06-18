@@ -1,0 +1,52 @@
+property ancestor
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"objGameObject">
+  [  2] pusharglist 1 ........................... <"objGameObject">
+  [  4] extcall 34 .............................. <script("objGameObject")>
+  [  6] pusharglist 1 ........................... <script("objGameObject")>
+  [  8] extcall 0 ............................... <new(script("objGameObject"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objGameObject"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushcons 1 .............................. <"modAnimSet">
+  [ 16] pusharglistnoret 2 ...................... <me, "modAnimSet">
+  [ 18] objcall 1717 ............................ me.addModule("modAnimSet")
+  [ 21] getparam 0 .............................. <me>
+  [ 23] pusharglistnoret 1 ...................... <me>
+  [ 25] extcall 35 .............................. return me
+  [ 27] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getglobal 40 ............................ <g>
+  [ 10] getchainedprop 155 ...................... <g.magicLimitMaster>
+  [ 12] getparam 1 .............................. <params>
+  [ 14] getobjprop 160 .......................... <params.magicLimit>
+  [ 16] pusharglistnoret 2 ...................... <g.magicLimitMaster, params.magicLimit>
+  [ 18] objcall 2973 ............................ g.magicLimitMaster.setMagicLimit(params.magicLimit)
+  [ 21] ret
+end
+
+on finish me
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 155 ...................... <g.magicLimitMaster>
+  [  4] pusharglistnoret 1 ...................... <g.magicLimitMaster>
+  [  6] objcall 2974 ............................ g.magicLimitMaster.setMagicLimitToDefault()
+  [  9] getprop 33 .............................. <ancestor>
+  [ 11] pusharglistnoret 1 ...................... <ancestor>
+  [ 13] objcall 3 ............................... ancestor.finish()
+  [ 15] ret
+end
+
+on update me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 33 ....................... <me.ancestor>
+  [  4] pusharglistnoret 1 ...................... <me.ancestor>
+  [  6] objcall 31 .............................. me.ancestor.update()
+  [  8] ret
+end

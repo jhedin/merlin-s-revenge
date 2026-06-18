@@ -1,0 +1,185 @@
+property ancestor, pGraves
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getprop 33 .............................. <ancestor>
+  [ 12] pusharglistnoret 1 ...................... <ancestor>
+  [ 14] objcall 2 ............................... ancestor.addModParams()
+  [ 16] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pusharglist 0 ........................... <[]>
+  [ 10] pushlist ................................ <[]>
+  [ 11] setprop 1159 ............................ pGraves = []
+  [ 14] ret
+end
+
+on addSaveData me, sd
+  [  0] getparam 1 .............................. <sd>
+  [  2] pushsymb 1159 ........................... <#pGraves>
+  [  5] getprop 1159 ............................ <pGraves>
+  [  8] pusharglist 1 ........................... <pGraves>
+  [ 10] objcall 175 ............................. <pGraves.duplicate()>
+  [ 12] pusharglistnoret 3 ...................... <sd, #pGraves, pGraves.duplicate()>
+  [ 14] objcall 48 .............................. sd[#pGraves] = pGraves.duplicate()
+  [ 16] getprop 33 .............................. <ancestor>
+  [ 18] getparam 1 .............................. <sd>
+  [ 20] pusharglistnoret 2 ...................... <ancestor, sd>
+  [ 22] objcall 4 ............................... ancestor.addSaveData(sd)
+  [ 24] ret
+end
+
+on drawAndRecordGrave me, theObj
+  [  0] getparam 1 .............................. <theObj>
+  [  2] pusharglist 1 ........................... <theObj>
+  [  4] objcall 749 ............................. <theObj.getGraveMember()>
+  [  7] setlocal 0 .............................. graveMember = theObj.getGraveMember()
+  [  9] getlocal 0 .............................. <graveMember>
+  [ 11] getobjprop 800 .......................... <graveMember.image>
+  [ 14] setlocal 1 .............................. graveImage = graveMember.image
+  [ 16] getlocal 0 .............................. <graveMember>
+  [ 18] getparam 1 .............................. <theObj>
+  [ 20] pusharglist 1 ........................... <theObj>
+  [ 22] objcall 111 ............................. <theObj.getLoc()>
+  [ 24] pusharglist 2 ........................... <graveMember, theObj.getLoc()>
+  [ 26] extcall 1160 ............................ <RectOfMemberDrawnAtLoc(graveMember, theObj.getLoc())>
+  [ 29] setlocal 2 .............................. graveRect = RectOfMemberDrawnAtLoc(graveMember, theObj.getLoc())
+  [ 31] getparam 0 .............................. <me>
+  [ 33] getlocal 1 .............................. <graveImage>
+  [ 35] getlocal 2 .............................. <graveRect>
+  [ 37] pusharglistnoret 3 ...................... <me, graveImage, graveRect>
+  [ 39] objcall 748 ............................. me.drawGrave(graveImage, graveRect)
+  [ 42] getparam 0 .............................. <me>
+  [ 44] getlocal 0 .............................. <graveMember>
+  [ 46] getlocal 2 .............................. <graveRect>
+  [ 48] getparam 1 .............................. <theObj>
+  [ 50] pusharglistnoret 4 ...................... <me, graveMember, graveRect, theObj>
+  [ 52] objcall 1157 ............................ me.recordGrave(graveMember, graveRect, theObj)
+  [ 55] ret
+end
+
+on drawGrave me, theImage, therect
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 95 .............................. <me.getMember()>
+  [  6] getobjprop 800 .......................... <me.getMember().image>
+  [  9] setlocal 0 .............................. roomImage = me.getMember().image
+  [ 11] getparam 0 .............................. <me>
+  [ 13] getchainedprop 57 ....................... <me.id>
+  [ 15] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 17] pusharglist 1 ........................... <me.id.bigMe>
+  [ 19] objcall 111 ............................. <me.id.bigMe.getLoc()>
+  [ 21] setlocal 1 .............................. roomLocOnScreen = me.id.bigMe.getLoc()
+  [ 23] getparam 2 .............................. <therect>
+  [ 25] getlocal 1 .............................. <roomLocOnScreen>
+  [ 27] getlocal 1 .............................. <roomLocOnScreen>
+  [ 29] pusharglist 2 ........................... <roomLocOnScreen, roomLocOnScreen>
+  [ 31] extcall 263 ............................. <rect(roomLocOnScreen, roomLocOnScreen)>
+  [ 34] sub ..................................... <therect - rect(roomLocOnScreen, roomLocOnScreen)>
+  [ 35] setparam 2 .............................. therect = therect - rect(roomLocOnScreen, roomLocOnScreen)
+  [ 37] pushsymb 839 ............................ <#useFastQuads>
+  [ 40] pushint8 1 .............................. <1>
+  [ 42] pushsymb 840 ............................ <#ink>
+  [ 45] pushint8 36 ............................. <36>
+  [ 47] pusharglist 4 ........................... <[#useFastQuads: 1, #ink: 36]>
+  [ 49] pushproplist ............................ <[#useFastQuads: 1, #ink: 36]>
+  [ 50] setlocal 2 .............................. drawParams = [#useFastQuads: 1, #ink: 36]
+  [ 52] getlocal 0 .............................. <roomImage>
+  [ 54] getparam 1 .............................. <theImage>
+  [ 56] getparam 2 .............................. <therect>
+  [ 58] getparam 1 .............................. <theImage>
+  [ 60] getobjprop 263 .......................... <theImage.rect>
+  [ 63] getlocal 2 .............................. <drawParams>
+  [ 65] pusharglistnoret 5 ...................... <roomImage, theImage, therect, theImage.rect, drawParams>
+  [ 67] objcall 841 ............................. roomImage.copyPixels(theImage, therect, theImage.rect, drawParams)
+  [ 70] ret
+end
+
+on recordGrave me, theMember, therect, theObj
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 1168 ..................... <g.structMaster>
+  [  5] pushsymb 1169 ........................... <#graveRecord>
+  [  8] pusharglist 2 ........................... <g.structMaster, #graveRecord>
+  [ 10] objcall 1170 ............................ <g.structMaster.getStruct(#graveRecord)>
+  [ 13] setlocal 0 .............................. newGrave = g.structMaster.getStruct(#graveRecord)
+  [ 15] getlocal 0 .............................. <newGrave>
+  [ 17] getparam 3 .............................. <theObj>
+  [ 19] pusharglist 1 ........................... <theObj>
+  [ 21] objcall 611 ............................. <theObj.getActorType()>
+  [ 24] setobjprop 623 .......................... newGrave.actorType = theObj.getActorType()
+  [ 27] getlocal 0 .............................. <newGrave>
+  [ 29] getparam 1 .............................. <theMember>
+  [ 31] setobjprop 99 ........................... newGrave.member = theMember
+  [ 33] getlocal 0 .............................. <newGrave>
+  [ 35] getparam 2 .............................. <therect>
+  [ 37] setobjprop 263 .......................... newGrave.rect = therect
+  [ 40] getprop 1159 ............................ <pGraves>
+  [ 43] getlocal 0 .............................. <newGrave>
+  [ 45] pusharglistnoret 2 ...................... <pGraves, newGrave>
+  [ 47] objcall 256 ............................. pGraves.append(newGrave)
+  [ 50] ret
+end
+
+on reDrawGraves me
+  [  0] getprop 1159 ............................ <pGraves>
+  [  3] peek 0
+  [  5] pusharglist 1
+  [  7] extcall 257
+  [ 10] pushint8 1
+  [ 12] peek 0
+  [ 14] peek 2
+  [ 16] lteq
+  [ 17] jmpifz [ 54] ............................ repeat with grave in pGraves
+  [ 20] peek 2
+  [ 22] peek 1
+  [ 24] pusharglist 2
+  [ 26] extcall 109
+  [ 28] setlocal 0
+  [ 30] getparam 0 .............................. <me>
+  [ 32] getlocal 0 .............................. <grave>
+  [ 34] getchainedprop 99 ....................... <grave.member>
+  [ 36] getobjprop 800 .......................... <grave.member.image>
+  [ 39] getlocal 0 .............................. <grave>
+  [ 41] getobjprop 263 .......................... <grave.rect>
+  [ 44] pusharglistnoret 3 ...................... <me, grave.member.image, grave.rect>
+  [ 46] objcall 748 ............................. me.drawGrave(grave.member.image, grave.rect)
+  [ 49] pushint8 1
+  [ 51] add
+  [ 52] endrepeat [ 12]
+  [ 54] pop 3
+  [ 56] ret
+end
+
+on restoreFromSave me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 26 .............................. ancestor.restoreFromSave(sd)
+  [  8] getparam 1 .............................. <sd>
+  [ 10] getobjprop 1159 ......................... <sd.pGraves>
+  [ 13] setprop 1159 ............................ pGraves = sd.pGraves
+  [ 16] ret
+end

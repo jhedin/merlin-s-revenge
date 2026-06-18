@@ -1,0 +1,83 @@
+property ancestor
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"objAiEnemy">
+  [  2] pusharglist 1 ........................... <"objAiEnemy">
+  [  4] extcall 27 .............................. <script("objAiEnemy")>
+  [  6] pusharglist 1 ........................... <script("objAiEnemy")>
+  [  8] extcall 0 ............................... <new(script("objAiEnemy"))>
+  [ 10] setprop 77 .............................. ancestor = new(script("objAiEnemy"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 17 .............................. return me
+  [ 18] ret
+end
+
+on init me, player
+  [  0] getprop 77 .............................. <ancestor>
+  [  2] getparam 1 .............................. <player>
+  [  4] pusharglistnoret 2 ...................... <ancestor, player>
+  [  6] objcall 1 ............................... ancestor.init(player)
+  [  8] ret
+end
+
+on updateMoveToAttack me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 371 ...................... <me.pAttack>
+  [  5] getchainedprop 716 ...................... <me.pAttack.idealAttackLoc>
+  [  8] pusharglist 1 ........................... <me.pAttack.idealAttackLoc>
+  [ 10] objcall 48 .............................. <me.pAttack.idealAttackLoc.duplicate()>
+  [ 12] setlocal 0 .............................. attackLoc = me.pAttack.idealAttackLoc.duplicate()
+  [ 14] getparam 0 .............................. <me>
+  [ 16] getchainedprop 371 ...................... <me.pAttack>
+  [ 19] getobjprop 394 .......................... <me.pAttack.reach>
+  [ 22] setlocal 1 .............................. reach = me.pAttack.reach
+  [ 24] getparam 0 .............................. <me>
+  [ 26] getchainedprop 354 ...................... <me.pPlayer>
+  [ 29] pusharglist 1 ........................... <me.pPlayer>
+  [ 31] objcall 383 ............................. <me.pPlayer.getRect()>
+  [ 34] getlocal 0 .............................. <attackLoc>
+  [ 36] getlocal 0 .............................. <attackLoc>
+  [ 38] pusharglist 2 ........................... <attackLoc, attackLoc>
+  [ 40] extcall 160 ............................. <rect(attackLoc, attackLoc)>
+  [ 42] add ..................................... <me.pPlayer.getRect() + rect(attackLoc, attackLoc)>
+  [ 43] setlocal 2 .............................. idealRect = me.pPlayer.getRect() + rect(attackLoc, attackLoc)
+  [ 45] getparam 0 .............................. <me>
+  [ 47] getchainedprop 354 ...................... <me.pPlayer>
+  [ 50] pusharglist 1 ........................... <me.pPlayer>
+  [ 52] objcall 383 ............................. <me.pPlayer.getRect()>
+  [ 55] getlocal 1 .............................. <reach>
+  [ 57] pushint8 1 .............................. <1>
+  [ 59] pusharglist 2 ........................... <reach, 1>
+  [ 61] objcall 38 .............................. <reach[1]>
+  [ 63] getlocal 1 .............................. <reach>
+  [ 65] pushint8 2 .............................. <2>
+  [ 67] pusharglist 2 ........................... <reach, 2>
+  [ 69] objcall 38 .............................. <reach[2]>
+  [ 71] pusharglist 3 ........................... <me.pPlayer.getRect(), reach[1], reach[2]>
+  [ 73] objcall 159 ............................. <me.pPlayer.getRect().inflate(reach[1], reach[2])>
+  [ 75] setlocal 3 .............................. attackRect = me.pPlayer.getRect().inflate(reach[1], reach[2])
+  [ 77] getparam 0 .............................. <me>
+  [ 79] getlocal 2 .............................. <idealRect>
+  [ 81] pusharglistnoret 2 ...................... <me, idealRect>
+  [ 83] objcall 352 ............................. me.updateMoveToRect(idealRect)
+  [ 86] getparam 0 .............................. <me>
+  [ 88] getlocal 3 .............................. <attackRect>
+  [ 90] pusharglist 2 ........................... <me, attackRect>
+  [ 92] objcall 344 ............................. <me.checkInRect(attackRect)>
+  [ 95] setlocal 4 .............................. inRect = me.checkInRect(attackRect)
+  [ 97] getlocal 4 .............................. <inRect>
+  [ 99] pushint8 1 .............................. <1>
+  [101] eq ...................................... <inRect = 1>
+  [102] jmpifz [112] ............................ if inRect = 1 then / else
+  [105] pushint8 1 .............................. <1>
+  [107] setlocal 5 .............................. fin = 1
+  [109] jmp [115]
+  [112] pushzero ................................ <0>
+  [113] setlocal 5 .............................. fin = 0
+  [115] getlocal 5 .............................. <fin>
+  [117] pusharglistnoret 1 ...................... <fin>
+  [119] extcall 17 .............................. return fin
+  [121] ret
+end

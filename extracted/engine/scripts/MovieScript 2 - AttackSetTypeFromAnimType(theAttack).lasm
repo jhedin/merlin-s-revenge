@@ -1,0 +1,48 @@
+on AttackSetTypeFromAnimType theAttack
+  [  0] getparam 0 .............................. <theAttack>
+  [  2] getobjprop 1 ............................ <theAttack.type>
+  [  4] pushsymb 2 .............................. <#auto>
+  [  6] nteq .................................... <theAttack.type <> #auto>
+  [  7] jmpifz [ 14] ............................ if theAttack.type <> #auto then
+  [ 10] pusharglistnoret 0 ...................... <>
+  [ 12] extcall 3 ............................... return 
+  [ 14] getparam 0 .............................. <theAttack>
+  [ 16] getobjprop 4 ............................ <theAttack.animType>
+  [ 18] peek 0 .................................. case theAttack.animType of
+  [ 20] pushsymb 5 .............................. <#magic>
+  [ 22] eq
+  [ 23] jmpifz [ 35] ............................ (case) #magic:
+  [ 26] getparam 0 .............................. <theAttack>
+  [ 28] pushsymb 5 .............................. <#magic>
+  [ 30] setobjprop 1 ............................ theAttack.type = #magic
+  [ 32] jmp [ 90]
+  [ 35] peek 0
+  [ 37] pushsymb 6 .............................. <#naturalMelee>
+  [ 39] nteq
+  [ 40] jmpifz [ 59] ............................ (case) #naturalMelee, ...
+  [ 43] peek 0
+  [ 45] pushsymb 7 .............................. <#weaponMelee>
+  [ 47] nteq
+  [ 48] jmpifz [ 59] ............................ (case) ..., #weaponMelee, ...
+  [ 51] peek 0
+  [ 53] pushsymb 8 .............................. <#magicMelee>
+  [ 55] eq
+  [ 56] jmpifz [ 68] ............................ (case) ..., #magicMelee:
+  [ 59] getparam 0 .............................. <theAttack>
+  [ 61] pushsymb 9 .............................. <#melee>
+  [ 63] setobjprop 1 ............................ theAttack.type = #melee
+  [ 65] jmp [ 90]
+  [ 68] peek 0
+  [ 70] pushsymb 10 ............................. <#naturalRanged>
+  [ 72] nteq
+  [ 73] jmpifz [ 84] ............................ (case) #naturalRanged, ...
+  [ 76] peek 0
+  [ 78] pushsymb 11 ............................. <#weaponRanged>
+  [ 80] eq
+  [ 81] jmpifz [ 90] ............................ (case) ..., #weaponRanged:
+  [ 84] getparam 0 .............................. <theAttack>
+  [ 86] pushsymb 12 ............................. <#ranged>
+  [ 88] setobjprop 1 ............................ theAttack.type = #ranged
+  [ 90] pop 1 ................................... end case
+  [ 92] ret
+end

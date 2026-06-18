@@ -1,0 +1,151 @@
+global g
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 3 ............................... return me
+  [  6] ret
+end
+
+on init me
+  [  0] ret
+end
+
+on experienceStar me, theObj
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 619 ...................... <g.actorMaster>
+  [  5] pushsymb 894 ............................ <#newActor>
+  [  8] pusharglist 2 ........................... <g.actorMaster, #newActor>
+  [ 10] objcall 339 ............................. <g.actorMaster.getParams(#newActor)>
+  [ 13] setlocal 0 .............................. params = g.actorMaster.getParams(#newActor)
+  [ 15] getlocal 0 .............................. <params>
+  [ 17] pushsymb 1003 ........................... <#experienceStar>
+  [ 20] setobjprop 260 .......................... params.typ = #experienceStar
+  [ 23] getlocal 0 .............................. <params>
+  [ 25] pushzero ................................ <0>
+  [ 26] pushint8 2 .............................. <2>
+  [ 28] inv ..................................... <-2>
+  [ 29] pusharglist 2 ........................... <0, -2>
+  [ 31] extcall 122 ............................. <point(0, -2)>
+  [ 33] setobjprop 905 .......................... params.initVect = point(0, -2)
+  [ 36] getlocal 0 .............................. <params>
+  [ 38] getparam 1 .............................. <theObj>
+  [ 40] pusharglist 1 ........................... <theObj>
+  [ 42] objcall 745 ............................. <theObj.getLoc()>
+  [ 45] setobjprop 908 .......................... params.startLoc = theObj.getLoc()
+  [ 48] getlocal 0 .............................. <params>
+  [ 50] pushzero ................................ <0>
+  [ 51] setobjprop 909 .......................... params.useOffset = 0
+  [ 54] getglobal 191 ........................... <g>
+  [ 56] getchainedprop 619 ...................... <g.actorMaster>
+  [ 59] getlocal 0 .............................. <params>
+  [ 61] pusharglist 2 ........................... <g.actorMaster, params>
+  [ 63] objcall 894 ............................. <g.actorMaster.newActor(params)>
+  [ 66] setlocal 1 .............................. star = g.actorMaster.newActor(params)
+  [ 68] getparam 1 .............................. <theObj>
+  [ 70] pusharglist 1 ........................... <theObj>
+  [ 72] objcall 1006 ............................ <theObj.getLocZ()>
+  [ 75] setlocal 2 .............................. theObjLocZ = theObj.getLocZ()
+  [ 77] getlocal 1 .............................. <star>
+  [ 79] getlocal 2 .............................. <theObjLocZ>
+  [ 81] pushint8 1 .............................. <1>
+  [ 83] sub ..................................... <theObjLocZ - 1>
+  [ 84] pusharglistnoret 2 ...................... <star, theObjLocZ - 1>
+  [ 86] objcall 1007 ............................ star.setLocZ(theObjLocZ - 1)
+  [ 89] ret
+end
+
+on markerStar me, where
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 619 ...................... <g.actorMaster>
+  [  5] pushsymb 1008 ........................... <#star>
+  [  8] getparam 1 .............................. <where>
+  [ 10] pusharglist 3 ........................... <g.actorMaster, #star, where>
+  [ 12] objcall 894 ............................. <g.actorMaster.newActor(#star, where)>
+  [ 15] setlocal 0 .............................. star = g.actorMaster.newActor(#star, where)
+  [ 17] getlocal 0 .............................. <star>
+  [ 19] pushzero ................................ <0>
+  [ 20] pusharglistnoret 2 ...................... <star, 0>
+  [ 22] objcall 1010 ............................ star.setWeight(0)
+  [ 25] getlocal 0 .............................. <star>
+  [ 27] pushint8 1 .............................. <1>
+  [ 29] pusharglistnoret 2 ...................... <star, 1>
+  [ 31] objcall 1011 ............................ star.setLifeCount(1)
+  [ 34] ret
+end
+
+on starBurstX me, where, strength
+  [  0] getparam 2 .............................. <strength>
+  [  2] pusharglist 0 ........................... <>
+  [  4] extcall 388 ............................. <VOID>
+  [  7] eq ...................................... <strength = VOID>
+  [  8] jmpifz [ 15] ............................ if strength = VOID then
+  [ 11] pushint8 3 .............................. <3>
+  [ 13] setparam 2 .............................. strength = 3
+  [ 15] pushint8 1 .............................. <1>
+  [ 17] inv ..................................... <-1>
+  [ 18] pushint8 1 .............................. <1>
+  [ 20] inv ..................................... <-1>
+  [ 21] pusharglist 2 ........................... <-1, -1>
+  [ 23] extcall 122 ............................. <point(-1, -1)>
+  [ 25] pushint8 1 .............................. <1>
+  [ 27] inv ..................................... <-1>
+  [ 28] pushint8 1 .............................. <1>
+  [ 30] pusharglist 2 ........................... <-1, 1>
+  [ 32] extcall 122 ............................. <point(-1, 1)>
+  [ 34] pushint8 1 .............................. <1>
+  [ 36] pushint8 1 .............................. <1>
+  [ 38] inv ..................................... <-1>
+  [ 39] pusharglist 2 ........................... <1, -1>
+  [ 41] extcall 122 ............................. <point(1, -1)>
+  [ 43] pushint8 1 .............................. <1>
+  [ 45] pushint8 1 .............................. <1>
+  [ 47] pusharglist 2 ........................... <1, 1>
+  [ 49] extcall 122 ............................. <point(1, 1)>
+  [ 51] pusharglist 4 ........................... <[point(-1, -1), point(-1, 1), point(1, -1), point(1, 1)]>
+  [ 53] pushlist ................................ <[point(-1, -1), point(-1, 1), point(1, -1), point(1, 1)]>
+  [ 54] setlocal 0 .............................. dirs = [point(-1, -1), point(-1, 1), point(1, -1), point(1, 1)]
+  [ 56] getglobal 191 ........................... <g>
+  [ 58] getchainedprop 619 ...................... <g.actorMaster>
+  [ 61] pushsymb 894 ............................ <#newActor>
+  [ 64] pusharglist 2 ........................... <g.actorMaster, #newActor>
+  [ 66] objcall 339 ............................. <g.actorMaster.getParams(#newActor)>
+  [ 69] setlocal 1 .............................. params = g.actorMaster.getParams(#newActor)
+  [ 71] getlocal 1 .............................. <params>
+  [ 73] pushsymb 1008 ........................... <#star>
+  [ 76] setobjprop 260 .......................... params.typ = #star
+  [ 79] getlocal 1 .............................. <params>
+  [ 81] getparam 1 .............................. <where>
+  [ 83] setobjprop 908 .......................... params.startLoc = where
+  [ 86] pushint8 1 .............................. <1>
+  [ 88] setlocal 2
+  [ 90] getlocal 2
+  [ 92] pushint8 4 .............................. <4>
+  [ 94] lteq
+  [ 95] jmpifz [140] ............................ repeat with i = 1 to 4
+  [ 98] getglobal 191 ........................... <g>
+  [100] getchainedprop 619 ...................... <g.actorMaster>
+  [103] getlocal 1 .............................. <params>
+  [105] pusharglist 2 ........................... <g.actorMaster, params>
+  [107] objcall 894 ............................. <g.actorMaster.newActor(params)>
+  [110] setlocal 3 .............................. star = g.actorMaster.newActor(params)
+  [112] getlocal 3 .............................. <star>
+  [114] getlocal 0 .............................. <dirs>
+  [116] getlocal 2 .............................. <i>
+  [118] pusharglist 2 ........................... <dirs, i>
+  [120] objcall 301 ............................. <dirs[i]>
+  [123] getparam 2 .............................. <strength>
+  [125] mul ..................................... <dirs[i] * strength>
+  [126] pusharglistnoret 2 ...................... <star, dirs[i] * strength>
+  [128] objcall 746 ............................. star.setVect(dirs[i] * strength)
+  [131] pushint8 1
+  [133] getlocal 2
+  [135] add
+  [136] setlocal 2
+  [138] endrepeat [ 90]
+  [140] ret
+end
+
+on stop me
+  [  0] ret
+end

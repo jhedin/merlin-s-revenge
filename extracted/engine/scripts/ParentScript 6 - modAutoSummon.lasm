@@ -1,0 +1,252 @@
+property ancestor, pArmyMembers
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getlocal 0 .............................. <i>
+  [ 12] pushsymb 4593 ........................... <#armyMembers>
+  [ 15] pusharglist 0 ........................... <[]>
+  [ 17] pushlist ................................ <[]>
+  [ 18] pusharglistnoret 3 ...................... <i, #armyMembers, []>
+  [ 20] objcall 48 .............................. i[#armyMembers] = []
+  [ 22] getprop 33 .............................. <ancestor>
+  [ 24] pusharglistnoret 1 ...................... <ancestor>
+  [ 26] objcall 2 ............................... ancestor.addModParams()
+  [ 28] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 4593 ......................... <params.armyMembers>
+  [ 13] setprop 4594 ............................ pArmyMembers = params.armyMembers
+  [ 16] ret
+end
+
+on addSaveData me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 4 ............................... ancestor.addSaveData(sd)
+  [  8] ret
+end
+
+on restoreFromSave me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 26 .............................. ancestor.restoreFromSave(sd)
+  [  8] ret
+end
+
+on summonArmy me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 51 ....................... <me.big>
+  [  4] pusharglist 1 ........................... <me.big>
+  [  6] objcall 238 ............................. <me.big.getTeam()>
+  [  8] setlocal 0 .............................. team = me.big.getTeam()
+  [ 10] getglobal 40 ............................ <g>
+  [ 12] getchainedprop 1130 ..................... <g.reservationsMaster>
+  [ 15] getlocal 0 .............................. <team>
+  [ 17] pusharglist 2 ........................... <g.reservationsMaster, team>
+  [ 19] objcall 4595 ............................ <g.reservationsMaster.getAvailableSlots(team)>
+  [ 22] setlocal 1 .............................. availableSlots = g.reservationsMaster.getAvailableSlots(team)
+  [ 24] getlocal 1 .............................. <availableSlots>
+  [ 26] pushzero ................................ <0>
+  [ 27] eq ...................................... <availableSlots = 0>
+  [ 28] jmpifz [ 35] ............................ if availableSlots = 0 then
+  [ 31] pusharglistnoret 0 ...................... <>
+  [ 33] extcall 35 .............................. return 
+  [ 35] getglobal 40 ............................ <g>
+  [ 37] getchainedprop 120 ...................... <g.armyMaster>
+  [ 39] getlocal 0 .............................. <team>
+  [ 41] pusharglist 2 ........................... <g.armyMaster, team>
+  [ 43] objcall 4596 ............................ <g.armyMaster.getReserveArmyTeam(team)>
+  [ 46] setlocal 2 .............................. reserveTeam = g.armyMaster.getReserveArmyTeam(team)
+  [ 48] getlocal 2 .............................. <reserveTeam>
+  [ 50] pushsymb 49 ............................. <#none>
+  [ 52] eq ...................................... <reserveTeam = #none>
+  [ 53] getlocal 2 .............................. <reserveTeam>
+  [ 55] pusharglist 0 ........................... <>
+  [ 57] extcall 166 ............................. <VOID>
+  [ 59] eq ...................................... <reserveTeam = VOID>
+  [ 60] or ...................................... <(reserveTeam = #none) or (reserveTeam = VOID)>
+  [ 61] jmpifz [ 68] ............................ if (reserveTeam = #none) or (reserveTeam = VOID) then
+  [ 64] pusharglistnoret 0 ...................... <>
+  [ 66] extcall 35 .............................. return 
+  [ 68] getprop 4594 ............................ <pArmyMembers>
+  [ 71] pusharglist 1 ........................... <pArmyMembers>
+  [ 73] objcall 257 ............................. <pArmyMembers.count()>
+  [ 76] setlocal 3 .............................. membersNum = pArmyMembers.count()
+  [ 78] getlocal 1 .............................. <availableSlots>
+  [ 80] getlocal 3 .............................. <membersNum>
+  [ 82] gteq .................................... <availableSlots >= membersNum>
+  [ 83] jmpifz [ 96] ............................ if availableSlots >= membersNum then / else
+  [ 86] getlocal 1 .............................. <availableSlots>
+  [ 88] getlocal 3 .............................. <membersNum>
+  [ 90] div ..................................... <availableSlots / membersNum>
+  [ 91] setlocal 4 .............................. slotsPerUnit = availableSlots / membersNum
+  [ 93] jmp [106]
+  [ 96] getlocal 1 .............................. <availableSlots>
+  [ 98] getlocal 3 .............................. <membersNum>
+  [100] pushint8 2 .............................. <2>
+  [102] sub ..................................... <membersNum - 2>
+  [103] div ..................................... <availableSlots / (membersNum - 2)>
+  [104] setlocal 4 .............................. slotsPerUnit = availableSlots / (membersNum - 2)
+  [106] getlocal 4 .............................. <slotsPerUnit>
+  [108] pushzero ................................ <0>
+  [109] eq ...................................... <slotsPerUnit = 0>
+  [110] jmpifz [117] ............................ if slotsPerUnit = 0 then
+  [113] pushint8 1 .............................. <1>
+  [115] setlocal 4 .............................. slotsPerUnit = 1
+  [117] getglobal 40 ............................ <g>
+  [119] getchainedprop 1399 ..................... <g.mouseMaster>
+  [122] pusharglist 1 ........................... <g.mouseMaster>
+  [124] objcall 1400 ............................ <g.mouseMaster.getMouseLoc()>
+  [127] setlocal 5 .............................. startLoc = g.mouseMaster.getMouseLoc()
+  [129] getlocal 5 .............................. <startLoc>
+  [131] setlocal 6 .............................. SummonLoc = startLoc
+  [133] getprop 4594 ............................ <pArmyMembers>
+  [136] peek 0
+  [138] pusharglist 1
+  [140] extcall 257
+  [143] pushint8 1
+  [145] peek 0
+  [147] peek 2
+  [149] lteq
+  [150] jmpifz [363] ............................ repeat with typ in pArmyMembers
+  [153] peek 2
+  [155] peek 1
+  [157] pusharglist 2
+  [159] extcall 109
+  [161] setlocal 7
+  [163] getlocal 2 .............................. <reserveTeam>
+  [165] getlocal 7 .............................. <typ>
+  [167] pusharglist 2 ........................... <reserveTeam, typ>
+  [169] objcall 109 ............................. <reserveTeam[typ]>
+  [171] pusharglist 0 ........................... <>
+  [173] extcall 166 ............................. <VOID>
+  [175] eq ...................................... <reserveTeam[typ] = VOID>
+  [176] jmpifz [180] ............................ if reserveTeam[typ] = VOID then
+  [179] ret ..................................... exit
+  [180] getlocal 4 .............................. <slotsPerUnit>
+  [182] setlocal 8 .............................. slotsForTyp = slotsPerUnit
+  [184] getlocal 2 .............................. <reserveTeam>
+  [186] getlocal 7 .............................. <typ>
+  [188] pusharglist 2 ........................... <reserveTeam, typ>
+  [190] objcall 109 ............................. <reserveTeam[typ]>
+  [192] pusharglist 1 ........................... <reserveTeam[typ]>
+  [194] objcall 257 ............................. <reserveTeam[typ].count()>
+  [197] setlocal 9 .............................. unitsAvailable = reserveTeam[typ].count()
+  [199] getlocal 9 .............................. <unitsAvailable>
+  [201] getlocal 8 .............................. <slotsForTyp>
+  [203] lt ...................................... <unitsAvailable < slotsForTyp>
+  [204] jmpifz [211] ............................ if unitsAvailable < slotsForTyp then
+  [207] getlocal 9 .............................. <unitsAvailable>
+  [209] setlocal 8 .............................. slotsForTyp = unitsAvailable
+  [211] getlocal 1 .............................. <availableSlots>
+  [213] getlocal 8 .............................. <slotsForTyp>
+  [215] lt ...................................... <availableSlots < slotsForTyp>
+  [216] jmpifz [223] ............................ if availableSlots < slotsForTyp then
+  [219] getlocal 1 .............................. <availableSlots>
+  [221] setlocal 8 .............................. slotsForTyp = availableSlots
+  [223] getlocal 8 .............................. <slotsForTyp>
+  [225] setlocal 10
+  [227] getlocal 10
+  [229] pushint8 1 .............................. <1>
+  [231] gteq
+  [232] jmpifz [350] ............................ repeat with i = slotsForTyp down to 1
+  [235] getlocal 1 .............................. <availableSlots>
+  [237] pushzero ................................ <0>
+  [238] eq ...................................... <availableSlots = 0>
+  [239] jmpifz [246] ............................ if availableSlots = 0 then / else
+  [242] ret ..................................... exit
+  [243] jmp [256]
+  [246] getlocal 9 .............................. <unitsAvailable>
+  [248] pushzero ................................ <0>
+  [249] eq ...................................... <unitsAvailable = 0>
+  [250] jmpifz [256] ............................ if unitsAvailable = 0 then
+  [253] jmp [341] ............................... next repeat
+  [256] getlocal 6 .............................. <SummonLoc>
+  [258] getlocal 5 .............................. <startLoc>
+  [260] getobjprop 540 .......................... <startLoc.locV>
+  [263] pushint8 30 ............................. <30>
+  [265] pusharglist 1 ........................... <30>
+  [267] extcall 158 ............................. <random(30)>
+  [269] add ..................................... <startLoc.locV + random(30)>
+  [270] pushint8 15 ............................. <15>
+  [272] sub ..................................... <startLoc.locV + random(30) - 15>
+  [273] setobjprop 540 .......................... SummonLoc.locV = startLoc.locV + random(30) - 15
+  [276] getlocal 6 .............................. <SummonLoc>
+  [278] getlocal 5 .............................. <startLoc>
+  [280] getobjprop 540 .......................... <startLoc.locV>
+  [283] pushint8 30 ............................. <30>
+  [285] pusharglist 1 ........................... <30>
+  [287] extcall 158 ............................. <random(30)>
+  [289] add ..................................... <startLoc.locV + random(30)>
+  [290] pushint8 15 ............................. <15>
+  [292] sub ..................................... <startLoc.locV + random(30) - 15>
+  [293] setobjprop 540 .......................... SummonLoc.locV = startLoc.locV + random(30) - 15
+  [296] getglobal 40 ............................ <g>
+  [298] getchainedprop 120 ...................... <g.armyMaster>
+  [300] getlocal 0 .............................. <team>
+  [302] getlocal 7 .............................. <typ>
+  [304] getlocal 6 .............................. <SummonLoc>
+  [306] getlocal 9 .............................. <unitsAvailable>
+  [308] pusharglist 5 ........................... <g.armyMaster, team, typ, SummonLoc, unitsAvailable>
+  [310] objcall 4597 ............................ <g.armyMaster.createUnitNum(team, typ, SummonLoc, unitsAvailable)>
+  [313] setlocal 11 ............................. unit = g.armyMaster.createUnitNum(team, typ, SummonLoc, unitsAvailable)
+  [315] getlocal 11 ............................. <unit>
+  [317] pushsymb 49 ............................. <#none>
+  [319] nteq .................................... <unit <> #none>
+  [320] jmpifz [340] ............................ if unit <> #none then
+  [323] getlocal 1 .............................. <availableSlots>
+  [325] pushint8 1 .............................. <1>
+  [327] sub ..................................... <availableSlots - 1>
+  [328] setlocal 1 .............................. availableSlots = availableSlots - 1
+  [330] getlocal 9 .............................. <unitsAvailable>
+  [332] pushint8 1 .............................. <1>
+  [334] sub ..................................... <unitsAvailable - 1>
+  [335] setlocal 9 .............................. unitsAvailable = unitsAvailable - 1
+  [337] jmp [341] ............................... next repeat
+  [340] ret ..................................... exit
+  [341] pushint8 -1
+  [343] getlocal 10
+  [345] add
+  [346] setlocal 10
+  [348] endrepeat [227]
+  [350] getlocal 1 .............................. <availableSlots>
+  [352] pushzero ................................ <0>
+  [353] eq ...................................... <availableSlots = 0>
+  [354] jmpifz [358] ............................ if availableSlots = 0 then
+  [357] ret ..................................... exit
+  [358] pushint8 1
+  [360] add
+  [361] endrepeat [145]
+  [363] pop 3
+  [365] getglobal 40 ............................ <g>
+  [367] getchainedprop 120 ...................... <g.armyMaster>
+  [369] pusharglistnoret 1 ...................... <g.armyMaster>
+  [371] objcall 4598 ............................ g.armyMaster.displayNextSummons()
+  [374] ret
+end

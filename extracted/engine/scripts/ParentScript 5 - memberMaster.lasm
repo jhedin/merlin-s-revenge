@@ -1,0 +1,173 @@
+property pParams
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 3 ............................... return me
+  [  6] ret
+end
+
+on init me
+  [  0] pushcons 0 .............................. <"temp">
+  [  2] pushint8 2 .............................. <2>
+  [  4] get 8 ................................... <the number of castMembers of castLib "temp">
+  [  6] setlocal 0 .............................. numImages = the number of castMembers of castLib "temp"
+  [  8] pushint8 1 .............................. <1>
+  [ 10] setlocal 1
+  [ 12] getlocal 1
+  [ 14] getlocal 0 .............................. <numImages>
+  [ 16] lteq
+  [ 17] jmpifz [ 42] ............................ repeat with i = 1 to numImages
+  [ 20] getlocal 1 .............................. <i>
+  [ 22] pushcons 0 .............................. <"temp">
+  [ 24] pusharglist 2 ........................... <i, "temp">
+  [ 26] extcall 193 ............................. <member(i, "temp")>
+  [ 28] pusharglistnoret 1 ...................... <member(i, "temp")>
+  [ 30] objcall 375 ............................. member(i, "temp").erase()
+  [ 33] pushint8 1
+  [ 35] getlocal 1
+  [ 37] add
+  [ 38] setlocal 1
+  [ 40] endrepeat [ 12]
+  [ 42] pusharglist 0 ........................... <[:]>
+  [ 44] pushproplist ............................ <[:]>
+  [ 45] setprop 376 ............................. pParams = [:]
+  [ 48] getprop 376 ............................. <pParams>
+  [ 51] pushsymb 374 ............................ <#requestTextMember>
+  [ 54] pusharglist 0 ........................... <[:]>
+  [ 56] pushproplist ............................ <[:]>
+  [ 57] pusharglistnoret 3 ...................... <pParams, #requestTextMember, [:]>
+  [ 59] objcall 54 .............................. pParams[#requestTextMember] = [:]
+  [ 61] getprop 376 ............................. <pParams>
+  [ 64] getobjprop 374 .......................... <pParams.requestTextMember>
+  [ 67] setlocal 2 .............................. rtm = pParams.requestTextMember
+  [ 69] getlocal 2 .............................. <rtm>
+  [ 71] pushsymb 377 ............................ <#alignment>
+  [ 74] pushsymb 378 ............................ <#center>
+  [ 77] pusharglistnoret 3 ...................... <rtm, #alignment, #center>
+  [ 79] objcall 54 .............................. rtm[#alignment] = #center
+  [ 81] getlocal 2 .............................. <rtm>
+  [ 83] pushsymb 359 ............................ <#color>
+  [ 86] pushint16 255 ........................... <255>
+  [ 89] pushint16 255 ........................... <255>
+  [ 92] pushint16 255 ........................... <255>
+  [ 95] pusharglist 3 ........................... <255, 255, 255>
+  [ 97] extcall 106 ............................. <rgb(255, 255, 255)>
+  [ 99] pusharglistnoret 3 ...................... <rtm, #color, rgb(255, 255, 255)>
+  [101] objcall 54 .............................. rtm[#color] = rgb(255, 255, 255)
+  [103] getlocal 2 .............................. <rtm>
+  [105] pushsymb 379 ............................ <#font>
+  [108] pushcons 1 .............................. <"Arial">
+  [110] pusharglistnoret 3 ...................... <rtm, #font, "Arial">
+  [112] objcall 54 .............................. rtm[#font] = "Arial"
+  [114] getlocal 2 .............................. <rtm>
+  [116] pushsymb 380 ............................ <#fontSize>
+  [119] pushint8 10 ............................. <10>
+  [121] pusharglistnoret 3 ...................... <rtm, #fontSize, 10>
+  [123] objcall 54 .............................. rtm[#fontSize] = 10
+  [125] getlocal 2 .............................. <rtm>
+  [127] pushsymb 381 ............................ <#fontStyle>
+  [130] pushsymb 382 ............................ <#plain>
+  [133] pusharglist 1 ........................... <[#plain]>
+  [135] pushlist ................................ <[#plain]>
+  [136] pusharglistnoret 3 ...................... <rtm, #fontStyle, [#plain]>
+  [138] objcall 54 .............................. rtm[#fontStyle] = [#plain]
+  [140] getlocal 2 .............................. <rtm>
+  [142] pushsymb 138 ............................ <#name>
+  [144] pushcons 2 .............................. <"textMember">
+  [146] pusharglistnoret 3 ...................... <rtm, #name, "textMember">
+  [148] objcall 54 .............................. rtm[#name] = "textMember"
+  [150] getlocal 2 .............................. <rtm>
+  [152] pushsymb 325 ............................ <#width>
+  [155] pushint16 300 ........................... <300>
+  [158] pusharglistnoret 3 ...................... <rtm, #width, 300>
+  [160] objcall 54 .............................. rtm[#width] = 300
+  [162] ret
+end
+
+on freeMember me, theMember
+  [  0] getparam 1 .............................. <theMember>
+  [  2] pusharglistnoret 1 ...................... <theMember>
+  [  4] objcall 375 ............................. theMember.erase()
+  [  7] ret
+end
+
+on getParams me, theFunction
+  [  0] getprop 376 ............................. <pParams>
+  [  3] getparam 1 .............................. <theFunction>
+  [  5] pusharglist 2 ........................... <pParams, theFunction>
+  [  7] objcall 301 ............................. <pParams[theFunction]>
+  [ 10] pusharglist 1 ........................... <pParams[theFunction]>
+  [ 12] objcall 302 ............................. <pParams[theFunction].duplicate()>
+  [ 15] pusharglistnoret 1 ...................... <pParams[theFunction].duplicate()>
+  [ 17] extcall 3 ............................... return pParams[theFunction].duplicate()
+  [ 19] ret
+end
+
+on requestMember me, theType, thename
+  [  0] getparam 1 .............................. <theType>
+  [  2] pushcons 0 .............................. <"temp">
+  [  4] pusharglist 1 ........................... <"temp">
+  [  6] extcall 387 ............................. <castLib("temp")>
+  [  9] pusharglist 2 ........................... <theType, castLib("temp")>
+  [ 11] extcall 0 ............................... <new(theType, castLib("temp"))>
+  [ 13] setlocal 0 .............................. imageMem = new(theType, castLib("temp"))
+  [ 15] getparam 2 .............................. <thename>
+  [ 17] pusharglist 0 ........................... <>
+  [ 19] extcall 388 ............................. <VOID>
+  [ 22] nteq .................................... <thename <> VOID>
+  [ 23] jmpifz [ 32] ............................ if thename <> VOID then
+  [ 26] getlocal 0 .............................. <imageMem>
+  [ 28] getparam 2 .............................. <thename>
+  [ 30] setobjprop 138 .......................... imageMem.name = thename
+  [ 32] getlocal 0 .............................. <imageMem>
+  [ 34] pusharglistnoret 1 ...................... <imageMem>
+  [ 36] extcall 3 ............................... return imageMem
+  [ 38] ret
+end
+
+on requestTextMember me, params
+  [  0] pushsymb 392 ............................ <#text>
+  [  3] pushcons 0 .............................. <"temp">
+  [  5] pusharglist 1 ........................... <"temp">
+  [  7] extcall 387 ............................. <castLib("temp")>
+  [ 10] pusharglist 2 ........................... <#text, castLib("temp")>
+  [ 12] extcall 0 ............................... <new(#text, castLib("temp"))>
+  [ 14] setlocal 0 .............................. textMember = new(#text, castLib("temp"))
+  [ 16] getlocal 0 .............................. <textMember>
+  [ 18] getparam 1 .............................. <params>
+  [ 20] getobjprop 377 .......................... <params.alignment>
+  [ 23] setobjprop 377 .......................... textMember.alignment = params.alignment
+  [ 26] getlocal 0 .............................. <textMember>
+  [ 28] getparam 1 .............................. <params>
+  [ 30] getobjprop 138 .......................... <params.name>
+  [ 32] setobjprop 138 .......................... textMember.name = params.name
+  [ 34] getlocal 0 .............................. <textMember>
+  [ 36] getparam 1 .............................. <params>
+  [ 38] getobjprop 379 .......................... <params.font>
+  [ 41] setobjprop 379 .......................... textMember.font = params.font
+  [ 44] getlocal 0 .............................. <textMember>
+  [ 46] getparam 1 .............................. <params>
+  [ 48] getobjprop 380 .......................... <params.fontSize>
+  [ 51] setobjprop 380 .......................... textMember.fontSize = params.fontSize
+  [ 54] getlocal 0 .............................. <textMember>
+  [ 56] getparam 1 .............................. <params>
+  [ 58] getobjprop 381 .......................... <params.fontStyle>
+  [ 61] setobjprop 381 .......................... textMember.fontStyle = params.fontStyle
+  [ 64] getlocal 0 .............................. <textMember>
+  [ 66] getparam 1 .............................. <params>
+  [ 68] getobjprop 359 .......................... <params.color>
+  [ 71] setobjprop 359 .......................... textMember.color = params.color
+  [ 74] getlocal 0 .............................. <textMember>
+  [ 76] getparam 1 .............................. <params>
+  [ 78] getobjprop 325 .......................... <params.width>
+  [ 81] setobjprop 325 .......................... textMember.width = params.width
+  [ 84] getlocal 0 .............................. <textMember>
+  [ 86] pusharglistnoret 1 ...................... <textMember>
+  [ 88] extcall 3 ............................... return textMember
+  [ 90] ret
+end
+
+on stop me
+  [  0] ret
+end

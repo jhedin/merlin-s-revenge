@@ -1,0 +1,38 @@
+global g
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 12 .............................. return me
+  [  6] ret
+end
+
+on init me
+  [  0] getglobal 21 ............................ <g>
+  [  2] getchainedprop 284 ...................... <g.updater>
+  [  5] getparam 0 .............................. <me>
+  [  7] pushsymb 285 ............................ <#hi>
+  [ 10] pusharglistnoret 3 ...................... <g.updater, me, #hi>
+  [ 12] objcall 286 ............................. g.updater.addPrg(me, #hi)
+  [ 15] ret
+end
+
+on start me
+  [  0] getglobal 21 ............................ <g>
+  [  2] getchainedprop 287 ...................... <g.frameTimer>
+  [  5] pusharglistnoret 1 ...................... <g.frameTimer>
+  [  7] objcall 3 ............................... g.frameTimer.start()
+  [  9] getglobal 21 ............................ <g>
+  [ 11] getchainedprop 288 ...................... <g.titlemaster>
+  [ 14] pusharglistnoret 1 ...................... <g.titlemaster>
+  [ 16] objcall 3 ............................... g.titlemaster.start()
+  [ 18] ret
+end
+
+on update me
+  [  0] ret
+end
+
+on stop me
+  [  0] ret
+end

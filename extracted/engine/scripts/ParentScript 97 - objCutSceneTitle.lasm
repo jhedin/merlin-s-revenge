@@ -1,0 +1,206 @@
+property ancestor, pBackgroundColour, pDisplayTime, pDisplayTimer, pmode, pTitleColour, pTitleMember, pTitleToShow
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"objSpriteMember">
+  [  2] pusharglist 1 ........................... <"objSpriteMember">
+  [  4] extcall 34 .............................. <script("objSpriteMember")>
+  [  6] pusharglist 1 ........................... <script("objSpriteMember")>
+  [  8] extcall 0 ............................... <new(script("objSpriteMember"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objSpriteMember"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushcons 1 .............................. <"modColourTransform">
+  [ 16] pusharglistnoret 2 ...................... <me, "modColourTransform">
+  [ 18] objcall 1717 ............................ me.addModule("modColourTransform")
+  [ 21] getparam 0 .............................. <me>
+  [ 23] pusharglistnoret 1 ...................... <me>
+  [ 25] extcall 35 .............................. return me
+  [ 27] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pushzero ................................ <0>
+  [  9] pushzero ................................ <0>
+  [ 10] pushzero ................................ <0>
+  [ 11] pusharglist 3 ........................... <0, 0, 0>
+  [ 13] extcall 436 ............................. <rgb(0, 0, 0)>
+  [ 16] setprop 2430 ............................ pBackgroundColour = rgb(0, 0, 0)
+  [ 19] pushint16 150 ........................... <150>
+  [ 22] setprop 2431 ............................ pDisplayTime = 150
+  [ 25] pushsymb 49 ............................. <#none>
+  [ 27] setprop 2432 ............................ pDisplayTimer = #none
+  [ 30] pushsymb 49 ............................. <#none>
+  [ 32] setprop 312 ............................. pmode = #none
+  [ 35] pushint16 204 ........................... <204>
+  [ 38] pushint16 204 ........................... <204>
+  [ 41] pushzero ................................ <0>
+  [ 42] pusharglist 3 ........................... <204, 204, 0>
+  [ 44] extcall 436 ............................. <rgb(204, 204, 0)>
+  [ 47] setprop 2433 ............................ pTitleColour = rgb(204, 204, 0)
+  [ 50] getparam 1 .............................. <params>
+  [ 52] getchainedprop 267 ...................... <params.spr>
+  [ 55] getobjprop 99 ........................... <params.spr.member>
+  [ 57] setprop 2434 ............................ pTitleMember = params.spr.member
+  [ 60] getprop 2434 ............................ <pTitleMember>
+  [ 63] getprop 2430 ............................ <pBackgroundColour>
+  [ 66] setobjprop 437 .......................... pTitleMember.color = pBackgroundColour
+  [ 69] ret
+end
+
+on finish me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushcons 2 .............................. <EMPTY>
+  [  4] pusharglistnoret 2 ...................... <me, EMPTY>
+  [  6] objcall 2426 ............................ me.setTitle(EMPTY)
+  [  9] getparam 0 .............................. <me>
+  [ 11] pusharglistnoret 1 ...................... <me>
+  [ 13] objcall 2422 ............................ me.cancelDisplayTimer()
+  [ 16] getprop 2434 ............................ <pTitleMember>
+  [ 19] pushsymb 49 ............................. <#none>
+  [ 21] nteq .................................... <pTitleMember <> #none>
+  [ 22] jmpifz [ 30] ............................ if pTitleMember <> #none then
+  [ 25] pushsymb 49 ............................. <#none>
+  [ 27] setprop 2434 ............................ pTitleMember = #none
+  [ 30] getprop 33 .............................. <ancestor>
+  [ 32] pusharglistnoret 1 ...................... <ancestor>
+  [ 34] objcall 3 ............................... ancestor.finish()
+  [ 36] ret
+end
+
+on cancelDisplayTimer me
+  [  0] getprop 2432 ............................ <pDisplayTimer>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] nteq .................................... <pDisplayTimer <> #none>
+  [  6] jmpifz [ 21] ............................ if pDisplayTimer <> #none then
+  [  9] getprop 2432 ............................ <pDisplayTimer>
+  [ 12] pusharglistnoret 1 ...................... <pDisplayTimer>
+  [ 14] objcall 3 ............................... pDisplayTimer.finish()
+  [ 16] pushsymb 49 ............................. <#none>
+  [ 18] setprop 2432 ............................ pDisplayTimer = #none
+  [ 21] ret
+end
+
+on colourTransformFin me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 478 ............................. ancestor.colourTransformFin()
+  [  7] getprop 312 ............................. <pmode>
+  [ 10] peek 0 .................................. case pmode of
+  [ 12] pushsymb 1453 ........................... <#fadeDown>
+  [ 15] eq
+  [ 16] jmpifz [ 43] ............................ (case) #fadeDown:
+  [ 19] getparam 0 .............................. <me>
+  [ 21] getprop 2435 ............................ <pTitleToShow>
+  [ 24] pusharglistnoret 2 ...................... <me, pTitleToShow>
+  [ 26] objcall 2426 ............................ me.setTitle(pTitleToShow)
+  [ 29] getparam 0 .............................. <me>
+  [ 31] pusharglistnoret 1 ...................... <me>
+  [ 33] objcall 2429 ............................ me.startDisplayTimer()
+  [ 36] getparam 0 .............................. <me>
+  [ 38] pusharglistnoret 1 ...................... <me>
+  [ 40] objcall 2425 ............................ me.revealTitle()
+  [ 43] pop 1
+  [ 45] ret
+end
+
+on displayTimerFinished me
+  [  0] pushsymb 49 ............................. <#none>
+  [  2] setprop 2432 ............................ pDisplayTimer = #none
+  [  5] getparam 0 .............................. <me>
+  [  7] pusharglistnoret 1 ...................... <me>
+  [  9] objcall 2424 ............................ me.hideTitle()
+  [ 12] ret
+end
+
+on hideTitle me
+  [  0] getparam 0 .............................. <me>
+  [  2] getprop 2430 ............................ <pBackgroundColour>
+  [  5] pusharglistnoret 2 ...................... <me, pBackgroundColour>
+  [  7] objcall 2428 ............................ me.startColourChange(pBackgroundColour)
+  [ 10] pushsymb 49 ............................. <#none>
+  [ 12] setprop 312 ............................. pmode = #none
+  [ 15] ret
+end
+
+on revealTitle me
+  [  0] getparam 0 .............................. <me>
+  [  2] getprop 2433 ............................ <pTitleColour>
+  [  5] pusharglistnoret 2 ...................... <me, pTitleColour>
+  [  7] objcall 2428 ............................ me.startColourChange(pTitleColour)
+  [ 10] pushsymb 49 ............................. <#none>
+  [ 12] setprop 312 ............................. pmode = #none
+  [ 15] ret
+end
+
+on setTitle me, theText
+  [  0] getprop 2434 ............................ <pTitleMember>
+  [  3] getparam 1 .............................. <theText>
+  [  5] setobjprop 670 .......................... pTitleMember.text = theText
+  [  8] ret
+end
+
+on showTitle me, theText
+  [  0] getparam 1 .............................. <theText>
+  [  2] setprop 2435 ............................ pTitleToShow = theText
+  [  5] getparam 0 .............................. <me>
+  [  7] getprop 2430 ............................ <pBackgroundColour>
+  [ 10] pusharglistnoret 2 ...................... <me, pBackgroundColour>
+  [ 12] objcall 2428 ............................ me.startColourChange(pBackgroundColour)
+  [ 15] pushsymb 1453 ........................... <#fadeDown>
+  [ 18] setprop 312 ............................. pmode = #fadeDown
+  [ 21] ret
+end
+
+on startColourChange me, newColour
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 442 ............................ <#colourTransform>
+  [  5] pusharglist 2 ........................... <me, #colourTransform>
+  [  7] objcall 230 ............................. <me.getParams(#colourTransform)>
+  [  9] setlocal 0 .............................. params = me.getParams(#colourTransform)
+  [ 11] getlocal 0 .............................. <params>
+  [ 13] getparam 1 .............................. <newColour>
+  [ 15] setobjprop 462 .......................... params.targetColor = newColour
+  [ 18] getlocal 0 .............................. <params>
+  [ 20] pushint8 4 .............................. <4>
+  [ 22] setobjprop 215 .......................... params.speed = 4
+  [ 24] getparam 0 .............................. <me>
+  [ 26] getlocal 0 .............................. <params>
+  [ 28] pusharglistnoret 2 ...................... <me, params>
+  [ 30] objcall 442 ............................. me.colourTransform(params)
+  [ 33] ret
+end
+
+on startDisplayTimer me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 2422 ............................ me.cancelDisplayTimer()
+  [  7] getglobal 40 ............................ <g>
+  [  9] getchainedprop 41 ....................... <g.objectMaster>
+  [ 11] pushsymb 2438 ........................... <#objTimer>
+  [ 14] pusharglist 2 ........................... <g.objectMaster, #objTimer>
+  [ 16] objcall 43 .............................. <g.objectMaster.requestObject(#objTimer)>
+  [ 18] setprop 2432 ............................ pDisplayTimer = g.objectMaster.requestObject(#objTimer)
+  [ 21] getprop 2432 ............................ <pDisplayTimer>
+  [ 24] pushsymb 1 .............................. <#init>
+  [ 26] pusharglist 2 ........................... <pDisplayTimer, #init>
+  [ 28] objcall 230 ............................. <pDisplayTimer.getParams(#init)>
+  [ 30] setlocal 0 .............................. params = pDisplayTimer.getParams(#init)
+  [ 32] getlocal 0 .............................. <params>
+  [ 34] getparam 0 .............................. <me>
+  [ 36] setobjprop 474 .......................... params.callingPrg = me
+  [ 39] getlocal 0 .............................. <params>
+  [ 41] pushsymb 2423 ........................... <#displayTimerFinished>
+  [ 44] setobjprop 1389 ......................... params.callingPrgMessage = #displayTimerFinished
+  [ 47] getlocal 0 .............................. <params>
+  [ 49] getprop 2431 ............................ <pDisplayTime>
+  [ 52] setobjprop 2439 ......................... params.framesTime = pDisplayTime
+  [ 55] getprop 2432 ............................ <pDisplayTimer>
+  [ 58] getlocal 0 .............................. <params>
+  [ 60] pusharglistnoret 2 ...................... <pDisplayTimer, params>
+  [ 62] objcall 1 ............................... pDisplayTimer.init(params)
+  [ 64] ret
+end

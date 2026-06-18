@@ -1,0 +1,263 @@
+property ancestor, pHealAmount, pHealDelayCounter, pRemainingHitpoints, pMedikitActive, pNumOfMedikits, pUpdateMedikitDisplay
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getlocal 0 .............................. <i>
+  [ 12] pushsymb 775 ............................ <#updateMedikitDisplay>
+  [ 15] pushint8 1 .............................. <1>
+  [ 17] pusharglistnoret 3 ...................... <i, #updateMedikitDisplay, 1>
+  [ 19] objcall 48 .............................. i[#updateMedikitDisplay] = 1
+  [ 21] getprop 33 .............................. <ancestor>
+  [ 23] pusharglistnoret 1 ...................... <ancestor>
+  [ 25] objcall 2 ............................... ancestor.addModParams()
+  [ 27] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pushint8 1 .............................. <1>
+  [ 10] setprop 776 ............................. pHealAmount = 1
+  [ 13] pusharglist 0 ........................... <>
+  [ 15] extcall 529 ............................. <CounterNew()>
+  [ 18] setprop 777 ............................. pHealDelayCounter = CounterNew()
+  [ 21] getprop 777 ............................. <pHealDelayCounter>
+  [ 24] pushsymb 530 ............................ <#tim>
+  [ 27] pushint8 2 .............................. <2>
+  [ 29] pushint8 5 .............................. <5>
+  [ 31] pusharglistnoret 4 ...................... <pHealDelayCounter, #tim, 2, 5>
+  [ 33] objcall 531 ............................. pHealDelayCounter.tim[2] = 5
+  [ 36] pushzero ................................ <0>
+  [ 37] setprop 778 ............................. pRemainingHitpoints = 0
+  [ 40] pushzero ................................ <0>
+  [ 41] setprop 779 ............................. pNumOfMedikits = 0
+  [ 44] getparam 1 .............................. <params>
+  [ 46] getobjprop 775 .......................... <params.updateMedikitDisplay>
+  [ 49] setprop 780 ............................. pUpdateMedikitDisplay = params.updateMedikitDisplay
+  [ 52] ret
+end
+
+on addSaveData me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 4 ............................... ancestor.addSaveData(sd)
+  [  8] getparam 1 .............................. <sd>
+  [ 10] pushsymb 777 ............................ <#pHealDelayCounter>
+  [ 13] getprop 777 ............................. <pHealDelayCounter>
+  [ 16] pusharglistnoret 3 ...................... <sd, #pHealDelayCounter, pHealDelayCounter>
+  [ 18] objcall 48 .............................. sd[#pHealDelayCounter] = pHealDelayCounter
+  [ 20] getparam 1 .............................. <sd>
+  [ 22] pushsymb 778 ............................ <#pRemainingHitpoints>
+  [ 25] getprop 778 ............................. <pRemainingHitpoints>
+  [ 28] pusharglistnoret 3 ...................... <sd, #pRemainingHitpoints, pRemainingHitpoints>
+  [ 30] objcall 48 .............................. sd[#pRemainingHitpoints] = pRemainingHitpoints
+  [ 32] getparam 1 .............................. <sd>
+  [ 34] pushsymb 781 ............................ <#pMedikitActive>
+  [ 37] getprop 781 ............................. <pMedikitActive>
+  [ 40] pusharglistnoret 3 ...................... <sd, #pMedikitActive, pMedikitActive>
+  [ 42] objcall 48 .............................. sd[#pMedikitActive] = pMedikitActive
+  [ 44] getparam 1 .............................. <sd>
+  [ 46] pushsymb 779 ............................ <#pNumOfMedikits>
+  [ 49] getprop 779 ............................. <pNumOfMedikits>
+  [ 52] pusharglistnoret 3 ...................... <sd, #pNumOfMedikits, pNumOfMedikits>
+  [ 54] objcall 48 .............................. sd[#pNumOfMedikits] = pNumOfMedikits
+  [ 56] getparam 1 .............................. <sd>
+  [ 58] pushsymb 780 ............................ <#pUpdateMedikitDisplay>
+  [ 61] getprop 780 ............................. <pUpdateMedikitDisplay>
+  [ 64] pusharglistnoret 3 ...................... <sd, #pUpdateMedikitDisplay, pUpdateMedikitDisplay>
+  [ 66] objcall 48 .............................. sd[#pUpdateMedikitDisplay] = pUpdateMedikitDisplay
+  [ 68] ret
+end
+
+on attemptHeal me
+  [  0] getprop 777 ............................. <pHealDelayCounter>
+  [  3] pusharglistnoret 1 ...................... <pHealDelayCounter>
+  [  5] extcall 553 ............................. counter(pHealDelayCounter)
+  [  8] getprop 777 ............................. <pHealDelayCounter>
+  [ 11] getobjprop 552 .......................... <pHealDelayCounter.fin>
+  [ 14] jmpifz [ 82] ............................ if pHealDelayCounter.fin then
+  [ 17] getprop 778 ............................. <pRemainingHitpoints>
+  [ 20] pushzero ................................ <0>
+  [ 21] gt ...................................... <pRemainingHitpoints > 0>
+  [ 22] jmpifz [ 64] ............................ if pRemainingHitpoints > 0 then / else
+  [ 25] getprop 778 ............................. <pRemainingHitpoints>
+  [ 28] getprop 776 ............................. <pHealAmount>
+  [ 31] sub ..................................... <pRemainingHitpoints - pHealAmount>
+  [ 32] setprop 778 ............................. pRemainingHitpoints = pRemainingHitpoints - pHealAmount
+  [ 35] getparam 0 .............................. <me>
+  [ 37] getchainedprop 57 ....................... <me.id>
+  [ 39] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 41] getprop 776 ............................. <pHealAmount>
+  [ 44] pusharglistnoret 2 ...................... <me.id.bigMe, pHealAmount>
+  [ 46] objcall 497 ............................. me.id.bigMe.addToEnergy(pHealAmount)
+  [ 49] pushint8 1 .............................. <1>
+  [ 51] setprop 781 ............................. pMedikitActive = 1
+  [ 54] getparam 0 .............................. <me>
+  [ 56] pusharglistnoret 1 ...................... <me>
+  [ 58] objcall 775 ............................. me.updateMedikitDisplay()
+  [ 61] jmp [ 82]
+  [ 64] pushzero ................................ <0>
+  [ 65] setprop 781 ............................. pMedikitActive = 0
+  [ 68] getparam 0 .............................. <me>
+  [ 70] pusharglistnoret 1 ...................... <me>
+  [ 72] objcall 773 ............................. me.nextMedikit()
+  [ 75] getparam 0 .............................. <me>
+  [ 77] pusharglistnoret 1 ...................... <me>
+  [ 79] objcall 775 ............................. me.updateMedikitDisplay()
+  [ 82] ret
+end
+
+on getMedikitActive me
+  [  0] getprop 781 ............................. <pMedikitActive>
+  [  3] pusharglistnoret 1 ...................... <pMedikitActive>
+  [  5] extcall 35 .............................. return pMedikitActive
+  [  7] ret
+end
+
+on getMedikitRemainingHitpoints me
+  [  0] getprop 778 ............................. <pRemainingHitpoints>
+  [  3] pusharglistnoret 1 ...................... <pRemainingHitpoints>
+  [  5] extcall 35 .............................. return pRemainingHitpoints
+  [  7] ret
+end
+
+on getMedikitMaxHitpoints me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 57 ....................... <me.id>
+  [  4] getchainedprop 58 ....................... <me.id.bigMe>
+  [  6] pusharglist 1 ........................... <me.id.bigMe>
+  [  8] objcall 506 ............................. <me.id.bigMe.getMaxEnergy()>
+  [ 11] pusharglistnoret 1 ...................... <me.id.bigMe.getMaxEnergy()>
+  [ 13] extcall 35 .............................. return me.id.bigMe.getMaxEnergy()
+  [ 15] ret
+end
+
+on getNumOfMedikits me
+  [  0] getprop 779 ............................. <pNumOfMedikits>
+  [  3] setlocal 0 .............................. numOfMedikits = pNumOfMedikits
+  [  5] getprop 778 ............................. <pRemainingHitpoints>
+  [  8] pushzero ................................ <0>
+  [  9] gt ...................................... <pRemainingHitpoints > 0>
+  [ 10] jmpifz [ 20] ............................ if pRemainingHitpoints > 0 then
+  [ 13] getlocal 0 .............................. <numOfMedikits>
+  [ 15] pushint8 1 .............................. <1>
+  [ 17] add ..................................... <numOfMedikits + 1>
+  [ 18] setlocal 0 .............................. numOfMedikits = numOfMedikits + 1
+  [ 20] getlocal 0 .............................. <numOfMedikits>
+  [ 22] pusharglistnoret 1 ...................... <numOfMedikits>
+  [ 24] extcall 35 .............................. return numOfMedikits
+  [ 26] ret
+end
+
+on nextMedikit me
+  [  0] getprop 779 ............................. <pNumOfMedikits>
+  [  3] pushzero ................................ <0>
+  [  4] gt ...................................... <pNumOfMedikits > 0>
+  [  5] jmpifz [ 32] ............................ if pNumOfMedikits > 0 then
+  [  8] getprop 779 ............................. <pNumOfMedikits>
+  [ 11] pushint8 1 .............................. <1>
+  [ 13] sub ..................................... <pNumOfMedikits - 1>
+  [ 14] setprop 779 ............................. pNumOfMedikits = pNumOfMedikits - 1
+  [ 17] getparam 0 .............................. <me>
+  [ 19] pusharglist 1 ........................... <me>
+  [ 21] objcall 771 ............................. <me.getMedikitMaxHitpoints()>
+  [ 24] setprop 778 ............................. pRemainingHitpoints = me.getMedikitMaxHitpoints()
+  [ 27] pushint8 1 .............................. <1>
+  [ 29] setprop 781 ............................. pMedikitActive = 1
+  [ 32] ret
+end
+
+on medikitCollected me
+  [  0] getprop 779 ............................. <pNumOfMedikits>
+  [  3] pushint8 1 .............................. <1>
+  [  5] add ..................................... <pNumOfMedikits + 1>
+  [  6] setprop 779 ............................. pNumOfMedikits = pNumOfMedikits + 1
+  [  9] getparam 0 .............................. <me>
+  [ 11] pusharglistnoret 1 ...................... <me>
+  [ 13] objcall 775 ............................. me.updateMedikitDisplay()
+  [ 16] ret
+end
+
+on restoreFromSave me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 26 .............................. ancestor.restoreFromSave(sd)
+  [  8] getparam 1 .............................. <sd>
+  [ 10] getobjprop 777 .......................... <sd.pHealDelayCounter>
+  [ 13] setprop 777 ............................. pHealDelayCounter = sd.pHealDelayCounter
+  [ 16] getparam 1 .............................. <sd>
+  [ 18] getobjprop 778 .......................... <sd.pRemainingHitpoints>
+  [ 21] setprop 778 ............................. pRemainingHitpoints = sd.pRemainingHitpoints
+  [ 24] getparam 1 .............................. <sd>
+  [ 26] getobjprop 781 .......................... <sd.pMedikitActive>
+  [ 29] setprop 781 ............................. pMedikitActive = sd.pMedikitActive
+  [ 32] getparam 1 .............................. <sd>
+  [ 34] getobjprop 779 .......................... <sd.pNumOfMedikits>
+  [ 37] setprop 779 ............................. pNumOfMedikits = sd.pNumOfMedikits
+  [ 40] getparam 1 .............................. <sd>
+  [ 42] getobjprop 780 .......................... <sd.pUpdateMedikitDisplay>
+  [ 45] setprop 780 ............................. pUpdateMedikitDisplay = sd.pUpdateMedikitDisplay
+  [ 48] getparam 0 .............................. <me>
+  [ 50] pusharglistnoret 1 ...................... <me>
+  [ 52] objcall 775 ............................. me.updateMedikitDisplay()
+  [ 55] ret
+end
+
+on update me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 31 .............................. ancestor.update()
+  [  6] getparam 0 .............................. <me>
+  [  8] getchainedprop 57 ....................... <me.id>
+  [ 10] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 12] pusharglist 1 ........................... <me.id.bigMe>
+  [ 14] objcall 500 ............................. <me.id.bigMe.checkEnergyIsAtMax()>
+  [ 17] pushzero ................................ <0>
+  [ 18] eq ...................................... <me.id.bigMe.checkEnergyIsAtMax() = 0>
+  [ 19] jmpifz [ 32] ............................ if me.id.bigMe.checkEnergyIsAtMax() = 0 then / else
+  [ 22] getparam 0 .............................. <me>
+  [ 24] pusharglistnoret 1 ...................... <me>
+  [ 26] objcall 768 ............................. me.attemptHeal()
+  [ 29] jmp [ 43]
+  [ 32] pushzero ................................ <0>
+  [ 33] setprop 781 ............................. pMedikitActive = 0
+  [ 36] getparam 0 .............................. <me>
+  [ 38] pusharglistnoret 1 ...................... <me>
+  [ 40] objcall 775 ............................. me.updateMedikitDisplay()
+  [ 43] ret
+end
+
+on updateMedikitDisplay me
+  [  0] getprop 780 ............................. <pUpdateMedikitDisplay>
+  [  3] jmpifz [ 22] ............................ if pUpdateMedikitDisplay then
+  [  6] getglobal 40 ............................ <g>
+  [  8] getchainedprop 783 ...................... <g.medikitMaster>
+  [ 11] getparam 0 .............................. <me>
+  [ 13] getchainedprop 57 ....................... <me.id>
+  [ 15] getobjprop 58 ........................... <me.id.bigMe>
+  [ 17] pusharglistnoret 2 ...................... <g.medikitMaster, me.id.bigMe>
+  [ 19] objcall 784 ............................. g.medikitMaster.updateDisplay(me.id.bigMe)
+  [ 22] ret
+end

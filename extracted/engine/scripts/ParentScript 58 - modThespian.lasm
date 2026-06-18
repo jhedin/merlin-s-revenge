@@ -1,0 +1,1591 @@
+property ancestor, pFrameCounter, pExitingStage, pMyLayer, pPreviousAIMode, pScriptPerformer, pScriptPerformerActorID, pSkipCounter, pSpeechBackgroundColor, pSpeechBackgroundBlend, pSpeechBackgroundBorder, pSpeechBackgroundSprite, pSpeechCharWidth, pSpeechColor, pSpeechDisplayMode, pSpeechOffset, pSpeechStyle, pSpeechWidth, pSpeechWidthCutscene, pTextMember, pTextSprite, pTheLine, pThespMode, pTurnToFaceLocked
+global g, gGameTextLayer, gCutSceneSpeechLayer
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getlocal 0 .............................. <i>
+  [ 12] getchainedprop 1477 ..................... <i.flags>
+  [ 15] pushsymb 1478 ........................... <#player>
+  [ 18] pusharglistnoret 2 ...................... <i.flags, #player>
+  [ 20] objcall 256 ............................. i.flags.append(#player)
+  [ 23] getlocal 0 .............................. <i>
+  [ 25] pushsymb 1479 ........................... <#skipDuration>
+  [ 28] pushint8 30 ............................. <30>
+  [ 30] pusharglistnoret 3 ...................... <i, #skipDuration, 30>
+  [ 32] objcall 48 .............................. i[#skipDuration] = 30
+  [ 34] getlocal 0 .............................. <i>
+  [ 36] pushsymb 1480 ........................... <#speechBackgroundColor>
+  [ 39] pushzero ................................ <0>
+  [ 40] pushzero ................................ <0>
+  [ 41] pushzero ................................ <0>
+  [ 42] pusharglist 3 ........................... <0, 0, 0>
+  [ 44] extcall 436 ............................. <rgb(0, 0, 0)>
+  [ 47] pusharglistnoret 3 ...................... <i, #speechBackgroundColor, rgb(0, 0, 0)>
+  [ 49] objcall 48 .............................. i[#speechBackgroundColor] = rgb(0, 0, 0)
+  [ 51] getlocal 0 .............................. <i>
+  [ 53] pushsymb 1481 ........................... <#speechBackgroundBlend>
+  [ 56] pushint8 80 ............................. <80>
+  [ 58] pusharglistnoret 3 ...................... <i, #speechBackgroundBlend, 80>
+  [ 60] objcall 48 .............................. i[#speechBackgroundBlend] = 80
+  [ 62] getlocal 0 .............................. <i>
+  [ 64] pushsymb 1482 ........................... <#speechBackgroundBorder>
+  [ 67] pushint8 10 ............................. <10>
+  [ 69] inv ..................................... <-10>
+  [ 70] pushint8 10 ............................. <10>
+  [ 72] inv ..................................... <-10>
+  [ 73] pushint8 10 ............................. <10>
+  [ 75] pushint8 10 ............................. <10>
+  [ 77] pusharglist 4 ........................... <-10, -10, 10, 10>
+  [ 79] extcall 263 ............................. <rect(-10, -10, 10, 10)>
+  [ 82] pusharglistnoret 3 ...................... <i, #speechBackgroundBorder, rect(-10, -10, 10, 10)>
+  [ 84] objcall 48 .............................. i[#speechBackgroundBorder] = rect(-10, -10, 10, 10)
+  [ 86] getlocal 0 .............................. <i>
+  [ 88] pushsymb 1483 ........................... <#speechCharWidth>
+  [ 91] pushint8 6 .............................. <6>
+  [ 93] pusharglistnoret 3 ...................... <i, #speechCharWidth, 6>
+  [ 95] objcall 48 .............................. i[#speechCharWidth] = 6
+  [ 97] getlocal 0 .............................. <i>
+  [ 99] pushsymb 1484 ........................... <#speechColor>
+  [102] pushint16 255 ........................... <255>
+  [105] pushint16 255 ........................... <255>
+  [108] pushint16 255 ........................... <255>
+  [111] pusharglist 3 ........................... <255, 255, 255>
+  [113] extcall 436 ............................. <rgb(255, 255, 255)>
+  [116] pusharglistnoret 3 ...................... <i, #speechColor, rgb(255, 255, 255)>
+  [118] objcall 48 .............................. i[#speechColor] = rgb(255, 255, 255)
+  [120] getlocal 0 .............................. <i>
+  [122] pushsymb 1485 ........................... <#speechDisplayMode>
+  [125] pushsymb 1486 ........................... <#ingame>
+  [128] pusharglistnoret 3 ...................... <i, #speechDisplayMode, #ingame>
+  [130] objcall 48 .............................. i[#speechDisplayMode] = #ingame
+  [132] getlocal 0 .............................. <i>
+  [134] pushsymb 1487 ........................... <#speechOffset>
+  [137] pushint8 75 ............................. <75>
+  [139] inv ..................................... <-75>
+  [140] pushint8 20 ............................. <20>
+  [142] inv ..................................... <-20>
+  [143] pusharglist 2 ........................... <-75, -20>
+  [145] extcall 197 ............................. <point(-75, -20)>
+  [147] pusharglistnoret 3 ...................... <i, #speechOffset, point(-75, -20)>
+  [149] objcall 48 .............................. i[#speechOffset] = point(-75, -20)
+  [151] getlocal 0 .............................. <i>
+  [153] pushsymb 1488 ........................... <#speechStyle>
+  [156] pushsymb 1489 ........................... <#bold>
+  [159] pusharglist 1 ........................... <[#bold]>
+  [161] pushlist ................................ <[#bold]>
+  [162] pusharglistnoret 3 ...................... <i, #speechStyle, [#bold]>
+  [164] objcall 48 .............................. i[#speechStyle] = [#bold]
+  [166] getlocal 0 .............................. <i>
+  [168] pushsymb 1490 ........................... <#speechWidth>
+  [171] pushint16 150 ........................... <150>
+  [174] pusharglistnoret 3 ...................... <i, #speechWidth, 150>
+  [176] objcall 48 .............................. i[#speechWidth] = 150
+  [178] getlocal 0 .............................. <i>
+  [180] pushsymb 1491 ........................... <#speechWidthCutscene>
+  [183] pushint16 300 ........................... <300>
+  [186] pusharglistnoret 3 ...................... <i, #speechWidthCutscene, 300>
+  [188] objcall 48 .............................. i[#speechWidthCutscene] = 300
+  [190] getprop 33 .............................. <ancestor>
+  [192] pusharglistnoret 1 ...................... <ancestor>
+  [194] objcall 2 ............................... ancestor.addModParams()
+  [196] ret
+end
+
+on init me, params
+  [  0] pushzero ................................ <0>
+  [  1] setprop 1492 ............................ pExitingStage = 0
+  [  4] pusharglist 0 ........................... <>
+  [  6] extcall 529 ............................. <CounterNew()>
+  [  9] setprop 1493 ............................ pFrameCounter = CounterNew()
+  [ 12] getglobal 815 ........................... <gGameTextLayer>
+  [ 15] setprop 814 ............................. pMyLayer = gGameTextLayer
+  [ 18] pushsymb 49 ............................. <#none>
+  [ 20] setprop 1494 ............................ pPreviousAIMode = #none
+  [ 23] pushsymb 49 ............................. <#none>
+  [ 25] setprop 1495 ............................ pScriptPerformer = #none
+  [ 28] pushsymb 49 ............................. <#none>
+  [ 30] setprop 1496 ............................ pScriptPerformerActorID = #none
+  [ 33] pusharglist 0 ........................... <>
+  [ 35] extcall 529 ............................. <CounterNew()>
+  [ 38] setprop 1497 ............................ pSkipCounter = CounterNew()
+  [ 41] getprop 1497 ............................ <pSkipCounter>
+  [ 44] pushsymb 530 ............................ <#tim>
+  [ 47] pushint8 2 .............................. <2>
+  [ 49] getparam 1 .............................. <params>
+  [ 51] getobjprop 1479 ......................... <params.skipDuration>
+  [ 54] pusharglistnoret 4 ...................... <pSkipCounter, #tim, 2, params.skipDuration>
+  [ 56] objcall 531 ............................. pSkipCounter.tim[2] = params.skipDuration
+  [ 59] getparam 1 .............................. <params>
+  [ 61] getobjprop 1480 ......................... <params.speechBackgroundColor>
+  [ 64] setprop 1498 ............................ pSpeechBackgroundColor = params.speechBackgroundColor
+  [ 67] getparam 1 .............................. <params>
+  [ 69] getobjprop 1481 ......................... <params.speechBackgroundBlend>
+  [ 72] setprop 1499 ............................ pSpeechBackgroundBlend = params.speechBackgroundBlend
+  [ 75] getparam 1 .............................. <params>
+  [ 77] getobjprop 1482 ......................... <params.speechBackgroundBorder>
+  [ 80] setprop 1500 ............................ pSpeechBackgroundBorder = params.speechBackgroundBorder
+  [ 83] pushsymb 49 ............................. <#none>
+  [ 85] setprop 1501 ............................ pSpeechBackgroundSprite = #none
+  [ 88] getparam 1 .............................. <params>
+  [ 90] getobjprop 1483 ......................... <params.speechCharWidth>
+  [ 93] setprop 1502 ............................ pSpeechCharWidth = params.speechCharWidth
+  [ 96] getparam 1 .............................. <params>
+  [ 98] getobjprop 1484 ......................... <params.speechColor>
+  [101] setprop 1503 ............................ pSpeechColor = params.speechColor
+  [104] getparam 1 .............................. <params>
+  [106] getobjprop 1485 ......................... <params.speechDisplayMode>
+  [109] setprop 1504 ............................ pSpeechDisplayMode = params.speechDisplayMode
+  [112] getparam 1 .............................. <params>
+  [114] getobjprop 1487 ......................... <params.speechOffset>
+  [117] setprop 1505 ............................ pSpeechOffset = params.speechOffset
+  [120] getparam 1 .............................. <params>
+  [122] getobjprop 1488 ......................... <params.speechStyle>
+  [125] setprop 1506 ............................ pSpeechStyle = params.speechStyle
+  [128] getparam 1 .............................. <params>
+  [130] getobjprop 1490 ......................... <params.speechWidth>
+  [133] setprop 1507 ............................ pSpeechWidth = params.speechWidth
+  [136] getparam 1 .............................. <params>
+  [138] getobjprop 1491 ......................... <params.speechWidthCutscene>
+  [141] setprop 1508 ............................ pSpeechWidthCutscene = params.speechWidthCutscene
+  [144] pushsymb 49 ............................. <#none>
+  [146] setprop 1509 ............................ pTextMember = #none
+  [149] pushsymb 49 ............................. <#none>
+  [151] setprop 1510 ............................ pTheLine = #none
+  [154] pushzero ................................ <0>
+  [155] setprop 1511 ............................ pTurnToFaceLocked = 0
+  [158] getparam 0 .............................. <me>
+  [160] pushsymb 1512 ........................... <#waitForNextLine>
+  [163] pusharglistnoret 2 ...................... <me, #waitForNextLine>
+  [165] objcall 1456 ............................ me.goThespMode(#waitForNextLine)
+  [168] getprop 33 .............................. <ancestor>
+  [170] getparam 1 .............................. <params>
+  [172] pusharglistnoret 2 ...................... <ancestor, params>
+  [174] objcall 1 ............................... ancestor.init(params)
+  [176] ret
+end
+
+on finish me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 1454 ............................ me.freeTextMember()
+  [  7] getprop 33 .............................. <ancestor>
+  [  9] pusharglistnoret 1 ...................... <ancestor>
+  [ 11] objcall 3 ............................... ancestor.finish()
+  [ 13] ret
+end
+
+on acquireTextMember me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 1454 ............................ me.freeTextMember()
+  [  7] getglobal 40 ............................ <g>
+  [  9] getchainedprop 254 ...................... <g.spriteMaster>
+  [ 11] pusharglist 1 ........................... <g.spriteMaster>
+  [ 13] objcall 255 ............................. <g.spriteMaster.requestSprite()>
+  [ 15] setprop 1501 ............................ pSpeechBackgroundSprite = g.spriteMaster.requestSprite()
+  [ 18] getprop 1501 ............................ <pSpeechBackgroundSprite>
+  [ 21] getprop 1498 ............................ <pSpeechBackgroundColor>
+  [ 24] setobjprop 437 .......................... pSpeechBackgroundSprite.color = pSpeechBackgroundColor
+  [ 27] getprop 1501 ............................ <pSpeechBackgroundSprite>
+  [ 30] getprop 1499 ............................ <pSpeechBackgroundBlend>
+  [ 33] setobjprop 687 .......................... pSpeechBackgroundSprite.blend = pSpeechBackgroundBlend
+  [ 36] getprop 1501 ............................ <pSpeechBackgroundSprite>
+  [ 39] getprop 814 ............................. <pMyLayer>
+  [ 42] setobjprop 259 .......................... pSpeechBackgroundSprite.locZ = pMyLayer
+  [ 45] getprop 1504 ............................ <pSpeechDisplayMode>
+  [ 48] peek 0 .................................. case pSpeechDisplayMode of
+  [ 50] pushsymb 1486 ........................... <#ingame>
+  [ 53] eq
+  [ 54] jmpifz [ 65] ............................ (case) #ingame:
+  [ 57] getprop 1507 ............................ <pSpeechWidth>
+  [ 60] setlocal 0 .............................. speechWidth = pSpeechWidth
+  [ 62] jmp [ 79]
+  [ 65] peek 0
+  [ 67] pushsymb 1513 ........................... <#cutscene>
+  [ 70] eq
+  [ 71] jmpifz [ 79] ............................ (case) #cutscene:
+  [ 74] getprop 1508 ............................ <pSpeechWidthCutscene>
+  [ 77] setlocal 0 .............................. speechWidth = pSpeechWidthCutscene
+  [ 79] pop 1 ................................... end case
+  [ 81] getglobal 40 ............................ <g>
+  [ 83] getchainedprop 858 ...................... <g.memberMaster>
+  [ 86] pushsymb 1514 ........................... <#requestTextMember>
+  [ 89] pusharglist 2 ........................... <g.memberMaster, #requestTextMember>
+  [ 91] objcall 230 ............................. <g.memberMaster.getParams(#requestTextMember)>
+  [ 93] setlocal 1 .............................. params = g.memberMaster.getParams(#requestTextMember)
+  [ 95] getlocal 1 .............................. <params>
+  [ 97] pushcons 1 .............................. <"thespian_speech">
+  [ 99] setobjprop 44 ........................... params.name = "thespian_speech"
+  [101] getlocal 1 .............................. <params>
+  [103] pushcons 2 .............................. <"Verdana">
+  [105] setobjprop 1515 ......................... params.font = "Verdana"
+  [108] getlocal 1 .............................. <params>
+  [110] pushint8 10 ............................. <10>
+  [112] setobjprop 1516 ......................... params.fontSize = 10
+  [115] getlocal 1 .............................. <params>
+  [117] getprop 1506 ............................ <pSpeechStyle>
+  [120] setobjprop 1517 ......................... params.fontStyle = pSpeechStyle
+  [123] getlocal 1 .............................. <params>
+  [125] getprop 1503 ............................ <pSpeechColor>
+  [128] setobjprop 437 .......................... params.color = pSpeechColor
+  [131] getlocal 1 .............................. <params>
+  [133] getlocal 0 .............................. <speechWidth>
+  [135] setobjprop 424 .......................... params.width = speechWidth
+  [138] getglobal 40 ............................ <g>
+  [140] getchainedprop 858 ...................... <g.memberMaster>
+  [143] getlocal 1 .............................. <params>
+  [145] pusharglist 2 ........................... <g.memberMaster, params>
+  [147] objcall 1514 ............................ <g.memberMaster.requestTextMember(params)>
+  [150] setprop 1509 ............................ pTextMember = g.memberMaster.requestTextMember(params)
+  [153] getglobal 40 ............................ <g>
+  [155] getchainedprop 254 ...................... <g.spriteMaster>
+  [157] pusharglist 1 ........................... <g.spriteMaster>
+  [159] objcall 255 ............................. <g.spriteMaster.requestSprite()>
+  [161] setprop 1518 ............................ pTextSprite = g.spriteMaster.requestSprite()
+  [164] getprop 1518 ............................ <pTextSprite>
+  [167] getprop 814 ............................. <pMyLayer>
+  [170] setobjprop 259 .......................... pTextSprite.locZ = pMyLayer
+  [173] getprop 1518 ............................ <pTextSprite>
+  [176] getprop 1509 ............................ <pTextMember>
+  [179] pusharglistnoret 2 ...................... <pTextSprite, pTextMember>
+  [181] extcall 96 .............................. SpriteSetMember(pTextSprite, pTextMember)
+  [183] ret
+end
+
+on AIisTryingToMove me
+  [  0] getprop 1497 ............................ <pSkipCounter>
+  [  3] getobjprop 552 .......................... <pSkipCounter.fin>
+  [  6] jmpifz [ 19] ............................ if pSkipCounter.fin then
+  [  9] getglobal 40 ............................ <g>
+  [ 11] getchainedprop 1032 ..................... <g.cutSceneMaster>
+  [ 14] pusharglistnoret 1 ...................... <g.cutSceneMaster>
+  [ 16] objcall 1519 ............................ g.cutSceneMaster.scriptCancelled()
+  [ 19] ret
+end
+
+on at me, theloc
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <theloc>
+  [  4] pusharglist 2 ........................... <me, theloc>
+  [  6] objcall 1457 ............................ <me.interpretLoc(theloc)>
+  [  9] setlocal 0 .............................. atLoc = me.interpretLoc(theloc)
+  [ 11] getparam 0 .............................. <me>
+  [ 13] getlocal 0 .............................. <atLoc>
+  [ 15] pusharglistnoret 2 ...................... <me, atLoc>
+  [ 17] objcall 669 ............................. me.setLoc(atLoc)
+  [ 20] ret
+end
+
+on atPlayer me, playerName
+  [  0] getprop 1495 ............................ <pScriptPerformer>
+  [  3] getparam 1 .............................. <playerName>
+  [  5] pusharglist 2 ........................... <pScriptPerformer, playerName>
+  [  7] objcall 861 ............................. <pScriptPerformer.getPlayer(playerName)>
+  [ 10] setlocal 0 .............................. playerToAppearAt = pScriptPerformer.getPlayer(playerName)
+  [ 12] getlocal 0 .............................. <playerToAppearAt>
+  [ 14] pusharglist 1 ........................... <playerToAppearAt>
+  [ 16] objcall 111 ............................. <playerToAppearAt.getLoc()>
+  [ 18] setlocal 1 .............................. locToAppearAt = playerToAppearAt.getLoc()
+  [ 20] getlocal 1 .............................. <locToAppearAt>
+  [ 22] getobjprop 539 .......................... <locToAppearAt.locH>
+  [ 25] setlocal 2 .............................. xLoc = locToAppearAt.locH
+  [ 27] getparam 0 .............................. <me>
+  [ 29] getlocal 2 .............................. <xLoc>
+  [ 31] pusharglistnoret 2 ...................... <me, xLoc>
+  [ 33] objcall 1444 ............................ me.at(xLoc)
+  [ 36] ret
+end
+
+on calcStageLeftOffLoc me
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 1032 ..................... <g.cutSceneMaster>
+  [  5] pusharglist 1 ........................... <g.cutSceneMaster>
+  [  7] objcall 1524 ............................ <g.cutSceneMaster.getStageLeft()>
+  [ 10] setlocal 0 .............................. leftStage = g.cutSceneMaster.getStageLeft()
+  [ 12] getlocal 0 .............................. <leftStage>
+  [ 14] getparam 0 .............................. <me>
+  [ 16] pusharglist 1 ........................... <me>
+  [ 18] objcall 1525 ............................ <me.getWidth()>
+  [ 21] pushint8 2 .............................. <2>
+  [ 23] div ..................................... <me.getWidth() / 2>
+  [ 24] sub ..................................... <leftStage - (me.getWidth() / 2)>
+  [ 25] setlocal 1 .............................. offLoc = leftStage - (me.getWidth() / 2)
+  [ 27] getlocal 1 .............................. <offLoc>
+  [ 29] pusharglistnoret 1 ...................... <offLoc>
+  [ 31] extcall 35 .............................. return offLoc
+  [ 33] ret
+end
+
+on calcStageRightOffLoc me
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 1032 ..................... <g.cutSceneMaster>
+  [  5] pusharglist 1 ........................... <g.cutSceneMaster>
+  [  7] objcall 1528 ............................ <g.cutSceneMaster.getStageRight()>
+  [ 10] setlocal 0 .............................. rightStage = g.cutSceneMaster.getStageRight()
+  [ 12] getlocal 0 .............................. <rightStage>
+  [ 14] getparam 0 .............................. <me>
+  [ 16] pusharglist 1 ........................... <me>
+  [ 18] objcall 1525 ............................ <me.getWidth()>
+  [ 21] pushint8 2 .............................. <2>
+  [ 23] div ..................................... <me.getWidth() / 2>
+  [ 24] add ..................................... <rightStage + (me.getWidth() / 2)>
+  [ 25] setlocal 1 .............................. offLoc = rightStage + (me.getWidth() / 2)
+  [ 27] getlocal 1 .............................. <offLoc>
+  [ 29] pusharglistnoret 1 ...................... <offLoc>
+  [ 31] extcall 35 .............................. return offLoc
+  [ 33] ret
+end
+
+on calcTeleportFloor me
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 1032 ..................... <g.cutSceneMaster>
+  [  5] pusharglist 1 ........................... <g.cutSceneMaster>
+  [  7] objcall 1530 ............................ <g.cutSceneMaster.getEnvironment()>
+  [ 10] setlocal 0 .............................. env = g.cutSceneMaster.getEnvironment()
+  [ 12] getlocal 0 .............................. <env>
+  [ 14] pushsymb 1513 ........................... <#cutscene>
+  [ 17] eq ...................................... <env = #cutscene>
+  [ 18] jmpifz [ 36] ............................ if env = #cutscene then / else
+  [ 21] getglobal 40 ............................ <g>
+  [ 23] getchainedprop 1032 ..................... <g.cutSceneMaster>
+  [ 26] pusharglist 1 ........................... <g.cutSceneMaster>
+  [ 28] objcall 1033 ............................ <g.cutSceneMaster.getStageFloor()>
+  [ 31] setlocal 1 .............................. teleportFloor = g.cutSceneMaster.getStageFloor()
+  [ 33] jmp [ 48]
+  [ 36] getparam 0 .............................. <me>
+  [ 38] getchainedprop 51 ....................... <me.big>
+  [ 40] pusharglist 1 ........................... <me.big>
+  [ 42] objcall 113 ............................. <me.big.getRect()>
+  [ 44] getobjprop 114 .......................... <me.big.getRect().bottom>
+  [ 46] setlocal 1 .............................. teleportFloor = me.big.getRect().bottom
+  [ 48] getlocal 1 .............................. <teleportFloor>
+  [ 50] pusharglistnoret 1 ...................... <teleportFloor>
+  [ 52] extcall 35 .............................. return teleportFloor
+  [ 54] ret
+end
+
+on cancelMoveTo me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 57 ....................... <me.id>
+  [  4] getchainedprop 58 ....................... <me.id.bigMe>
+  [  6] pusharglist 1 ........................... <me.id.bigMe>
+  [  8] objcall 52 .............................. <me.id.bigMe.getMode()>
+  [ 10] setlocal 0 .............................. myMode = me.id.bigMe.getMode()
+  [ 12] getlocal 0 .............................. <myMode>
+  [ 14] pushsymb 67 ............................. <#moveToLoc>
+  [ 16] eq ...................................... <myMode = #moveToLoc>
+  [ 17] jmpifz [ 33] ............................ if myMode = #moveToLoc then
+  [ 20] getparam 0 .............................. <me>
+  [ 22] getchainedprop 57 ....................... <me.id>
+  [ 24] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 26] pushsymb 63 ............................. <#walk>
+  [ 28] pusharglistnoret 2 ...................... <me.id.bigMe, #walk>
+  [ 30] objcall 278 ............................. me.id.bigMe.goMode(#walk)
+  [ 33] ret
+end
+
+on displaySpeech me, theSpeech
+  [  0] getprop 1504 ............................ <pSpeechDisplayMode>
+  [  3] peek 0 .................................. case pSpeechDisplayMode of
+  [  5] pushsymb 1486 ........................... <#ingame>
+  [  8] eq
+  [  9] jmpifz [ 24] ............................ (case) #ingame:
+  [ 12] getparam 0 .............................. <me>
+  [ 14] getparam 1 .............................. <theSpeech>
+  [ 16] pusharglistnoret 2 ...................... <me, theSpeech>
+  [ 18] objcall 1450 ............................ me.displaySpeechInGame(theSpeech)
+  [ 21] jmp [ 42]
+  [ 24] peek 0
+  [ 26] pushsymb 1513 ........................... <#cutscene>
+  [ 29] eq
+  [ 30] jmpifz [ 42] ............................ (case) #cutscene:
+  [ 33] getparam 0 .............................. <me>
+  [ 35] getparam 1 .............................. <theSpeech>
+  [ 37] pusharglistnoret 2 ...................... <me, theSpeech>
+  [ 39] objcall 1449 ............................ me.displaySpeechCutScene(theSpeech)
+  [ 42] pop 1 ................................... end case
+  [ 44] ret
+end
+
+on displaySpeechCutScene me, theSpeech
+  [  0] getprop 1509 ............................ <pTextMember>
+  [  3] getparam 1 .............................. <theSpeech>
+  [  5] setobjprop 670 .......................... pTextMember.text = theSpeech
+  [  8] getglobal 40 ............................ <g>
+  [ 10] getchainedprop 1032 ..................... <g.cutSceneMaster>
+  [ 13] pusharglist 1 ........................... <g.cutSceneMaster>
+  [ 15] objcall 1535 ............................ <g.cutSceneMaster.getSpeechFloor()>
+  [ 18] setlocal 0 .............................. speechFloor = g.cutSceneMaster.getSpeechFloor()
+  [ 20] getglobal 40 ............................ <g>
+  [ 22] getchainedprop 1032 ..................... <g.cutSceneMaster>
+  [ 25] pusharglist 1 ........................... <g.cutSceneMaster>
+  [ 27] objcall 1524 ............................ <g.cutSceneMaster.getStageLeft()>
+  [ 30] setlocal 1 .............................. leftStage = g.cutSceneMaster.getStageLeft()
+  [ 32] getglobal 40 ............................ <g>
+  [ 34] getchainedprop 1032 ..................... <g.cutSceneMaster>
+  [ 37] pusharglist 1 ........................... <g.cutSceneMaster>
+  [ 39] objcall 1528 ............................ <g.cutSceneMaster.getStageRight()>
+  [ 42] setlocal 2 .............................. rightStage = g.cutSceneMaster.getStageRight()
+  [ 44] getprop 1509 ............................ <pTextMember>
+  [ 47] getobjprop 423 .......................... <pTextMember.height>
+  [ 50] setlocal 3 .............................. textBoxHeight = pTextMember.height
+  [ 52] getlocal 0 .............................. <speechFloor>
+  [ 54] getlocal 3 .............................. <textBoxHeight>
+  [ 56] sub ..................................... <speechFloor - textBoxHeight>
+  [ 57] setlocal 4 .............................. yLoc = speechFloor - textBoxHeight
+  [ 59] getprop 1509 ............................ <pTextMember>
+  [ 62] getobjprop 424 .......................... <pTextMember.width>
+  [ 65] pushint8 2 .............................. <2>
+  [ 67] div ..................................... <pTextMember.width / 2>
+  [ 68] setlocal 5 .............................. textHalfWidth = pTextMember.width / 2
+  [ 70] getparam 0 .............................. <me>
+  [ 72] getchainedprop 57 ....................... <me.id>
+  [ 74] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 76] pusharglist 1 ........................... <me.id.bigMe>
+  [ 78] objcall 111 ............................. <me.id.bigMe.getLoc()>
+  [ 80] getobjprop 539 .......................... <me.id.bigMe.getLoc().locH>
+  [ 83] getlocal 5 .............................. <textHalfWidth>
+  [ 85] sub ..................................... <me.id.bigMe.getLoc().locH - textHalfWidth>
+  [ 86] setlocal 6 .............................. xLoc = me.id.bigMe.getLoc().locH - textHalfWidth
+  [ 88] getparam 1 .............................. <theSpeech>
+  [ 90] pushsymb 1536 ........................... <#chars>
+  [ 93] pusharglist 2 ........................... <theSpeech, #chars>
+  [ 95] objcall 257 ............................. <theSpeech.chars.count>
+  [ 98] getprop 1502 ............................ <pSpeechCharWidth>
+  [101] mul ..................................... <theSpeech.chars.count * pSpeechCharWidth>
+  [102] setlocal 7 .............................. charWidth = theSpeech.chars.count * pSpeechCharWidth
+  [104] getlocal 7 .............................. <charWidth>
+  [106] getprop 1509 ............................ <pTextMember>
+  [109] getobjprop 424 .......................... <pTextMember.width>
+  [112] gt ...................................... <charWidth > pTextMember.width>
+  [113] jmpifz [124] ............................ if charWidth > pTextMember.width then
+  [116] getprop 1509 ............................ <pTextMember>
+  [119] getobjprop 424 .......................... <pTextMember.width>
+  [122] setlocal 7 .............................. charWidth = pTextMember.width
+  [124] getprop 1509 ............................ <pTextMember>
+  [127] getobjprop 424 .......................... <pTextMember.width>
+  [130] getlocal 7 .............................. <charWidth>
+  [132] sub ..................................... <pTextMember.width - charWidth>
+  [133] pushint8 2 .............................. <2>
+  [135] div ..................................... <(pTextMember.width - charWidth) / 2>
+  [136] setlocal 8 .............................. edgeToCharGap = (pTextMember.width - charWidth) / 2
+  [138] getlocal 6 .............................. <xLoc>
+  [140] getlocal 8 .............................. <edgeToCharGap>
+  [142] add ..................................... <xLoc + edgeToCharGap>
+  [143] setlocal 9 .............................. charLeft = xLoc + edgeToCharGap
+  [145] getlocal 6 .............................. <xLoc>
+  [147] getprop 1509 ............................ <pTextMember>
+  [150] getobjprop 424 .......................... <pTextMember.width>
+  [153] add ..................................... <xLoc + pTextMember.width>
+  [154] getlocal 8 .............................. <edgeToCharGap>
+  [156] sub ..................................... <xLoc + pTextMember.width - edgeToCharGap>
+  [157] setlocal 10 ............................. charRight = xLoc + pTextMember.width - edgeToCharGap
+  [159] getlocal 9 .............................. <charLeft>
+  [161] getlocal 1 .............................. <leftStage>
+  [163] lt ...................................... <charLeft < leftStage>
+  [164] jmpifz [174] ............................ if charLeft < leftStage then
+  [167] getlocal 1 .............................. <leftStage>
+  [169] getlocal 8 .............................. <edgeToCharGap>
+  [171] sub ..................................... <leftStage - edgeToCharGap>
+  [172] setlocal 6 .............................. xLoc = leftStage - edgeToCharGap
+  [174] getlocal 10 ............................. <charRight>
+  [176] getlocal 2 .............................. <rightStage>
+  [178] gt ...................................... <charRight > rightStage>
+  [179] jmpifz [192] ............................ if charRight > rightStage then
+  [182] getlocal 2 .............................. <rightStage>
+  [184] getlocal 7 .............................. <charWidth>
+  [186] sub ..................................... <rightStage - charWidth>
+  [187] getlocal 8 .............................. <edgeToCharGap>
+  [189] sub ..................................... <rightStage - charWidth - edgeToCharGap>
+  [190] setlocal 6 .............................. xLoc = rightStage - charWidth - edgeToCharGap
+  [192] getprop 1518 ............................ <pTextSprite>
+  [195] getlocal 6 .............................. <xLoc>
+  [197] getlocal 4 .............................. <yLoc>
+  [199] pusharglist 2 ........................... <xLoc, yLoc>
+  [201] extcall 197 ............................. <point(xLoc, yLoc)>
+  [203] setobjprop 832 .......................... pTextSprite.loc = point(xLoc, yLoc)
+  [206] ret
+end
+
+on displaySpeechInGame me, theSpeech
+  [  0] getprop 1509 ............................ <pTextMember>
+  [  3] getparam 1 .............................. <theSpeech>
+  [  5] setobjprop 670 .......................... pTextMember.text = theSpeech
+  [  8] getparam 0 .............................. <me>
+  [ 10] getchainedprop 57 ....................... <me.id>
+  [ 12] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 14] pusharglist 1 ........................... <me.id.bigMe>
+  [ 16] objcall 111 ............................. <me.id.bigMe.getLoc()>
+  [ 18] getprop 1505 ............................ <pSpeechOffset>
+  [ 21] add ..................................... <me.id.bigMe.getLoc() + pSpeechOffset>
+  [ 22] setlocal 0 .............................. speechLoc = me.id.bigMe.getLoc() + pSpeechOffset
+  [ 24] getlocal 0 .............................. <speechLoc>
+  [ 26] getlocal 0 .............................. <speechLoc>
+  [ 28] getobjprop 540 .......................... <speechLoc.locV>
+  [ 31] getprop 1509 ............................ <pTextMember>
+  [ 34] getobjprop 423 .......................... <pTextMember.height>
+  [ 37] sub ..................................... <speechLoc.locV - pTextMember.height>
+  [ 38] setobjprop 540 .......................... speechLoc.locV = speechLoc.locV - pTextMember.height
+  [ 41] getprop 1518 ............................ <pTextSprite>
+  [ 44] getlocal 0 .............................. <speechLoc>
+  [ 46] setobjprop 832 .......................... pTextSprite.loc = speechLoc
+  [ 49] getparam 1 .............................. <theSpeech>
+  [ 51] pushcons 3 .............................. <EMPTY>
+  [ 53] eq ...................................... <theSpeech = EMPTY>
+  [ 54] jmpifz [ 79] ............................ if theSpeech = EMPTY then / else
+  [ 57] getprop 1501 ............................ <pSpeechBackgroundSprite>
+  [ 60] pushint8 1 .............................. <1>
+  [ 62] inv ..................................... <-1>
+  [ 63] pushint8 1 .............................. <1>
+  [ 65] inv ..................................... <-1>
+  [ 66] pushzero ................................ <0>
+  [ 67] pushzero ................................ <0>
+  [ 68] pusharglist 4 ........................... <-1, -1, 0, 0>
+  [ 70] extcall 263 ............................. <rect(-1, -1, 0, 0)>
+  [ 73] setobjprop 263 .......................... pSpeechBackgroundSprite.rect = rect(-1, -1, 0, 0)
+  [ 76] jmp [195]
+  [ 79] getparam 1 .............................. <theSpeech>
+  [ 81] pushsymb 1536 ........................... <#chars>
+  [ 84] pusharglist 2 ........................... <theSpeech, #chars>
+  [ 86] objcall 257 ............................. <theSpeech.chars.count>
+  [ 89] getprop 1502 ............................ <pSpeechCharWidth>
+  [ 92] mul ..................................... <theSpeech.chars.count * pSpeechCharWidth>
+  [ 93] setlocal 1 .............................. backWidth = theSpeech.chars.count * pSpeechCharWidth
+  [ 95] getlocal 1 .............................. <backWidth>
+  [ 97] getprop 1509 ............................ <pTextMember>
+  [100] getobjprop 424 .......................... <pTextMember.width>
+  [103] gt ...................................... <backWidth > pTextMember.width>
+  [104] jmpifz [115] ............................ if backWidth > pTextMember.width then
+  [107] getprop 1509 ............................ <pTextMember>
+  [110] getobjprop 424 .......................... <pTextMember.width>
+  [113] setlocal 1 .............................. backWidth = pTextMember.width
+  [115] getparam 0 .............................. <me>
+  [117] getchainedprop 57 ....................... <me.id>
+  [119] getchainedprop 58 ....................... <me.id.bigMe>
+  [121] pusharglist 1 ........................... <me.id.bigMe>
+  [123] objcall 111 ............................. <me.id.bigMe.getLoc()>
+  [125] pushint8 1 .............................. <1>
+  [127] pusharglist 2 ........................... <me.id.bigMe.getLoc(), 1>
+  [129] objcall 109 ............................. <me.id.bigMe.getLoc()[1]>
+  [131] setlocal 2 .............................. centreX = me.id.bigMe.getLoc()[1]
+  [133] getlocal 2 .............................. <centreX>
+  [135] getlocal 1 .............................. <backWidth>
+  [137] pushint8 2 .............................. <2>
+  [139] div ..................................... <backWidth / 2>
+  [140] sub ..................................... <centreX - (backWidth / 2)>
+  [141] getlocal 0 .............................. <speechLoc>
+  [143] pushint8 2 .............................. <2>
+  [145] pusharglist 2 ........................... <speechLoc, 2>
+  [147] objcall 109 ............................. <speechLoc[2]>
+  [149] getlocal 2 .............................. <centreX>
+  [151] getlocal 1 .............................. <backWidth>
+  [153] pushint8 2 .............................. <2>
+  [155] div ..................................... <backWidth / 2>
+  [156] add ..................................... <centreX + (backWidth / 2)>
+  [157] getlocal 0 .............................. <speechLoc>
+  [159] pushint8 2 .............................. <2>
+  [161] pusharglist 2 ........................... <speechLoc, 2>
+  [163] objcall 109 ............................. <speechLoc[2]>
+  [165] getprop 1509 ............................ <pTextMember>
+  [168] getobjprop 423 .......................... <pTextMember.height>
+  [171] add ..................................... <speechLoc[2] + pTextMember.height>
+  [172] pusharglist 4 ........................... <centreX - (backWidth / 2), speechLoc[2], centreX + (backWidth / 2), speechLoc[2] + pTextMember.height>
+  [174] extcall 263 ............................. <rect(centreX - (backWidth / 2), speechLoc[2], centreX + (backWidth / 2), speechLoc[2] + pTextMember.height)>
+  [177] setlocal 3 .............................. backRect = rect(centreX - (backWidth / 2), speechLoc[2], centreX + (backWidth / 2), speechLoc[2] + pTextMember.height)
+  [179] getlocal 3 .............................. <backRect>
+  [181] getprop 1500 ............................ <pSpeechBackgroundBorder>
+  [184] add ..................................... <backRect + pSpeechBackgroundBorder>
+  [185] setlocal 3 .............................. backRect = backRect + pSpeechBackgroundBorder
+  [187] getprop 1501 ............................ <pSpeechBackgroundSprite>
+  [190] getlocal 3 .............................. <backRect>
+  [192] setobjprop 263 .......................... pSpeechBackgroundSprite.rect = backRect
+  [195] ret
+end
+
+on enterStageLeft me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 1495 ..................... <me.pScriptPerformer>
+  [  5] pusharglist 1 ........................... <me.pScriptPerformer>
+  [  7] objcall 1548 ............................ <me.pScriptPerformer.getStageLeftOnLoc()>
+  [ 10] setlocal 0 .............................. stageOnLoc = me.pScriptPerformer.getStageLeftOnLoc()
+  [ 12] getparam 0 .............................. <me>
+  [ 14] getparam 0 .............................. <me>
+  [ 16] pusharglist 1 ........................... <me>
+  [ 18] objcall 1035 ............................ <me.calcStageLeftOffLoc()>
+  [ 21] pusharglistnoret 2 ...................... <me, me.calcStageLeftOffLoc()>
+  [ 23] objcall 1444 ............................ me.at(me.calcStageLeftOffLoc())
+  [ 26] getparam 0 .............................. <me>
+  [ 28] getlocal 0 .............................. <stageOnLoc>
+  [ 30] pusharglistnoret 2 ...................... <me, stageOnLoc>
+  [ 32] objcall 1475 ............................ me.walkTo(stageOnLoc)
+  [ 35] ret
+end
+
+on enterStageRight me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 1495 ..................... <me.pScriptPerformer>
+  [  5] pusharglist 1 ........................... <me.pScriptPerformer>
+  [  7] objcall 1550 ............................ <me.pScriptPerformer.getStageRightOnLoc()>
+  [ 10] setlocal 0 .............................. stageOnLoc = me.pScriptPerformer.getStageRightOnLoc()
+  [ 12] getparam 0 .............................. <me>
+  [ 14] getparam 0 .............................. <me>
+  [ 16] pusharglist 1 ........................... <me>
+  [ 18] objcall 1036 ............................ <me.calcStageRightOffLoc()>
+  [ 21] pusharglistnoret 2 ...................... <me, me.calcStageRightOffLoc()>
+  [ 23] objcall 1444 ............................ me.at(me.calcStageRightOffLoc())
+  [ 26] getparam 0 .............................. <me>
+  [ 28] getlocal 0 .............................. <stageOnLoc>
+  [ 30] pusharglistnoret 2 ...................... <me, stageOnLoc>
+  [ 32] objcall 1475 ............................ me.walkTo(stageOnLoc)
+  [ 35] ret
+end
+
+on fadeDown me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 51 ....................... <me.big>
+  [  4] pusharglistnoret 1 ...................... <me.big>
+  [  6] objcall 676 ............................. me.big.startSlowFadeOut()
+  [  9] ret
+end
+
+on faderFin me
+  [  0] getprop 1495 ............................ <pScriptPerformer>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] nteq .................................... <pScriptPerformer <> #none>
+  [  6] jmpifz [ 17] ............................ if pScriptPerformer <> #none then
+  [  9] getprop 1495 ............................ <pScriptPerformer>
+  [ 12] pusharglistnoret 1 ...................... <pScriptPerformer>
+  [ 14] objcall 1551 ............................ pScriptPerformer.playerFaderFin()
+  [ 17] ret
+end
+
+on freeTextMember me
+  [  0] getprop 1509 ............................ <pTextMember>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] nteq .................................... <pTextMember <> #none>
+  [  6] jmpifz [ 44] ............................ if pTextMember <> #none then
+  [  9] getglobal 40 ............................ <g>
+  [ 11] getchainedprop 858 ...................... <g.memberMaster>
+  [ 14] getprop 1509 ............................ <pTextMember>
+  [ 17] pusharglistnoret 2 ...................... <g.memberMaster, pTextMember>
+  [ 19] objcall 859 ............................. g.memberMaster.freeMember(pTextMember)
+  [ 22] pushsymb 49 ............................. <#none>
+  [ 24] setprop 1509 ............................ pTextMember = #none
+  [ 27] getglobal 40 ............................ <g>
+  [ 29] getchainedprop 254 ...................... <g.spriteMaster>
+  [ 31] getprop 1518 ............................ <pTextSprite>
+  [ 34] pusharglistnoret 2 ...................... <g.spriteMaster, pTextSprite>
+  [ 36] objcall 270 ............................. g.spriteMaster.freeSprite(pTextSprite)
+  [ 39] pushsymb 49 ............................. <#none>
+  [ 41] setprop 1518 ............................ pTextSprite = #none
+  [ 44] getprop 1501 ............................ <pSpeechBackgroundSprite>
+  [ 47] pushsymb 49 ............................. <#none>
+  [ 49] nteq .................................... <pSpeechBackgroundSprite <> #none>
+  [ 50] jmpifz [ 70] ............................ if pSpeechBackgroundSprite <> #none then
+  [ 53] getglobal 40 ............................ <g>
+  [ 55] getchainedprop 254 ...................... <g.spriteMaster>
+  [ 57] getprop 1501 ............................ <pSpeechBackgroundSprite>
+  [ 60] pusharglistnoret 2 ...................... <g.spriteMaster, pSpeechBackgroundSprite>
+  [ 62] objcall 270 ............................. g.spriteMaster.freeSprite(pSpeechBackgroundSprite)
+  [ 65] pushsymb 49 ............................. <#none>
+  [ 67] setprop 1501 ............................ pSpeechBackgroundSprite = #none
+  [ 70] ret
+end
+
+on goThespianMode me
+  [  0] getprop 1497 ............................ <pSkipCounter>
+  [  3] pusharglistnoret 1 ...................... <pSkipCounter>
+  [  5] extcall 706 ............................. CounterReset(pSkipCounter)
+  [  8] getparam 0 .............................. <me>
+  [ 10] pusharglistnoret 1 ...................... <me>
+  [ 12] objcall 1442 ............................ me.acquireTextMember()
+  [ 15] getparam 0 .............................. <me>
+  [ 17] getchainedprop 922 ...................... <me.pAI>
+  [ 20] pusharglistnoret 1 ...................... <me.pAI>
+  [ 22] objcall 1455 ............................ me.pAI.goThespianMode()
+  [ 25] ret
+end
+
+on goThespMode me, newMode
+  [  0] getparam 1 .............................. <newMode>
+  [  2] peek 0 .................................. case newMode of
+  [  4] pushsymb 1552 ........................... <#displayLine>
+  [  7] eq
+  [  8] jmpifz [ 73] ............................ (case) #displayLine:
+  [ 11] getprop 1493 ............................ <pFrameCounter>
+  [ 14] pushsymb 530 ............................ <#tim>
+  [ 17] pushint8 2 .............................. <2>
+  [ 19] getprop 1510 ............................ <pTheLine>
+  [ 22] getobjprop 1553 ......................... <pTheLine.displayTime>
+  [ 25] pusharglistnoret 4 ...................... <pFrameCounter, #tim, 2, pTheLine.displayTime>
+  [ 27] objcall 531 ............................. pFrameCounter.tim[2] = pTheLine.displayTime
+  [ 30] getprop 1493 ............................ <pFrameCounter>
+  [ 33] pusharglistnoret 1 ...................... <pFrameCounter>
+  [ 35] extcall 706 ............................. CounterReset(pFrameCounter)
+  [ 38] getprop 1510 ............................ <pTheLine>
+  [ 41] getparam 0 .............................. <me>
+  [ 43] getprop 1510 ............................ <pTheLine>
+  [ 46] getobjprop 1554 ......................... <pTheLine.args>
+  [ 49] pusharglist 2 ........................... <me, pTheLine.args>
+  [ 51] objcall 1458 ............................ <me.interpretSpeechVariables(pTheLine.args)>
+  [ 54] setobjprop 1554 ......................... pTheLine.args = me.interpretSpeechVariables(pTheLine.args)
+  [ 57] getparam 0 .............................. <me>
+  [ 59] getprop 1510 ............................ <pTheLine>
+  [ 62] getobjprop 1554 ......................... <pTheLine.args>
+  [ 65] pusharglistnoret 2 ...................... <me, pTheLine.args>
+  [ 67] objcall 1448 ............................ me.displaySpeech(pTheLine.args)
+  [ 70] jmp [118]
+  [ 73] peek 0
+  [ 75] pushsymb 1555 ........................... <#delayAfterLine>
+  [ 78] eq
+  [ 79] jmpifz [118] ............................ (case) #delayAfterLine:
+  [ 82] getprop 1493 ............................ <pFrameCounter>
+  [ 85] pushsymb 530 ............................ <#tim>
+  [ 88] pushint8 2 .............................. <2>
+  [ 90] getprop 1510 ............................ <pTheLine>
+  [ 93] getobjprop 1556 ......................... <pTheLine.delayTime>
+  [ 96] pusharglistnoret 4 ...................... <pFrameCounter, #tim, 2, pTheLine.delayTime>
+  [ 98] objcall 531 ............................. pFrameCounter.tim[2] = pTheLine.delayTime
+  [101] getprop 1493 ............................ <pFrameCounter>
+  [104] pusharglistnoret 1 ...................... <pFrameCounter>
+  [106] extcall 706 ............................. CounterReset(pFrameCounter)
+  [109] getparam 0 .............................. <me>
+  [111] pushcons 3 .............................. <EMPTY>
+  [113] pusharglistnoret 2 ...................... <me, EMPTY>
+  [115] objcall 1448 ............................ me.displaySpeech(EMPTY)
+  [118] pop 1 ................................... end case
+  [120] getparam 1 .............................. <newMode>
+  [122] setprop 1557 ............................ pThespMode = newMode
+  [125] ret
+end
+
+on gotoWings me
+  [  0] getprop 1495 ............................ <pScriptPerformer>
+  [  3] getprop 1496 ............................ <pScriptPerformerActorID>
+  [  6] pusharglistnoret 2 ...................... <pScriptPerformer, pScriptPerformerActorID>
+  [  8] objcall 1558 ............................ pScriptPerformer.actorToWings(pScriptPerformerActorID)
+  [ 11] ret
+end
+
+on internalEvent me, theEvent
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <theEvent>
+  [  4] pusharglistnoret 2 ...................... <ancestor, theEvent>
+  [  6] objcall 22 .............................. ancestor.internalEvent(theEvent)
+  [  8] getparam 1 .............................. <theEvent>
+  [ 10] peek 0 .................................. case theEvent of
+  [ 12] pushsymb 930 ............................ <#moveToLocFinished>
+  [ 15] eq
+  [ 16] jmpifz [ 26] ............................ (case) #moveToLocFinished:
+  [ 19] getparam 0 .............................. <me>
+  [ 21] pusharglistnoret 1 ...................... <me>
+  [ 23] objcall 930 ............................. me.moveToLocFinished()
+  [ 26] pop 1
+  [ 28] ret
+end
+
+on interpretLoc me, theloc
+  [  0] getparam 1 .............................. <theloc>
+  [  2] pushsymb 197 ............................ <#point>
+  [  4] pusharglist 2 ........................... <theloc, #point>
+  [  6] extcall 206 ............................. <ilk(theloc, #point)>
+  [  8] jmpifz [ 20] ............................ if ilk(theloc, #point) then / else
+  [ 11] getparam 1 .............................. <theloc>
+  [ 13] pusharglistnoret 1 ...................... <theloc>
+  [ 15] extcall 35 .............................. return theloc
+  [ 17] jmp [ 61]
+  [ 20] getglobal 40 ............................ <g>
+  [ 22] getchainedprop 1032 ..................... <g.cutSceneMaster>
+  [ 25] pusharglist 1 ........................... <g.cutSceneMaster>
+  [ 27] objcall 1033 ............................ <g.cutSceneMaster.getStageFloor()>
+  [ 30] setlocal 0 .............................. stageFloor = g.cutSceneMaster.getStageFloor()
+  [ 32] getparam 0 .............................. <me>
+  [ 34] getchainedprop 57 ....................... <me.id>
+  [ 36] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 38] pushsymb 114 ............................ <#bottom>
+  [ 40] getlocal 0 .............................. <stageFloor>
+  [ 42] pusharglist 3 ........................... <me.id.bigMe, #bottom, stageFloor>
+  [ 44] objcall 965 ............................. <me.id.bigMe.positionEdge(#bottom, stageFloor)>
+  [ 47] setlocal 1 .............................. yLoc = me.id.bigMe.positionEdge(#bottom, stageFloor)
+  [ 49] getparam 1 .............................. <theloc>
+  [ 51] getlocal 1 .............................. <yLoc>
+  [ 53] pusharglist 2 ........................... <theloc, yLoc>
+  [ 55] extcall 197 ............................. <point(theloc, yLoc)>
+  [ 57] pusharglistnoret 1 ...................... <point(theloc, yLoc)>
+  [ 59] extcall 35 .............................. return point(theloc, yLoc)
+  [ 61] ret
+end
+
+on interpretSpeechVariables me, theSpeechText
+  [  0] getparam 1 .............................. <theSpeechText>
+  [  2] pushsymb 1559 ........................... <#words>
+  [  5] pusharglist 2 ........................... <theSpeechText, #words>
+  [  7] objcall 257 ............................. <theSpeechText.words.count>
+  [ 10] setlocal 0
+  [ 12] getlocal 0
+  [ 14] pushint8 1 .............................. <1>
+  [ 16] gteq
+  [ 17] jmpifz [137] ............................ repeat with i = theSpeechText.words.count down to 1
+  [ 20] getparam 1 .............................. <theSpeechText>
+  [ 22] pushsymb 1560 ........................... <#word>
+  [ 25] getlocal 0 .............................. <i>
+  [ 27] pusharglist 3 ........................... <theSpeechText, #word, i>
+  [ 29] objcall 381 ............................. <theSpeechText.word[i]>
+  [ 32] setlocal 1 .............................. nWord = theSpeechText.word[i]
+  [ 34] getlocal 1 .............................. <nWord>
+  [ 36] pushcons 4 .............................. <"#key">
+  [ 38] eq ...................................... <nWord = "#key">
+  [ 39] jmpifz [128] ............................ if nWord = "#key" then
+  [ 42] getglobal 40 ............................ <g>
+  [ 44] getchainedprop 1561 ..................... <g.keyMaster>
+  [ 47] getparam 1 .............................. <theSpeechText>
+  [ 49] pushsymb 1560 ........................... <#word>
+  [ 52] getlocal 0 .............................. <i>
+  [ 54] pushint8 1 .............................. <1>
+  [ 56] add ..................................... <i + 1>
+  [ 57] pusharglist 3 ........................... <theSpeechText, #word, i + 1>
+  [ 59] objcall 381 ............................. <theSpeechText.word[i + 1]>
+  [ 62] pusharglist 1 ........................... <theSpeechText.word[i + 1]>
+  [ 64] extcall 1562 ............................ <value(theSpeechText.word[i + 1])>
+  [ 67] pusharglist 2 ........................... <g.keyMaster, value(theSpeechText.word[i + 1])>
+  [ 69] objcall 1563 ............................ <g.keyMaster.getKeyFor(value(theSpeechText.word[i + 1]))>
+  [ 72] setlocal 2 .............................. currentKey = g.keyMaster.getKeyFor(value(theSpeechText.word[i + 1]))
+  [ 74] getparam 1 .............................. <theSpeechText>
+  [ 76] pushsymb 1560 ........................... <#word>
+  [ 79] pushint8 1 .............................. <1>
+  [ 81] getlocal 0 .............................. <i>
+  [ 83] pushint8 1 .............................. <1>
+  [ 85] sub ..................................... <i - 1>
+  [ 86] pusharglist 4 ........................... <theSpeechText, #word, 1, i - 1>
+  [ 88] objcall 381 ............................. <theSpeechText.word[1..i - 1]>
+  [ 91] pushcons 5 .............................. <QUOTE>
+  [ 93] joinpadstr .............................. <theSpeechText.word[1..i - 1] && QUOTE>
+  [ 94] getlocal 2 .............................. <currentKey>
+  [ 96] joinstr ................................. <theSpeechText.word[1..i - 1] && QUOTE & currentKey>
+  [ 97] pushcons 5 .............................. <QUOTE>
+  [ 99] joinstr ................................. <theSpeechText.word[1..i - 1] && QUOTE & currentKey & QUOTE>
+  [100] getparam 1 .............................. <theSpeechText>
+  [102] pushsymb 1560 ........................... <#word>
+  [105] getlocal 0 .............................. <i>
+  [107] pushint8 2 .............................. <2>
+  [109] add ..................................... <i + 2>
+  [110] getparam 1 .............................. <theSpeechText>
+  [112] pushsymb 1559 ........................... <#words>
+  [115] pusharglist 2 ........................... <theSpeechText, #words>
+  [117] objcall 257 ............................. <theSpeechText.words.count>
+  [120] pusharglist 4 ........................... <theSpeechText, #word, i + 2, theSpeechText.words.count>
+  [122] objcall 381 ............................. <theSpeechText.word[i + 2..theSpeechText.words.count]>
+  [125] joinpadstr .............................. <theSpeechText.word[1..i - 1] && QUOTE & currentKey & QUOTE && theSpeechText.word[i + 2..theSpeechText.words.count]>
+  [126] setparam 1 .............................. theSpeechText = theSpeechText.word[1..i - 1] && QUOTE & currentKey & QUOTE && theSpeechText.word[i + 2..theSpeechText.words.count]
+  [128] pushint8 -1
+  [130] getlocal 0
+  [132] add
+  [133] setlocal 0
+  [135] endrepeat [ 12]
+  [137] getparam 1 .............................. <theSpeechText>
+  [139] pusharglistnoret 1 ...................... <theSpeechText>
+  [141] extcall 35 .............................. return theSpeechText
+  [143] ret
+end
+
+on leaveThespianMode me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1512 ........................... <#waitForNextLine>
+  [  5] pusharglistnoret 2 ...................... <me, #waitForNextLine>
+  [  7] objcall 1456 ............................ me.goThespMode(#waitForNextLine)
+  [ 10] getparam 0 .............................. <me>
+  [ 12] pusharglistnoret 1 ...................... <me>
+  [ 14] objcall 1454 ............................ me.freeTextMember()
+  [ 17] getparam 0 .............................. <me>
+  [ 19] getchainedprop 922 ...................... <me.pAI>
+  [ 22] pusharglistnoret 1 ...................... <me.pAI>
+  [ 24] objcall 1459 ............................ me.pAI.leaveThespianMode()
+  [ 27] ret
+end
+
+on lineFinished me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1512 ........................... <#waitForNextLine>
+  [  5] pusharglistnoret 2 ...................... <me, #waitForNextLine>
+  [  7] objcall 1456 ............................ me.goThespMode(#waitForNextLine)
+  [ 10] getprop 1495 ............................ <pScriptPerformer>
+  [ 13] pusharglistnoret 1 ...................... <pScriptPerformer>
+  [ 15] objcall 1460 ............................ pScriptPerformer.lineFinished()
+  [ 18] ret
+end
+
+on lockTurnToFace me
+  [  0] pushint8 1 .............................. <1>
+  [  2] setprop 1511 ............................ pTurnToFaceLocked = 1
+  [  5] ret
+end
+
+on moveXYFin me
+  [  0] getprop 1557 ............................ <pThespMode>
+  [  3] pushsymb 1567 ........................... <#slideExit>
+  [  6] eq ...................................... <pThespMode = #slideExit>
+  [  7] jmpifz [ 17] ............................ if pThespMode = #slideExit then
+  [ 10] getparam 0 .............................. <me>
+  [ 12] pusharglistnoret 1 ...................... <me>
+  [ 14] objcall 1022 ............................ me.gotoWings()
+  [ 17] ret
+end
+
+on moveToLocFinished me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 1473 ............................ me.unlockTurnToFace()
+  [  7] getprop 1492 ............................ <pExitingStage>
+  [ 10] pushint8 1 .............................. <1>
+  [ 12] eq ...................................... <pExitingStage = 1>
+  [ 13] jmpifz [ 23] ............................ if pExitingStage = 1 then
+  [ 16] getparam 0 .............................. <me>
+  [ 18] pusharglistnoret 1 ...................... <me>
+  [ 20] objcall 1022 ............................ me.gotoWings()
+  [ 23] ret
+end
+
+on performLine me, theLine
+  [  0] getparam 1 .............................. <theLine>
+  [  2] setprop 1510 ............................ pTheLine = theLine
+  [  5] getparam 1 .............................. <theLine>
+  [  7] getobjprop 1568 ......................... <theLine.theCommand>
+  [ 10] peek 0 .................................. case theLine.theCommand of
+  [ 12] pushsymb 1444 ........................... <#at>
+  [ 15] eq
+  [ 16] jmpifz [ 42] ............................ (case) #at:
+  [ 19] getparam 0 .............................. <me>
+  [ 21] getprop 1510 ............................ <pTheLine>
+  [ 24] getobjprop 1554 ......................... <pTheLine.args>
+  [ 27] pusharglistnoret 2 ...................... <me, pTheLine.args>
+  [ 29] objcall 1444 ............................ me.at(pTheLine.args)
+  [ 32] getparam 0 .............................. <me>
+  [ 34] pusharglistnoret 1 ...................... <me>
+  [ 36] objcall 1460 ............................ me.lineFinished()
+  [ 39] jmp [658]
+  [ 42] peek 0
+  [ 44] pushsymb 1445 ........................... <#atPlayer>
+  [ 47] eq
+  [ 48] jmpifz [ 74] ............................ (case) #atPlayer:
+  [ 51] getparam 0 .............................. <me>
+  [ 53] getprop 1510 ............................ <pTheLine>
+  [ 56] getobjprop 1554 ......................... <pTheLine.args>
+  [ 59] pusharglistnoret 2 ...................... <me, pTheLine.args>
+  [ 61] objcall 1445 ............................ me.atPlayer(pTheLine.args)
+  [ 64] getparam 0 .............................. <me>
+  [ 66] pusharglistnoret 1 ...................... <me>
+  [ 68] objcall 1460 ............................ me.lineFinished()
+  [ 71] jmp [658]
+  [ 74] peek 0
+  [ 76] pushsymb 981 ............................ <#dropProp>
+  [ 79] eq
+  [ 80] jmpifz [102] ............................ (case) #dropProp:
+  [ 83] getparam 0 .............................. <me>
+  [ 85] getchainedprop 51 ....................... <me.big>
+  [ 87] pusharglistnoret 1 ...................... <me.big>
+  [ 89] objcall 981 ............................. me.big.dropProp()
+  [ 92] getparam 0 .............................. <me>
+  [ 94] pusharglistnoret 1 ...................... <me>
+  [ 96] objcall 1460 ............................ me.lineFinished()
+  [ 99] jmp [658]
+  [102] peek 0
+  [104] pushsymb 1451 ........................... <#enterStageLeft>
+  [107] eq
+  [108] jmpifz [132] ............................ (case) #enterStageLeft:
+  [111] pushzero ................................ <0>
+  [112] setprop 1492 ............................ pExitingStage = 0
+  [115] getparam 0 .............................. <me>
+  [117] pusharglistnoret 1 ...................... <me>
+  [119] objcall 1451 ............................ me.enterStageLeft()
+  [122] getparam 0 .............................. <me>
+  [124] pusharglistnoret 1 ...................... <me>
+  [126] objcall 1460 ............................ me.lineFinished()
+  [129] jmp [658]
+  [132] peek 0
+  [134] pushsymb 1452 ........................... <#enterStageRight>
+  [137] eq
+  [138] jmpifz [162] ............................ (case) #enterStageRight:
+  [141] pushzero ................................ <0>
+  [142] setprop 1492 ............................ pExitingStage = 0
+  [145] getparam 0 .............................. <me>
+  [147] pusharglistnoret 1 ...................... <me>
+  [149] objcall 1452 ............................ me.enterStageRight()
+  [152] getparam 0 .............................. <me>
+  [154] pusharglistnoret 1 ...................... <me>
+  [156] objcall 1460 ............................ me.lineFinished()
+  [159] jmp [658]
+  [162] peek 0
+  [164] pushsymb 1569 ........................... <#exitStageLeft>
+  [167] eq
+  [168] jmpifz [200] ............................ (case) #exitStageLeft:
+  [171] pushint8 1 .............................. <1>
+  [173] setprop 1492 ............................ pExitingStage = 1
+  [176] getparam 0 .............................. <me>
+  [178] getparam 0 .............................. <me>
+  [180] pusharglist 1 ........................... <me>
+  [182] objcall 1035 ............................ <me.calcStageLeftOffLoc()>
+  [185] pusharglistnoret 2 ...................... <me, me.calcStageLeftOffLoc()>
+  [187] objcall 1475 ............................ me.walkTo(me.calcStageLeftOffLoc())
+  [190] getparam 0 .............................. <me>
+  [192] pusharglistnoret 1 ...................... <me>
+  [194] objcall 1460 ............................ me.lineFinished()
+  [197] jmp [658]
+  [200] peek 0
+  [202] pushsymb 1570 ........................... <#exitStageRight>
+  [205] eq
+  [206] jmpifz [238] ............................ (case) #exitStageRight:
+  [209] pushint8 1 .............................. <1>
+  [211] setprop 1492 ............................ pExitingStage = 1
+  [214] getparam 0 .............................. <me>
+  [216] getparam 0 .............................. <me>
+  [218] pusharglist 1 ........................... <me>
+  [220] objcall 1036 ............................ <me.calcStageRightOffLoc()>
+  [223] pusharglistnoret 2 ...................... <me, me.calcStageRightOffLoc()>
+  [225] objcall 1475 ............................ me.walkTo(me.calcStageRightOffLoc())
+  [228] getparam 0 .............................. <me>
+  [230] pusharglistnoret 1 ...................... <me>
+  [232] objcall 1460 ............................ me.lineFinished()
+  [235] jmp [658]
+  [238] peek 0
+  [240] pushsymb 1453 ........................... <#fadeDown>
+  [243] eq
+  [244] jmpifz [264] ............................ (case) #fadeDown:
+  [247] getparam 0 .............................. <me>
+  [249] pusharglistnoret 1 ...................... <me>
+  [251] objcall 1453 ............................ me.fadeDown()
+  [254] getparam 0 .............................. <me>
+  [256] pusharglistnoret 1 ...................... <me>
+  [258] objcall 1460 ............................ me.lineFinished()
+  [261] jmp [658]
+  [264] peek 0
+  [266] pushsymb 278 ............................ <#goMode>
+  [269] eq
+  [270] jmpifz [298] ............................ (case) #goMode:
+  [273] getparam 0 .............................. <me>
+  [275] getchainedprop 51 ....................... <me.big>
+  [277] getprop 1510 ............................ <pTheLine>
+  [280] getobjprop 1554 ......................... <pTheLine.args>
+  [283] pusharglistnoret 2 ...................... <me.big, pTheLine.args>
+  [285] objcall 278 ............................. me.big.goMode(pTheLine.args)
+  [288] getparam 0 .............................. <me>
+  [290] pusharglistnoret 1 ...................... <me>
+  [292] objcall 1460 ............................ me.lineFinished()
+  [295] jmp [658]
+  [298] peek 0
+  [300] pushsymb 1022 ........................... <#gotoWings>
+  [303] eq
+  [304] jmpifz [324] ............................ (case) #gotoWings:
+  [307] getparam 0 .............................. <me>
+  [309] pusharglistnoret 1 ...................... <me>
+  [311] objcall 1022 ............................ me.gotoWings()
+  [314] getparam 0 .............................. <me>
+  [316] pusharglistnoret 1 ...................... <me>
+  [318] objcall 1460 ............................ me.lineFinished()
+  [321] jmp [658]
+  [324] peek 0
+  [326] pushsymb 1571 ........................... <#goWastedMode>
+  [329] eq
+  [330] jmpifz [361] ............................ (case) #goWastedMode:
+  [333] getparam 0 .............................. <me>
+  [335] getchainedprop 57 ....................... <me.id>
+  [337] getchainedprop 58 ....................... <me.id.bigMe>
+  [339] pusharglistnoret 1 ...................... <me.id.bigMe>
+  [341] objcall 1572 ............................ me.id.bigMe.wastedModeOn()
+  [344] getparam 0 .............................. <me>
+  [346] pusharglistnoret 1 ...................... <me>
+  [348] objcall 1464 ............................ me.reAlignToStageFloor()
+  [351] getparam 0 .............................. <me>
+  [353] pusharglistnoret 1 ...................... <me>
+  [355] objcall 1460 ............................ me.lineFinished()
+  [358] jmp [658]
+  [361] peek 0
+  [363] pushsymb 1573 ........................... <#propAt>
+  [366] eq
+  [367] jmpifz [405] ............................ (case) #propAt:
+  [370] getparam 0 .............................. <me>
+  [372] getchainedprop 51 ....................... <me.big>
+  [374] pushsymb 1010 ........................... <#prop>
+  [377] pusharglistnoret 2 ...................... <me.big, #prop>
+  [379] objcall 992 ............................. me.big.setPropStatus(#prop)
+  [382] getparam 0 .............................. <me>
+  [384] getprop 1510 ............................ <pTheLine>
+  [387] getobjprop 1554 ......................... <pTheLine.args>
+  [390] pusharglistnoret 2 ...................... <me, pTheLine.args>
+  [392] objcall 1444 ............................ me.at(pTheLine.args)
+  [395] getparam 0 .............................. <me>
+  [397] pusharglistnoret 1 ...................... <me>
+  [399] objcall 1460 ............................ me.lineFinished()
+  [402] jmp [658]
+  [405] peek 0
+  [407] pushsymb 1463 ........................... <#produceProp>
+  [410] eq
+  [411] jmpifz [431] ............................ (case) #produceProp:
+  [414] getparam 0 .............................. <me>
+  [416] pusharglistnoret 1 ...................... <me>
+  [418] objcall 1463 ............................ me.produceProp()
+  [421] getparam 0 .............................. <me>
+  [423] pusharglistnoret 1 ...................... <me>
+  [425] objcall 1460 ............................ me.lineFinished()
+  [428] jmp [658]
+  [431] peek 0
+  [433] pushsymb 991 ............................ <#putAwayProp>
+  [436] eq
+  [437] jmpifz [459] ............................ (case) #putAwayProp:
+  [440] getparam 0 .............................. <me>
+  [442] getchainedprop 51 ....................... <me.big>
+  [444] pusharglistnoret 1 ...................... <me.big>
+  [446] objcall 991 ............................. me.big.putAwayProp()
+  [449] getparam 0 .............................. <me>
+  [451] pusharglistnoret 1 ...................... <me>
+  [453] objcall 1460 ............................ me.lineFinished()
+  [456] jmp [658]
+  [459] peek 0
+  [461] pushsymb 1468 ........................... <#speakLine>
+  [464] eq
+  [465] jmpifz [478] ............................ (case) #speakLine:
+  [468] getparam 0 .............................. <me>
+  [470] pusharglistnoret 1 ...................... <me>
+  [472] objcall 1468 ............................ me.speakLine()
+  [475] jmp [658]
+  [478] peek 0
+  [480] pushsymb 112 ............................ <#teleportInAt>
+  [482] eq
+  [483] jmpifz [519] ............................ (case) #teleportInAt:
+  [486] getparam 0 .............................. <me>
+  [488] getchainedprop 57 ....................... <me.id>
+  [490] getchainedprop 58 ....................... <me.id.bigMe>
+  [492] getparam 0 .............................. <me>
+  [494] getprop 1510 ............................ <pTheLine>
+  [497] getobjprop 1554 ......................... <pTheLine.args>
+  [500] pusharglist 2 ........................... <me, pTheLine.args>
+  [502] objcall 1457 ............................ <me.interpretLoc(pTheLine.args)>
+  [505] pusharglistnoret 2 ...................... <me.id.bigMe, me.interpretLoc(pTheLine.args)>
+  [507] objcall 112 ............................. me.id.bigMe.teleportInAt(me.interpretLoc(pTheLine.args))
+  [509] getparam 0 .............................. <me>
+  [511] pusharglistnoret 1 ...................... <me>
+  [513] objcall 1460 ............................ me.lineFinished()
+  [516] jmp [658]
+  [519] peek 0
+  [521] pushsymb 115 ............................ <#teleportOut>
+  [523] eq
+  [524] jmpifz [557] ............................ (case) #teleportOut:
+  [527] getparam 0 .............................. <me>
+  [529] getchainedprop 57 ....................... <me.id>
+  [531] getchainedprop 58 ....................... <me.id.bigMe>
+  [533] pushsymb 1574 ........................... <#modThespian>
+  [536] getparam 0 .............................. <me>
+  [538] pusharglist 1 ........................... <me>
+  [540] objcall 1446 ............................ <me.calcTeleportFloor()>
+  [543] pusharglistnoret 3 ...................... <me.id.bigMe, #modThespian, me.calcTeleportFloor()>
+  [545] objcall 115 ............................. me.id.bigMe.teleportOut(#modThespian, me.calcTeleportFloor())
+  [547] getparam 0 .............................. <me>
+  [549] pusharglistnoret 1 ...................... <me>
+  [551] objcall 1460 ............................ me.lineFinished()
+  [554] jmp [658]
+  [557] peek 0
+  [559] pushsymb 1469 ........................... <#turnToFace>
+  [562] eq
+  [563] jmpifz [589] ............................ (case) #turnToFace:
+  [566] getparam 0 .............................. <me>
+  [568] getprop 1510 ............................ <pTheLine>
+  [571] getobjprop 1554 ......................... <pTheLine.args>
+  [574] pusharglistnoret 2 ...................... <me, pTheLine.args>
+  [576] objcall 1469 ............................ me.turnToFace(pTheLine.args)
+  [579] getparam 0 .............................. <me>
+  [581] pusharglistnoret 1 ...................... <me>
+  [583] objcall 1460 ............................ me.lineFinished()
+  [586] jmp [658]
+  [589] peek 0
+  [591] pushsymb 1475 ........................... <#walkTo>
+  [594] eq
+  [595] jmpifz [625] ............................ (case) #walkTo:
+  [598] pushzero ................................ <0>
+  [599] setprop 1492 ............................ pExitingStage = 0
+  [602] getparam 0 .............................. <me>
+  [604] getprop 1510 ............................ <pTheLine>
+  [607] getobjprop 1554 ......................... <pTheLine.args>
+  [610] pusharglistnoret 2 ...................... <me, pTheLine.args>
+  [612] objcall 1475 ............................ me.walkTo(pTheLine.args)
+  [615] getparam 0 .............................. <me>
+  [617] pusharglistnoret 1 ...................... <me>
+  [619] objcall 1460 ............................ me.lineFinished()
+  [622] jmp [658]
+  [625] peek 0
+  [627] pushsymb 1476 ........................... <#walkToPlayer>
+  [630] eq
+  [631] jmpifz [658] ............................ (case) #walkToPlayer:
+  [634] pushzero ................................ <0>
+  [635] setprop 1492 ............................ pExitingStage = 0
+  [638] getparam 0 .............................. <me>
+  [640] getprop 1510 ............................ <pTheLine>
+  [643] getobjprop 1554 ......................... <pTheLine.args>
+  [646] pusharglistnoret 2 ...................... <me, pTheLine.args>
+  [648] objcall 1476 ............................ me.walkToPlayer(pTheLine.args)
+  [651] getparam 0 .............................. <me>
+  [653] pusharglistnoret 1 ...................... <me>
+  [655] objcall 1460 ............................ me.lineFinished()
+  [658] pop 1 ................................... end case
+  [660] ret
+end
+
+on produceProp me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 57 ....................... <me.id>
+  [  4] getobjprop 58 ........................... <me.id.bigMe>
+  [  6] setlocal 0 .............................. bigMe = me.id.bigMe
+  [  8] getprop 1510 ............................ <pTheLine>
+  [ 11] getobjprop 1554 ......................... <pTheLine.args>
+  [ 14] setlocal 1 .............................. propCharacter = pTheLine.args
+  [ 16] getprop 1495 ............................ <pScriptPerformer>
+  [ 19] getlocal 1 .............................. <propCharacter>
+  [ 21] pusharglist 2 ........................... <pScriptPerformer, propCharacter>
+  [ 23] objcall 861 ............................. <pScriptPerformer.getPlayer(propCharacter)>
+  [ 26] setlocal 2 .............................. propObj = pScriptPerformer.getPlayer(propCharacter)
+  [ 28] getlocal 0 .............................. <bigMe>
+  [ 30] getlocal 2 .............................. <propObj>
+  [ 32] pusharglistnoret 2 ...................... <bigMe, propObj>
+  [ 34] objcall 980 ............................. bigMe.carryProp(propObj)
+  [ 37] getlocal 2 .............................. <propObj>
+  [ 39] getlocal 0 .............................. <bigMe>
+  [ 41] pusharglistnoret 2 ...................... <propObj, bigMe>
+  [ 43] objcall 978 ............................. propObj.beProducedAsProp(bigMe)
+  [ 46] ret
+end
+
+on reAlignToStageFloor me
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 1032 ..................... <g.cutSceneMaster>
+  [  5] pusharglist 1 ........................... <g.cutSceneMaster>
+  [  7] objcall 1033 ............................ <g.cutSceneMaster.getStageFloor()>
+  [ 10] setlocal 0 .............................. stageFloor = g.cutSceneMaster.getStageFloor()
+  [ 12] getparam 0 .............................. <me>
+  [ 14] getchainedprop 57 ....................... <me.id>
+  [ 16] getobjprop 58 ........................... <me.id.bigMe>
+  [ 18] setlocal 1 .............................. bigMe = me.id.bigMe
+  [ 20] getlocal 1 .............................. <bigMe>
+  [ 22] pusharglist 1 ........................... <bigMe>
+  [ 24] objcall 111 ............................. <bigMe.getLoc()>
+  [ 26] getobjprop 539 .......................... <bigMe.getLoc().locH>
+  [ 29] setlocal 2 .............................. xLoc = bigMe.getLoc().locH
+  [ 31] getlocal 1 .............................. <bigMe>
+  [ 33] pushsymb 114 ............................ <#bottom>
+  [ 35] getlocal 0 .............................. <stageFloor>
+  [ 37] pusharglist 3 ........................... <bigMe, #bottom, stageFloor>
+  [ 39] objcall 965 ............................. <bigMe.positionEdge(#bottom, stageFloor)>
+  [ 42] setlocal 3 .............................. yLoc = bigMe.positionEdge(#bottom, stageFloor)
+  [ 44] getlocal 1 .............................. <bigMe>
+  [ 46] getlocal 2 .............................. <xLoc>
+  [ 48] getlocal 3 .............................. <yLoc>
+  [ 50] pusharglist 2 ........................... <xLoc, yLoc>
+  [ 52] extcall 197 ............................. <point(xLoc, yLoc)>
+  [ 54] pusharglistnoret 2 ...................... <bigMe, point(xLoc, yLoc)>
+  [ 56] objcall 669 ............................. bigMe.setLoc(point(xLoc, yLoc))
+  [ 59] ret
+end
+
+on setScriptPerformer me, newVal
+  [  0] getparam 1 .............................. <newVal>
+  [  2] setprop 1495 ............................ pScriptPerformer = newVal
+  [  5] ret
+end
+
+on setScriptPerformerActorID me, newVal
+  [  0] getparam 1 .............................. <newVal>
+  [  2] setprop 1496 ............................ pScriptPerformerActorID = newVal
+  [  5] ret
+end
+
+on setSpeechDisplayMode me, newVal
+  [  0] getparam 1 .............................. <newVal>
+  [  2] setprop 1504 ............................ pSpeechDisplayMode = newVal
+  [  5] getprop 1504 ............................ <pSpeechDisplayMode>
+  [  8] peek 0 .................................. case pSpeechDisplayMode of
+  [ 10] pushsymb 1486 ........................... <#ingame>
+  [ 13] eq
+  [ 14] jmpifz [ 26] ............................ (case) #ingame:
+  [ 17] getglobal 815 ........................... <gGameTextLayer>
+  [ 20] setprop 814 ............................. pMyLayer = gGameTextLayer
+  [ 23] jmp [ 41]
+  [ 26] peek 0
+  [ 28] pushsymb 1513 ........................... <#cutscene>
+  [ 31] eq
+  [ 32] jmpifz [ 41] ............................ (case) #cutscene:
+  [ 35] getglobal 1578 .......................... <gCutSceneSpeechLayer>
+  [ 38] setprop 814 ............................. pMyLayer = gCutSceneSpeechLayer
+  [ 41] pop 1 ................................... end case
+  [ 43] ret
+end
+
+on speakLine me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1552 ........................... <#displayLine>
+  [  5] pusharglistnoret 2 ...................... <me, #displayLine>
+  [  7] objcall 1456 ............................ me.goThespMode(#displayLine)
+  [ 10] ret
+end
+
+on teleportOutFinished me, caller
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <caller>
+  [  4] pusharglistnoret 2 ...................... <ancestor, caller>
+  [  6] objcall 119 ............................. ancestor.teleportOutFinished(caller)
+  [  8] getparam 1 .............................. <caller>
+  [ 10] pushsymb 1574 ........................... <#modThespian>
+  [ 13] eq ...................................... <caller = #modThespian>
+  [ 14] jmpifz [ 24] ............................ if caller = #modThespian then
+  [ 17] getparam 0 .............................. <me>
+  [ 19] pusharglistnoret 1 ...................... <me>
+  [ 21] objcall 1022 ............................ me.gotoWings()
+  [ 24] ret
+end
+
+on turnToFace me, objCharacter
+  [  0] getprop 1511 ............................ <pTurnToFaceLocked>
+  [  3] jmpifz [ 10] ............................ if pTurnToFaceLocked then
+  [  6] pusharglistnoret 0 ...................... <>
+  [  8] extcall 35 .............................. return 
+  [ 10] getparam 0 .............................. <me>
+  [ 12] getchainedprop 51 ....................... <me.big>
+  [ 14] pusharglist 1 ........................... <me.big>
+  [ 16] objcall 984 ............................. <me.big.getPropStatus()>
+  [ 19] pushsymb 1010 ........................... <#prop>
+  [ 22] eq ...................................... <me.big.getPropStatus() = #prop>
+  [ 23] jmpifz [ 30] ............................ if me.big.getPropStatus() = #prop then
+  [ 26] pusharglistnoret 0 ...................... <>
+  [ 28] extcall 35 .............................. return 
+  [ 30] getprop 1495 ............................ <pScriptPerformer>
+  [ 33] getparam 1 .............................. <objCharacter>
+  [ 35] pusharglist 2 ........................... <pScriptPerformer, objCharacter>
+  [ 37] objcall 861 ............................. <pScriptPerformer.getPlayer(objCharacter)>
+  [ 40] setlocal 0 .............................. playerToFace = pScriptPerformer.getPlayer(objCharacter)
+  [ 42] getlocal 0 .............................. <playerToFace>
+  [ 44] pusharglist 1 ........................... <playerToFace>
+  [ 46] objcall 111 ............................. <playerToFace.getLoc()>
+  [ 48] setlocal 1 .............................. locToFace = playerToFace.getLoc()
+  [ 50] getparam 0 .............................. <me>
+  [ 52] getchainedprop 57 ....................... <me.id>
+  [ 54] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 56] pusharglist 1 ........................... <me.id.bigMe>
+  [ 58] objcall 111 ............................. <me.id.bigMe.getLoc()>
+  [ 60] getlocal 1 .............................. <locToFace>
+  [ 62] pusharglist 2 ........................... <me.id.bigMe.getLoc(), locToFace>
+  [ 64] extcall 909 ............................. <PointDirPoint(me.id.bigMe.getLoc(), locToFace)>
+  [ 67] setlocal 2 .............................. dirToFace = PointDirPoint(me.id.bigMe.getLoc(), locToFace)
+  [ 69] getparam 0 .............................. <me>
+  [ 71] getchainedprop 57 ....................... <me.id>
+  [ 73] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 75] getlocal 2 .............................. <dirToFace>
+  [ 77] pushint8 1 .............................. <1>
+  [ 79] pusharglist 2 ........................... <dirToFace, 1>
+  [ 81] objcall 109 ............................. <dirToFace[1]>
+  [ 83] pusharglistnoret 2 ...................... <me.id.bigMe, dirToFace[1]>
+  [ 85] objcall 910 ............................. me.id.bigMe.setSpriteFlipFromDir(dirToFace[1])
+  [ 88] ret
+end
+
+on startWalkScrollLeft me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 51 ....................... <me.big>
+  [  4] pusharglist 1 ........................... <me.big>
+  [  6] objcall 984 ............................. <me.big.getPropStatus()>
+  [  9] pushsymb 997 ............................ <#notAProp>
+  [ 12] eq ...................................... <me.big.getPropStatus() = #notAProp>
+  [ 13] jmpifz [ 53] ............................ if me.big.getPropStatus() = #notAProp then / else
+  [ 16] getparam 0 .............................. <me>
+  [ 18] pusharglistnoret 1 ...................... <me>
+  [ 20] objcall 1447 ............................ me.cancelMoveTo()
+  [ 23] getparam 0 .............................. <me>
+  [ 25] pusharglistnoret 1 ...................... <me>
+  [ 27] objcall 1461 ............................ me.lockTurnToFace()
+  [ 30] getparam 0 .............................. <me>
+  [ 32] pushint8 1 .............................. <1>
+  [ 34] inv ..................................... <-1>
+  [ 35] pusharglistnoret 2 ...................... <me, -1>
+  [ 37] objcall 910 ............................. me.setSpriteFlipFromDir(-1)
+  [ 40] getparam 0 .............................. <me>
+  [ 42] pushint8 1 .............................. <1>
+  [ 44] inv ..................................... <-1>
+  [ 45] pusharglistnoret 2 ...................... <me, -1>
+  [ 47] objcall 880 ............................. me.moveHorizReaction(-1)
+  [ 50] jmp [ 62]
+  [ 53] getparam 0 .............................. <me>
+  [ 55] getchainedprop 51 ....................... <me.big>
+  [ 57] pusharglistnoret 1 ...................... <me.big>
+  [ 59] objcall 988 ............................. me.big.propExitStageRight()
+  [ 62] ret
+end
+
+on startWalkScrollRight me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 51 ....................... <me.big>
+  [  4] pusharglist 1 ........................... <me.big>
+  [  6] objcall 984 ............................. <me.big.getPropStatus()>
+  [  9] pushsymb 997 ............................ <#notAProp>
+  [ 12] eq ...................................... <me.big.getPropStatus() = #notAProp>
+  [ 13] jmpifz [ 51] ............................ if me.big.getPropStatus() = #notAProp then / else
+  [ 16] getparam 0 .............................. <me>
+  [ 18] pusharglistnoret 1 ...................... <me>
+  [ 20] objcall 1447 ............................ me.cancelMoveTo()
+  [ 23] getparam 0 .............................. <me>
+  [ 25] pusharglistnoret 1 ...................... <me>
+  [ 27] objcall 1461 ............................ me.lockTurnToFace()
+  [ 30] getparam 0 .............................. <me>
+  [ 32] pushint8 1 .............................. <1>
+  [ 34] pusharglistnoret 2 ...................... <me, 1>
+  [ 36] objcall 910 ............................. me.setSpriteFlipFromDir(1)
+  [ 39] getparam 0 .............................. <me>
+  [ 41] pushint8 1 .............................. <1>
+  [ 43] pusharglistnoret 2 ...................... <me, 1>
+  [ 45] objcall 880 ............................. me.moveHorizReaction(1)
+  [ 48] jmp [ 60]
+  [ 51] getparam 0 .............................. <me>
+  [ 53] getchainedprop 51 ....................... <me.big>
+  [ 55] pusharglistnoret 1 ...................... <me.big>
+  [ 57] objcall 987 ............................. me.big.propExitStageLeft()
+  [ 60] ret
+end
+
+on stopWalkScroll me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 51 ....................... <me.big>
+  [  4] pusharglist 1 ........................... <me.big>
+  [  6] objcall 984 ............................. <me.big.getPropStatus()>
+  [  9] pushsymb 997 ............................ <#notAProp>
+  [ 12] eq ...................................... <me.big.getPropStatus() = #notAProp>
+  [ 13] jmpifz [ 34] ............................ if me.big.getPropStatus() = #notAProp then / else
+  [ 16] getparam 0 .............................. <me>
+  [ 18] pusharglistnoret 1 ...................... <me>
+  [ 20] objcall 1473 ............................ me.unlockTurnToFace()
+  [ 23] getparam 0 .............................. <me>
+  [ 25] pushzero ................................ <0>
+  [ 26] pusharglistnoret 2 ...................... <me, 0>
+  [ 28] objcall 880 ............................. me.moveHorizReaction(0)
+  [ 31] jmp [ 43]
+  [ 34] getparam 0 .............................. <me>
+  [ 36] getchainedprop 51 ....................... <me.big>
+  [ 38] pusharglistnoret 1 ...................... <me.big>
+  [ 40] objcall 993 ............................. me.big.stopPropExit()
+  [ 43] ret
+end
+
+on unlockTurnToFace me
+  [  0] pushzero ................................ <0>
+  [  1] setprop 1511 ............................ pTurnToFaceLocked = 0
+  [  4] ret
+end
+
+on update me
+  [  0] getprop 1497 ............................ <pSkipCounter>
+  [  3] getobjprop 552 .......................... <pSkipCounter.fin>
+  [  6] pushzero ................................ <0>
+  [  7] eq ...................................... <pSkipCounter.fin = 0>
+  [  8] jmpifz [ 19] ............................ if pSkipCounter.fin = 0 then
+  [ 11] getprop 1497 ............................ <pSkipCounter>
+  [ 14] pusharglistnoret 1 ...................... <pSkipCounter>
+  [ 16] extcall 553 ............................. counter(pSkipCounter)
+  [ 19] getprop 1557 ............................ <pThespMode>
+  [ 22] peek 0 .................................. case pThespMode of
+  [ 24] pushsymb 1552 ........................... <#displayLine>
+  [ 27] eq
+  [ 28] jmpifz [ 58] ............................ (case) #displayLine:
+  [ 31] getparam 0 .............................. <me>
+  [ 33] pusharglist 1 ........................... <me>
+  [ 35] objcall 1474 ............................ <me.updateFrameWait()>
+  [ 38] setlocal 0 .............................. fin = me.updateFrameWait()
+  [ 40] getlocal 0 .............................. <fin>
+  [ 42] jmpifz [ 55] ............................ if fin then
+  [ 45] getparam 0 .............................. <me>
+  [ 47] pushsymb 1555 ........................... <#delayAfterLine>
+  [ 50] pusharglistnoret 2 ...................... <me, #delayAfterLine>
+  [ 52] objcall 1456 ............................ me.goThespMode(#delayAfterLine)
+  [ 55] jmp [ 88]
+  [ 58] peek 0
+  [ 60] pushsymb 1555 ........................... <#delayAfterLine>
+  [ 63] eq
+  [ 64] jmpifz [ 88] ............................ (case) #delayAfterLine:
+  [ 67] getparam 0 .............................. <me>
+  [ 69] pusharglist 1 ........................... <me>
+  [ 71] objcall 1474 ............................ <me.updateFrameWait()>
+  [ 74] setlocal 0 .............................. fin = me.updateFrameWait()
+  [ 76] getlocal 0 .............................. <fin>
+  [ 78] jmpifz [ 88] ............................ if fin then
+  [ 81] getparam 0 .............................. <me>
+  [ 83] pusharglistnoret 1 ...................... <me>
+  [ 85] objcall 1460 ............................ me.lineFinished()
+  [ 88] pop 1 ................................... end case
+  [ 90] getprop 33 .............................. <ancestor>
+  [ 92] pusharglistnoret 1 ...................... <ancestor>
+  [ 94] objcall 31 .............................. ancestor.update()
+  [ 96] ret
+end
+
+on updateFrameWait me
+  [  0] getprop 1493 ............................ <pFrameCounter>
+  [  3] getobjprop 552 .......................... <pFrameCounter.fin>
+  [  6] jmpifz [ 15] ............................ if pFrameCounter.fin then
+  [  9] pushint8 1 .............................. <1>
+  [ 11] pusharglistnoret 1 ...................... <1>
+  [ 13] extcall 35 .............................. return 1
+  [ 15] getprop 1493 ............................ <pFrameCounter>
+  [ 18] pusharglistnoret 1 ...................... <pFrameCounter>
+  [ 20] extcall 553 ............................. counter(pFrameCounter)
+  [ 23] pushzero ................................ <0>
+  [ 24] pusharglistnoret 1 ...................... <0>
+  [ 26] extcall 35 .............................. return 0
+  [ 28] ret
+end
+
+on walkTo me, theloc
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 1461 ............................ me.lockTurnToFace()
+  [  7] getparam 0 .............................. <me>
+  [  9] getparam 1 .............................. <theloc>
+  [ 11] pusharglist 2 ........................... <me, theloc>
+  [ 13] objcall 1457 ............................ <me.interpretLoc(theloc)>
+  [ 16] setparam 1 .............................. theloc = me.interpretLoc(theloc)
+  [ 18] getparam 0 .............................. <me>
+  [ 20] getchainedprop 57 ....................... <me.id>
+  [ 22] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 24] getparam 1 .............................. <theloc>
+  [ 26] pusharglistnoret 2 ...................... <me.id.bigMe, theloc>
+  [ 28] objcall 67 .............................. me.id.bigMe.moveToLoc(theloc)
+  [ 30] ret
+end
+
+on walkToPlayer me, thename
+  [  0] getprop 1495 ............................ <pScriptPerformer>
+  [  3] getparam 1 .............................. <thename>
+  [  5] pusharglist 2 ........................... <pScriptPerformer, thename>
+  [  7] objcall 861 ............................. <pScriptPerformer.getPlayer(thename)>
+  [ 10] setlocal 0 .............................. playerToWalkTo = pScriptPerformer.getPlayer(thename)
+  [ 12] getlocal 0 .............................. <playerToWalkTo>
+  [ 14] pusharglist 1 ........................... <playerToWalkTo>
+  [ 16] objcall 111 ............................. <playerToWalkTo.getLoc()>
+  [ 18] setlocal 1 .............................. locToWalkTo = playerToWalkTo.getLoc()
+  [ 20] getlocal 1 .............................. <locToWalkTo>
+  [ 22] getobjprop 539 .......................... <locToWalkTo.locH>
+  [ 25] setlocal 2 .............................. xLoc = locToWalkTo.locH
+  [ 27] getparam 0 .............................. <me>
+  [ 29] getlocal 2 .............................. <xLoc>
+  [ 31] pusharglistnoret 2 ...................... <me, xLoc>
+  [ 33] objcall 1475 ............................ me.walkTo(xLoc)
+  [ 36] ret
+end

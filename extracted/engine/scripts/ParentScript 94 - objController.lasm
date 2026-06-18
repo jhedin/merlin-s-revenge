@@ -1,0 +1,180 @@
+property ancestor, pExclusive, pObjects
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"objParams">
+  [  2] pusharglist 1 ........................... <"objParams">
+  [  4] extcall 34 .............................. <script("objParams")>
+  [  6] pusharglist 1 ........................... <script("objParams")>
+  [  8] extcall 0 ............................... <new(script("objParams"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objParams"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 626 ............................ <#exclusive>
+  [ 27] pushint8 1 .............................. <1>
+  [ 29] pusharglistnoret 3 ...................... <i, #exclusive, 1>
+  [ 31] objcall 48 .............................. i[#exclusive] = 1
+  [ 33] getparam 0 .............................. <me>
+  [ 35] pusharglistnoret 1 ...................... <me>
+  [ 37] extcall 35 .............................. return me
+  [ 39] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 626 .......................... <params.exclusive>
+  [ 13] setprop 2384 ............................ pExclusive = params.exclusive
+  [ 16] pusharglist 0 ........................... <[]>
+  [ 18] pushlist ................................ <[]>
+  [ 19] setprop 2385 ............................ pObjects = []
+  [ 22] ret
+end
+
+on finish me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 2379 ............................ me.finishObjects()
+  [  7] getprop 33 .............................. <ancestor>
+  [  9] pusharglistnoret 1 ...................... <ancestor>
+  [ 11] objcall 3 ............................... ancestor.finish()
+  [ 13] ret
+end
+
+on clearAll me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 2379 ............................ me.finishObjects()
+  [  7] ret
+end
+
+on deactivateObjects me
+  [  0] getprop 2385 ............................ <pObjects>
+  [  3] peek 0
+  [  5] pusharglist 1
+  [  7] extcall 257
+  [ 10] pushint8 1
+  [ 12] peek 0
+  [ 14] peek 2
+  [ 16] lteq
+  [ 17] jmpifz [ 42] ............................ repeat with nObj in pObjects
+  [ 20] peek 2
+  [ 22] peek 1
+  [ 24] pusharglist 2
+  [ 26] extcall 109
+  [ 28] setlocal 0
+  [ 30] getlocal 0 .............................. <nObj>
+  [ 32] pusharglistnoret 1 ...................... <nObj>
+  [ 34] objcall 371 ............................. nObj.deactivate()
+  [ 37] pushint8 1
+  [ 39] add
+  [ 40] endrepeat [ 12]
+  [ 42] pop 3
+  [ 44] ret
+end
+
+on finishObjects me
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 41 ....................... <g.objectMaster>
+  [  4] getprop 2385 ............................ <pObjects>
+  [  7] pusharglistnoret 2 ...................... <g.objectMaster, pObjects>
+  [  9] objcall 2379 ............................ g.objectMaster.finishObjects(pObjects)
+  [ 12] pusharglist 0 ........................... <[]>
+  [ 14] pushlist ................................ <[]>
+  [ 15] setprop 2385 ............................ pObjects = []
+  [ 18] ret
+end
+
+on getObject me, pos
+  [  0] getparam 1 .............................. <pos>
+  [  2] pushint8 1 .............................. <1>
+  [  4] lt ...................................... <pos < 1>
+  [  5] jmpifz [ 12] ............................ if pos < 1 then
+  [  8] pushint8 1 .............................. <1>
+  [ 10] setparam 1 .............................. pos = 1
+  [ 12] getprop 2385 ............................ <pObjects>
+  [ 15] getobjprop 257 .......................... <pObjects.count>
+  [ 18] pushzero ................................ <0>
+  [ 19] eq ...................................... <pObjects.count = 0>
+  [ 20] jmpifz [ 29] ............................ if pObjects.count = 0 then
+  [ 23] pushsymb 49 ............................. <#none>
+  [ 25] pusharglistnoret 1 ...................... <#none>
+  [ 27] extcall 35 .............................. return #none
+  [ 29] getprop 2385 ............................ <pObjects>
+  [ 32] getparam 1 .............................. <pos>
+  [ 34] pusharglist 2 ........................... <pObjects, pos>
+  [ 36] objcall 109 ............................. <pObjects[pos]>
+  [ 38] pusharglistnoret 1 ...................... <pObjects[pos]>
+  [ 40] extcall 35 .............................. return pObjects[pos]
+  [ 42] ret
+end
+
+on newObject me, params
+  [  0] getparam 1 .............................. <params>
+  [  2] getparam 0 .............................. <me>
+  [  4] getchainedprop 57 ....................... <me.id>
+  [  6] getobjprop 58 ........................... <me.id.bigMe>
+  [  8] setobjprop 2387 ......................... params.myController = me.id.bigMe
+  [ 11] getprop 2384 ............................ <pExclusive>
+  [ 14] jmpifz [ 28] ............................ if pExclusive then
+  [ 17] getparam 0 .............................. <me>
+  [ 19] getchainedprop 57 ....................... <me.id>
+  [ 21] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 23] pusharglistnoret 1 ...................... <me.id.bigMe>
+  [ 25] objcall 2378 ............................ me.id.bigMe.deactivateObjects()
+  [ 28] getparam 1 .............................. <params>
+  [ 30] pusharglistnoret 1 ...................... <params>
+  [ 32] extcall 35 .............................. return params
+  [ 34] ret
+end
+
+on objectFinished me, theObject
+  [  0] getprop 2385 ............................ <pObjects>
+  [  3] getparam 1 .............................. <theObject>
+  [  5] pusharglist 2 ........................... <pObjects, theObject>
+  [  7] objcall 219 ............................. <pObjects.getPos(theObject)>
+  [  9] setlocal 0 .............................. objpos = pObjects.getPos(theObject)
+  [ 11] getlocal 0 .............................. <objpos>
+  [ 13] pushzero ................................ <0>
+  [ 14] gt ...................................... <objpos > 0>
+  [ 15] jmpifz [ 61] ............................ if objpos > 0 then
+  [ 18] getprop 2385 ............................ <pObjects>
+  [ 21] getlocal 0 .............................. <objpos>
+  [ 23] pusharglistnoret 2 ...................... <pObjects, objpos>
+  [ 25] objcall 1087 ............................ pObjects.deleteAt(objpos)
+  [ 28] getprop 2384 ............................ <pExclusive>
+  [ 31] jmpifz [ 61] ............................ if pExclusive then
+  [ 34] getlocal 0 .............................. <objpos>
+  [ 36] pushint8 1 .............................. <1>
+  [ 38] sub ..................................... <objpos - 1>
+  [ 39] pushzero ................................ <0>
+  [ 40] gt ...................................... <(objpos - 1) > 0>
+  [ 41] jmpifz [ 61] ............................ if (objpos - 1) > 0 then
+  [ 44] getprop 2385 ............................ <pObjects>
+  [ 47] getlocal 0 .............................. <objpos>
+  [ 49] pushint8 1 .............................. <1>
+  [ 51] sub ..................................... <objpos - 1>
+  [ 52] pusharglist 2 ........................... <pObjects, objpos - 1>
+  [ 54] objcall 109 ............................. <pObjects[objpos - 1]>
+  [ 56] pusharglistnoret 1 ...................... <pObjects[objpos - 1]>
+  [ 58] objcall 370 ............................. pObjects[objpos - 1].activate()
+  [ 61] ret
+end
+
+on start me
+  [  0] ret
+end
+
+on stop me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 3 ............................... me.finish()
+  [  6] ret
+end

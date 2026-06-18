@@ -1,0 +1,29 @@
+on RectCalcMiddle therect
+  [  0] pushzero ................................ <0>
+  [  1] pushzero ................................ <0>
+  [  2] pusharglist 2 ........................... <0, 0>
+  [  4] extcall 97 .............................. <point(0, 0)>
+  [  6] setlocal 0 .............................. theloc = point(0, 0)
+  [  8] getlocal 0 .............................. <theloc>
+  [ 10] getparam 0 .............................. <therect>
+  [ 12] getobjprop 192 .......................... <therect.left>
+  [ 14] getparam 0 .............................. <therect>
+  [ 16] getobjprop 316 .......................... <therect.right>
+  [ 19] add ..................................... <therect.left + therect.right>
+  [ 20] pushint8 2 .............................. <2>
+  [ 22] div ..................................... <(therect.left + therect.right) / 2>
+  [ 23] setobjprop 158 .......................... theloc.locH = (therect.left + therect.right) / 2
+  [ 25] getlocal 0 .............................. <theloc>
+  [ 27] getparam 0 .............................. <therect>
+  [ 29] getobjprop 193 .......................... <therect.top>
+  [ 31] getparam 0 .............................. <therect>
+  [ 33] getobjprop 317 .......................... <therect.bottom>
+  [ 36] add ..................................... <therect.top + therect.bottom>
+  [ 37] pushint8 2 .............................. <2>
+  [ 39] div ..................................... <(therect.top + therect.bottom) / 2>
+  [ 40] setobjprop 159 .......................... theloc.locV = (therect.top + therect.bottom) / 2
+  [ 42] getlocal 0 .............................. <theloc>
+  [ 44] pusharglistnoret 1 ...................... <theloc>
+  [ 46] extcall 3 ............................... return theloc
+  [ 48] ret
+end

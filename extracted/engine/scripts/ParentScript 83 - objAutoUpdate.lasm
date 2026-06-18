@@ -1,0 +1,292 @@
+property ancestor, pAutoUpdate, pAutoUpdatePrg, pAutoUpdatePrior, pCallingPrg, pCallingPrgMessage, pFin, pLastFin
+global gGameSpeed, g
+
+on new me
+  [  0] pushcons 0 .............................. <"objModules">
+  [  2] pusharglist 1 ........................... <"objModules">
+  [  4] extcall 34 .............................. <script("objModules")>
+  [  6] pusharglist 1 ........................... <script("objModules")>
+  [  8] extcall 0 ............................... <new(script("objModules"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objModules"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 2075 ........................... <#autoUpdate>
+  [ 27] pushint8 1 .............................. <1>
+  [ 29] pusharglistnoret 3 ...................... <i, #autoUpdate, 1>
+  [ 31] objcall 48 .............................. i[#autoUpdate] = 1
+  [ 33] getlocal 0 .............................. <i>
+  [ 35] pushsymb 2076 ........................... <#autoUpdatePrior>
+  [ 38] pushsymb 834 ............................ <#lo>
+  [ 41] pusharglistnoret 3 ...................... <i, #autoUpdatePrior, #lo>
+  [ 43] objcall 48 .............................. i[#autoUpdatePrior] = #lo
+  [ 45] getlocal 0 .............................. <i>
+  [ 47] pushsymb 474 ............................ <#callingPrg>
+  [ 50] pushsymb 49 ............................. <#none>
+  [ 52] pusharglistnoret 3 ...................... <i, #callingPrg, #none>
+  [ 54] objcall 48 .............................. i[#callingPrg] = #none
+  [ 56] getlocal 0 .............................. <i>
+  [ 58] pushsymb 1389 ........................... <#callingPrgMessage>
+  [ 61] pushsymb 2077 ........................... <#autoUpdateFinished>
+  [ 64] pusharglistnoret 3 ...................... <i, #callingPrgMessage, #autoUpdateFinished>
+  [ 66] objcall 48 .............................. i[#callingPrgMessage] = #autoUpdateFinished
+  [ 68] getparam 0 .............................. <me>
+  [ 70] pusharglistnoret 1 ...................... <me>
+  [ 72] extcall 35 .............................. return me
+  [ 74] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 2075 ......................... <params.autoUpdate>
+  [ 13] setprop 2078 ............................ pAutoUpdate = params.autoUpdate
+  [ 16] getglobal 40 ............................ <g>
+  [ 18] getobjprop 833 .......................... <g.updater>
+  [ 21] setprop 2079 ............................ pAutoUpdatePrg = g.updater
+  [ 24] getparam 1 .............................. <params>
+  [ 26] getobjprop 2076 ......................... <params.autoUpdatePrior>
+  [ 29] setprop 2080 ............................ pAutoUpdatePrior = params.autoUpdatePrior
+  [ 32] getparam 1 .............................. <params>
+  [ 34] getobjprop 474 .......................... <params.callingPrg>
+  [ 37] setprop 2081 ............................ pCallingPrg = params.callingPrg
+  [ 40] getparam 1 .............................. <params>
+  [ 42] getobjprop 1389 ......................... <params.callingPrgMessage>
+  [ 45] setprop 2082 ............................ pCallingPrgMessage = params.callingPrgMessage
+  [ 48] pushzero ................................ <0>
+  [ 49] setprop 2083 ............................ pLastFin = 0
+  [ 52] pushzero ................................ <0>
+  [ 53] setprop 1808 ............................ pFin = 0
+  [ 56] ret
+end
+
+on addSaveData me, sd
+  [  0] getparam 1 .............................. <sd>
+  [  2] pushsymb 2078 ........................... <#pAutoUpdate>
+  [  5] getprop 2078 ............................ <pAutoUpdate>
+  [  8] pusharglistnoret 3 ...................... <sd, #pAutoUpdate, pAutoUpdate>
+  [ 10] objcall 48 .............................. sd[#pAutoUpdate] = pAutoUpdate
+  [ 12] getparam 1 .............................. <sd>
+  [ 14] pushsymb 2080 ........................... <#pAutoUpdatePrior>
+  [ 17] getprop 2080 ............................ <pAutoUpdatePrior>
+  [ 20] pusharglistnoret 3 ...................... <sd, #pAutoUpdatePrior, pAutoUpdatePrior>
+  [ 22] objcall 48 .............................. sd[#pAutoUpdatePrior] = pAutoUpdatePrior
+  [ 24] getparam 1 .............................. <sd>
+  [ 26] pushsymb 2082 ........................... <#pCallingPrgMessage>
+  [ 29] getprop 2082 ............................ <pCallingPrgMessage>
+  [ 32] pusharglistnoret 3 ...................... <sd, #pCallingPrgMessage, pCallingPrgMessage>
+  [ 34] objcall 48 .............................. sd[#pCallingPrgMessage] = pCallingPrgMessage
+  [ 36] getparam 1 .............................. <sd>
+  [ 38] pushsymb 1808 ........................... <#pFin>
+  [ 41] getprop 1808 ............................ <pFin>
+  [ 44] pusharglistnoret 3 ...................... <sd, #pFin, pFin>
+  [ 46] objcall 48 .............................. sd[#pFin] = pFin
+  [ 48] getparam 1 .............................. <sd>
+  [ 50] pushsymb 2083 ........................... <#pLastFin>
+  [ 53] getprop 2083 ............................ <pLastFin>
+  [ 56] pusharglistnoret 3 ...................... <sd, #pLastFin, pLastFin>
+  [ 58] objcall 48 .............................. sd[#pLastFin] = pLastFin
+  [ 60] getprop 33 .............................. <ancestor>
+  [ 62] getparam 1 .............................. <sd>
+  [ 64] pusharglistnoret 2 ...................... <ancestor, sd>
+  [ 66] objcall 4 ............................... ancestor.addSaveData(sd)
+  [ 68] ret
+end
+
+on cancel me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 57 ....................... <me.id>
+  [  4] getchainedprop 58 ....................... <me.id.bigMe>
+  [  6] pusharglistnoret 1 ...................... <me.id.bigMe>
+  [  8] objcall 3 ............................... me.id.bigMe.finish()
+  [ 10] ret
+end
+
+on calcFin me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 57 ....................... <me.id>
+  [  4] getchainedprop 58 ....................... <me.id.bigMe>
+  [  6] pusharglist 1 ........................... <me.id.bigMe>
+  [  8] objcall 2084 ............................ <me.id.bigMe.finishConditionMet()>
+  [ 11] jmpifz [ 67] ............................ if me.id.bigMe.finishConditionMet() then / else
+  [ 14] pushint8 1 .............................. <1>
+  [ 16] setprop 1808 ............................ pFin = 1
+  [ 19] getparam 0 .............................. <me>
+  [ 21] getprop 2082 ............................ <pCallingPrgMessage>
+  [ 24] pusharglistnoret 2 ...................... <me, pCallingPrgMessage>
+  [ 26] objcall 123 ............................. me.eventNotify(pCallingPrgMessage)
+  [ 28] getprop 2078 ............................ <pAutoUpdate>
+  [ 31] jmpifz [ 45] ............................ if pAutoUpdate then
+  [ 34] getparam 0 .............................. <me>
+  [ 36] getchainedprop 57 ....................... <me.id>
+  [ 38] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 40] pusharglistnoret 1 ...................... <me.id.bigMe>
+  [ 42] objcall 2072 ............................ me.id.bigMe.finished()
+  [ 45] getprop 2083 ............................ <pLastFin>
+  [ 48] pushzero ................................ <0>
+  [ 49] eq ...................................... <pLastFin = 0>
+  [ 50] jmpifz [ 64] ............................ if pLastFin = 0 then
+  [ 53] getparam 0 .............................. <me>
+  [ 55] getchainedprop 57 ....................... <me.id>
+  [ 57] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 59] pusharglistnoret 1 ...................... <me.id.bigMe>
+  [ 61] objcall 2073 ............................ me.id.bigMe.informCallingPrg()
+  [ 64] jmp [ 71]
+  [ 67] pushzero ................................ <0>
+  [ 68] setprop 1808 ............................ pFin = 0
+  [ 71] getprop 1808 ............................ <pFin>
+  [ 74] setprop 2083 ............................ pLastFin = pFin
+  [ 77] ret
+end
+
+on calcStart me
+  [  0] getprop 2078 ............................ <pAutoUpdate>
+  [  3] getprop 1808 ............................ <pFin>
+  [  6] not ..................................... <not pFin>
+  [  7] and ..................................... <pAutoUpdate and not pFin>
+  [  8] jmpifz [ 28] ............................ if pAutoUpdate and not pFin then
+  [ 11] getprop 2079 ............................ <pAutoUpdatePrg>
+  [ 14] getparam 0 .............................. <me>
+  [ 16] getchainedprop 57 ....................... <me.id>
+  [ 18] getobjprop 58 ........................... <me.id.bigMe>
+  [ 20] getprop 2080 ............................ <pAutoUpdatePrior>
+  [ 23] pusharglistnoret 3 ...................... <pAutoUpdatePrg, me.id.bigMe, pAutoUpdatePrior>
+  [ 25] objcall 835 ............................. pAutoUpdatePrg.addPrg(me.id.bigMe, pAutoUpdatePrior)
+  [ 28] ret
+end
+
+on deactivate me
+  [  0] getprop 2079 ............................ <pAutoUpdatePrg>
+  [  3] getparam 0 .............................. <me>
+  [  5] getchainedprop 57 ....................... <me.id>
+  [  7] getobjprop 58 ........................... <me.id.bigMe>
+  [  9] pusharglistnoret 2 ...................... <pAutoUpdatePrg, me.id.bigMe>
+  [ 11] objcall 857 ............................. pAutoUpdatePrg.removePrg(me.id.bigMe)
+  [ 14] ret
+end
+
+on activate me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 692 ............................. me.calcStart()
+  [  7] ret
+end
+
+on finished me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 57 ....................... <me.id>
+  [  4] getchainedprop 58 ....................... <me.id.bigMe>
+  [  6] pusharglistnoret 1 ...................... <me.id.bigMe>
+  [  8] objcall 3 ............................... me.id.bigMe.finish()
+  [ 10] ret
+end
+
+on finish me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 371 ............................. me.deactivate()
+  [  7] getprop 33 .............................. <ancestor>
+  [  9] pusharglistnoret 1 ...................... <ancestor>
+  [ 11] objcall 3 ............................... ancestor.finish()
+  [ 13] ret
+end
+
+on informCallingPrg me
+  [  0] getprop 2081 ............................ <pCallingPrg>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] nteq .................................... <pCallingPrg <> #none>
+  [  6] jmpifz [ 20] ............................ if pCallingPrg <> #none then
+  [  9] getprop 2082 ............................ <pCallingPrgMessage>
+  [ 12] getprop 2081 ............................ <pCallingPrg>
+  [ 15] pusharglistnoret 2 ...................... <pCallingPrgMessage, pCallingPrg>
+  [ 17] extcall 479 ............................. call(pCallingPrgMessage, pCallingPrg)
+  [ 20] ret
+end
+
+on paws me
+  [  0] getprop 2079 ............................ <pAutoUpdatePrg>
+  [  3] getparam 0 .............................. <me>
+  [  5] getchainedprop 57 ....................... <me.id>
+  [  7] getobjprop 58 ........................... <me.id.bigMe>
+  [  9] pusharglistnoret 2 ...................... <pAutoUpdatePrg, me.id.bigMe>
+  [ 11] objcall 857 ............................. pAutoUpdatePrg.removePrg(me.id.bigMe)
+  [ 14] getprop 33 .............................. <ancestor>
+  [ 16] pusharglistnoret 1 ...................... <ancestor>
+  [ 18] objcall 452 ............................. ancestor.paws()
+  [ 21] ret
+end
+
+on restoreFromSave me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 26 .............................. ancestor.restoreFromSave(sd)
+  [  8] getparam 1 .............................. <sd>
+  [ 10] getobjprop 2078 ......................... <sd.pAutoUpdate>
+  [ 13] setprop 2078 ............................ pAutoUpdate = sd.pAutoUpdate
+  [ 16] getglobal 40 ............................ <g>
+  [ 18] getobjprop 833 .......................... <g.updater>
+  [ 21] setprop 2079 ............................ pAutoUpdatePrg = g.updater
+  [ 24] getparam 1 .............................. <sd>
+  [ 26] getobjprop 2080 ......................... <sd.pAutoUpdatePrior>
+  [ 29] setprop 2080 ............................ pAutoUpdatePrior = sd.pAutoUpdatePrior
+  [ 32] getparam 1 .............................. <sd>
+  [ 34] getobjprop 2082 ......................... <sd.pCallingPrgMessage>
+  [ 37] setprop 2082 ............................ pCallingPrgMessage = sd.pCallingPrgMessage
+  [ 40] getparam 1 .............................. <sd>
+  [ 42] getobjprop 1808 ......................... <sd.pFin>
+  [ 45] setprop 1808 ............................ pFin = sd.pFin
+  [ 48] getparam 1 .............................. <sd>
+  [ 50] getobjprop 2083 ......................... <sd.pLastFin>
+  [ 53] setprop 2083 ............................ pLastFin = sd.pLastFin
+  [ 56] getparam 0 .............................. <me>
+  [ 58] pusharglistnoret 1 ...................... <me>
+  [ 60] objcall 692 ............................. me.calcStart()
+  [ 63] ret
+end
+
+on setAutoUpdate me, which
+  [  0] getparam 1 .............................. <which>
+  [  2] setprop 2078 ............................ pAutoUpdate = which
+  [  5] ret
+end
+
+on start me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 692 ............................. me.calcStart()
+  [  7] getprop 33 .............................. <ancestor>
+  [  9] pusharglistnoret 1 ...................... <ancestor>
+  [ 11] objcall 1590 ............................ ancestor.start()
+  [ 14] ret
+end
+
+on update me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 31 .............................. ancestor.update()
+  [  6] getparam 0 .............................. <me>
+  [  8] pusharglistnoret 1 ...................... <me>
+  [ 10] objcall 2071 ............................ me.calcFin()
+  [ 13] ret
+end
+
+on unpaws me
+  [  0] getprop 2079 ............................ <pAutoUpdatePrg>
+  [  3] getparam 0 .............................. <me>
+  [  5] getchainedprop 57 ....................... <me.id>
+  [  7] getobjprop 58 ........................... <me.id.bigMe>
+  [  9] getprop 2080 ............................ <pAutoUpdatePrior>
+  [ 12] pusharglistnoret 3 ...................... <pAutoUpdatePrg, me.id.bigMe, pAutoUpdatePrior>
+  [ 14] objcall 835 ............................. pAutoUpdatePrg.addPrg(me.id.bigMe, pAutoUpdatePrior)
+  [ 17] getprop 33 .............................. <ancestor>
+  [ 19] pusharglistnoret 1 ...................... <ancestor>
+  [ 21] objcall 459 ............................. ancestor.unpaws()
+  [ 24] ret
+end

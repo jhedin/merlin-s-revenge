@@ -1,0 +1,13 @@
+on AttackSetTypeFromAnimType theAttack
+  if theAttack.type <> #auto then
+    return 
+  end if
+  case theAttack.animType of
+    #magic:
+      theAttack.type = #magic
+    #naturalMelee, #weaponMelee, #magicMelee:
+      theAttack.type = #melee
+    #naturalRanged, #weaponRanged:
+      theAttack.type = #ranged
+  end case
+end

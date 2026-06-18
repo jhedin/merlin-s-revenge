@@ -1,0 +1,475 @@
+property pTeams, pDebug, pReservations, pTeamOverride
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 3 ............................... return me
+  [  6] ret
+end
+
+on init me
+  [  0] pusharglist 0 ........................... <[:]>
+  [  2] pushproplist ............................ <[:]>
+  [  3] setprop 1154 ............................ pTeams = [:]
+  [  6] pushzero ................................ <0>
+  [  7] setprop 1155 ............................ pDebug = 0
+  [ 10] pusharglist 0 ........................... <[]>
+  [ 12] pushlist ................................ <[]>
+  [ 13] setprop 1156 ............................ pReservations = []
+  [ 16] ret
+end
+
+on cancelReservation me, obj
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <obj>
+  [  4] pusharglist 2 ........................... <me, obj>
+  [  6] objcall 1146 ............................ <me.getReservationForObj(obj)>
+  [  9] setlocal 0 .............................. reservation = me.getReservationForObj(obj)
+  [ 11] getlocal 0 .............................. <reservation>
+  [ 13] pushsymb 103 ............................ <#none>
+  [ 15] eq ...................................... <reservation = #none>
+  [ 16] jmpifz [ 23] ............................ if reservation = #none then
+  [ 19] pusharglistnoret 0 ...................... <>
+  [ 21] extcall 3 ............................... return 
+  [ 23] getparam 0 .............................. <me>
+  [ 25] getparam 1 .............................. <obj>
+  [ 27] pusharglist 2 ........................... <me, obj>
+  [ 29] objcall 1147 ............................ <me.getTeamForObj(obj)>
+  [ 32] setlocal 1 .............................. team = me.getTeamForObj(obj)
+  [ 34] getlocal 1 .............................. <team>
+  [ 36] getlocal 1 .............................. <team>
+  [ 38] getobjprop 1157 ......................... <team.reservedSlots>
+  [ 41] getlocal 0 .............................. <reservation>
+  [ 43] getobjprop 162 .......................... <reservation.num>
+  [ 45] sub ..................................... <team.reservedSlots - reservation.num>
+  [ 46] setobjprop 1157 ......................... team.reservedSlots = team.reservedSlots - reservation.num
+  [ 49] getprop 1156 ............................ <pReservations>
+  [ 52] getlocal 0 .............................. <reservation>
+  [ 54] pusharglistnoret 2 ...................... <pReservations, reservation>
+  [ 56] objcall 1158 ............................ pReservations.deleteOne(reservation)
+  [ 59] ret
+end
+
+on cancelReservationTeam me, obj, team
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <obj>
+  [  4] pusharglist 2 ........................... <me, obj>
+  [  6] objcall 1146 ............................ <me.getReservationForObj(obj)>
+  [  9] setlocal 0 .............................. reservation = me.getReservationForObj(obj)
+  [ 11] getlocal 0 .............................. <reservation>
+  [ 13] pushsymb 103 ............................ <#none>
+  [ 15] eq ...................................... <reservation = #none>
+  [ 16] jmpifz [ 23] ............................ if reservation = #none then
+  [ 19] pusharglistnoret 0 ...................... <>
+  [ 21] extcall 3 ............................... return 
+  [ 23] getparam 2 .............................. <team>
+  [ 25] pusharglist 0 ........................... <>
+  [ 27] extcall 388 ............................. <VOID>
+  [ 30] nteq .................................... <team <> VOID>
+  [ 31] getparam 2 .............................. <team>
+  [ 33] pushsymb 103 ............................ <#none>
+  [ 35] nteq .................................... <team <> #none>
+  [ 36] and ..................................... <(team <> VOID) and (team <> #none)>
+  [ 37] jmpifz [ 55] ............................ if (team <> VOID) and (team <> #none) then
+  [ 40] getparam 2 .............................. <team>
+  [ 42] getparam 2 .............................. <team>
+  [ 44] getobjprop 1157 ......................... <team.reservedSlots>
+  [ 47] getlocal 0 .............................. <reservation>
+  [ 49] getobjprop 162 .......................... <reservation.num>
+  [ 51] sub ..................................... <team.reservedSlots - reservation.num>
+  [ 52] setobjprop 1157 ......................... team.reservedSlots = team.reservedSlots - reservation.num
+  [ 55] getprop 1156 ............................ <pReservations>
+  [ 58] getlocal 0 .............................. <reservation>
+  [ 60] pusharglistnoret 2 ...................... <pReservations, reservation>
+  [ 62] objcall 1158 ............................ pReservations.deleteOne(reservation)
+  [ 65] ret
+end
+
+on getAvailableSlots me, teamSym
+  [  0] getprop 1154 ............................ <pTeams>
+  [  3] getparam 1 .............................. <teamSym>
+  [  5] pusharglist 2 ........................... <pTeams, teamSym>
+  [  7] objcall 301 ............................. <pTeams[teamSym]>
+  [ 10] setlocal 0 .............................. team = pTeams[teamSym]
+  [ 12] getlocal 0 .............................. <team>
+  [ 14] getobjprop 283 .......................... <team.maxMembers>
+  [ 17] getlocal 0 .............................. <team>
+  [ 19] getobjprop 1159 ......................... <team.currentMembers>
+  [ 22] sub ..................................... <team.maxMembers - team.currentMembers>
+  [ 23] getlocal 0 .............................. <team>
+  [ 25] getobjprop 1157 ......................... <team.reservedSlots>
+  [ 28] sub ..................................... <team.maxMembers - team.currentMembers - team.reservedSlots>
+  [ 29] pusharglistnoret 1 ...................... <team.maxMembers - team.currentMembers - team.reservedSlots>
+  [ 31] extcall 3 ............................... return team.maxMembers - team.currentMembers - team.reservedSlots
+  [ 33] ret
+end
+
+on getPermissionToRelease me, obj, numToRelease
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. permission = 0
+  [  3] getparam 1 .............................. <obj>
+  [  5] pusharglist 1 ........................... <obj>
+  [  7] objcall 1097 ............................ <obj.getTeam()>
+  [ 10] setlocal 1 .............................. teamName = obj.getTeam()
+  [ 12] getprop 1154 ............................ <pTeams>
+  [ 15] getlocal 1 .............................. <teamName>
+  [ 17] pusharglist 2 ........................... <pTeams, teamName>
+  [ 19] objcall 301 ............................. <pTeams[teamName]>
+  [ 22] setlocal 2 .............................. team = pTeams[teamName]
+  [ 24] getlocal 2 .............................. <team>
+  [ 26] getobjprop 283 .......................... <team.maxMembers>
+  [ 29] setlocal 3 .............................. maxMembers = team.maxMembers
+  [ 31] getprop 1504 ............................ <pTeamOverride>
+  [ 34] getlocal 3 .............................. <maxMembers>
+  [ 36] pushint8 5 .............................. <5>
+  [ 38] gt ...................................... <maxMembers > 5>
+  [ 39] and ..................................... <pTeamOverride and (maxMembers > 5)>
+  [ 40] jmpifz [ 50] ............................ if pTeamOverride and (maxMembers > 5) then
+  [ 43] getlocal 3 .............................. <maxMembers>
+  [ 45] pushint8 2 .............................. <2>
+  [ 47] div ..................................... <maxMembers / 2>
+  [ 48] setlocal 3 .............................. maxMembers = maxMembers / 2
+  [ 50] getlocal 2 .............................. <team>
+  [ 52] getobjprop 1159 ......................... <team.currentMembers>
+  [ 55] getlocal 2 .............................. <team>
+  [ 57] getobjprop 1157 ......................... <team.reservedSlots>
+  [ 60] add ..................................... <team.currentMembers + team.reservedSlots>
+  [ 61] getparam 2 .............................. <numToRelease>
+  [ 63] add ..................................... <team.currentMembers + team.reservedSlots + numToRelease>
+  [ 64] getlocal 3 .............................. <maxMembers>
+  [ 66] lteq .................................... <(team.currentMembers + team.reservedSlots + numToRelease) <= maxMembers>
+  [ 67] jmpifz [107] ............................ if (team.currentMembers + team.reservedSlots + numToRelease) <= maxMembers then
+  [ 70] pushint8 1 .............................. <1>
+  [ 72] setlocal 0 .............................. permission = 1
+  [ 74] getlocal 2 .............................. <team>
+  [ 76] getlocal 2 .............................. <team>
+  [ 78] getobjprop 1157 ......................... <team.reservedSlots>
+  [ 81] getparam 2 .............................. <numToRelease>
+  [ 83] add ..................................... <team.reservedSlots + numToRelease>
+  [ 84] setobjprop 1157 ......................... team.reservedSlots = team.reservedSlots + numToRelease
+  [ 87] getparam 0 .............................. <me>
+  [ 89] getparam 1 .............................. <obj>
+  [ 91] getparam 2 .............................. <numToRelease>
+  [ 93] pusharglistnoret 3 ...................... <me, obj, numToRelease>
+  [ 95] objcall 1148 ............................ me.makeReservation(obj, numToRelease)
+  [ 98] getparam 0 .............................. <me>
+  [100] getlocal 2 .............................. <team>
+  [102] pusharglistnoret 2 ...................... <me, team>
+  [104] objcall 1153 ............................ me.printReport(team)
+  [107] getlocal 0 .............................. <permission>
+  [109] pusharglistnoret 1 ...................... <permission>
+  [111] extcall 3 ............................... return permission
+  [113] ret
+end
+
+on getPermissionToReleaseTeam me, obj, numToRelease, team
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. permission = 0
+  [  3] getparam 3 .............................. <team>
+  [  5] getobjprop 278 .......................... <team.teamName>
+  [  8] setlocal 1 .............................. teamName = team.teamName
+  [ 10] getprop 1154 ............................ <pTeams>
+  [ 13] getlocal 1 .............................. <teamName>
+  [ 15] pusharglist 2 ........................... <pTeams, teamName>
+  [ 17] objcall 301 ............................. <pTeams[teamName]>
+  [ 20] pusharglist 0 ........................... <>
+  [ 22] extcall 388 ............................. <VOID>
+  [ 25] eq ...................................... <pTeams[teamName] = VOID>
+  [ 26] jmpifz [ 60] ............................ if pTeams[teamName] = VOID then
+  [ 29] getparam 3 .............................. <team>
+  [ 31] pushsymb 1159 ........................... <#currentMembers>
+  [ 34] pushzero ................................ <0>
+  [ 35] pusharglistnoret 3 ...................... <team, #currentMembers, 0>
+  [ 37] objcall 54 .............................. team[#currentMembers] = 0
+  [ 39] getparam 3 .............................. <team>
+  [ 41] pushsymb 1157 ........................... <#reservedSlots>
+  [ 44] pushzero ................................ <0>
+  [ 45] pusharglistnoret 3 ...................... <team, #reservedSlots, 0>
+  [ 47] objcall 54 .............................. team[#reservedSlots] = 0
+  [ 49] getprop 1154 ............................ <pTeams>
+  [ 52] getlocal 1 .............................. <teamName>
+  [ 54] getparam 3 .............................. <team>
+  [ 56] pusharglistnoret 3 ...................... <pTeams, teamName, team>
+  [ 58] objcall 54 .............................. pTeams[teamName] = team
+  [ 60] getprop 1154 ............................ <pTeams>
+  [ 63] getlocal 1 .............................. <teamName>
+  [ 65] pusharglist 2 ........................... <pTeams, teamName>
+  [ 67] objcall 301 ............................. <pTeams[teamName]>
+  [ 70] setparam 3 .............................. team = pTeams[teamName]
+  [ 72] getparam 3 .............................. <team>
+  [ 74] getobjprop 283 .......................... <team.maxMembers>
+  [ 77] setlocal 2 .............................. maxMembers = team.maxMembers
+  [ 79] getprop 1504 ............................ <pTeamOverride>
+  [ 82] getlocal 2 .............................. <maxMembers>
+  [ 84] pushint8 5 .............................. <5>
+  [ 86] gt ...................................... <maxMembers > 5>
+  [ 87] and ..................................... <pTeamOverride and (maxMembers > 5)>
+  [ 88] jmpifz [ 98] ............................ if pTeamOverride and (maxMembers > 5) then
+  [ 91] getlocal 2 .............................. <maxMembers>
+  [ 93] pushint8 2 .............................. <2>
+  [ 95] div ..................................... <maxMembers / 2>
+  [ 96] setlocal 2 .............................. maxMembers = maxMembers / 2
+  [ 98] getparam 3 .............................. <team>
+  [100] getobjprop 1159 ......................... <team.currentMembers>
+  [103] getparam 3 .............................. <team>
+  [105] getobjprop 1157 ......................... <team.reservedSlots>
+  [108] add ..................................... <team.currentMembers + team.reservedSlots>
+  [109] getparam 2 .............................. <numToRelease>
+  [111] add ..................................... <team.currentMembers + team.reservedSlots + numToRelease>
+  [112] getlocal 2 .............................. <maxMembers>
+  [114] lteq .................................... <(team.currentMembers + team.reservedSlots + numToRelease) <= maxMembers>
+  [115] jmpifz [155] ............................ if (team.currentMembers + team.reservedSlots + numToRelease) <= maxMembers then
+  [118] pushint8 1 .............................. <1>
+  [120] setlocal 0 .............................. permission = 1
+  [122] getparam 3 .............................. <team>
+  [124] getparam 3 .............................. <team>
+  [126] getobjprop 1157 ......................... <team.reservedSlots>
+  [129] getparam 2 .............................. <numToRelease>
+  [131] add ..................................... <team.reservedSlots + numToRelease>
+  [132] setobjprop 1157 ......................... team.reservedSlots = team.reservedSlots + numToRelease
+  [135] getparam 0 .............................. <me>
+  [137] getparam 1 .............................. <obj>
+  [139] getparam 2 .............................. <numToRelease>
+  [141] pusharglistnoret 3 ...................... <me, obj, numToRelease>
+  [143] objcall 1148 ............................ me.makeReservation(obj, numToRelease)
+  [146] getparam 0 .............................. <me>
+  [148] getparam 3 .............................. <team>
+  [150] pusharglistnoret 2 ...................... <me, team>
+  [152] objcall 1153 ............................ me.printReport(team)
+  [155] getlocal 0 .............................. <permission>
+  [157] pusharglistnoret 1 ...................... <permission>
+  [159] extcall 3 ............................... return permission
+  [161] ret
+end
+
+on getReservationForObj me, obj
+  [  0] getprop 1156 ............................ <pReservations>
+  [  3] pushsymb 187 ............................ <#obj>
+  [  5] getparam 1 .............................. <obj>
+  [  7] pusharglist 3 ........................... <pReservations, #obj, obj>
+  [  9] extcall 1001 ............................ <ListGetPosByProp(pReservations, #obj, obj)>
+  [ 12] setlocal 0 .............................. reservationPos = ListGetPosByProp(pReservations, #obj, obj)
+  [ 14] getlocal 0 .............................. <reservationPos>
+  [ 16] pushzero ................................ <0>
+  [ 17] eq ...................................... <reservationPos = 0>
+  [ 18] jmpifz [ 27] ............................ if reservationPos = 0 then
+  [ 21] pushsymb 103 ............................ <#none>
+  [ 23] pusharglistnoret 1 ...................... <#none>
+  [ 25] extcall 3 ............................... return #none
+  [ 27] getprop 1156 ............................ <pReservations>
+  [ 30] getlocal 0 .............................. <reservationPos>
+  [ 32] pusharglist 2 ........................... <pReservations, reservationPos>
+  [ 34] objcall 301 ............................. <pReservations[reservationPos]>
+  [ 37] setlocal 1 .............................. reservation = pReservations[reservationPos]
+  [ 39] getlocal 1 .............................. <reservation>
+  [ 41] pusharglistnoret 1 ...................... <reservation>
+  [ 43] extcall 3 ............................... return reservation
+  [ 45] ret
+end
+
+on getTeamForObj me, obj
+  [  0] getparam 1 .............................. <obj>
+  [  2] pusharglist 1 ........................... <obj>
+  [  4] objcall 1097 ............................ <obj.getTeam()>
+  [  7] setlocal 0 .............................. teamName = obj.getTeam()
+  [  9] getprop 1154 ............................ <pTeams>
+  [ 12] getlocal 0 .............................. <teamName>
+  [ 14] pusharglist 2 ........................... <pTeams, teamName>
+  [ 16] objcall 301 ............................. <pTeams[teamName]>
+  [ 19] setlocal 1 .............................. team = pTeams[teamName]
+  [ 21] getlocal 1 .............................. <team>
+  [ 23] pusharglistnoret 1 ...................... <team>
+  [ 25] extcall 3 ............................... return team
+  [ 27] ret
+end
+
+on makeReservation me, obj, num
+  [  0] pushsymb 187 ............................ <#obj>
+  [  2] getparam 1 .............................. <obj>
+  [  4] pushsymb 162 ............................ <#num>
+  [  6] getparam 2 .............................. <num>
+  [  8] pusharglist 4 ........................... <[#obj: obj, #num: num]>
+  [ 10] pushproplist ............................ <[#obj: obj, #num: num]>
+  [ 11] setlocal 0 .............................. newRes = [#obj: obj, #num: num]
+  [ 13] getprop 1156 ............................ <pReservations>
+  [ 16] getlocal 0 .............................. <newRes>
+  [ 18] pusharglistnoret 2 ...................... <pReservations, newRes>
+  [ 20] objcall 506 ............................. pReservations.append(newRes)
+  [ 23] ret
+end
+
+on objectJoined me, team, teamRole, obj
+  [  0] getparam 1 .............................. <team>
+  [  2] getobjprop 278 .......................... <team.teamName>
+  [  5] setlocal 0 .............................. teamName = team.teamName
+  [  7] getprop 1154 ............................ <pTeams>
+  [ 10] getlocal 0 .............................. <teamName>
+  [ 12] pusharglist 2 ........................... <pTeams, teamName>
+  [ 14] objcall 301 ............................. <pTeams[teamName]>
+  [ 17] pusharglist 0 ........................... <>
+  [ 19] extcall 388 ............................. <VOID>
+  [ 22] eq ...................................... <pTeams[teamName] = VOID>
+  [ 23] jmpifz [ 57] ............................ if pTeams[teamName] = VOID then
+  [ 26] getprop 1154 ............................ <pTeams>
+  [ 29] getlocal 0 .............................. <teamName>
+  [ 31] getparam 1 .............................. <team>
+  [ 33] pusharglistnoret 3 ...................... <pTeams, teamName, team>
+  [ 35] objcall 54 .............................. pTeams[teamName] = team
+  [ 37] getparam 1 .............................. <team>
+  [ 39] pushsymb 1159 ........................... <#currentMembers>
+  [ 42] pushzero ................................ <0>
+  [ 43] pusharglistnoret 3 ...................... <team, #currentMembers, 0>
+  [ 45] objcall 54 .............................. team[#currentMembers] = 0
+  [ 47] getparam 1 .............................. <team>
+  [ 49] pushsymb 1157 ........................... <#reservedSlots>
+  [ 52] pushzero ................................ <0>
+  [ 53] pusharglistnoret 3 ...................... <team, #reservedSlots, 0>
+  [ 55] objcall 54 .............................. team[#reservedSlots] = 0
+  [ 57] getparam 2 .............................. <teamRole>
+  [ 59] pushsymb 135 ............................ <#teamMembers>
+  [ 61] eq ...................................... <teamRole = #teamMembers>
+  [ 62] jmpifz [ 87] ............................ if teamRole = #teamMembers then
+  [ 65] getparam 1 .............................. <team>
+  [ 67] getparam 1 .............................. <team>
+  [ 69] getobjprop 1159 ......................... <team.currentMembers>
+  [ 72] pushint8 1 .............................. <1>
+  [ 74] add ..................................... <team.currentMembers + 1>
+  [ 75] setobjprop 1159 ......................... team.currentMembers = team.currentMembers + 1
+  [ 78] getparam 0 .............................. <me>
+  [ 80] getparam 1 .............................. <team>
+  [ 82] pusharglistnoret 2 ...................... <me, team>
+  [ 84] objcall 1153 ............................ me.printReport(team)
+  [ 87] ret
+end
+
+on objectLeft me, team, teamRole, obj
+  [  0] getparam 2 .............................. <teamRole>
+  [  2] pushsymb 135 ............................ <#teamMembers>
+  [  4] nteq .................................... <teamRole <> #teamMembers>
+  [  5] jmpifz [ 12] ............................ if teamRole <> #teamMembers then
+  [  8] pusharglistnoret 0 ...................... <>
+  [ 10] extcall 3 ............................... return 
+  [ 12] getparam 1 .............................. <team>
+  [ 14] getparam 1 .............................. <team>
+  [ 16] getobjprop 1159 ......................... <team.currentMembers>
+  [ 19] pushint8 1 .............................. <1>
+  [ 21] sub ..................................... <team.currentMembers - 1>
+  [ 22] setobjprop 1159 ......................... team.currentMembers = team.currentMembers - 1
+  [ 25] getparam 0 .............................. <me>
+  [ 27] getparam 1 .............................. <team>
+  [ 29] pusharglistnoret 2 ...................... <me, team>
+  [ 31] objcall 1153 ............................ me.printReport(team)
+  [ 34] ret
+end
+
+on objectReleasedFromReservation me, obj
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <obj>
+  [  4] pusharglist 2 ........................... <me, obj>
+  [  6] objcall 1147 ............................ <me.getTeamForObj(obj)>
+  [  9] setlocal 0 .............................. team = me.getTeamForObj(obj)
+  [ 11] getlocal 0 .............................. <team>
+  [ 13] getlocal 0 .............................. <team>
+  [ 15] getobjprop 1157 ......................... <team.reservedSlots>
+  [ 18] pushint8 1 .............................. <1>
+  [ 20] sub ..................................... <team.reservedSlots - 1>
+  [ 21] setobjprop 1157 ......................... team.reservedSlots = team.reservedSlots - 1
+  [ 24] getparam 0 .............................. <me>
+  [ 26] getparam 1 .............................. <obj>
+  [ 28] pusharglist 2 ........................... <me, obj>
+  [ 30] objcall 1146 ............................ <me.getReservationForObj(obj)>
+  [ 33] setlocal 1 .............................. reservation = me.getReservationForObj(obj)
+  [ 35] getlocal 1 .............................. <reservation>
+  [ 37] getlocal 1 .............................. <reservation>
+  [ 39] getobjprop 162 .......................... <reservation.num>
+  [ 41] pushint8 1 .............................. <1>
+  [ 43] sub ..................................... <reservation.num - 1>
+  [ 44] setobjprop 162 .......................... reservation.num = reservation.num - 1
+  [ 46] getlocal 1 .............................. <reservation>
+  [ 48] getobjprop 162 .......................... <reservation.num>
+  [ 50] pushint8 1 .............................. <1>
+  [ 52] lt ...................................... <reservation.num < 1>
+  [ 53] jmpifz [ 66] ............................ if reservation.num < 1 then
+  [ 56] getprop 1156 ............................ <pReservations>
+  [ 59] getlocal 1 .............................. <reservation>
+  [ 61] pusharglistnoret 2 ...................... <pReservations, reservation>
+  [ 63] objcall 1158 ............................ pReservations.deleteOne(reservation)
+  [ 66] ret
+end
+
+on objectReleasedFromReservationTeam me, obj, theTeam
+  [  0] getparam 2 .............................. <theTeam>
+  [  2] getparam 2 .............................. <theTeam>
+  [  4] getobjprop 1157 ......................... <theTeam.reservedSlots>
+  [  7] pushint8 1 .............................. <1>
+  [  9] sub ..................................... <theTeam.reservedSlots - 1>
+  [ 10] setobjprop 1157 ......................... theTeam.reservedSlots = theTeam.reservedSlots - 1
+  [ 13] getparam 0 .............................. <me>
+  [ 15] getparam 1 .............................. <obj>
+  [ 17] pusharglist 2 ........................... <me, obj>
+  [ 19] objcall 1146 ............................ <me.getReservationForObj(obj)>
+  [ 22] setlocal 0 .............................. reservation = me.getReservationForObj(obj)
+  [ 24] getlocal 0 .............................. <reservation>
+  [ 26] getlocal 0 .............................. <reservation>
+  [ 28] getobjprop 162 .......................... <reservation.num>
+  [ 30] pushint8 1 .............................. <1>
+  [ 32] sub ..................................... <reservation.num - 1>
+  [ 33] setobjprop 162 .......................... reservation.num = reservation.num - 1
+  [ 35] getlocal 0 .............................. <reservation>
+  [ 37] getobjprop 162 .......................... <reservation.num>
+  [ 39] pushint8 1 .............................. <1>
+  [ 41] lt ...................................... <reservation.num < 1>
+  [ 42] jmpifz [ 55] ............................ if reservation.num < 1 then
+  [ 45] getprop 1156 ............................ <pReservations>
+  [ 48] getlocal 0 .............................. <reservation>
+  [ 50] pusharglistnoret 2 ...................... <pReservations, reservation>
+  [ 52] objcall 1158 ............................ pReservations.deleteOne(reservation)
+  [ 55] ret
+end
+
+on printReport me, team
+  [  0] getprop 1155 ............................ <pDebug>
+  [  3] jmpifz [ 49] ............................ if pDebug then
+  [  6] pushcons 0 .............................. <"Team ">
+  [  8] getparam 1 .............................. <team>
+  [ 10] getobjprop 278 .......................... <team.teamName>
+  [ 13] joinstr ................................. <"Team " & team.teamName>
+  [ 14] pushcons 1 .............................. <" : ">
+  [ 16] joinstr ................................. <"Team " & team.teamName & " : ">
+  [ 17] getparam 1 .............................. <team>
+  [ 19] getobjprop 1159 ......................... <team.currentMembers>
+  [ 22] joinstr ................................. <"Team " & team.teamName & " : " & team.currentMembers>
+  [ 23] pushcons 2 .............................. <" mems, ">
+  [ 25] joinstr ................................. <"Team " & team.teamName & " : " & team.currentMembers & " mems, ">
+  [ 26] getparam 1 .............................. <team>
+  [ 28] getobjprop 1157 ......................... <team.reservedSlots>
+  [ 31] joinstr ................................. <"Team " & team.teamName & " : " & team.currentMembers & " mems, " & team.reservedSlots>
+  [ 32] pushcons 3 .............................. <" res, ">
+  [ 34] joinstr ................................. <"Team " & team.teamName & " : " & team.currentMembers & " mems, " & team.reservedSlots & " res, ">
+  [ 35] getparam 1 .............................. <team>
+  [ 37] getobjprop 283 .......................... <team.maxMembers>
+  [ 40] joinstr ................................. <"Team " & team.teamName & " : " & team.currentMembers & " mems, " & team.reservedSlots & " res, " & team.maxMembers>
+  [ 41] pushcons 4 .............................. <" max.">
+  [ 43] joinstr ................................. <"Team " & team.teamName & " : " & team.currentMembers & " mems, " & team.reservedSlots & " res, " & team.maxMembers & " max.">
+  [ 44] pusharglistnoret 1 ...................... <"Team " & team.teamName & " : " & team.currentMembers & " mems, " & team.reservedSlots & " res, " & team.maxMembers & " max.">
+  [ 46] extcall 414 ............................. put "Team " & team.teamName & " : " & team.currentMembers & " mems, " & team.reservedSlots & " res, " & team.maxMembers & " max."
+  [ 49] ret
+end
+
+on setTeamOverride me, theState
+  [  0] getparam 1 .............................. <theState>
+  [  2] setprop 1504 ............................ pTeamOverride = theState
+  [  5] ret
+end
+
+on start me
+  [  0] pusharglistnoret 0 ...................... <>
+  [  2] extcall 438 ............................. nothing()
+  [  5] ret
+end
+
+on stop me
+  [  0] pusharglistnoret 0 ...................... <>
+  [  2] extcall 438 ............................. nothing()
+  [  5] ret
+end

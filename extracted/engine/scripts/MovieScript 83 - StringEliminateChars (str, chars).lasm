@@ -1,0 +1,66 @@
+on StringEliminateChars str, strChars
+  [  0] getparam 0 .............................. <str>
+  [  2] pushsymb 406 ............................ <#chars>
+  [  5] pusharglist 2 ........................... <str, #chars>
+  [  7] objcall 17 .............................. <str.chars.count>
+  [  9] setlocal 0 .............................. strLenth = str.chars.count
+  [ 11] pusharglist 0 ........................... <[]>
+  [ 13] pushlist ................................ <[]>
+  [ 14] setlocal 1 .............................. deleteList = []
+  [ 16] pushint8 1 .............................. <1>
+  [ 18] setlocal 2
+  [ 20] getlocal 2
+  [ 22] getlocal 0 .............................. <strLenth>
+  [ 24] lteq
+  [ 25] jmpifz [ 66] ............................ repeat with ch = 1 to strLenth
+  [ 28] getparam 0 .............................. <str>
+  [ 30] pushsymb 284 ............................ <#char>
+  [ 33] getlocal 2 .............................. <ch>
+  [ 35] pusharglist 3 ........................... <str, #char, ch>
+  [ 37] objcall 123 ............................. <str.char[ch]>
+  [ 39] setlocal 3 .............................. nextChar = str.char[ch]
+  [ 41] getparam 1 .............................. <strChars>
+  [ 43] getlocal 3 .............................. <nextChar>
+  [ 45] containsstr ............................. <strChars contains nextChar>
+  [ 46] jmpifz [ 57] ............................ if strChars contains nextChar then
+  [ 49] getlocal 1 .............................. <deleteList>
+  [ 51] getlocal 2 .............................. <ch>
+  [ 53] pusharglistnoret 2 ...................... <deleteList, ch>
+  [ 55] objcall 83 .............................. deleteList.append(ch)
+  [ 57] pushint8 1
+  [ 59] getlocal 2
+  [ 61] add
+  [ 62] setlocal 2
+  [ 64] endrepeat [ 20]
+  [ 66] getlocal 1 .............................. <deleteList>
+  [ 68] getobjprop 17 ........................... <deleteList.count>
+  [ 70] setlocal 4 .............................. deleteLenth = deleteList.count
+  [ 72] getlocal 4 .............................. <deleteLenth>
+  [ 74] setlocal 5
+  [ 76] getlocal 5
+  [ 78] pushint8 1 .............................. <1>
+  [ 80] gteq
+  [ 81] jmpifz [121] ............................ repeat with de = deleteLenth down to 1
+  [ 84] getlocal 1 .............................. <deleteList>
+  [ 86] getlocal 5 .............................. <de>
+  [ 88] pusharglist 2 ........................... <deleteList, de>
+  [ 90] objcall 18 .............................. <deleteList[de]>
+  [ 92] setlocal 6 .............................. nextCh = deleteList[de]
+  [ 94] pushzero ................................ <0>
+  [ 95] pushchunkvarref 4 ....................... <str>
+  [ 97] pushsymb 284 ............................ <#char>
+  [100] getlocal 6 .............................. <nextCh>
+  [102] pusharglist 3 ........................... <str, #char, nextCh>
+  [104] objcall 418 ............................. <str.char[nextCh]>
+  [107] pusharglistnoret 1 ...................... <str.char[nextCh]>
+  [109] objcall 419 ............................. delete str.char[nextCh]
+  [112] pushint8 -1
+  [114] getlocal 5
+  [116] add
+  [117] setlocal 5
+  [119] endrepeat [ 76]
+  [121] getparam 0 .............................. <str>
+  [123] pusharglistnoret 1 ...................... <str>
+  [125] extcall 3 ............................... return str
+  [127] ret
+end

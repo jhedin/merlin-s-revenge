@@ -1,0 +1,252 @@
+property pCeilingLevel, pGroundLevel, pWalls
+global gStageSize
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 12 .............................. return me
+  [  6] ret
+end
+
+on init me
+  [  0] pushzero ................................ <0>
+  [  1] setprop 445 ............................. pCeilingLevel = 0
+  [  4] getglobal 447 ........................... <gStageSize>
+  [  7] pushint8 2 .............................. <2>
+  [  9] pusharglist 2 ........................... <gStageSize, 2>
+  [ 11] objcall 34 .............................. <gStageSize[2]>
+  [ 13] pushint8 40 ............................. <40>
+  [ 15] sub ..................................... <gStageSize[2] - 40>
+  [ 16] setprop 446 ............................. pGroundLevel = gStageSize[2] - 40
+  [ 19] pushzero ................................ <0>
+  [ 20] getglobal 447 ........................... <gStageSize>
+  [ 23] pushint8 1 .............................. <1>
+  [ 25] pusharglist 2 ........................... <gStageSize, 1>
+  [ 27] objcall 34 .............................. <gStageSize[1]>
+  [ 29] pusharglist 2 ........................... <[0, gStageSize[1]]>
+  [ 31] pushlist ................................ <[0, gStageSize[1]]>
+  [ 32] setprop 448 ............................. pWalls = [0, gStageSize[1]]
+  [ 35] ret
+end
+
+on checkCollisions me, callingPrg, newLoc, oldloc, spr, useMiddle
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <callingPrg>
+  [  4] getparam 2 .............................. <newLoc>
+  [  6] getparam 4 .............................. <spr>
+  [  8] getparam 5 .............................. <useMiddle>
+  [ 10] pusharglist 5 ........................... <me, callingPrg, newLoc, spr, useMiddle>
+  [ 12] objcall 442 ............................. <me.checkCollisionsCeilings(callingPrg, newLoc, spr, useMiddle)>
+  [ 15] setparam 2 .............................. newLoc = me.checkCollisionsCeilings(callingPrg, newLoc, spr, useMiddle)
+  [ 17] getparam 0 .............................. <me>
+  [ 19] getparam 1 .............................. <callingPrg>
+  [ 21] getparam 2 .............................. <newLoc>
+  [ 23] getparam 4 .............................. <spr>
+  [ 25] getparam 5 .............................. <useMiddle>
+  [ 27] pusharglist 5 ........................... <me, callingPrg, newLoc, spr, useMiddle>
+  [ 29] objcall 444 ............................. <me.checkCollisionsWalls(callingPrg, newLoc, spr, useMiddle)>
+  [ 32] setparam 2 .............................. newLoc = me.checkCollisionsWalls(callingPrg, newLoc, spr, useMiddle)
+  [ 34] getparam 0 .............................. <me>
+  [ 36] getparam 1 .............................. <callingPrg>
+  [ 38] getparam 2 .............................. <newLoc>
+  [ 40] getparam 4 .............................. <spr>
+  [ 42] getparam 5 .............................. <useMiddle>
+  [ 44] pusharglist 5 ........................... <me, callingPrg, newLoc, spr, useMiddle>
+  [ 46] objcall 443 ............................. <me.checkCollisionsPlatforms(callingPrg, newLoc, spr, useMiddle)>
+  [ 49] setparam 2 .............................. newLoc = me.checkCollisionsPlatforms(callingPrg, newLoc, spr, useMiddle)
+  [ 51] getparam 2 .............................. <newLoc>
+  [ 53] pusharglistnoret 1 ...................... <newLoc>
+  [ 55] extcall 12 .............................. return newLoc
+  [ 57] ret
+end
+
+on checkCollisionsCeilings me, callingPrg, newLoc, spr, useMiddle
+  [  0] getparam 4 .............................. <useMiddle>
+  [  2] jmpifz [ 21] ............................ if useMiddle then / else
+  [  5] getparam 3 .............................. <spr>
+  [  7] getobjprop 181 .......................... <spr.height>
+  [  9] pushint8 2 .............................. <2>
+  [ 11] div ..................................... <spr.height / 2>
+  [ 12] pushint8 1 .............................. <1>
+  [ 14] inv ..................................... <-1>
+  [ 15] mul ..................................... <spr.height / 2 * -1>
+  [ 16] setlocal 0 .............................. topOffset = spr.height / 2 * -1
+  [ 18] jmp [ 40]
+  [ 21] getparam 3 .............................. <spr>
+  [ 23] getchainedprop 28 ....................... <spr.member>
+  [ 25] pushsymb 453 ............................ <#regPoint>
+  [ 28] pushint8 2 .............................. <2>
+  [ 30] pusharglist 3 ........................... <spr.member, #regPoint, 2>
+  [ 32] objcall 37 .............................. <spr.member.regPoint[2]>
+  [ 34] pushint8 1 .............................. <1>
+  [ 36] inv ..................................... <-1>
+  [ 37] mul ..................................... <spr.member.regPoint[2] * -1>
+  [ 38] setlocal 0 .............................. topOffset = spr.member.regPoint[2] * -1
+  [ 40] getparam 2 .............................. <newLoc>
+  [ 42] pushint8 2 .............................. <2>
+  [ 44] pusharglist 2 ........................... <newLoc, 2>
+  [ 46] objcall 34 .............................. <newLoc[2]>
+  [ 48] getlocal 0 .............................. <topOffset>
+  [ 50] add ..................................... <newLoc[2] + topOffset>
+  [ 51] setlocal 1 .............................. newTop = newLoc[2] + topOffset
+  [ 53] getlocal 1 .............................. <newTop>
+  [ 55] getprop 445 ............................. <pCeilingLevel>
+  [ 58] lt ...................................... <newTop < pCeilingLevel>
+  [ 59] jmpifz [ 83] ............................ if newTop < pCeilingLevel then
+  [ 62] getparam 2 .............................. <newLoc>
+  [ 64] pushint8 2 .............................. <2>
+  [ 66] getprop 445 ............................. <pCeilingLevel>
+  [ 69] getlocal 0 .............................. <topOffset>
+  [ 71] sub ..................................... <pCeilingLevel - topOffset>
+  [ 72] pusharglistnoret 3 ...................... <newLoc, 2, pCeilingLevel - topOffset>
+  [ 74] objcall 83 .............................. newLoc[2] = pCeilingLevel - topOffset
+  [ 76] getparam 1 .............................. <callingPrg>
+  [ 78] pusharglistnoret 1 ...................... <callingPrg>
+  [ 80] objcall 454 ............................. callingPrg.collisionCeiling()
+  [ 83] getparam 2 .............................. <newLoc>
+  [ 85] pusharglistnoret 1 ...................... <newLoc>
+  [ 87] extcall 12 .............................. return newLoc
+  [ 89] ret
+end
+
+on checkCollisionsPlatforms me, callingPrg, newLoc, spr, useMiddle
+  [  0] getparam 4 .............................. <useMiddle>
+  [  2] jmpifz [ 17] ............................ if useMiddle then / else
+  [  5] getparam 3 .............................. <spr>
+  [  7] getobjprop 181 .......................... <spr.height>
+  [  9] pushint8 2 .............................. <2>
+  [ 11] div ..................................... <spr.height / 2>
+  [ 12] setlocal 0 .............................. bottomOffset = spr.height / 2
+  [ 14] jmp [ 37]
+  [ 17] getparam 3 .............................. <spr>
+  [ 19] getobjprop 181 .......................... <spr.height>
+  [ 21] getparam 3 .............................. <spr>
+  [ 23] getchainedprop 28 ....................... <spr.member>
+  [ 25] pushsymb 453 ............................ <#regPoint>
+  [ 28] pushint8 2 .............................. <2>
+  [ 30] pusharglist 3 ........................... <spr.member, #regPoint, 2>
+  [ 32] objcall 37 .............................. <spr.member.regPoint[2]>
+  [ 34] sub ..................................... <spr.height - spr.member.regPoint[2]>
+  [ 35] setlocal 0 .............................. bottomOffset = spr.height - spr.member.regPoint[2]
+  [ 37] getparam 2 .............................. <newLoc>
+  [ 39] pushint8 2 .............................. <2>
+  [ 41] pusharglist 2 ........................... <newLoc, 2>
+  [ 43] objcall 34 .............................. <newLoc[2]>
+  [ 45] getlocal 0 .............................. <bottomOffset>
+  [ 47] add ..................................... <newLoc[2] + bottomOffset>
+  [ 48] setlocal 1 .............................. newBottom = newLoc[2] + bottomOffset
+  [ 50] getlocal 1 .............................. <newBottom>
+  [ 52] getprop 446 ............................. <pGroundLevel>
+  [ 55] gt ...................................... <newBottom > pGroundLevel>
+  [ 56] jmpifz [ 83] ............................ if newBottom > pGroundLevel then / else
+  [ 59] getparam 2 .............................. <newLoc>
+  [ 61] pushint8 2 .............................. <2>
+  [ 63] getprop 446 ............................. <pGroundLevel>
+  [ 66] getlocal 0 .............................. <bottomOffset>
+  [ 68] sub ..................................... <pGroundLevel - bottomOffset>
+  [ 69] pusharglistnoret 3 ...................... <newLoc, 2, pGroundLevel - bottomOffset>
+  [ 71] objcall 83 .............................. newLoc[2] = pGroundLevel - bottomOffset
+  [ 73] getparam 1 .............................. <callingPrg>
+  [ 75] pusharglistnoret 1 ...................... <callingPrg>
+  [ 77] objcall 457 ............................. callingPrg.collisionPlatform()
+  [ 80] jmp [ 90]
+  [ 83] getparam 1 .............................. <callingPrg>
+  [ 85] pusharglistnoret 1 ...................... <callingPrg>
+  [ 87] objcall 458 ............................. callingPrg.collisionNoPlatform()
+  [ 90] getparam 2 .............................. <newLoc>
+  [ 92] pusharglistnoret 1 ...................... <newLoc>
+  [ 94] extcall 12 .............................. return newLoc
+  [ 96] ret
+end
+
+on checkCollisionsWalls me, callingPrg, newLoc, spr, useMiddle
+  [  0] getparam 4 .............................. <useMiddle>
+  [  2] jmpifz [ 25] ............................ if useMiddle then / else
+  [  5] getparam 3 .............................. <spr>
+  [  7] getobjprop 180 .......................... <spr.width>
+  [  9] pushint8 2 .............................. <2>
+  [ 11] div ..................................... <spr.width / 2>
+  [ 12] setlocal 0 .............................. rightOffset = spr.width / 2
+  [ 14] getlocal 0 .............................. <rightOffset>
+  [ 16] pushint8 1 .............................. <1>
+  [ 18] inv ..................................... <-1>
+  [ 19] mul ..................................... <rightOffset * -1>
+  [ 20] setlocal 1 .............................. leftOffset = rightOffset * -1
+  [ 22] jmp [ 64]
+  [ 25] getparam 3 .............................. <spr>
+  [ 27] getobjprop 180 .......................... <spr.width>
+  [ 29] getparam 3 .............................. <spr>
+  [ 31] getchainedprop 28 ....................... <spr.member>
+  [ 33] pushsymb 453 ............................ <#regPoint>
+  [ 36] pushint8 1 .............................. <1>
+  [ 38] pusharglist 3 ........................... <spr.member, #regPoint, 1>
+  [ 40] objcall 37 .............................. <spr.member.regPoint[1]>
+  [ 42] sub ..................................... <spr.width - spr.member.regPoint[1]>
+  [ 43] setlocal 0 .............................. rightOffset = spr.width - spr.member.regPoint[1]
+  [ 45] getparam 3 .............................. <spr>
+  [ 47] getchainedprop 28 ....................... <spr.member>
+  [ 49] pushsymb 453 ............................ <#regPoint>
+  [ 52] pushint8 1 .............................. <1>
+  [ 54] pusharglist 3 ........................... <spr.member, #regPoint, 1>
+  [ 56] objcall 37 .............................. <spr.member.regPoint[1]>
+  [ 58] pushint8 1 .............................. <1>
+  [ 60] inv ..................................... <-1>
+  [ 61] mul ..................................... <spr.member.regPoint[1] * -1>
+  [ 62] setlocal 1 .............................. leftOffset = spr.member.regPoint[1] * -1
+  [ 64] getparam 2 .............................. <newLoc>
+  [ 66] getlocal 1 .............................. <leftOffset>
+  [ 68] add ..................................... <newLoc + leftOffset>
+  [ 69] setlocal 2 .............................. newLeft = newLoc + leftOffset
+  [ 71] getparam 2 .............................. <newLoc>
+  [ 73] getlocal 0 .............................. <rightOffset>
+  [ 75] add ..................................... <newLoc + rightOffset>
+  [ 76] setlocal 3 .............................. newRight = newLoc + rightOffset
+  [ 78] getlocal 2 .............................. <newLeft>
+  [ 80] getprop 448 ............................. <pWalls>
+  [ 83] pushint8 1 .............................. <1>
+  [ 85] pusharglist 2 ........................... <pWalls, 1>
+  [ 87] objcall 34 .............................. <pWalls[1]>
+  [ 89] lt ...................................... <newLeft < pWalls[1]>
+  [ 90] jmpifz [120] ............................ if newLeft < pWalls[1] then
+  [ 93] getparam 2 .............................. <newLoc>
+  [ 95] pushint8 1 .............................. <1>
+  [ 97] getprop 448 ............................. <pWalls>
+  [100] pushint8 1 .............................. <1>
+  [102] pusharglist 2 ........................... <pWalls, 1>
+  [104] objcall 34 .............................. <pWalls[1]>
+  [106] getlocal 1 .............................. <leftOffset>
+  [108] sub ..................................... <pWalls[1] - leftOffset>
+  [109] pusharglistnoret 3 ...................... <newLoc, 1, pWalls[1] - leftOffset>
+  [111] objcall 83 .............................. newLoc[1] = pWalls[1] - leftOffset
+  [113] getparam 1 .............................. <callingPrg>
+  [115] pusharglistnoret 1 ...................... <callingPrg>
+  [117] objcall 461 ............................. callingPrg.collisionWallLeft()
+  [120] getlocal 3 .............................. <newRight>
+  [122] getprop 448 ............................. <pWalls>
+  [125] pushint8 2 .............................. <2>
+  [127] pusharglist 2 ........................... <pWalls, 2>
+  [129] objcall 34 .............................. <pWalls[2]>
+  [131] gt ...................................... <newRight > pWalls[2]>
+  [132] jmpifz [162] ............................ if newRight > pWalls[2] then
+  [135] getparam 2 .............................. <newLoc>
+  [137] pushint8 1 .............................. <1>
+  [139] getprop 448 ............................. <pWalls>
+  [142] pushint8 2 .............................. <2>
+  [144] pusharglist 2 ........................... <pWalls, 2>
+  [146] objcall 34 .............................. <pWalls[2]>
+  [148] getlocal 0 .............................. <rightOffset>
+  [150] sub ..................................... <pWalls[2] - rightOffset>
+  [151] pusharglistnoret 3 ...................... <newLoc, 1, pWalls[2] - rightOffset>
+  [153] objcall 83 .............................. newLoc[1] = pWalls[2] - rightOffset
+  [155] getparam 1 .............................. <callingPrg>
+  [157] pusharglistnoret 1 ...................... <callingPrg>
+  [159] objcall 462 ............................. callingPrg.collisionWallRight()
+  [162] getparam 2 .............................. <newLoc>
+  [164] pusharglistnoret 1 ...................... <newLoc>
+  [166] extcall 12 .............................. return newLoc
+  [168] ret
+end
+
+on stop me
+  [  0] ret
+end

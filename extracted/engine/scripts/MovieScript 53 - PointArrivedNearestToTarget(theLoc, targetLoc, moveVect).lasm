@@ -1,0 +1,35 @@
+on PointArrivedNearestToTarget theloc, targetloc, lastDistXY
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. targetReached = 0
+  [  3] getparam 0 .............................. <theloc>
+  [  5] getparam 1 .............................. <targetloc>
+  [  7] pusharglist 2 ........................... <theloc, targetloc>
+  [  9] extcall 313 ............................. <PointDistXY(theloc, targetloc)>
+  [ 12] setlocal 1 .............................. distxy = PointDistXY(theloc, targetloc)
+  [ 14] getlocal 1 .............................. <distxy>
+  [ 16] getobjprop 158 .......................... <distxy.locH>
+  [ 18] getparam 2 .............................. <lastDistXY>
+  [ 20] getobjprop 158 .......................... <lastDistXY.locH>
+  [ 22] gt ...................................... <distxy.locH > lastDistXY.locH>
+  [ 23] getlocal 1 .............................. <distxy>
+  [ 25] getobjprop 159 .......................... <distxy.locV>
+  [ 27] getparam 2 .............................. <lastDistXY>
+  [ 29] getobjprop 159 .......................... <lastDistXY.locV>
+  [ 31] gt ...................................... <distxy.locV > lastDistXY.locV>
+  [ 32] or ...................................... <(distxy.locH > lastDistXY.locH) or (distxy.locV > lastDistXY.locV)>
+  [ 33] jmpifz [ 40] ............................ if (distxy.locH > lastDistXY.locH) or (distxy.locV > lastDistXY.locV) then
+  [ 36] pushint8 1 .............................. <1>
+  [ 38] setlocal 0 .............................. targetReached = 1
+  [ 40] getparam 2 .............................. <lastDistXY>
+  [ 42] getlocal 1 .............................. <distxy>
+  [ 44] getobjprop 158 .......................... <distxy.locH>
+  [ 46] setobjprop 158 .......................... lastDistXY.locH = distxy.locH
+  [ 48] getparam 2 .............................. <lastDistXY>
+  [ 50] getlocal 1 .............................. <distxy>
+  [ 52] getobjprop 159 .......................... <distxy.locV>
+  [ 54] setobjprop 159 .......................... lastDistXY.locV = distxy.locV
+  [ 56] getlocal 0 .............................. <targetReached>
+  [ 58] pusharglistnoret 1 ...................... <targetReached>
+  [ 60] extcall 3 ............................... return targetReached
+  [ 62] ret
+end

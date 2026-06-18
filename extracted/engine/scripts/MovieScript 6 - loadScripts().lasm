@@ -1,0 +1,38 @@
+on loadScripts me
+  [  0] pushcons 0 .............................. <"Loader">
+  [  2] pusharglist 1 ........................... <"Loader">
+  [  4] extcall 11 .............................. <script("Loader")>
+  [  6] pusharglist 1 ........................... <script("Loader")>
+  [  8] extcall 16 .............................. <new(script("Loader"))>
+  [ 10] setlocal 0 .............................. loader = new(script("Loader"))
+  [ 12] getlocal 0 .............................. <loader>
+  [ 14] getmovieprop 205 ........................ <the moviePath>
+  [ 16] pushcons 1 .............................. <"casts">
+  [ 18] joinstr ................................. <the moviePath & "casts">
+  [ 19] pusharglistnoret 2 ...................... <loader, the moviePath & "casts">
+  [ 21] objcall 146 ............................. loader.setLoadFolder(the moviePath & "casts")
+  [ 23] getlocal 0 .............................. <loader>
+  [ 25] pushcons 2 .............................. <"data">
+  [ 27] pushcons 3 .............................. <"master_objects">
+  [ 29] pushcons 4 .............................. <"script_objects">
+  [ 31] pushcons 5 .............................. <"general_functions">
+  [ 33] pusharglist 4 ........................... <["data", "master_objects", "script_objects", "general_functions"]>
+  [ 35] pushlist ................................ <["data", "master_objects", "script_objects", "general_functions"]>
+  [ 36] pusharglistnoret 2 ...................... <loader, ["data", "master_objects", "script_objects", "general_functions"]>
+  [ 38] objcall 145 ............................. loader.setCasts(["data", "master_objects", "script_objects", "general_functions"])
+  [ 40] getlocal 0 .............................. <loader>
+  [ 42] pushsymb 221 ............................ <#field>
+  [ 44] pushsymb 11 ............................. <#script>
+  [ 46] pusharglist 2 ........................... <[#field, #script]>
+  [ 48] pushlist ................................ <[#field, #script]>
+  [ 49] pusharglistnoret 2 ...................... <loader, [#field, #script]>
+  [ 51] objcall 148 ............................. loader.setTypesToLoad([#field, #script])
+  [ 53] getlocal 0 .............................. <loader>
+  [ 55] pusharglist 1 ........................... <loader>
+  [ 57] objcall 135 ............................. <loader.loadCasts()>
+  [ 59] setlocal 1 .............................. errors = loader.loadCasts()
+  [ 61] getlocal 1 .............................. <errors>
+  [ 63] pusharglistnoret 1 ...................... <errors>
+  [ 65] extcall 90 .............................. return errors
+  [ 67] ret
+end

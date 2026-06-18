@@ -1,0 +1,1420 @@
+property ancestor, pBox, pCornerTile, pCollisionMap, pCollisionEdges, pDisplayLines, pEndOfTile, pLocInMap, pTileType, pSolidCorners, pSolidEdges, pStartOfTile, pSurroundingTiles
+global g, gGameView
+
+on new me
+  [  0] pushcons 0 .............................. <"objParams">
+  [  2] pusharglist 1 ........................... <"objParams">
+  [  4] extcall 34 .............................. <script("objParams")>
+  [  6] pusharglist 1 ........................... <script("objParams")>
+  [  8] extcall 0 ............................... <new(script("objParams"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objParams"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 2270 ........................... <#collisionMap>
+  [ 27] pushsymb 49 ............................. <#none>
+  [ 29] pusharglistnoret 3 ...................... <i, #collisionMap, #none>
+  [ 31] objcall 48 .............................. i[#collisionMap] = #none
+  [ 33] getlocal 0 .............................. <i>
+  [ 35] pushsymb 2271 ........................... <#locInMap>
+  [ 38] pushint8 1 .............................. <1>
+  [ 40] pushint8 1 .............................. <1>
+  [ 42] pusharglist 2 ........................... <1, 1>
+  [ 44] extcall 197 ............................. <point(1, 1)>
+  [ 46] pusharglistnoret 3 ...................... <i, #locInMap, point(1, 1)>
+  [ 48] objcall 48 .............................. i[#locInMap] = point(1, 1)
+  [ 50] getlocal 0 .............................. <i>
+  [ 52] pushsymb 399 ............................ <#tileType>
+  [ 55] pushsymb 49 ............................. <#none>
+  [ 57] pusharglistnoret 3 ...................... <i, #tileType, #none>
+  [ 59] objcall 48 .............................. i[#tileType] = #none
+  [ 61] getparam 0 .............................. <me>
+  [ 63] pusharglistnoret 1 ...................... <me>
+  [ 65] extcall 35 .............................. return me
+  [ 67] ret
+end
+
+on init me, params
+  [  0] pushsymb 49 ............................. <#none>
+  [  2] setprop 417 ............................. pBox = #none
+  [  5] getparam 1 .............................. <params>
+  [  7] getobjprop 2270 ......................... <params.collisionMap>
+  [ 10] setprop 378 ............................. pCollisionMap = params.collisionMap
+  [ 13] pusharglist 0 ........................... <[]>
+  [ 15] pushlist ................................ <[]>
+  [ 16] setprop 2322 ............................ pDisplayLines = []
+  [ 19] getparam 1 .............................. <params>
+  [ 21] getobjprop 2271 ......................... <params.locInMap>
+  [ 24] setprop 2323 ............................ pLocInMap = params.locInMap
+  [ 27] getparam 1 .............................. <params>
+  [ 29] getobjprop 399 .......................... <params.tileType>
+  [ 32] setprop 2324 ............................ pTileType = params.tileType
+  [ 35] pusharglist 0 ........................... <[]>
+  [ 37] pushlist ................................ <[]>
+  [ 38] setprop 2325 ............................ pSolidCorners = []
+  [ 41] getglobal 40 ............................ <g>
+  [ 43] getchainedprop 1168 ..................... <g.structMaster>
+  [ 46] pushsymb 2327 ........................... <#surroundingTiles>
+  [ 49] pusharglist 2 ........................... <g.structMaster, #surroundingTiles>
+  [ 51] objcall 1170 ............................ <g.structMaster.getStruct(#surroundingTiles)>
+  [ 54] setprop 2326 ............................ pSurroundingTiles = g.structMaster.getStruct(#surroundingTiles)
+  [ 57] getparam 0 .............................. <me>
+  [ 59] pusharglistnoret 1 ...................... <me>
+  [ 61] objcall 2295 ............................ me.initCollisionEdges()
+  [ 64] getprop 33 .............................. <ancestor>
+  [ 66] getparam 1 .............................. <params>
+  [ 68] pusharglistnoret 2 ...................... <ancestor, params>
+  [ 70] objcall 1 ............................... ancestor.init(params)
+  [ 72] ret
+end
+
+on initCollisionEdge me, nEdge
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 1168 ..................... <g.structMaster>
+  [  5] pushsymb 2328 ........................... <#collisionEdge>
+  [  8] pusharglist 2 ........................... <g.structMaster, #collisionEdge>
+  [ 10] objcall 1170 ............................ <g.structMaster.getStruct(#collisionEdge)>
+  [ 13] setlocal 0 .............................. nCollisionEdge = g.structMaster.getStruct(#collisionEdge)
+  [ 15] pushzero ................................ <0>
+  [ 16] setlocal 1 .............................. solid = 0
+  [ 18] getprop 2324 ............................ <pTileType>
+  [ 21] pushsymb 1221 ........................... <#solid>
+  [ 24] eq ...................................... <pTileType = #solid>
+  [ 25] jmpifz [ 32] ............................ if pTileType = #solid then
+  [ 28] pushint8 1 .............................. <1>
+  [ 30] setlocal 1 .............................. solid = 1
+  [ 32] getparam 1 .............................. <nEdge>
+  [ 34] peek 0 .................................. case nEdge of
+  [ 36] pushsymb 264 ............................ <#left>
+  [ 39] eq
+  [ 40] jmpifz [ 75] ............................ (case) #left:
+  [ 43] getprop 2329 ............................ <pStartOfTile>
+  [ 46] pushint8 1 .............................. <1>
+  [ 48] pusharglist 2 ........................... <pStartOfTile, 1>
+  [ 50] objcall 109 ............................. <pStartOfTile[1]>
+  [ 52] setlocal 2 .............................. location = pStartOfTile[1]
+  [ 54] pushint8 1 .............................. <1>
+  [ 56] setlocal 3 .............................. axis = 1
+  [ 58] getprop 2324 ............................ <pTileType>
+  [ 61] pushsymb 2330 ........................... <#wallLeft>
+  [ 64] eq ...................................... <pTileType = #wallLeft>
+  [ 65] jmpifz [ 72] ............................ if pTileType = #wallLeft then
+  [ 68] pushint8 1 .............................. <1>
+  [ 70] setlocal 1 .............................. solid = 1
+  [ 72] jmp [194]
+  [ 75] peek 0
+  [ 77] pushsymb 265 ............................ <#top>
+  [ 80] eq
+  [ 81] jmpifz [116] ............................ (case) #top:
+  [ 84] getprop 2329 ............................ <pStartOfTile>
+  [ 87] pushint8 2 .............................. <2>
+  [ 89] pusharglist 2 ........................... <pStartOfTile, 2>
+  [ 91] objcall 109 ............................. <pStartOfTile[2]>
+  [ 93] setlocal 2 .............................. location = pStartOfTile[2]
+  [ 95] pushint8 2 .............................. <2>
+  [ 97] setlocal 3 .............................. axis = 2
+  [ 99] getprop 2324 ............................ <pTileType>
+  [102] pushsymb 2331 ........................... <#platform>
+  [105] eq ...................................... <pTileType = #platform>
+  [106] jmpifz [113] ............................ if pTileType = #platform then
+  [109] pushint8 1 .............................. <1>
+  [111] setlocal 1 .............................. solid = 1
+  [113] jmp [194]
+  [116] peek 0
+  [118] pushsymb 266 ............................ <#right>
+  [121] eq
+  [122] jmpifz [157] ............................ (case) #right:
+  [125] getprop 2332 ............................ <pEndOfTile>
+  [128] pushint8 1 .............................. <1>
+  [130] pusharglist 2 ........................... <pEndOfTile, 1>
+  [132] objcall 109 ............................. <pEndOfTile[1]>
+  [134] setlocal 2 .............................. location = pEndOfTile[1]
+  [136] pushint8 1 .............................. <1>
+  [138] setlocal 3 .............................. axis = 1
+  [140] getprop 2324 ............................ <pTileType>
+  [143] pushsymb 2333 ........................... <#wallRight>
+  [146] eq ...................................... <pTileType = #wallRight>
+  [147] jmpifz [154] ............................ if pTileType = #wallRight then
+  [150] pushint8 1 .............................. <1>
+  [152] setlocal 1 .............................. solid = 1
+  [154] jmp [194]
+  [157] peek 0
+  [159] pushsymb 114 ............................ <#bottom>
+  [161] eq
+  [162] jmpifz [194] ............................ (case) #bottom:
+  [165] getprop 2332 ............................ <pEndOfTile>
+  [168] pushint8 2 .............................. <2>
+  [170] pusharglist 2 ........................... <pEndOfTile, 2>
+  [172] objcall 109 ............................. <pEndOfTile[2]>
+  [174] setlocal 2 .............................. location = pEndOfTile[2]
+  [176] pushint8 2 .............................. <2>
+  [178] setlocal 3 .............................. axis = 2
+  [180] getprop 2324 ............................ <pTileType>
+  [183] pushsymb 2334 ........................... <#ceiling>
+  [186] eq ...................................... <pTileType = #ceiling>
+  [187] jmpifz [194] ............................ if pTileType = #ceiling then
+  [190] pushint8 1 .............................. <1>
+  [192] setlocal 1 .............................. solid = 1
+  [194] pop 1 ................................... end case
+  [196] getlocal 0 .............................. <nCollisionEdge>
+  [198] getlocal 3 .............................. <axis>
+  [200] setobjprop 2293 ......................... nCollisionEdge.axis = axis
+  [203] getlocal 0 .............................. <nCollisionEdge>
+  [205] getlocal 2 .............................. <location>
+  [207] setobjprop 1662 ......................... nCollisionEdge.location = location
+  [210] getlocal 0 .............................. <nCollisionEdge>
+  [212] getlocal 1 .............................. <solid>
+  [214] setobjprop 1221 ......................... nCollisionEdge.solid = solid
+  [217] getprop 2335 ............................ <pCollisionEdges>
+  [220] getparam 1 .............................. <nEdge>
+  [222] getlocal 0 .............................. <nCollisionEdge>
+  [224] pusharglistnoret 3 ...................... <pCollisionEdges, nEdge, nCollisionEdge>
+  [226] objcall 48 .............................. pCollisionEdges[nEdge] = nCollisionEdge
+  [228] ret
+end
+
+on initCollisionEdges me
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 1168 ..................... <g.structMaster>
+  [  5] pushsymb 1224 ........................... <#screenExits>
+  [  8] pusharglist 2 ........................... <g.structMaster, #screenExits>
+  [ 10] objcall 1170 ............................ <g.structMaster.getStruct(#screenExits)>
+  [ 13] setprop 2335 ............................ pCollisionEdges = g.structMaster.getStruct(#screenExits)
+  [ 16] getprop 378 ............................. <pCollisionMap>
+  [ 19] pusharglist 1 ........................... <pCollisionMap>
+  [ 21] objcall 389 ............................. <pCollisionMap.getFirstTileLoc()>
+  [ 24] setlocal 0 .............................. firstTile = pCollisionMap.getFirstTileLoc()
+  [ 26] getprop 378 ............................. <pCollisionMap>
+  [ 29] pusharglist 1 ........................... <pCollisionMap>
+  [ 31] objcall 390 ............................. <pCollisionMap.getTileSize()>
+  [ 34] setlocal 1 .............................. tilesize = pCollisionMap.getTileSize()
+  [ 36] getlocal 0 .............................. <firstTile>
+  [ 38] getlocal 1 .............................. <tilesize>
+  [ 40] getprop 2323 ............................ <pLocInMap>
+  [ 43] mul ..................................... <tilesize * pLocInMap>
+  [ 44] add ..................................... <firstTile + (tilesize * pLocInMap)>
+  [ 45] setprop 2332 ............................ pEndOfTile = firstTile + (tilesize * pLocInMap)
+  [ 48] getprop 2332 ............................ <pEndOfTile>
+  [ 51] getlocal 1 .............................. <tilesize>
+  [ 53] sub ..................................... <pEndOfTile - tilesize>
+  [ 54] setprop 2329 ............................ pStartOfTile = pEndOfTile - tilesize
+  [ 57] getprop 2329 ............................ <pStartOfTile>
+  [ 60] pushint8 1 .............................. <1>
+  [ 62] pushint8 1 .............................. <1>
+  [ 64] pusharglist 2 ........................... <1, 1>
+  [ 66] extcall 197 ............................. <point(1, 1)>
+  [ 68] sub ..................................... <pStartOfTile - point(1, 1)>
+  [ 69] setprop 2329 ............................ pStartOfTile = pStartOfTile - point(1, 1)
+  [ 72] pushint8 1 .............................. <1>
+  [ 74] setlocal 2
+  [ 76] getlocal 2
+  [ 78] getprop 2335 ............................ <pCollisionEdges>
+  [ 81] getobjprop 257 .......................... <pCollisionEdges.count>
+  [ 84] lteq
+  [ 85] jmpifz [118] ............................ repeat with i = 1 to pCollisionEdges.count
+  [ 88] getprop 2335 ............................ <pCollisionEdges>
+  [ 91] getlocal 2 .............................. <i>
+  [ 93] pusharglist 2 ........................... <pCollisionEdges, i>
+  [ 95] objcall 1092 ............................ <pCollisionEdges.getPropAt(i)>
+  [ 98] setlocal 3 .............................. nEdge = pCollisionEdges.getPropAt(i)
+  [100] getparam 0 .............................. <me>
+  [102] getlocal 3 .............................. <nEdge>
+  [104] pusharglistnoret 2 ...................... <me, nEdge>
+  [106] objcall 2309 ............................ me.initCollisionEdge(nEdge)
+  [109] pushint8 1
+  [111] getlocal 2
+  [113] add
+  [114] setlocal 2
+  [116] endrepeat [ 76]
+  [118] ret
+end
+
+on initSolidEdgesList me
+  [  0] pusharglist 0 ........................... <[]>
+  [  2] pushlist ................................ <[]>
+  [  3] setprop 2337 ............................ pSolidEdges = []
+  [  6] pushint8 1 .............................. <1>
+  [  8] setlocal 0
+  [ 10] getlocal 0
+  [ 12] pushint8 4 .............................. <4>
+  [ 14] lteq
+  [ 15] jmpifz [ 68] ............................ repeat with i = 1 to 4
+  [ 18] getprop 2335 ............................ <pCollisionEdges>
+  [ 21] getlocal 0 .............................. <i>
+  [ 23] pusharglist 2 ........................... <pCollisionEdges, i>
+  [ 25] objcall 109 ............................. <pCollisionEdges[i]>
+  [ 27] setlocal 1 .............................. nCollisionEdge = pCollisionEdges[i]
+  [ 29] getlocal 1 .............................. <nCollisionEdge>
+  [ 31] getobjprop 1221 ......................... <nCollisionEdge.solid>
+  [ 34] jmpifz [ 59] ............................ if nCollisionEdge.solid then
+  [ 37] getprop 2335 ............................ <pCollisionEdges>
+  [ 40] getlocal 0 .............................. <i>
+  [ 42] pusharglist 2 ........................... <pCollisionEdges, i>
+  [ 44] objcall 1092 ............................ <pCollisionEdges.getPropAt(i)>
+  [ 47] setlocal 2 .............................. nEdge = pCollisionEdges.getPropAt(i)
+  [ 49] getprop 2337 ............................ <pSolidEdges>
+  [ 52] getlocal 2 .............................. <nEdge>
+  [ 54] pusharglistnoret 2 ...................... <pSolidEdges, nEdge>
+  [ 56] objcall 256 ............................. pSolidEdges.append(nEdge)
+  [ 59] pushint8 1
+  [ 61] getlocal 0
+  [ 63] add
+  [ 64] setlocal 0
+  [ 66] endrepeat [ 10]
+  [ 68] ret
+end
+
+on finish me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 2311 ............................ me.finishDisplayLines()
+  [  7] getparam 0 .............................. <me>
+  [  9] pusharglistnoret 1 ...................... <me>
+  [ 11] objcall 408 ............................. me.finishBox()
+  [ 14] getprop 33 .............................. <ancestor>
+  [ 16] pusharglistnoret 1 ...................... <ancestor>
+  [ 18] objcall 3 ............................... ancestor.finish()
+  [ 20] ret
+end
+
+on finishBox me
+  [  0] getprop 417 ............................. <pBox>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] nteq .................................... <pBox <> #none>
+  [  6] jmpifz [ 21] ............................ if pBox <> #none then
+  [  9] getprop 417 ............................. <pBox>
+  [ 12] pusharglistnoret 1 ...................... <pBox>
+  [ 14] objcall 3 ............................... pBox.finish()
+  [ 16] pushsymb 49 ............................. <#none>
+  [ 18] setprop 417 ............................. pBox = #none
+  [ 21] ret
+end
+
+on finishDisplayLines me
+  [  0] pushsymb 3 .............................. <#finish>
+  [  2] getprop 2322 ............................ <pDisplayLines>
+  [  5] pusharglistnoret 2 ...................... <#finish, pDisplayLines>
+  [  7] extcall 479 ............................. call(#finish, pDisplayLines)
+  [ 10] pusharglist 0 ........................... <[]>
+  [ 12] pushlist ................................ <[]>
+  [ 13] setprop 2322 ............................ pDisplayLines = []
+  [ 16] ret
+end
+
+on calcEdgeOrientation me, theEdge
+  [  0] getparam 1 .............................. <theEdge>
+  [  2] peek 0 .................................. case theEdge of
+  [  4] pushsymb 265 ............................ <#top>
+  [  7] nteq
+  [  8] jmpifz [ 19] ............................ (case) #top, ...
+  [ 11] peek 0
+  [ 13] pushsymb 114 ............................ <#bottom>
+  [ 15] eq
+  [ 16] jmpifz [ 27] ............................ (case) ..., #bottom:
+  [ 19] pushsymb 2338 ........................... <#horizontal>
+  [ 22] setlocal 0 .............................. orientation = #horizontal
+  [ 24] jmp [ 50]
+  [ 27] peek 0
+  [ 29] pushsymb 264 ............................ <#left>
+  [ 32] nteq
+  [ 33] jmpifz [ 45] ............................ (case) #left, ...
+  [ 36] peek 0
+  [ 38] pushsymb 266 ............................ <#right>
+  [ 41] eq
+  [ 42] jmpifz [ 50] ............................ (case) ..., #right:
+  [ 45] pushsymb 2339 ........................... <#vertical>
+  [ 48] setlocal 0 .............................. orientation = #vertical
+  [ 50] pop 1 ................................... end case
+  [ 52] getlocal 0 .............................. <orientation>
+  [ 54] pusharglistnoret 1 ...................... <orientation>
+  [ 56] extcall 35 .............................. return orientation
+  [ 58] ret
+end
+
+on calcOppositeEdge me, edge
+  [  0] getparam 1 .............................. <edge>
+  [  2] peek 0 .................................. case edge of
+  [  4] pushsymb 264 ............................ <#left>
+  [  7] eq
+  [  8] jmpifz [ 23] ............................ (case) #left:
+  [ 11] pop 1
+  [ 13] pushsymb 266 ............................ <#right>
+  [ 16] pusharglistnoret 1 ...................... <#right>
+  [ 18] extcall 35 .............................. return #right
+  [ 20] jmp [ 81]
+  [ 23] peek 0
+  [ 25] pushsymb 265 ............................ <#top>
+  [ 28] eq
+  [ 29] jmpifz [ 43] ............................ (case) #top:
+  [ 32] pop 1
+  [ 34] pushsymb 114 ............................ <#bottom>
+  [ 36] pusharglistnoret 1 ...................... <#bottom>
+  [ 38] extcall 35 .............................. return #bottom
+  [ 40] jmp [ 81]
+  [ 43] peek 0
+  [ 45] pushsymb 266 ............................ <#right>
+  [ 48] eq
+  [ 49] jmpifz [ 64] ............................ (case) #right:
+  [ 52] pop 1
+  [ 54] pushsymb 264 ............................ <#left>
+  [ 57] pusharglistnoret 1 ...................... <#left>
+  [ 59] extcall 35 .............................. return #left
+  [ 61] jmp [ 81]
+  [ 64] peek 0
+  [ 66] pushsymb 114 ............................ <#bottom>
+  [ 68] eq
+  [ 69] jmpifz [ 81] ............................ (case) #bottom:
+  [ 72] pop 1
+  [ 74] pushsymb 265 ............................ <#top>
+  [ 77] pusharglistnoret 1 ...................... <#top>
+  [ 79] extcall 35 .............................. return #top
+  [ 81] pop 1 ................................... end case
+  [ 83] ret
+end
+
+on calcOverlap me, collisionRect, Dir, printOverlap
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <collisionRect>
+  [  4] getparam 2 .............................. <Dir>
+  [  6] pusharglist 3 ........................... <me, collisionRect, Dir>
+  [  8] objcall 2315 ............................ <me.calcOverlapEdges(collisionRect, Dir)>
+  [ 11] setlocal 0 .............................. overlap = me.calcOverlapEdges(collisionRect, Dir)
+  [ 13] getprop 2341 ............................ <pCornerTile>
+  [ 16] pushint8 1 .............................. <1>
+  [ 18] eq ...................................... <pCornerTile = 1>
+  [ 19] getlocal 0 .............................. <overlap>
+  [ 21] pushint8 1 .............................. <1>
+  [ 23] pusharglist 2 ........................... <overlap, 1>
+  [ 25] objcall 109 ............................. <overlap[1]>
+  [ 27] pushsymb 49 ............................. <#none>
+  [ 29] eq ...................................... <overlap[1] = #none>
+  [ 30] getlocal 0 .............................. <overlap>
+  [ 32] pushint8 2 .............................. <2>
+  [ 34] pusharglist 2 ........................... <overlap, 2>
+  [ 36] objcall 109 ............................. <overlap[2]>
+  [ 38] pushsymb 49 ............................. <#none>
+  [ 40] eq ...................................... <overlap[2] = #none>
+  [ 41] and ..................................... <(overlap[1] = #none) and (overlap[2] = #none)>
+  [ 42] and ..................................... <(pCornerTile = 1) and ((overlap[1] = #none) and (overlap[2] = #none))>
+  [ 43] jmpifz [ 61] ............................ if (pCornerTile = 1) and ((overlap[1] = #none) and (overlap[2] = #none)) then
+  [ 46] getparam 0 .............................. <me>
+  [ 48] getparam 1 .............................. <collisionRect>
+  [ 50] getparam 2 .............................. <Dir>
+  [ 52] getlocal 0 .............................. <overlap>
+  [ 54] pusharglist 4 ........................... <me, collisionRect, Dir, overlap>
+  [ 56] objcall 2314 ............................ <me.calcOverlapCorners(collisionRect, Dir, overlap)>
+  [ 59] setlocal 0 .............................. overlap = me.calcOverlapCorners(collisionRect, Dir, overlap)
+  [ 61] getlocal 0 .............................. <overlap>
+  [ 63] pusharglistnoret 1 ...................... <overlap>
+  [ 65] extcall 35 .............................. return overlap
+  [ 67] ret
+end
+
+on calcOverlapCorners me, collisionRect, Dir, overlap
+  [  0] getprop 2325 ............................ <pSolidCorners>
+  [  3] peek 0
+  [  5] pusharglist 1
+  [  7] extcall 257
+  [ 10] pushint8 1
+  [ 12] peek 0
+  [ 14] peek 2
+  [ 16] lteq
+  [ 17] jmpifz [365] ............................ repeat with nCorner in pSolidCorners
+  [ 20] peek 2
+  [ 22] peek 1
+  [ 24] pusharglist 2
+  [ 26] extcall 109
+  [ 28] setlocal 0
+  [ 30] getlocal 0 .............................. <nCorner>
+  [ 32] peek 0 .................................. case nCorner of
+  [ 34] pushsymb 2343 ........................... <#topLeft>
+  [ 37] eq
+  [ 38] jmpifz [113] ............................ (case) #topLeft:
+  [ 41] getparam 2 .............................. <Dir>
+  [ 43] pushint8 1 .............................. <1>
+  [ 45] pushint8 1 .............................. <1>
+  [ 47] pusharglist 2 ........................... <1, 1>
+  [ 49] extcall 197 ............................. <point(1, 1)>
+  [ 51] eq ...................................... <Dir = point(1, 1)>
+  [ 52] jmpifz [110] ............................ if Dir = point(1, 1) then
+  [ 55] getparam 3 .............................. <overlap>
+  [ 57] pushint8 2 .............................. <2>
+  [ 59] getparam 0 .............................. <me>
+  [ 61] pushsymb 265 ............................ <#top>
+  [ 64] getparam 1 .............................. <collisionRect>
+  [ 66] getobjprop 114 .......................... <collisionRect.bottom>
+  [ 68] pusharglist 3 ........................... <me, #top, collisionRect.bottom>
+  [ 70] objcall 2316 ............................ <me.calcOverlapEdge(#top, collisionRect.bottom)>
+  [ 73] pusharglistnoret 3 ...................... <overlap, 2, me.calcOverlapEdge(#top, collisionRect.bottom)>
+  [ 75] objcall 48 .............................. overlap[2] = me.calcOverlapEdge(#top, collisionRect.bottom)
+  [ 77] getparam 3 .............................. <overlap>
+  [ 79] pushint8 1 .............................. <1>
+  [ 81] getparam 0 .............................. <me>
+  [ 83] pushsymb 264 ............................ <#left>
+  [ 86] getparam 1 .............................. <collisionRect>
+  [ 88] getobjprop 266 .......................... <collisionRect.right>
+  [ 91] pusharglist 3 ........................... <me, #left, collisionRect.right>
+  [ 93] objcall 2316 ............................ <me.calcOverlapEdge(#left, collisionRect.right)>
+  [ 96] pusharglistnoret 3 ...................... <overlap, 1, me.calcOverlapEdge(#left, collisionRect.right)>
+  [ 98] objcall 48 .............................. overlap[1] = me.calcOverlapEdge(#left, collisionRect.right)
+  [100] getparam 3 .............................. <overlap>
+  [102] pushint8 3 .............................. <3>
+  [104] pushint8 1 .............................. <1>
+  [106] pusharglistnoret 3 ...................... <overlap, 3, 1>
+  [108] objcall 48 .............................. overlap[3] = 1
+  [110] jmp [357]
+  [113] peek 0
+  [115] pushsymb 2344 ........................... <#topRight>
+  [118] eq
+  [119] jmpifz [195] ............................ (case) #topRight:
+  [122] getparam 2 .............................. <Dir>
+  [124] pushint8 1 .............................. <1>
+  [126] inv ..................................... <-1>
+  [127] pushint8 1 .............................. <1>
+  [129] pusharglist 2 ........................... <-1, 1>
+  [131] extcall 197 ............................. <point(-1, 1)>
+  [133] eq ...................................... <Dir = point(-1, 1)>
+  [134] jmpifz [192] ............................ if Dir = point(-1, 1) then
+  [137] getparam 3 .............................. <overlap>
+  [139] pushint8 2 .............................. <2>
+  [141] getparam 0 .............................. <me>
+  [143] pushsymb 265 ............................ <#top>
+  [146] getparam 1 .............................. <collisionRect>
+  [148] getobjprop 114 .......................... <collisionRect.bottom>
+  [150] pusharglist 3 ........................... <me, #top, collisionRect.bottom>
+  [152] objcall 2316 ............................ <me.calcOverlapEdge(#top, collisionRect.bottom)>
+  [155] pusharglistnoret 3 ...................... <overlap, 2, me.calcOverlapEdge(#top, collisionRect.bottom)>
+  [157] objcall 48 .............................. overlap[2] = me.calcOverlapEdge(#top, collisionRect.bottom)
+  [159] getparam 3 .............................. <overlap>
+  [161] pushint8 1 .............................. <1>
+  [163] getparam 0 .............................. <me>
+  [165] pushsymb 266 ............................ <#right>
+  [168] getparam 1 .............................. <collisionRect>
+  [170] getobjprop 264 .......................... <collisionRect.left>
+  [173] pusharglist 3 ........................... <me, #right, collisionRect.left>
+  [175] objcall 2316 ............................ <me.calcOverlapEdge(#right, collisionRect.left)>
+  [178] pusharglistnoret 3 ...................... <overlap, 1, me.calcOverlapEdge(#right, collisionRect.left)>
+  [180] objcall 48 .............................. overlap[1] = me.calcOverlapEdge(#right, collisionRect.left)
+  [182] getparam 3 .............................. <overlap>
+  [184] pushint8 3 .............................. <3>
+  [186] pushint8 1 .............................. <1>
+  [188] pusharglistnoret 3 ...................... <overlap, 3, 1>
+  [190] objcall 48 .............................. overlap[3] = 1
+  [192] jmp [357]
+  [195] peek 0
+  [197] pushsymb 2345 ........................... <#bottomRight>
+  [200] eq
+  [201] jmpifz [278] ............................ (case) #bottomRight:
+  [204] getparam 2 .............................. <Dir>
+  [206] pushint8 1 .............................. <1>
+  [208] inv ..................................... <-1>
+  [209] pushint8 1 .............................. <1>
+  [211] inv ..................................... <-1>
+  [212] pusharglist 2 ........................... <-1, -1>
+  [214] extcall 197 ............................. <point(-1, -1)>
+  [216] eq ...................................... <Dir = point(-1, -1)>
+  [217] jmpifz [275] ............................ if Dir = point(-1, -1) then
+  [220] getparam 3 .............................. <overlap>
+  [222] pushint8 2 .............................. <2>
+  [224] getparam 0 .............................. <me>
+  [226] pushsymb 114 ............................ <#bottom>
+  [228] getparam 1 .............................. <collisionRect>
+  [230] getobjprop 265 .......................... <collisionRect.top>
+  [233] pusharglist 3 ........................... <me, #bottom, collisionRect.top>
+  [235] objcall 2316 ............................ <me.calcOverlapEdge(#bottom, collisionRect.top)>
+  [238] pusharglistnoret 3 ...................... <overlap, 2, me.calcOverlapEdge(#bottom, collisionRect.top)>
+  [240] objcall 48 .............................. overlap[2] = me.calcOverlapEdge(#bottom, collisionRect.top)
+  [242] getparam 3 .............................. <overlap>
+  [244] pushint8 1 .............................. <1>
+  [246] getparam 0 .............................. <me>
+  [248] pushsymb 266 ............................ <#right>
+  [251] getparam 1 .............................. <collisionRect>
+  [253] getobjprop 264 .......................... <collisionRect.left>
+  [256] pusharglist 3 ........................... <me, #right, collisionRect.left>
+  [258] objcall 2316 ............................ <me.calcOverlapEdge(#right, collisionRect.left)>
+  [261] pusharglistnoret 3 ...................... <overlap, 1, me.calcOverlapEdge(#right, collisionRect.left)>
+  [263] objcall 48 .............................. overlap[1] = me.calcOverlapEdge(#right, collisionRect.left)
+  [265] getparam 3 .............................. <overlap>
+  [267] pushint8 3 .............................. <3>
+  [269] pushint8 1 .............................. <1>
+  [271] pusharglistnoret 3 ...................... <overlap, 3, 1>
+  [273] objcall 48 .............................. overlap[3] = 1
+  [275] jmp [357]
+  [278] peek 0
+  [280] pushsymb 2346 ........................... <#bottomLeft>
+  [283] eq
+  [284] jmpifz [357] ............................ (case) #bottomLeft:
+  [287] getparam 2 .............................. <Dir>
+  [289] pushint8 1 .............................. <1>
+  [291] pushint8 1 .............................. <1>
+  [293] inv ..................................... <-1>
+  [294] pusharglist 2 ........................... <1, -1>
+  [296] extcall 197 ............................. <point(1, -1)>
+  [298] eq ...................................... <Dir = point(1, -1)>
+  [299] jmpifz [357] ............................ if Dir = point(1, -1) then
+  [302] getparam 3 .............................. <overlap>
+  [304] pushint8 2 .............................. <2>
+  [306] getparam 0 .............................. <me>
+  [308] pushsymb 114 ............................ <#bottom>
+  [310] getparam 1 .............................. <collisionRect>
+  [312] getobjprop 265 .......................... <collisionRect.top>
+  [315] pusharglist 3 ........................... <me, #bottom, collisionRect.top>
+  [317] objcall 2316 ............................ <me.calcOverlapEdge(#bottom, collisionRect.top)>
+  [320] pusharglistnoret 3 ...................... <overlap, 2, me.calcOverlapEdge(#bottom, collisionRect.top)>
+  [322] objcall 48 .............................. overlap[2] = me.calcOverlapEdge(#bottom, collisionRect.top)
+  [324] getparam 3 .............................. <overlap>
+  [326] pushint8 1 .............................. <1>
+  [328] getparam 0 .............................. <me>
+  [330] pushsymb 264 ............................ <#left>
+  [333] getparam 1 .............................. <collisionRect>
+  [335] getobjprop 266 .......................... <collisionRect.right>
+  [338] pusharglist 3 ........................... <me, #left, collisionRect.right>
+  [340] objcall 2316 ............................ <me.calcOverlapEdge(#left, collisionRect.right)>
+  [343] pusharglistnoret 3 ...................... <overlap, 1, me.calcOverlapEdge(#left, collisionRect.right)>
+  [345] objcall 48 .............................. overlap[1] = me.calcOverlapEdge(#left, collisionRect.right)
+  [347] getparam 3 .............................. <overlap>
+  [349] pushint8 3 .............................. <3>
+  [351] pushint8 1 .............................. <1>
+  [353] pusharglistnoret 3 ...................... <overlap, 3, 1>
+  [355] objcall 48 .............................. overlap[3] = 1
+  [357] pop 1 ................................... end case
+  [359] pushint8 1
+  [361] add
+  [362] endrepeat [ 12]
+  [365] pop 3
+  [367] getparam 3 .............................. <overlap>
+  [369] pusharglistnoret 1 ...................... <overlap>
+  [371] extcall 35 .............................. return overlap
+  [373] ret
+end
+
+on calcOverlapEdges me, collisionRect, Dir
+  [  0] pushsymb 49 ............................. <#none>
+  [  2] pushsymb 49 ............................. <#none>
+  [  4] pushzero ................................ <0>
+  [  5] pusharglist 3 ........................... <[#none, #none, 0]>
+  [  7] pushlist ................................ <[#none, #none, 0]>
+  [  8] setlocal 0 .............................. overlap = [#none, #none, 0]
+  [ 10] getprop 2337 ............................ <pSolidEdges>
+  [ 13] peek 0
+  [ 15] pusharglist 1
+  [ 17] extcall 257
+  [ 20] pushint8 1
+  [ 22] peek 0
+  [ 24] peek 2
+  [ 26] lteq
+  [ 27] jmpifz [237] ............................ repeat with solidEdge in pSolidEdges
+  [ 30] peek 2
+  [ 32] peek 1
+  [ 34] pusharglist 2
+  [ 36] extcall 109
+  [ 38] setlocal 1
+  [ 40] getlocal 1 .............................. <solidEdge>
+  [ 42] pushsymb 264 ............................ <#left>
+  [ 45] eq ...................................... <solidEdge = #left>
+  [ 46] jmpifz [ 89] ............................ if solidEdge = #left then
+  [ 49] getparam 2 .............................. <Dir>
+  [ 51] pushint8 1 .............................. <1>
+  [ 53] pusharglist 2 ........................... <Dir, 1>
+  [ 55] objcall 109 ............................. <Dir[1]>
+  [ 57] pushint8 1 .............................. <1>
+  [ 59] eq ...................................... <Dir[1] = 1>
+  [ 60] jmpifz [ 86] ............................ if Dir[1] = 1 then
+  [ 63] getlocal 0 .............................. <overlap>
+  [ 65] pushint8 1 .............................. <1>
+  [ 67] getparam 0 .............................. <me>
+  [ 69] pushsymb 264 ............................ <#left>
+  [ 72] getparam 1 .............................. <collisionRect>
+  [ 74] getobjprop 266 .......................... <collisionRect.right>
+  [ 77] pusharglist 3 ........................... <me, #left, collisionRect.right>
+  [ 79] objcall 2316 ............................ <me.calcOverlapEdge(#left, collisionRect.right)>
+  [ 82] pusharglistnoret 3 ...................... <overlap, 1, me.calcOverlapEdge(#left, collisionRect.right)>
+  [ 84] objcall 48 .............................. overlap[1] = me.calcOverlapEdge(#left, collisionRect.right)
+  [ 86] jmp [232] ............................... next repeat
+  [ 89] getlocal 1 .............................. <solidEdge>
+  [ 91] pushsymb 265 ............................ <#top>
+  [ 94] eq ...................................... <solidEdge = #top>
+  [ 95] jmpifz [137] ............................ if solidEdge = #top then
+  [ 98] getparam 2 .............................. <Dir>
+  [100] pushint8 2 .............................. <2>
+  [102] pusharglist 2 ........................... <Dir, 2>
+  [104] objcall 109 ............................. <Dir[2]>
+  [106] pushint8 1 .............................. <1>
+  [108] eq ...................................... <Dir[2] = 1>
+  [109] jmpifz [134] ............................ if Dir[2] = 1 then
+  [112] getlocal 0 .............................. <overlap>
+  [114] pushint8 2 .............................. <2>
+  [116] getparam 0 .............................. <me>
+  [118] pushsymb 265 ............................ <#top>
+  [121] getparam 1 .............................. <collisionRect>
+  [123] getobjprop 114 .......................... <collisionRect.bottom>
+  [125] pusharglist 3 ........................... <me, #top, collisionRect.bottom>
+  [127] objcall 2316 ............................ <me.calcOverlapEdge(#top, collisionRect.bottom)>
+  [130] pusharglistnoret 3 ...................... <overlap, 2, me.calcOverlapEdge(#top, collisionRect.bottom)>
+  [132] objcall 48 .............................. overlap[2] = me.calcOverlapEdge(#top, collisionRect.bottom)
+  [134] jmp [232] ............................... next repeat
+  [137] getlocal 1 .............................. <solidEdge>
+  [139] pushsymb 266 ............................ <#right>
+  [142] eq ...................................... <solidEdge = #right>
+  [143] jmpifz [187] ............................ if solidEdge = #right then
+  [146] getparam 2 .............................. <Dir>
+  [148] pushint8 1 .............................. <1>
+  [150] pusharglist 2 ........................... <Dir, 1>
+  [152] objcall 109 ............................. <Dir[1]>
+  [154] pushint8 1 .............................. <1>
+  [156] inv ..................................... <-1>
+  [157] eq ...................................... <Dir[1] = -1>
+  [158] jmpifz [184] ............................ if Dir[1] = -1 then
+  [161] getlocal 0 .............................. <overlap>
+  [163] pushint8 1 .............................. <1>
+  [165] getparam 0 .............................. <me>
+  [167] pushsymb 266 ............................ <#right>
+  [170] getparam 1 .............................. <collisionRect>
+  [172] getobjprop 264 .......................... <collisionRect.left>
+  [175] pusharglist 3 ........................... <me, #right, collisionRect.left>
+  [177] objcall 2316 ............................ <me.calcOverlapEdge(#right, collisionRect.left)>
+  [180] pusharglistnoret 3 ...................... <overlap, 1, me.calcOverlapEdge(#right, collisionRect.left)>
+  [182] objcall 48 .............................. overlap[1] = me.calcOverlapEdge(#right, collisionRect.left)
+  [184] jmp [232] ............................... next repeat
+  [187] getlocal 1 .............................. <solidEdge>
+  [189] pushsymb 114 ............................ <#bottom>
+  [191] eq ...................................... <solidEdge = #bottom>
+  [192] jmpifz [232] ............................ if solidEdge = #bottom then
+  [195] getparam 2 .............................. <Dir>
+  [197] pushint8 2 .............................. <2>
+  [199] pusharglist 2 ........................... <Dir, 2>
+  [201] objcall 109 ............................. <Dir[2]>
+  [203] pushint8 1 .............................. <1>
+  [205] inv ..................................... <-1>
+  [206] eq ...................................... <Dir[2] = -1>
+  [207] jmpifz [232] ............................ if Dir[2] = -1 then
+  [210] getlocal 0 .............................. <overlap>
+  [212] pushint8 2 .............................. <2>
+  [214] getparam 0 .............................. <me>
+  [216] pushsymb 114 ............................ <#bottom>
+  [218] getparam 1 .............................. <collisionRect>
+  [220] getobjprop 265 .......................... <collisionRect.top>
+  [223] pusharglist 3 ........................... <me, #bottom, collisionRect.top>
+  [225] objcall 2316 ............................ <me.calcOverlapEdge(#bottom, collisionRect.top)>
+  [228] pusharglistnoret 3 ...................... <overlap, 2, me.calcOverlapEdge(#bottom, collisionRect.top)>
+  [230] objcall 48 .............................. overlap[2] = me.calcOverlapEdge(#bottom, collisionRect.top)
+  [232] pushint8 1
+  [234] add
+  [235] endrepeat [ 22]
+  [237] pop 3
+  [239] getlocal 0 .............................. <overlap>
+  [241] pusharglistnoret 1 ...................... <overlap>
+  [243] extcall 35 .............................. return overlap
+  [245] ret
+end
+
+on calcOverlapEdge me, myEdge, collisionRectEdge
+  [  0] getprop 2335 ............................ <pCollisionEdges>
+  [  3] getparam 1 .............................. <myEdge>
+  [  5] pusharglist 2 ........................... <pCollisionEdges, myEdge>
+  [  7] objcall 109 ............................. <pCollisionEdges[myEdge]>
+  [  9] setlocal 0 .............................. collisionEdge = pCollisionEdges[myEdge]
+  [ 11] getparam 2 .............................. <collisionRectEdge>
+  [ 13] getlocal 0 .............................. <collisionEdge>
+  [ 15] getobjprop 1662 ......................... <collisionEdge.location>
+  [ 18] sub ..................................... <collisionRectEdge - collisionEdge.location>
+  [ 19] pusharglistnoret 1 ...................... <collisionRectEdge - collisionEdge.location>
+  [ 21] extcall 35 .............................. return collisionRectEdge - collisionEdge.location
+  [ 23] ret
+end
+
+on calcOverlapPlatform me, collisionRect, Dir, callingPrg
+  [  0] pushsymb 49 ............................. <#none>
+  [  2] pushsymb 49 ............................. <#none>
+  [  4] pushzero ................................ <0>
+  [  5] pusharglist 3 ........................... <[#none, #none, 0]>
+  [  7] pushlist ................................ <[#none, #none, 0]>
+  [  8] setlocal 0 .............................. overlap = [#none, #none, 0]
+  [ 10] getparam 2 .............................. <Dir>
+  [ 12] pushint8 2 .............................. <2>
+  [ 14] pusharglist 2 ........................... <Dir, 2>
+  [ 16] objcall 109 ............................. <Dir[2]>
+  [ 18] pushint8 1 .............................. <1>
+  [ 20] lt ...................................... <Dir[2] < 1>
+  [ 21] getparam 3 .............................. <callingPrg>
+  [ 23] pusharglist 1 ........................... <callingPrg>
+  [ 25] objcall 1961 ............................ <callingPrg.getAIPlatformDrop()>
+  [ 28] or ...................................... <(Dir[2] < 1) or callingPrg.getAIPlatformDrop()>
+  [ 29] jmpifz [ 38] ............................ if (Dir[2] < 1) or callingPrg.getAIPlatformDrop() then
+  [ 32] getlocal 0 .............................. <overlap>
+  [ 34] pusharglistnoret 1 ...................... <overlap>
+  [ 36] extcall 35 .............................. return overlap
+  [ 38] getparam 3 .............................. <callingPrg>
+  [ 40] pusharglist 1 ........................... <callingPrg>
+  [ 42] objcall 111 ............................. <callingPrg.getLoc()>
+  [ 44] setlocal 1 .............................. oldloc = callingPrg.getLoc()
+  [ 46] getparam 3 .............................. <callingPrg>
+  [ 48] getlocal 1 .............................. <oldloc>
+  [ 50] pusharglist 2 ........................... <callingPrg, oldloc>
+  [ 52] objcall 409 ............................. <callingPrg.calcCollisionRect(oldloc)>
+  [ 55] getobjprop 263 .......................... <callingPrg.calcCollisionRect(oldloc).rect>
+  [ 58] setlocal 2 .............................. oldCollisionRect = callingPrg.calcCollisionRect(oldloc).rect
+  [ 60] getparam 0 .............................. <me>
+  [ 62] pushsymb 265 ............................ <#top>
+  [ 65] getlocal 2 .............................. <oldCollisionRect>
+  [ 67] getobjprop 114 .......................... <oldCollisionRect.bottom>
+  [ 69] pusharglist 3 ........................... <me, #top, oldCollisionRect.bottom>
+  [ 71] objcall 2316 ............................ <me.calcOverlapEdge(#top, oldCollisionRect.bottom)>
+  [ 74] setlocal 3 .............................. oldOverlap = me.calcOverlapEdge(#top, oldCollisionRect.bottom)
+  [ 76] getlocal 3 .............................. <oldOverlap>
+  [ 78] pushzero ................................ <0>
+  [ 79] lteq .................................... <oldOverlap <= 0>
+  [ 80] jmpifz [105] ............................ if oldOverlap <= 0 then
+  [ 83] getlocal 0 .............................. <overlap>
+  [ 85] pushint8 2 .............................. <2>
+  [ 87] getparam 0 .............................. <me>
+  [ 89] pushsymb 265 ............................ <#top>
+  [ 92] getparam 1 .............................. <collisionRect>
+  [ 94] getobjprop 114 .......................... <collisionRect.bottom>
+  [ 96] pusharglist 3 ........................... <me, #top, collisionRect.bottom>
+  [ 98] objcall 2316 ............................ <me.calcOverlapEdge(#top, collisionRect.bottom)>
+  [101] pusharglistnoret 3 ...................... <overlap, 2, me.calcOverlapEdge(#top, collisionRect.bottom)>
+  [103] objcall 48 .............................. overlap[2] = me.calcOverlapEdge(#top, collisionRect.bottom)
+  [105] getlocal 0 .............................. <overlap>
+  [107] pusharglistnoret 1 ...................... <overlap>
+  [109] extcall 35 .............................. return overlap
+  [111] ret
+end
+
+on calcSolidCorner me, vert, side, surroundingEdges
+  [  0] getparam 3 .............................. <surroundingEdges>
+  [  2] getparam 1 .............................. <vert>
+  [  4] pusharglist 2 ........................... <surroundingEdges, vert>
+  [  6] objcall 109 ............................. <surroundingEdges[vert]>
+  [  8] pushsymb 49 ............................. <#none>
+  [ 10] nteq .................................... <surroundingEdges[vert] <> #none>
+  [ 11] getparam 3 .............................. <surroundingEdges>
+  [ 13] getparam 2 .............................. <side>
+  [ 15] pusharglist 2 ........................... <surroundingEdges, side>
+  [ 17] objcall 109 ............................. <surroundingEdges[side]>
+  [ 19] pushsymb 49 ............................. <#none>
+  [ 21] nteq .................................... <surroundingEdges[side] <> #none>
+  [ 22] and ..................................... <(surroundingEdges[vert] <> #none) and (surroundingEdges[side] <> #none)>
+  [ 23] jmpifz [ 81] ............................ if (surroundingEdges[vert] <> #none) and (surroundingEdges[side] <> #none) then
+  [ 26] getparam 3 .............................. <surroundingEdges>
+  [ 28] getparam 1 .............................. <vert>
+  [ 30] pusharglist 2 ........................... <surroundingEdges, vert>
+  [ 32] objcall 109 ............................. <surroundingEdges[vert]>
+  [ 34] getparam 2 .............................. <side>
+  [ 36] pusharglist 2 ........................... <surroundingEdges[vert], side>
+  [ 38] objcall 109 ............................. <surroundingEdges[vert][side]>
+  [ 40] getobjprop 1221 ......................... <surroundingEdges[vert][side].solid>
+  [ 43] pushint8 1 .............................. <1>
+  [ 45] eq ...................................... <surroundingEdges[vert][side].solid = 1>
+  [ 46] getparam 3 .............................. <surroundingEdges>
+  [ 48] getparam 2 .............................. <side>
+  [ 50] pusharglist 2 ........................... <surroundingEdges, side>
+  [ 52] objcall 109 ............................. <surroundingEdges[side]>
+  [ 54] getparam 1 .............................. <vert>
+  [ 56] pusharglist 2 ........................... <surroundingEdges[side], vert>
+  [ 58] objcall 109 ............................. <surroundingEdges[side][vert]>
+  [ 60] getobjprop 1221 ......................... <surroundingEdges[side][vert].solid>
+  [ 63] pushint8 1 .............................. <1>
+  [ 65] eq ...................................... <surroundingEdges[side][vert].solid = 1>
+  [ 66] and ..................................... <(surroundingEdges[vert][side].solid = 1) and (surroundingEdges[side][vert].solid = 1)>
+  [ 67] jmpifz [ 81] ............................ if (surroundingEdges[vert][side].solid = 1) and (surroundingEdges[side][vert].solid = 1) then
+  [ 70] pushint8 1 .............................. <1>
+  [ 72] setprop 2341 ............................ pCornerTile = 1
+  [ 75] pushint8 1 .............................. <1>
+  [ 77] pusharglistnoret 1 ...................... <1>
+  [ 79] extcall 35 .............................. return 1
+  [ 81] pushzero ................................ <0>
+  [ 82] pusharglistnoret 1 ...................... <0>
+  [ 84] extcall 35 .............................. return 0
+  [ 86] ret
+end
+
+on clearDisplayCollisionEdges me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 2311 ............................ me.finishDisplayLines()
+  [  7] ret
+end
+
+on display me
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 41 ....................... <g.objectMaster>
+  [  4] pushsymb 435 ............................ <#objBox>
+  [  7] pusharglist 2 ........................... <g.objectMaster, #objBox>
+  [  9] objcall 43 .............................. <g.objectMaster.requestObject(#objBox)>
+  [ 11] setprop 417 ............................. pBox = g.objectMaster.requestObject(#objBox)
+  [ 14] getprop 417 ............................. <pBox>
+  [ 17] pushsymb 1 .............................. <#init>
+  [ 19] pusharglist 2 ........................... <pBox, #init>
+  [ 21] objcall 230 ............................. <pBox.getParams(#init)>
+  [ 23] setlocal 0 .............................. params = pBox.getParams(#init)
+  [ 25] getlocal 0 .............................. <params>
+  [ 27] getparam 0 .............................. <me>
+  [ 29] pusharglist 1 ........................... <me>
+  [ 31] objcall 113 ............................. <me.getRect()>
+  [ 33] setobjprop 438 .......................... params.initialRect = me.getRect()
+  [ 36] getlocal 0 .............................. <params>
+  [ 38] pushint16 255 ........................... <255>
+  [ 41] pushzero ................................ <0>
+  [ 42] pushint16 255 ........................... <255>
+  [ 45] pusharglist 3 ........................... <255, 0, 255>
+  [ 47] extcall 436 ............................. <rgb(255, 0, 255)>
+  [ 50] setobjprop 437 .......................... params.color = rgb(255, 0, 255)
+  [ 53] getprop 417 ............................. <pBox>
+  [ 56] getlocal 0 .............................. <params>
+  [ 58] pusharglistnoret 2 ...................... <pBox, params>
+  [ 60] objcall 1 ............................... pBox.init(params)
+  [ 62] ret
+end
+
+on displayCollisionEdges me
+  [  0] getprop 2335 ............................ <pCollisionEdges>
+  [  3] getobjprop 257 .......................... <pCollisionEdges.count>
+  [  6] setlocal 0 .............................. numEdges = pCollisionEdges.count
+  [  8] pushint8 1 .............................. <1>
+  [ 10] setlocal 1
+  [ 12] getlocal 1
+  [ 14] getlocal 0 .............................. <numEdges>
+  [ 16] lteq
+  [ 17] jmpifz [226] ............................ repeat with i = 1 to numEdges
+  [ 20] getprop 2335 ............................ <pCollisionEdges>
+  [ 23] getlocal 1 .............................. <i>
+  [ 25] pusharglist 2 ........................... <pCollisionEdges, i>
+  [ 27] objcall 109 ............................. <pCollisionEdges[i]>
+  [ 29] setlocal 2 .............................. nEdge = pCollisionEdges[i]
+  [ 31] getlocal 2 .............................. <nEdge>
+  [ 33] getobjprop 1221 ......................... <nEdge.solid>
+  [ 36] pushint8 1 .............................. <1>
+  [ 38] eq ...................................... <nEdge.solid = 1>
+  [ 39] jmpifz [217] ............................ if nEdge.solid = 1 then
+  [ 42] getparam 0 .............................. <me>
+  [ 44] getprop 2335 ............................ <pCollisionEdges>
+  [ 47] getlocal 1 .............................. <i>
+  [ 49] pusharglist 2 ........................... <pCollisionEdges, i>
+  [ 51] objcall 1092 ............................ <pCollisionEdges.getPropAt(i)>
+  [ 54] pusharglist 2 ........................... <me, pCollisionEdges.getPropAt(i)>
+  [ 56] objcall 2312 ............................ <me.calcEdgeOrientation(pCollisionEdges.getPropAt(i))>
+  [ 59] setlocal 3 .............................. orientation = me.calcEdgeOrientation(pCollisionEdges.getPropAt(i))
+  [ 61] getglobal 40 ............................ <g>
+  [ 63] getchainedprop 41 ....................... <g.objectMaster>
+  [ 65] pushsymb 2356 ........................... <#objLine>
+  [ 68] pusharglist 2 ........................... <g.objectMaster, #objLine>
+  [ 70] objcall 43 .............................. <g.objectMaster.requestObject(#objLine)>
+  [ 72] setlocal 4 .............................. nLine = g.objectMaster.requestObject(#objLine)
+  [ 74] getlocal 4 .............................. <nLine>
+  [ 76] pushsymb 1 .............................. <#init>
+  [ 78] pusharglist 2 ........................... <nLine, #init>
+  [ 80] objcall 230 ............................. <nLine.getParams(#init)>
+  [ 82] setlocal 5 .............................. params = nLine.getParams(#init)
+  [ 84] getlocal 3 .............................. <orientation>
+  [ 86] pushsymb 2338 ........................... <#horizontal>
+  [ 89] eq ...................................... <orientation = #horizontal>
+  [ 90] jmpifz [148] ............................ if orientation = #horizontal then / else
+  [ 93] getlocal 5 .............................. <params>
+  [ 95] getlocal 2 .............................. <nEdge>
+  [ 97] getobjprop 1662 ......................... <nEdge.location>
+  [100] setobjprop 2357 ......................... params.locy = nEdge.location
+  [103] getlocal 5 .............................. <params>
+  [105] pushsymb 2358 ........................... <#locLength>
+  [108] pushint8 1 .............................. <1>
+  [110] getprop 2335 ............................ <pCollisionEdges>
+  [113] getchainedprop 264 ...................... <pCollisionEdges.left>
+  [116] getobjprop 1662 ......................... <pCollisionEdges.left.location>
+  [119] pusharglistnoret 4 ...................... <params, #locLength, 1, pCollisionEdges.left.location>
+  [121] objcall 531 ............................. params.locLength[1] = pCollisionEdges.left.location
+  [124] getlocal 5 .............................. <params>
+  [126] pushsymb 2358 ........................... <#locLength>
+  [129] pushint8 2 .............................. <2>
+  [131] getprop 2335 ............................ <pCollisionEdges>
+  [134] getchainedprop 266 ...................... <pCollisionEdges.right>
+  [137] getobjprop 1662 ......................... <pCollisionEdges.right.location>
+  [140] pusharglistnoret 4 ...................... <params, #locLength, 2, pCollisionEdges.right.location>
+  [142] objcall 531 ............................. params.locLength[2] = pCollisionEdges.right.location
+  [145] jmp [199]
+  [148] getlocal 5 .............................. <params>
+  [150] getlocal 2 .............................. <nEdge>
+  [152] getobjprop 1662 ......................... <nEdge.location>
+  [155] setobjprop 2359 ......................... params.locx = nEdge.location
+  [158] getlocal 5 .............................. <params>
+  [160] pushsymb 2358 ........................... <#locLength>
+  [163] pushint8 1 .............................. <1>
+  [165] getprop 2335 ............................ <pCollisionEdges>
+  [168] getchainedprop 265 ...................... <pCollisionEdges.top>
+  [171] getobjprop 1662 ......................... <pCollisionEdges.top.location>
+  [174] pusharglistnoret 4 ...................... <params, #locLength, 1, pCollisionEdges.top.location>
+  [176] objcall 531 ............................. params.locLength[1] = pCollisionEdges.top.location
+  [179] getlocal 5 .............................. <params>
+  [181] pushsymb 2358 ........................... <#locLength>
+  [184] pushint8 2 .............................. <2>
+  [186] getprop 2335 ............................ <pCollisionEdges>
+  [189] getchainedprop 114 ...................... <pCollisionEdges.bottom>
+  [191] getobjprop 1662 ......................... <pCollisionEdges.bottom.location>
+  [194] pusharglistnoret 4 ...................... <params, #locLength, 2, pCollisionEdges.bottom.location>
+  [196] objcall 531 ............................. params.locLength[2] = pCollisionEdges.bottom.location
+  [199] getlocal 4 .............................. <nLine>
+  [201] getlocal 5 .............................. <params>
+  [203] pusharglistnoret 2 ...................... <nLine, params>
+  [205] objcall 1 ............................... nLine.init(params)
+  [207] getprop 2322 ............................ <pDisplayLines>
+  [210] getlocal 4 .............................. <nLine>
+  [212] pusharglistnoret 2 ...................... <pDisplayLines, nLine>
+  [214] objcall 256 ............................. pDisplayLines.append(nLine)
+  [217] pushint8 1
+  [219] getlocal 1
+  [221] add
+  [222] setlocal 1
+  [224] endrepeat [ 12]
+  [226] pushsymb 1665 ........................... <#display>
+  [229] getprop 2322 ............................ <pDisplayLines>
+  [232] pusharglistnoret 2 ...................... <#display, pDisplayLines>
+  [234] extcall 479 ............................. call(#display, pDisplayLines)
+  [237] ret
+end
+
+on getCollisionEdge me, theEdge
+  [  0] getprop 2335 ............................ <pCollisionEdges>
+  [  3] getparam 1 .............................. <theEdge>
+  [  5] pusharglist 2 ........................... <pCollisionEdges, theEdge>
+  [  7] objcall 109 ............................. <pCollisionEdges[theEdge]>
+  [  9] pusharglistnoret 1 ...................... <pCollisionEdges[theEdge]>
+  [ 11] extcall 35 .............................. return pCollisionEdges[theEdge]
+  [ 13] ret
+end
+
+on getCollisionEdges me
+  [  0] getprop 2335 ............................ <pCollisionEdges>
+  [  3] pusharglistnoret 1 ...................... <pCollisionEdges>
+  [  5] extcall 35 .............................. return pCollisionEdges
+  [  7] ret
+end
+
+on getRect me
+  [  0] pushzero ................................ <0>
+  [  1] pushzero ................................ <0>
+  [  2] pushzero ................................ <0>
+  [  3] pushzero ................................ <0>
+  [  4] pusharglist 4 ........................... <0, 0, 0, 0>
+  [  6] extcall 263 ............................. <rect(0, 0, 0, 0)>
+  [  9] setlocal 0 .............................. myRect = rect(0, 0, 0, 0)
+  [ 11] getprop 2335 ............................ <pCollisionEdges>
+  [ 14] pushint8 1 .............................. <1>
+  [ 16] pusharglist 2 ........................... <pCollisionEdges, 1>
+  [ 18] objcall 109 ............................. <pCollisionEdges[1]>
+  [ 20] setlocal 1 .............................. collEdge = pCollisionEdges[1]
+  [ 22] getlocal 0 .............................. <myRect>
+  [ 24] pushint8 1 .............................. <1>
+  [ 26] getlocal 1 .............................. <collEdge>
+  [ 28] getobjprop 1662 ......................... <collEdge.location>
+  [ 31] pusharglistnoret 3 ...................... <myRect, 1, collEdge.location>
+  [ 33] objcall 48 .............................. myRect[1] = collEdge.location
+  [ 35] getprop 2335 ............................ <pCollisionEdges>
+  [ 38] pushint8 2 .............................. <2>
+  [ 40] pusharglist 2 ........................... <pCollisionEdges, 2>
+  [ 42] objcall 109 ............................. <pCollisionEdges[2]>
+  [ 44] setlocal 1 .............................. collEdge = pCollisionEdges[2]
+  [ 46] getlocal 0 .............................. <myRect>
+  [ 48] pushint8 2 .............................. <2>
+  [ 50] getlocal 1 .............................. <collEdge>
+  [ 52] getobjprop 1662 ......................... <collEdge.location>
+  [ 55] pusharglistnoret 3 ...................... <myRect, 2, collEdge.location>
+  [ 57] objcall 48 .............................. myRect[2] = collEdge.location
+  [ 59] getprop 2335 ............................ <pCollisionEdges>
+  [ 62] pushint8 3 .............................. <3>
+  [ 64] pusharglist 2 ........................... <pCollisionEdges, 3>
+  [ 66] objcall 109 ............................. <pCollisionEdges[3]>
+  [ 68] setlocal 1 .............................. collEdge = pCollisionEdges[3]
+  [ 70] getlocal 0 .............................. <myRect>
+  [ 72] pushint8 3 .............................. <3>
+  [ 74] getlocal 1 .............................. <collEdge>
+  [ 76] getobjprop 1662 ......................... <collEdge.location>
+  [ 79] pusharglistnoret 3 ...................... <myRect, 3, collEdge.location>
+  [ 81] objcall 48 .............................. myRect[3] = collEdge.location
+  [ 83] getprop 2335 ............................ <pCollisionEdges>
+  [ 86] pushint8 4 .............................. <4>
+  [ 88] pusharglist 2 ........................... <pCollisionEdges, 4>
+  [ 90] objcall 109 ............................. <pCollisionEdges[4]>
+  [ 92] setlocal 1 .............................. collEdge = pCollisionEdges[4]
+  [ 94] getlocal 0 .............................. <myRect>
+  [ 96] pushint8 4 .............................. <4>
+  [ 98] getlocal 1 .............................. <collEdge>
+  [100] getobjprop 1662 ......................... <collEdge.location>
+  [103] pusharglistnoret 3 ...................... <myRect, 4, collEdge.location>
+  [105] objcall 48 .............................. myRect[4] = collEdge.location
+  [107] getlocal 0 .............................. <myRect>
+  [109] pusharglistnoret 1 ...................... <myRect>
+  [111] extcall 35 .............................. return myRect
+  [113] ret
+end
+
+on getTileType me
+  [  0] getprop 2324 ............................ <pTileType>
+  [  3] pusharglistnoret 1 ...................... <pTileType>
+  [  5] extcall 35 .............................. return pTileType
+  [  7] ret
+end
+
+on identifyAsCornerTile me
+  [  0] pushzero ................................ <0>
+  [  1] setprop 2341 ............................ pCornerTile = 0
+  [  4] getparam 0 .............................. <me>
+  [  6] pusharglist 1 ........................... <me>
+  [  8] objcall 397 ............................. <me.getTileType()>
+  [ 11] pushsymb 1221 ........................... <#solid>
+  [ 14] nteq .................................... <me.getTileType() <> #solid>
+  [ 15] jmpifz [ 22] ............................ if me.getTileType() <> #solid then
+  [ 18] pusharglistnoret 0 ...................... <>
+  [ 20] extcall 35 .............................. return 
+  [ 22] pusharglist 0 ........................... <[]>
+  [ 24] pushlist ................................ <[]>
+  [ 25] setlocal 0 .............................. neighboursToCheck = []
+  [ 27] getprop 2335 ............................ <pCollisionEdges>
+  [ 30] setlocal 1 .............................. myEdges = pCollisionEdges
+  [ 32] pushint8 1 .............................. <1>
+  [ 34] setlocal 2
+  [ 36] getlocal 2
+  [ 38] pushint8 4 .............................. <4>
+  [ 40] lteq
+  [ 41] jmpifz [ 93] ............................ repeat with i = 1 to 4
+  [ 44] getlocal 1 .............................. <myEdges>
+  [ 46] getlocal 2 .............................. <i>
+  [ 48] pusharglist 2 ........................... <myEdges, i>
+  [ 50] objcall 109 ............................. <myEdges[i]>
+  [ 52] setlocal 3 .............................. nCollisionEdge = myEdges[i]
+  [ 54] getlocal 3 .............................. <nCollisionEdge>
+  [ 56] getobjprop 1221 ......................... <nCollisionEdge.solid>
+  [ 59] pushzero ................................ <0>
+  [ 60] eq ...................................... <nCollisionEdge.solid = 0>
+  [ 61] jmpifz [ 84] ............................ if nCollisionEdge.solid = 0 then
+  [ 64] getlocal 1 .............................. <myEdges>
+  [ 66] getlocal 2 .............................. <i>
+  [ 68] pusharglist 2 ........................... <myEdges, i>
+  [ 70] objcall 1092 ............................ <myEdges.getPropAt(i)>
+  [ 73] setlocal 4 .............................. nEdge = myEdges.getPropAt(i)
+  [ 75] getlocal 0 .............................. <neighboursToCheck>
+  [ 77] getlocal 4 .............................. <nEdge>
+  [ 79] pusharglistnoret 2 ...................... <neighboursToCheck, nEdge>
+  [ 81] objcall 256 ............................. neighboursToCheck.append(nEdge)
+  [ 84] pushint8 1
+  [ 86] getlocal 2
+  [ 88] add
+  [ 89] setlocal 2
+  [ 91] endrepeat [ 36]
+  [ 93] getlocal 0 .............................. <neighboursToCheck>
+  [ 95] getobjprop 257 .......................... <neighboursToCheck.count>
+  [ 98] pushzero ................................ <0>
+  [ 99] eq ...................................... <neighboursToCheck.count = 0>
+  [100] jmpifz [107] ............................ if neighboursToCheck.count = 0 then
+  [103] pusharglistnoret 0 ...................... <>
+  [105] extcall 35 .............................. return 
+  [107] getglobal 40 ............................ <g>
+  [109] getchainedprop 1168 ..................... <g.structMaster>
+  [112] pushsymb 2327 ........................... <#surroundingTiles>
+  [115] pusharglist 2 ........................... <g.structMaster, #surroundingTiles>
+  [117] objcall 1170 ............................ <g.structMaster.getStruct(#surroundingTiles)>
+  [120] setlocal 5 .............................. surroundingEdges = g.structMaster.getStruct(#surroundingTiles)
+  [122] pushint8 1 .............................. <1>
+  [124] setlocal 2
+  [126] getlocal 2
+  [128] getlocal 0 .............................. <neighboursToCheck>
+  [130] getobjprop 257 .......................... <neighboursToCheck.count>
+  [133] lteq
+  [134] jmpifz [194] ............................ repeat with i = 1 to neighboursToCheck.count
+  [137] getlocal 0 .............................. <neighboursToCheck>
+  [139] getlocal 2 .............................. <i>
+  [141] pusharglist 2 ........................... <neighboursToCheck, i>
+  [143] objcall 109 ............................. <neighboursToCheck[i]>
+  [145] setlocal 4 .............................. nEdge = neighboursToCheck[i]
+  [147] getprop 2326 ............................ <pSurroundingTiles>
+  [150] getlocal 4 .............................. <nEdge>
+  [152] pusharglist 2 ........................... <pSurroundingTiles, nEdge>
+  [154] objcall 109 ............................. <pSurroundingTiles[nEdge]>
+  [156] setlocal 6 .............................. nTile = pSurroundingTiles[nEdge]
+  [158] getlocal 6 .............................. <nTile>
+  [160] pushsymb 49 ............................. <#none>
+  [162] nteq .................................... <nTile <> #none>
+  [163] jmpifz [185] ............................ if nTile <> #none then
+  [166] getlocal 6 .............................. <nTile>
+  [168] pusharglist 1 ........................... <nTile>
+  [170] objcall 2320 ............................ <nTile.getCollisionEdges()>
+  [173] setlocal 7 .............................. nEdges = nTile.getCollisionEdges()
+  [175] getlocal 5 .............................. <surroundingEdges>
+  [177] getlocal 4 .............................. <nEdge>
+  [179] getlocal 7 .............................. <nEdges>
+  [181] pusharglistnoret 3 ...................... <surroundingEdges, nEdge, nEdges>
+  [183] objcall 48 .............................. surroundingEdges[nEdge] = nEdges
+  [185] pushint8 1
+  [187] getlocal 2
+  [189] add
+  [190] setlocal 2
+  [192] endrepeat [126]
+  [194] getglobal 40 ............................ <g>
+  [196] getchainedprop 1168 ..................... <g.structMaster>
+  [199] pushsymb 2365 ........................... <#corners>
+  [202] pusharglist 2 ........................... <g.structMaster, #corners>
+  [204] objcall 1170 ............................ <g.structMaster.getStruct(#corners)>
+  [207] setlocal 8 .............................. corners = g.structMaster.getStruct(#corners)
+  [209] pushzero ................................ <0>
+  [210] setprop 2341 ............................ pCornerTile = 0
+  [213] getlocal 8 .............................. <corners>
+  [215] getparam 0 .............................. <me>
+  [217] pushsymb 265 ............................ <#top>
+  [220] pushsymb 264 ............................ <#left>
+  [223] getlocal 5 .............................. <surroundingEdges>
+  [225] pusharglist 4 ........................... <me, #top, #left, surroundingEdges>
+  [227] objcall 2318 ............................ <me.calcSolidCorner(#top, #left, surroundingEdges)>
+  [230] setobjprop 2343 ......................... corners.topLeft = me.calcSolidCorner(#top, #left, surroundingEdges)
+  [233] getlocal 8 .............................. <corners>
+  [235] getparam 0 .............................. <me>
+  [237] pushsymb 265 ............................ <#top>
+  [240] pushsymb 266 ............................ <#right>
+  [243] getlocal 5 .............................. <surroundingEdges>
+  [245] pusharglist 4 ........................... <me, #top, #right, surroundingEdges>
+  [247] objcall 2318 ............................ <me.calcSolidCorner(#top, #right, surroundingEdges)>
+  [250] setobjprop 2344 ......................... corners.topRight = me.calcSolidCorner(#top, #right, surroundingEdges)
+  [253] getlocal 8 .............................. <corners>
+  [255] getparam 0 .............................. <me>
+  [257] pushsymb 114 ............................ <#bottom>
+  [259] pushsymb 266 ............................ <#right>
+  [262] getlocal 5 .............................. <surroundingEdges>
+  [264] pusharglist 4 ........................... <me, #bottom, #right, surroundingEdges>
+  [266] objcall 2318 ............................ <me.calcSolidCorner(#bottom, #right, surroundingEdges)>
+  [269] setobjprop 2345 ......................... corners.bottomRight = me.calcSolidCorner(#bottom, #right, surroundingEdges)
+  [272] getlocal 8 .............................. <corners>
+  [274] getparam 0 .............................. <me>
+  [276] pushsymb 114 ............................ <#bottom>
+  [278] pushsymb 264 ............................ <#left>
+  [281] getlocal 5 .............................. <surroundingEdges>
+  [283] pusharglist 4 ........................... <me, #bottom, #left, surroundingEdges>
+  [285] objcall 2318 ............................ <me.calcSolidCorner(#bottom, #left, surroundingEdges)>
+  [288] setobjprop 2346 ......................... corners.bottomLeft = me.calcSolidCorner(#bottom, #left, surroundingEdges)
+  [291] pusharglist 0 ........................... <[]>
+  [293] pushlist ................................ <[]>
+  [294] setprop 2325 ............................ pSolidCorners = []
+  [297] pushint8 1 .............................. <1>
+  [299] setlocal 2
+  [301] getlocal 2
+  [303] pushint8 4 .............................. <4>
+  [305] lteq
+  [306] jmpifz [357] ............................ repeat with i = 1 to 4
+  [309] getlocal 8 .............................. <corners>
+  [311] getlocal 2 .............................. <i>
+  [313] pusharglist 2 ........................... <corners, i>
+  [315] objcall 109 ............................. <corners[i]>
+  [317] setlocal 9 .............................. nCorner = corners[i]
+  [319] getlocal 9 .............................. <nCorner>
+  [321] pushint8 1 .............................. <1>
+  [323] eq ...................................... <nCorner = 1>
+  [324] jmpifz [348] ............................ if nCorner = 1 then
+  [327] getlocal 8 .............................. <corners>
+  [329] getlocal 2 .............................. <i>
+  [331] pusharglist 2 ........................... <corners, i>
+  [333] objcall 1092 ............................ <corners.getPropAt(i)>
+  [336] setlocal 10 ............................. nCornerSym = corners.getPropAt(i)
+  [338] getprop 2325 ............................ <pSolidCorners>
+  [341] getlocal 10 ............................. <nCornerSym>
+  [343] pusharglistnoret 2 ...................... <pSolidCorners, nCornerSym>
+  [345] objcall 256 ............................. pSolidCorners.append(nCornerSym)
+  [348] pushint8 1
+  [350] getlocal 2
+  [352] add
+  [353] setlocal 2
+  [355] endrepeat [301]
+  [357] ret
+end
+
+on mergeEdges me
+  [  0] pushsymb 266 ............................ <#right>
+  [  3] pushsymb 114 ............................ <#bottom>
+  [  5] pusharglist 2 ........................... <[#right, #bottom]>
+  [  7] pushlist ................................ <[#right, #bottom]>
+  [  8] setlocal 0 .............................. edges = [#right, #bottom]
+  [ 10] getlocal 0 .............................. <edges>
+  [ 12] peek 0
+  [ 14] pusharglist 1
+  [ 16] extcall 257
+  [ 19] pushint8 1
+  [ 21] peek 0
+  [ 23] peek 2
+  [ 25] lteq
+  [ 26] jmpifz [154] ............................ repeat with edge in edges
+  [ 29] peek 2
+  [ 31] peek 1
+  [ 33] pusharglist 2
+  [ 35] extcall 109
+  [ 37] setlocal 1
+  [ 39] getparam 0 .............................. <me>
+  [ 41] getlocal 1 .............................. <edge>
+  [ 43] pusharglist 2 ........................... <me, edge>
+  [ 45] objcall 2313 ............................ <me.calcOppositeEdge(edge)>
+  [ 48] setlocal 2 .............................. oppositeEdge = me.calcOppositeEdge(edge)
+  [ 50] getprop 2326 ............................ <pSurroundingTiles>
+  [ 53] getlocal 1 .............................. <edge>
+  [ 55] pusharglist 2 ........................... <pSurroundingTiles, edge>
+  [ 57] objcall 109 ............................. <pSurroundingTiles[edge]>
+  [ 59] setlocal 3 .............................. compareTile = pSurroundingTiles[edge]
+  [ 61] getlocal 3 .............................. <compareTile>
+  [ 63] pushsymb 49 ............................. <#none>
+  [ 65] eq ...................................... <compareTile = #none>
+  [ 66] jmpifz [ 72] ............................ if compareTile = #none then
+  [ 69] jmp [149] ............................... next repeat
+  [ 72] getlocal 1 .............................. <edge>
+  [ 74] pushsymb 114 ............................ <#bottom>
+  [ 76] eq ...................................... <edge = #bottom>
+  [ 77] getlocal 3 .............................. <compareTile>
+  [ 79] pusharglist 1 ........................... <compareTile>
+  [ 81] objcall 397 ............................. <compareTile.getTileType()>
+  [ 84] pushsymb 2331 ........................... <#platform>
+  [ 87] eq ...................................... <compareTile.getTileType() = #platform>
+  [ 88] and ..................................... <(edge = #bottom) and (compareTile.getTileType() = #platform)>
+  [ 89] jmpifz [ 95] ............................ if (edge = #bottom) and (compareTile.getTileType() = #platform) then
+  [ 92] jmp [149] ............................... next repeat
+  [ 95] getparam 0 .............................. <me>
+  [ 97] getlocal 1 .............................. <edge>
+  [ 99] pusharglist 2 ........................... <me, edge>
+  [101] objcall 2319 ............................ <me.getCollisionEdge(edge)>
+  [104] setlocal 4 .............................. myEdge = me.getCollisionEdge(edge)
+  [106] getlocal 3 .............................. <compareTile>
+  [108] getlocal 2 .............................. <oppositeEdge>
+  [110] pusharglist 2 ........................... <compareTile, oppositeEdge>
+  [112] objcall 2319 ............................ <compareTile.getCollisionEdge(oppositeEdge)>
+  [115] setlocal 5 .............................. compareEdge = compareTile.getCollisionEdge(oppositeEdge)
+  [117] getlocal 4 .............................. <myEdge>
+  [119] getobjprop 1221 ......................... <myEdge.solid>
+  [122] pushint8 1 .............................. <1>
+  [124] eq ...................................... <myEdge.solid = 1>
+  [125] getlocal 5 .............................. <compareEdge>
+  [127] getobjprop 1221 ......................... <compareEdge.solid>
+  [130] pushint8 1 .............................. <1>
+  [132] eq ...................................... <compareEdge.solid = 1>
+  [133] and ..................................... <(myEdge.solid = 1) and (compareEdge.solid = 1)>
+  [134] jmpifz [149] ............................ if (myEdge.solid = 1) and (compareEdge.solid = 1) then
+  [137] getlocal 4 .............................. <myEdge>
+  [139] pushzero ................................ <0>
+  [140] setobjprop 1221 ......................... myEdge.solid = 0
+  [143] getlocal 5 .............................. <compareEdge>
+  [145] pushzero ................................ <0>
+  [146] setobjprop 1221 ......................... compareEdge.solid = 0
+  [149] pushint8 1
+  [151] add
+  [152] endrepeat [ 21]
+  [154] pop 3
+  [156] getparam 0 .............................. <me>
+  [158] pusharglistnoret 1 ...................... <me>
+  [160] objcall 2310 ............................ me.initSolidEdgesList()
+  [163] ret
+end
+
+on setTile me, edge, Tile
+  [  0] getprop 2326 ............................ <pSurroundingTiles>
+  [  3] getparam 1 .............................. <edge>
+  [  5] getparam 2 .............................. <Tile>
+  [  7] pusharglistnoret 3 ...................... <pSurroundingTiles, edge, Tile>
+  [  9] objcall 48 .............................. pSurroundingTiles[edge] = Tile
+  [ 11] ret
+end
+
+on setTileType me, newType
+  [  0] getprop 2324 ............................ <pTileType>
+  [  3] getparam 1 .............................. <newType>
+  [  5] eq ...................................... <pTileType = newType>
+  [  6] jmpifz [ 13] ............................ if pTileType = newType then
+  [  9] pusharglistnoret 0 ...................... <>
+  [ 11] extcall 35 .............................. return 
+  [ 13] getparam 1 .............................. <newType>
+  [ 15] setprop 2324 ............................ pTileType = newType
+  [ 18] getparam 0 .............................. <me>
+  [ 20] pusharglistnoret 1 ...................... <me>
+  [ 22] objcall 2295 ............................ me.initCollisionEdges()
+  [ 25] pushsymb 264 ............................ <#left>
+  [ 28] pushsymb 265 ............................ <#top>
+  [ 31] pushsymb 266 ............................ <#right>
+  [ 34] pushsymb 114 ............................ <#bottom>
+  [ 36] pusharglist 4 ........................... <[#left, #top, #right, #bottom]>
+  [ 38] pushlist ................................ <[#left, #top, #right, #bottom]>
+  [ 39] setlocal 0 .............................. edges = [#left, #top, #right, #bottom]
+  [ 41] pushsymb 266 ............................ <#right>
+  [ 44] pushsymb 114 ............................ <#bottom>
+  [ 46] pushsymb 264 ............................ <#left>
+  [ 49] pushsymb 265 ............................ <#top>
+  [ 52] pusharglist 4 ........................... <[#right, #bottom, #left, #top]>
+  [ 54] pushlist ................................ <[#right, #bottom, #left, #top]>
+  [ 55] setlocal 1 .............................. oppedges = [#right, #bottom, #left, #top]
+  [ 57] pushint8 1 .............................. <1>
+  [ 59] setlocal 2
+  [ 61] getlocal 2
+  [ 63] getlocal 0 .............................. <edges>
+  [ 65] getobjprop 257 .......................... <edges.count>
+  [ 68] lteq
+  [ 69] jmpifz [117] ............................ repeat with i = 1 to edges.count
+  [ 72] getlocal 0 .............................. <edges>
+  [ 74] getlocal 2 .............................. <i>
+  [ 76] pusharglist 2 ........................... <edges, i>
+  [ 78] objcall 109 ............................. <edges[i]>
+  [ 80] setlocal 3 .............................. nEdge = edges[i]
+  [ 82] getlocal 1 .............................. <oppedges>
+  [ 84] getlocal 2 .............................. <i>
+  [ 86] pusharglist 2 ........................... <oppedges, i>
+  [ 88] objcall 109 ............................. <oppedges[i]>
+  [ 90] setlocal 4 .............................. nOppEdge = oppedges[i]
+  [ 92] getprop 2326 ............................ <pSurroundingTiles>
+  [ 95] getlocal 3 .............................. <nEdge>
+  [ 97] pusharglist 2 ........................... <pSurroundingTiles, nEdge>
+  [ 99] objcall 109 ............................. <pSurroundingTiles[nEdge]>
+  [101] getlocal 4 .............................. <nOppEdge>
+  [103] pusharglistnoret 2 ...................... <pSurroundingTiles[nEdge], nOppEdge>
+  [105] objcall 2309 ............................ pSurroundingTiles[nEdge].initCollisionEdge(nOppEdge)
+  [108] pushint8 1
+  [110] getlocal 2
+  [112] add
+  [113] setlocal 2
+  [115] endrepeat [ 61]
+  [117] getprop 2326 ............................ <pSurroundingTiles>
+  [120] getchainedprop 265 ...................... <pSurroundingTiles.top>
+  [123] pusharglistnoret 1 ...................... <pSurroundingTiles.top>
+  [125] objcall 2294 ............................ pSurroundingTiles.top.mergeEdges()
+  [128] getprop 2326 ............................ <pSurroundingTiles>
+  [131] getchainedprop 264 ...................... <pSurroundingTiles.left>
+  [134] pusharglistnoret 1 ...................... <pSurroundingTiles.left>
+  [136] objcall 2294 ............................ pSurroundingTiles.left.mergeEdges()
+  [139] getparam 0 .............................. <me>
+  [141] pusharglistnoret 1 ...................... <me>
+  [143] objcall 2294 ............................ me.mergeEdges()
+  [146] getprop 2326 ............................ <pSurroundingTiles>
+  [149] getchainedprop 265 ...................... <pSurroundingTiles.top>
+  [152] pusharglistnoret 1 ...................... <pSurroundingTiles.top>
+  [154] objcall 2288 ............................ pSurroundingTiles.top.identifyAsCornerTile()
+  [157] getprop 2326 ............................ <pSurroundingTiles>
+  [160] getchainedprop 264 ...................... <pSurroundingTiles.left>
+  [163] pusharglistnoret 1 ...................... <pSurroundingTiles.left>
+  [165] objcall 2288 ............................ pSurroundingTiles.left.identifyAsCornerTile()
+  [168] getprop 2326 ............................ <pSurroundingTiles>
+  [171] getchainedprop 114 ...................... <pSurroundingTiles.bottom>
+  [173] pusharglistnoret 1 ...................... <pSurroundingTiles.bottom>
+  [175] objcall 2288 ............................ pSurroundingTiles.bottom.identifyAsCornerTile()
+  [178] getprop 2326 ............................ <pSurroundingTiles>
+  [181] getchainedprop 266 ...................... <pSurroundingTiles.right>
+  [184] pusharglistnoret 1 ...................... <pSurroundingTiles.right>
+  [186] objcall 2288 ............................ pSurroundingTiles.right.identifyAsCornerTile()
+  [189] getparam 0 .............................. <me>
+  [191] pusharglistnoret 1 ...................... <me>
+  [193] objcall 2288 ............................ me.identifyAsCornerTile()
+  [196] ret
+end
+
+on undisplay me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 408 ............................. me.finishBox()
+  [  7] ret
+end
+
+on undisplayCollisionEdges me
+  [  0] pushsymb 3 .............................. <#finish>
+  [  2] getprop 2322 ............................ <pDisplayLines>
+  [  5] pusharglistnoret 2 ...................... <#finish, pDisplayLines>
+  [  7] extcall 479 ............................. call(#finish, pDisplayLines)
+  [ 10] ret
+end

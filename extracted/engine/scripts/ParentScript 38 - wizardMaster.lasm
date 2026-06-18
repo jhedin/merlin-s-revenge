@@ -1,0 +1,224 @@
+property pLoc, pWizardDisplayer, pwizardsFound, pSelectedWizard, pSummonMod
+global g
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 3 ............................... return me
+  [  6] ret
+end
+
+on init me
+  [  0] pushzero ................................ <0>
+  [  1] pushzero ................................ <0>
+  [  2] pusharglist 2 ........................... <0, 0>
+  [  4] extcall 122 ............................. <point(0, 0)>
+  [  6] setprop 1135 ............................ pLoc = point(0, 0)
+  [  9] pushsymb 103 ............................ <#none>
+  [ 11] setprop 1663 ............................ pWizardDisplayer = #none
+  [ 14] pusharglist 0 ........................... <[:]>
+  [ 16] pushproplist ............................ <[:]>
+  [ 17] setprop 1664 ............................ pwizardsFound = [:]
+  [ 20] pushsymb 103 ............................ <#none>
+  [ 22] setprop 1665 ............................ pSummonMod = #none
+  [ 25] ret
+end
+
+on finish me
+  [  0] getprop 1663 ............................ <pWizardDisplayer>
+  [  3] pusharglist 1 ........................... <pWizardDisplayer>
+  [  5] extcall 350 ............................. <ilk(pWizardDisplayer)>
+  [  8] pushsymb 388 ............................ <#void>
+  [ 11] nteq .................................... <ilk(pWizardDisplayer) <> #void>
+  [ 12] getprop 1663 ............................ <pWizardDisplayer>
+  [ 15] pushsymb 103 ............................ <#none>
+  [ 17] nteq .................................... <pWizardDisplayer <> #none>
+  [ 18] and ..................................... <(ilk(pWizardDisplayer) <> #void) and (pWizardDisplayer <> #none)>
+  [ 19] jmpifz [ 34] ............................ if (ilk(pWizardDisplayer) <> #void) and (pWizardDisplayer <> #none) then
+  [ 22] getprop 1663 ............................ <pWizardDisplayer>
+  [ 25] pusharglistnoret 1 ...................... <pWizardDisplayer>
+  [ 27] objcall 239 ............................. pWizardDisplayer.finish()
+  [ 29] pushsymb 103 ............................ <#none>
+  [ 31] setprop 1663 ............................ pWizardDisplayer = #none
+  [ 34] ret
+end
+
+on newWizardFound me, theWizard
+  [  0] getparam 1 .............................. <theWizard>
+  [  2] pusharglist 1 ........................... <theWizard>
+  [  4] extcall 530 ............................. <string(theWizard)>
+  [  7] setlocal 0 .............................. wizardSym = string(theWizard)
+  [  9] getlocal 0 .............................. <wizardSym>
+  [ 11] pushint8 1 .............................. <1>
+  [ 13] get 1 ................................... <the number of chars in wizardSym>
+  [ 15] setlocal 1 .............................. totalLength = the number of chars in wizardSym
+  [ 17] getlocal 0 .............................. <wizardSym>
+  [ 19] pushint8 1 .............................. <1>
+  [ 21] getlocal 1 .............................. <totalLength>
+  [ 23] pushint8 6 .............................. <6>
+  [ 25] sub ..................................... <totalLength - 6>
+  [ 26] pusharglist 3 ........................... <wizardSym, 1, totalLength - 6>
+  [ 28] extcall 1065 ............................ <chars(wizardSym, 1, totalLength - 6)>
+  [ 31] setlocal 2 .............................. wizardName = chars(wizardSym, 1, totalLength - 6)
+  [ 33] getlocal 2 .............................. <wizardName>
+  [ 35] pusharglist 1 ........................... <wizardName>
+  [ 37] extcall 442 ............................. <symbol(wizardName)>
+  [ 40] setlocal 0 .............................. wizardSym = symbol(wizardName)
+  [ 42] getprop 1664 ............................ <pwizardsFound>
+  [ 45] getlocal 0 .............................. <wizardSym>
+  [ 47] pusharglist 0 ........................... <[:]>
+  [ 49] pushproplist ............................ <[:]>
+  [ 50] pusharglistnoret 3 ...................... <pwizardsFound, wizardSym, [:]>
+  [ 52] objcall 54 .............................. pwizardsFound[wizardSym] = [:]
+  [ 54] getprop 1664 ............................ <pwizardsFound>
+  [ 57] getlocal 0 .............................. <wizardSym>
+  [ 59] pusharglist 2 ........................... <pwizardsFound, wizardSym>
+  [ 61] objcall 301 ............................. <pwizardsFound[wizardSym]>
+  [ 64] pushsymb 1666 ........................... <#wizardSym>
+  [ 67] getlocal 0 .............................. <wizardSym>
+  [ 69] pusharglistnoret 3 ...................... <pwizardsFound[wizardSym], #wizardSym, wizardSym>
+  [ 71] objcall 54 .............................. pwizardsFound[wizardSym][#wizardSym] = wizardSym
+  [ 73] getlocal 2 .............................. <wizardName>
+  [ 75] pushcons 0 .............................. <"_off">
+  [ 77] joinstr ................................. <wizardName & "_off">
+  [ 78] setlocal 3 .............................. wizardBarPic = wizardName & "_off"
+  [ 80] getprop 1664 ............................ <pwizardsFound>
+  [ 83] getlocal 0 .............................. <wizardSym>
+  [ 85] pusharglist 2 ........................... <pwizardsFound, wizardSym>
+  [ 87] objcall 301 ............................. <pwizardsFound[wizardSym]>
+  [ 90] pushsymb 1667 ........................... <#bar>
+  [ 93] getlocal 3 .............................. <wizardBarPic>
+  [ 95] pushcons 1 .............................. <"gfx">
+  [ 97] pusharglist 2 ........................... <wizardBarPic, "gfx">
+  [ 99] extcall 193 ............................. <member(wizardBarPic, "gfx")>
+  [101] pusharglistnoret 3 ...................... <pwizardsFound[wizardSym], #bar, member(wizardBarPic, "gfx")>
+  [103] objcall 1668 ............................ pwizardsFound[wizardSym].addProp(#bar, member(wizardBarPic, "gfx"))
+  [106] getlocal 2 .............................. <wizardName>
+  [108] pushcons 2 .............................. <"_ws">
+  [110] joinstr ................................. <wizardName & "_ws">
+  [111] setlocal 4 .............................. wizardSelectorPic = wizardName & "_ws"
+  [113] getprop 1664 ............................ <pwizardsFound>
+  [116] getlocal 0 .............................. <wizardSym>
+  [118] pusharglist 2 ........................... <pwizardsFound, wizardSym>
+  [120] objcall 301 ............................. <pwizardsFound[wizardSym]>
+  [123] pushsymb 1669 ........................... <#selector>
+  [126] getlocal 4 .............................. <wizardSelectorPic>
+  [128] pushcons 1 .............................. <"gfx">
+  [130] pusharglist 2 ........................... <wizardSelectorPic, "gfx">
+  [132] extcall 193 ............................. <member(wizardSelectorPic, "gfx")>
+  [134] pusharglistnoret 3 ...................... <pwizardsFound[wizardSym], #selector, member(wizardSelectorPic, "gfx")>
+  [136] objcall 1668 ............................ pwizardsFound[wizardSym].addProp(#selector, member(wizardSelectorPic, "gfx"))
+  [139] getprop 1664 ............................ <pwizardsFound>
+  [142] getobjprop 348 .......................... <pwizardsFound.count>
+  [145] pushint8 1 .............................. <1>
+  [147] eq ...................................... <pwizardsFound.count = 1>
+  [148] getprop 1665 ............................ <pSummonMod>
+  [151] pushsymb 103 ............................ <#none>
+  [153] nteq .................................... <pSummonMod <> #none>
+  [154] and ..................................... <(pwizardsFound.count = 1) and (pSummonMod <> #none)>
+  [155] jmpifz [193] ............................ if (pwizardsFound.count = 1) and (pSummonMod <> #none) then
+  [158] getparam 0 .............................. <me>
+  [160] getprop 1664 ............................ <pwizardsFound>
+  [163] getlocal 0 .............................. <wizardSym>
+  [165] pusharglist 2 ........................... <pwizardsFound, wizardSym>
+  [167] objcall 301 ............................. <pwizardsFound[wizardSym]>
+  [170] pusharglistnoret 2 ...................... <me, pwizardsFound[wizardSym]>
+  [172] objcall 1659 ............................ me.setWizard(pwizardsFound[wizardSym])
+  [175] getprop 1665 ............................ <pSummonMod>
+  [178] getprop 1664 ............................ <pwizardsFound>
+  [181] pusharglistnoret 2 ...................... <pSummonMod, pwizardsFound>
+  [183] objcall 1670 ............................ pSummonMod.updateWizards(pwizardsFound)
+  [186] getparam 0 .............................. <me>
+  [188] pusharglistnoret 1 ...................... <me>
+  [190] objcall 1661 ............................ me.wizardOn()
+  [193] ret
+end
+
+on getWizards me
+  [  0] getprop 1664 ............................ <pwizardsFound>
+  [  3] pusharglist 1 ........................... <pwizardsFound>
+  [  5] objcall 302 ............................. <pwizardsFound.duplicate()>
+  [  8] pusharglistnoret 1 ...................... <pwizardsFound.duplicate()>
+  [ 10] extcall 3 ............................... return pwizardsFound.duplicate()
+  [ 12] ret
+end
+
+on registerMod me, theObj
+  [  0] getparam 1 .............................. <theObj>
+  [  2] setprop 1665 ............................ pSummonMod = theObj
+  [  5] ret
+end
+
+on setWizard me, wizard
+  [  0] getparam 1 .............................. <wizard>
+  [  2] getobjprop 1666 ......................... <wizard.wizardSym>
+  [  5] setprop 1676 ............................ pSelectedWizard = wizard.wizardSym
+  [  8] getparam 0 .............................. <me>
+  [ 10] getprop 1664 ............................ <pwizardsFound>
+  [ 13] getprop 1676 ............................ <pSelectedWizard>
+  [ 16] pusharglist 2 ........................... <pwizardsFound, pSelectedWizard>
+  [ 18] objcall 301 ............................. <pwizardsFound[pSelectedWizard]>
+  [ 21] getobjprop 1667 ......................... <pwizardsFound[pSelectedWizard].bar>
+  [ 24] pusharglistnoret 2 ...................... <me, pwizardsFound[pSelectedWizard].bar>
+  [ 26] objcall 1134 ............................ me.updateDisplay(pwizardsFound[pSelectedWizard].bar)
+  [ 29] ret
+end
+
+on setWizards me, wizards
+  [  0] getparam 1 .............................. <wizards>
+  [  2] setprop 1664 ............................ pwizardsFound = wizards
+  [  5] ret
+end
+
+on start me, theloc
+  [  0] getparam 1 .............................. <theloc>
+  [  2] setprop 1135 ............................ pLoc = theloc
+  [  5] getglobal 191 ........................... <g>
+  [  7] getchainedprop 336 ...................... <g.objectMaster>
+  [ 10] pushsymb 1679 ........................... <#objWizardDisplayer>
+  [ 13] pusharglist 2 ........................... <g.objectMaster, #objWizardDisplayer>
+  [ 15] objcall 338 ............................. <g.objectMaster.requestObject(#objWizardDisplayer)>
+  [ 18] setprop 1663 ............................ pWizardDisplayer = g.objectMaster.requestObject(#objWizardDisplayer)
+  [ 21] getprop 1663 ............................ <pWizardDisplayer>
+  [ 24] pushsymb 1 .............................. <#init>
+  [ 26] pusharglist 2 ........................... <pWizardDisplayer, #init>
+  [ 28] objcall 339 ............................. <pWizardDisplayer.getParams(#init)>
+  [ 31] setlocal 0 .............................. params = pWizardDisplayer.getParams(#init)
+  [ 33] getlocal 0 .............................. <params>
+  [ 35] getparam 1 .............................. <theloc>
+  [ 37] setobjprop 1138 ......................... params.displayLoc = theloc
+  [ 40] getprop 1663 ............................ <pWizardDisplayer>
+  [ 43] getlocal 0 .............................. <params>
+  [ 45] pusharglistnoret 2 ...................... <pWizardDisplayer, params>
+  [ 47] objcall 1 ............................... pWizardDisplayer.init(params)
+  [ 49] ret
+end
+
+on stop me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 239 ............................. me.finish()
+  [  6] ret
+end
+
+on wizardOn me
+  [  0] getprop 1663 ............................ <pWizardDisplayer>
+  [  3] pusharglistnoret 1 ...................... <pWizardDisplayer>
+  [  5] objcall 1680 ............................ pWizardDisplayer.setWizardOn()
+  [  8] ret
+end
+
+on wizardOff me
+  [  0] getprop 1663 ............................ <pWizardDisplayer>
+  [  3] pusharglistnoret 1 ...................... <pWizardDisplayer>
+  [  5] objcall 1681 ............................ pWizardDisplayer.setWizardOff()
+  [  8] ret
+end
+
+on updateDisplay me, theObj
+  [  0] getprop 1663 ............................ <pWizardDisplayer>
+  [  3] getparam 1 .............................. <theObj>
+  [  5] pusharglistnoret 2 ...................... <pWizardDisplayer, theObj>
+  [  7] objcall 1141 ............................ pWizardDisplayer.updateDisplayFromObj(theObj)
+  [ 10] ret
+end

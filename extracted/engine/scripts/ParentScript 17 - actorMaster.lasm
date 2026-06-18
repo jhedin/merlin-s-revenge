@@ -1,0 +1,853 @@
+property pObjectOffsets, pParams, pPlayer
+global g, q, gGameObjectLayer, gPlayerLayer, gMineLayer, gEnemyEnergyMasterOn
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 3 ............................... return me
+  [  6] ret
+end
+
+on init me
+  [  0] pushsymb 103 ............................ <#none>
+  [  2] setprop 904 ............................. pPlayer = #none
+  [  5] pusharglist 0 ........................... <[:]>
+  [  7] pushproplist ............................ <[:]>
+  [  8] setprop 376 ............................. pParams = [:]
+  [ 11] getprop 376 ............................. <pParams>
+  [ 14] pushsymb 894 ............................ <#newActor>
+  [ 17] pusharglist 0 ........................... <[:]>
+  [ 19] pushproplist ............................ <[:]>
+  [ 20] pusharglistnoret 3 ...................... <pParams, #newActor, [:]>
+  [ 22] objcall 54 .............................. pParams[#newActor] = [:]
+  [ 24] getprop 376 ............................. <pParams>
+  [ 27] getobjprop 894 .......................... <pParams.newActor>
+  [ 30] setlocal 0 .............................. n = pParams.newActor
+  [ 32] getlocal 0 .............................. <n>
+  [ 34] pushsymb 905 ............................ <#initVect>
+  [ 37] pushsymb 103 ............................ <#none>
+  [ 39] pusharglistnoret 3 ...................... <n, #initVect, #none>
+  [ 41] objcall 54 .............................. n[#initVect] = #none
+  [ 43] getlocal 0 .............................. <n>
+  [ 45] pushsymb 906 ............................ <#forceCreate>
+  [ 48] pushzero ................................ <0>
+  [ 49] pusharglistnoret 3 ...................... <n, #forceCreate, 0>
+  [ 51] objcall 54 .............................. n[#forceCreate] = 0
+  [ 53] getlocal 0 .............................. <n>
+  [ 55] pushsymb 907 ............................ <#preBuilt>
+  [ 58] pushint8 1 .............................. <1>
+  [ 60] pusharglistnoret 3 ...................... <n, #preBuilt, 1>
+  [ 62] objcall 54 .............................. n[#preBuilt] = 1
+  [ 64] getlocal 0 .............................. <n>
+  [ 66] pushsymb 260 ............................ <#typ>
+  [ 69] pushsymb 103 ............................ <#none>
+  [ 71] pusharglistnoret 3 ...................... <n, #typ, #none>
+  [ 73] objcall 54 .............................. n[#typ] = #none
+  [ 75] getlocal 0 .............................. <n>
+  [ 77] pushsymb 900 ............................ <#startActor>
+  [ 80] pushint8 1 .............................. <1>
+  [ 82] pusharglistnoret 3 ...................... <n, #startActor, 1>
+  [ 84] objcall 54 .............................. n[#startActor] = 1
+  [ 86] getlocal 0 .............................. <n>
+  [ 88] pushsymb 908 ............................ <#startLoc>
+  [ 91] pushsymb 103 ............................ <#none>
+  [ 93] pusharglistnoret 3 ...................... <n, #startLoc, #none>
+  [ 95] objcall 54 .............................. n[#startLoc] = #none
+  [ 97] getlocal 0 .............................. <n>
+  [ 99] pushsymb 909 ............................ <#useOffset>
+  [102] pushint8 1 .............................. <1>
+  [104] pusharglistnoret 3 ...................... <n, #useOffset, 1>
+  [106] objcall 54 .............................. n[#useOffset] = 1
+  [108] pusharglist 0 ........................... <[:]>
+  [110] pushproplist ............................ <[:]>
+  [111] setprop 910 ............................. pObjectOffsets = [:]
+  [114] getparam 0 .............................. <me>
+  [116] pusharglistnoret 1 ...................... <me>
+  [118] objcall 893 ............................. me.initObjectOffsets()
+  [121] ret
+end
+
+on initObjectOffsets
+  [  0] pushcons 0 .............................. <"objectOffsets">
+  [  2] pushcons 1 .............................. <"data">
+  [  4] pusharglist 2 ........................... <"objectOffsets", "data">
+  [  6] extcall 193 ............................. <member("objectOffsets", "data")>
+  [  8] setlocal 0 .............................. memObjectOffsets = member("objectOffsets", "data")
+  [ 10] getlocal 0 .............................. <memObjectOffsets>
+  [ 12] pushint8 1 .............................. <1>
+  [ 14] inv ..................................... <-1>
+  [ 15] pushint8 1 .............................. <1>
+  [ 17] pusharglist 2 ........................... <-1, 1>
+  [ 19] extcall 193 ............................. <member(-1, 1)>
+  [ 21] eq ...................................... <memObjectOffsets = member(-1, 1)>
+  [ 22] jmpifz [ 36] ............................ if memObjectOffsets = member(-1, 1) then
+  [ 25] pushcons 2 .............................. <"actorMaster.initObjectOffsets(): objectOffsets member not found - not to worry, offsets are prolly defined in the actor data">
+  [ 27] pusharglistnoret 1 ...................... <"actorMaster.initObjectOffsets(): objectOffsets member not found - not to worry, offsets are prolly defined in the actor data">
+  [ 29] extcall 414 ............................. put "actorMaster.initObjectOffsets(): objectOffsets member not found - not to worry, offsets are prolly defined in the actor data"
+  [ 32] pusharglistnoret 0 ...................... <>
+  [ 34] extcall 3 ............................... return 
+  [ 36] getlocal 0 .............................. <memObjectOffsets>
+  [ 38] getobjprop 392 .......................... <memObjectOffsets.text>
+  [ 41] setlocal 1 .............................. theText = memObjectOffsets.text
+  [ 43] getlocal 1 .............................. <theText>
+  [ 45] pushcons 3 .............................. <RETURN>
+  [ 47] pusharglist 2 ........................... <theText, RETURN>
+  [ 49] extcall 911 ............................. <StringEliminateChars(theText, RETURN)>
+  [ 52] setlocal 1 .............................. theText = StringEliminateChars(theText, RETURN)
+  [ 54] getlocal 1 .............................. <theText>
+  [ 56] pusharglist 1 ........................... <theText>
+  [ 58] extcall 912 ............................. <value(theText)>
+  [ 61] setlocal 2 .............................. theVal = value(theText)
+  [ 63] getlocal 2 .............................. <theVal>
+  [ 65] pusharglist 0 ........................... <>
+  [ 67] extcall 388 ............................. <VOID>
+  [ 70] nteq .................................... <theVal <> VOID>
+  [ 71] jmpifz [ 82] ............................ if theVal <> VOID then / else
+  [ 74] getlocal 2 .............................. <theVal>
+  [ 76] setprop 910 ............................. pObjectOffsets = theVal
+  [ 79] jmp [ 89]
+  [ 82] pushcons 4 .............................. <"actorMaster.initObjectOffsets(): error in objectOffsets">
+  [ 84] pusharglistnoret 1 ...................... <"actorMaster.initObjectOffsets(): error in objectOffsets">
+  [ 86] extcall 414 ............................. put "actorMaster.initObjectOffsets(): error in objectOffsets"
+  [ 89] ret
+end
+
+on finish me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 629 ............................. me.finishActors()
+  [  7] ret
+end
+
+on finishActors me
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 336 ...................... <g.objectMaster>
+  [  5] pushsymb 916 ............................ <#objGameObject>
+  [  8] pusharglistnoret 2 ...................... <g.objectMaster, #objGameObject>
+  [ 10] objcall 917 ............................. g.objectMaster.finishAllWithFlag(#objGameObject)
+  [ 13] pushsymb 103 ............................ <#none>
+  [ 15] setprop 904 ............................. pPlayer = #none
+  [ 18] ret
+end
+
+on newActor me, params
+  [  0] getparam 1 .............................. <params>
+  [  2] getobjprop 260 .......................... <params.typ>
+  [  5] pushsymb 918 ............................ <#kongFuChicken>
+  [  8] eq ...................................... <params.typ = #kongFuChicken>
+  [  9] jmpifz [ 17] ............................ if params.typ = #kongFuChicken then
+  [ 12] pusharglistnoret 0 ...................... <>
+  [ 14] extcall 438 ............................. nothing()
+  [ 17] getglobal 191 ........................... <g>
+  [ 19] getchainedprop 496 ...................... <g.spriteMaster>
+  [ 22] pusharglist 1 ........................... <g.spriteMaster>
+  [ 24] objcall 306 ............................. <g.spriteMaster.checkFreeSprite()>
+  [ 27] setlocal 0 .............................. freeSprite = g.spriteMaster.checkFreeSprite()
+  [ 29] pushsymb 103 ............................ <#none>
+  [ 31] setlocal 1 .............................. obj = #none
+  [ 33] getlocal 0 .............................. <freeSprite>
+  [ 35] jmpifz [ 82] ............................ if freeSprite then
+  [ 38] getparam 0 .............................. <me>
+  [ 40] getparam 1 .............................. <params>
+  [ 42] getobjprop 260 .......................... <params.typ>
+  [ 45] getparam 1 .............................. <params>
+  [ 47] getobjprop 908 .......................... <params.startLoc>
+  [ 50] getparam 1 .............................. <params>
+  [ 52] getobjprop 909 .......................... <params.useOffset>
+  [ 55] getparam 1 .............................. <params>
+  [ 57] getobjprop 905 .......................... <params.initVect>
+  [ 60] getparam 1 .............................. <params>
+  [ 62] getobjprop 907 .......................... <params.preBuilt>
+  [ 65] getparam 1 .............................. <params>
+  [ 67] getobjprop 906 .......................... <params.forceCreate>
+  [ 70] getparam 1 .............................. <params>
+  [ 72] getobjprop 900 .......................... <params.startActor>
+  [ 75] pusharglist 8 ........................... <me, params.typ, params.startLoc, params.useOffset, params.initVect, params.preBuilt, params.forceCreate, params.startActor>
+  [ 77] objcall 900 ............................. <me.startActor(params.typ, params.startLoc, params.useOffset, params.initVect, params.preBuilt, params.forceCreate, params.startActor)>
+  [ 80] setlocal 1 .............................. obj = me.startActor(params.typ, params.startLoc, params.useOffset, params.initVect, params.preBuilt, params.forceCreate, params.startActor)
+  [ 82] getlocal 1 .............................. <obj>
+  [ 84] pusharglistnoret 1 ...................... <obj>
+  [ 86] extcall 3 ............................... return obj
+  [ 88] ret
+end
+
+on adjustStartLoc me, theloc, typ
+  [  0] getprop 910 ............................. <pObjectOffsets>
+  [  3] getparam 2 .............................. <typ>
+  [  5] pusharglist 2 ........................... <pObjectOffsets, typ>
+  [  7] objcall 301 ............................. <pObjectOffsets[typ]>
+  [ 10] setlocal 0 .............................. oOffset = pObjectOffsets[typ]
+  [ 12] getlocal 0 .............................. <oOffset>
+  [ 14] pusharglist 0 ........................... <>
+  [ 16] extcall 388 ............................. <VOID>
+  [ 19] nteq .................................... <oOffset <> VOID>
+  [ 20] jmpifz [ 30] ............................ if oOffset <> VOID then
+  [ 23] getparam 1 .............................. <theloc>
+  [ 25] getlocal 0 .............................. <oOffset>
+  [ 27] add ..................................... <theloc + oOffset>
+  [ 28] setparam 1 .............................. theloc = theloc + oOffset
+  [ 30] getparam 1 .............................. <theloc>
+  [ 32] pusharglistnoret 1 ...................... <theloc>
+  [ 34] extcall 3 ............................... return theloc
+  [ 36] ret
+end
+
+on checkCollisionsWithSolidArea me, theloc
+  [  0] pushint8 1 .............................. <1>
+  [  2] setlocal 0 .............................. collisionsOk = 1
+  [  4] getglobal 191 ........................... <g>
+  [  6] getchainedprop 735 ...................... <g.gamemaster>
+  [  9] pusharglist 1 ........................... <g.gamemaster>
+  [ 11] objcall 597 ............................. <g.gamemaster.getCurrentMap()>
+  [ 14] setlocal 1 .............................. currentMap = g.gamemaster.getCurrentMap()
+  [ 16] getlocal 1 .............................. <currentMap>
+  [ 18] pushsymb 103 ............................ <#none>
+  [ 20] nteq .................................... <currentMap <> #none>
+  [ 21] jmpifz [ 59] ............................ if currentMap <> #none then
+  [ 24] getlocal 1 .............................. <currentMap>
+  [ 26] getparam 1 .............................. <theloc>
+  [ 28] pusharglist 2 ........................... <currentMap, theloc>
+  [ 30] objcall 921 ............................. <currentMap.getActiveTileTypeAtLoc(theloc)>
+  [ 33] setlocal 2 .............................. tileType = currentMap.getActiveTileTypeAtLoc(theloc)
+  [ 35] getlocal 2 .............................. <tileType>
+  [ 37] peek 0 .................................. case tileType of
+  [ 39] pushsymb 179 ............................ <#solid>
+  [ 41] nteq
+  [ 42] jmpifz [ 54] ............................ (case) #solid, ...
+  [ 45] peek 0
+  [ 47] pushsymb 759 ............................ <#outsidePlayArea>
+  [ 50] eq
+  [ 51] jmpifz [ 57] ............................ (case) ..., #outsidePlayArea:
+  [ 54] pushzero ................................ <0>
+  [ 55] setlocal 0 .............................. collisionsOk = 0
+  [ 57] pop 1
+  [ 59] getlocal 0 .............................. <collisionsOk>
+  [ 61] pusharglistnoret 1 ...................... <collisionsOk>
+  [ 63] extcall 3 ............................... return collisionsOk
+  [ 65] ret
+end
+
+on getActorData me, actorSymbol
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <actorSymbol>
+  [  4] pusharglist 2 ........................... <me, actorSymbol>
+  [  6] objcall 899 ............................. <me.retrieveActorData(actorSymbol)>
+  [  9] pusharglistnoret 1 ...................... <me.retrieveActorData(actorSymbol)>
+  [ 11] extcall 3 ............................... return me.retrieveActorData(actorSymbol)
+  [ 13] ret
+end
+
+on getMiniMapStatusForSymbol me, theSymbol
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <theSymbol>
+  [  4] pusharglist 2 ........................... <me, theSymbol>
+  [  6] objcall 899 ............................. <me.retrieveActorData(theSymbol)>
+  [  9] setlocal 0 .............................. data = me.retrieveActorData(theSymbol)
+  [ 11] getlocal 0 .............................. <data>
+  [ 13] getobjprop 924 .......................... <data.miniMapStatus>
+  [ 16] pusharglistnoret 1 ...................... <data.miniMapStatus>
+  [ 18] extcall 3 ............................... return data.miniMapStatus
+  [ 20] ret
+end
+
+on pauseGameObjects me
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 336 ...................... <g.objectMaster>
+  [  5] pushsymb 916 ............................ <#objGameObject>
+  [  8] pusharglist 2 ........................... <g.objectMaster, #objGameObject>
+  [ 10] objcall 927 ............................. <g.objectMaster.getActiveObjectsWithFlag(#objGameObject)>
+  [ 13] setlocal 0 .............................. gameObjects = g.objectMaster.getActiveObjectsWithFlag(#objGameObject)
+  [ 15] getlocal 0 .............................. <gameObjects>
+  [ 17] peek 0
+  [ 19] pusharglist 1
+  [ 21] extcall 348
+  [ 24] pushint8 1
+  [ 26] peek 0
+  [ 28] peek 2
+  [ 30] lteq
+  [ 31] jmpifz [ 57] ............................ repeat with gameObject in gameObjects
+  [ 34] peek 2
+  [ 36] peek 1
+  [ 38] pusharglist 2
+  [ 40] extcall 301
+  [ 43] setlocal 1
+  [ 45] getlocal 1 .............................. <gameObject>
+  [ 47] pusharglistnoret 1 ...................... <gameObject>
+  [ 49] objcall 928 ............................. gameObject.paws()
+  [ 52] pushint8 1
+  [ 54] add
+  [ 55] endrepeat [ 26]
+  [ 57] pop 3
+  [ 59] ret
+end
+
+on retrieveActorData me, datatyp
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 658 ...................... <g.collectionsMaster>
+  [  5] pushsymb 428 ............................ <#objActorData>
+  [  8] getparam 1 .............................. <datatyp>
+  [ 10] pusharglist 3 ........................... <g.collectionsMaster, #objActorData, datatyp>
+  [ 12] objcall 423 ............................. <g.collectionsMaster.getObj(#objActorData, datatyp)>
+  [ 15] setlocal 0 .............................. dataObj = g.collectionsMaster.getObj(#objActorData, datatyp)
+  [ 17] getlocal 0 .............................. <dataObj>
+  [ 19] pusharglist 1 ........................... <dataObj>
+  [ 21] objcall 931 ............................. <dataObj.getData()>
+  [ 24] setlocal 1 .............................. data = dataObj.getData()
+  [ 26] getlocal 1 .............................. <data>
+  [ 28] pushsymb 932 ............................ <#inherit>
+  [ 31] pusharglist 2 ........................... <data, #inherit>
+  [ 33] objcall 301 ............................. <data[#inherit]>
+  [ 36] pusharglist 0 ........................... <>
+  [ 38] extcall 388 ............................. <VOID>
+  [ 41] nteq .................................... <data[#inherit] <> VOID>
+  [ 42] jmpifz [ 75] ............................ if data[#inherit] <> VOID then
+  [ 45] getparam 0 .............................. <me>
+  [ 47] getlocal 1 .............................. <data>
+  [ 49] getobjprop 932 .......................... <data.inherit>
+  [ 52] pusharglist 2 ........................... <me, data.inherit>
+  [ 54] objcall 899 ............................. <me.retrieveActorData(data.inherit)>
+  [ 57] setlocal 2 .............................. inheritData = me.retrieveActorData(data.inherit)
+  [ 59] getlocal 2 .............................. <inheritData>
+  [ 61] pusharglist 1 ........................... <inheritData>
+  [ 63] objcall 302 ............................. <inheritData.duplicate()>
+  [ 66] getlocal 1 .............................. <data>
+  [ 68] pusharglist 2 ........................... <inheritData.duplicate(), data>
+  [ 70] extcall 933 ............................. <ListsMerge(inheritData.duplicate(), data)>
+  [ 73] setlocal 1 .............................. data = ListsMerge(inheritData.duplicate(), data)
+  [ 75] getlocal 1 .............................. <data>
+  [ 77] pushsymb 53 ............................. <#attack>
+  [ 79] pusharglist 2 ........................... <data, #attack>
+  [ 81] objcall 301 ............................. <data[#attack]>
+  [ 84] pushsymb 103 ............................ <#none>
+  [ 86] nteq .................................... <data[#attack] <> #none>
+  [ 87] getlocal 1 .............................. <data>
+  [ 89] pushsymb 53 ............................. <#attack>
+  [ 91] pusharglist 2 ........................... <data, #attack>
+  [ 93] objcall 301 ............................. <data[#attack]>
+  [ 96] pusharglist 0 ........................... <>
+  [ 98] extcall 388 ............................. <VOID>
+  [101] nteq .................................... <data[#attack] <> VOID>
+  [102] and ..................................... <(data[#attack] <> #none) and (data[#attack] <> VOID)>
+  [103] jmpifz [133] ............................ if (data[#attack] <> #none) and (data[#attack] <> VOID) then
+  [106] getglobal 191 ........................... <g>
+  [108] getchainedprop 192 ...................... <g.structMaster>
+  [110] pushsymb 53 ............................. <#attack>
+  [112] pusharglist 2 ........................... <g.structMaster, #attack>
+  [114] objcall 51 .............................. <g.structMaster.getStruct(#attack)>
+  [116] setlocal 3 .............................. attack = g.structMaster.getStruct(#attack)
+  [118] getlocal 1 .............................. <data>
+  [120] getlocal 3 .............................. <attack>
+  [122] getlocal 1 .............................. <data>
+  [124] getobjprop 53 ........................... <data.attack>
+  [126] pusharglist 2 ........................... <attack, data.attack>
+  [128] extcall 934 ............................. <ListModifyProperties(attack, data.attack)>
+  [131] setobjprop 53 ........................... data.attack = ListModifyProperties(attack, data.attack)
+  [133] getlocal 1 .............................. <data>
+  [135] pusharglistnoret 1 ...................... <data>
+  [137] extcall 3 ............................... return data
+  [139] ret
+end
+
+on start me
+  [  0] getglobal 938 ........................... <gEnemyEnergyMasterOn>
+  [  3] pushint8 1 .............................. <1>
+  [  5] eq ...................................... <gEnemyEnergyMasterOn = 1>
+  [  6] jmpifz [ 19] ............................ if gEnemyEnergyMasterOn = 1 then
+  [  9] getglobal 191 ........................... <g>
+  [ 11] getchainedprop 630 ...................... <g.EnemyEnergyMaster>
+  [ 14] pusharglistnoret 1 ...................... <g.EnemyEnergyMaster>
+  [ 16] objcall 398 ............................. g.EnemyEnergyMaster.start()
+  [ 19] pusharglistnoret 0 ...................... <>
+  [ 21] extcall 3 ............................... return 
+  [ 23] getparam 0 .............................. <me>
+  [ 25] pushsymb 939 ............................ <#player>
+  [ 28] pushint8 100 ............................ <100>
+  [ 30] pushint16 250 ........................... <250>
+  [ 33] pusharglist 2 ........................... <100, 250>
+  [ 35] extcall 122 ............................. <point(100, 250)>
+  [ 37] pusharglist 3 ........................... <me, #player, point(100, 250)>
+  [ 39] objcall 900 ............................. <me.startActor(#player, point(100, 250))>
+  [ 42] setlocal 0 .............................. player = me.startActor(#player, point(100, 250))
+  [ 44] getlocal 0 .............................. <player>
+  [ 46] setprop 904 ............................. pPlayer = player
+  [ 49] pusharglist 0 ........................... <[]>
+  [ 51] pushlist ................................ <[]>
+  [ 52] setlocal 1 .............................. startActors = []
+  [ 54] getlocal 1 .............................. <startActors>
+  [ 56] pushsymb 455 ............................ <#objType>
+  [ 59] pushsymb 940 ............................ <#bat>
+  [ 62] pushsymb 941 ............................ <#quantity>
+  [ 65] pushzero ................................ <0>
+  [ 66] pusharglist 4 ........................... <[#objType: #bat, #quantity: 0]>
+  [ 68] pushproplist ............................ <[#objType: #bat, #quantity: 0]>
+  [ 69] pusharglistnoret 2 ...................... <startActors, [#objType: #bat, #quantity: 0]>
+  [ 71] objcall 506 ............................. startActors.append([#objType: #bat, #quantity: 0])
+  [ 74] getlocal 1 .............................. <startActors>
+  [ 76] pushsymb 455 ............................ <#objType>
+  [ 79] pushsymb 942 ............................ <#bigWitch>
+  [ 82] pushsymb 941 ............................ <#quantity>
+  [ 85] pushzero ................................ <0>
+  [ 86] pusharglist 4 ........................... <[#objType: #bigWitch, #quantity: 0]>
+  [ 88] pushproplist ............................ <[#objType: #bigWitch, #quantity: 0]>
+  [ 89] pusharglistnoret 2 ...................... <startActors, [#objType: #bigWitch, #quantity: 0]>
+  [ 91] objcall 506 ............................. startActors.append([#objType: #bigWitch, #quantity: 0])
+  [ 94] getlocal 1 .............................. <startActors>
+  [ 96] pushsymb 455 ............................ <#objType>
+  [ 99] pushsymb 943 ............................ <#goblin>
+  [102] pushsymb 941 ............................ <#quantity>
+  [105] pushzero ................................ <0>
+  [106] pusharglist 4 ........................... <[#objType: #goblin, #quantity: 0]>
+  [108] pushproplist ............................ <[#objType: #goblin, #quantity: 0]>
+  [109] pusharglistnoret 2 ...................... <startActors, [#objType: #goblin, #quantity: 0]>
+  [111] objcall 506 ............................. startActors.append([#objType: #goblin, #quantity: 0])
+  [114] getlocal 1 .............................. <startActors>
+  [116] pushsymb 455 ............................ <#objType>
+  [119] pushsymb 944 ............................ <#goblinSoldier>
+  [122] pushsymb 941 ............................ <#quantity>
+  [125] pushzero ................................ <0>
+  [126] pusharglist 4 ........................... <[#objType: #goblinSoldier, #quantity: 0]>
+  [128] pushproplist ............................ <[#objType: #goblinSoldier, #quantity: 0]>
+  [129] pusharglistnoret 2 ...................... <startActors, [#objType: #goblinSoldier, #quantity: 0]>
+  [131] objcall 506 ............................. startActors.append([#objType: #goblinSoldier, #quantity: 0])
+  [134] getlocal 1 .............................. <startActors>
+  [136] pushsymb 455 ............................ <#objType>
+  [139] pushsymb 945 ............................ <#hairSpider>
+  [142] pushsymb 941 ............................ <#quantity>
+  [145] pushzero ................................ <0>
+  [146] pusharglist 4 ........................... <[#objType: #hairSpider, #quantity: 0]>
+  [148] pushproplist ............................ <[#objType: #hairSpider, #quantity: 0]>
+  [149] pusharglistnoret 2 ...................... <startActors, [#objType: #hairSpider, #quantity: 0]>
+  [151] objcall 506 ............................. startActors.append([#objType: #hairSpider, #quantity: 0])
+  [154] getlocal 1 .............................. <startActors>
+  [156] pushsymb 455 ............................ <#objType>
+  [159] pushsymb 946 ............................ <#spider>
+  [162] pushsymb 941 ............................ <#quantity>
+  [165] pushzero ................................ <0>
+  [166] pusharglist 4 ........................... <[#objType: #spider, #quantity: 0]>
+  [168] pushproplist ............................ <[#objType: #spider, #quantity: 0]>
+  [169] pusharglistnoret 2 ...................... <startActors, [#objType: #spider, #quantity: 0]>
+  [171] objcall 506 ............................. startActors.append([#objType: #spider, #quantity: 0])
+  [174] getlocal 1 .............................. <startActors>
+  [176] pushsymb 455 ............................ <#objType>
+  [179] pushsymb 947 ............................ <#littleWitch>
+  [182] pushsymb 941 ............................ <#quantity>
+  [185] pushzero ................................ <0>
+  [186] pusharglist 4 ........................... <[#objType: #littleWitch, #quantity: 0]>
+  [188] pushproplist ............................ <[#objType: #littleWitch, #quantity: 0]>
+  [189] pusharglistnoret 2 ...................... <startActors, [#objType: #littleWitch, #quantity: 0]>
+  [191] objcall 506 ............................. startActors.append([#objType: #littleWitch, #quantity: 0])
+  [194] getlocal 1 .............................. <startActors>
+  [196] pushsymb 455 ............................ <#objType>
+  [199] pushsymb 948 ............................ <#fryingPan>
+  [202] pushsymb 941 ............................ <#quantity>
+  [205] pushzero ................................ <0>
+  [206] pusharglist 4 ........................... <[#objType: #fryingPan, #quantity: 0]>
+  [208] pushproplist ............................ <[#objType: #fryingPan, #quantity: 0]>
+  [209] pusharglistnoret 2 ...................... <startActors, [#objType: #fryingPan, #quantity: 0]>
+  [211] objcall 506 ............................. startActors.append([#objType: #fryingPan, #quantity: 0])
+  [214] getlocal 1 .............................. <startActors>
+  [216] pushsymb 455 ............................ <#objType>
+  [219] pushsymb 949 ............................ <#hairDrop>
+  [222] pushsymb 941 ............................ <#quantity>
+  [225] pushzero ................................ <0>
+  [226] pusharglist 4 ........................... <[#objType: #hairDrop, #quantity: 0]>
+  [228] pushproplist ............................ <[#objType: #hairDrop, #quantity: 0]>
+  [229] pusharglistnoret 2 ...................... <startActors, [#objType: #hairDrop, #quantity: 0]>
+  [231] objcall 506 ............................. startActors.append([#objType: #hairDrop, #quantity: 0])
+  [234] getlocal 1 .............................. <startActors>
+  [236] pushsymb 455 ............................ <#objType>
+  [239] pushsymb 950 ............................ <#paddle>
+  [242] pushsymb 941 ............................ <#quantity>
+  [245] pushzero ................................ <0>
+  [246] pusharglist 4 ........................... <[#objType: #paddle, #quantity: 0]>
+  [248] pushproplist ............................ <[#objType: #paddle, #quantity: 0]>
+  [249] pusharglistnoret 2 ...................... <startActors, [#objType: #paddle, #quantity: 0]>
+  [251] objcall 506 ............................. startActors.append([#objType: #paddle, #quantity: 0])
+  [254] getlocal 1 .............................. <startActors>
+  [256] pushsymb 455 ............................ <#objType>
+  [259] pushsymb 951 ............................ <#pugelstick>
+  [262] pushsymb 941 ............................ <#quantity>
+  [265] pushzero ................................ <0>
+  [266] pusharglist 4 ........................... <[#objType: #pugelstick, #quantity: 0]>
+  [268] pushproplist ............................ <[#objType: #pugelstick, #quantity: 0]>
+  [269] pusharglistnoret 2 ...................... <startActors, [#objType: #pugelstick, #quantity: 0]>
+  [271] objcall 506 ............................. startActors.append([#objType: #pugelstick, #quantity: 0])
+  [274] getlocal 1 .............................. <startActors>
+  [276] pushsymb 455 ............................ <#objType>
+  [279] pushsymb 952 ............................ <#spade>
+  [282] pushsymb 941 ............................ <#quantity>
+  [285] pushzero ................................ <0>
+  [286] pusharglist 4 ........................... <[#objType: #spade, #quantity: 0]>
+  [288] pushproplist ............................ <[#objType: #spade, #quantity: 0]>
+  [289] pusharglistnoret 2 ...................... <startActors, [#objType: #spade, #quantity: 0]>
+  [291] objcall 506 ............................. startActors.append([#objType: #spade, #quantity: 0])
+  [294] getlocal 1 .............................. <startActors>
+  [296] pushsymb 455 ............................ <#objType>
+  [299] pushsymb 953 ............................ <#sword>
+  [302] pushsymb 941 ............................ <#quantity>
+  [305] pushzero ................................ <0>
+  [306] pusharglist 4 ........................... <[#objType: #sword, #quantity: 0]>
+  [308] pushproplist ............................ <[#objType: #sword, #quantity: 0]>
+  [309] pusharglistnoret 2 ...................... <startActors, [#objType: #sword, #quantity: 0]>
+  [311] objcall 506 ............................. startActors.append([#objType: #sword, #quantity: 0])
+  [314] getlocal 1 .............................. <startActors>
+  [316] pushsymb 455 ............................ <#objType>
+  [319] pushsymb 954 ............................ <#scissors>
+  [322] pushsymb 941 ............................ <#quantity>
+  [325] pushzero ................................ <0>
+  [326] pusharglist 4 ........................... <[#objType: #scissors, #quantity: 0]>
+  [328] pushproplist ............................ <[#objType: #scissors, #quantity: 0]>
+  [329] pusharglistnoret 2 ...................... <startActors, [#objType: #scissors, #quantity: 0]>
+  [331] objcall 506 ............................. startActors.append([#objType: #scissors, #quantity: 0])
+  [334] getlocal 1 .............................. <startActors>
+  [336] peek 0
+  [338] pusharglist 1
+  [340] extcall 348
+  [343] pushint8 1
+  [345] peek 0
+  [347] peek 2
+  [349] lteq
+  [350] jmpifz [420] ............................ repeat with startActor in startActors
+  [353] peek 2
+  [355] peek 1
+  [357] pusharglist 2
+  [359] extcall 301
+  [362] setlocal 2
+  [364] pushint8 1 .............................. <1>
+  [366] setlocal 3
+  [368] getlocal 3
+  [370] getlocal 2 .............................. <startActor>
+  [372] getobjprop 941 .......................... <startActor.quantity>
+  [375] lteq
+  [376] jmpifz [415] ............................ repeat with i = 1 to startActor.quantity
+  [379] getparam 0 .............................. <me>
+  [381] getlocal 2 .............................. <startActor>
+  [383] getobjprop 455 .......................... <startActor.objType>
+  [386] pushint16 450 ........................... <450>
+  [389] pusharglist 1 ........................... <450>
+  [391] extcall 955 ............................. <random(450)>
+  [394] pushint16 300 ........................... <300>
+  [397] pusharglist 2 ........................... <random(450), 300>
+  [399] extcall 122 ............................. <point(random(450), 300)>
+  [401] pusharglistnoret 3 ...................... <me, startActor.objType, point(random(450), 300)>
+  [403] objcall 900 ............................. me.startActor(startActor.objType, point(random(450), 300))
+  [406] pushint8 1
+  [408] getlocal 3
+  [410] add
+  [411] setlocal 3
+  [413] endrepeat [368]
+  [415] pushint8 1
+  [417] add
+  [418] endrepeat [345]
+  [420] pop 3
+  [422] ret
+end
+
+on startActor me, typ, startLoc, useOffsets, initVect, preBuilt, forceCreate, startActor
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <typ>
+  [  4] pusharglist 2 ........................... <me, typ>
+  [  6] objcall 899 ............................. <me.retrieveActorData(typ)>
+  [  9] setlocal 0 .............................. actorData = me.retrieveActorData(typ)
+  [ 11] getlocal 0 .............................. <actorData>
+  [ 13] pushsymb 455 ............................ <#objType>
+  [ 16] pusharglist 2 ........................... <actorData, #objType>
+  [ 18] objcall 301 ............................. <actorData[#objType]>
+  [ 21] pusharglist 0 ........................... <>
+  [ 23] extcall 388 ............................. <VOID>
+  [ 26] eq ...................................... <actorData[#objType] = VOID>
+  [ 27] jmpifz [ 53] ............................ if actorData[#objType] = VOID then
+  [ 30] pushcons 5 .............................. <"actorMaster.newActor: please define typ ">
+  [ 32] getglobal 957 ........................... <q>
+  [ 35] joinstr ................................. <"actorMaster.newActor: please define typ " & q>
+  [ 36] getparam 1 .............................. <typ>
+  [ 38] joinstr ................................. <"actorMaster.newActor: please define typ " & q & typ>
+  [ 39] getglobal 957 ........................... <q>
+  [ 42] joinstr ................................. <"actorMaster.newActor: please define typ " & q & typ & q>
+  [ 43] pusharglistnoret 1 ...................... <"actorMaster.newActor: please define typ " & q & typ & q>
+  [ 45] extcall 456 ............................. alert("actorMaster.newActor: please define typ " & q & typ & q)
+  [ 48] pusharglistnoret 0 ...................... <>
+  [ 50] extcall 438 ............................. nothing()
+  [ 53] getglobal 191 ........................... <g>
+  [ 55] getchainedprop 336 ...................... <g.objectMaster>
+  [ 58] getlocal 0 .............................. <actorData>
+  [ 60] pushsymb 455 ............................ <#objType>
+  [ 63] pusharglist 2 ........................... <actorData, #objType>
+  [ 65] objcall 301 ............................. <actorData[#objType]>
+  [ 68] pusharglist 2 ........................... <g.objectMaster, actorData[#objType]>
+  [ 70] objcall 338 ............................. <g.objectMaster.requestObject(actorData[#objType])>
+  [ 73] setlocal 1 .............................. obj = g.objectMaster.requestObject(actorData[#objType])
+  [ 75] getlocal 0 .............................. <actorData>
+  [ 77] pushsymb 958 ............................ <#AIType>
+  [ 80] pusharglist 2 ........................... <actorData, #AIType>
+  [ 82] objcall 301 ............................. <actorData[#AIType]>
+  [ 85] pusharglist 0 ........................... <>
+  [ 87] extcall 388 ............................. <VOID>
+  [ 90] nteq .................................... <actorData[#AIType] <> VOID>
+  [ 91] jmpifz [186] ............................ if actorData[#AIType] <> VOID then
+  [ 94] getglobal 191 ........................... <g>
+  [ 96] getchainedprop 336 ...................... <g.objectMaster>
+  [ 99] getlocal 0 .............................. <actorData>
+  [101] pushsymb 958 ............................ <#AIType>
+  [104] pusharglist 2 ........................... <actorData, #AIType>
+  [106] objcall 301 ............................. <actorData[#AIType]>
+  [109] pusharglist 2 ........................... <g.objectMaster, actorData[#AIType]>
+  [111] objcall 338 ............................. <g.objectMaster.requestObject(actorData[#AIType])>
+  [114] setlocal 2 .............................. AI = g.objectMaster.requestObject(actorData[#AIType])
+  [116] getlocal 2 .............................. <AI>
+  [118] pushsymb 1 .............................. <#init>
+  [120] pusharglist 2 ........................... <AI, #init>
+  [122] objcall 339 ............................. <AI.getParams(#init)>
+  [125] setlocal 3 .............................. params = AI.getParams(#init)
+  [127] getlocal 2 .............................. <AI>
+  [129] getlocal 3 .............................. <params>
+  [131] pusharglistnoret 2 ...................... <AI, params>
+  [133] objcall 1 ............................... AI.init(params)
+  [135] getlocal 0 .............................. <actorData>
+  [137] pushsymb 958 ............................ <#AIType>
+  [140] pusharglist 2 ........................... <actorData, #AIType>
+  [142] objcall 301 ............................. <actorData[#AIType]>
+  [145] pushsymb 959 ............................ <#objAiEnemyTargetSeek>
+  [148] eq ...................................... <actorData[#AIType] = #objAiEnemyTargetSeek>
+  [149] jmpifz [186] ............................ if actorData[#AIType] = #objAiEnemyTargetSeek then
+  [152] getlocal 2 .............................. <AI>
+  [154] getlocal 0 .............................. <actorData>
+  [156] pushsymb 960 ............................ <#AiTarget>
+  [159] pusharglist 2 ........................... <actorData, #AiTarget>
+  [161] objcall 301 ............................. <actorData[#AiTarget]>
+  [164] pusharglistnoret 2 ...................... <AI, actorData[#AiTarget]>
+  [166] objcall 961 ............................. AI.setTargetType(actorData[#AiTarget])
+  [169] getlocal 2 .............................. <AI>
+  [171] getlocal 0 .............................. <actorData>
+  [173] pushsymb 962 ............................ <#AiTargetAction>
+  [176] pusharglist 2 ........................... <actorData, #AiTargetAction>
+  [178] objcall 301 ............................. <actorData[#AiTargetAction]>
+  [181] pusharglistnoret 2 ...................... <AI, actorData[#AiTargetAction]>
+  [183] objcall 963 ............................. AI.setAction(actorData[#AiTargetAction])
+  [186] getparam 0 .............................. <me>
+  [188] getlocal 1 .............................. <obj>
+  [190] getlocal 0 .............................. <actorData>
+  [192] getlocal 2 .............................. <AI>
+  [194] pusharglist 4 ........................... <me, obj, actorData, AI>
+  [196] objcall 901 ............................. <me.setParams(obj, actorData, AI)>
+  [199] setlocal 3 .............................. params = me.setParams(obj, actorData, AI)
+  [201] getparam 3 .............................. <useOffsets>
+  [203] jmpifz [216] ............................ if useOffsets then
+  [206] getparam 2 .............................. <startLoc>
+  [208] getlocal 3 .............................. <params>
+  [210] getobjprop 964 .......................... <params.startOffset>
+  [213] add ..................................... <startLoc + params.startOffset>
+  [214] setparam 2 .............................. startLoc = startLoc + params.startOffset
+  [216] getlocal 3 .............................. <params>
+  [218] getparam 2 .............................. <startLoc>
+  [220] pusharglist 1 ........................... <startLoc>
+  [222] objcall 302 ............................. <startLoc.duplicate()>
+  [225] setobjprop 965 .......................... params.initLoc = startLoc.duplicate()
+  [228] getparam 4 .............................. <initVect>
+  [230] pushsymb 103 ............................ <#none>
+  [232] nteq .................................... <initVect <> #none>
+  [233] jmpifz [248] ............................ if initVect <> #none then
+  [236] getlocal 3 .............................. <params>
+  [238] getparam 4 .............................. <initVect>
+  [240] pusharglist 1 ........................... <initVect>
+  [242] objcall 302 ............................. <initVect.duplicate()>
+  [245] setobjprop 905 .......................... params.initVect = initVect.duplicate()
+  [248] getlocal 3 .............................. <params>
+  [250] pushsymb 907 ............................ <#preBuilt>
+  [253] pusharglist 2 ........................... <params, #preBuilt>
+  [255] objcall 301 ............................. <params[#preBuilt]>
+  [258] pusharglist 0 ........................... <>
+  [260] extcall 388 ............................. <VOID>
+  [263] nteq .................................... <params[#preBuilt] <> VOID>
+  [264] jmpifz [274] ............................ if params[#preBuilt] <> VOID then
+  [267] getlocal 3 .............................. <params>
+  [269] getparam 5 .............................. <preBuilt>
+  [271] setobjprop 907 .......................... params.preBuilt = preBuilt
+  [274] getlocal 3 .............................. <params>
+  [276] getobjprop 199 .......................... <params.actorType>
+  [278] pushsymb 260 ............................ <#typ>
+  [281] eq ...................................... <params.actorType = #typ>
+  [282] jmpifz [291] ............................ if params.actorType = #typ then
+  [285] getlocal 3 .............................. <params>
+  [287] getparam 1 .............................. <typ>
+  [289] setobjprop 199 .......................... params.actorType = typ
+  [291] getparam 0 .............................. <me>
+  [293] getlocal 3 .............................. <params>
+  [295] pusharglistnoret 2 ...................... <me, params>
+  [297] objcall 903 ............................. me.setParamsMaster(params)
+  [300] getlocal 1 .............................. <obj>
+  [302] getlocal 3 .............................. <params>
+  [304] pusharglistnoret 2 ...................... <obj, params>
+  [306] objcall 1 ............................... obj.init(params)
+  [308] getlocal 3 .............................. <params>
+  [310] getobjprop 966 .......................... <params.createOnSolid>
+  [313] getparam 6 .............................. <forceCreate>
+  [315] or ...................................... <params.createOnSolid or forceCreate>
+  [316] jmpifz [326] ............................ if params.createOnSolid or forceCreate then / else
+  [319] pushint8 1 .............................. <1>
+  [321] setlocal 4 .............................. collisionsOk = 1
+  [323] jmp [389]
+  [326] pushint8 1 .............................. <1>
+  [328] setlocal 4 .............................. collisionsOk = 1
+  [330] getlocal 1 .............................. <obj>
+  [332] pusharglist 1 ........................... <obj>
+  [334] objcall 744 ............................. <obj.getCollisionDetection()>
+  [337] pushint8 1 .............................. <1>
+  [339] eq ...................................... <obj.getCollisionDetection() = 1>
+  [340] jmpifz [357] ............................ if obj.getCollisionDetection() = 1 then
+  [343] getglobal 191 ........................... <g>
+  [345] getchainedprop 655 ...................... <g.collisionMaster>
+  [348] getlocal 1 .............................. <obj>
+  [350] pusharglist 2 ........................... <g.collisionMaster, obj>
+  [352] objcall 723 ............................. <g.collisionMaster.checkCollisionsNewObject(obj)>
+  [355] setlocal 4 .............................. collisionsOk = g.collisionMaster.checkCollisionsNewObject(obj)
+  [357] getlocal 4 .............................. <collisionsOk>
+  [359] pushint8 1 .............................. <1>
+  [361] eq ...................................... <collisionsOk = 1>
+  [362] jmpifz [389] ............................ if collisionsOk = 1 then
+  [365] getlocal 1 .............................. <obj>
+  [367] pusharglist 1 ........................... <obj>
+  [369] objcall 744 ............................. <obj.getCollisionDetection()>
+  [372] pushint8 1 .............................. <1>
+  [374] eq ...................................... <obj.getCollisionDetection() = 1>
+  [375] jmpifz [389] ............................ if obj.getCollisionDetection() = 1 then
+  [378] getparam 0 .............................. <me>
+  [380] getparam 2 .............................. <startLoc>
+  [382] pusharglist 2 ........................... <me, startLoc>
+  [384] objcall 896 ............................. <me.checkCollisionsWithSolidArea(startLoc)>
+  [387] setlocal 4 .............................. collisionsOk = me.checkCollisionsWithSolidArea(startLoc)
+  [389] getlocal 4 .............................. <collisionsOk>
+  [391] jmpifz [412] ............................ if collisionsOk then / else
+  [394] getparam 7 .............................. <startActor>
+  [396] pushint8 1 .............................. <1>
+  [398] eq ...................................... <startActor = 1>
+  [399] jmpifz [409] ............................ if startActor = 1 then
+  [402] getlocal 1 .............................. <obj>
+  [404] pusharglistnoret 1 ...................... <obj>
+  [406] objcall 398 ............................. obj.start()
+  [409] jmp [422]
+  [412] getlocal 1 .............................. <obj>
+  [414] pusharglistnoret 1 ...................... <obj>
+  [416] objcall 239 ............................. obj.finish()
+  [418] pushsymb 103 ............................ <#none>
+  [420] setlocal 1 .............................. obj = #none
+  [422] getparam 1 .............................. <typ>
+  [424] pushsymb 939 ............................ <#player>
+  [427] eq ...................................... <typ = #player>
+  [428] jmpifz [436] ............................ if typ = #player then
+  [431] getlocal 1 .............................. <obj>
+  [433] setprop 904 ............................. pPlayer = obj
+  [436] getlocal 1 .............................. <obj>
+  [438] pusharglistnoret 1 ...................... <obj>
+  [440] extcall 3 ............................... return obj
+  [442] ret
+end
+
+on setParams me, obj, data, AI
+  [  0] getparam 1 .............................. <obj>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <obj, #init>
+  [  6] objcall 339 ............................. <obj.getParams(#init)>
+  [  9] setlocal 0 .............................. params = obj.getParams(#init)
+  [ 11] getparam 3 .............................. <AI>
+  [ 13] pusharglist 0 ........................... <>
+  [ 15] extcall 388 ............................. <VOID>
+  [ 18] nteq .................................... <AI <> VOID>
+  [ 19] jmpifz [ 29] ............................ if AI <> VOID then
+  [ 22] getlocal 0 .............................. <params>
+  [ 24] getparam 3 .............................. <AI>
+  [ 26] setobjprop 969 .......................... params.AI = AI
+  [ 29] getparam 0 .............................. <me>
+  [ 31] getlocal 0 .............................. <params>
+  [ 33] getparam 2 .............................. <data>
+  [ 35] pusharglist 3 ........................... <me, params, data>
+  [ 37] objcall 902 ............................. <me.setParamsFromData(params, data)>
+  [ 40] setlocal 0 .............................. params = me.setParamsFromData(params, data)
+  [ 42] getlocal 0 .............................. <params>
+  [ 44] pusharglistnoret 1 ...................... <params>
+  [ 46] extcall 3 ............................... return params
+  [ 48] ret
+end
+
+on setParamsFromData me, params, data
+  [  0] getparam 1 .............................. <params>
+  [  2] getparam 2 .............................. <data>
+  [  4] pusharglist 2 ........................... <params, data>
+  [  6] extcall 934 ............................. <ListModifyProperties(params, data)>
+  [  9] setparam 1 .............................. params = ListModifyProperties(params, data)
+  [ 11] getparam 1 .............................. <params>
+  [ 13] pusharglistnoret 1 ...................... <params>
+  [ 15] extcall 3 ............................... return params
+  [ 17] ret
+end
+
+on setParamsMaster me, params
+  [  0] getparam 1 .............................. <params>
+  [  2] getobjprop 970 .......................... <params.masterPrg>
+  [  5] peek 0 .................................. case params.masterPrg of
+  [  7] pushsymb 619 ............................ <#actorMaster>
+  [ 10] eq
+  [ 11] jmpifz [ 21] ............................ (case) #actorMaster:
+  [ 14] getparam 1 .............................. <params>
+  [ 16] getparam 0 .............................. <me>
+  [ 18] setobjprop 970 .......................... params.masterPrg = me
+  [ 21] pop 1
+  [ 23] ret
+end
+
+on getParams me, functionSym
+  [  0] getprop 376 ............................. <pParams>
+  [  3] getparam 1 .............................. <functionSym>
+  [  5] pusharglist 2 ........................... <pParams, functionSym>
+  [  7] objcall 301 ............................. <pParams[functionSym]>
+  [ 10] pusharglist 1 ........................... <pParams[functionSym]>
+  [ 12] objcall 302 ............................. <pParams[functionSym].duplicate()>
+  [ 15] pusharglistnoret 1 ...................... <pParams[functionSym].duplicate()>
+  [ 17] extcall 3 ............................... return pParams[functionSym].duplicate()
+  [ 19] ret
+end
+
+on getPlayer me
+  [  0] getprop 904 ............................. <pPlayer>
+  [  3] pusharglistnoret 1 ...................... <pPlayer>
+  [  5] extcall 3 ............................... return pPlayer
+  [  7] ret
+end
+
+on stop me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 239 ............................. me.finish()
+  [  6] ret
+end
+
+on unpauseGameObjects me
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 336 ...................... <g.objectMaster>
+  [  5] pushsymb 916 ............................ <#objGameObject>
+  [  8] pusharglist 2 ........................... <g.objectMaster, #objGameObject>
+  [ 10] objcall 927 ............................. <g.objectMaster.getActiveObjectsWithFlag(#objGameObject)>
+  [ 13] setlocal 0 .............................. gameObjects = g.objectMaster.getActiveObjectsWithFlag(#objGameObject)
+  [ 15] getlocal 0 .............................. <gameObjects>
+  [ 17] peek 0
+  [ 19] pusharglist 1
+  [ 21] extcall 348
+  [ 24] pushint8 1
+  [ 26] peek 0
+  [ 28] peek 2
+  [ 30] lteq
+  [ 31] jmpifz [ 57] ............................ repeat with gameObject in gameObjects
+  [ 34] peek 2
+  [ 36] peek 1
+  [ 38] pusharglist 2
+  [ 40] extcall 301
+  [ 43] setlocal 1
+  [ 45] getlocal 1 .............................. <gameObject>
+  [ 47] pusharglistnoret 1 ...................... <gameObject>
+  [ 49] objcall 971 ............................. gameObject.unpaws()
+  [ 52] pushint8 1
+  [ 54] add
+  [ 55] endrepeat [ 26]
+  [ 57] pop 3
+  [ 59] ret
+end

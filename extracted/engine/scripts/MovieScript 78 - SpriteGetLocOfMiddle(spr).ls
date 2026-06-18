@@ -1,0 +1,5 @@
+on SpriteGetLocOfMiddle spr
+  locx = spr.rect[1] + (spr.width / 2)
+  locy = spr.rect[2] + (spr.height / 2)
+  return point(locx, locy)
+end

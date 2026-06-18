@@ -1,0 +1,117 @@
+property ancestor, pRotational
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 1176 ......................... <params.rotational>
+  [ 13] setprop 1175 ............................ pRotational = params.rotational
+  [ 16] getparam 0 .............................. <me>
+  [ 18] pusharglistnoret 1 ...................... <me>
+  [ 20] objcall 1173 ............................ me.initRotational()
+  [ 23] ret
+end
+
+on initRotational me
+  [  0] getprop 1175 ............................ <pRotational>
+  [  3] pushzero ................................ <0>
+  [  4] nteq .................................... <pRotational <> 0>
+  [  5] jmpifz [ 15] ............................ if pRotational <> 0 then
+  [  8] getparam 0 .............................. <me>
+  [ 10] pusharglistnoret 1 ...................... <me>
+  [ 12] objcall 1174 ............................ me.updateRotational()
+  [ 15] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getlocal 0 .............................. <i>
+  [ 12] pushsymb 1176 ........................... <#rotational>
+  [ 15] pushint8 1 .............................. <1>
+  [ 17] pusharglistnoret 3 ...................... <i, #rotational, 1>
+  [ 19] objcall 48 .............................. i[#rotational] = 1
+  [ 21] getprop 33 .............................. <ancestor>
+  [ 23] pusharglistnoret 1 ...................... <ancestor>
+  [ 25] objcall 2 ............................... ancestor.addModParams()
+  [ 27] ret
+end
+
+on addSaveData me, sd
+  [  0] getparam 1 .............................. <sd>
+  [  2] pushsymb 1175 ........................... <#pRotational>
+  [  5] getprop 1175 ............................ <pRotational>
+  [  8] pusharglistnoret 3 ...................... <sd, #pRotational, pRotational>
+  [ 10] objcall 48 .............................. sd[#pRotational] = pRotational
+  [ 12] getprop 33 .............................. <ancestor>
+  [ 14] getparam 1 .............................. <sd>
+  [ 16] pusharglistnoret 2 ...................... <ancestor, sd>
+  [ 18] objcall 4 ............................... ancestor.addSaveData(sd)
+  [ 20] ret
+end
+
+on restoreFromSave me, sd
+  [  0] getparam 1 .............................. <sd>
+  [  2] getobjprop 1175 ......................... <sd.pRotational>
+  [  5] setprop 1175 ............................ pRotational = sd.pRotational
+  [  8] getparam 0 .............................. <me>
+  [ 10] pusharglistnoret 1 ...................... <me>
+  [ 12] objcall 1173 ............................ me.initRotational()
+  [ 15] getprop 33 .............................. <ancestor>
+  [ 17] getparam 1 .............................. <sd>
+  [ 19] pusharglistnoret 2 ...................... <ancestor, sd>
+  [ 21] objcall 26 .............................. ancestor.restoreFromSave(sd)
+  [ 23] ret
+end
+
+on update me
+  [  0] getprop 1175 ............................ <pRotational>
+  [  3] pushint8 1 .............................. <1>
+  [  5] eq ...................................... <pRotational = 1>
+  [  6] jmpifz [ 16] ............................ if pRotational = 1 then
+  [  9] getparam 0 .............................. <me>
+  [ 11] pusharglistnoret 1 ...................... <me>
+  [ 13] objcall 1174 ............................ me.updateRotational()
+  [ 16] getprop 33 .............................. <ancestor>
+  [ 18] pusharglistnoret 1 ...................... <ancestor>
+  [ 20] objcall 31 .............................. ancestor.update()
+  [ 22] ret
+end
+
+on updateRotational me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 57 ....................... <me.id>
+  [  4] getchainedprop 58 ....................... <me.id.bigMe>
+  [  6] pusharglist 1 ........................... <me.id.bigMe>
+  [  8] objcall 201 ............................. <me.id.bigMe.getVect()>
+  [ 10] setlocal 0 .............................. vect = me.id.bigMe.getVect()
+  [ 12] getlocal 0 .............................. <vect>
+  [ 14] pusharglist 1 ........................... <vect>
+  [ 16] extcall 1177 ............................ <GeomAngle(vect)>
+  [ 19] setlocal 1 .............................. rot = GeomAngle(vect)
+  [ 21] getparam 0 .............................. <me>
+  [ 23] getchainedprop 57 ....................... <me.id>
+  [ 25] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 27] getlocal 1 .............................. <rot>
+  [ 29] pusharglistnoret 2 ...................... <me.id.bigMe, rot>
+  [ 31] objcall 1178 ............................ me.id.bigMe.setSpriteRotation(rot)
+  [ 34] ret
+end

@@ -1,0 +1,456 @@
+property ancestor, pTeleportCaller, pTeleportCeiling, pTeleportFadeStep, pTeleportFloorLoc, pTeleportFrames, pTeleportHeight, pTeleportHeightStep, pTeleportMode, pTeleportXLoc
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getprop 33 .............................. <ancestor>
+  [ 12] pusharglistnoret 1 ...................... <ancestor>
+  [ 14] objcall 2 ............................... ancestor.addModParams()
+  [ 16] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pushsymb 49 ............................. <#none>
+  [ 10] setprop 1428 ............................ pTeleportCaller = #none
+  [ 13] pushsymb 49 ............................. <#none>
+  [ 15] setprop 1429 ............................ pTeleportCeiling = #none
+  [ 18] pushsymb 49 ............................. <#none>
+  [ 20] setprop 1430 ............................ pTeleportFloorLoc = #none
+  [ 23] pushint8 15 ............................. <15>
+  [ 25] setprop 1431 ............................ pTeleportFrames = 15
+  [ 28] pushint16 1000 .......................... <1000>
+  [ 31] setprop 1432 ............................ pTeleportHeight = 1000
+  [ 34] pushsymb 49 ............................. <#none>
+  [ 36] setprop 1433 ............................ pTeleportMode = #none
+  [ 39] pushsymb 49 ............................. <#none>
+  [ 41] setprop 1434 ............................ pTeleportXLoc = #none
+  [ 44] getprop 1432 ............................ <pTeleportHeight>
+  [ 47] getprop 1431 ............................ <pTeleportFrames>
+  [ 50] div ..................................... <pTeleportHeight / pTeleportFrames>
+  [ 51] setprop 1435 ............................ pTeleportHeightStep = pTeleportHeight / pTeleportFrames
+  [ 54] pushint8 100 ............................ <100>
+  [ 56] getprop 1431 ............................ <pTeleportFrames>
+  [ 59] div ..................................... <100 / pTeleportFrames>
+  [ 60] setprop 1436 ............................ pTeleportFadeStep = 100 / pTeleportFrames
+  [ 63] ret
+end
+
+on addSaveData me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 4 ............................... ancestor.addSaveData(sd)
+  [  8] getparam 0 .............................. <me>
+  [ 10] getparam 1 .............................. <sd>
+  [ 12] pusharglistnoret 2 ...................... <me, sd>
+  [ 14] objcall 6 ............................... me.addToSaveData(sd)
+  [ 16] ret
+end
+
+on addToArmyDetails me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 51 ....................... <me.big>
+  [  4] pusharglist 1 ........................... <me.big>
+  [  6] objcall 54 .............................. <me.big.getArmyDetails()>
+  [  8] setlocal 0 .............................. ad = me.big.getArmyDetails()
+  [ 10] ret
+end
+
+on addToSaveData me, sd
+  [  0] getparam 1 .............................. <sd>
+  [  2] pushsymb 1428 ........................... <#pTeleportCaller>
+  [  5] getprop 1428 ............................ <pTeleportCaller>
+  [  8] pusharglistnoret 3 ...................... <sd, #pTeleportCaller, pTeleportCaller>
+  [ 10] objcall 48 .............................. sd[#pTeleportCaller] = pTeleportCaller
+  [ 12] getparam 1 .............................. <sd>
+  [ 14] pushsymb 1429 ........................... <#pTeleportCeiling>
+  [ 17] getprop 1429 ............................ <pTeleportCeiling>
+  [ 20] pusharglistnoret 3 ...................... <sd, #pTeleportCeiling, pTeleportCeiling>
+  [ 22] objcall 48 .............................. sd[#pTeleportCeiling] = pTeleportCeiling
+  [ 24] getparam 1 .............................. <sd>
+  [ 26] pushsymb 1436 ........................... <#pTeleportFadeStep>
+  [ 29] getprop 1436 ............................ <pTeleportFadeStep>
+  [ 32] pusharglistnoret 3 ...................... <sd, #pTeleportFadeStep, pTeleportFadeStep>
+  [ 34] objcall 48 .............................. sd[#pTeleportFadeStep] = pTeleportFadeStep
+  [ 36] getparam 1 .............................. <sd>
+  [ 38] pushsymb 1430 ........................... <#pTeleportFloorLoc>
+  [ 41] getprop 1430 ............................ <pTeleportFloorLoc>
+  [ 44] pusharglistnoret 3 ...................... <sd, #pTeleportFloorLoc, pTeleportFloorLoc>
+  [ 46] objcall 48 .............................. sd[#pTeleportFloorLoc] = pTeleportFloorLoc
+  [ 48] getparam 1 .............................. <sd>
+  [ 50] pushsymb 1431 ........................... <#pTeleportFrames>
+  [ 53] getprop 1431 ............................ <pTeleportFrames>
+  [ 56] pusharglistnoret 3 ...................... <sd, #pTeleportFrames, pTeleportFrames>
+  [ 58] objcall 48 .............................. sd[#pTeleportFrames] = pTeleportFrames
+  [ 60] getparam 1 .............................. <sd>
+  [ 62] pushsymb 1432 ........................... <#pTeleportHeight>
+  [ 65] getprop 1432 ............................ <pTeleportHeight>
+  [ 68] pusharglistnoret 3 ...................... <sd, #pTeleportHeight, pTeleportHeight>
+  [ 70] objcall 48 .............................. sd[#pTeleportHeight] = pTeleportHeight
+  [ 72] getparam 1 .............................. <sd>
+  [ 74] pushsymb 1435 ........................... <#pTeleportHeightStep>
+  [ 77] getprop 1435 ............................ <pTeleportHeightStep>
+  [ 80] pusharglistnoret 3 ...................... <sd, #pTeleportHeightStep, pTeleportHeightStep>
+  [ 82] objcall 48 .............................. sd[#pTeleportHeightStep] = pTeleportHeightStep
+  [ 84] getparam 1 .............................. <sd>
+  [ 86] pushsymb 1433 ........................... <#pTeleportMode>
+  [ 89] getprop 1433 ............................ <pTeleportMode>
+  [ 92] pusharglistnoret 3 ...................... <sd, #pTeleportMode, pTeleportMode>
+  [ 94] objcall 48 .............................. sd[#pTeleportMode] = pTeleportMode
+  [ 96] getparam 1 .............................. <sd>
+  [ 98] pushsymb 1434 ........................... <#pTeleportXLoc>
+  [101] getprop 1434 ............................ <pTeleportXLoc>
+  [104] pusharglistnoret 3 ...................... <sd, #pTeleportXLoc, pTeleportXLoc>
+  [106] objcall 48 .............................. sd[#pTeleportXLoc] = pTeleportXLoc
+  [108] ret
+end
+
+on getTeleportMode me
+  [  0] getprop 1433 ............................ <pTeleportMode>
+  [  3] pusharglistnoret 1 ...................... <pTeleportMode>
+  [  5] extcall 35 .............................. return pTeleportMode
+  [  7] ret
+end
+
+on goTeleportMode me, newMode
+  [  0] getparam 1 .............................. <newMode>
+  [  2] setprop 1433 ............................ pTeleportMode = newMode
+  [  5] ret
+end
+
+on internalEvent me, theEvent
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <theEvent>
+  [  4] pusharglistnoret 2 ...................... <ancestor, theEvent>
+  [  6] objcall 22 .............................. ancestor.internalEvent(theEvent)
+  [  8] getparam 1 .............................. <theEvent>
+  [ 10] peek 0 .................................. case theEvent of
+  [ 12] pushsymb 5 .............................. <#addToArmyDetails>
+  [ 14] eq
+  [ 15] jmpifz [ 27] ............................ (case) #addToArmyDetails:
+  [ 18] getparam 0 .............................. <me>
+  [ 20] pusharglistnoret 1 ...................... <me>
+  [ 22] objcall 5 ............................... me.addToArmyDetails()
+  [ 24] jmp [ 41]
+  [ 27] peek 0
+  [ 29] pushsymb 25 ............................. <#restoreFromArmyDetails>
+  [ 31] eq
+  [ 32] jmpifz [ 41] ............................ (case) #restoreFromArmyDetails:
+  [ 35] getparam 0 .............................. <me>
+  [ 37] pusharglistnoret 1 ...................... <me>
+  [ 39] objcall 25 .............................. me.restoreFromArmyDetails()
+  [ 41] pop 1 ................................... end case
+  [ 43] ret
+end
+
+on restoreFromArmyDetails me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 51 ....................... <me.big>
+  [  4] pusharglist 1 ........................... <me.big>
+  [  6] objcall 54 .............................. <me.big.getArmyDetails()>
+  [  8] setlocal 0 .............................. ad = me.big.getArmyDetails()
+  [ 10] ret
+end
+
+on restoreFromSave me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 26 .............................. ancestor.restoreFromSave(sd)
+  [  8] getparam 0 .............................. <me>
+  [ 10] getparam 1 .............................. <sd>
+  [ 12] pusharglistnoret 2 ...................... <me, sd>
+  [ 14] objcall 27 .............................. me.restoreFromSaveData(sd)
+  [ 16] ret
+end
+
+on restoreFromSaveData me, sd
+  [  0] getparam 1 .............................. <sd>
+  [  2] getobjprop 1428 ......................... <sd.pTeleportCaller>
+  [  5] setprop 1428 ............................ pTeleportCaller = sd.pTeleportCaller
+  [  8] getparam 1 .............................. <sd>
+  [ 10] getobjprop 1429 ......................... <sd.pTeleportCeiling>
+  [ 13] setprop 1429 ............................ pTeleportCeiling = sd.pTeleportCeiling
+  [ 16] getparam 1 .............................. <sd>
+  [ 18] getobjprop 1436 ......................... <sd.pTeleportFadeStep>
+  [ 21] setprop 1436 ............................ pTeleportFadeStep = sd.pTeleportFadeStep
+  [ 24] getparam 1 .............................. <sd>
+  [ 26] getobjprop 1430 ......................... <sd.pTeleportFloorLoc>
+  [ 29] setprop 1430 ............................ pTeleportFloorLoc = sd.pTeleportFloorLoc
+  [ 32] getparam 1 .............................. <sd>
+  [ 34] getobjprop 1431 ......................... <sd.pTeleportFrames>
+  [ 37] setprop 1431 ............................ pTeleportFrames = sd.pTeleportFrames
+  [ 40] getparam 1 .............................. <sd>
+  [ 42] getobjprop 1432 ......................... <sd.pTeleportHeight>
+  [ 45] setprop 1432 ............................ pTeleportHeight = sd.pTeleportHeight
+  [ 48] getparam 1 .............................. <sd>
+  [ 50] getobjprop 1435 ......................... <sd.pTeleportHeightStep>
+  [ 53] setprop 1435 ............................ pTeleportHeightStep = sd.pTeleportHeightStep
+  [ 56] getparam 1 .............................. <sd>
+  [ 58] getobjprop 1433 ......................... <sd.pTeleportMode>
+  [ 61] setprop 1433 ............................ pTeleportMode = sd.pTeleportMode
+  [ 64] getparam 1 .............................. <sd>
+  [ 66] getobjprop 1434 ......................... <sd.pTeleportXLoc>
+  [ 69] setprop 1434 ............................ pTeleportXLoc = sd.pTeleportXLoc
+  [ 72] ret
+end
+
+on teleportFinished me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 57 ....................... <me.id>
+  [  4] getchainedprop 58 ....................... <me.id.bigMe>
+  [  6] pushzero ................................ <0>
+  [  7] pusharglistnoret 2 ...................... <me.id.bigMe, 0>
+  [  9] objcall 29 .............................. me.id.bigMe.setAnimKeepSize(0)
+  [ 11] getparam 0 .............................. <me>
+  [ 13] pushsymb 49 ............................. <#none>
+  [ 15] pusharglistnoret 2 ...................... <me, #none>
+  [ 17] objcall 1424 ............................ me.goTeleportMode(#none)
+  [ 20] ret
+end
+
+on teleportInAt me, theloc
+  [  0] getparam 1 .............................. <theloc>
+  [  2] getobjprop 539 .......................... <theloc.locH>
+  [  5] setprop 1434 ............................ pTeleportXLoc = theloc.locH
+  [  8] getparam 1 .............................. <theloc>
+  [ 10] getobjprop 540 .......................... <theloc.locV>
+  [ 13] setprop 1430 ............................ pTeleportFloorLoc = theloc.locV
+  [ 16] getprop 1430 ............................ <pTeleportFloorLoc>
+  [ 19] getprop 1432 ............................ <pTeleportHeight>
+  [ 22] sub ..................................... <pTeleportFloorLoc - pTeleportHeight>
+  [ 23] setprop 1429 ............................ pTeleportCeiling = pTeleportFloorLoc - pTeleportHeight
+  [ 26] getparam 0 .............................. <me>
+  [ 28] getchainedprop 57 ....................... <me.id>
+  [ 30] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 32] pushint8 1 .............................. <1>
+  [ 34] pusharglistnoret 2 ...................... <me.id.bigMe, 1>
+  [ 36] objcall 29 .............................. me.id.bigMe.setAnimKeepSize(1)
+  [ 38] getparam 0 .............................. <me>
+  [ 40] getchainedprop 57 ....................... <me.id>
+  [ 42] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 44] getprop 1432 ............................ <pTeleportHeight>
+  [ 47] pusharglistnoret 2 ...................... <me.id.bigMe, pTeleportHeight>
+  [ 49] objcall 1011 ............................ me.id.bigMe.setSpriteHeight(pTeleportHeight)
+  [ 52] getparam 0 .............................. <me>
+  [ 54] pushsymb 1437 ........................... <#teleportInStretch>
+  [ 57] pusharglistnoret 2 ...................... <me, #teleportInStretch>
+  [ 59] objcall 1424 ............................ me.goTeleportMode(#teleportInStretch)
+  [ 62] getparam 0 .............................. <me>
+  [ 64] pusharglistnoret 1 ...................... <me>
+  [ 66] objcall 672 ............................. me.invisible()
+  [ 69] getparam 0 .............................. <me>
+  [ 71] getprop 1436 ............................ <pTeleportFadeStep>
+  [ 74] pushsymb 690 ............................ <#in>
+  [ 77] pusharglistnoret 3 ...................... <me, pTeleportFadeStep, #in>
+  [ 79] objcall 681 ............................. me.startTransBlend(pTeleportFadeStep, #in)
+  [ 82] ret
+end
+
+on teleportOut me, callerSym, teleportFloorLoc
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 57 ....................... <me.id>
+  [  4] getobjprop 58 ........................... <me.id.bigMe>
+  [  6] setlocal 0 .............................. bigMe = me.id.bigMe
+  [  8] getparam 1 .............................. <callerSym>
+  [ 10] setprop 1428 ............................ pTeleportCaller = callerSym
+  [ 13] getlocal 0 .............................. <bigMe>
+  [ 15] pusharglist 1 ........................... <bigMe>
+  [ 17] objcall 111 ............................. <bigMe.getLoc()>
+  [ 19] getobjprop 539 .......................... <bigMe.getLoc().locH>
+  [ 22] setprop 1434 ............................ pTeleportXLoc = bigMe.getLoc().locH
+  [ 25] getparam 2 .............................. <teleportFloorLoc>
+  [ 27] setprop 1430 ............................ pTeleportFloorLoc = teleportFloorLoc
+  [ 30] getprop 1430 ............................ <pTeleportFloorLoc>
+  [ 33] getprop 1432 ............................ <pTeleportHeight>
+  [ 36] sub ..................................... <pTeleportFloorLoc - pTeleportHeight>
+  [ 37] setprop 1429 ............................ pTeleportCeiling = pTeleportFloorLoc - pTeleportHeight
+  [ 40] getlocal 0 .............................. <bigMe>
+  [ 42] pushint8 1 .............................. <1>
+  [ 44] pusharglistnoret 2 ...................... <bigMe, 1>
+  [ 46] objcall 29 .............................. bigMe.setAnimKeepSize(1)
+  [ 48] getparam 0 .............................. <me>
+  [ 50] pushsymb 1438 ........................... <#teleportOutStretch>
+  [ 53] pusharglistnoret 2 ...................... <me, #teleportOutStretch>
+  [ 55] objcall 1424 ............................ me.goTeleportMode(#teleportOutStretch)
+  [ 58] getparam 0 .............................. <me>
+  [ 60] getprop 1436 ............................ <pTeleportFadeStep>
+  [ 63] pushsymb 689 ............................ <#out>
+  [ 66] pusharglistnoret 3 ...................... <me, pTeleportFadeStep, #out>
+  [ 68] objcall 681 ............................. me.startTransBlend(pTeleportFadeStep, #out)
+  [ 71] ret
+end
+
+on update me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 31 .............................. ancestor.update()
+  [  6] getprop 1433 ............................ <pTeleportMode>
+  [  9] peek 0 .................................. case pTeleportMode of
+  [ 11] pushsymb 1437 ........................... <#teleportInStretch>
+  [ 14] eq
+  [ 15] jmpifz [ 62] ............................ (case) #teleportInStretch:
+  [ 18] getparam 0 .............................. <me>
+  [ 20] pusharglist 1 ........................... <me>
+  [ 22] objcall 1426 ............................ <me.updateTeleportInStretch()>
+  [ 25] setlocal 0 .............................. fin = me.updateTeleportInStretch()
+  [ 27] getlocal 0 .............................. <fin>
+  [ 29] jmpifz [ 59] ............................ if fin then
+  [ 32] getparam 0 .............................. <me>
+  [ 34] pusharglistnoret 1 ...................... <me>
+  [ 36] objcall 1425 ............................ me.teleportFinished()
+  [ 39] getparam 0 .............................. <me>
+  [ 41] getchainedprop 57 ....................... <me.id>
+  [ 43] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 45] pusharglistnoret 1 ...................... <me.id.bigMe>
+  [ 47] objcall 117 ............................. me.id.bigMe.teleportInFinished()
+  [ 49] getparam 0 .............................. <me>
+  [ 51] getchainedprop 51 ....................... <me.big>
+  [ 53] pushsymb 117 ............................ <#teleportInFinished>
+  [ 55] pusharglistnoret 2 ...................... <me.big, #teleportInFinished>
+  [ 57] objcall 22 .............................. me.big.internalEvent(#teleportInFinished)
+  [ 59] jmp [115]
+  [ 62] peek 0
+  [ 64] pushsymb 1438 ........................... <#teleportOutStretch>
+  [ 67] eq
+  [ 68] jmpifz [115] ............................ (case) #teleportOutStretch:
+  [ 71] getparam 0 .............................. <me>
+  [ 73] pusharglist 1 ........................... <me>
+  [ 75] objcall 1427 ............................ <me.updateTeleportOutStretch()>
+  [ 78] setlocal 0 .............................. fin = me.updateTeleportOutStretch()
+  [ 80] getlocal 0 .............................. <fin>
+  [ 82] jmpifz [115] ............................ if fin then
+  [ 85] getparam 0 .............................. <me>
+  [ 87] pusharglistnoret 1 ...................... <me>
+  [ 89] objcall 1425 ............................ me.teleportFinished()
+  [ 92] getparam 0 .............................. <me>
+  [ 94] getchainedprop 57 ....................... <me.id>
+  [ 96] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 98] getprop 1428 ............................ <pTeleportCaller>
+  [101] pusharglistnoret 2 ...................... <me.id.bigMe, pTeleportCaller>
+  [103] objcall 119 ............................. me.id.bigMe.teleportOutFinished(pTeleportCaller)
+  [105] getparam 0 .............................. <me>
+  [107] getchainedprop 51 ....................... <me.big>
+  [109] pushsymb 119 ............................ <#teleportOutFinished>
+  [111] pusharglistnoret 2 ...................... <me.big, #teleportOutFinished>
+  [113] objcall 22 .............................. me.big.internalEvent(#teleportOutFinished)
+  [115] pop 1 ................................... end case
+  [117] ret
+end
+
+on updateTeleportInStretch me
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. fin = 0
+  [  3] getparam 0 .............................. <me>
+  [  5] getchainedprop 57 ....................... <me.id>
+  [  7] getchainedprop 58 ....................... <me.id.bigMe>
+  [  9] getprop 1435 ............................ <pTeleportHeightStep>
+  [ 12] inv ..................................... <-pTeleportHeightStep>
+  [ 13] pusharglistnoret 2 ...................... <me.id.bigMe, -pTeleportHeightStep>
+  [ 15] objcall 1441 ............................ me.id.bigMe.incSpriteHeight(-pTeleportHeightStep)
+  [ 18] getparam 0 .............................. <me>
+  [ 20] getchainedprop 57 ....................... <me.id>
+  [ 22] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 24] pusharglist 1 ........................... <me.id.bigMe>
+  [ 26] objcall 1390 ............................ <me.id.bigMe.getSpriteHeight()>
+  [ 29] getparam 0 .............................. <me>
+  [ 31] getchainedprop 57 ....................... <me.id>
+  [ 33] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 35] pusharglist 1 ........................... <me.id.bigMe>
+  [ 37] objcall 961 ............................. <me.id.bigMe.getMemberHeight()>
+  [ 40] lt ...................................... <me.id.bigMe.getSpriteHeight() < me.id.bigMe.getMemberHeight()>
+  [ 41] jmpifz [ 70] ............................ if me.id.bigMe.getSpriteHeight() < me.id.bigMe.getMemberHeight() then
+  [ 44] getparam 0 .............................. <me>
+  [ 46] getchainedprop 57 ....................... <me.id>
+  [ 48] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 50] getparam 0 .............................. <me>
+  [ 52] getchainedprop 57 ....................... <me.id>
+  [ 54] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 56] pusharglist 1 ........................... <me.id.bigMe>
+  [ 58] objcall 961 ............................. <me.id.bigMe.getMemberHeight()>
+  [ 61] pusharglistnoret 2 ...................... <me.id.bigMe, me.id.bigMe.getMemberHeight()>
+  [ 63] objcall 1011 ............................ me.id.bigMe.setSpriteHeight(me.id.bigMe.getMemberHeight())
+  [ 66] pushint8 1 .............................. <1>
+  [ 68] setlocal 0 .............................. fin = 1
+  [ 70] getparam 0 .............................. <me>
+  [ 72] getchainedprop 57 ....................... <me.id>
+  [ 74] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 76] pushsymb 114 ............................ <#bottom>
+  [ 78] getprop 1430 ............................ <pTeleportFloorLoc>
+  [ 81] pusharglist 3 ........................... <me.id.bigMe, #bottom, pTeleportFloorLoc>
+  [ 83] objcall 965 ............................. <me.id.bigMe.positionEdge(#bottom, pTeleportFloorLoc)>
+  [ 86] setlocal 1 .............................. yLoc = me.id.bigMe.positionEdge(#bottom, pTeleportFloorLoc)
+  [ 88] getparam 0 .............................. <me>
+  [ 90] getchainedprop 57 ....................... <me.id>
+  [ 92] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 94] getprop 1434 ............................ <pTeleportXLoc>
+  [ 97] getlocal 1 .............................. <yLoc>
+  [ 99] pusharglist 2 ........................... <pTeleportXLoc, yLoc>
+  [101] extcall 197 ............................. <point(pTeleportXLoc, yLoc)>
+  [103] pusharglistnoret 2 ...................... <me.id.bigMe, point(pTeleportXLoc, yLoc)>
+  [105] objcall 669 ............................. me.id.bigMe.setLoc(point(pTeleportXLoc, yLoc))
+  [108] getlocal 0 .............................. <fin>
+  [110] pusharglistnoret 1 ...................... <fin>
+  [112] extcall 35 .............................. return fin
+  [114] ret
+end
+
+on updateTeleportOutStretch me
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. fin = 0
+  [  3] getparam 0 .............................. <me>
+  [  5] getchainedprop 57 ....................... <me.id>
+  [  7] getobjprop 58 ........................... <me.id.bigMe>
+  [  9] setlocal 1 .............................. bigMe = me.id.bigMe
+  [ 11] getlocal 1 .............................. <bigMe>
+  [ 13] getprop 1435 ............................ <pTeleportHeightStep>
+  [ 16] pusharglistnoret 2 ...................... <bigMe, pTeleportHeightStep>
+  [ 18] objcall 1441 ............................ bigMe.incSpriteHeight(pTeleportHeightStep)
+  [ 21] getlocal 1 .............................. <bigMe>
+  [ 23] pusharglist 1 ........................... <bigMe>
+  [ 25] objcall 1390 ............................ <bigMe.getSpriteHeight()>
+  [ 28] getprop 1432 ............................ <pTeleportHeight>
+  [ 31] gt ...................................... <bigMe.getSpriteHeight() > pTeleportHeight>
+  [ 32] jmpifz [ 39] ............................ if bigMe.getSpriteHeight() > pTeleportHeight then
+  [ 35] pushint8 1 .............................. <1>
+  [ 37] setlocal 0 .............................. fin = 1
+  [ 39] getparam 0 .............................. <me>
+  [ 41] getchainedprop 57 ....................... <me.id>
+  [ 43] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 45] pushsymb 114 ............................ <#bottom>
+  [ 47] getprop 1430 ............................ <pTeleportFloorLoc>
+  [ 50] pusharglist 3 ........................... <me.id.bigMe, #bottom, pTeleportFloorLoc>
+  [ 52] objcall 965 ............................. <me.id.bigMe.positionEdge(#bottom, pTeleportFloorLoc)>
+  [ 55] setlocal 2 .............................. yLoc = me.id.bigMe.positionEdge(#bottom, pTeleportFloorLoc)
+  [ 57] getlocal 1 .............................. <bigMe>
+  [ 59] getprop 1434 ............................ <pTeleportXLoc>
+  [ 62] getlocal 2 .............................. <yLoc>
+  [ 64] pusharglist 2 ........................... <pTeleportXLoc, yLoc>
+  [ 66] extcall 197 ............................. <point(pTeleportXLoc, yLoc)>
+  [ 68] pusharglistnoret 2 ...................... <bigMe, point(pTeleportXLoc, yLoc)>
+  [ 70] objcall 669 ............................. bigMe.setLoc(point(pTeleportXLoc, yLoc))
+  [ 73] getlocal 0 .............................. <fin>
+  [ 75] pusharglistnoret 1 ...................... <fin>
+  [ 77] extcall 35 .............................. return fin
+  [ 79] ret
+end

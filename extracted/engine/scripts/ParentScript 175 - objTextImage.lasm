@@ -1,0 +1,124 @@
+property ancestor, pFont, pimage, pText
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"objMenuTitle">
+  [  2] pusharglist 1 ........................... <"objMenuTitle">
+  [  4] extcall 34 .............................. <script("objMenuTitle")>
+  [  6] pusharglist 1 ........................... <script("objMenuTitle")>
+  [  8] extcall 0 ............................... <new(script("objMenuTitle"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objMenuTitle"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 1515 ........................... <#font>
+  [ 27] pushsymb 3215 ........................... <#menu>
+  [ 30] pusharglistnoret 3 ...................... <i, #font, #menu>
+  [ 32] objcall 48 .............................. i[#font] = #menu
+  [ 34] getlocal 0 .............................. <i>
+  [ 36] pushsymb 670 ............................ <#text>
+  [ 39] pushcons 1 .............................. <"some text">
+  [ 41] pusharglistnoret 3 ...................... <i, #text, "some text">
+  [ 43] objcall 48 .............................. i[#text] = "some text"
+  [ 45] getparam 0 .............................. <me>
+  [ 47] pusharglistnoret 1 ...................... <me>
+  [ 49] extcall 35 .............................. return me
+  [ 51] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 1515 ......................... <params.font>
+  [ 13] setprop 2496 ............................ pFont = params.font
+  [ 16] getparam 1 .............................. <params>
+  [ 18] getobjprop 670 .......................... <params.text>
+  [ 21] setprop 3928 ............................ pText = params.text
+  [ 24] getparam 0 .............................. <me>
+  [ 26] pusharglist 1 ........................... <me>
+  [ 28] objcall 3927 ............................ <me.makeImage()>
+  [ 31] setprop 3929 ............................ pimage = me.makeImage()
+  [ 34] ret
+end
+
+on displayCentered me, x1, x2, yLoc
+  [  0] getprop 3929 ............................ <pimage>
+  [  3] getobjprop 424 .......................... <pimage.width>
+  [  6] setlocal 0 .............................. mywidth = pimage.width
+  [  8] getparam 2 .............................. <x2>
+  [ 10] getparam 1 .............................. <x1>
+  [ 12] sub ..................................... <x2 - x1>
+  [ 13] setlocal 1 .............................. xWidth = x2 - x1
+  [ 15] getlocal 1 .............................. <xWidth>
+  [ 17] getlocal 0 .............................. <mywidth>
+  [ 19] sub ..................................... <xWidth - mywidth>
+  [ 20] setlocal 2 .............................. spaces = xWidth - mywidth
+  [ 22] getlocal 2 .............................. <spaces>
+  [ 24] pushint8 2 .............................. <2>
+  [ 26] div ..................................... <spaces / 2>
+  [ 27] setlocal 3 .............................. leftSpace = spaces / 2
+  [ 29] getlocal 3 .............................. <leftSpace>
+  [ 31] setlocal 4 .............................. xOffset = leftSpace
+  [ 33] getparam 1 .............................. <x1>
+  [ 35] getlocal 4 .............................. <xOffset>
+  [ 37] add ..................................... <x1 + xOffset>
+  [ 38] setlocal 5 .............................. xLoc = x1 + xOffset
+  [ 40] getparam 0 .............................. <me>
+  [ 42] getlocal 5 .............................. <xLoc>
+  [ 44] getparam 3 .............................. <yLoc>
+  [ 46] pusharglist 2 ........................... <xLoc, yLoc>
+  [ 48] extcall 197 ............................. <point(xLoc, yLoc)>
+  [ 50] pusharglistnoret 2 ...................... <me, point(xLoc, yLoc)>
+  [ 52] objcall 3924 ............................ me.displayAtLoc(point(xLoc, yLoc))
+  [ 55] ret
+end
+
+on displayAtLoc me, theloc
+  [  0] getparam 0 .............................. <me>
+  [  2] getprop 3929 ............................ <pimage>
+  [  5] getparam 1 .............................. <theloc>
+  [  7] pusharglistnoret 3 ...................... <me, pimage, theloc>
+  [  9] objcall 2502 ............................ me.displayImageAtLoc(pimage, theloc)
+  [ 12] ret
+end
+
+on getImageHeight me
+  [  0] getprop 3929 ............................ <pimage>
+  [  3] getobjprop 423 .......................... <pimage.height>
+  [  6] pusharglistnoret 1 ...................... <pimage.height>
+  [  8] extcall 35 .............................. return pimage.height
+  [ 10] ret
+end
+
+on getImageWidth me
+  [  0] getprop 3929 ............................ <pimage>
+  [  3] getobjprop 424 .......................... <pimage.width>
+  [  6] pusharglistnoret 1 ...................... <pimage.width>
+  [  8] extcall 35 .............................. return pimage.width
+  [ 10] ret
+end
+
+on makeImage me
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 2508 ..................... <g.collectionsMaster>
+  [  5] pushsymb 2509 ........................... <#objFont>
+  [  8] getprop 2496 ............................ <pFont>
+  [ 11] pusharglist 3 ........................... <g.collectionsMaster, #objFont, pFont>
+  [ 13] objcall 2380 ............................ <g.collectionsMaster.getObject(#objFont, pFont)>
+  [ 16] setlocal 0 .............................. theFont = g.collectionsMaster.getObject(#objFont, pFont)
+  [ 18] getlocal 0 .............................. <theFont>
+  [ 20] getprop 3928 ............................ <pText>
+  [ 23] pusharglist 2 ........................... <theFont, pText>
+  [ 25] objcall 2501 ............................ <theFont.getString(pText)>
+  [ 28] setlocal 1 .............................. theImage = theFont.getString(pText)
+  [ 30] getlocal 1 .............................. <theImage>
+  [ 32] pusharglistnoret 1 ...................... <theImage>
+  [ 34] extcall 35 .............................. return theImage
+  [ 36] ret
+end

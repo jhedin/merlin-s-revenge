@@ -1,0 +1,169 @@
+property ancestor, pSplashDamageOn, pSplashGraveOn
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getlocal 0 .............................. <i>
+  [ 12] pushsymb 1337 ........................... <#splashDamageOn>
+  [ 15] pushzero ................................ <0>
+  [ 16] pusharglistnoret 3 ...................... <i, #splashDamageOn, 0>
+  [ 18] objcall 48 .............................. i[#splashDamageOn] = 0
+  [ 20] getlocal 0 .............................. <i>
+  [ 22] pushsymb 1338 ........................... <#splashGraveOn>
+  [ 25] pushzero ................................ <0>
+  [ 26] pusharglistnoret 3 ...................... <i, #splashGraveOn, 0>
+  [ 28] objcall 48 .............................. i[#splashGraveOn] = 0
+  [ 30] getprop 33 .............................. <ancestor>
+  [ 32] pusharglistnoret 1 ...................... <ancestor>
+  [ 34] objcall 2 ............................... ancestor.addModParams()
+  [ 36] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 1337 ......................... <params.splashDamageOn>
+  [ 13] setprop 1339 ............................ pSplashDamageOn = params.splashDamageOn
+  [ 16] getparam 1 .............................. <params>
+  [ 18] getobjprop 1338 ......................... <params.splashGraveOn>
+  [ 21] setprop 1340 ............................ pSplashGraveOn = params.splashGraveOn
+  [ 24] ret
+end
+
+on calcAttackDistSplash me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 51 ....................... <me.big>
+  [  4] getchainedprop 149 ...................... <me.big.pAttack>
+  [  6] getobjprop 202 .......................... <me.big.pAttack.power>
+  [  8] pusharglistnoret 1 ...................... <me.big.pAttack.power>
+  [ 10] extcall 35 .............................. return me.big.pAttack.power
+  [ 12] ret
+end
+
+on calcAttackHitSplash me, obj
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. hit = 0
+  [  3] getparam 1 .............................. <obj>
+  [  5] pusharglist 1 ........................... <obj>
+  [  7] objcall 111 ............................. <obj.getLoc()>
+  [  9] getparam 0 .............................. <me>
+  [ 11] getchainedprop 51 ....................... <me.big>
+  [ 13] pusharglist 1 ........................... <me.big>
+  [ 15] objcall 111 ............................. <me.big.getLoc()>
+  [ 17] pusharglist 2 ........................... <obj.getLoc(), me.big.getLoc()>
+  [ 19] extcall 190 ............................. <GeomDistSqr(obj.getLoc(), me.big.getLoc())>
+  [ 21] setlocal 1 .............................. dist = GeomDistSqr(obj.getLoc(), me.big.getLoc())
+  [ 23] getlocal 1 .............................. <dist>
+  [ 25] getparam 0 .............................. <me>
+  [ 27] getchainedprop 51 ....................... <me.big>
+  [ 29] getchainedprop 149 ...................... <me.big.pAttack>
+  [ 31] getobjprop 202 .......................... <me.big.pAttack.power>
+  [ 33] getparam 0 .............................. <me>
+  [ 35] getchainedprop 51 ....................... <me.big>
+  [ 37] getchainedprop 149 ...................... <me.big.pAttack>
+  [ 39] getobjprop 202 .......................... <me.big.pAttack.power>
+  [ 41] mul ..................................... <me.big.pAttack.power * me.big.pAttack.power>
+  [ 42] lt ...................................... <dist < (me.big.pAttack.power * me.big.pAttack.power)>
+  [ 43] jmpifz [ 50] ............................ if dist < (me.big.pAttack.power * me.big.pAttack.power) then
+  [ 46] pushint8 1 .............................. <1>
+  [ 48] setlocal 0 .............................. hit = 1
+  [ 50] getlocal 0 .............................. <hit>
+  [ 52] pusharglistnoret 1 ...................... <hit>
+  [ 54] extcall 35 .............................. return hit
+  [ 56] ret
+end
+
+on calcCollisionVectSplash me, objTarget
+  [  0] getparam 1 .............................. <objTarget>
+  [  2] pusharglist 1 ........................... <objTarget>
+  [  4] objcall 111 ............................. <objTarget.getLoc()>
+  [  6] setlocal 0 .............................. targetloc = objTarget.getLoc()
+  [  8] getparam 0 .............................. <me>
+  [ 10] pusharglist 1 ........................... <me>
+  [ 12] objcall 111 ............................. <me.getLoc()>
+  [ 14] setlocal 1 .............................. attackLoc = me.getLoc()
+  [ 16] getparam 0 .............................. <me>
+  [ 18] getchainedprop 51 ....................... <me.big>
+  [ 20] getchainedprop 149 ...................... <me.big.pAttack>
+  [ 22] getobjprop 202 .......................... <me.big.pAttack.power>
+  [ 24] setlocal 2 .............................. attackPower = me.big.pAttack.power
+  [ 26] getlocal 0 .............................. <targetloc>
+  [ 28] getlocal 1 .............................. <attackLoc>
+  [ 30] getlocal 2 .............................. <attackPower>
+  [ 32] pusharglist 3 ........................... <targetloc, attackLoc, attackPower>
+  [ 34] extcall 212 ............................. <CollisionCalcVect(targetloc, attackLoc, attackPower)>
+  [ 36] setlocal 3 .............................. collisionVect = CollisionCalcVect(targetloc, attackLoc, attackPower)
+  [ 38] getlocal 3 .............................. <collisionVect>
+  [ 40] pusharglistnoret 1 ...................... <collisionVect>
+  [ 42] extcall 35 .............................. return collisionVect
+  [ 44] ret
+end
+
+on drawSplashGrave me
+  [  0] getprop 1340 ............................ <pSplashGraveOn>
+  [  3] jmpifz [ 15] ............................ if pSplashGraveOn then
+  [  6] getparam 0 .............................. <me>
+  [  8] getchainedprop 51 ....................... <me.big>
+  [ 10] pusharglistnoret 1 ...................... <me.big>
+  [ 12] objcall 748 ............................. me.big.drawGrave()
+  [ 15] ret
+end
+
+on hasSplashDamage me
+  [  0] getprop 1339 ............................ <pSplashDamageOn>
+  [  3] pusharglistnoret 1 ...................... <pSplashDamageOn>
+  [  5] extcall 35 .............................. return pSplashDamageOn
+  [  7] ret
+end
+
+on impactSplashDamage me
+  [  0] getprop 1339 ............................ <pSplashDamageOn>
+  [  3] jmpifz [ 20] ............................ if pSplashDamageOn then
+  [  6] getglobal 40 ............................ <g>
+  [  8] getchainedprop 642 ...................... <g.teamMaster>
+  [ 11] getparam 0 .............................. <me>
+  [ 13] getobjprop 51 ........................... <me.big>
+  [ 15] pusharglistnoret 2 ...................... <g.teamMaster, me.big>
+  [ 17] objcall 643 ............................. g.teamMaster.impactAttack(me.big)
+  [ 20] ret
+end
+
+on internalEvent me, theEvent
+  [  0] getparam 1 .............................. <theEvent>
+  [  2] peek 0 .................................. case theEvent of
+  [  4] pushsymb 646 ............................ <#land>
+  [  7] nteq
+  [  8] jmpifz [ 20] ............................ (case) #land, ...
+  [ 11] peek 0
+  [ 13] pushsymb 1342 ........................... <#mineTriggered>
+  [ 16] eq
+  [ 17] jmpifz [ 34] ............................ (case) ..., #mineTriggered:
+  [ 20] getparam 0 .............................. <me>
+  [ 22] pusharglistnoret 1 ...................... <me>
+  [ 24] objcall 1336 ............................ me.impactSplashDamage()
+  [ 27] getparam 0 .............................. <me>
+  [ 29] pusharglistnoret 1 ...................... <me>
+  [ 31] objcall 1335 ............................ me.drawSplashGrave()
+  [ 34] pop 1
+  [ 36] ret
+end

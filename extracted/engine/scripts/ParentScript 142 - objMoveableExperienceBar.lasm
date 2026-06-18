@@ -1,0 +1,259 @@
+property ancestor, pExperienceBar, pSurroundHeight, pTarget
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"objSpriteMember">
+  [  2] pusharglist 1 ........................... <"objSpriteMember">
+  [  4] extcall 34 .............................. <script("objSpriteMember")>
+  [  6] pusharglist 1 ........................... <script("objSpriteMember")>
+  [  8] extcall 0 ............................... <new(script("objSpriteMember"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objSpriteMember"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 3344 ........................... <#surroundHeight>
+  [ 27] pushint8 4 .............................. <4>
+  [ 29] pusharglistnoret 3 ...................... <i, #surroundHeight, 4>
+  [ 31] objcall 48 .............................. i[#surroundHeight] = 4
+  [ 33] getparam 0 .............................. <me>
+  [ 35] pusharglistnoret 1 ...................... <me>
+  [ 37] extcall 35 .............................. return me
+  [ 39] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pushsymb 49 ............................. <#none>
+  [ 10] setprop 3354 ............................ pExperienceBar = #none
+  [ 13] getparam 1 .............................. <params>
+  [ 15] getobjprop 3344 ......................... <params.surroundHeight>
+  [ 18] setprop 3345 ............................ pSurroundHeight = params.surroundHeight
+  [ 21] pushsymb 49 ............................. <#none>
+  [ 23] setprop 2847 ............................ pTarget = #none
+  [ 26] ret
+end
+
+on finish me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 3350 ............................ me.finishExperienceBar()
+  [  7] getprop 33 .............................. <ancestor>
+  [  9] pusharglistnoret 1 ...................... <ancestor>
+  [ 11] objcall 3 ............................... ancestor.finish()
+  [ 13] ret
+end
+
+on finishExperienceBar me
+  [  0] getprop 3354 ............................ <pExperienceBar>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] nteq .................................... <pExperienceBar <> #none>
+  [  6] jmpifz [ 26] ............................ if pExperienceBar <> #none then
+  [  9] getprop 3354 ............................ <pExperienceBar>
+  [ 12] pusharglistnoret 1 ...................... <pExperienceBar>
+  [ 14] objcall 3 ............................... pExperienceBar.finish()
+  [ 16] pushsymb 49 ............................. <#none>
+  [ 18] setprop 3354 ............................ pExperienceBar = #none
+  [ 21] pushsymb 49 ............................. <#none>
+  [ 23] setprop 2847 ............................ pTarget = #none
+  [ 26] ret
+end
+
+on calcSurroundRect me
+  [  0] getprop 2847 ............................ <pTarget>
+  [  3] pusharglist 1 ........................... <pTarget>
+  [  5] objcall 498 ............................. <pTarget.calcEnergyRectBottom()>
+  [  8] setlocal 0 .............................. ExperienceRect = pTarget.calcEnergyRectBottom()
+  [ 10] getlocal 0 .............................. <ExperienceRect>
+  [ 12] getobjprop 114 .......................... <ExperienceRect.bottom>
+  [ 14] getprop 3345 ............................ <pSurroundHeight>
+  [ 17] add ..................................... <ExperienceRect.bottom + pSurroundHeight>
+  [ 18] setlocal 1 .............................. surroundRectBottom = ExperienceRect.bottom + pSurroundHeight
+  [ 20] getlocal 0 .............................. <ExperienceRect>
+  [ 22] getobjprop 264 .......................... <ExperienceRect.left>
+  [ 25] getlocal 0 .............................. <ExperienceRect>
+  [ 27] getobjprop 114 .......................... <ExperienceRect.bottom>
+  [ 29] pushint8 3 .............................. <3>
+  [ 31] add ..................................... <ExperienceRect.bottom + 3>
+  [ 32] getlocal 0 .............................. <ExperienceRect>
+  [ 34] getobjprop 266 .......................... <ExperienceRect.right>
+  [ 37] getlocal 1 .............................. <surroundRectBottom>
+  [ 39] pushint8 3 .............................. <3>
+  [ 41] add ..................................... <surroundRectBottom + 3>
+  [ 42] pusharglist 4 ........................... <ExperienceRect.left, ExperienceRect.bottom + 3, ExperienceRect.right, surroundRectBottom + 3>
+  [ 44] extcall 263 ............................. <rect(ExperienceRect.left, ExperienceRect.bottom + 3, ExperienceRect.right, surroundRectBottom + 3)>
+  [ 47] setlocal 2 .............................. surroundRect = rect(ExperienceRect.left, ExperienceRect.bottom + 3, ExperienceRect.right, surroundRectBottom + 3)
+  [ 49] getlocal 2 .............................. <surroundRect>
+  [ 51] pusharglistnoret 1 ...................... <surroundRect>
+  [ 53] extcall 35 .............................. return surroundRect
+  [ 55] ret
+end
+
+on displayTargetExperience me
+  [  0] getprop 2847 ............................ <pTarget>
+  [  3] pusharglist 1 ........................... <pTarget>
+  [  5] objcall 574 ............................. <pTarget.getExperienceData()>
+  [  8] getobjprop 601 .......................... <pTarget.getExperienceData().expPnts>
+  [ 11] pushzero ................................ <0>
+  [ 12] gt ...................................... <pTarget.getExperienceData().expPnts > 0>
+  [ 13] jmpifz [ 46] ............................ if pTarget.getExperienceData().expPnts > 0 then / else
+  [ 16] getparam 0 .............................. <me>
+  [ 18] pusharglist 1 ........................... <me>
+  [ 20] objcall 3339 ............................ <me.calcSurroundRect()>
+  [ 23] setlocal 0 .............................. surroundRect = me.calcSurroundRect()
+  [ 25] getparam 0 .............................. <me>
+  [ 27] getlocal 0 .............................. <surroundRect>
+  [ 29] pusharglistnoret 2 ...................... <me, surroundRect>
+  [ 31] objcall 2960 ............................ me.setSpriteRect(surroundRect)
+  [ 34] getparam 0 .............................. <me>
+  [ 36] getlocal 0 .............................. <surroundRect>
+  [ 38] pusharglistnoret 2 ...................... <me, surroundRect>
+  [ 40] objcall 3353 ............................ me.updateExperienceBar(surroundRect)
+  [ 43] jmp [ 53]
+  [ 46] getparam 0 .............................. <me>
+  [ 48] pusharglistnoret 1 ...................... <me>
+  [ 50] objcall 1794 ............................ me.clearTarget()
+  [ 53] ret
+end
+
+on ensureExperienceBar me
+  [  0] getprop 3354 ............................ <pExperienceBar>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] eq ...................................... <pExperienceBar = #none>
+  [  6] jmpifz [ 61] ............................ if pExperienceBar = #none then
+  [  9] getglobal 40 ............................ <g>
+  [ 11] getchainedprop 41 ....................... <g.objectMaster>
+  [ 13] pushsymb 3356 ........................... <#objExperienceBar>
+  [ 16] pusharglist 2 ........................... <g.objectMaster, #objExperienceBar>
+  [ 18] objcall 43 .............................. <g.objectMaster.requestObject(#objExperienceBar)>
+  [ 20] setprop 3354 ............................ pExperienceBar = g.objectMaster.requestObject(#objExperienceBar)
+  [ 23] getprop 3354 ............................ <pExperienceBar>
+  [ 26] pushsymb 1 .............................. <#init>
+  [ 28] pusharglist 2 ........................... <pExperienceBar, #init>
+  [ 30] objcall 230 ............................. <pExperienceBar.getParams(#init)>
+  [ 32] setlocal 0 .............................. params = pExperienceBar.getParams(#init)
+  [ 34] getlocal 0 .............................. <params>
+  [ 36] pushint8 1 .............................. <1>
+  [ 38] setobjprop 2582 ......................... params.barBorder = 1
+  [ 41] getlocal 0 .............................. <params>
+  [ 43] getparam 0 .............................. <me>
+  [ 45] pusharglist 1 ........................... <me>
+  [ 47] objcall 97 .............................. <me.getSprite()>
+  [ 49] setobjprop 2585 ......................... params.surroundSpr = me.getSprite()
+  [ 52] getprop 3354 ............................ <pExperienceBar>
+  [ 55] getlocal 0 .............................. <params>
+  [ 57] pusharglistnoret 2 ...................... <pExperienceBar, params>
+  [ 59] objcall 1 ............................... pExperienceBar.init(params)
+  [ 61] ret
+end
+
+on clearTarget me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 3342 ............................ me.targetDead()
+  [  7] ret
+end
+
+on setTarget me, theObj
+  [  0] getparam 1 .............................. <theObj>
+  [  2] setprop 2847 ............................ pTarget = theObj
+  [  5] getparam 0 .............................. <me>
+  [  7] pusharglistnoret 1 ...................... <me>
+  [  9] objcall 3347 ............................ me.ensureSpriteAndMember()
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] objcall 3352 ............................ me.ensureExperienceBar()
+  [ 19] getprop 2847 ............................ <pTarget>
+  [ 22] pusharglist 1 ........................... <pTarget>
+  [ 24] objcall 574 ............................. <pTarget.getExperienceData()>
+  [ 27] setlocal 0 .............................. levelData = pTarget.getExperienceData()
+  [ 29] getlocal 0 .............................. <levelData>
+  [ 31] getobjprop 600 .......................... <levelData.expToNxtLvl>
+  [ 34] pushzero ................................ <0>
+  [ 35] gt ...................................... <levelData.expToNxtLvl > 0>
+  [ 36] getlocal 0 .............................. <levelData>
+  [ 38] getobjprop 601 .......................... <levelData.expPnts>
+  [ 41] pushzero ................................ <0>
+  [ 42] gt ...................................... <levelData.expPnts > 0>
+  [ 43] and ..................................... <(levelData.expToNxtLvl > 0) and (levelData.expPnts > 0)>
+  [ 44] jmpifz [ 81] ............................ if (levelData.expToNxtLvl > 0) and (levelData.expPnts > 0) then / else
+  [ 47] getglobal 40 ............................ <g>
+  [ 49] getchainedprop 642 ...................... <g.teamMaster>
+  [ 52] getprop 2847 ............................ <pTarget>
+  [ 55] pusharglist 1 ........................... <pTarget>
+  [ 57] objcall 238 ............................. <pTarget.getTeam()>
+  [ 59] pusharglist 2 ........................... <g.teamMaster, pTarget.getTeam()>
+  [ 61] objcall 3348 ............................ <g.teamMaster.getTeamColour(pTarget.getTeam())>
+  [ 64] setlocal 1 .............................. targetTeamColour = g.teamMaster.getTeamColour(pTarget.getTeam())
+  [ 66] getprop 3354 ............................ <pExperienceBar>
+  [ 69] getlocal 0 .............................. <levelData>
+  [ 71] getlocal 1 .............................. <targetTeamColour>
+  [ 73] pusharglistnoret 3 ...................... <pExperienceBar, levelData, targetTeamColour>
+  [ 75] objcall 2029 ............................ pExperienceBar.reset(levelData, targetTeamColour)
+  [ 78] jmp [ 88]
+  [ 81] getparam 0 .............................. <me>
+  [ 83] pusharglistnoret 1 ...................... <me>
+  [ 85] objcall 1794 ............................ me.clearTarget()
+  [ 88] ret
+end
+
+on targetDead me
+  [  0] pushsymb 49 ............................. <#none>
+  [  2] setprop 2847 ............................ pTarget = #none
+  [  5] getparam 0 .............................. <me>
+  [  7] pusharglistnoret 1 ...................... <me>
+  [  9] objcall 3350 ............................ me.finishExperienceBar()
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] objcall 375 ............................. me.offscreen()
+  [ 19] ret
+end
+
+on update me
+  [  0] getprop 2847 ............................ <pTarget>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] nteq .................................... <pTarget <> #none>
+  [  6] jmpifz [ 50] ............................ if pTarget <> #none then
+  [  9] getprop 2847 ............................ <pTarget>
+  [ 12] pusharglist 1 ........................... <pTarget>
+  [ 14] objcall 499 ............................. <pTarget.checkDead()>
+  [ 17] pushzero ................................ <0>
+  [ 18] eq ...................................... <pTarget.checkDead() = 0>
+  [ 19] getprop 2847 ............................ <pTarget>
+  [ 22] pusharglist 1 ........................... <pTarget>
+  [ 24] objcall 1828 ............................ <pTarget.getDead()>
+  [ 27] pushzero ................................ <0>
+  [ 28] eq ...................................... <pTarget.getDead() = 0>
+  [ 29] and ..................................... <(pTarget.checkDead() = 0) and (pTarget.getDead() = 0)>
+  [ 30] jmpifz [ 43] ............................ if (pTarget.checkDead() = 0) and (pTarget.getDead() = 0) then / else
+  [ 33] getparam 0 .............................. <me>
+  [ 35] pusharglistnoret 1 ...................... <me>
+  [ 37] objcall 3351 ............................ me.displayTargetExperience()
+  [ 40] jmp [ 50]
+  [ 43] getparam 0 .............................. <me>
+  [ 45] pusharglistnoret 1 ...................... <me>
+  [ 47] objcall 3342 ............................ me.targetDead()
+  [ 50] ret
+end
+
+on updateExperienceBar me, surroundRect
+  [  0] getprop 3354 ............................ <pExperienceBar>
+  [  3] getparam 1 .............................. <surroundRect>
+  [  5] pusharglistnoret 2 ...................... <pExperienceBar, surroundRect>
+  [  7] objcall 2579 ............................ pExperienceBar.setSurroundRect(surroundRect)
+  [ 10] getprop 3354 ............................ <pExperienceBar>
+  [ 13] pusharglistnoret 1 ...................... <pExperienceBar>
+  [ 15] objcall 2581 ............................ pExperienceBar.updateBarOnSurround()
+  [ 18] getprop 3354 ............................ <pExperienceBar>
+  [ 21] getprop 2847 ............................ <pTarget>
+  [ 24] pusharglist 1 ........................... <pTarget>
+  [ 26] objcall 574 ............................. <pTarget.getExperienceData()>
+  [ 29] pusharglistnoret 2 ...................... <pExperienceBar, pTarget.getExperienceData()>
+  [ 31] objcall 2615 ............................ pExperienceBar.updateExp(pTarget.getExperienceData())
+  [ 34] ret
+end

@@ -1,0 +1,677 @@
+property ancestor, pAnimSet, pCharacter, pCollisionUseMiddle, pDead, pFrictionX, pFrictionY, pMoveXY, pMinCollisionSpeed, pParams, pSpr, pTransColor
+global g, gGameObjectLayer
+
+on new me
+  [  0] pushcons 0 .............................. <"objAutoUpdate">
+  [  2] pusharglist 1 ........................... <"objAutoUpdate">
+  [  4] extcall 27 .............................. <script("objAutoUpdate")>
+  [  6] pusharglist 1 ........................... <script("objAutoUpdate")>
+  [  8] extcall 0 ............................... <new(script("objAutoUpdate"))>
+  [ 10] setprop 77 .............................. ancestor = new(script("objAutoUpdate"))
+  [ 12] pushsymb 1 .............................. <#init>
+  [ 14] pusharglist 0 ........................... <[:]>
+  [ 16] pushproplist ............................ <[:]>
+  [ 17] pusharglist 2 ........................... <[#init: [:]]>
+  [ 19] pushproplist ............................ <[#init: [:]]>
+  [ 20] setprop 140 ............................. pParams = [#init: [:]]
+  [ 22] getprop 140 ............................. <pParams>
+  [ 24] getobjprop 1 ............................ <pParams.init>
+  [ 26] setlocal 0 .............................. i = pParams.init
+  [ 28] getlocal 0 .............................. <i>
+  [ 30] pushsymb 112 ............................ <#character>
+  [ 32] pushsymb 768 ............................ <#gameObject>
+  [ 35] pusharglistnoret 3 ...................... <i, #character, #gameObject>
+  [ 37] objcall 37 .............................. i[#character] = #gameObject
+  [ 39] getlocal 0 .............................. <i>
+  [ 41] pushsymb 769 ............................ <#collisionUseMiddle>
+  [ 44] pushzero ................................ <0>
+  [ 45] pusharglistnoret 3 ...................... <i, #collisionUseMiddle, 0>
+  [ 47] objcall 37 .............................. i[#collisionUseMiddle] = 0
+  [ 49] getlocal 0 .............................. <i>
+  [ 51] pushsymb 770 ............................ <#friction>
+  [ 54] pushfloat32 12.5 ........................ <12.5>
+  [ 59] pushzero ................................ <0>
+  [ 60] pusharglist 2 ........................... <12.5, 0>
+  [ 62] extcall 215 ............................. <point(12.5, 0)>
+  [ 64] pusharglistnoret 3 ...................... <i, #friction, point(12.5, 0)>
+  [ 66] objcall 37 .............................. i[#friction] = point(12.5, 0)
+  [ 68] getlocal 0 .............................. <i>
+  [ 70] pushsymb 771 ............................ <#initLoc>
+  [ 73] pushint8 100 ............................ <100>
+  [ 75] pushint8 100 ............................ <100>
+  [ 77] pusharglist 2 ........................... <100, 100>
+  [ 79] extcall 215 ............................. <point(100, 100)>
+  [ 81] pusharglistnoret 3 ...................... <i, #initLoc, point(100, 100)>
+  [ 83] objcall 37 .............................. i[#initLoc] = point(100, 100)
+  [ 85] getlocal 0 .............................. <i>
+  [ 87] pushsymb 772 ............................ <#initMode>
+  [ 90] pushsymb 773 ............................ <#stand>
+  [ 93] pusharglistnoret 3 ...................... <i, #initMode, #stand>
+  [ 95] objcall 37 .............................. i[#initMode] = #stand
+  [ 97] getlocal 0 .............................. <i>
+  [ 99] pushsymb 774 ............................ <#initVect>
+  [102] pushzero ................................ <0>
+  [103] pushzero ................................ <0>
+  [104] pusharglist 2 ........................... <0, 0>
+  [106] extcall 215 ............................. <point(0, 0)>
+  [108] pusharglistnoret 3 ...................... <i, #initVect, point(0, 0)>
+  [110] objcall 37 .............................. i[#initVect] = point(0, 0)
+  [112] getlocal 0 .............................. <i>
+  [114] pushsymb 775 ............................ <#keepVect>
+  [117] pushzero ................................ <0>
+  [118] pusharglistnoret 3 ...................... <i, #keepVect, 0>
+  [120] objcall 37 .............................. i[#keepVect] = 0
+  [122] getlocal 0 .............................. <i>
+  [124] pushsymb 776 ............................ <#layerZ>
+  [127] getglobal 777 ........................... <gGameObjectLayer>
+  [130] pusharglistnoret 3 ...................... <i, #layerZ, gGameObjectLayer>
+  [132] objcall 37 .............................. i[#layerZ] = gGameObjectLayer
+  [134] getlocal 0 .............................. <i>
+  [136] pushsymb 94 ............................. <#name>
+  [138] pushsymb 22 ............................. <#none>
+  [140] pusharglistnoret 3 ...................... <i, #name, #none>
+  [142] objcall 37 .............................. i[#name] = #none
+  [144] getlocal 0 .............................. <i>
+  [146] pushsymb 250 ............................ <#masterPrg>
+  [148] pushsymb 22 ............................. <#none>
+  [150] pusharglistnoret 3 ...................... <i, #masterPrg, #none>
+  [152] objcall 37 .............................. i[#masterPrg] = #none
+  [154] getlocal 0 .............................. <i>
+  [156] pushsymb 158 ............................ <#member>
+  [158] pushsymb 22 ............................. <#none>
+  [160] pusharglistnoret 3 ...................... <i, #member, #none>
+  [162] objcall 37 .............................. i[#member] = #none
+  [164] getlocal 0 .............................. <i>
+  [166] pushsymb 778 ............................ <#minCollisionSpeed>
+  [169] pushint8 5 .............................. <5>
+  [171] pusharglistnoret 3 ...................... <i, #minCollisionSpeed, 5>
+  [173] objcall 37 .............................. i[#minCollisionSpeed] = 5
+  [175] getlocal 0 .............................. <i>
+  [177] pushsymb 779 ............................ <#weight>
+  [180] pushcons 1 .............................. <0.20000000000000001>
+  [182] pusharglistnoret 3 ...................... <i, #weight, 0.20000000000000001>
+  [184] objcall 37 .............................. i[#weight] = 0.20000000000000001
+  [186] getparam 0 .............................. <me>
+  [188] pusharglistnoret 1 ...................... <me>
+  [190] extcall 17 .............................. return me
+  [192] ret
+end
+
+on init me, params
+  [  0] getparam 1 .............................. <params>
+  [  2] getobjprop 112 .......................... <params.character>
+  [  4] setprop 780 ............................. pCharacter = params.character
+  [  7] getparam 1 .............................. <params>
+  [  9] getobjprop 769 .......................... <params.collisionUseMiddle>
+  [ 12] setprop 781 ............................. pCollisionUseMiddle = params.collisionUseMiddle
+  [ 15] pushzero ................................ <0>
+  [ 16] setprop 782 ............................. pDead = 0
+  [ 19] getparam 1 .............................. <params>
+  [ 21] pushsymb 770 ............................ <#friction>
+  [ 24] pushint8 1 .............................. <1>
+  [ 26] pusharglist 3 ........................... <params, #friction, 1>
+  [ 28] objcall 209 ............................. <params.friction[1]>
+  [ 30] setprop 783 ............................. pFrictionX = params.friction[1]
+  [ 33] getparam 1 .............................. <params>
+  [ 35] pushsymb 770 ............................ <#friction>
+  [ 38] pushint8 2 .............................. <2>
+  [ 40] pusharglist 3 ........................... <params, #friction, 2>
+  [ 42] objcall 209 ............................. <params.friction[2]>
+  [ 44] setprop 784 ............................. pFrictionY = params.friction[2]
+  [ 47] getglobal 101 ........................... <g>
+  [ 49] getchainedprop 155 ...................... <g.spriteMaster>
+  [ 51] pusharglist 1 ........................... <g.spriteMaster>
+  [ 53] objcall 156 ............................. <g.spriteMaster.requestSprite()>
+  [ 55] setprop 79 .............................. pSpr = g.spriteMaster.requestSprite()
+  [ 57] getprop 79 .............................. <pSpr>
+  [ 59] getparam 1 .............................. <params>
+  [ 61] getchainedprop 771 ...................... <params.initLoc>
+  [ 64] pusharglist 1 ........................... <params.initLoc>
+  [ 66] objcall 48 .............................. <params.initLoc.duplicate()>
+  [ 68] setobjprop 216 .......................... pSpr.loc = params.initLoc.duplicate()
+  [ 70] getprop 79 .............................. <pSpr>
+  [ 72] getparam 1 .............................. <params>
+  [ 74] getobjprop 776 .......................... <params.layerZ>
+  [ 77] setobjprop 217 .......................... pSpr.locZ = params.layerZ
+  [ 79] pushsymb 22 ............................. <#none>
+  [ 81] setprop 734 ............................. pTransColor = #none
+  [ 84] getparam 1 .............................. <params>
+  [ 86] getobjprop 778 .......................... <params.minCollisionSpeed>
+  [ 89] setprop 785 ............................. pMinCollisionSpeed = params.minCollisionSpeed
+  [ 92] getglobal 101 ........................... <g>
+  [ 94] getchainedprop 102 ...................... <g.objectMaster>
+  [ 96] pushsymb 281 ............................ <#objMoveXY>
+  [ 99] pusharglist 2 ........................... <g.objectMaster, #objMoveXY>
+  [101] objcall 3 ............................... <g.objectMaster.requestObject(#objMoveXY)>
+  [103] setprop 786 ............................. pMoveXY = g.objectMaster.requestObject(#objMoveXY)
+  [106] getprop 786 ............................. <pMoveXY>
+  [109] getparam 0 .............................. <me>
+  [111] getprop 79 .............................. <pSpr>
+  [113] pusharglistnoret 3 ...................... <pMoveXY, me, pSpr>
+  [115] objcall 787 ............................. pMoveXY.initGameChar(me, pSpr)
+  [118] getprop 786 ............................. <pMoveXY>
+  [121] getparam 1 .............................. <params>
+  [123] getobjprop 770 .......................... <params.friction>
+  [126] pusharglistnoret 2 ...................... <pMoveXY, params.friction>
+  [128] objcall 788 ............................. pMoveXY.setFriction(params.friction)
+  [131] getprop 786 ............................. <pMoveXY>
+  [134] getparam 1 .............................. <params>
+  [136] getobjprop 775 .......................... <params.keepVect>
+  [139] pusharglistnoret 2 ...................... <pMoveXY, params.keepVect>
+  [141] objcall 765 ............................. pMoveXY.setKeepVect(params.keepVect)
+  [144] getprop 786 ............................. <pMoveXY>
+  [147] getparam 1 .............................. <params>
+  [149] getobjprop 774 .......................... <params.initVect>
+  [152] pusharglistnoret 2 ...................... <pMoveXY, params.initVect>
+  [154] objcall 282 ............................. pMoveXY.setVect(params.initVect)
+  [157] getprop 786 ............................. <pMoveXY>
+  [160] getparam 1 .............................. <params>
+  [162] getobjprop 779 .......................... <params.weight>
+  [165] pusharglistnoret 2 ...................... <pMoveXY, params.weight>
+  [167] objcall 284 ............................. pMoveXY.setWeight(params.weight)
+  [170] getparam 0 .............................. <me>
+  [172] getchainedprop 69 ....................... <me.pFlags>
+  [174] pushsymb 789 ............................ <#objGameObject>
+  [177] pusharglistnoret 2 ...................... <me.pFlags, #objGameObject>
+  [179] objcall 111 ............................. me.pFlags.append(#objGameObject)
+  [181] getparam 1 .............................. <params>
+  [183] getobjprop 158 .......................... <params.member>
+  [185] pushsymb 22 ............................. <#none>
+  [187] nteq .................................... <params.member <> #none>
+  [188] jmpifz [203] ............................ if params.member <> #none then
+  [191] getparam 0 .............................. <me>
+  [193] getobjprop 79 ........................... <me.pSpr>
+  [195] getparam 1 .............................. <params>
+  [197] getobjprop 158 .......................... <params.member>
+  [199] pusharglistnoret 2 ...................... <me.pSpr, params.member>
+  [201] extcall 212 ............................. SpriteSetMember(me.pSpr, params.member)
+  [203] getprop 77 .............................. <ancestor>
+  [205] pusharglistnoret 1 ...................... <ancestor>
+  [207] objcall 1 ............................... ancestor.init()
+  [209] ret
+end
+
+on finish me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 746 ............................. me.cancelTransColor()
+  [  7] getprop 786 ............................. <pMoveXY>
+  [ 10] pusharglistnoret 1 ...................... <pMoveXY>
+  [ 12] objcall 39 .............................. pMoveXY.finish()
+  [ 14] getglobal 101 ........................... <g>
+  [ 16] getchainedprop 155 ...................... <g.spriteMaster>
+  [ 18] getprop 79 .............................. <pSpr>
+  [ 20] pusharglistnoret 2 ...................... <g.spriteMaster, pSpr>
+  [ 22] objcall 165 ............................. g.spriteMaster.freeSprite(pSpr)
+  [ 24] getprop 77 .............................. <ancestor>
+  [ 26] pusharglistnoret 1 ...................... <ancestor>
+  [ 28] objcall 39 .............................. ancestor.finish()
+  [ 30] ret
+end
+
+on cancelTransColor me
+  [  0] getprop 734 ............................. <pTransColor>
+  [  3] pushsymb 22 ............................. <#none>
+  [  5] nteq .................................... <pTransColor <> #none>
+  [  6] jmpifz [ 17] ............................ if pTransColor <> #none then
+  [  9] getprop 734 ............................. <pTransColor>
+  [ 12] pusharglistnoret 1 ...................... <pTransColor>
+  [ 14] objcall 431 ............................. pTransColor.cancel()
+  [ 17] ret
+end
+
+on checkCollisions me, newLoc, oldloc
+  [  0] getglobal 101 ........................... <g>
+  [  2] getchainedprop 790 ...................... <g.collisionMaster>
+  [  5] getparam 0 .............................. <me>
+  [  7] getchainedprop 67 ....................... <me.id>
+  [  9] getobjprop 66 ........................... <me.id.bigMe>
+  [ 11] getparam 1 .............................. <newLoc>
+  [ 13] getparam 2 .............................. <oldloc>
+  [ 15] getprop 79 .............................. <pSpr>
+  [ 17] getprop 781 ............................. <pCollisionUseMiddle>
+  [ 20] pusharglist 6 ........................... <g.collisionMaster, me.id.bigMe, newLoc, oldloc, pSpr, pCollisionUseMiddle>
+  [ 22] objcall 747 ............................. <g.collisionMaster.checkCollisions(me.id.bigMe, newLoc, oldloc, pSpr, pCollisionUseMiddle)>
+  [ 25] setparam 1 .............................. newLoc = g.collisionMaster.checkCollisions(me.id.bigMe, newLoc, oldloc, pSpr, pCollisionUseMiddle)
+  [ 27] getparam 1 .............................. <newLoc>
+  [ 29] pusharglistnoret 1 ...................... <newLoc>
+  [ 31] extcall 17 .............................. return newLoc
+  [ 33] ret
+end
+
+on checkCollisionsWithHair me
+  [  0] getglobal 101 ........................... <g>
+  [  2] getchainedprop 387 ...................... <g.actorMaster>
+  [  5] pusharglist 1 ........................... <g.actorMaster>
+  [  7] objcall 793 ............................. <g.actorMaster.getPlayer()>
+  [ 10] setlocal 0 .............................. player = g.actorMaster.getPlayer()
+  [ 12] getlocal 0 .............................. <player>
+  [ 14] getparam 0 .............................. <me>
+  [ 16] getchainedprop 67 ....................... <me.id>
+  [ 18] getchainedprop 66 ....................... <me.id.bigMe>
+  [ 20] pusharglist 1 ........................... <me.id.bigMe>
+  [ 22] objcall 383 ............................. <me.id.bigMe.getRect()>
+  [ 25] getprop 785 ............................. <pMinCollisionSpeed>
+  [ 28] pusharglist 3 ........................... <player, me.id.bigMe.getRect(), pMinCollisionSpeed>
+  [ 30] objcall 794 ............................. <player.checkHairCollisions(me.id.bigMe.getRect(), pMinCollisionSpeed)>
+  [ 33] setlocal 1 .............................. collideVect = player.checkHairCollisions(me.id.bigMe.getRect(), pMinCollisionSpeed)
+  [ 35] getlocal 1 .............................. <collideVect>
+  [ 37] pushzero ................................ <0>
+  [ 38] nteq .................................... <collideVect <> 0>
+  [ 39] jmpifz [ 51] ............................ if collideVect <> 0 then
+  [ 42] getparam 0 .............................. <me>
+  [ 44] getlocal 1 .............................. <collideVect>
+  [ 46] pusharglistnoret 2 ...................... <me, collideVect>
+  [ 48] objcall 385 ............................. me.takeHit(collideVect)
+  [ 51] ret
+end
+
+on checkForCollisionWithPlayer me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 383 ............................. <me.getRect()>
+  [  7] setlocal 0 .............................. myRect = me.getRect()
+  [  9] getlocal 0 .............................. <myRect>
+  [ 11] pushint8 1 .............................. <1>
+  [ 13] inv ..................................... <-1>
+  [ 14] pushint8 1 .............................. <1>
+  [ 16] inv ..................................... <-1>
+  [ 17] pushzero ................................ <0>
+  [ 18] pushzero ................................ <0>
+  [ 19] pusharglist 4 ........................... <-1, -1, 0, 0>
+  [ 21] extcall 160 ............................. <rect(-1, -1, 0, 0)>
+  [ 23] eq ...................................... <myRect = rect(-1, -1, 0, 0)>
+  [ 24] jmpifz [ 32] ............................ if myRect = rect(-1, -1, 0, 0) then
+  [ 27] pushzero ................................ <0>
+  [ 28] pusharglistnoret 1 ...................... <0>
+  [ 30] extcall 17 .............................. return 0
+  [ 32] getglobal 101 ........................... <g>
+  [ 34] getchainedprop 387 ...................... <g.actorMaster>
+  [ 37] pusharglist 1 ........................... <g.actorMaster>
+  [ 39] objcall 793 ............................. <g.actorMaster.getPlayer()>
+  [ 42] setlocal 1 .............................. player = g.actorMaster.getPlayer()
+  [ 44] getlocal 1 .............................. <player>
+  [ 46] pusharglist 1 ........................... <player>
+  [ 48] objcall 383 ............................. <player.getRect()>
+  [ 51] setlocal 2 .............................. playerRect = player.getRect()
+  [ 53] getlocal 2 .............................. <playerRect>
+  [ 55] getlocal 0 .............................. <myRect>
+  [ 57] getobjprop 162 .......................... <myRect.width>
+  [ 59] pushint8 2 .............................. <2>
+  [ 61] div ..................................... <myRect.width / 2>
+  [ 62] getlocal 0 .............................. <myRect>
+  [ 64] getobjprop 310 .......................... <myRect.height>
+  [ 67] pushint8 2 .............................. <2>
+  [ 69] div ..................................... <myRect.height / 2>
+  [ 70] pusharglist 3 ........................... <playerRect, myRect.width / 2, myRect.height / 2>
+  [ 72] objcall 159 ............................. <playerRect.inflate(myRect.width / 2, myRect.height / 2)>
+  [ 74] setlocal 2 .............................. playerRect = playerRect.inflate(myRect.width / 2, myRect.height / 2)
+  [ 76] getparam 0 .............................. <me>
+  [ 78] pusharglist 1 ........................... <me>
+  [ 80] objcall 74 .............................. <me.getLoc()>
+  [ 82] getlocal 2 .............................. <playerRect>
+  [ 84] pusharglist 2 ........................... <me.getLoc(), playerRect>
+  [ 86] extcall 384 ............................. <inside(me.getLoc(), playerRect)>
+  [ 89] jmpifz [ 98] ............................ if inside(me.getLoc(), playerRect) then
+  [ 92] pushint8 1 .............................. <1>
+  [ 94] pusharglistnoret 1 ...................... <1>
+  [ 96] extcall 17 .............................. return 1
+  [ 98] pushzero ................................ <0>
+  [ 99] pusharglistnoret 1 ...................... <0>
+  [101] extcall 17 .............................. return 0
+  [103] ret
+end
+
+on collisionCeiling me
+  [  0] getprop 786 ............................. <pMoveXY>
+  [  3] pushzero ................................ <0>
+  [  4] pusharglistnoret 2 ...................... <pMoveXY, 0>
+  [  6] objcall 796 ............................. pMoveXY.setVectY(0)
+  [  9] ret
+end
+
+on collisionPlatform me
+  [  0] getprop 786 ............................. <pMoveXY>
+  [  3] pushzero ................................ <0>
+  [  4] pusharglistnoret 2 ...................... <pMoveXY, 0>
+  [  6] objcall 796 ............................. pMoveXY.setVectY(0)
+  [  9] ret
+end
+
+on collisionNoPlatform me
+  [  0] ret
+end
+
+on collisionWallLeft me
+  [  0] getprop 786 ............................. <pMoveXY>
+  [  3] pusharglistnoret 1 ...................... <pMoveXY>
+  [  5] objcall 797 ............................. pMoveXY.bounceRight()
+  [  8] ret
+end
+
+on collisionWallRight me
+  [  0] getprop 786 ............................. <pMoveXY>
+  [  3] pusharglistnoret 1 ...................... <pMoveXY>
+  [  5] objcall 798 ............................. pMoveXY.bounceLeft()
+  [  8] ret
+end
+
+on finishConditionMet me
+  [  0] getprop 782 ............................. <pDead>
+  [  3] pusharglistnoret 1 ...................... <pDead>
+  [  5] extcall 17 .............................. return pDead
+  [  7] ret
+end
+
+on frictionXOff me
+  [  0] getprop 786 ............................. <pMoveXY>
+  [  3] pushint8 5 .............................. <5>
+  [  5] pusharglistnoret 2 ...................... <pMoveXY, 5>
+  [  7] objcall 799 ............................. pMoveXY.setFrictionX(5)
+  [ 10] ret
+end
+
+on frictionXOn me
+  [  0] getprop 786 ............................. <pMoveXY>
+  [  3] getprop 783 ............................. <pFrictionX>
+  [  6] pusharglistnoret 2 ...................... <pMoveXY, pFrictionX>
+  [  8] objcall 799 ............................. pMoveXY.setFrictionX(pFrictionX)
+  [ 11] ret
+end
+
+on frictionYOff me
+  [  0] getprop 786 ............................. <pMoveXY>
+  [  3] pushzero ................................ <0>
+  [  4] pusharglistnoret 2 ...................... <pMoveXY, 0>
+  [  6] objcall 800 ............................. pMoveXY.setFrictionY(0)
+  [  9] ret
+end
+
+on frictionYOn me
+  [  0] getprop 786 ............................. <pMoveXY>
+  [  3] getprop 784 ............................. <pFrictionY>
+  [  6] pusharglistnoret 2 ...................... <pMoveXY, pFrictionY>
+  [  8] objcall 800 ............................. pMoveXY.setFrictionY(pFrictionY)
+  [ 11] ret
+end
+
+on frictionStrong me
+  [  0] getprop 786 ............................. <pMoveXY>
+  [  3] pushint8 20 ............................. <20>
+  [  5] pushint8 20 ............................. <20>
+  [  7] pusharglist 2 ........................... <20, 20>
+  [  9] extcall 215 ............................. <point(20, 20)>
+  [ 11] pusharglistnoret 2 ...................... <pMoveXY, point(20, 20)>
+  [ 13] objcall 788 ............................. pMoveXY.setFriction(point(20, 20))
+  [ 16] ret
+end
+
+on flashWhite me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 746 ............................. me.cancelTransColor()
+  [  7] getglobal 101 ........................... <g>
+  [  9] getchainedprop 102 ...................... <g.objectMaster>
+  [ 11] pushsymb 738 ............................ <#objTransColor>
+  [ 14] pusharglist 2 ........................... <g.objectMaster, #objTransColor>
+  [ 16] objcall 3 ............................... <g.objectMaster.requestObject(#objTransColor)>
+  [ 18] setprop 734 ............................. pTransColor = g.objectMaster.requestObject(#objTransColor)
+  [ 21] getprop 734 ............................. <pTransColor>
+  [ 24] pushsymb 1 .............................. <#init>
+  [ 26] pusharglist 2 ........................... <pTransColor, #init>
+  [ 28] objcall 136 ............................. <pTransColor.getParams(#init)>
+  [ 30] setlocal 0 .............................. params = pTransColor.getParams(#init)
+  [ 32] getlocal 0 .............................. <params>
+  [ 34] getparam 0 .............................. <me>
+  [ 36] setobjprop 292 .......................... params.callingPrg = me
+  [ 39] getlocal 0 .............................. <params>
+  [ 41] getprop 79 .............................. <pSpr>
+  [ 43] setobjprop 81 ........................... params.spr = pSpr
+  [ 45] getlocal 0 .............................. <params>
+  [ 47] pushsymb 81 ............................. <#spr>
+  [ 49] setobjprop 739 .......................... params.transformTarget = #spr
+  [ 52] getlocal 0 .............................. <params>
+  [ 54] pushint16 255 ........................... <255>
+  [ 57] pushint16 255 ........................... <255>
+  [ 60] pushint16 255 ........................... <255>
+  [ 63] pusharglist 3 ........................... <255, 255, 255>
+  [ 65] extcall 146 ............................. <rgb(255, 255, 255)>
+  [ 67] setobjprop 801 .......................... params.startColor = rgb(255, 255, 255)
+  [ 70] getlocal 0 .............................. <params>
+  [ 72] pushzero ................................ <0>
+  [ 73] pushzero ................................ <0>
+  [ 74] pushzero ................................ <0>
+  [ 75] pusharglist 3 ........................... <0, 0, 0>
+  [ 77] extcall 146 ............................. <rgb(0, 0, 0)>
+  [ 79] setobjprop 741 .......................... params.targetColor = rgb(0, 0, 0)
+  [ 82] getprop 734 ............................. <pTransColor>
+  [ 85] getlocal 0 .............................. <params>
+  [ 87] pusharglistnoret 2 ...................... <pTransColor, params>
+  [ 89] objcall 1 ............................... pTransColor.init(params)
+  [ 91] ret
+end
+
+on getAnimFrame me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 67 ....................... <me.id>
+  [  4] getchainedprop 66 ....................... <me.id.bigMe>
+  [  6] getchainedprop 802 ...................... <me.id.bigMe.pAnimSet>
+  [  9] getparam 0 .............................. <me>
+  [ 11] getchainedprop 67 ....................... <me.id>
+  [ 13] getchainedprop 66 ....................... <me.id.bigMe>
+  [ 15] pushsymb 22 ............................. <#none>
+  [ 17] pusharglist 2 ........................... <me.id.bigMe, #none>
+  [ 19] objcall 803 ............................. <me.id.bigMe.getAnimSym(#none)>
+  [ 22] pusharglist 2 ........................... <me.id.bigMe.pAnimSet, me.id.bigMe.getAnimSym(#none)>
+  [ 24] objcall 87 .............................. <me.id.bigMe.pAnimSet.getFrame(me.id.bigMe.getAnimSym(#none))>
+  [ 26] pusharglistnoret 1 ...................... <me.id.bigMe.pAnimSet.getFrame(me.id.bigMe.getAnimSym(#none))>
+  [ 28] extcall 17 .............................. return me.id.bigMe.pAnimSet.getFrame(me.id.bigMe.getAnimSym(#none))
+  [ 30] ret
+end
+
+on getAnimFrameFresh me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 67 ....................... <me.id>
+  [  4] getchainedprop 66 ....................... <me.id.bigMe>
+  [  6] getchainedprop 802 ...................... <me.id.bigMe.pAnimSet>
+  [  9] getparam 0 .............................. <me>
+  [ 11] getchainedprop 67 ....................... <me.id>
+  [ 13] getchainedprop 66 ....................... <me.id.bigMe>
+  [ 15] pushsymb 22 ............................. <#none>
+  [ 17] pusharglist 2 ........................... <me.id.bigMe, #none>
+  [ 19] objcall 803 ............................. <me.id.bigMe.getAnimSym(#none)>
+  [ 22] pusharglist 2 ........................... <me.id.bigMe.pAnimSet, me.id.bigMe.getAnimSym(#none)>
+  [ 24] objcall 88 .............................. <me.id.bigMe.pAnimSet.getFrameFresh(me.id.bigMe.getAnimSym(#none))>
+  [ 26] pusharglistnoret 1 ...................... <me.id.bigMe.pAnimSet.getFrameFresh(me.id.bigMe.getAnimSym(#none))>
+  [ 28] extcall 17 .............................. return me.id.bigMe.pAnimSet.getFrameFresh(me.id.bigMe.getAnimSym(#none))
+  [ 30] ret
+end
+
+on getAnimLooped me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 67 ....................... <me.id>
+  [  4] getchainedprop 66 ....................... <me.id.bigMe>
+  [  6] getchainedprop 802 ...................... <me.id.bigMe.pAnimSet>
+  [  9] getparam 0 .............................. <me>
+  [ 11] getchainedprop 67 ....................... <me.id>
+  [ 13] getchainedprop 66 ....................... <me.id.bigMe>
+  [ 15] pushsymb 22 ............................. <#none>
+  [ 17] pusharglist 2 ........................... <me.id.bigMe, #none>
+  [ 19] objcall 803 ............................. <me.id.bigMe.getAnimSym(#none)>
+  [ 22] pusharglist 2 ........................... <me.id.bigMe.pAnimSet, me.id.bigMe.getAnimSym(#none)>
+  [ 24] objcall 89 .............................. <me.id.bigMe.pAnimSet.getLooped(me.id.bigMe.getAnimSym(#none))>
+  [ 26] pusharglistnoret 1 ...................... <me.id.bigMe.pAnimSet.getLooped(me.id.bigMe.getAnimSym(#none))>
+  [ 28] extcall 17 .............................. return me.id.bigMe.pAnimSet.getLooped(me.id.bigMe.getAnimSym(#none))
+  [ 30] ret
+end
+
+on getCharacter me
+  [  0] getprop 780 ............................. <pCharacter>
+  [  3] pusharglistnoret 1 ...................... <pCharacter>
+  [  5] extcall 17 .............................. return pCharacter
+  [  7] ret
+end
+
+on getFlip me
+  [  0] getprop 79 .............................. <pSpr>
+  [  2] getobjprop 308 .......................... <pSpr.flipH>
+  [  5] pusharglistnoret 1 ...................... <pSpr.flipH>
+  [  7] extcall 17 .............................. return pSpr.flipH
+  [  9] ret
+end
+
+on getLoc me
+  [  0] getprop 79 .............................. <pSpr>
+  [  2] getchainedprop 216 ...................... <pSpr.loc>
+  [  4] pusharglist 1 ........................... <pSpr.loc>
+  [  6] objcall 48 .............................. <pSpr.loc.duplicate()>
+  [  8] pusharglistnoret 1 ...................... <pSpr.loc.duplicate()>
+  [ 10] extcall 17 .............................. return pSpr.loc.duplicate()
+  [ 12] ret
+end
+
+on getParams me, function
+  [  0] getprop 140 ............................. <pParams>
+  [  2] getparam 1 .............................. <function>
+  [  4] pusharglist 2 ........................... <pParams, function>
+  [  6] objcall 38 .............................. <pParams[function]>
+  [  8] pusharglist 1 ........................... <pParams[function]>
+  [ 10] objcall 48 .............................. <pParams[function].duplicate()>
+  [ 12] pusharglistnoret 1 ...................... <pParams[function].duplicate()>
+  [ 14] extcall 17 .............................. return pParams[function].duplicate()
+  [ 16] ret
+end
+
+on getRect me
+  [  0] getprop 79 .............................. <pSpr>
+  [  2] getchainedprop 160 ...................... <pSpr.rect>
+  [  4] pusharglist 1 ........................... <pSpr.rect>
+  [  6] objcall 48 .............................. <pSpr.rect.duplicate()>
+  [  8] pusharglistnoret 1 ...................... <pSpr.rect.duplicate()>
+  [ 10] extcall 17 .............................. return pSpr.rect.duplicate()
+  [ 12] ret
+end
+
+on getVect me
+  [  0] getprop 786 ............................. <pMoveXY>
+  [  3] pusharglist 1 ........................... <pMoveXY>
+  [  5] objcall 761 ............................. <pMoveXY.getVect()>
+  [  8] pusharglistnoret 1 ...................... <pMoveXY.getVect()>
+  [ 10] extcall 17 .............................. return pMoveXY.getVect()
+  [ 12] ret
+end
+
+on getVectX me
+  [  0] getprop 786 ............................. <pMoveXY>
+  [  3] pusharglist 1 ........................... <pMoveXY>
+  [  5] objcall 762 ............................. <pMoveXY.getVectX()>
+  [  8] pusharglistnoret 1 ...................... <pMoveXY.getVectX()>
+  [ 10] extcall 17 .............................. return pMoveXY.getVectX()
+  [ 12] ret
+end
+
+on informCallingPrg me
+  [  0] ret
+end
+
+on moveLoc me, newLoc
+  [  0] getprop 786 ............................. <pMoveXY>
+  [  3] getparam 1 .............................. <newLoc>
+  [  5] pusharglistnoret 2 ...................... <pMoveXY, newLoc>
+  [  7] objcall 763 ............................. pMoveXY.moveLoc(newLoc)
+  [ 10] ret
+end
+
+on moveXYFin me
+  [  0] ret
+end
+
+on setDead me, newDead
+  [  0] getparam 1 .............................. <newDead>
+  [  2] setprop 782 ............................. pDead = newDead
+  [  5] ret
+end
+
+on setFlip me, newFlip
+  [  0] getprop 79 .............................. <pSpr>
+  [  2] getparam 1 .............................. <newFlip>
+  [  4] setobjprop 308 .......................... pSpr.flipH = newFlip
+  [  7] ret
+end
+
+on setKeepVect me, newVal
+  [  0] getprop 786 ............................. <pMoveXY>
+  [  3] getparam 1 .............................. <newVal>
+  [  5] pusharglistnoret 2 ...................... <pMoveXY, newVal>
+  [  7] objcall 765 ............................. pMoveXY.setKeepVect(newVal)
+  [ 10] ret
+end
+
+on setLoc me, newLoc
+  [  0] getprop 786 ............................. <pMoveXY>
+  [  3] getparam 1 .............................. <newLoc>
+  [  5] pusharglistnoret 2 ...................... <pMoveXY, newLoc>
+  [  7] objcall 766 ............................. pMoveXY.setLoc(newLoc)
+  [ 10] ret
+end
+
+on setVect me, newVect
+  [  0] getprop 786 ............................. <pMoveXY>
+  [  3] getparam 1 .............................. <newVect>
+  [  5] pusharglistnoret 2 ...................... <pMoveXY, newVect>
+  [  7] objcall 282 ............................. pMoveXY.setVect(newVect)
+  [ 10] ret
+end
+
+on setWeight me, newWeight
+  [  0] getprop 786 ............................. <pMoveXY>
+  [  3] getparam 1 .............................. <newWeight>
+  [  5] pusharglistnoret 2 ...................... <pMoveXY, newWeight>
+  [  7] objcall 284 ............................. pMoveXY.setWeight(newWeight)
+  [ 10] ret
+end
+
+on start me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 77 ....................... <me.ancestor>
+  [  4] pusharglistnoret 1 ...................... <me.ancestor>
+  [  6] objcall 433 ............................. me.ancestor.calcStart()
+  [  9] getprop 786 ............................. <pMoveXY>
+  [ 12] pushint8 1 .............................. <1>
+  [ 14] pusharglistnoret 2 ...................... <pMoveXY, 1>
+  [ 16] objcall 293 ............................. pMoveXY.setAutoUpdate(1)
+  [ 19] getprop 786 ............................. <pMoveXY>
+  [ 22] pusharglistnoret 1 ...................... <pMoveXY>
+  [ 24] objcall 433 ............................. pMoveXY.calcStart()
+  [ 27] getprop 786 ............................. <pMoveXY>
+  [ 30] pushzero ................................ <0>
+  [ 31] pusharglistnoret 2 ...................... <pMoveXY, 0>
+  [ 33] objcall 293 ............................. pMoveXY.setAutoUpdate(0)
+  [ 36] ret
+end
+
+on takeHit me, collideVect
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 786 ...................... <me.pMoveXY>
+  [  5] getparam 1 .............................. <collideVect>
+  [  7] pusharglistnoret 2 ...................... <me.pMoveXY, collideVect>
+  [  9] objcall 808 ............................. me.pMoveXY.vectAdd(collideVect)
+  [ 12] ret
+end
+
+on transformFin me
+  [  0] pushsymb 22 ............................. <#none>
+  [  2] setprop 734 ............................. pTransColor = #none
+  [  5] ret
+end
+
+on update me
+  [  0] getprop 77 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 432 ............................. ancestor.calcFin()
+  [  7] ret
+end
+
+on updateAI me
+  [  0] ret
+end

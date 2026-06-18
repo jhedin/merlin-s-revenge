@@ -1,0 +1,89 @@
+property ancestor, pLocation, pTarget
+
+on new me
+  [  0] pushcons 0 .............................. <"objTileSetKey">
+  [  2] pusharglist 1 ........................... <"objTileSetKey">
+  [  4] extcall 27 .............................. <script("objTileSetKey")>
+  [  6] pusharglist 1 ........................... <script("objTileSetKey")>
+  [  8] extcall 0 ............................... <new(script("objTileSetKey"))>
+  [ 10] setprop 77 .............................. ancestor = new(script("objTileSetKey"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 221 ............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushint8 2 .............................. <2>
+  [ 26] setobjprop 1104 ......................... i.displayScale = 2
+  [ 29] getlocal 0 .............................. <i>
+  [ 31] pushsymb 525 ............................ <#location>
+  [ 34] pushint8 32 ............................. <32>
+  [ 36] pushint8 4 .............................. <4>
+  [ 38] pusharglist 2 ........................... <32, 4>
+  [ 40] extcall 215 ............................. <point(32, 4)>
+  [ 42] pusharglistnoret 3 ...................... <i, #location, point(32, 4)>
+  [ 44] objcall 37 .............................. i[#location] = point(32, 4)
+  [ 46] getlocal 0 .............................. <i>
+  [ 48] pushsymb 158 ............................ <#member>
+  [ 50] pushcons 1 .............................. <"tlk_commands">
+  [ 52] pushcons 2 .............................. <"gfx">
+  [ 54] pusharglist 2 ........................... <"tlk_commands", "gfx">
+  [ 56] extcall 158 ............................. <member("tlk_commands", "gfx")>
+  [ 58] pusharglistnoret 3 ...................... <i, #member, member("tlk_commands", "gfx")>
+  [ 60] objcall 37 .............................. i[#member] = member("tlk_commands", "gfx")
+  [ 62] getlocal 0 .............................. <i>
+  [ 64] pushsymb 829 ............................ <#targetObject>
+  [ 67] pushsymb 22 ............................. <#none>
+  [ 69] pusharglistnoret 3 ...................... <i, #targetObject, #none>
+  [ 71] objcall 37 .............................. i[#targetObject] = #none
+  [ 73] getlocal 0 .............................. <i>
+  [ 75] pushzero ................................ <0>
+  [ 76] setobjprop 827 .......................... i.allowRangeSelections = 0
+  [ 79] getparam 0 .............................. <me>
+  [ 81] pusharglistnoret 1 ...................... <me>
+  [ 83] extcall 17 .............................. return me
+  [ 85] ret
+end
+
+on init me, params
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 77 ....................... <me.ancestor>
+  [  4] getparam 1 .............................. <params>
+  [  6] pusharglistnoret 2 ...................... <me.ancestor, params>
+  [  8] objcall 1 ............................... me.ancestor.init(params)
+  [ 10] getparam 1 .............................. <params>
+  [ 12] getobjprop 525 .......................... <params.location>
+  [ 15] setprop 542 ............................. pLocation = params.location
+  [ 18] getparam 1 .............................. <params>
+  [ 20] getobjprop 829 .......................... <params.targetObject>
+  [ 23] setprop 836 ............................. pTarget = params.targetObject
+  [ 26] ret
+end
+
+on display me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1020 ........................... <#edit>
+  [  5] getprop 542 ............................. <pLocation>
+  [  8] pusharglistnoret 3 ...................... <me, #edit, pLocation>
+  [ 10] objcall 990 ............................. me.show(#edit, pLocation)
+  [ 13] ret
+end
+
+on selectionMade me, theSel, theObj
+  [  0] getparam 2 .............................. <theObj>
+  [  2] peek 0 .................................. case theObj of
+  [  4] getparam 0 .............................. <me>
+  [  6] eq
+  [  7] jmpifz [ 31] ............................ (case) me:
+  [ 10] getparam 0 .............................. <me>
+  [ 12] getparam 1 .............................. <theSel>
+  [ 14] pusharglist 2 ........................... <me, theSel>
+  [ 16] objcall 1333 ............................ <me.getTileSymbol(theSel)>
+  [ 19] setlocal 0 .............................. commandSym = me.getTileSymbol(theSel)
+  [ 21] getprop 836 ............................. <pTarget>
+  [ 24] getlocal 0 .............................. <commandSym>
+  [ 26] pusharglistnoret 2 ...................... <pTarget, commandSym>
+  [ 28] objcall 1168 ............................ pTarget.commandIssued(commandSym)
+  [ 31] pop 1
+  [ 33] ret
+end

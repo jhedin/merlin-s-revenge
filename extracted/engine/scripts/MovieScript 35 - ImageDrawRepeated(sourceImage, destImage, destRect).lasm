@@ -1,0 +1,91 @@
+on ImageDrawRepeated sourceImage, destImage, destRect
+  [  0] getparam 0 .............................. <sourceImage>
+  [  2] getobjprop 190 .......................... <sourceImage.width>
+  [  4] getparam 0 .............................. <sourceImage>
+  [  6] getobjprop 191 .......................... <sourceImage.height>
+  [  8] pusharglist 2 ........................... <sourceImage.width, sourceImage.height>
+  [ 10] extcall 97 .............................. <point(sourceImage.width, sourceImage.height)>
+  [ 12] setlocal 0 .............................. sourceSize = point(sourceImage.width, sourceImage.height)
+  [ 14] getparam 2 .............................. <destRect>
+  [ 16] getobjprop 190 .......................... <destRect.width>
+  [ 18] getparam 2 .............................. <destRect>
+  [ 20] getobjprop 191 .......................... <destRect.height>
+  [ 22] pusharglist 2 ........................... <destRect.width, destRect.height>
+  [ 24] extcall 97 .............................. <point(destRect.width, destRect.height)>
+  [ 26] setlocal 1 .............................. destSize = point(destRect.width, destRect.height)
+  [ 28] getlocal 1 .............................. <destSize>
+  [ 30] getlocal 0 .............................. <sourceSize>
+  [ 32] div ..................................... <destSize / sourceSize>
+  [ 33] setlocal 2 .............................. repeats = destSize / sourceSize
+  [ 35] pushint8 1 .............................. <1>
+  [ 37] setlocal 3
+  [ 39] getlocal 3
+  [ 41] getlocal 2 .............................. <repeats>
+  [ 43] pushint8 2 .............................. <2>
+  [ 45] pusharglist 2 ........................... <repeats, 2>
+  [ 47] objcall 18 .............................. <repeats[2]>
+  [ 49] lteq
+  [ 50] jmpifz [167] ............................ repeat with y = 1 to repeats[2]
+  [ 53] pushint8 1 .............................. <1>
+  [ 55] setlocal 4
+  [ 57] getlocal 4
+  [ 59] getlocal 2 .............................. <repeats>
+  [ 61] pushint8 1 .............................. <1>
+  [ 63] pusharglist 2 ........................... <repeats, 1>
+  [ 65] objcall 18 .............................. <repeats[1]>
+  [ 67] lteq
+  [ 68] jmpifz [158] ............................ repeat with x = 1 to repeats[1]
+  [ 71] getlocal 4 .............................. <x>
+  [ 73] pushint8 1 .............................. <1>
+  [ 75] sub ..................................... <x - 1>
+  [ 76] getlocal 3 .............................. <y>
+  [ 78] pushint8 1 .............................. <1>
+  [ 80] sub ..................................... <y - 1>
+  [ 81] pusharglist 2 ........................... <x - 1, y - 1>
+  [ 83] extcall 97 .............................. <point(x - 1, y - 1)>
+  [ 85] getlocal 0 .............................. <sourceSize>
+  [ 87] mul ..................................... <point(x - 1, y - 1) * sourceSize>
+  [ 88] setlocal 5 .............................. posMod = point(x - 1, y - 1) * sourceSize
+  [ 90] getparam 2 .............................. <destRect>
+  [ 92] getobjprop 192 .......................... <destRect.left>
+  [ 94] getparam 2 .............................. <destRect>
+  [ 96] getobjprop 193 .......................... <destRect.top>
+  [ 98] pusharglist 2 ........................... <destRect.left, destRect.top>
+  [100] extcall 97 .............................. <point(destRect.left, destRect.top)>
+  [102] getlocal 5 .............................. <posMod>
+  [104] add ..................................... <point(destRect.left, destRect.top) + posMod>
+  [105] setlocal 6 .............................. toRectStart = point(destRect.left, destRect.top) + posMod
+  [107] getlocal 6 .............................. <toRectStart>
+  [109] getlocal 0 .............................. <sourceSize>
+  [111] add ..................................... <toRectStart + sourceSize>
+  [112] setlocal 7 .............................. toRectEnd = toRectStart + sourceSize
+  [114] getlocal 6 .............................. <toRectStart>
+  [116] getlocal 7 .............................. <toRectEnd>
+  [118] pusharglist 2 ........................... <toRectStart, toRectEnd>
+  [120] extcall 109 ............................. <rect(toRectStart, toRectEnd)>
+  [122] setlocal 8 .............................. torect = rect(toRectStart, toRectEnd)
+  [124] getparam 1 .............................. <destImage>
+  [126] getparam 0 .............................. <sourceImage>
+  [128] getlocal 8 .............................. <torect>
+  [130] getparam 0 .............................. <sourceImage>
+  [132] getobjprop 109 .......................... <sourceImage.rect>
+  [134] pushsymb 194 ............................ <#useFastQuads>
+  [136] pushint8 1 .............................. <1>
+  [138] pushsymb 195 ............................ <#ink>
+  [140] pushint8 36 ............................. <36>
+  [142] pusharglist 4 ........................... <[#useFastQuads: 1, #ink: 36]>
+  [144] pushproplist ............................ <[#useFastQuads: 1, #ink: 36]>
+  [145] pusharglistnoret 5 ...................... <destImage, sourceImage, torect, sourceImage.rect, [#useFastQuads: 1, #ink: 36]>
+  [147] objcall 196 ............................. destImage.copyPixels(sourceImage, torect, sourceImage.rect, [#useFastQuads: 1, #ink: 36])
+  [149] pushint8 1
+  [151] getlocal 4
+  [153] add
+  [154] setlocal 4
+  [156] endrepeat [ 57]
+  [158] pushint8 1
+  [160] getlocal 3
+  [162] add
+  [163] setlocal 3
+  [165] endrepeat [ 39]
+  [167] ret
+end

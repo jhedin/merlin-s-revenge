@@ -1,0 +1,314 @@
+property pAnimData
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 3 ............................... return me
+  [  6] ret
+end
+
+on init me
+  [  0] pusharglist 0 ........................... <[:]>
+  [  2] pushproplist ............................ <[:]>
+  [  3] setprop 1122 ............................ pAnimData = [:]
+  [  6] getparam 0 .............................. <me>
+  [  8] pusharglist 1 ........................... <me>
+  [ 10] objcall 1118 ............................ <me.collectMembers()>
+  [ 13] setlocal 0 .............................. animMembers = me.collectMembers()
+  [ 15] getparam 0 .............................. <me>
+  [ 17] getlocal 0 .............................. <animMembers>
+  [ 19] pusharglist 2 ........................... <me, animMembers>
+  [ 21] objcall 1121 ............................ <me.seperateMembers(animMembers)>
+  [ 24] setlocal 0 .............................. animMembers = me.seperateMembers(animMembers)
+  [ 26] getparam 0 .............................. <me>
+  [ 28] getlocal 0 .............................. <animMembers>
+  [ 30] pusharglistnoret 2 ...................... <me, animMembers>
+  [ 32] objcall 1119 ............................ me.extractData(animMembers)
+  [ 35] ret
+end
+
+on finish me
+  [  0] ret
+end
+
+on addFrame me, theData, themem
+  [  0] getprop 1122 ............................ <pAnimData>
+  [  3] getparam 1 .............................. <theData>
+  [  5] pushint8 2 .............................. <2>
+  [  7] pusharglist 2 ........................... <theData, 2>
+  [  9] objcall 301 ............................. <theData[2]>
+  [ 12] pusharglist 2 ........................... <pAnimData, theData[2]>
+  [ 14] objcall 301 ............................. <pAnimData[theData[2]]>
+  [ 17] pusharglist 0 ........................... <>
+  [ 19] extcall 388 ............................. <VOID>
+  [ 22] eq ...................................... <pAnimData[theData[2]] = VOID>
+  [ 23] jmpifz [ 45] ............................ if pAnimData[theData[2]] = VOID then
+  [ 26] getprop 1122 ............................ <pAnimData>
+  [ 29] getparam 1 .............................. <theData>
+  [ 31] pushint8 2 .............................. <2>
+  [ 33] pusharglist 2 ........................... <theData, 2>
+  [ 35] objcall 301 ............................. <theData[2]>
+  [ 38] pusharglist 0 ........................... <[:]>
+  [ 40] pushproplist ............................ <[:]>
+  [ 41] pusharglistnoret 3 ...................... <pAnimData, theData[2], [:]>
+  [ 43] objcall 54 .............................. pAnimData[theData[2]] = [:]
+  [ 45] getprop 1122 ............................ <pAnimData>
+  [ 48] getparam 1 .............................. <theData>
+  [ 50] pushint8 2 .............................. <2>
+  [ 52] pusharglist 2 ........................... <theData, 2>
+  [ 54] objcall 301 ............................. <theData[2]>
+  [ 57] pusharglist 2 ........................... <pAnimData, theData[2]>
+  [ 59] objcall 301 ............................. <pAnimData[theData[2]]>
+  [ 62] getparam 1 .............................. <theData>
+  [ 64] pushint8 3 .............................. <3>
+  [ 66] pusharglist 2 ........................... <theData, 3>
+  [ 68] objcall 301 ............................. <theData[3]>
+  [ 71] pusharglist 2 ........................... <pAnimData[theData[2]], theData[3]>
+  [ 73] objcall 301 ............................. <pAnimData[theData[2]][theData[3]]>
+  [ 76] pusharglist 0 ........................... <>
+  [ 78] extcall 388 ............................. <VOID>
+  [ 81] eq ...................................... <pAnimData[theData[2]][theData[3]] = VOID>
+  [ 82] jmpifz [118] ............................ if pAnimData[theData[2]][theData[3]] = VOID then
+  [ 85] getprop 1122 ............................ <pAnimData>
+  [ 88] getparam 1 .............................. <theData>
+  [ 90] pushint8 2 .............................. <2>
+  [ 92] pusharglist 2 ........................... <theData, 2>
+  [ 94] objcall 301 ............................. <theData[2]>
+  [ 97] pusharglist 2 ........................... <pAnimData, theData[2]>
+  [ 99] objcall 301 ............................. <pAnimData[theData[2]]>
+  [102] getparam 1 .............................. <theData>
+  [104] pushint8 3 .............................. <3>
+  [106] pusharglist 2 ........................... <theData, 3>
+  [108] objcall 301 ............................. <theData[3]>
+  [111] pusharglist 0 ........................... <[]>
+  [113] pushlist ................................ <[]>
+  [114] pusharglistnoret 3 ...................... <pAnimData[theData[2]], theData[3], []>
+  [116] objcall 54 .............................. pAnimData[theData[2]][theData[3]] = []
+  [118] getprop 1122 ............................ <pAnimData>
+  [121] getparam 1 .............................. <theData>
+  [123] pushint8 2 .............................. <2>
+  [125] pusharglist 2 ........................... <theData, 2>
+  [127] objcall 301 ............................. <theData[2]>
+  [130] pusharglist 2 ........................... <pAnimData, theData[2]>
+  [132] objcall 301 ............................. <pAnimData[theData[2]]>
+  [135] getparam 1 .............................. <theData>
+  [137] pushint8 3 .............................. <3>
+  [139] pusharglist 2 ........................... <theData, 3>
+  [141] objcall 301 ............................. <theData[3]>
+  [144] pusharglist 2 ........................... <pAnimData[theData[2]], theData[3]>
+  [146] objcall 301 ............................. <pAnimData[theData[2]][theData[3]]>
+  [149] pushsymb 865 ............................ <#mem>
+  [152] getparam 2 .............................. <themem>
+  [154] pushsymb 1124 ........................... <#dela>
+  [157] getparam 1 .............................. <theData>
+  [159] pushint8 4 .............................. <4>
+  [161] pusharglist 2 ........................... <theData, 4>
+  [163] objcall 301 ............................. <theData[4]>
+  [166] pusharglist 4 ........................... <[#mem: themem, #dela: theData[4]]>
+  [168] pushproplist ............................ <[#mem: themem, #dela: theData[4]]>
+  [169] pusharglistnoret 2 ...................... <pAnimData[theData[2]][theData[3]], [#mem: themem, #dela: theData[4]]>
+  [171] objcall 506 ............................. pAnimData[theData[2]][theData[3]].append([#mem: themem, #dela: theData[4]])
+  [174] ret
+end
+
+on collectMembers me
+  [  0] pusharglist 0 ........................... <[]>
+  [  2] pushlist ................................ <[]>
+  [  3] setlocal 0 .............................. animMembers = []
+  [  5] pushcons 0 .............................. <"gfx">
+  [  7] pushint8 2 .............................. <2>
+  [  9] get 8 ................................... <the number of castMembers of castLib "gfx">
+  [ 11] setlocal 1 .............................. nummem = the number of castMembers of castLib "gfx"
+  [ 13] pushint8 1 .............................. <1>
+  [ 15] setlocal 2
+  [ 17] getlocal 2
+  [ 19] getlocal 1 .............................. <nummem>
+  [ 21] lteq
+  [ 22] jmpifz [ 78] ............................ repeat with i = 1 to nummem
+  [ 25] getlocal 2 .............................. <i>
+  [ 27] pushcons 0 .............................. <"gfx">
+  [ 29] pusharglist 2 ........................... <i, "gfx">
+  [ 31] extcall 193 ............................. <member(i, "gfx")>
+  [ 33] setlocal 3 .............................. nMem = member(i, "gfx")
+  [ 35] getlocal 3 .............................. <nMem>
+  [ 37] getobjprop 138 .......................... <nMem.name>
+  [ 39] setlocal 4 .............................. nName = nMem.name
+  [ 41] getlocal 4 .............................. <nName>
+  [ 43] pushcons 1 .............................. <"anm_">
+  [ 45] containsstr ............................. <nName contains "anm_">
+  [ 46] jmpifz [ 69] ............................ if nName contains "anm_" then
+  [ 49] getlocal 0 .............................. <animMembers>
+  [ 51] pushsymb 1127 ........................... <#nam>
+  [ 54] getlocal 4 .............................. <nName>
+  [ 56] pushsymb 865 ............................ <#mem>
+  [ 59] getlocal 3 .............................. <nMem>
+  [ 61] pusharglist 4 ........................... <[#nam: nName, #mem: nMem]>
+  [ 63] pushproplist ............................ <[#nam: nName, #mem: nMem]>
+  [ 64] pusharglistnoret 2 ...................... <animMembers, [#nam: nName, #mem: nMem]>
+  [ 66] objcall 506 ............................. animMembers.append([#nam: nName, #mem: nMem])
+  [ 69] pushint8 1
+  [ 71] getlocal 2
+  [ 73] add
+  [ 74] setlocal 2
+  [ 76] endrepeat [ 17]
+  [ 78] getlocal 0 .............................. <animMembers>
+  [ 80] pusharglistnoret 1 ...................... <animMembers>
+  [ 82] extcall 3 ............................... return animMembers
+  [ 84] ret
+end
+
+on extractData me, animMembers
+  [  0] getparam 1 .............................. <animMembers>
+  [  2] peek 0
+  [  4] pusharglist 1
+  [  6] extcall 348
+  [  9] pushint8 1
+  [ 11] peek 0
+  [ 13] peek 2
+  [ 15] lteq
+  [ 16] jmpifz [129] ............................ repeat with memData in animMembers
+  [ 19] peek 2
+  [ 21] peek 1
+  [ 23] pusharglist 2
+  [ 25] extcall 301
+  [ 28] setlocal 0
+  [ 30] getlocal 0 .............................. <memData>
+  [ 32] getobjprop 1127 ......................... <memData.nam>
+  [ 35] pushcons 2 .............................. <"_">
+  [ 37] pusharglist 2 ........................... <memData.nam, "_">
+  [ 39] extcall 1129 ............................ <StringExtractList(memData.nam, "_")>
+  [ 42] setlocal 1 .............................. data = StringExtractList(memData.nam, "_")
+  [ 44] getlocal 1 .............................. <data>
+  [ 46] pushint8 2 .............................. <2>
+  [ 48] getlocal 1 .............................. <data>
+  [ 50] pushint8 2 .............................. <2>
+  [ 52] pusharglist 2 ........................... <data, 2>
+  [ 54] objcall 301 ............................. <data[2]>
+  [ 57] pusharglist 1 ........................... <data[2]>
+  [ 59] extcall 442 ............................. <symbol(data[2])>
+  [ 62] pusharglistnoret 3 ...................... <data, 2, symbol(data[2])>
+  [ 64] objcall 54 .............................. data[2] = symbol(data[2])
+  [ 66] getlocal 1 .............................. <data>
+  [ 68] pushint8 3 .............................. <3>
+  [ 70] getlocal 1 .............................. <data>
+  [ 72] pushint8 3 .............................. <3>
+  [ 74] pusharglist 2 ........................... <data, 3>
+  [ 76] objcall 301 ............................. <data[3]>
+  [ 79] pusharglist 1 ........................... <data[3]>
+  [ 81] extcall 442 ............................. <symbol(data[3])>
+  [ 84] pusharglistnoret 3 ...................... <data, 3, symbol(data[3])>
+  [ 86] objcall 54 .............................. data[3] = symbol(data[3])
+  [ 88] getlocal 1 .............................. <data>
+  [ 90] pushint8 4 .............................. <4>
+  [ 92] getlocal 1 .............................. <data>
+  [ 94] pushint8 4 .............................. <4>
+  [ 96] pusharglist 2 ........................... <data, 4>
+  [ 98] objcall 301 ............................. <data[4]>
+  [101] pusharglist 1 ........................... <data[4]>
+  [103] extcall 912 ............................. <value(data[4])>
+  [106] pusharglistnoret 3 ...................... <data, 4, value(data[4])>
+  [108] objcall 54 .............................. data[4] = value(data[4])
+  [110] getparam 0 .............................. <me>
+  [112] getlocal 1 .............................. <data>
+  [114] getlocal 0 .............................. <memData>
+  [116] getobjprop 865 .......................... <memData.mem>
+  [119] pusharglistnoret 3 ...................... <me, data, memData.mem>
+  [121] objcall 1117 ............................ me.addFrame(data, memData.mem)
+  [124] pushint8 1
+  [126] add
+  [127] endrepeat [ 11]
+  [129] pop 3
+  [131] ret
+end
+
+on getStripDefs me, charName
+  [  0] getparam 1 .............................. <charName>
+  [  2] pusharglist 1 ........................... <charName>
+  [  4] extcall 442 ............................. <symbol(charName)>
+  [  7] setparam 1 .............................. charName = symbol(charName)
+  [  9] getprop 1122 ............................ <pAnimData>
+  [ 12] getparam 1 .............................. <charName>
+  [ 14] pusharglist 2 ........................... <pAnimData, charName>
+  [ 16] objcall 301 ............................. <pAnimData[charName]>
+  [ 19] pusharglistnoret 1 ...................... <pAnimData[charName]>
+  [ 21] extcall 3 ............................... return pAnimData[charName]
+  [ 23] ret
+end
+
+on seperateMembers me, animMembers
+  [  0] pushint8 1 .............................. <1>
+  [  2] setlocal 0 .............................. i = 1
+  [  4] getparam 1 .............................. <animMembers>
+  [  6] peek 0
+  [  8] pusharglist 1
+  [ 10] extcall 348
+  [ 13] pushint8 1
+  [ 15] peek 0
+  [ 17] peek 2
+  [ 19] lteq
+  [ 20] jmpifz [133] ............................ repeat with animMember in animMembers
+  [ 23] peek 2
+  [ 25] peek 1
+  [ 27] pusharglist 2
+  [ 29] extcall 301
+  [ 32] setlocal 1
+  [ 34] getlocal 1 .............................. <animMember>
+  [ 36] getobjprop 1127 ......................... <animMember.nam>
+  [ 39] setlocal 2 .............................. nName = animMember.nam
+  [ 41] getlocal 2 .............................. <nName>
+  [ 43] pushcons 3 .............................. <" ">
+  [ 45] pusharglist 2 ........................... <nName, " ">
+  [ 47] extcall 1129 ............................ <StringExtractList(nName, " ")>
+  [ 50] setlocal 3 .............................. namList = StringExtractList(nName, " ")
+  [ 52] getlocal 3 .............................. <namList>
+  [ 54] getobjprop 348 .......................... <namList.count>
+  [ 57] pushint8 1 .............................. <1>
+  [ 59] gt ...................................... <namList.count > 1>
+  [ 60] jmpifz [121] ............................ if namList.count > 1 then
+  [ 63] getlocal 1 .............................. <animMember>
+  [ 65] getobjprop 865 .......................... <animMember.mem>
+  [ 68] setlocal 4 .............................. nMem = animMember.mem
+  [ 70] pushint8 2 .............................. <2>
+  [ 72] setlocal 0
+  [ 74] getlocal 0
+  [ 76] getlocal 3 .............................. <namList>
+  [ 78] getobjprop 348 .......................... <namList.count>
+  [ 81] lteq
+  [ 82] jmpifz [121] ............................ repeat with i = 2 to namList.count
+  [ 85] getparam 1 .............................. <animMembers>
+  [ 87] pushsymb 1127 ........................... <#nam>
+  [ 90] getlocal 3 .............................. <namList>
+  [ 92] getlocal 0 .............................. <i>
+  [ 94] pusharglist 2 ........................... <namList, i>
+  [ 96] objcall 301 ............................. <namList[i]>
+  [ 99] pushsymb 865 ............................ <#mem>
+  [102] getlocal 4 .............................. <nMem>
+  [104] pusharglist 4 ........................... <[#nam: namList[i], #mem: nMem]>
+  [106] pushproplist ............................ <[#nam: namList[i], #mem: nMem]>
+  [107] pusharglistnoret 2 ...................... <animMembers, [#nam: namList[i], #mem: nMem]>
+  [109] objcall 506 ............................. animMembers.append([#nam: namList[i], #mem: nMem])
+  [112] pushint8 1
+  [114] getlocal 0
+  [116] add
+  [117] setlocal 0
+  [119] endrepeat [ 74]
+  [121] getlocal 0 .............................. <i>
+  [123] pushint8 1 .............................. <1>
+  [125] add ..................................... <i + 1>
+  [126] setlocal 0 .............................. i = i + 1
+  [128] pushint8 1
+  [130] add
+  [131] endrepeat [ 15]
+  [133] pop 3
+  [135] getparam 1 .............................. <animMembers>
+  [137] pusharglistnoret 1 ...................... <animMembers>
+  [139] extcall 3 ............................... return animMembers
+  [141] ret
+end
+
+on stop me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 239 ............................. me.finish()
+  [  6] ret
+end

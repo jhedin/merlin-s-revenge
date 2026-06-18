@@ -1,0 +1,294 @@
+property ancestor, pPossessDistance, pTargetLoc, pTargetType
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"objAi">
+  [  2] pusharglist 1 ........................... <"objAi">
+  [  4] extcall 34 .............................. <script("objAi")>
+  [  6] pusharglist 1 ........................... <script("objAi")>
+  [  8] extcall 0 ............................... <new(script("objAi"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objAi"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 1884 ........................... <#targetType>
+  [ 27] pushsymb 1885 ........................... <#monk>
+  [ 30] pusharglistnoret 3 ...................... <i, #targetType, #monk>
+  [ 32] objcall 48 .............................. i[#targetType] = #monk
+  [ 34] getparam 0 .............................. <me>
+  [ 36] pusharglistnoret 1 ...................... <me>
+  [ 38] extcall 35 .............................. return me
+  [ 40] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pushint8 10 ............................. <10>
+  [ 10] setprop 1886 ............................ pPossessDistance = 10
+  [ 13] getparam 1 .............................. <params>
+  [ 15] getobjprop 1884 ......................... <params.targetType>
+  [ 18] setprop 1887 ............................ pTargetType = params.targetType
+  [ 21] ret
+end
+
+on addSaveData me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 4 ............................... ancestor.addSaveData(sd)
+  [  8] getparam 1 .............................. <sd>
+  [ 10] pushsymb 954 ............................ <#pTargetLoc>
+  [ 13] getprop 954 ............................. <pTargetLoc>
+  [ 16] pusharglistnoret 3 ...................... <sd, #pTargetLoc, pTargetLoc>
+  [ 18] objcall 48 .............................. sd[#pTargetLoc] = pTargetLoc
+  [ 20] ret
+end
+
+on attemptPossess me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1091 ........................... <#target>
+  [  5] pusharglist 2 ........................... <me, #target>
+  [  7] objcall 606 ............................. <me.getRelation(#target)>
+  [ 10] setlocal 0 .............................. myTarget = me.getRelation(#target)
+  [ 12] getlocal 0 .............................. <myTarget>
+  [ 14] pushsymb 49 ............................. <#none>
+  [ 16] eq ...................................... <myTarget = #none>
+  [ 17] jmpifz [ 33] ............................ if myTarget = #none then / else
+  [ 20] getparam 0 .............................. <me>
+  [ 22] pushsymb 1812 ........................... <#findTarget>
+  [ 25] pusharglistnoret 2 ...................... <me, #findTarget>
+  [ 27] objcall 278 ............................. me.goMode(#findTarget)
+  [ 30] jmp [ 92]
+  [ 33] getparam 0 .............................. <me>
+  [ 35] pusharglist 1 ........................... <me>
+  [ 37] objcall 111 ............................. <me.getLoc()>
+  [ 39] getlocal 0 .............................. <myTarget>
+  [ 41] pusharglist 1 ........................... <myTarget>
+  [ 43] objcall 111 ............................. <myTarget.getLoc()>
+  [ 45] pusharglist 2 ........................... <me.getLoc(), myTarget.getLoc()>
+  [ 47] extcall 862 ............................. <geomPixelDist(me.getLoc(), myTarget.getLoc())>
+  [ 50] getprop 1886 ............................ <pPossessDistance>
+  [ 53] lt ...................................... <geomPixelDist(me.getLoc(), myTarget.getLoc()) < pPossessDistance>
+  [ 54] jmpifz [ 82] ............................ if geomPixelDist(me.getLoc(), myTarget.getLoc()) < pPossessDistance then / else
+  [ 57] getparam 0 .............................. <me>
+  [ 59] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [ 61] getlocal 0 .............................. <myTarget>
+  [ 63] pusharglistnoret 2 ...................... <me.pCharacterPrg, myTarget>
+  [ 65] objcall 576 ............................. me.pCharacterPrg.mergeExperience(myTarget)
+  [ 68] getparam 0 .............................. <me>
+  [ 70] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [ 72] pushsymb 3 .............................. <#finish>
+  [ 74] pusharglistnoret 2 ...................... <me.pCharacterPrg, #finish>
+  [ 76] objcall 278 ............................. me.pCharacterPrg.goMode(#finish)
+  [ 79] jmp [ 92]
+  [ 82] getparam 0 .............................. <me>
+  [ 84] pushsymb 1812 ........................... <#findTarget>
+  [ 87] pusharglistnoret 2 ...................... <me, #findTarget>
+  [ 89] objcall 278 ............................. me.goMode(#findTarget)
+  [ 92] ret
+end
+
+on eventNotification me, theEvent, theObj
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <theEvent>
+  [  4] getparam 2 .............................. <theObj>
+  [  6] pusharglistnoret 3 ...................... <ancestor, theEvent, theObj>
+  [  8] objcall 568 ............................. ancestor.eventNotification(theEvent, theObj)
+  [ 11] getparam 1 .............................. <theEvent>
+  [ 13] peek 0 .................................. case theEvent of
+  [ 15] pushsymb 122 ............................ <#leaveGame>
+  [ 17] nteq
+  [ 18] jmpifz [ 30] ............................ (case) #leaveGame, ...
+  [ 21] peek 0
+  [ 23] pushsymb 484 ............................ <#outOfEnergy>
+  [ 26] eq
+  [ 27] jmpifz [ 58] ............................ (case) ..., #outOfEnergy:
+  [ 30] getparam 2 .............................. <theObj>
+  [ 32] getparam 0 .............................. <me>
+  [ 34] pushsymb 1091 ........................... <#target>
+  [ 37] pusharglist 2 ........................... <me, #target>
+  [ 39] objcall 606 ............................. <me.getRelation(#target)>
+  [ 42] eq ...................................... <theObj = me.getRelation(#target)>
+  [ 43] jmpifz [ 58] ............................ if theObj = me.getRelation(#target) then
+  [ 46] getparam 0 .............................. <me>
+  [ 48] getparam 2 .............................. <theObj>
+  [ 50] pushsymb 1091 ........................... <#target>
+  [ 53] pusharglistnoret 3 ...................... <me, theObj, #target>
+  [ 55] objcall 614 ............................. me.breakRelationship(theObj, #target)
+  [ 58] pop 1
+  [ 60] ret
+end
+
+on getAttack me
+  [  0] pushsymb 49 ............................. <#none>
+  [  2] pusharglistnoret 1 ...................... <#none>
+  [  4] extcall 35 .............................. return #none
+  [  6] ret
+end
+
+on goToLoc me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1091 ........................... <#target>
+  [  5] pusharglist 2 ........................... <me, #target>
+  [  7] objcall 606 ............................. <me.getRelation(#target)>
+  [ 10] setlocal 0 .............................. myTarget = me.getRelation(#target)
+  [ 12] getlocal 0 .............................. <myTarget>
+  [ 14] pushsymb 49 ............................. <#none>
+  [ 16] eq ...................................... <myTarget = #none>
+  [ 17] jmpifz [ 34] ............................ if myTarget = #none then / else
+  [ 20] getparam 0 .............................. <me>
+  [ 22] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [ 24] getprop 954 ............................. <pTargetLoc>
+  [ 27] pusharglistnoret 2 ...................... <me.pCharacterPrg, pTargetLoc>
+  [ 29] objcall 67 .............................. me.pCharacterPrg.moveToLoc(pTargetLoc)
+  [ 31] jmp [ 48]
+  [ 34] getparam 0 .............................. <me>
+  [ 36] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [ 38] getlocal 0 .............................. <myTarget>
+  [ 40] pusharglist 1 ........................... <myTarget>
+  [ 42] objcall 111 ............................. <myTarget.getLoc()>
+  [ 44] pusharglistnoret 2 ...................... <me.pCharacterPrg, myTarget.getLoc()>
+  [ 46] objcall 67 .............................. me.pCharacterPrg.moveToLoc(myTarget.getLoc())
+  [ 48] getparam 0 .............................. <me>
+  [ 50] pushsymb 1882 ........................... <#goToLoc>
+  [ 53] pusharglistnoret 2 ...................... <me, #goToLoc>
+  [ 55] objcall 278 ............................. me.goMode(#goToLoc)
+  [ 58] ret
+end
+
+on internalEvent me, theEvent
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <theEvent>
+  [  4] pusharglistnoret 2 ...................... <ancestor, theEvent>
+  [  6] objcall 22 .............................. ancestor.internalEvent(theEvent)
+  [  8] getparam 1 .............................. <theEvent>
+  [ 10] peek 0 .................................. case theEvent of
+  [ 12] pushsymb 482 ............................ <#buildingFinished>
+  [ 15] eq
+  [ 16] jmpifz [ 29] ............................ (case) #buildingFinished:
+  [ 19] getparam 0 .............................. <me>
+  [ 21] pushsymb 1812 ........................... <#findTarget>
+  [ 24] pusharglistnoret 2 ...................... <me, #findTarget>
+  [ 26] objcall 278 ............................. me.goMode(#findTarget)
+  [ 29] pop 1
+  [ 31] ret
+end
+
+on restoreFromSave me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 26 .............................. ancestor.restoreFromSave(sd)
+  [  8] getparam 1 .............................. <sd>
+  [ 10] getobjprop 954 .......................... <sd.pTargetLoc>
+  [ 13] setprop 954 ............................. pTargetLoc = sd.pTargetLoc
+  [ 16] ret
+end
+
+on update me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 31 .............................. ancestor.update()
+  [  6] getparam 0 .............................. <me>
+  [  8] getobjprop 312 .......................... <me.pmode>
+  [ 11] peek 0 .................................. case me.pmode of
+  [ 13] pushsymb 1812 ........................... <#findTarget>
+  [ 16] eq
+  [ 17] jmpifz [ 44] ............................ (case) #findTarget:
+  [ 20] getparam 0 .............................. <me>
+  [ 22] pusharglist 1 ........................... <me>
+  [ 24] objcall 1803 ............................ <me.updateFindTarget()>
+  [ 27] setlocal 0 .............................. fin = me.updateFindTarget()
+  [ 29] getlocal 0 .............................. <fin>
+  [ 31] jmpifz [ 41] ............................ if fin then
+  [ 34] getparam 0 .............................. <me>
+  [ 36] pusharglistnoret 1 ...................... <me>
+  [ 38] objcall 1882 ............................ me.goToLoc()
+  [ 41] jmp [ 74]
+  [ 44] peek 0
+  [ 46] pushsymb 1882 ........................... <#goToLoc>
+  [ 49] eq
+  [ 50] jmpifz [ 74] ............................ (case) #goToLoc:
+  [ 53] getparam 0 .............................. <me>
+  [ 55] pusharglist 1 ........................... <me>
+  [ 57] objcall 1883 ............................ <me.updateGoToLoc()>
+  [ 60] setlocal 0 .............................. fin = me.updateGoToLoc()
+  [ 62] getlocal 0 .............................. <fin>
+  [ 64] jmpifz [ 74] ............................ if fin then
+  [ 67] getparam 0 .............................. <me>
+  [ 69] pusharglistnoret 1 ...................... <me>
+  [ 71] objcall 1881 ............................ me.attemptPossess()
+  [ 74] pop 1 ................................... end case
+  [ 76] ret
+end
+
+on updateFindTarget me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [  4] pusharglist 1 ........................... <me.pCharacterPrg>
+  [  6] objcall 743 ............................. <me.pCharacterPrg.getTeamWhenAlive()>
+  [  9] setlocal 0 .............................. myTeam = me.pCharacterPrg.getTeamWhenAlive()
+  [ 11] getglobal 40 ............................ <g>
+  [ 13] getchainedprop 642 ...................... <g.teamMaster>
+  [ 16] getprop 1887 ............................ <pTargetType>
+  [ 19] getlocal 0 .............................. <myTeam>
+  [ 21] pusharglist 3 ........................... <g.teamMaster, pTargetType, myTeam>
+  [ 23] objcall 1888 ............................ <g.teamMaster.findUnitOfType(pTargetType, myTeam)>
+  [ 26] setlocal 1 .............................. myTarget = g.teamMaster.findUnitOfType(pTargetType, myTeam)
+  [ 28] getlocal 1 .............................. <myTarget>
+  [ 30] pushsymb 49 ............................. <#none>
+  [ 32] eq ...................................... <myTarget = #none>
+  [ 33] jmpifz [ 70] ............................ if myTarget = #none then / else
+  [ 36] getglobal 40 ............................ <g>
+  [ 38] getchainedprop 754 ...................... <g.gamemaster>
+  [ 41] pusharglist 1 ........................... <g.gamemaster>
+  [ 43] objcall 1821 ............................ <g.gamemaster.getCurrentMap()>
+  [ 46] setlocal 2 .............................. currentMap = g.gamemaster.getCurrentMap()
+  [ 48] getlocal 2 .............................. <currentMap>
+  [ 50] pusharglist 1 ........................... <currentMap>
+  [ 52] objcall 260 ............................. <currentMap.getSpriteRect()>
+  [ 55] setlocal 3 .............................. mapRect = currentMap.getSpriteRect()
+  [ 57] getlocal 3 .............................. <mapRect>
+  [ 59] pusharglist 1 ........................... <mapRect>
+  [ 61] extcall 1889 ............................ <PointRandomInRect(mapRect)>
+  [ 64] setprop 954 ............................. pTargetLoc = PointRandomInRect(mapRect)
+  [ 67] jmp [ 87]
+  [ 70] getparam 0 .............................. <me>
+  [ 72] getlocal 1 .............................. <myTarget>
+  [ 74] pusharglistnoret 2 ...................... <me, myTarget>
+  [ 76] objcall 236 ............................. me.setTarget(myTarget)
+  [ 78] getlocal 1 .............................. <myTarget>
+  [ 80] pusharglist 1 ........................... <myTarget>
+  [ 82] objcall 111 ............................. <myTarget.getLoc()>
+  [ 84] setprop 954 ............................. pTargetLoc = myTarget.getLoc()
+  [ 87] pushint8 1 .............................. <1>
+  [ 89] pusharglistnoret 1 ...................... <1>
+  [ 91] extcall 35 .............................. return 1
+  [ 93] ret
+end
+
+on updateGoToLoc me
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. fin = 0
+  [  3] getparam 0 .............................. <me>
+  [  5] pusharglist 1 ........................... <me>
+  [  7] objcall 111 ............................. <me.getLoc()>
+  [  9] getprop 954 ............................. <pTargetLoc>
+  [ 12] pusharglist 2 ........................... <me.getLoc(), pTargetLoc>
+  [ 14] extcall 862 ............................. <geomPixelDist(me.getLoc(), pTargetLoc)>
+  [ 17] getprop 1886 ............................ <pPossessDistance>
+  [ 20] lt ...................................... <geomPixelDist(me.getLoc(), pTargetLoc) < pPossessDistance>
+  [ 21] jmpifz [ 28] ............................ if geomPixelDist(me.getLoc(), pTargetLoc) < pPossessDistance then
+  [ 24] pushint8 1 .............................. <1>
+  [ 26] setlocal 0 .............................. fin = 1
+  [ 28] getlocal 0 .............................. <fin>
+  [ 30] pusharglistnoret 1 ...................... <fin>
+  [ 32] extcall 35 .............................. return fin
+  [ 34] ret
+end

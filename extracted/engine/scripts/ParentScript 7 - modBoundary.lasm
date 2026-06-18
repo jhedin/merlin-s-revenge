@@ -1,0 +1,188 @@
+property ancestor, pBoundaryMember, pBoundarySprites
+global g, gMapBoundary, gMapBoundaryLayer
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 252 .......................... <params.boundaryMember>
+  [ 12] setprop 251 ............................. pBoundaryMember = params.boundaryMember
+  [ 14] pusharglist 0 ........................... <[]>
+  [ 16] pushlist ................................ <[]>
+  [ 17] setprop 253 ............................. pBoundarySprites = []
+  [ 19] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getlocal 0 .............................. <i>
+  [ 12] pushsymb 252 ............................ <#boundaryMember>
+  [ 14] pushcons 1 .............................. <"dot">
+  [ 16] pushcons 2 .............................. <"gfx">
+  [ 18] pusharglist 2 ........................... <"dot", "gfx">
+  [ 20] extcall 99 .............................. <member("dot", "gfx")>
+  [ 22] pusharglistnoret 3 ...................... <i, #boundaryMember, member("dot", "gfx")>
+  [ 24] objcall 48 .............................. i[#boundaryMember] = member("dot", "gfx")
+  [ 26] getprop 33 .............................. <ancestor>
+  [ 28] pusharglistnoret 1 ...................... <ancestor>
+  [ 30] objcall 2 ............................... ancestor.addModParams()
+  [ 32] ret
+end
+
+on displayBoundary me
+  [  0] pusharglist 0 ........................... <[]>
+  [  2] pushlist ................................ <[]>
+  [  3] setprop 253 ............................. pBoundarySprites = []
+  [  5] pushint8 1 .............................. <1>
+  [  7] setlocal 0
+  [  9] getlocal 0
+  [ 11] pushint8 4 .............................. <4>
+  [ 13] lteq
+  [ 14] jmpifz [ 61] ............................ repeat with i = 1 to 4
+  [ 17] getglobal 40 ............................ <g>
+  [ 19] getchainedprop 254 ...................... <g.spriteMaster>
+  [ 21] pusharglist 1 ........................... <g.spriteMaster>
+  [ 23] objcall 255 ............................. <g.spriteMaster.requestSprite()>
+  [ 25] setlocal 1 .............................. spr = g.spriteMaster.requestSprite()
+  [ 27] getlocal 1 .............................. <spr>
+  [ 29] getprop 251 ............................. <pBoundaryMember>
+  [ 31] pusharglistnoret 2 ...................... <spr, pBoundaryMember>
+  [ 33] extcall 96 .............................. SpriteSetMember(spr, pBoundaryMember)
+  [ 35] getlocal 1 .............................. <spr>
+  [ 37] getglobal 258 ........................... <gMapBoundaryLayer>
+  [ 40] setobjprop 259 .......................... spr.locZ = gMapBoundaryLayer
+  [ 43] getprop 253 ............................. <pBoundarySprites>
+  [ 45] getlocal 1 .............................. <spr>
+  [ 47] pusharglistnoret 2 ...................... <pBoundarySprites, spr>
+  [ 49] objcall 256 ............................. pBoundarySprites.append(spr)
+  [ 52] pushint8 1
+  [ 54] getlocal 0
+  [ 56] add
+  [ 57] setlocal 0
+  [ 59] endrepeat [  9]
+  [ 61] getparam 0 .............................. <me>
+  [ 63] getchainedprop 57 ....................... <me.id>
+  [ 65] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 67] pusharglist 1 ........................... <me.id.bigMe>
+  [ 69] objcall 260 ............................. <me.id.bigMe.getSpriteRect()>
+  [ 72] setlocal 2 .............................. mapRect = me.id.bigMe.getSpriteRect()
+  [ 74] getlocal 2 .............................. <mapRect>
+  [ 76] getglobal 262 ........................... <gMapBoundary>
+  [ 79] getglobal 262 ........................... <gMapBoundary>
+  [ 82] pusharglist 3 ........................... <mapRect, gMapBoundary, gMapBoundary>
+  [ 84] extcall 261 ............................. <inflate(mapRect, gMapBoundary, gMapBoundary)>
+  [ 87] setlocal 3 .............................. boundaryRect = inflate(mapRect, gMapBoundary, gMapBoundary)
+  [ 89] getprop 253 ............................. <pBoundarySprites>
+  [ 91] pushint8 1 .............................. <1>
+  [ 93] pusharglist 2 ........................... <pBoundarySprites, 1>
+  [ 95] objcall 109 ............................. <pBoundarySprites[1]>
+  [ 97] getlocal 3 .............................. <boundaryRect>
+  [ 99] getobjprop 264 .......................... <boundaryRect.left>
+  [102] getlocal 3 .............................. <boundaryRect>
+  [104] getobjprop 265 .......................... <boundaryRect.top>
+  [107] getlocal 3 .............................. <boundaryRect>
+  [109] getobjprop 266 .......................... <boundaryRect.right>
+  [112] getlocal 2 .............................. <mapRect>
+  [114] getobjprop 265 .......................... <mapRect.top>
+  [117] pusharglist 4 ........................... <boundaryRect.left, boundaryRect.top, boundaryRect.right, mapRect.top>
+  [119] extcall 263 ............................. <rect(boundaryRect.left, boundaryRect.top, boundaryRect.right, mapRect.top)>
+  [122] setobjprop 263 .......................... pBoundarySprites[1].rect = rect(boundaryRect.left, boundaryRect.top, boundaryRect.right, mapRect.top)
+  [125] getprop 253 ............................. <pBoundarySprites>
+  [127] pushint8 2 .............................. <2>
+  [129] pusharglist 2 ........................... <pBoundarySprites, 2>
+  [131] objcall 109 ............................. <pBoundarySprites[2]>
+  [133] getlocal 3 .............................. <boundaryRect>
+  [135] getobjprop 264 .......................... <boundaryRect.left>
+  [138] getlocal 3 .............................. <boundaryRect>
+  [140] getobjprop 265 .......................... <boundaryRect.top>
+  [143] getlocal 2 .............................. <mapRect>
+  [145] getobjprop 264 .......................... <mapRect.left>
+  [148] getlocal 3 .............................. <boundaryRect>
+  [150] getobjprop 114 .......................... <boundaryRect.bottom>
+  [152] pusharglist 4 ........................... <boundaryRect.left, boundaryRect.top, mapRect.left, boundaryRect.bottom>
+  [154] extcall 263 ............................. <rect(boundaryRect.left, boundaryRect.top, mapRect.left, boundaryRect.bottom)>
+  [157] setobjprop 263 .......................... pBoundarySprites[2].rect = rect(boundaryRect.left, boundaryRect.top, mapRect.left, boundaryRect.bottom)
+  [160] getprop 253 ............................. <pBoundarySprites>
+  [162] pushint8 3 .............................. <3>
+  [164] pusharglist 2 ........................... <pBoundarySprites, 3>
+  [166] objcall 109 ............................. <pBoundarySprites[3]>
+  [168] getlocal 3 .............................. <boundaryRect>
+  [170] getobjprop 264 .......................... <boundaryRect.left>
+  [173] getlocal 2 .............................. <mapRect>
+  [175] getobjprop 114 .......................... <mapRect.bottom>
+  [177] getlocal 3 .............................. <boundaryRect>
+  [179] getobjprop 266 .......................... <boundaryRect.right>
+  [182] getlocal 3 .............................. <boundaryRect>
+  [184] getobjprop 114 .......................... <boundaryRect.bottom>
+  [186] pusharglist 4 ........................... <boundaryRect.left, mapRect.bottom, boundaryRect.right, boundaryRect.bottom>
+  [188] extcall 263 ............................. <rect(boundaryRect.left, mapRect.bottom, boundaryRect.right, boundaryRect.bottom)>
+  [191] setobjprop 263 .......................... pBoundarySprites[3].rect = rect(boundaryRect.left, mapRect.bottom, boundaryRect.right, boundaryRect.bottom)
+  [194] getprop 253 ............................. <pBoundarySprites>
+  [196] pushint8 4 .............................. <4>
+  [198] pusharglist 2 ........................... <pBoundarySprites, 4>
+  [200] objcall 109 ............................. <pBoundarySprites[4]>
+  [202] getlocal 2 .............................. <mapRect>
+  [204] getobjprop 266 .......................... <mapRect.right>
+  [207] getlocal 3 .............................. <boundaryRect>
+  [209] getobjprop 265 .......................... <boundaryRect.top>
+  [212] getlocal 3 .............................. <boundaryRect>
+  [214] getobjprop 266 .......................... <boundaryRect.right>
+  [217] getlocal 3 .............................. <boundaryRect>
+  [219] getobjprop 114 .......................... <boundaryRect.bottom>
+  [221] pusharglist 4 ........................... <mapRect.right, boundaryRect.top, boundaryRect.right, boundaryRect.bottom>
+  [223] extcall 263 ............................. <rect(mapRect.right, boundaryRect.top, boundaryRect.right, boundaryRect.bottom)>
+  [226] setobjprop 263 .......................... pBoundarySprites[4].rect = rect(mapRect.right, boundaryRect.top, boundaryRect.right, boundaryRect.bottom)
+  [229] ret
+end
+
+on finish me
+  [  0] getprop 253 ............................. <pBoundarySprites>
+  [  2] peek 0
+  [  4] pusharglist 1
+  [  6] extcall 257
+  [  9] pushint8 1
+  [ 11] peek 0
+  [ 13] peek 2
+  [ 15] lteq
+  [ 16] jmpifz [ 45] ............................ repeat with spr in pBoundarySprites
+  [ 19] peek 2
+  [ 21] peek 1
+  [ 23] pusharglist 2
+  [ 25] extcall 109
+  [ 27] setlocal 0
+  [ 29] getglobal 40 ............................ <g>
+  [ 31] getchainedprop 254 ...................... <g.spriteMaster>
+  [ 33] getlocal 0 .............................. <spr>
+  [ 35] pusharglistnoret 2 ...................... <g.spriteMaster, spr>
+  [ 37] objcall 270 ............................. g.spriteMaster.freeSprite(spr)
+  [ 40] pushint8 1
+  [ 42] add
+  [ 43] endrepeat [ 11]
+  [ 45] pop 3
+  [ 47] pusharglist 0 ........................... <[]>
+  [ 49] pushlist ................................ <[]>
+  [ 50] setprop 253 ............................. pBoundarySprites = []
+  [ 52] getprop 33 .............................. <ancestor>
+  [ 54] pusharglistnoret 1 ...................... <ancestor>
+  [ 56] objcall 3 ............................... ancestor.finish()
+  [ 58] ret
+end

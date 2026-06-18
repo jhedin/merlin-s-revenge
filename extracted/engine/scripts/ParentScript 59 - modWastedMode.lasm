@@ -1,0 +1,89 @@
+property ancestor, pWastedModeBlend, pWastedModeBlendOff, pWastedModeHeight, pWastedModeIsOn
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getprop 33 .............................. <ancestor>
+  [ 12] pusharglistnoret 1 ...................... <ancestor>
+  [ 14] objcall 2 ............................... ancestor.addModParams()
+  [ 16] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pushint8 30 ............................. <30>
+  [ 10] setprop 1586 ............................ pWastedModeBlend = 30
+  [ 13] pushint8 100 ............................ <100>
+  [ 15] setprop 1587 ............................ pWastedModeBlendOff = 100
+  [ 18] pushint8 60 ............................. <60>
+  [ 20] setprop 1588 ............................ pWastedModeHeight = 60
+  [ 23] pushzero ................................ <0>
+  [ 24] setprop 1589 ............................ pWastedModeIsOn = 0
+  [ 27] ret
+end
+
+on finish me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 3 ............................... ancestor.finish()
+  [  6] ret
+end
+
+on wastedModeOn me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 57 ....................... <me.id>
+  [  4] getobjprop 58 ........................... <me.id.bigMe>
+  [  6] setlocal 0 .............................. bigMe = me.id.bigMe
+  [  8] getlocal 0 .............................. <bigMe>
+  [ 10] getprop 1586 ............................ <pWastedModeBlend>
+  [ 13] pusharglistnoret 2 ...................... <bigMe, pWastedModeBlend>
+  [ 15] objcall 673 ............................. bigMe.setBlend(pWastedModeBlend)
+  [ 18] getlocal 0 .............................. <bigMe>
+  [ 20] pushint8 1 .............................. <1>
+  [ 22] pusharglistnoret 2 ...................... <bigMe, 1>
+  [ 24] objcall 29 .............................. bigMe.setAnimKeepSize(1)
+  [ 26] getlocal 0 .............................. <bigMe>
+  [ 28] getprop 1588 ............................ <pWastedModeHeight>
+  [ 31] pusharglistnoret 2 ...................... <bigMe, pWastedModeHeight>
+  [ 33] objcall 1011 ............................ bigMe.setSpriteHeight(pWastedModeHeight)
+  [ 36] pushint8 1 .............................. <1>
+  [ 38] setprop 1589 ............................ pWastedModeIsOn = 1
+  [ 41] ret
+end
+
+on wastedModeOff me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 57 ....................... <me.id>
+  [  4] getobjprop 58 ........................... <me.id.bigMe>
+  [  6] setlocal 0 .............................. bigMe = me.id.bigMe
+  [  8] getlocal 0 .............................. <bigMe>
+  [ 10] getprop 1587 ............................ <pWastedModeBlendOff>
+  [ 13] pusharglistnoret 2 ...................... <bigMe, pWastedModeBlendOff>
+  [ 15] objcall 673 ............................. bigMe.setBlend(pWastedModeBlendOff)
+  [ 18] getlocal 0 .............................. <bigMe>
+  [ 20] pushzero ................................ <0>
+  [ 21] pusharglistnoret 2 ...................... <bigMe, 0>
+  [ 23] objcall 29 .............................. bigMe.setAnimKeepSize(0)
+  [ 25] pushzero ................................ <0>
+  [ 26] setprop 1589 ............................ pWastedModeIsOn = 0
+  [ 29] ret
+end

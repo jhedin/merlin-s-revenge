@@ -1,0 +1,328 @@
+property ancestor, pDieOnExplode, pPrimeCounter, pTriggerRadius, pDieOnExplodeNumber, pExplosions, pCheckCounter, pTriggerRadiusTile
+global g, gMineLayer
+
+on new me
+  [  0] pushcons 0 .............................. <"objGameObject">
+  [  2] pusharglist 1 ........................... <"objGameObject">
+  [  4] extcall 34 .............................. <script("objGameObject")>
+  [  6] pusharglist 1 ........................... <script("objGameObject")>
+  [  8] extcall 0 ............................... <new(script("objGameObject"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objGameObject"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 3310 ........................... <#dieOnExplode>
+  [ 27] pushint8 1 .............................. <1>
+  [ 29] pusharglistnoret 3 ...................... <i, #dieOnExplode, 1>
+  [ 31] objcall 48 .............................. i[#dieOnExplode] = 1
+  [ 33] getlocal 0 .............................. <i>
+  [ 35] pushsymb 3311 ........................... <#dieOnExplodeNumber>
+  [ 38] pushzero ................................ <0>
+  [ 39] pusharglistnoret 3 ...................... <i, #dieOnExplodeNumber, 0>
+  [ 41] objcall 48 .............................. i[#dieOnExplodeNumber] = 0
+  [ 43] getlocal 0 .............................. <i>
+  [ 45] pushsymb 3312 ........................... <#timeToPrime>
+  [ 48] pushint8 30 ............................. <30>
+  [ 50] pusharglistnoret 3 ...................... <i, #timeToPrime, 30>
+  [ 52] objcall 48 .............................. i[#timeToPrime] = 30
+  [ 54] getlocal 0 .............................. <i>
+  [ 56] pushsymb 3313 ........................... <#triggerRadius>
+  [ 59] pushint8 20 ............................. <20>
+  [ 61] pusharglistnoret 3 ...................... <i, #triggerRadius, 20>
+  [ 63] objcall 48 .............................. i[#triggerRadius] = 20
+  [ 65] getlocal 0 .............................. <i>
+  [ 67] pushsymb 4667 ........................... <#timeToCheck>
+  [ 70] pushint8 3 .............................. <3>
+  [ 72] pusharglistnoret 3 ...................... <i, #timeToCheck, 3>
+  [ 74] objcall 48 .............................. i[#timeToCheck] = 3
+  [ 76] getparam 0 .............................. <me>
+  [ 78] pushcons 1 .............................. <"modAnimSet">
+  [ 80] pusharglistnoret 2 ...................... <me, "modAnimSet">
+  [ 82] objcall 1717 ............................ me.addModule("modAnimSet")
+  [ 85] getparam 0 .............................. <me>
+  [ 87] pushcons 2 .............................. <"modAttack">
+  [ 89] pusharglistnoret 2 ...................... <me, "modAttack">
+  [ 91] objcall 1717 ............................ me.addModule("modAttack")
+  [ 94] getparam 0 .............................. <me>
+  [ 96] pushcons 3 .............................. <"modExploder">
+  [ 98] pusharglistnoret 2 ...................... <me, "modExploder">
+  [100] objcall 1717 ............................ me.addModule("modExploder")
+  [103] getparam 0 .............................. <me>
+  [105] pusharglistnoret 1 ...................... <me>
+  [107] extcall 35 .............................. return me
+  [109] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 3310 ......................... <params.dieOnExplode>
+  [ 13] setprop 3314 ............................ pDieOnExplode = params.dieOnExplode
+  [ 16] pusharglist 0 ........................... <>
+  [ 18] extcall 529 ............................. <CounterNew()>
+  [ 21] setprop 3315 ............................ pPrimeCounter = CounterNew()
+  [ 24] getprop 3315 ............................ <pPrimeCounter>
+  [ 27] pushsymb 530 ............................ <#tim>
+  [ 30] pushint8 2 .............................. <2>
+  [ 32] getparam 1 .............................. <params>
+  [ 34] getobjprop 3312 ......................... <params.timeToPrime>
+  [ 37] pusharglistnoret 4 ...................... <pPrimeCounter, #tim, 2, params.timeToPrime>
+  [ 39] objcall 531 ............................. pPrimeCounter.tim[2] = params.timeToPrime
+  [ 42] getparam 1 .............................. <params>
+  [ 44] getobjprop 3313 ......................... <params.triggerRadius>
+  [ 47] setprop 3316 ............................ pTriggerRadius = params.triggerRadius
+  [ 50] getparam 1 .............................. <params>
+  [ 52] getobjprop 3311 ......................... <params.dieOnExplodeNumber>
+  [ 55] setprop 3317 ............................ pDieOnExplodeNumber = params.dieOnExplodeNumber
+  [ 58] pushzero ................................ <0>
+  [ 59] setprop 4665 ............................ pExplosions = 0
+  [ 62] pusharglist 0 ........................... <>
+  [ 64] extcall 529 ............................. <CounterNew()>
+  [ 67] setprop 4668 ............................ pCheckCounter = CounterNew()
+  [ 70] getprop 4668 ............................ <pCheckCounter>
+  [ 73] pushsymb 530 ............................ <#tim>
+  [ 76] pushint8 2 .............................. <2>
+  [ 78] getparam 1 .............................. <params>
+  [ 80] getobjprop 4667 ......................... <params.timeToCheck>
+  [ 83] pusharglistnoret 4 ...................... <pCheckCounter, #tim, 2, params.timeToCheck>
+  [ 85] objcall 531 ............................. pCheckCounter.tim[2] = params.timeToCheck
+  [ 88] getprop 3316 ............................ <pTriggerRadius>
+  [ 91] getglobal 40 ............................ <g>
+  [ 93] getchainedprop 642 ...................... <g.teamMaster>
+  [ 96] pusharglist 1 ........................... <g.teamMaster>
+  [ 98] objcall 390 ............................. <g.teamMaster.getTileSize()>
+  [101] div ..................................... <pTriggerRadius / g.teamMaster.getTileSize()>
+  [102] pusharglist 1 ........................... <pTriggerRadius / g.teamMaster.getTileSize()>
+  [104] extcall 210 ............................. <integer(pTriggerRadius / g.teamMaster.getTileSize())>
+  [106] pushint8 1 .............................. <1>
+  [108] add ..................................... <integer(pTriggerRadius / g.teamMaster.getTileSize()) + 1>
+  [109] setprop 4669 ............................ pTriggerRadiusTile = integer(pTriggerRadius / g.teamMaster.getTileSize()) + 1
+  [112] getparam 0 .............................. <me>
+  [114] getglobal 3319 .......................... <gMineLayer>
+  [117] pusharglistnoret 2 ...................... <me, gMineLayer>
+  [119] objcall 299 ............................. me.setLocZ(gMineLayer)
+  [122] ret
+end
+
+on gainExperienceFromTransfer me, Xp
+  [  0] pushzero ................................ <0>
+  [  1] pusharglistnoret 1 ...................... <0>
+  [  3] extcall 35 .............................. return 0
+  [  5] ret
+end
+
+on internalEvent me, theEvent
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <theEvent>
+  [  4] pusharglistnoret 2 ...................... <ancestor, theEvent>
+  [  6] objcall 22 .............................. ancestor.internalEvent(theEvent)
+  [  8] getparam 1 .............................. <theEvent>
+  [ 10] peek 0 .................................. case theEvent of
+  [ 12] pushsymb 647 ............................ <#explodeFin>
+  [ 15] eq
+  [ 16] jmpifz [ 82] ............................ (case) #explodeFin:
+  [ 19] getprop 3314 ............................ <pDieOnExplode>
+  [ 22] jmpifz [ 39] ............................ if pDieOnExplode then / else
+  [ 25] getparam 0 .............................. <me>
+  [ 27] getchainedprop 51 ....................... <me.big>
+  [ 29] pushint8 1 .............................. <1>
+  [ 31] pusharglistnoret 2 ...................... <me.big, 1>
+  [ 33] objcall 707 ............................. me.big.setDead(1)
+  [ 36] jmp [ 82]
+  [ 39] getparam 0 .............................. <me>
+  [ 41] pusharglistnoret 1 ...................... <me>
+  [ 43] objcall 3307 ............................ me.resetMine()
+  [ 46] getprop 4665 ............................ <pExplosions>
+  [ 49] pushint8 1 .............................. <1>
+  [ 51] add ..................................... <pExplosions + 1>
+  [ 52] setprop 4665 ............................ pExplosions = pExplosions + 1
+  [ 55] getprop 3317 ............................ <pDieOnExplodeNumber>
+  [ 58] getprop 4665 ............................ <pExplosions>
+  [ 61] lteq .................................... <pDieOnExplodeNumber <= pExplosions>
+  [ 62] getprop 3317 ............................ <pDieOnExplodeNumber>
+  [ 65] pushzero ................................ <0>
+  [ 66] nteq .................................... <pDieOnExplodeNumber <> 0>
+  [ 67] and ..................................... <(pDieOnExplodeNumber <= pExplosions) and (pDieOnExplodeNumber <> 0)>
+  [ 68] jmpifz [ 82] ............................ if (pDieOnExplodeNumber <= pExplosions) and (pDieOnExplodeNumber <> 0) then
+  [ 71] getparam 0 .............................. <me>
+  [ 73] getchainedprop 51 ....................... <me.big>
+  [ 75] pushint8 1 .............................. <1>
+  [ 77] pusharglistnoret 2 ...................... <me.big, 1>
+  [ 79] objcall 707 ............................. me.big.setDead(1)
+  [ 82] pop 1
+  [ 84] ret
+end
+
+on gainExperience me, theExperience
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 240 ............................. <me.getOwner()>
+  [  6] setlocal 0 .............................. owner = me.getOwner()
+  [  8] getlocal 0 .............................. <owner>
+  [ 10] pushsymb 49 ............................. <#none>
+  [ 12] nteq .................................... <owner <> #none>
+  [ 13] jmpifz [ 25] ............................ if owner <> #none then
+  [ 16] getlocal 0 .............................. <owner>
+  [ 18] getparam 1 .............................. <theExperience>
+  [ 20] pusharglistnoret 2 ...................... <owner, theExperience>
+  [ 22] objcall 569 ............................. owner.gainExperience(theExperience)
+  [ 25] ret
+end
+
+on recordKill me, theObj
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 240 ............................. <me.getOwner()>
+  [  6] setlocal 0 .............................. owner = me.getOwner()
+  [  8] getlocal 0 .............................. <owner>
+  [ 10] pushsymb 49 ............................. <#none>
+  [ 12] nteq .................................... <owner <> #none>
+  [ 13] jmpifz [ 25] ............................ if owner <> #none then
+  [ 16] getlocal 0 .............................. <owner>
+  [ 18] getparam 1 .............................. <theObj>
+  [ 20] pusharglistnoret 2 ...................... <owner, theObj>
+  [ 22] objcall 577 ............................. owner.recordKill(theObj)
+  [ 25] ret
+end
+
+on resetMine me
+  [  0] getprop 3315 ............................ <pPrimeCounter>
+  [  3] pusharglistnoret 1 ...................... <pPrimeCounter>
+  [  5] extcall 706 ............................. CounterReset(pPrimeCounter)
+  [  8] getprop 4668 ............................ <pCheckCounter>
+  [ 11] pusharglistnoret 1 ...................... <pCheckCounter>
+  [ 13] extcall 706 ............................. CounterReset(pCheckCounter)
+  [ 16] getparam 0 .............................. <me>
+  [ 18] pushsymb 69 ............................. <#stand>
+  [ 20] pusharglistnoret 2 ...................... <me, #stand>
+  [ 22] objcall 278 ............................. me.goMode(#stand)
+  [ 25] ret
+end
+
+on start me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 1590 ............................ ancestor.start()
+  [  7] getparam 0 .............................. <me>
+  [  9] pusharglistnoret 1 ...................... <me>
+  [ 11] objcall 3307 ............................ me.resetMine()
+  [ 14] ret
+end
+
+on update me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 31 .............................. ancestor.update()
+  [  6] getparam 0 .............................. <me>
+  [  8] pusharglist 1 ........................... <me>
+  [ 10] objcall 52 .............................. <me.getMode()>
+  [ 12] peek 0 .................................. case me.getMode() of
+  [ 14] pushsymb 69 ............................. <#stand>
+  [ 16] eq
+  [ 17] jmpifz [ 47] ............................ (case) #stand:
+  [ 20] getparam 0 .............................. <me>
+  [ 22] pusharglist 1 ........................... <me>
+  [ 24] objcall 3309 ............................ <me.updatePrime()>
+  [ 27] setlocal 0 .............................. fin = me.updatePrime()
+  [ 29] getlocal 0 .............................. <fin>
+  [ 31] jmpifz [ 44] ............................ if fin then
+  [ 34] getparam 0 .............................. <me>
+  [ 36] pushsymb 3322 ........................... <#primed>
+  [ 39] pusharglistnoret 2 ...................... <me, #primed>
+  [ 41] objcall 278 ............................. me.goMode(#primed)
+  [ 44] jmp [ 95]
+  [ 47] peek 0
+  [ 49] pushsymb 3322 ........................... <#primed>
+  [ 52] eq
+  [ 53] jmpifz [ 95] ............................ (case) #primed:
+  [ 56] getparam 0 .............................. <me>
+  [ 58] pusharglist 1 ........................... <me>
+  [ 60] objcall 4666 ............................ <me.updateCheck()>
+  [ 63] setlocal 0 .............................. fin = me.updateCheck()
+  [ 65] getlocal 0 .............................. <fin>
+  [ 67] jmpifz [ 95] ............................ if fin then
+  [ 70] getparam 0 .............................. <me>
+  [ 72] pusharglist 1 ........................... <me>
+  [ 74] objcall 3308 ............................ <me.updateCheckCollisions()>
+  [ 77] setlocal 0 .............................. fin = me.updateCheckCollisions()
+  [ 79] getlocal 0 .............................. <fin>
+  [ 81] jmpifz [ 95] ............................ if fin then
+  [ 84] getparam 0 .............................. <me>
+  [ 86] getchainedprop 51 ....................... <me.big>
+  [ 88] pushsymb 1342 ........................... <#mineTriggered>
+  [ 91] pusharglistnoret 2 ...................... <me.big, #mineTriggered>
+  [ 93] objcall 22 .............................. me.big.internalEvent(#mineTriggered)
+  [ 95] pop 1 ................................... end case
+  [ 97] ret
+end
+
+on updateCheckCollisions me
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. fin = 0
+  [  3] getglobal 40 ............................ <g>
+  [  5] getchainedprop 642 ...................... <g.teamMaster>
+  [  8] getparam 0 .............................. <me>
+  [ 10] getobjprop 51 ........................... <me.big>
+  [ 12] getprop 4669 ............................ <pTriggerRadiusTile>
+  [ 15] pusharglist 3 ........................... <g.teamMaster, me.big, pTriggerRadiusTile>
+  [ 17] objcall 4670 ............................ <g.teamMaster.findTargetWithin(me.big, pTriggerRadiusTile)>
+  [ 20] getobjprop 192 .......................... <g.teamMaster.findTargetWithin(me.big, pTriggerRadiusTile).dist>
+  [ 22] setlocal 1 .............................. dist = g.teamMaster.findTargetWithin(me.big, pTriggerRadiusTile).dist
+  [ 24] getlocal 1 .............................. <dist>
+  [ 26] getprop 3316 ............................ <pTriggerRadius>
+  [ 29] getprop 3316 ............................ <pTriggerRadius>
+  [ 32] mul ..................................... <pTriggerRadius * pTriggerRadius>
+  [ 33] lt ...................................... <dist < (pTriggerRadius * pTriggerRadius)>
+  [ 34] jmpifz [ 41] ............................ if dist < (pTriggerRadius * pTriggerRadius) then
+  [ 37] pushint8 1 .............................. <1>
+  [ 39] setlocal 0 .............................. fin = 1
+  [ 41] getlocal 0 .............................. <fin>
+  [ 43] pusharglistnoret 1 ...................... <fin>
+  [ 45] extcall 35 .............................. return fin
+  [ 47] ret
+end
+
+on updateCheck me
+  [  0] getprop 4668 ............................ <pCheckCounter>
+  [  3] getobjprop 552 .......................... <pCheckCounter.fin>
+  [  6] setlocal 0 .............................. fin = pCheckCounter.fin
+  [  8] getlocal 0 .............................. <fin>
+  [ 10] pushzero ................................ <0>
+  [ 11] eq ...................................... <fin = 0>
+  [ 12] jmpifz [ 23] ............................ if fin = 0 then
+  [ 15] getprop 4668 ............................ <pCheckCounter>
+  [ 18] pusharglistnoret 1 ...................... <pCheckCounter>
+  [ 20] extcall 553 ............................. counter(pCheckCounter)
+  [ 23] getlocal 0 .............................. <fin>
+  [ 25] jmpifz [ 36] ............................ if fin then
+  [ 28] getprop 4668 ............................ <pCheckCounter>
+  [ 31] pusharglistnoret 1 ...................... <pCheckCounter>
+  [ 33] extcall 706 ............................. CounterReset(pCheckCounter)
+  [ 36] getlocal 0 .............................. <fin>
+  [ 38] pusharglistnoret 1 ...................... <fin>
+  [ 40] extcall 35 .............................. return fin
+  [ 42] ret
+end
+
+on updatePrime me
+  [  0] getprop 3315 ............................ <pPrimeCounter>
+  [  3] getobjprop 552 .......................... <pPrimeCounter.fin>
+  [  6] setlocal 0 .............................. fin = pPrimeCounter.fin
+  [  8] getlocal 0 .............................. <fin>
+  [ 10] pushzero ................................ <0>
+  [ 11] eq ...................................... <fin = 0>
+  [ 12] jmpifz [ 23] ............................ if fin = 0 then
+  [ 15] getprop 3315 ............................ <pPrimeCounter>
+  [ 18] pusharglistnoret 1 ...................... <pPrimeCounter>
+  [ 20] extcall 553 ............................. counter(pPrimeCounter)
+  [ 23] getlocal 0 .............................. <fin>
+  [ 25] pusharglistnoret 1 ...................... <fin>
+  [ 27] extcall 35 .............................. return fin
+  [ 29] ret
+end

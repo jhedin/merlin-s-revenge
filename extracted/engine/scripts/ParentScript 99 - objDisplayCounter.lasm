@@ -1,0 +1,150 @@
+property ancestor, pColour, pDisplayLoc, pFont, pLastValue, pNumDigits
+global g, gGlobalDisplayLayer
+
+on new me
+  [  0] pushcons 0 .............................. <"objSpriteMember">
+  [  2] pusharglist 1 ........................... <"objSpriteMember">
+  [  4] extcall 34 .............................. <script("objSpriteMember")>
+  [  6] pusharglist 1 ........................... <script("objSpriteMember")>
+  [  8] extcall 0 ............................... <new(script("objSpriteMember"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objSpriteMember"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] getglobal 2491 .......................... <gGlobalDisplayLayer>
+  [ 27] setobjprop 1352 ......................... i.layer = gGlobalDisplayLayer
+  [ 30] getlocal 0 .............................. <i>
+  [ 32] pushsymb 2492 ........................... <#colour>
+  [ 35] pushint16 255 ........................... <255>
+  [ 38] pushint16 255 ........................... <255>
+  [ 41] pushint16 255 ........................... <255>
+  [ 44] pusharglist 3 ........................... <255, 255, 255>
+  [ 46] extcall 436 ............................. <rgb(255, 255, 255)>
+  [ 49] pusharglistnoret 3 ...................... <i, #colour, rgb(255, 255, 255)>
+  [ 51] objcall 48 .............................. i[#colour] = rgb(255, 255, 255)
+  [ 53] getlocal 0 .............................. <i>
+  [ 55] pushsymb 2493 ........................... <#displayLoc>
+  [ 58] pushzero ................................ <0>
+  [ 59] pushzero ................................ <0>
+  [ 60] pusharglist 2 ........................... <0, 0>
+  [ 62] extcall 197 ............................. <point(0, 0)>
+  [ 64] pusharglistnoret 3 ...................... <i, #displayLoc, point(0, 0)>
+  [ 66] objcall 48 .............................. i[#displayLoc] = point(0, 0)
+  [ 68] getparam 0 .............................. <me>
+  [ 70] pusharglistnoret 1 ...................... <me>
+  [ 72] extcall 35 .............................. return me
+  [ 74] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 2492 ......................... <params.colour>
+  [ 13] setprop 2494 ............................ pColour = params.colour
+  [ 16] getparam 1 .............................. <params>
+  [ 18] getobjprop 2493 ......................... <params.displayLoc>
+  [ 21] setprop 2495 ............................ pDisplayLoc = params.displayLoc
+  [ 24] pushsymb 2497 ........................... <#numbers>
+  [ 27] setprop 2496 ............................ pFont = #numbers
+  [ 30] pushsymb 49 ............................. <#none>
+  [ 32] setprop 2498 ............................ pLastValue = #none
+  [ 35] pushint8 2 .............................. <2>
+  [ 37] setprop 2499 ............................ pNumDigits = 2
+  [ 40] ret
+end
+
+on displayValue me, newValue
+  [  0] getparam 1 .............................. <newValue>
+  [  2] getprop 2498 ............................ <pLastValue>
+  [  5] nteq .................................... <newValue <> pLastValue>
+  [  6] jmpifz [ 85] ............................ if newValue <> pLastValue then
+  [  9] getparam 1 .............................. <newValue>
+  [ 11] pusharglist 1 ........................... <newValue>
+  [ 13] extcall 667 ............................. <string(newValue)>
+  [ 16] setlocal 0 .............................. newString = string(newValue)
+  [ 18] pushint8 1 .............................. <1>
+  [ 20] setlocal 1 .............................. addtostart = 1
+  [ 22] getlocal 0 .............................. <newString>
+  [ 24] getprop 2499 ............................ <pNumDigits>
+  [ 27] getlocal 1 .............................. <addtostart>
+  [ 29] pushcons 1 .............................. <"0">
+  [ 31] pusharglist 4 ........................... <newString, pNumDigits, addtostart, "0">
+  [ 33] extcall 2500 ............................ <StringAddChars(newString, pNumDigits, addtostart, "0")>
+  [ 36] setlocal 0 .............................. newString = StringAddChars(newString, pNumDigits, addtostart, "0")
+  [ 38] getparam 0 .............................. <me>
+  [ 40] pusharglist 1 ........................... <me>
+  [ 42] objcall 2488 ............................ <me.getFontObj()>
+  [ 45] setlocal 2 .............................. theFont = me.getFontObj()
+  [ 47] getlocal 2 .............................. <theFont>
+  [ 49] getlocal 0 .............................. <newString>
+  [ 51] pusharglist 2 ........................... <theFont, newString>
+  [ 53] objcall 2501 ............................ <theFont.getString(newString)>
+  [ 56] setlocal 3 .............................. newImage = theFont.getString(newString)
+  [ 58] getparam 0 .............................. <me>
+  [ 60] getlocal 3 .............................. <newImage>
+  [ 62] getprop 2495 ............................ <pDisplayLoc>
+  [ 65] pusharglistnoret 3 ...................... <me, newImage, pDisplayLoc>
+  [ 67] objcall 2502 ............................ me.displayImageAtLoc(newImage, pDisplayLoc)
+  [ 70] getparam 0 .............................. <me>
+  [ 72] getprop 2494 ............................ <pColour>
+  [ 75] pusharglistnoret 2 ...................... <me, pColour>
+  [ 77] objcall 2503 ............................ me.setSpriteColor(pColour)
+  [ 80] getparam 1 .............................. <newValue>
+  [ 82] setprop 2498 ............................ pLastValue = newValue
+  [ 85] ret
+end
+
+on getDisplayWidth me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 2488 ............................ <me.getFontObj()>
+  [  7] setlocal 0 .............................. theFont = me.getFontObj()
+  [  9] getlocal 0 .............................. <theFont>
+  [ 11] pusharglist 1 ........................... <theFont>
+  [ 13] objcall 2507 ............................ <theFont.getCharWidth()>
+  [ 16] setlocal 1 .............................. charWidth = theFont.getCharWidth()
+  [ 18] getlocal 1 .............................. <charWidth>
+  [ 20] getprop 2499 ............................ <pNumDigits>
+  [ 23] mul ..................................... <charWidth * pNumDigits>
+  [ 24] setlocal 2 .............................. mywidth = charWidth * pNumDigits
+  [ 26] getlocal 2 .............................. <mywidth>
+  [ 28] pusharglistnoret 1 ...................... <mywidth>
+  [ 30] extcall 35 .............................. return mywidth
+  [ 32] ret
+end
+
+on getFontObj me
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 2508 ..................... <g.collectionsMaster>
+  [  5] pushsymb 2509 ........................... <#objFont>
+  [  8] getprop 2496 ............................ <pFont>
+  [ 11] pusharglist 3 ........................... <g.collectionsMaster, #objFont, pFont>
+  [ 13] objcall 2380 ............................ <g.collectionsMaster.getObject(#objFont, pFont)>
+  [ 16] pusharglistnoret 1 ...................... <g.collectionsMaster.getObject(#objFont, pFont)>
+  [ 18] extcall 35 .............................. return g.collectionsMaster.getObject(#objFont, pFont)
+  [ 20] ret
+end
+
+on setDisplayLoc me, newLoc
+  [  0] getparam 1 .............................. <newLoc>
+  [  2] setprop 2495 ............................ pDisplayLoc = newLoc
+  [  5] getparam 0 .............................. <me>
+  [  7] getparam 1 .............................. <newLoc>
+  [  9] pusharglistnoret 2 ...................... <me, newLoc>
+  [ 11] objcall 2510 ............................ me.setSpriteLoc(newLoc)
+  [ 14] ret
+end
+
+on updateValue me, newValue
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <newValue>
+  [  4] pusharglistnoret 2 ...................... <me, newValue>
+  [  6] objcall 2486 ............................ me.displayValue(newValue)
+  [  9] ret
+end

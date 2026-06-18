@@ -1,0 +1,50 @@
+on ListModifyProperties params, data
+  [  0] pushint8 1 .............................. <1>
+  [  2] setlocal 0
+  [  4] getlocal 0
+  [  6] getparam 1 .............................. <data>
+  [  8] getobjprop 17 ........................... <data.count>
+  [ 10] lteq
+  [ 11] jmpifz [ 89] ............................ repeat with i = 1 to data.count
+  [ 14] getparam 1 .............................. <data>
+  [ 16] getlocal 0 .............................. <i>
+  [ 18] pusharglist 2 ........................... <data, i>
+  [ 20] objcall 237 ............................. <data.getPropAt(i)>
+  [ 22] setlocal 1 .............................. nProp = data.getPropAt(i)
+  [ 24] getparam 0 .............................. <params>
+  [ 26] getlocal 1 .............................. <nProp>
+  [ 28] pusharglist 2 ........................... <params, nProp>
+  [ 30] objcall 18 .............................. <params[nProp]>
+  [ 32] pushsymb 238 ............................ <#propList>
+  [ 34] pusharglist 2 ........................... <params[nProp], #propList>
+  [ 36] extcall 15 .............................. <ilk(params[nProp], #propList)>
+  [ 38] jmpifz [ 64] ............................ if ilk(params[nProp], #propList) then
+  [ 41] getparam 0 .............................. <params>
+  [ 43] getlocal 1 .............................. <nProp>
+  [ 45] pusharglist 2 ........................... <params, nProp>
+  [ 47] objcall 18 .............................. <params[nProp]>
+  [ 49] getparam 1 .............................. <data>
+  [ 51] getlocal 1 .............................. <nProp>
+  [ 53] pusharglist 2 ........................... <data, nProp>
+  [ 55] objcall 18 .............................. <data[nProp]>
+  [ 57] pusharglistnoret 2 ...................... <params[nProp], data[nProp]>
+  [ 59] localcall 0 ............................. ListModifyProperties(params[nProp], data[nProp])
+  [ 61] jmp [ 80] ............................... next repeat
+  [ 64] getparam 0 .............................. <params>
+  [ 66] getlocal 1 .............................. <nProp>
+  [ 68] getparam 1 .............................. <data>
+  [ 70] getlocal 1 .............................. <nProp>
+  [ 72] pusharglist 2 ........................... <data, nProp>
+  [ 74] objcall 18 .............................. <data[nProp]>
+  [ 76] pusharglistnoret 3 ...................... <params, nProp, data[nProp]>
+  [ 78] objcall 81 .............................. params[nProp] = data[nProp]
+  [ 80] pushint8 1
+  [ 82] getlocal 0
+  [ 84] add
+  [ 85] setlocal 0
+  [ 87] endrepeat [  4]
+  [ 89] getparam 0 .............................. <params>
+  [ 91] pusharglistnoret 1 ...................... <params>
+  [ 93] extcall 3 ............................... return params
+  [ 95] ret
+end

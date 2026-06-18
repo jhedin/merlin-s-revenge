@@ -1,0 +1,214 @@
+property ancestor, pFlasher, pFlasherTime
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on init me, params
+  [  0] pushsymb 49 ............................. <#none>
+  [  2] setprop 712 ............................. pFlasher = #none
+  [  5] getparam 1 .............................. <params>
+  [  7] getobjprop 714 .......................... <params.flasherTime>
+  [ 10] setprop 713 ............................. pFlasherTime = params.flasherTime
+  [ 13] getprop 33 .............................. <ancestor>
+  [ 15] getparam 1 .............................. <params>
+  [ 17] pusharglistnoret 2 ...................... <ancestor, params>
+  [ 19] objcall 1 ............................... ancestor.init(params)
+  [ 21] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getlocal 0 .............................. <i>
+  [ 12] pushsymb 714 ............................ <#flasherTime>
+  [ 15] pushint8 30 ............................. <30>
+  [ 17] pusharglistnoret 3 ...................... <i, #flasherTime, 30>
+  [ 19] objcall 48 .............................. i[#flasherTime] = 30
+  [ 21] getprop 33 .............................. <ancestor>
+  [ 23] pusharglistnoret 1 ...................... <ancestor>
+  [ 25] objcall 2 ............................... ancestor.addModParams()
+  [ 27] ret
+end
+
+on finish me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 709 ............................. me.finishFlasher()
+  [  7] getprop 33 .............................. <ancestor>
+  [  9] pusharglistnoret 1 ...................... <ancestor>
+  [ 11] objcall 3 ............................... ancestor.finish()
+  [ 13] ret
+end
+
+on acquireFlasher me
+  [  0] getprop 712 ............................. <pFlasher>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] eq ...................................... <pFlasher = #none>
+  [  6] jmpifz [ 23] ............................ if pFlasher = #none then
+  [  9] getglobal 40 ............................ <g>
+  [ 11] getchainedprop 41 ....................... <g.objectMaster>
+  [ 13] pushsymb 715 ............................ <#objFlasher>
+  [ 16] pusharglist 2 ........................... <g.objectMaster, #objFlasher>
+  [ 18] objcall 43 .............................. <g.objectMaster.requestObject(#objFlasher)>
+  [ 20] setprop 712 ............................. pFlasher = g.objectMaster.requestObject(#objFlasher)
+  [ 23] ret
+end
+
+on addSaveData me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 4 ............................... ancestor.addSaveData(sd)
+  [  8] getprop 712 ............................. <pFlasher>
+  [ 11] pushsymb 49 ............................. <#none>
+  [ 13] eq ...................................... <pFlasher = #none>
+  [ 14] jmpifz [ 31] ............................ if pFlasher = #none then / else
+  [ 17] getparam 1 .............................. <sd>
+  [ 19] pushsymb 712 ............................ <#pFlasher>
+  [ 22] pushsymb 49 ............................. <#none>
+  [ 24] pusharglistnoret 3 ...................... <sd, #pFlasher, #none>
+  [ 26] objcall 48 .............................. sd[#pFlasher] = #none
+  [ 28] jmp [ 56]
+  [ 31] pusharglist 0 ........................... <[:]>
+  [ 33] pushproplist ............................ <[:]>
+  [ 34] setlocal 0 .............................. saveData = [:]
+  [ 36] getprop 712 ............................. <pFlasher>
+  [ 39] getlocal 0 .............................. <saveData>
+  [ 41] pusharglistnoret 2 ...................... <pFlasher, saveData>
+  [ 43] objcall 4 ............................... pFlasher.addSaveData(saveData)
+  [ 45] getparam 1 .............................. <sd>
+  [ 47] pushsymb 712 ............................ <#pFlasher>
+  [ 50] getlocal 0 .............................. <saveData>
+  [ 52] pusharglistnoret 3 ...................... <sd, #pFlasher, saveData>
+  [ 54] objcall 48 .............................. sd[#pFlasher] = saveData
+  [ 56] ret
+end
+
+on finishFlasher me
+  [  0] getprop 712 ............................. <pFlasher>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] nteq .................................... <pFlasher <> #none>
+  [  6] jmpifz [ 21] ............................ if pFlasher <> #none then
+  [  9] getprop 712 ............................. <pFlasher>
+  [ 12] pusharglistnoret 1 ...................... <pFlasher>
+  [ 14] objcall 3 ............................... pFlasher.finish()
+  [ 16] pushsymb 49 ............................. <#none>
+  [ 18] setprop 712 ............................. pFlasher = #none
+  [ 21] ret
+end
+
+on flasherFinished me
+  [  0] pushsymb 49 ............................. <#none>
+  [  2] setprop 712 ............................. pFlasher = #none
+  [  5] ret
+end
+
+on paws me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 452 ............................. ancestor.paws()
+  [  7] getprop 712 ............................. <pFlasher>
+  [ 10] pushsymb 49 ............................. <#none>
+  [ 12] nteq .................................... <pFlasher <> #none>
+  [ 13] jmpifz [ 24] ............................ if pFlasher <> #none then
+  [ 16] getprop 712 ............................. <pFlasher>
+  [ 19] pusharglistnoret 1 ...................... <pFlasher>
+  [ 21] objcall 452 ............................. pFlasher.paws()
+  [ 24] ret
+end
+
+on restoreFromSave me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 26 .............................. ancestor.restoreFromSave(sd)
+  [  8] getparam 0 .............................. <me>
+  [ 10] pusharglistnoret 1 ...................... <me>
+  [ 12] objcall 709 ............................. me.finishFlasher()
+  [ 15] getparam 1 .............................. <sd>
+  [ 17] getobjprop 712 .......................... <sd.pFlasher>
+  [ 20] pushsymb 49 ............................. <#none>
+  [ 22] nteq .................................... <sd.pFlasher <> #none>
+  [ 23] jmpifz [ 73] ............................ if sd.pFlasher <> #none then
+  [ 26] getparam 0 .............................. <me>
+  [ 28] pusharglistnoret 1 ...................... <me>
+  [ 30] objcall 708 ............................. me.acquireFlasher()
+  [ 33] getprop 712 ............................. <pFlasher>
+  [ 36] getparam 0 .............................. <me>
+  [ 38] getobjprop 51 ........................... <me.big>
+  [ 40] pusharglistnoret 2 ...................... <pFlasher, me.big>
+  [ 42] objcall 685 ............................. pFlasher.setCallingPrg(me.big)
+  [ 45] getprop 712 ............................. <pFlasher>
+  [ 48] getparam 0 .............................. <me>
+  [ 50] getchainedprop 51 ....................... <me.big>
+  [ 52] pusharglist 1 ........................... <me.big>
+  [ 54] objcall 97 .............................. <me.big.getSprite()>
+  [ 56] pusharglistnoret 2 ...................... <pFlasher, me.big.getSprite()>
+  [ 58] objcall 686 ............................. pFlasher.setSprite(me.big.getSprite())
+  [ 61] getprop 712 ............................. <pFlasher>
+  [ 64] getparam 1 .............................. <sd>
+  [ 66] getobjprop 712 .......................... <sd.pFlasher>
+  [ 69] pusharglistnoret 2 ...................... <pFlasher, sd.pFlasher>
+  [ 71] objcall 26 .............................. pFlasher.restoreFromSave(sd.pFlasher)
+  [ 73] ret
+end
+
+on startFlasher me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 708 ............................. me.acquireFlasher()
+  [  7] getprop 712 ............................. <pFlasher>
+  [ 10] pushsymb 1 .............................. <#init>
+  [ 12] pusharglist 2 ........................... <pFlasher, #init>
+  [ 14] objcall 230 ............................. <pFlasher.getParams(#init)>
+  [ 16] setlocal 0 .............................. params = pFlasher.getParams(#init)
+  [ 18] getlocal 0 .............................. <params>
+  [ 20] getparam 0 .............................. <me>
+  [ 22] getchainedprop 57 ....................... <me.id>
+  [ 24] getobjprop 58 ........................... <me.id.bigMe>
+  [ 26] setobjprop 474 .......................... params.callingPrg = me.id.bigMe
+  [ 29] getlocal 0 .............................. <params>
+  [ 31] getparam 0 .............................. <me>
+  [ 33] pusharglist 1 ........................... <me>
+  [ 35] objcall 97 .............................. <me.getSprite()>
+  [ 37] setobjprop 267 .......................... params.spr = me.getSprite()
+  [ 40] getlocal 0 .............................. <params>
+  [ 42] getprop 713 ............................. <pFlasherTime>
+  [ 45] setobjprop 716 .......................... params.time = pFlasherTime
+  [ 48] getprop 712 ............................. <pFlasher>
+  [ 51] getlocal 0 .............................. <params>
+  [ 53] pusharglistnoret 2 ...................... <pFlasher, params>
+  [ 55] objcall 1 ............................... pFlasher.init(params)
+  [ 57] getprop 712 ............................. <pFlasher>
+  [ 60] pusharglistnoret 1 ...................... <pFlasher>
+  [ 62] objcall 692 ............................. pFlasher.calcStart()
+  [ 65] ret
+end
+
+on unpaws me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 459 ............................. ancestor.unpaws()
+  [  7] getprop 712 ............................. <pFlasher>
+  [ 10] pushsymb 49 ............................. <#none>
+  [ 12] nteq .................................... <pFlasher <> #none>
+  [ 13] jmpifz [ 24] ............................ if pFlasher <> #none then
+  [ 16] getprop 712 ............................. <pFlasher>
+  [ 19] pusharglistnoret 1 ...................... <pFlasher>
+  [ 21] objcall 459 ............................. pFlasher.unpaws()
+  [ 24] ret
+end

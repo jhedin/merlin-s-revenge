@@ -1,0 +1,290 @@
+property ancestor, pStretchTransHeight, pStretchTransWidth
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getprop 33 .............................. <ancestor>
+  [ 12] pusharglistnoret 1 ...................... <ancestor>
+  [ 14] objcall 2 ............................... ancestor.addModParams()
+  [ 16] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pushsymb 49 ............................. <#none>
+  [ 10] setprop 1384 ............................ pStretchTransHeight = #none
+  [ 13] pushsymb 49 ............................. <#none>
+  [ 15] setprop 1385 ............................ pStretchTransWidth = #none
+  [ 18] ret
+end
+
+on finish me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 3 ............................... ancestor.finish()
+  [  6] getparam 0 .............................. <me>
+  [  8] pusharglistnoret 1 ...................... <me>
+  [ 10] objcall 1377 ............................ me.cancelStretch()
+  [ 13] ret
+end
+
+on cancelStretch me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 1378 ............................ me.cancelStretchHeight()
+  [  7] getparam 0 .............................. <me>
+  [  9] pusharglistnoret 1 ...................... <me>
+  [ 11] objcall 1379 ............................ me.cancelStretchWidth()
+  [ 14] ret
+end
+
+on cancelStretchHeight me
+  [  0] getprop 1384 ............................ <pStretchTransHeight>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] nteq .................................... <pStretchTransHeight <> #none>
+  [  6] jmpifz [ 21] ............................ if pStretchTransHeight <> #none then
+  [  9] getprop 1384 ............................ <pStretchTransHeight>
+  [ 12] pusharglistnoret 1 ...................... <pStretchTransHeight>
+  [ 14] objcall 3 ............................... pStretchTransHeight.finish()
+  [ 16] pushsymb 49 ............................. <#none>
+  [ 18] setprop 1384 ............................ pStretchTransHeight = #none
+  [ 21] ret
+end
+
+on cancelStretchWidth me
+  [  0] getprop 1385 ............................ <pStretchTransWidth>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] nteq .................................... <pStretchTransWidth <> #none>
+  [  6] jmpifz [ 21] ............................ if pStretchTransWidth <> #none then
+  [  9] getprop 1385 ............................ <pStretchTransWidth>
+  [ 12] pusharglistnoret 1 ...................... <pStretchTransWidth>
+  [ 14] objcall 3 ............................... pStretchTransWidth.finish()
+  [ 16] pushsymb 49 ............................. <#none>
+  [ 18] setprop 1385 ............................ pStretchTransWidth = #none
+  [ 21] ret
+end
+
+on eventNotification me, theEvent, theObj
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <theEvent>
+  [  4] getparam 2 .............................. <theObj>
+  [  6] pusharglistnoret 3 ...................... <ancestor, theEvent, theObj>
+  [  8] objcall 568 ............................. ancestor.eventNotification(theEvent, theObj)
+  [ 11] getparam 1 .............................. <theEvent>
+  [ 13] peek 0 .................................. case theEvent of
+  [ 15] pushsymb 1382 ........................... <#stretchHeightFinished>
+  [ 18] eq
+  [ 19] jmpifz [ 50] ............................ (case) #stretchHeightFinished:
+  [ 22] getparam 2 .............................. <theObj>
+  [ 24] getprop 1384 ............................ <pStretchTransHeight>
+  [ 27] eq ...................................... <theObj = pStretchTransHeight>
+  [ 28] jmpifz [ 47] ............................ if theObj = pStretchTransHeight then
+  [ 31] pushsymb 49 ............................. <#none>
+  [ 33] setprop 1384 ............................ pStretchTransHeight = #none
+  [ 36] getparam 0 .............................. <me>
+  [ 38] getchainedprop 51 ....................... <me.big>
+  [ 40] pushsymb 1374 ........................... <#transHeightFin>
+  [ 43] pusharglistnoret 2 ...................... <me.big, #transHeightFin>
+  [ 45] objcall 22 .............................. me.big.internalEvent(#transHeightFin)
+  [ 47] jmp [ 84]
+  [ 50] peek 0
+  [ 52] pushsymb 1386 ........................... <#strecthWidthFinished>
+  [ 55] eq
+  [ 56] jmpifz [ 84] ............................ (case) #strecthWidthFinished:
+  [ 59] getparam 2 .............................. <theObj>
+  [ 61] getprop 1385 ............................ <pStretchTransWidth>
+  [ 64] eq ...................................... <theObj = pStretchTransWidth>
+  [ 65] jmpifz [ 84] ............................ if theObj = pStretchTransWidth then
+  [ 68] pushsymb 49 ............................. <#none>
+  [ 70] setprop 1385 ............................ pStretchTransWidth = #none
+  [ 73] getparam 0 .............................. <me>
+  [ 75] getchainedprop 51 ....................... <me.big>
+  [ 77] pushsymb 1387 ........................... <#transWidthFin>
+  [ 80] pusharglistnoret 2 ...................... <me.big, #transWidthFin>
+  [ 82] objcall 22 .............................. me.big.internalEvent(#transWidthFin)
+  [ 84] pop 1 ................................... end case
+  [ 86] ret
+end
+
+on notifyIfFinished me
+  [  0] getprop 1384 ............................ <pStretchTransHeight>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] eq ...................................... <pStretchTransHeight = #none>
+  [  6] getprop 1385 ............................ <pStretchTransWidth>
+  [  9] pushsymb 49 ............................. <#none>
+  [ 11] eq ...................................... <pStretchTransWidth = #none>
+  [ 12] and ..................................... <(pStretchTransHeight = #none) and (pStretchTransWidth = #none)>
+  [ 13] jmpifz [ 27] ............................ if (pStretchTransHeight = #none) and (pStretchTransWidth = #none) then
+  [ 16] getparam 0 .............................. <me>
+  [ 18] getchainedprop 51 ....................... <me.big>
+  [ 20] pushsymb 1023 ........................... <#stretchFinished>
+  [ 23] pusharglistnoret 2 ...................... <me.big, #stretchFinished>
+  [ 25] objcall 22 .............................. me.big.internalEvent(#stretchFinished)
+  [ 27] ret
+end
+
+on startStretch me, newWidth, newHeight, speed
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 2 .............................. <newHeight>
+  [  4] getparam 3 .............................. <speed>
+  [  6] pusharglistnoret 3 ...................... <me, newHeight, speed>
+  [  8] objcall 1375 ............................ me.startStretchHeight(newHeight, speed)
+  [ 11] getparam 0 .............................. <me>
+  [ 13] getparam 1 .............................. <newWidth>
+  [ 15] getparam 3 .............................. <speed>
+  [ 17] pusharglistnoret 3 ...................... <me, newWidth, speed>
+  [ 19] objcall 1381 ............................ me.startStretchWidth(newWidth, speed)
+  [ 22] ret
+end
+
+on startStretchHeight me, newHeight, speed
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 1378 ............................ me.cancelStretchHeight()
+  [  7] getparam 0 .............................. <me>
+  [  9] getchainedprop 57 ....................... <me.id>
+  [ 11] getobjprop 58 ........................... <me.id.bigMe>
+  [ 13] setlocal 0 .............................. bigMe = me.id.bigMe
+  [ 15] getglobal 40 ............................ <g>
+  [ 17] getchainedprop 41 ....................... <g.objectMaster>
+  [ 19] pushsymb 1388 ........................... <#objTransHeight>
+  [ 22] pusharglist 2 ........................... <g.objectMaster, #objTransHeight>
+  [ 24] objcall 43 .............................. <g.objectMaster.requestObject(#objTransHeight)>
+  [ 26] setprop 1384 ............................ pStretchTransHeight = g.objectMaster.requestObject(#objTransHeight)
+  [ 29] getprop 1384 ............................ <pStretchTransHeight>
+  [ 32] pushsymb 1 .............................. <#init>
+  [ 34] pusharglist 2 ........................... <pStretchTransHeight, #init>
+  [ 36] objcall 230 ............................. <pStretchTransHeight.getParams(#init)>
+  [ 38] setlocal 1 .............................. params = pStretchTransHeight.getParams(#init)
+  [ 40] getlocal 1 .............................. <params>
+  [ 42] getlocal 0 .............................. <bigMe>
+  [ 44] setobjprop 474 .......................... params.callingPrg = bigMe
+  [ 47] getlocal 1 .............................. <params>
+  [ 49] pushsymb 1382 ........................... <#stretchHeightFinished>
+  [ 52] setobjprop 1389 ......................... params.callingPrgMessage = #stretchHeightFinished
+  [ 55] getlocal 1 .............................. <params>
+  [ 57] getlocal 0 .............................. <bigMe>
+  [ 59] pusharglist 1 ........................... <bigMe>
+  [ 61] objcall 1390 ............................ <bigMe.getSpriteHeight()>
+  [ 64] setobjprop 1391 ......................... params.initialValue = bigMe.getSpriteHeight()
+  [ 67] getlocal 1 .............................. <params>
+  [ 69] getparam 2 .............................. <speed>
+  [ 71] setobjprop 215 .......................... params.speed = speed
+  [ 73] getlocal 1 .............................. <params>
+  [ 75] getparam 1 .............................. <newHeight>
+  [ 77] setobjprop 691 .......................... params.targetValue = newHeight
+  [ 80] getlocal 1 .............................. <params>
+  [ 82] getlocal 0 .............................. <bigMe>
+  [ 84] pusharglist 1 ........................... <bigMe>
+  [ 86] objcall 97 .............................. <bigMe.getSprite()>
+  [ 88] setobjprop 267 .......................... params.spr = bigMe.getSprite()
+  [ 91] getprop 1384 ............................ <pStretchTransHeight>
+  [ 94] getlocal 1 .............................. <params>
+  [ 96] pusharglistnoret 2 ...................... <pStretchTransHeight, params>
+  [ 98] objcall 1 ............................... pStretchTransHeight.init(params)
+  [100] getprop 1384 ............................ <pStretchTransHeight>
+  [103] pusharglistnoret 1 ...................... <pStretchTransHeight>
+  [105] objcall 692 ............................. pStretchTransHeight.calcStart()
+  [108] getparam 0 .............................. <me>
+  [110] getprop 1384 ............................ <pStretchTransHeight>
+  [113] pushsymb 1382 ........................... <#stretchHeightFinished>
+  [116] pushsymb 628 ............................ <#once>
+  [119] pusharglistnoret 4 ...................... <me, pStretchTransHeight, #stretchHeightFinished, #once>
+  [121] objcall 629 ............................. me.keepMePosted(pStretchTransHeight, #stretchHeightFinished, #once)
+  [124] ret
+end
+
+on startStretchWidth me, newWidth, speed
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 1379 ............................ me.cancelStretchWidth()
+  [  7] getparam 0 .............................. <me>
+  [  9] getchainedprop 57 ....................... <me.id>
+  [ 11] getobjprop 58 ........................... <me.id.bigMe>
+  [ 13] setlocal 0 .............................. bigMe = me.id.bigMe
+  [ 15] getglobal 40 ............................ <g>
+  [ 17] getchainedprop 41 ....................... <g.objectMaster>
+  [ 19] pushsymb 1392 ........................... <#objTransWidth>
+  [ 22] pusharglist 2 ........................... <g.objectMaster, #objTransWidth>
+  [ 24] objcall 43 .............................. <g.objectMaster.requestObject(#objTransWidth)>
+  [ 26] setprop 1385 ............................ pStretchTransWidth = g.objectMaster.requestObject(#objTransWidth)
+  [ 29] getprop 1384 ............................ <pStretchTransHeight>
+  [ 32] pushsymb 1 .............................. <#init>
+  [ 34] pusharglist 2 ........................... <pStretchTransHeight, #init>
+  [ 36] objcall 230 ............................. <pStretchTransHeight.getParams(#init)>
+  [ 38] setlocal 1 .............................. params = pStretchTransHeight.getParams(#init)
+  [ 40] getlocal 1 .............................. <params>
+  [ 42] getlocal 0 .............................. <bigMe>
+  [ 44] setobjprop 474 .......................... params.callingPrg = bigMe
+  [ 47] getlocal 1 .............................. <params>
+  [ 49] pushsymb 1383 ........................... <#stretchWidthFinished>
+  [ 52] setobjprop 1389 ......................... params.callingPrgMessage = #stretchWidthFinished
+  [ 55] getlocal 1 .............................. <params>
+  [ 57] getlocal 0 .............................. <bigMe>
+  [ 59] pusharglist 1 ........................... <bigMe>
+  [ 61] objcall 1024 ............................ <bigMe.getSpriteWidth()>
+  [ 64] setobjprop 1391 ......................... params.initialValue = bigMe.getSpriteWidth()
+  [ 67] getlocal 1 .............................. <params>
+  [ 69] getparam 2 .............................. <speed>
+  [ 71] setobjprop 215 .......................... params.speed = speed
+  [ 73] getlocal 1 .............................. <params>
+  [ 75] getparam 1 .............................. <newWidth>
+  [ 77] setobjprop 691 .......................... params.targetValue = newWidth
+  [ 80] getlocal 1 .............................. <params>
+  [ 82] getlocal 0 .............................. <bigMe>
+  [ 84] pusharglist 1 ........................... <bigMe>
+  [ 86] objcall 97 .............................. <bigMe.getSprite()>
+  [ 88] setobjprop 267 .......................... params.spr = bigMe.getSprite()
+  [ 91] getprop 1385 ............................ <pStretchTransWidth>
+  [ 94] getlocal 1 .............................. <params>
+  [ 96] pusharglistnoret 2 ...................... <pStretchTransWidth, params>
+  [ 98] objcall 1 ............................... pStretchTransWidth.init(params)
+  [100] getprop 1385 ............................ <pStretchTransWidth>
+  [103] pusharglistnoret 1 ...................... <pStretchTransWidth>
+  [105] objcall 692 ............................. pStretchTransWidth.calcStart()
+  [108] getparam 0 .............................. <me>
+  [110] getprop 1385 ............................ <pStretchTransWidth>
+  [113] pushsymb 1383 ........................... <#stretchWidthFinished>
+  [116] pushsymb 628 ............................ <#once>
+  [119] pusharglistnoret 4 ...................... <me, pStretchTransWidth, #stretchWidthFinished, #once>
+  [121] objcall 629 ............................. me.keepMePosted(pStretchTransWidth, #stretchWidthFinished, #once)
+  [124] ret
+end
+
+on stretchHeightFinished me
+  [  0] pushsymb 49 ............................. <#none>
+  [  2] setprop 1384 ............................ pStretchTransHeight = #none
+  [  5] getparam 0 .............................. <me>
+  [  7] pusharglistnoret 1 ...................... <me>
+  [  9] objcall 1380 ............................ me.notifyIfFinished()
+  [ 12] ret
+end
+
+on stretchWidthFinished me
+  [  0] pushsymb 49 ............................. <#none>
+  [  2] setprop 1385 ............................ pStretchTransWidth = #none
+  [  5] getparam 0 .............................. <me>
+  [  7] pusharglistnoret 1 ...................... <me>
+  [  9] objcall 1380 ............................ me.notifyIfFinished()
+  [ 12] ret
+end

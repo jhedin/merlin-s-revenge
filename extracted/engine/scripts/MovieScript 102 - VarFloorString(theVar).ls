@@ -1,0 +1,7 @@
+on VarFloorString theVar
+  theStr = string(theVar)
+  dotPos = StringGetPos(theStr, ".")
+  endPos = dotPos - 1
+  theVal = theStr.char[1..endPos]
+  return integer(theVal)
+end

@@ -1,0 +1,49 @@
+property ancestor, pSpr
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushcons 0 .............................. <"objTransformer">
+  [  4] pusharglist 1 ........................... <"objTransformer">
+  [  6] extcall 27 .............................. <script("objTransformer")>
+  [  8] pusharglist 1 ........................... <script("objTransformer")>
+  [ 10] extcall 0 ............................... <new(script("objTransformer"))>
+  [ 12] setobjprop 77 ........................... me.ancestor = new(script("objTransformer"))
+  [ 14] getparam 0 .............................. <me>
+  [ 16] pushsymb 1 .............................. <#init>
+  [ 18] pusharglist 2 ........................... <me, #init>
+  [ 20] objcall 221 ............................. <me.modifyParams(#init)>
+  [ 22] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 24] getlocal 0 .............................. <i>
+  [ 26] pushsymb 81 ............................. <#spr>
+  [ 28] pushsymb 22 ............................. <#none>
+  [ 30] pusharglistnoret 3 ...................... <i, #spr, #none>
+  [ 32] objcall 37 .............................. i[#spr] = #none
+  [ 34] getparam 0 .............................. <me>
+  [ 36] pusharglistnoret 1 ...................... <me>
+  [ 38] extcall 17 .............................. return me
+  [ 40] ret
+end
+
+on init me, params
+  [  0] getparam 1 .............................. <params>
+  [  2] getobjprop 81 ........................... <params.spr>
+  [  4] setprop 79 .............................. pSpr = params.spr
+  [  6] getparam 1 .............................. <params>
+  [  8] getprop 79 .............................. <pSpr>
+  [ 10] getobjprop 294 .......................... <pSpr.blend>
+  [ 13] setobjprop 911 .......................... params.initialValue = pSpr.blend
+  [ 16] getparam 0 .............................. <me>
+  [ 18] getchainedprop 77 ....................... <me.ancestor>
+  [ 20] getparam 1 .............................. <params>
+  [ 22] pusharglistnoret 2 ...................... <me.ancestor, params>
+  [ 24] objcall 1 ............................... me.ancestor.init(params)
+  [ 26] ret
+end
+
+on updateAttribute me
+  [  0] getprop 79 .............................. <pSpr>
+  [  2] getparam 0 .............................. <me>
+  [  4] getobjprop 913 .......................... <me.pCurr>
+  [  7] setobjprop 294 .......................... pSpr.blend = me.pCurr
+  [ 10] ret
+end

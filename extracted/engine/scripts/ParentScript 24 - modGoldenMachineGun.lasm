@@ -1,0 +1,98 @@
+property ancestor, pGmgOn, pGmgCollected
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getprop 33 .............................. <ancestor>
+  [ 12] pusharglistnoret 1 ...................... <ancestor>
+  [ 14] objcall 2 ............................... ancestor.addModParams()
+  [ 16] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pushzero ................................ <0>
+  [  9] setprop 4525 ............................ pGmgCollected = 0
+  [ 12] pushzero ................................ <0>
+  [ 13] setprop 4526 ............................ pGmgOn = 0
+  [ 16] ret
+end
+
+on gmgCollected me
+  [  0] pushint8 1 .............................. <1>
+  [  2] setprop 4525 ............................ pGmgCollected = 1
+  [  5] getparam 0 .............................. <me>
+  [  7] pusharglistnoret 1 ...................... <me>
+  [  9] objcall 4523 ............................ me.setGmg()
+  [ 12] ret
+end
+
+on getGmgOn me
+  [  0] getprop 4526 ............................ <pGmgOn>
+  [  3] pusharglistnoret 1 ...................... <pGmgOn>
+  [  5] extcall 35 .............................. return pGmgOn
+  [  7] ret
+end
+
+on setGmg me
+  [  0] getprop 4525 ............................ <pGmgCollected>
+  [  3] jmpifz [ 91] ............................ if pGmgCollected then
+  [  6] getprop 4526 ............................ <pGmgOn>
+  [  9] pushzero ................................ <0>
+  [ 10] eq ...................................... <pGmgOn = 0>
+  [ 11] jmpifz [ 22] ............................ if pGmgOn = 0 then / else
+  [ 14] pushint8 1 .............................. <1>
+  [ 16] setprop 4526 ............................ pGmgOn = 1
+  [ 19] jmp [ 26]
+  [ 22] pushzero ................................ <0>
+  [ 23] setprop 4526 ............................ pGmgOn = 0
+  [ 26] getprop 4526 ............................ <pGmgOn>
+  [ 29] pushint8 1 .............................. <1>
+  [ 31] eq ...................................... <pGmgOn = 1>
+  [ 32] jmpifz [ 58] ............................ if pGmgOn = 1 then / else
+  [ 35] getparam 0 .............................. <me>
+  [ 37] getchainedprop 51 ....................... <me.big>
+  [ 39] pusharglistnoret 1 ...................... <me.big>
+  [ 41] objcall 4530 ............................ me.big.gmgOn()
+  [ 44] getparam 0 .............................. <me>
+  [ 46] getchainedprop 51 ....................... <me.big>
+  [ 48] pushsymb 4529 ........................... <#gmgTurnedOn>
+  [ 51] pusharglistnoret 2 ...................... <me.big, #gmgTurnedOn>
+  [ 53] objcall 22 .............................. me.big.internalEvent(#gmgTurnedOn)
+  [ 55] jmp [ 78]
+  [ 58] getparam 0 .............................. <me>
+  [ 60] getchainedprop 51 ....................... <me.big>
+  [ 62] pusharglistnoret 1 ...................... <me.big>
+  [ 64] objcall 4534 ............................ me.big.gmgOff()
+  [ 67] getparam 0 .............................. <me>
+  [ 69] getchainedprop 51 ....................... <me.big>
+  [ 71] pushsymb 4537 ........................... <#gmgTurnedOff>
+  [ 74] pusharglistnoret 2 ...................... <me.big, #gmgTurnedOff>
+  [ 76] objcall 22 .............................. me.big.internalEvent(#gmgTurnedOff)
+  [ 78] getglobal 40 ............................ <g>
+  [ 80] getchainedprop 4560 ..................... <g.gmgMaster>
+  [ 83] getprop 4526 ............................ <pGmgOn>
+  [ 86] pusharglistnoret 2 ...................... <g.gmgMaster, pGmgOn>
+  [ 88] objcall 784 ............................. g.gmgMaster.updateDisplay(pGmgOn)
+  [ 91] ret
+end

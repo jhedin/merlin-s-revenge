@@ -1,0 +1,44 @@
+on GeomInside thepoint, therect
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. pointInside = 0
+  [  3] getparam 0 .............................. <thepoint>
+  [  5] pushint8 1 .............................. <1>
+  [  7] pusharglist 2 ........................... <thepoint, 1>
+  [  9] objcall 18 .............................. <thepoint[1]>
+  [ 11] getparam 1 .............................. <therect>
+  [ 13] pushint8 1 .............................. <1>
+  [ 15] pusharglist 2 ........................... <therect, 1>
+  [ 17] objcall 18 .............................. <therect[1]>
+  [ 19] getparam 1 .............................. <therect>
+  [ 21] pushint8 3 .............................. <3>
+  [ 23] pusharglist 2 ........................... <therect, 3>
+  [ 25] objcall 18 .............................. <therect[3]>
+  [ 27] pusharglist 2 ........................... <[therect[1], therect[3]]>
+  [ 29] pushlist ................................ <[therect[1], therect[3]]>
+  [ 30] pusharglist 2 ........................... <thepoint[1], [therect[1], therect[3]]>
+  [ 32] extcall 133 ............................. <VarInRange(thepoint[1], [therect[1], therect[3]])>
+  [ 34] getparam 0 .............................. <thepoint>
+  [ 36] pushint8 2 .............................. <2>
+  [ 38] pusharglist 2 ........................... <thepoint, 2>
+  [ 40] objcall 18 .............................. <thepoint[2]>
+  [ 42] getparam 1 .............................. <therect>
+  [ 44] pushint8 2 .............................. <2>
+  [ 46] pusharglist 2 ........................... <therect, 2>
+  [ 48] objcall 18 .............................. <therect[2]>
+  [ 50] getparam 1 .............................. <therect>
+  [ 52] pushint8 4 .............................. <4>
+  [ 54] pusharglist 2 ........................... <therect, 4>
+  [ 56] objcall 18 .............................. <therect[4]>
+  [ 58] pusharglist 2 ........................... <[therect[2], therect[4]]>
+  [ 60] pushlist ................................ <[therect[2], therect[4]]>
+  [ 61] pusharglist 2 ........................... <thepoint[2], [therect[2], therect[4]]>
+  [ 63] extcall 133 ............................. <VarInRange(thepoint[2], [therect[2], therect[4]])>
+  [ 65] and ..................................... <VarInRange(thepoint[1], [therect[1], therect[3]]) and VarInRange(thepoint[2], [therect[2], therect[4]])>
+  [ 66] jmpifz [ 73] ............................ if VarInRange(thepoint[1], [therect[1], therect[3]]) and VarInRange(thepoint[2], [therect[2], therect[4]]) then
+  [ 69] pushint8 1 .............................. <1>
+  [ 71] setlocal 0 .............................. pointInside = 1
+  [ 73] getlocal 0 .............................. <pointInside>
+  [ 75] pusharglistnoret 1 ...................... <pointInside>
+  [ 77] extcall 3 ............................... return pointInside
+  [ 79] ret
+end

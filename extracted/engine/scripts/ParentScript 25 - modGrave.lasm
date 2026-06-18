@@ -1,0 +1,96 @@
+property ancestor, pGraveOn
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getlocal 0 .............................. <i>
+  [ 12] pushsymb 751 ............................ <#graveOn>
+  [ 15] pushint8 1 .............................. <1>
+  [ 17] pusharglistnoret 3 ...................... <i, #graveOn, 1>
+  [ 19] objcall 48 .............................. i[#graveOn] = 1
+  [ 21] getprop 33 .............................. <ancestor>
+  [ 23] pusharglistnoret 1 ...................... <ancestor>
+  [ 25] objcall 2 ............................... ancestor.addModParams()
+  [ 27] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 751 .......................... <params.graveOn>
+  [ 13] setprop 752 ............................. pGraveOn = params.graveOn
+  [ 16] getparam 1 .............................. <params>
+  [ 18] pushsymb 108 ............................ <#ghost>
+  [ 20] pusharglist 2 ........................... <params, #ghost>
+  [ 22] objcall 109 ............................. <params[#ghost]>
+  [ 24] pushint8 1 .............................. <1>
+  [ 26] eq ...................................... <params[#ghost] = 1>
+  [ 27] jmpifz [ 34] ............................ if params[#ghost] = 1 then
+  [ 30] pushzero ................................ <0>
+  [ 31] setprop 752 ............................. pGraveOn = 0
+  [ 34] ret
+end
+
+on drawGrave me
+  [  0] getprop 752 ............................. <pGraveOn>
+  [  3] pushzero ................................ <0>
+  [  4] eq ...................................... <pGraveOn = 0>
+  [  5] jmpifz [ 12] ............................ if pGraveOn = 0 then
+  [  8] pusharglistnoret 0 ...................... <>
+  [ 10] extcall 35 .............................. return 
+  [ 12] getparam 0 .............................. <me>
+  [ 14] getchainedprop 51 ....................... <me.big>
+  [ 16] pushint8 1 .............................. <1>
+  [ 18] pusharglistnoret 2 ...................... <me.big, 1>
+  [ 20] objcall 753 ............................. me.big.setFlipFromDir(1)
+  [ 23] getglobal 40 ............................ <g>
+  [ 25] getchainedprop 754 ...................... <g.gamemaster>
+  [ 28] pusharglist 1 ........................... <g.gamemaster>
+  [ 30] objcall 755 ............................. <g.gamemaster.getCurrentRoom()>
+  [ 33] setlocal 0 .............................. currentRoom = g.gamemaster.getCurrentRoom()
+  [ 35] getlocal 0 .............................. <currentRoom>
+  [ 37] getparam 0 .............................. <me>
+  [ 39] getchainedprop 57 ....................... <me.id>
+  [ 41] getobjprop 58 ........................... <me.id.bigMe>
+  [ 43] pusharglistnoret 2 ...................... <currentRoom, me.id.bigMe>
+  [ 45] objcall 756 ............................. currentRoom.drawAndRecordGrave(me.id.bigMe)
+  [ 48] ret
+end
+
+on getGraveMember me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 51 ....................... <me.big>
+  [  4] pushsymb 76 ............................. <#grave>
+  [  6] pusharglist 2 ........................... <me.big, #grave>
+  [  8] objcall 18 .............................. <me.big.getAnimMemberFromStrip(#grave)>
+  [ 10] pusharglistnoret 1 ...................... <me.big.getAnimMemberFromStrip(#grave)>
+  [ 12] extcall 35 .............................. return me.big.getAnimMemberFromStrip(#grave)
+  [ 14] ret
+end
+
+on getGraveOn me
+  [  0] getprop 752 ............................. <pGraveOn>
+  [  3] pusharglistnoret 1 ...................... <pGraveOn>
+  [  5] extcall 35 .............................. return pGraveOn
+  [  7] ret
+end

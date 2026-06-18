@@ -1,0 +1,534 @@
+property p, p3DWorld, pShader
+global g, g3DMode
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 3 ............................... return me
+  [  6] ret
+end
+
+on init me
+  [  0] pusharglist 0 ........................... <[:]>
+  [  2] pushproplist ............................ <[:]>
+  [  3] setprop 245 ............................. p = [:]
+  [  5] getprop 245 ............................. <p>
+  [  7] pushsymb 320 ............................ <#spriteList>
+  [ 10] pusharglist 0 ........................... <[]>
+  [ 12] pushlist ................................ <[]>
+  [ 13] pusharglistnoret 3 ...................... <p, #spriteList, []>
+  [ 15] objcall 54 .............................. p[#spriteList] = []
+  [ 17] getprop 245 ............................. <p>
+  [ 19] pushsymb 321 ............................ <#spriteInfo>
+  [ 22] pusharglist 0 ........................... <[]>
+  [ 24] pushlist ................................ <[]>
+  [ 25] pusharglistnoret 3 ...................... <p, #spriteInfo, []>
+  [ 27] objcall 54 .............................. p[#spriteInfo] = []
+  [ 29] getparam 0 .............................. <me>
+  [ 31] pusharglistnoret 1 ...................... <me>
+  [ 33] objcall 305 ............................. me.initSpriteLists()
+  [ 36] ret
+end
+
+on init3DWorld me
+  [  0] pushcons 0 .............................. <"3DWorld">
+  [  2] pushcons 1 .............................. <"gfx">
+  [  4] pusharglist 2 ........................... <"3DWorld", "gfx">
+  [  6] extcall 193 ............................. <member("3DWorld", "gfx")>
+  [  8] setprop 322 ............................. p3DWorld = member("3DWorld", "gfx")
+  [ 11] pushint8 1 .............................. <1>
+  [ 13] pusharglist 1 ........................... <1>
+  [ 15] extcall 323 ............................. <sprite(1)>
+  [ 18] getprop 322 ............................. <p3DWorld>
+  [ 21] setobjprop 193 .......................... sprite(1).member = p3DWorld
+  [ 23] pushint8 1 .............................. <1>
+  [ 25] pusharglist 1 ........................... <1>
+  [ 27] extcall 323 ............................. <sprite(1)>
+  [ 30] pushzero ................................ <0>
+  [ 31] pushzero ................................ <0>
+  [ 32] getmovieprop 324 ........................ <the stage>
+  [ 35] getchainedprop 200 ...................... <(the stage).rect>
+  [ 37] getobjprop 325 .......................... <(the stage).rect.width>
+  [ 40] getmovieprop 324 ........................ <the stage>
+  [ 43] getchainedprop 200 ...................... <(the stage).rect>
+  [ 45] getobjprop 326 .......................... <(the stage).rect.height>
+  [ 48] pusharglist 4 ........................... <0, 0, (the stage).rect.width, (the stage).rect.height>
+  [ 50] extcall 200 ............................. <rect(0, 0, (the stage).rect.width, (the stage).rect.height)>
+  [ 52] setobjprop 200 .......................... sprite(1).rect = rect(0, 0, (the stage).rect.width, (the stage).rect.height)
+  [ 54] getprop 322 ............................. <p3DWorld>
+  [ 57] pushcons 2 .............................. <"aShader">
+  [ 59] pusharglist 2 ........................... <p3DWorld, "aShader">
+  [ 61] objcall 328 ............................. <p3DWorld.shader("aShader")>
+  [ 64] pusharglist 1 ........................... <p3DWorld.shader("aShader")>
+  [ 66] extcall 327 ............................. <voidp(p3DWorld.shader("aShader"))>
+  [ 69] jmpifz [ 97] ............................ if voidp(p3DWorld.shader("aShader")) then
+  [ 72] getprop 322 ............................. <p3DWorld>
+  [ 75] pushcons 2 .............................. <"aShader">
+  [ 77] pushsymb 330 ............................ <#standard>
+  [ 80] pusharglist 3 ........................... <p3DWorld, "aShader", #standard>
+  [ 82] objcall 331 ............................. <p3DWorld.newShader("aShader", #standard)>
+  [ 85] setprop 329 ............................. pShader = p3DWorld.newShader("aShader", #standard)
+  [ 88] getprop 329 ............................. <pShader>
+  [ 91] pushsymb 332 ............................ <#replace>
+  [ 94] setobjprop 333 .......................... pShader.blendFunction = #replace
+  [ 97] ret
+end
+
+on initSpriteLists me
+  [  0] getmovieprop 334 ........................ <the lastChannel>
+  [  3] setlocal 0 .............................. lastChan = the lastChannel
+  [  5] pushint8 1 .............................. <1>
+  [  7] setlocal 1
+  [  9] getlocal 1
+  [ 11] getlocal 0 .............................. <lastChan>
+  [ 13] lteq
+  [ 14] jmpifz [150] ............................ repeat with i = 1 to lastChan
+  [ 17] getglobal 335 ........................... <g3DMode>
+  [ 20] pushzero ................................ <0>
+  [ 21] eq ...................................... <g3DMode = 0>
+  [ 22] jmpifz [ 37] ............................ if g3DMode = 0 then / else
+  [ 25] getlocal 1 .............................. <i>
+  [ 27] pusharglist 1 ........................... <i>
+  [ 29] extcall 323 ............................. <sprite(i)>
+  [ 32] setlocal 2 .............................. spr = sprite(i)
+  [ 34] jmp [ 78]
+  [ 37] getglobal 191 ........................... <g>
+  [ 39] getchainedprop 336 ...................... <g.objectMaster>
+  [ 42] pushsymb 337 ............................ <#obj3DSprite>
+  [ 45] pusharglist 2 ........................... <g.objectMaster, #obj3DSprite>
+  [ 47] objcall 338 ............................. <g.objectMaster.requestObject(#obj3DSprite)>
+  [ 50] setlocal 2 .............................. spr = g.objectMaster.requestObject(#obj3DSprite)
+  [ 52] getlocal 2 .............................. <spr>
+  [ 54] pushsymb 1 .............................. <#init>
+  [ 56] pusharglist 2 ........................... <spr, #init>
+  [ 58] objcall 339 ............................. <spr.getParams(#init)>
+  [ 61] setlocal 3 .............................. params = spr.getParams(#init)
+  [ 63] getlocal 3 .............................. <params>
+  [ 65] getlocal 1 .............................. <i>
+  [ 67] setobjprop 340 .......................... params.spriteNum = i
+  [ 70] getlocal 2 .............................. <spr>
+  [ 72] getlocal 3 .............................. <params>
+  [ 74] pusharglistnoret 2 ...................... <spr, params>
+  [ 76] objcall 1 ............................... spr.init(params)
+  [ 78] getlocal 2 .............................. <spr>
+  [ 80] getobjprop 193 .......................... <spr.member>
+  [ 82] pushcons 3 .............................. <"dot">
+  [ 84] pushcons 1 .............................. <"gfx">
+  [ 86] pusharglist 2 ........................... <"dot", "gfx">
+  [ 88] extcall 193 ............................. <member("dot", "gfx")>
+  [ 90] eq ...................................... <spr.member = member("dot", "gfx")>
+  [ 91] jmpifz [141] ............................ if spr.member = member("dot", "gfx") then
+  [ 94] getprop 245 ............................. <p>
+  [ 96] pushsymb 320 ............................ <#spriteList>
+  [ 99] getlocal 1 .............................. <i>
+  [101] getlocal 2 .............................. <spr>
+  [103] pusharglistnoret 4 ...................... <p, #spriteList, i, spr>
+  [105] objcall 341 ............................. p.spriteList[i] = spr
+  [108] getprop 245 ............................. <p>
+  [110] pushsymb 321 ............................ <#spriteInfo>
+  [113] getlocal 1 .............................. <i>
+  [115] pushsymb 342 ............................ <#inuse>
+  [118] pushzero ................................ <0>
+  [119] pushsymb 343 ............................ <#lastUser>
+  [122] pushsymb 103 ............................ <#none>
+  [124] pusharglist 4 ........................... <[#inuse: 0, #lastUser: #none]>
+  [126] pushproplist ............................ <[#inuse: 0, #lastUser: #none]>
+  [127] pusharglistnoret 4 ...................... <p, #spriteInfo, i, [#inuse: 0, #lastUser: #none]>
+  [129] objcall 341 ............................. p.spriteInfo[i] = [#inuse: 0, #lastUser: #none]
+  [132] getparam 0 .............................. <me>
+  [134] getlocal 1 .............................. <i>
+  [136] pusharglistnoret 2 ...................... <me, i>
+  [138] objcall 307 ............................. me.freeSprite(i)
+  [141] pushint8 1
+  [143] getlocal 1
+  [145] add
+  [146] setlocal 1
+  [148] endrepeat [  9]
+  [150] ret
+end
+
+on checkFreeSprite me
+  [  0] getprop 245 ............................. <p>
+  [  2] getobjprop 321 .......................... <p.spriteInfo>
+  [  5] peek 0
+  [  7] pusharglist 1
+  [  9] extcall 348
+  [ 12] pushint8 1
+  [ 14] peek 0
+  [ 16] peek 2
+  [ 18] lteq
+  [ 19] jmpifz [ 54] ............................ repeat with sprInfo in p.spriteInfo
+  [ 22] peek 2
+  [ 24] peek 1
+  [ 26] pusharglist 2
+  [ 28] extcall 301
+  [ 31] setlocal 0
+  [ 33] getlocal 0 .............................. <sprInfo>
+  [ 35] getobjprop 342 .......................... <sprInfo.inuse>
+  [ 38] pushzero ................................ <0>
+  [ 39] eq ...................................... <sprInfo.inuse = 0>
+  [ 40] jmpifz [ 49] ............................ if sprInfo.inuse = 0 then
+  [ 43] pushint8 1 .............................. <1>
+  [ 45] pusharglistnoret 1 ...................... <1>
+  [ 47] extcall 3 ............................... return 1
+  [ 49] pushint8 1
+  [ 51] add
+  [ 52] endrepeat [ 14]
+  [ 54] pop 3
+  [ 56] ret
+end
+
+on freeSprite me, sprNum
+  [  0] getparam 1 .............................. <sprNum>
+  [  2] pusharglist 1 ........................... <sprNum>
+  [  4] extcall 350 ............................. <ilk(sprNum)>
+  [  7] pushsymb 351 ............................ <#integer>
+  [ 10] nteq .................................... <ilk(sprNum) <> #integer>
+  [ 11] jmpifz [ 21] ............................ if ilk(sprNum) <> #integer then
+  [ 14] getparam 1 .............................. <sprNum>
+  [ 16] getobjprop 340 .......................... <sprNum.spriteNum>
+  [ 19] setparam 1 .............................. sprNum = sprNum.spriteNum
+  [ 21] getprop 245 ............................. <p>
+  [ 23] pushsymb 320 ............................ <#spriteList>
+  [ 26] getparam 1 .............................. <sprNum>
+  [ 28] pusharglist 3 ........................... <p, #spriteList, sprNum>
+  [ 30] objcall 352 ............................. <p.spriteList[sprNum]>
+  [ 33] setlocal 0 .............................. spr = p.spriteList[sprNum]
+  [ 35] getlocal 0 .............................. <spr>
+  [ 37] pushzero ................................ <0>
+  [ 38] setobjprop 353 .......................... spr.flipH = 0
+  [ 41] getlocal 0 .............................. <spr>
+  [ 43] pushint8 1 .............................. <1>
+  [ 45] inv ..................................... <-1>
+  [ 46] setobjprop 354 .......................... spr.locH = -1
+  [ 49] getlocal 0 .............................. <spr>
+  [ 51] pushint8 1 .............................. <1>
+  [ 53] inv ..................................... <-1>
+  [ 54] setobjprop 355 .......................... spr.locV = -1
+  [ 57] getlocal 0 .............................. <spr>
+  [ 59] getlocal 0 .............................. <spr>
+  [ 61] getobjprop 340 .......................... <spr.spriteNum>
+  [ 64] setobjprop 356 .......................... spr.locZ = spr.spriteNum
+  [ 67] getlocal 0 .............................. <spr>
+  [ 69] pushcons 3 .............................. <"dot">
+  [ 71] pushcons 1 .............................. <"gfx">
+  [ 73] pusharglist 2 ........................... <"dot", "gfx">
+  [ 75] extcall 193 ............................. <member("dot", "gfx")>
+  [ 77] setobjprop 193 .......................... spr.member = member("dot", "gfx")
+  [ 79] getlocal 0 .............................. <spr>
+  [ 81] pushint8 100 ............................ <100>
+  [ 83] setobjprop 357 .......................... spr.blend = 100
+  [ 86] getlocal 0 .............................. <spr>
+  [ 88] pushint8 1 .............................. <1>
+  [ 90] setobjprop 358 .......................... spr.visible = 1
+  [ 93] getlocal 0 .............................. <spr>
+  [ 95] pushzero ................................ <0>
+  [ 96] pushzero ................................ <0>
+  [ 97] pushzero ................................ <0>
+  [ 98] pusharglist 3 ........................... <0, 0, 0>
+  [100] extcall 106 ............................. <rgb(0, 0, 0)>
+  [102] setobjprop 359 .......................... spr.color = rgb(0, 0, 0)
+  [105] getlocal 0 .............................. <spr>
+  [107] pushint16 255 ........................... <255>
+  [110] pushint16 255 ........................... <255>
+  [113] pushint16 255 ........................... <255>
+  [116] pusharglist 3 ........................... <255, 255, 255>
+  [118] extcall 106 ............................. <rgb(255, 255, 255)>
+  [120] setobjprop 360 .......................... spr.bgColor = rgb(255, 255, 255)
+  [123] getlocal 0 .............................. <spr>
+  [125] pushint8 1 .............................. <1>
+  [127] setobjprop 325 .......................... spr.width = 1
+  [130] getlocal 0 .............................. <spr>
+  [132] pushint8 1 .............................. <1>
+  [134] setobjprop 326 .......................... spr.height = 1
+  [137] getlocal 0 .............................. <spr>
+  [139] pushint8 36 ............................. <36>
+  [141] setobjprop 361 .......................... spr.ink = 36
+  [144] getlocal 0 .............................. <spr>
+  [146] pushzero ................................ <0>
+  [147] setobjprop 362 .......................... spr.rotation = 0
+  [150] getprop 245 ............................. <p>
+  [152] pushsymb 321 ............................ <#spriteInfo>
+  [155] getparam 1 .............................. <sprNum>
+  [157] pusharglist 3 ........................... <p, #spriteInfo, sprNum>
+  [159] objcall 363 ............................. <p.spriteInfo[sprNum]>
+  [162] pushzero ................................ <0>
+  [163] setobjprop 342 .......................... p.spriteInfo[sprNum].inuse = 0
+  [166] ret
+end
+
+on freeSprites me, sprList
+  [  0] getparam 1 .............................. <sprList>
+  [  2] peek 0
+  [  4] pusharglist 1
+  [  6] extcall 348
+  [  9] pushint8 1
+  [ 11] peek 0
+  [ 13] peek 2
+  [ 15] lteq
+  [ 16] jmpifz [ 44] ............................ repeat with spr in sprList
+  [ 19] peek 2
+  [ 21] peek 1
+  [ 23] pusharglist 2
+  [ 25] extcall 301
+  [ 28] setlocal 0
+  [ 30] getparam 0 .............................. <me>
+  [ 32] getlocal 0 .............................. <spr>
+  [ 34] pusharglistnoret 2 ...................... <me, spr>
+  [ 36] objcall 307 ............................. me.freeSprite(spr)
+  [ 39] pushint8 1
+  [ 41] add
+  [ 42] endrepeat [ 11]
+  [ 44] pop 3
+  [ 46] ret
+end
+
+on findFreeSprite me
+  [  0] pushint8 1 .............................. <1>
+  [  2] setlocal 0
+  [  4] getlocal 0
+  [  6] getprop 245 ............................. <p>
+  [  8] pushsymb 321 ............................ <#spriteInfo>
+  [ 11] pusharglist 2 ........................... <p, #spriteInfo>
+  [ 13] objcall 348 ............................. <p.spriteInfo.count>
+  [ 16] lteq
+  [ 17] jmpifz [ 69] ............................ repeat with i = 1 to p.spriteInfo.count
+  [ 20] getprop 245 ............................. <p>
+  [ 22] pushsymb 321 ............................ <#spriteInfo>
+  [ 25] getlocal 0 .............................. <i>
+  [ 27] pusharglist 3 ........................... <p, #spriteInfo, i>
+  [ 29] objcall 352 ............................. <p.spriteInfo[i]>
+  [ 32] setlocal 1 .............................. spr = p.spriteInfo[i]
+  [ 34] getlocal 1 .............................. <spr>
+  [ 36] getobjprop 342 .......................... <spr.inuse>
+  [ 39] pushzero ................................ <0>
+  [ 40] eq ...................................... <spr.inuse = 0>
+  [ 41] jmpifz [ 60] ............................ if spr.inuse = 0 then
+  [ 44] getprop 245 ............................. <p>
+  [ 46] pushsymb 320 ............................ <#spriteList>
+  [ 49] getlocal 0 .............................. <i>
+  [ 51] pusharglist 3 ........................... <p, #spriteList, i>
+  [ 53] objcall 352 ............................. <p.spriteList[i]>
+  [ 56] pusharglistnoret 1 ...................... <p.spriteList[i]>
+  [ 58] extcall 3 ............................... return p.spriteList[i]
+  [ 60] pushint8 1
+  [ 62] getlocal 0
+  [ 64] add
+  [ 65] setlocal 0
+  [ 67] endrepeat [  4]
+  [ 69] ret
+end
+
+on get3DWorld me
+  [  0] getprop 322 ............................. <p3DWorld>
+  [  3] pusharglistnoret 1 ...................... <p3DWorld>
+  [  5] extcall 3 ............................... return p3DWorld
+  [  7] ret
+end
+
+on getShader me
+  [  0] getprop 329 ............................. <pShader>
+  [  3] pusharglistnoret 1 ...................... <pShader>
+  [  5] extcall 3 ............................... return pShader
+  [  7] ret
+end
+
+on getSpritesInUse me
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. numInUse = 0
+  [  3] getprop 245 ............................. <p>
+  [  5] getobjprop 321 .......................... <p.spriteInfo>
+  [  8] peek 0
+  [ 10] pusharglist 1
+  [ 12] extcall 348
+  [ 15] pushint8 1
+  [ 17] peek 0
+  [ 19] peek 2
+  [ 21] lteq
+  [ 22] jmpifz [ 59] ............................ repeat with spr in p.spriteInfo
+  [ 25] peek 2
+  [ 27] peek 1
+  [ 29] pusharglist 2
+  [ 31] extcall 301
+  [ 34] setlocal 1
+  [ 36] getlocal 1 .............................. <spr>
+  [ 38] getobjprop 342 .......................... <spr.inuse>
+  [ 41] pushint8 1 .............................. <1>
+  [ 43] eq ...................................... <spr.inuse = 1>
+  [ 44] jmpifz [ 54] ............................ if spr.inuse = 1 then
+  [ 47] getlocal 0 .............................. <numInUse>
+  [ 49] pushint8 1 .............................. <1>
+  [ 51] add ..................................... <numInUse + 1>
+  [ 52] setlocal 0 .............................. numInUse = numInUse + 1
+  [ 54] pushint8 1
+  [ 56] add
+  [ 57] endrepeat [ 17]
+  [ 59] pop 3
+  [ 61] getlocal 0 .............................. <numInUse>
+  [ 63] pusharglistnoret 1 ...................... <numInUse>
+  [ 65] extcall 3 ............................... return numInUse
+  [ 67] ret
+end
+
+on getSpriteWithMember me, member
+  [  0] getprop 245 ............................. <p>
+  [  2] getobjprop 320 .......................... <p.spriteList>
+  [  5] peek 0
+  [  7] pusharglist 1
+  [  9] extcall 348
+  [ 12] pushint8 1
+  [ 14] peek 0
+  [ 16] peek 2
+  [ 18] lteq
+  [ 19] jmpifz [ 54] ............................ repeat with spr in p.spriteList
+  [ 22] peek 2
+  [ 24] peek 1
+  [ 26] pusharglist 2
+  [ 28] extcall 301
+  [ 31] setlocal 0
+  [ 33] getlocal 0 .............................. <spr>
+  [ 35] getobjprop 193 .......................... <spr.member>
+  [ 37] getparam 1 .............................. <member>
+  [ 39] eq ...................................... <spr.member = member>
+  [ 40] jmpifz [ 49] ............................ if spr.member = member then
+  [ 43] getlocal 0 .............................. <spr>
+  [ 45] pusharglistnoret 1 ...................... <spr>
+  [ 47] extcall 3 ............................... return spr
+  [ 49] pushint8 1
+  [ 51] add
+  [ 52] endrepeat [ 14]
+  [ 54] pop 3
+  [ 56] pushsymb 103 ............................ <#none>
+  [ 58] pusharglistnoret 1 ...................... <#none>
+  [ 60] extcall 3 ............................... return #none
+  [ 62] ret
+end
+
+on hideAll2DSprites me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 358 ............................ <#visible>
+  [  5] pushzero ................................ <0>
+  [  6] pusharglistnoret 3 ...................... <me, #visible, 0>
+  [  8] objcall 315 ............................. me.setAll2DProperty(#visible, 0)
+  [ 11] ret
+end
+
+on setAll2DProperty me, theProperty, theValue
+  [  0] pushint8 1 .............................. <1>
+  [  2] setlocal 0
+  [  4] getlocal 0
+  [  6] getmovieprop 334 ........................ <the lastChannel>
+  [  9] lteq
+  [ 10] jmpifz [ 51] ............................ repeat with i = 1 to the lastChannel
+  [ 13] getlocal 0 .............................. <i>
+  [ 15] pusharglist 1 ........................... <i>
+  [ 17] extcall 323 ............................. <sprite(i)>
+  [ 20] setlocal 1 .............................. spr = sprite(i)
+  [ 22] getparam 1 .............................. <theProperty>
+  [ 24] peek 0 .................................. case theProperty of
+  [ 26] pushsymb 358 ............................ <#visible>
+  [ 29] eq
+  [ 30] jmpifz [ 40] ............................ (case) #visible:
+  [ 33] getlocal 1 .............................. <spr>
+  [ 35] getparam 2 .............................. <theValue>
+  [ 37] setobjprop 358 .......................... spr.visible = theValue
+  [ 40] pop 1
+  [ 42] pushint8 1
+  [ 44] getlocal 0
+  [ 46] add
+  [ 47] setlocal 0
+  [ 49] endrepeat [  4]
+  [ 51] ret
+end
+
+on showAll2DSprites me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 358 ............................ <#visible>
+  [  5] pushint8 1 .............................. <1>
+  [  7] pusharglistnoret 3 ...................... <me, #visible, 1>
+  [  9] objcall 315 ............................. me.setAll2DProperty(#visible, 1)
+  [ 12] ret
+end
+
+on visibleAll me, bVisible
+  [  0] getprop 245 ............................. <p>
+  [  2] getobjprop 320 .......................... <p.spriteList>
+  [  5] peek 0
+  [  7] pusharglist 1
+  [  9] extcall 348
+  [ 12] pushint8 1
+  [ 14] peek 0
+  [ 16] peek 2
+  [ 18] lteq
+  [ 19] jmpifz [ 45] ............................ repeat with spr in p.spriteList
+  [ 22] peek 2
+  [ 24] peek 1
+  [ 26] pusharglist 2
+  [ 28] extcall 301
+  [ 31] setlocal 0
+  [ 33] getlocal 0 .............................. <spr>
+  [ 35] getparam 1 .............................. <bVisible>
+  [ 37] setobjprop 358 .......................... spr.visible = bVisible
+  [ 40] pushint8 1
+  [ 42] add
+  [ 43] endrepeat [ 14]
+  [ 45] pop 3
+  [ 47] ret
+end
+
+on requestSprite me, requester
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 309 ............................. <me.findFreeSprite()>
+  [  7] setlocal 0 .............................. spr = me.findFreeSprite()
+  [  9] getprop 245 ............................. <p>
+  [ 11] pushsymb 321 ............................ <#spriteInfo>
+  [ 14] getlocal 0 .............................. <spr>
+  [ 16] getobjprop 340 .......................... <spr.spriteNum>
+  [ 19] pusharglist 3 ........................... <p, #spriteInfo, spr.spriteNum>
+  [ 21] objcall 363 ............................. <p.spriteInfo[spr.spriteNum]>
+  [ 24] pushint8 1 .............................. <1>
+  [ 26] setobjprop 342 .......................... p.spriteInfo[spr.spriteNum].inuse = 1
+  [ 29] getprop 245 ............................. <p>
+  [ 31] pushsymb 321 ............................ <#spriteInfo>
+  [ 34] getlocal 0 .............................. <spr>
+  [ 36] getobjprop 340 .......................... <spr.spriteNum>
+  [ 39] pusharglist 3 ........................... <p, #spriteInfo, spr.spriteNum>
+  [ 41] objcall 363 ............................. <p.spriteInfo[spr.spriteNum]>
+  [ 44] getparam 1 .............................. <requester>
+  [ 46] setobjprop 343 .......................... p.spriteInfo[spr.spriteNum].lastUser = requester
+  [ 49] getlocal 0 .............................. <spr>
+  [ 51] pusharglistnoret 1 ...................... <spr>
+  [ 53] extcall 3 ............................... return spr
+  [ 55] ret
+end
+
+on stop me
+  [  0] ret
+end
+
+on updateSprites me
+  [  0] getprop 245 ............................. <p>
+  [  2] getobjprop 320 .......................... <p.spriteList>
+  [  5] peek 0
+  [  7] pusharglist 1
+  [  9] extcall 348
+  [ 12] pushint8 1
+  [ 14] peek 0
+  [ 16] peek 2
+  [ 18] lteq
+  [ 19] jmpifz [ 45] ............................ repeat with spr in p.spriteList
+  [ 22] peek 2
+  [ 24] peek 1
+  [ 26] pusharglist 2
+  [ 28] extcall 301
+  [ 31] setlocal 0
+  [ 33] getlocal 0 .............................. <spr>
+  [ 35] pusharglistnoret 1 ...................... <spr>
+  [ 37] objcall 371 ............................. spr.update()
+  [ 40] pushint8 1
+  [ 42] add
+  [ 43] endrepeat [ 14]
+  [ 45] pop 3
+  [ 47] ret
+end

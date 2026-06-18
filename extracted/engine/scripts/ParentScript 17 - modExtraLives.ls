@@ -1,0 +1,78 @@
+property ancestor, pExtraLifeSound, pExtraLives, pExtraLivesTextMember, pLifePowerUp, pLifePowerUpsCollected, pLifePowerTextMember, pNumPowerUpsPerLife, pRespawnPoint
+
+on new me
+  ancestor = new(script("modModule"))
+  return me
+end
+
+on addModParams me
+  i = me.modifyParams(#init)
+  i[#extraLifeSound] = #none
+  i[#extraLives] = 0
+  i[#lifePowerUp] = #hairGem
+  i[#numPowerUpsPerLife] = 100
+  ancestor.addModParams()
+end
+
+on init me, params
+  pExtraLifeSound = params.extraLifeSound
+  pExtraLives = params.extraLives
+  pLifePowerUp = params.lifePowerUp
+  pLifePowerUpsCollected = 0
+  pNumPowerUpsPerLife = params.numPowerUpsPerLife
+  pRespawnPoint = point(0, 0)
+  pExtraLivesTextMember = member("extraLives_text", "gfx")
+  pLifePowerTextMember = member(string(pLifePowerUp) & "_text", "gfx")
+  me.updateExtraLivesDisplay()
+  me.updateLifePowerUpsDisplay()
+  ancestor.init(params)
+end
+
+on finish me
+  pExtraLives = 0
+  pLifePowerUpsCollected = 0
+  me.updateExtraLivesDisplay()
+  me.updateLifePowerUpsDisplay()
+  ancestor.finish()
+end
+
+on attemptRespawn me
+  if pExtraLives > 0 then
+    me.id.bigMe.respawn()
+    gameOver = 0
+  else
+    gameOver = 1
+  end if
+  return gameOver
+end
+
+on lifePowerUpCollected me
+  pLifePowerUpsCollected = pLifePowerUpsCollected + 1
+  if pLifePowerUpsCollected = pNumPowerUpsPerLife then
+    pExtraLives = pExtraLives + 1
+    pLifePowerUpsCollected = 0
+    me.updateExtraLivesDisplay()
+    me.PlaySound(pExtraLifeSound)
+  end if
+  me.flashWhite()
+  me.updateLifePowerUpsDisplay()
+end
+
+on recordRespawnPoint me
+  pRespawnPoint = me.getLoc()
+end
+
+on respawn me
+  me.setLoc(pRespawnPoint)
+  me.restoreEnergy()
+  pExtraLives = pExtraLives - 1
+  me.updateExtraLivesDisplay()
+end
+
+on updateExtraLivesDisplay me
+  pExtraLivesTextMember.text = string(pExtraLives)
+end
+
+on updateLifePowerUpsDisplay me
+  pLifePowerTextMember.text = string(pLifePowerUpsCollected)
+end

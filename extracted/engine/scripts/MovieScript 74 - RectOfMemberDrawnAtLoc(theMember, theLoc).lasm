@@ -1,0 +1,62 @@
+on RectOfMemberDrawnAtLoc theMember, theloc
+  [  0] getparam 0 .............................. <theMember>
+  [  2] getobjprop 36 ........................... <theMember.regPoint>
+  [  4] setlocal 0 .............................. theRegPoint = theMember.regPoint
+  [  6] getparam 0 .............................. <theMember>
+  [  8] getobjprop 190 .......................... <theMember.width>
+  [ 10] setlocal 1 .............................. memWidth = theMember.width
+  [ 12] getparam 0 .............................. <theMember>
+  [ 14] getobjprop 191 .......................... <theMember.height>
+  [ 16] setlocal 2 .............................. memHeight = theMember.height
+  [ 18] pushzero ................................ <0>
+  [ 19] getlocal 0 .............................. <theRegPoint>
+  [ 21] getobjprop 158 .......................... <theRegPoint.locH>
+  [ 23] sub ..................................... <0 - theRegPoint.locH>
+  [ 24] setlocal 3 .............................. leftOffset = 0 - theRegPoint.locH
+  [ 26] getlocal 1 .............................. <memWidth>
+  [ 28] getlocal 0 .............................. <theRegPoint>
+  [ 30] getobjprop 158 .......................... <theRegPoint.locH>
+  [ 32] sub ..................................... <memWidth - theRegPoint.locH>
+  [ 33] setlocal 4 .............................. rightOffset = memWidth - theRegPoint.locH
+  [ 35] pushzero ................................ <0>
+  [ 36] getlocal 0 .............................. <theRegPoint>
+  [ 38] getobjprop 159 .......................... <theRegPoint.locV>
+  [ 40] sub ..................................... <0 - theRegPoint.locV>
+  [ 41] setlocal 5 .............................. topOffset = 0 - theRegPoint.locV
+  [ 43] getlocal 2 .............................. <memHeight>
+  [ 45] getlocal 0 .............................. <theRegPoint>
+  [ 47] getobjprop 159 .......................... <theRegPoint.locV>
+  [ 49] sub ..................................... <memHeight - theRegPoint.locV>
+  [ 50] setlocal 6 .............................. bottomOffset = memHeight - theRegPoint.locV
+  [ 52] getparam 1 .............................. <theloc>
+  [ 54] getobjprop 158 .......................... <theloc.locH>
+  [ 56] getlocal 3 .............................. <leftOffset>
+  [ 58] add ..................................... <theloc.locH + leftOffset>
+  [ 59] setlocal 7 .............................. theLeft = theloc.locH + leftOffset
+  [ 61] getparam 1 .............................. <theloc>
+  [ 63] getobjprop 158 .......................... <theloc.locH>
+  [ 65] getlocal 4 .............................. <rightOffset>
+  [ 67] add ..................................... <theloc.locH + rightOffset>
+  [ 68] setlocal 8 .............................. theRight = theloc.locH + rightOffset
+  [ 70] getparam 1 .............................. <theloc>
+  [ 72] getobjprop 159 .......................... <theloc.locV>
+  [ 74] getlocal 5 .............................. <topOffset>
+  [ 76] add ..................................... <theloc.locV + topOffset>
+  [ 77] setlocal 9 .............................. theTop = theloc.locV + topOffset
+  [ 79] getparam 1 .............................. <theloc>
+  [ 81] getobjprop 159 .......................... <theloc.locV>
+  [ 83] getlocal 6 .............................. <bottomOffset>
+  [ 85] add ..................................... <theloc.locV + bottomOffset>
+  [ 86] setlocal 10 ............................. theBottom = theloc.locV + bottomOffset
+  [ 88] getlocal 7 .............................. <theLeft>
+  [ 90] getlocal 9 .............................. <theTop>
+  [ 92] getlocal 8 .............................. <theRight>
+  [ 94] getlocal 10 ............................. <theBottom>
+  [ 96] pusharglist 4 ........................... <theLeft, theTop, theRight, theBottom>
+  [ 98] extcall 109 ............................. <rect(theLeft, theTop, theRight, theBottom)>
+  [100] setlocal 11 ............................. therect = rect(theLeft, theTop, theRight, theBottom)
+  [102] getlocal 11 ............................. <therect>
+  [104] pusharglistnoret 1 ...................... <therect>
+  [106] extcall 3 ............................... return therect
+  [108] ret
+end

@@ -1,0 +1,159 @@
+property ancestor, pSpellToAttachTo, pSpellStrip, pUnitAvailableBlend, pUnitNotAvailableBlend
+
+on new me
+  [  0] pushcons 0 .............................. <"objAutoUpdate">
+  [  2] pusharglist 1 ........................... <"objAutoUpdate">
+  [  4] extcall 34 .............................. <script("objAutoUpdate")>
+  [  6] pusharglist 1 ........................... <script("objAutoUpdate")>
+  [  8] extcall 0 ............................... <new(script("objAutoUpdate"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objAutoUpdate"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 1318 ........................... <#spellStrip>
+  [ 27] pushsymb 49 ............................. <#none>
+  [ 29] pusharglistnoret 3 ...................... <i, #spellStrip, #none>
+  [ 31] objcall 48 .............................. i[#spellStrip] = #none
+  [ 33] getlocal 0 .............................. <i>
+  [ 35] pushsymb 1319 ........................... <#spellToAttachTo>
+  [ 38] pushsymb 49 ............................. <#none>
+  [ 40] pusharglistnoret 3 ...................... <i, #spellToAttachTo, #none>
+  [ 42] objcall 48 .............................. i[#spellToAttachTo] = #none
+  [ 44] getparam 0 .............................. <me>
+  [ 46] pushcons 1 .............................. <"modAnimSet">
+  [ 48] pusharglistnoret 2 ...................... <me, "modAnimSet">
+  [ 50] objcall 1717 ............................ me.addModule("modAnimSet")
+  [ 53] getparam 0 .............................. <me>
+  [ 55] pushcons 2 .............................. <"modFader">
+  [ 57] pusharglistnoret 2 ...................... <me, "modFader">
+  [ 59] objcall 1717 ............................ me.addModule("modFader")
+  [ 62] getparam 0 .............................. <me>
+  [ 64] pushcons 3 .............................. <"modSprite">
+  [ 66] pusharglistnoret 2 ...................... <me, "modSprite">
+  [ 68] objcall 1717 ............................ me.addModule("modSprite")
+  [ 71] getparam 0 .............................. <me>
+  [ 73] pusharglistnoret 1 ...................... <me>
+  [ 75] extcall 35 .............................. return me
+  [ 77] ret
+end
+
+on addModParams me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 2 ............................... ancestor.addModParams()
+  [  6] getparam 0 .............................. <me>
+  [  8] pushsymb 1 .............................. <#init>
+  [ 10] pusharglist 2 ........................... <me, #init>
+  [ 12] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 14] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 16] getlocal 0 .............................. <i>
+  [ 18] pushsymb 3887 ........................... <#spellIcons>
+  [ 21] setobjprop 45 ........................... i.character = #spellIcons
+  [ 23] getlocal 0 .............................. <i>
+  [ 25] pushcons 4 .............................. <"spellIcons">
+  [ 27] setobjprop 44 ........................... i.name = "spellIcons"
+  [ 29] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 1319 ......................... <params.spellToAttachTo>
+  [ 13] setprop 3888 ............................ pSpellToAttachTo = params.spellToAttachTo
+  [ 16] getparam 1 .............................. <params>
+  [ 18] getobjprop 1318 ......................... <params.spellStrip>
+  [ 21] setprop 3889 ............................ pSpellStrip = params.spellStrip
+  [ 24] pushint8 100 ............................ <100>
+  [ 26] setprop 3890 ............................ pUnitAvailableBlend = 100
+  [ 29] pushint8 50 ............................. <50>
+  [ 31] setprop 3891 ............................ pUnitNotAvailableBlend = 50
+  [ 34] getparam 0 .............................. <me>
+  [ 36] pusharglistnoret 1 ...................... <me>
+  [ 38] objcall 692 ............................. me.calcStart()
+  [ 41] getparam 0 .............................. <me>
+  [ 43] pusharglistnoret 1 ...................... <me>
+  [ 45] objcall 23 .............................. me.pauseAnim()
+  [ 47] getparam 0 .............................. <me>
+  [ 49] getprop 3888 ............................ <pSpellToAttachTo>
+  [ 52] pusharglist 1 ........................... <pSpellToAttachTo>
+  [ 54] objcall 296 ............................. <pSpellToAttachTo.getLocZ()>
+  [ 57] pushint8 1 .............................. <1>
+  [ 59] add ..................................... <pSpellToAttachTo.getLocZ() + 1>
+  [ 60] pusharglistnoret 2 ...................... <me, pSpellToAttachTo.getLocZ() + 1>
+  [ 62] objcall 299 ............................. me.setLocZ(pSpellToAttachTo.getLocZ() + 1)
+  [ 65] ret
+end
+
+on displayIconNumber me, theNum, available
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <theNum>
+  [  4] pusharglistnoret 2 ...................... <me, theNum>
+  [  6] objcall 21 .............................. me.gotoAnimFrame(theNum)
+  [  8] getparam 0 .............................. <me>
+  [ 10] pusharglistnoret 1 ...................... <me>
+  [ 12] objcall 7 ............................... me.frameAdvance()
+  [ 14] getparam 2 .............................. <available>
+  [ 16] jmpifz [ 32] ............................ if available then / else
+  [ 19] getparam 0 .............................. <me>
+  [ 21] getprop 3890 ............................ <pUnitAvailableBlend>
+  [ 24] pusharglistnoret 2 ...................... <me, pUnitAvailableBlend>
+  [ 26] objcall 673 ............................. me.setBlend(pUnitAvailableBlend)
+  [ 29] jmp [ 42]
+  [ 32] getparam 0 .............................. <me>
+  [ 34] getprop 3891 ............................ <pUnitNotAvailableBlend>
+  [ 37] pusharglistnoret 2 ...................... <me, pUnitNotAvailableBlend>
+  [ 39] objcall 673 ............................. me.setBlend(pUnitNotAvailableBlend)
+  [ 42] ret
+end
+
+on explode me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 679 ............................. me.startQuickFade()
+  [  7] ret
+end
+
+on finishConditionMet me
+  [  0] pushzero ................................ <0>
+  [  1] pusharglistnoret 1 ...................... <0>
+  [  3] extcall 35 .............................. return 0
+  [  5] ret
+end
+
+on getAnimSym me, theSym
+  [  0] getprop 3889 ............................ <pSpellStrip>
+  [  3] pusharglistnoret 1 ...................... <pSpellStrip>
+  [  5] extcall 35 .............................. return pSpellStrip
+  [  7] ret
+end
+
+on update me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 31 .............................. ancestor.update()
+  [  6] getprop 3888 ............................ <pSpellToAttachTo>
+  [  9] pusharglist 1 ........................... <pSpellToAttachTo>
+  [ 11] objcall 113 ............................. <pSpellToAttachTo.getRect()>
+  [ 13] setlocal 0 .............................. spellRect = pSpellToAttachTo.getRect()
+  [ 15] getparam 0 .............................. <me>
+  [ 17] getchainedprop 51 ....................... <me.big>
+  [ 19] getlocal 0 .............................. <spellRect>
+  [ 21] pusharglistnoret 2 ...................... <me.big, spellRect>
+  [ 23] objcall 1344 ............................ me.big.setRect(spellRect)
+  [ 26] getprop 3888 ............................ <pSpellToAttachTo>
+  [ 29] pusharglist 1 ........................... <pSpellToAttachTo>
+  [ 31] objcall 111 ............................. <pSpellToAttachTo.getLoc()>
+  [ 33] setlocal 1 .............................. spellLoc = pSpellToAttachTo.getLoc()
+  [ 35] getparam 0 .............................. <me>
+  [ 37] getchainedprop 51 ....................... <me.big>
+  [ 39] getlocal 1 .............................. <spellLoc>
+  [ 41] pusharglistnoret 2 ...................... <me.big, spellLoc>
+  [ 43] objcall 669 ............................. me.big.setLoc(spellLoc)
+  [ 46] ret
+end

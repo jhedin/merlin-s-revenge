@@ -1,0 +1,52 @@
+property pMagicLimit
+global gMagicLimit
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 3 ............................... return me
+  [  6] ret
+end
+
+on init me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 1405 ............................ me.setMagicLimitToDefault()
+  [  7] ret
+end
+
+on finish me
+  [  0] ret
+end
+
+on getMagicLimit me
+  [  0] getprop 1406 ............................ <pMagicLimit>
+  [  3] pusharglistnoret 1 ...................... <pMagicLimit>
+  [  5] extcall 3 ............................... return pMagicLimit
+  [  7] ret
+end
+
+on setMagicLimit me, newLimit
+  [  0] getparam 1 .............................. <newLimit>
+  [  2] setprop 1406 ............................ pMagicLimit = newLimit
+  [  5] ret
+end
+
+on setMagicLimitToDefault me
+  [  0] getparam 0 .............................. <me>
+  [  2] getglobal 1408 .......................... <gMagicLimit>
+  [  5] pusharglistnoret 2 ...................... <me, gMagicLimit>
+  [  7] objcall 1404 ............................ me.setMagicLimit(gMagicLimit)
+  [ 10] ret
+end
+
+on start me
+  [  0] ret
+end
+
+on stop me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 239 ............................. me.finish()
+  [  6] ret
+end

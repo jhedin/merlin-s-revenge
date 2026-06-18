@@ -1,0 +1,523 @@
+property ancestor, pAdjustXY, pCallingPrg, pFin, pFinIfOffscreen, pFriction, pKeepVect, pGravity, pLoc, pOldLoc, pStallCount, pSpr, pVect, pWeight
+global gGameSpeed, gStageSize
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushcons 0 .............................. <"objAutoUpdate">
+  [  4] pusharglist 1 ........................... <"objAutoUpdate">
+  [  6] extcall 27 .............................. <script("objAutoUpdate")>
+  [  8] pusharglist 1 ........................... <script("objAutoUpdate")>
+  [ 10] extcall 0 ............................... <new(script("objAutoUpdate"))>
+  [ 12] setobjprop 77 ........................... me.ancestor = new(script("objAutoUpdate"))
+  [ 14] getparam 0 .............................. <me>
+  [ 16] pusharglistnoret 1 ...................... <me>
+  [ 18] extcall 17 .............................. return me
+  [ 20] ret
+end
+
+on init me, callingPrg, spr
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 77 ....................... <me.ancestor>
+  [  4] pusharglistnoret 1 ...................... <me.ancestor>
+  [  6] objcall 1 ............................... me.ancestor.init()
+  [  8] pushzero ................................ <0>
+  [  9] setprop 881 ............................. pAdjustXY = 0
+  [ 12] getparam 1 .............................. <callingPrg>
+  [ 14] getchainedprop 67 ....................... <callingPrg.id>
+  [ 16] getobjprop 66 ........................... <callingPrg.id.bigMe>
+  [ 18] setprop 744 ............................. pCallingPrg = callingPrg.id.bigMe
+  [ 21] pushint8 1 .............................. <1>
+  [ 23] setprop 882 ............................. pFinIfOffscreen = 1
+  [ 26] pushfloat32 12.5 ........................ <12.5>
+  [ 31] pushzero ................................ <0>
+  [ 32] pusharglist 2 ........................... <12.5, 0>
+  [ 34] extcall 215 ............................. <point(12.5, 0)>
+  [ 36] setprop 883 ............................. pFriction = point(12.5, 0)
+  [ 39] pushzero ................................ <0>
+  [ 40] setprop 884 ............................. pKeepVect = 0
+  [ 43] pushzero ................................ <0>
+  [ 44] setprop 885 ............................. pGravity = 0
+  [ 47] getparam 0 .............................. <me>
+  [ 49] getparam 2 .............................. <spr>
+  [ 51] getchainedprop 216 ...................... <spr.loc>
+  [ 53] pusharglist 1 ........................... <spr.loc>
+  [ 55] objcall 48 .............................. <spr.loc.duplicate()>
+  [ 57] pusharglistnoret 2 ...................... <me, spr.loc.duplicate()>
+  [ 59] objcall 766 ............................. me.setLoc(spr.loc.duplicate())
+  [ 62] getparam 2 .............................. <spr>
+  [ 64] setprop 79 .............................. pSpr = spr
+  [ 66] pushzero ................................ <0>
+  [ 67] setprop 886 ............................. pWeight = 0
+  [ 70] pushfloat32 0.0 ......................... <0.0>
+  [ 75] pushfloat32 0.0 ......................... <0.0>
+  [ 80] pusharglist 2 ........................... <0.0, 0.0>
+  [ 82] extcall 215 ............................. <point(0.0, 0.0)>
+  [ 84] setprop 887 ............................. pVect = point(0.0, 0.0)
+  [ 87] pusharglist 0 ........................... <>
+  [ 89] extcall 120 ............................. <CounterNew()>
+  [ 91] setprop 888 ............................. pStallCount = CounterNew()
+  [ 94] getprop 888 ............................. <pStallCount>
+  [ 97] pushint8 1 .............................. <1>
+  [ 99] pushint8 10 ............................. <10>
+  [101] pusharglist 2 ........................... <[1, 10]>
+  [103] pushlist ................................ <[1, 10]>
+  [104] setobjprop 123 .......................... pStallCount.tim = [1, 10]
+  [106] getprop 888 ............................. <pStallCount>
+  [109] getglobal 121 ........................... <gGameSpeed>
+  [111] setobjprop 122 .......................... pStallCount.inc = gGameSpeed
+  [113] ret
+end
+
+on initGameChar me, callingPrg, spr
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <callingPrg>
+  [  4] getparam 2 .............................. <spr>
+  [  6] pusharglistnoret 3 ...................... <me, callingPrg, spr>
+  [  8] objcall 1 ............................... me.init(callingPrg, spr)
+  [ 10] getparam 0 .............................. <me>
+  [ 12] pushint8 1 .............................. <1>
+  [ 14] pusharglistnoret 2 ...................... <me, 1>
+  [ 16] objcall 877 ............................. me.setAdjustXY(1)
+  [ 19] getparam 0 .............................. <me>
+  [ 21] pushzero ................................ <0>
+  [ 22] pusharglistnoret 2 ...................... <me, 0>
+  [ 24] objcall 293 ............................. me.setAutoUpdate(0)
+  [ 27] getparam 0 .............................. <me>
+  [ 29] pushzero ................................ <0>
+  [ 30] pusharglistnoret 2 ...................... <me, 0>
+  [ 32] objcall 878 ............................. me.setFinIfOffscreen(0)
+  [ 35] getparam 0 .............................. <me>
+  [ 37] pushint8 1 .............................. <1>
+  [ 39] pusharglistnoret 2 ...................... <me, 1>
+  [ 41] objcall 283 ............................. me.setGravity(1)
+  [ 44] getparam 0 .............................. <me>
+  [ 46] pushcons 1 .............................. <0.20000000000000001>
+  [ 48] pusharglistnoret 2 ...................... <me, 0.20000000000000001>
+  [ 50] objcall 284 ............................. me.setWeight(0.20000000000000001)
+  [ 53] ret
+end
+
+on bounceLeft me
+  [  0] getprop 887 ............................. <pVect>
+  [  3] pushint8 1 .............................. <1>
+  [  5] pusharglist 2 ........................... <pVect, 1>
+  [  7] objcall 38 .............................. <pVect[1]>
+  [  9] pushzero ................................ <0>
+  [ 10] gt ...................................... <pVect[1] > 0>
+  [ 11] jmpifz [ 23] ............................ if pVect[1] > 0 then
+  [ 14] getparam 0 .............................. <me>
+  [ 16] pushint8 1 .............................. <1>
+  [ 18] pusharglistnoret 2 ...................... <me, 1>
+  [ 20] objcall 874 ............................. me.flipVect(1)
+  [ 23] ret
+end
+
+on bounceRight me
+  [  0] getprop 887 ............................. <pVect>
+  [  3] pushint8 1 .............................. <1>
+  [  5] pusharglist 2 ........................... <pVect, 1>
+  [  7] objcall 38 .............................. <pVect[1]>
+  [  9] pushzero ................................ <0>
+  [ 10] lt ...................................... <pVect[1] < 0>
+  [ 11] jmpifz [ 23] ............................ if pVect[1] < 0 then
+  [ 14] getparam 0 .............................. <me>
+  [ 16] pushint8 1 .............................. <1>
+  [ 18] pusharglistnoret 2 ...................... <me, 1>
+  [ 20] objcall 874 ............................. me.flipVect(1)
+  [ 23] ret
+end
+
+on finishConditionMet me
+  [  0] getprop 888 ............................. <pStallCount>
+  [  3] getobjprop 130 .......................... <pStallCount.fin>
+  [  5] jmpifz [ 23] ............................ if pStallCount.fin then
+  [  8] pushzero ................................ <0>
+  [  9] pushzero ................................ <0>
+  [ 10] pusharglist 2 ........................... <0, 0>
+  [ 12] extcall 215 ............................. <point(0, 0)>
+  [ 14] setprop 887 ............................. pVect = point(0, 0)
+  [ 17] pushint8 1 .............................. <1>
+  [ 19] pusharglistnoret 1 ...................... <1>
+  [ 21] extcall 17 .............................. return 1
+  [ 23] getprop 882 ............................. <pFinIfOffscreen>
+  [ 26] jmpifz [ 46] ............................ if pFinIfOffscreen then
+  [ 29] getparam 0 .............................. <me>
+  [ 31] pusharglist 1 ........................... <me>
+  [ 33] objcall 223 ............................. <me.onscreen()>
+  [ 35] pushzero ................................ <0>
+  [ 36] eq ...................................... <me.onscreen() = 0>
+  [ 37] jmpifz [ 46] ............................ if me.onscreen() = 0 then
+  [ 40] pushint8 1 .............................. <1>
+  [ 42] pusharglistnoret 1 ...................... <1>
+  [ 44] extcall 17 .............................. return 1
+  [ 46] pushzero ................................ <0>
+  [ 47] pusharglistnoret 1 ...................... <0>
+  [ 49] extcall 17 .............................. return 0
+  [ 51] ret
+end
+
+on flipVect me, i
+  [  0] getprop 887 ............................. <pVect>
+  [  3] getparam 1 .............................. <i>
+  [  5] getprop 887 ............................. <pVect>
+  [  8] getparam 1 .............................. <i>
+  [ 10] pusharglist 2 ........................... <pVect, i>
+  [ 12] objcall 38 .............................. <pVect[i]>
+  [ 14] pushint8 1 .............................. <1>
+  [ 16] inv ..................................... <-1>
+  [ 17] mul ..................................... <pVect[i] * -1>
+  [ 18] pusharglistnoret 3 ...................... <pVect, i, pVect[i] * -1>
+  [ 20] objcall 37 .............................. pVect[i] = pVect[i] * -1
+  [ 22] ret
+end
+
+on informCallingPrg
+  [  0] getprop 744 ............................. <pCallingPrg>
+  [  3] pusharglistnoret 1 ...................... <pCallingPrg>
+  [  5] objcall 228 ............................. pCallingPrg.moveXYFin()
+  [  7] ret
+end
+
+on onscreen me
+  [  0] pushzero ................................ <0>
+  [  1] pushzero ................................ <0>
+  [  2] getglobal 275 ........................... <gStageSize>
+  [  5] pushint8 1 .............................. <1>
+  [  7] pusharglist 2 ........................... <gStageSize, 1>
+  [  9] objcall 38 .............................. <gStageSize[1]>
+  [ 11] getglobal 275 ........................... <gStageSize>
+  [ 14] pushint8 2 .............................. <2>
+  [ 16] pusharglist 2 ........................... <gStageSize, 2>
+  [ 18] objcall 38 .............................. <gStageSize[2]>
+  [ 20] pusharglist 4 ........................... <0, 0, gStageSize[1], gStageSize[2]>
+  [ 22] extcall 160 ............................. <rect(0, 0, gStageSize[1], gStageSize[2])>
+  [ 24] setlocal 0 .............................. stagerect = rect(0, 0, gStageSize[1], gStageSize[2])
+  [ 26] getprop 79 .............................. <pSpr>
+  [ 28] getchainedprop 216 ...................... <pSpr.loc>
+  [ 30] getlocal 0 .............................. <stagerect>
+  [ 32] pusharglist 2 ........................... <pSpr.loc, stagerect>
+  [ 34] objcall 384 ............................. <pSpr.loc.inside(stagerect)>
+  [ 37] jmpifz [ 46] ............................ if pSpr.loc.inside(stagerect) then
+  [ 40] pushint8 1 .............................. <1>
+  [ 42] pusharglistnoret 1 ...................... <1>
+  [ 44] extcall 17 .............................. return 1
+  [ 46] getprop 79 .............................. <pSpr>
+  [ 48] getobjprop 160 .......................... <pSpr.rect>
+  [ 50] setlocal 1 .............................. sprRect = pSpr.rect
+  [ 52] getlocal 1 .............................. <sprRect>
+  [ 54] getlocal 0 .............................. <stagerect>
+  [ 56] pusharglist 2 ........................... <sprRect, stagerect>
+  [ 58] objcall 889 ............................. <sprRect.intersect(stagerect)>
+  [ 61] setlocal 2 .............................. intRect = sprRect.intersect(stagerect)
+  [ 63] getlocal 2 .............................. <intRect>
+  [ 65] pushzero ................................ <0>
+  [ 66] pushzero ................................ <0>
+  [ 67] pushzero ................................ <0>
+  [ 68] pushzero ................................ <0>
+  [ 69] pusharglist 4 ........................... <0, 0, 0, 0>
+  [ 71] extcall 160 ............................. <rect(0, 0, 0, 0)>
+  [ 73] eq ...................................... <intRect = rect(0, 0, 0, 0)>
+  [ 74] jmpifz [ 82] ............................ if intRect = rect(0, 0, 0, 0) then
+  [ 77] pushzero ................................ <0>
+  [ 78] pusharglistnoret 1 ...................... <0>
+  [ 80] extcall 17 .............................. return 0
+  [ 82] pushint8 1 .............................. <1>
+  [ 84] pusharglistnoret 1 ...................... <1>
+  [ 86] extcall 17 .............................. return 1
+  [ 88] ret
+end
+
+on update me
+  [  0] getprop 881 ............................. <pAdjustXY>
+  [  3] jmpifz [ 14] ............................ if pAdjustXY then
+  [  6] getprop 744 ............................. <pCallingPrg>
+  [  9] pusharglistnoret 1 ...................... <pCallingPrg>
+  [ 11] objcall 767 ............................. pCallingPrg.updateAI()
+  [ 14] getprop 884 ............................. <pKeepVect>
+  [ 17] jmpifz [ 40] ............................ if pKeepVect then
+  [ 20] getprop 893 ............................. <pLoc>
+  [ 23] getprop 894 ............................. <pOldLoc>
+  [ 26] sub ..................................... <pLoc - pOldLoc>
+  [ 27] setprop 887 ............................. pVect = pLoc - pOldLoc
+  [ 30] getprop 893 ............................. <pLoc>
+  [ 33] pusharglist 1 ........................... <pLoc>
+  [ 35] objcall 48 .............................. <pLoc.duplicate()>
+  [ 37] setprop 894 ............................. pOldLoc = pLoc.duplicate()
+  [ 40] getprop 887 ............................. <pVect>
+  [ 43] pusharglist 1 ........................... <pVect>
+  [ 45] objcall 48 .............................. <pVect.duplicate()>
+  [ 47] pusharglist 1 ........................... <pVect.duplicate()>
+  [ 49] extcall 279 ............................. <PointPositive(pVect.duplicate())>
+  [ 52] setlocal 0 .............................. speed = PointPositive(pVect.duplicate())
+  [ 54] getprop 883 ............................. <pFriction>
+  [ 57] pushfloat32 0.0 ......................... <0.0>
+  [ 62] pushfloat32 0.0 ......................... <0.0>
+  [ 67] pusharglist 2 ........................... <0.0, 0.0>
+  [ 69] extcall 215 ............................. <point(0.0, 0.0)>
+  [ 71] getlocal 0 .............................. <speed>
+  [ 73] pusharglist 2 ........................... <[point(0.0, 0.0), speed]>
+  [ 75] pushlist ................................ <[point(0.0, 0.0), speed]>
+  [ 76] pusharglist 2 ........................... <pFriction, [point(0.0, 0.0), speed]>
+  [ 78] extcall 895 ............................. <PointValRange(pFriction, [point(0.0, 0.0), speed])>
+  [ 81] setlocal 1 .............................. lostSpeed = PointValRange(pFriction, [point(0.0, 0.0), speed])
+  [ 83] getlocal 1 .............................. <lostSpeed>
+  [ 85] getglobal 121 ........................... <gGameSpeed>
+  [ 87] mul ..................................... <lostSpeed * gGameSpeed>
+  [ 88] setlocal 1 .............................. lostSpeed = lostSpeed * gGameSpeed
+  [ 90] getprop 885 ............................. <pGravity>
+  [ 93] getprop 886 ............................. <pWeight>
+  [ 96] mul ..................................... <pGravity * pWeight>
+  [ 97] getglobal 121 ........................... <gGameSpeed>
+  [ 99] mul ..................................... <pGravity * pWeight * gGameSpeed>
+  [100] setlocal 2 .............................. GravWeightSpeed = pGravity * pWeight * gGameSpeed
+  [102] getprop 887 ............................. <pVect>
+  [105] pushint8 2 .............................. <2>
+  [107] getprop 887 ............................. <pVect>
+  [110] pushint8 2 .............................. <2>
+  [112] pusharglist 2 ........................... <pVect, 2>
+  [114] objcall 38 .............................. <pVect[2]>
+  [116] getlocal 2 .............................. <GravWeightSpeed>
+  [118] add ..................................... <pVect[2] + GravWeightSpeed>
+  [119] pusharglistnoret 3 ...................... <pVect, 2, pVect[2] + GravWeightSpeed>
+  [121] objcall 37 .............................. pVect[2] = pVect[2] + GravWeightSpeed
+  [123] getprop 887 ............................. <pVect>
+  [126] getlocal 1 .............................. <lostSpeed>
+  [128] pusharglist 2 ........................... <pVect, lostSpeed>
+  [130] extcall 896 ............................. <PointTowardZero(pVect, lostSpeed)>
+  [133] setprop 887 ............................. pVect = PointTowardZero(pVect, lostSpeed)
+  [136] getprop 893 ............................. <pLoc>
+  [139] getprop 887 ............................. <pVect>
+  [142] add ..................................... <pLoc + pVect>
+  [143] setlocal 3 .............................. newLoc = pLoc + pVect
+  [145] getparam 0 .............................. <me>
+  [147] getlocal 3 .............................. <newLoc>
+  [149] pusharglist 1 ........................... <newLoc>
+  [151] objcall 48 .............................. <newLoc.duplicate()>
+  [153] getprop 893 ............................. <pLoc>
+  [156] pusharglist 1 ........................... <pLoc>
+  [158] objcall 48 .............................. <pLoc.duplicate()>
+  [160] pusharglistnoret 3 ...................... <me, newLoc.duplicate(), pLoc.duplicate()>
+  [162] objcall 880 ............................. me.stallUpdate(newLoc.duplicate(), pLoc.duplicate())
+  [165] getlocal 3 .............................. <newLoc>
+  [167] setprop 893 ............................. pLoc = newLoc
+  [170] getprop 881 ............................. <pAdjustXY>
+  [173] jmpifz [202] ............................ if pAdjustXY then
+  [176] getprop 744 ............................. <pCallingPrg>
+  [179] getprop 893 ............................. <pLoc>
+  [182] pusharglist 1 ........................... <pLoc>
+  [184] objcall 48 .............................. <pLoc.duplicate()>
+  [186] getprop 79 .............................. <pSpr>
+  [188] getchainedprop 216 ...................... <pSpr.loc>
+  [190] pusharglist 1 ........................... <pSpr.loc>
+  [192] objcall 48 .............................. <pSpr.loc.duplicate()>
+  [194] pusharglist 3 ........................... <pCallingPrg, pLoc.duplicate(), pSpr.loc.duplicate()>
+  [196] objcall 747 ............................. <pCallingPrg.checkCollisions(pLoc.duplicate(), pSpr.loc.duplicate())>
+  [199] setprop 893 ............................. pLoc = pCallingPrg.checkCollisions(pLoc.duplicate(), pSpr.loc.duplicate())
+  [202] getprop 79 .............................. <pSpr>
+  [204] getprop 893 ............................. <pLoc>
+  [207] pusharglist 1 ........................... <pLoc>
+  [209] objcall 48 .............................. <pLoc.duplicate()>
+  [211] setobjprop 216 .......................... pSpr.loc = pLoc.duplicate()
+  [213] getparam 0 .............................. <me>
+  [215] pusharglistnoret 1 ...................... <me>
+  [217] objcall 432 ............................. me.calcFin()
+  [220] ret
+end
+
+on addVectY me, newVectY
+  [  0] getprop 887 ............................. <pVect>
+  [  3] pushint8 2 .............................. <2>
+  [  5] getprop 887 ............................. <pVect>
+  [  8] pushint8 2 .............................. <2>
+  [ 10] pusharglist 2 ........................... <pVect, 2>
+  [ 12] objcall 38 .............................. <pVect[2]>
+  [ 14] getparam 1 .............................. <newVectY>
+  [ 16] add ..................................... <pVect[2] + newVectY>
+  [ 17] pusharglistnoret 3 ...................... <pVect, 2, pVect[2] + newVectY>
+  [ 19] objcall 37 .............................. pVect[2] = pVect[2] + newVectY
+  [ 21] ret
+end
+
+on getVect me
+  [  0] getprop 887 ............................. <pVect>
+  [  3] pusharglist 1 ........................... <pVect>
+  [  5] objcall 48 .............................. <pVect.duplicate()>
+  [  7] pusharglistnoret 1 ...................... <pVect.duplicate()>
+  [  9] extcall 17 .............................. return pVect.duplicate()
+  [ 11] ret
+end
+
+on getVectX me
+  [  0] getprop 887 ............................. <pVect>
+  [  3] pushint8 1 .............................. <1>
+  [  5] pusharglist 2 ........................... <pVect, 1>
+  [  7] objcall 38 .............................. <pVect[1]>
+  [  9] pusharglistnoret 1 ...................... <pVect[1]>
+  [ 11] extcall 17 .............................. return pVect[1]
+  [ 13] ret
+end
+
+on getVectY me
+  [  0] getprop 887 ............................. <pVect>
+  [  3] pushint8 2 .............................. <2>
+  [  5] pusharglist 2 ........................... <pVect, 2>
+  [  7] objcall 38 .............................. <pVect[2]>
+  [  9] pusharglistnoret 1 ...................... <pVect[2]>
+  [ 11] extcall 17 .............................. return pVect[2]
+  [ 13] ret
+end
+
+on setAdjustXY me, newAdjustXY
+  [  0] getparam 1 .............................. <newAdjustXY>
+  [  2] setprop 881 ............................. pAdjustXY = newAdjustXY
+  [  5] ret
+end
+
+on setFinIfOffscreen me, newFinIfOffscreen
+  [  0] getparam 1 .............................. <newFinIfOffscreen>
+  [  2] setprop 882 ............................. pFinIfOffscreen = newFinIfOffscreen
+  [  5] ret
+end
+
+on frictionSet me, newFric
+  [  0] getparam 1 .............................. <newFric>
+  [  2] setprop 883 ............................. pFriction = newFric
+  [  5] ret
+end
+
+on setFrictionX me, newFricX
+  [  0] getprop 883 ............................. <pFriction>
+  [  3] pushint8 1 .............................. <1>
+  [  5] getparam 1 .............................. <newFricX>
+  [  7] pusharglistnoret 3 ...................... <pFriction, 1, newFricX>
+  [  9] objcall 37 .............................. pFriction[1] = newFricX
+  [ 11] ret
+end
+
+on setFrictionY me, newFricY
+  [  0] getprop 883 ............................. <pFriction>
+  [  3] pushint8 2 .............................. <2>
+  [  5] getparam 1 .............................. <newFricY>
+  [  7] pusharglistnoret 3 ...................... <pFriction, 2, newFricY>
+  [  9] objcall 37 .............................. pFriction[2] = newFricY
+  [ 11] ret
+end
+
+on setGravity me, newGravity
+  [  0] getparam 1 .............................. <newGravity>
+  [  2] setprop 885 ............................. pGravity = newGravity
+  [  5] ret
+end
+
+on setLoc me, newLoc
+  [  0] getparam 1 .............................. <newLoc>
+  [  2] pusharglist 1 ........................... <newLoc>
+  [  4] objcall 48 .............................. <newLoc.duplicate()>
+  [  6] setprop 893 ............................. pLoc = newLoc.duplicate()
+  [  9] getparam 1 .............................. <newLoc>
+  [ 11] pusharglist 1 ........................... <newLoc>
+  [ 13] objcall 48 .............................. <newLoc.duplicate()>
+  [ 15] setprop 894 ............................. pOldLoc = newLoc.duplicate()
+  [ 18] pushzero ................................ <0>
+  [ 19] pushzero ................................ <0>
+  [ 20] pusharglist 2 ........................... <0, 0>
+  [ 22] extcall 215 ............................. <point(0, 0)>
+  [ 24] setprop 887 ............................. pVect = point(0, 0)
+  [ 27] ret
+end
+
+on moveLoc me, newLoc
+  [  0] getparam 1 .............................. <newLoc>
+  [  2] pusharglist 1 ........................... <newLoc>
+  [  4] objcall 48 .............................. <newLoc.duplicate()>
+  [  6] setprop 893 ............................. pLoc = newLoc.duplicate()
+  [  9] ret
+end
+
+on stallUpdate me, newLoc, currentLoc
+  [  0] getparam 1 .............................. <newLoc>
+  [  2] pusharglist 1 ........................... <newLoc>
+  [  4] extcall 906 ............................. <PointInteger(newLoc)>
+  [  7] setparam 1 .............................. newLoc = PointInteger(newLoc)
+  [  9] getparam 2 .............................. <currentLoc>
+  [ 11] pusharglist 1 ........................... <currentLoc>
+  [ 13] extcall 906 ............................. <PointInteger(currentLoc)>
+  [ 16] setparam 2 .............................. currentLoc = PointInteger(currentLoc)
+  [ 18] getparam 1 .............................. <newLoc>
+  [ 20] getparam 2 .............................. <currentLoc>
+  [ 22] eq ...................................... <newLoc = currentLoc>
+  [ 23] jmpifz [ 39] ............................ if newLoc = currentLoc then / else
+  [ 26] getprop 888 ............................. <pStallCount>
+  [ 29] pusharglist 1 ........................... <pStallCount>
+  [ 31] extcall 132 ............................. <counter(pStallCount)>
+  [ 33] setprop 888 ............................. pStallCount = counter(pStallCount)
+  [ 36] jmp [ 53]
+  [ 39] getprop 888 ............................. <pStallCount>
+  [ 42] pusharglist 1 ........................... <pStallCount>
+  [ 44] extcall 133 ............................. <CounterReset(pStallCount)>
+  [ 46] setprop 888 ............................. pStallCount = CounterReset(pStallCount)
+  [ 49] pushzero ................................ <0>
+  [ 50] setprop 443 ............................. pFin = 0
+  [ 53] ret
+end
+
+on vectAdd me, newVect
+  [  0] getprop 887 ............................. <pVect>
+  [  3] getparam 1 .............................. <newVect>
+  [  5] add ..................................... <pVect + newVect>
+  [  6] setprop 887 ............................. pVect = pVect + newVect
+  [  9] pushzero ................................ <0>
+  [ 10] setprop 443 ............................. pFin = 0
+  [ 13] ret
+end
+
+on setFriction me, newFriction
+  [  0] getparam 1 .............................. <newFriction>
+  [  2] setprop 883 ............................. pFriction = newFriction
+  [  5] ret
+end
+
+on setKeepVect me, newKeepVect
+  [  0] getparam 1 .............................. <newKeepVect>
+  [  2] setprop 884 ............................. pKeepVect = newKeepVect
+  [  5] ret
+end
+
+on setVect me, newVect
+  [  0] getparam 1 .............................. <newVect>
+  [  2] pusharglist 1 ........................... <newVect>
+  [  4] objcall 48 .............................. <newVect.duplicate()>
+  [  6] setprop 887 ............................. pVect = newVect.duplicate()
+  [  9] pushzero ................................ <0>
+  [ 10] setprop 443 ............................. pFin = 0
+  [ 13] getparam 0 .............................. <me>
+  [ 15] pusharglistnoret 1 ...................... <me>
+  [ 17] objcall 432 ............................. me.calcFin()
+  [ 20] getparam 0 .............................. <me>
+  [ 22] pusharglistnoret 1 ...................... <me>
+  [ 24] objcall 433 ............................. me.calcStart()
+  [ 27] ret
+end
+
+on setVectY me, newVectY
+  [  0] getprop 887 ............................. <pVect>
+  [  3] pushint8 2 .............................. <2>
+  [  5] getparam 1 .............................. <newVectY>
+  [  7] pusharglistnoret 3 ...................... <pVect, 2, newVectY>
+  [  9] objcall 37 .............................. pVect[2] = newVectY
+  [ 11] pushzero ................................ <0>
+  [ 12] setprop 443 ............................. pFin = 0
+  [ 15] getparam 0 .............................. <me>
+  [ 17] pusharglistnoret 1 ...................... <me>
+  [ 19] objcall 432 ............................. me.calcFin()
+  [ 22] getparam 0 .............................. <me>
+  [ 24] pusharglistnoret 1 ...................... <me>
+  [ 26] objcall 433 ............................. me.calcStart()
+  [ 29] ret
+end
+
+on setWeight me, newWeight
+  [  0] getparam 1 .............................. <newWeight>
+  [  2] setprop 886 ............................. pWeight = newWeight
+  [  5] ret
+end

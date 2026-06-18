@@ -1,0 +1,69 @@
+property ancestor, pDefinition
+
+on new me
+  [  0] pushcons 0 .............................. <"objMenu">
+  [  2] pusharglist 1 ........................... <"objMenu">
+  [  4] extcall 34 .............................. <script("objMenu")>
+  [  6] pusharglist 1 ........................... <script("objMenu")>
+  [  8] extcall 0 ............................... <new(script("objMenu"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objMenu"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 3293 ........................... <#definition>
+  [ 27] pushsymb 49 ............................. <#none>
+  [ 29] pusharglistnoret 3 ...................... <i, #definition, #none>
+  [ 31] objcall 48 .............................. i[#definition] = #none
+  [ 33] getparam 0 .............................. <me>
+  [ 35] pusharglistnoret 1 ...................... <me>
+  [ 37] extcall 35 .............................. return me
+  [ 39] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 3293 ......................... <params.definition>
+  [ 13] setprop 3029 ............................ pDefinition = params.definition
+  [ 16] ret
+end
+
+on calcMenuHeight me
+  [  0] getprop 3029 ............................ <pDefinition>
+  [  3] getobjprop 423 .......................... <pDefinition.height>
+  [  6] pusharglistnoret 1 ...................... <pDefinition.height>
+  [  8] extcall 35 .............................. return pDefinition.height
+  [ 10] ret
+end
+
+on calcMenuWidth me
+  [  0] getprop 3029 ............................ <pDefinition>
+  [  3] getobjprop 424 .......................... <pDefinition.width>
+  [  6] pusharglistnoret 1 ...................... <pDefinition.width>
+  [  8] extcall 35 .............................. return pDefinition.width
+  [ 10] ret
+end
+
+on display me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 3176 ............................ me.initTileMap()
+  [  7] getparam 0 .............................. <me>
+  [  9] pusharglistnoret 1 ...................... <me>
+  [ 11] objcall 3183 ............................ me.plotTileMapOutline()
+  [ 14] getparam 0 .............................. <me>
+  [ 16] pusharglist 1 ........................... <me>
+  [ 18] objcall 85 .............................. <me.getImage()>
+  [ 20] setlocal 0 .............................. myImage = me.getImage()
+  [ 22] getparam 0 .............................. <me>
+  [ 24] getlocal 0 .............................. <myImage>
+  [ 26] pusharglistnoret 2 ...................... <me, myImage>
+  [ 28] objcall 3172 ............................ me.displayInSprite(myImage)
+  [ 31] ret
+end

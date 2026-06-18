@@ -1,0 +1,154 @@
+property ancestor, pCurr, pTarget, pCallingPrg, pFin, pInitialValue, pPingPong, pSpeed
+global gGameSpeed
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushcons 0 .............................. <"objAutoUpdate">
+  [  4] pusharglist 1 ........................... <"objAutoUpdate">
+  [  6] extcall 27 .............................. <script("objAutoUpdate")>
+  [  8] pusharglist 1 ........................... <script("objAutoUpdate")>
+  [ 10] extcall 0 ............................... <new(script("objAutoUpdate"))>
+  [ 12] setobjprop 77 ........................... me.ancestor = new(script("objAutoUpdate"))
+  [ 14] getparam 0 .............................. <me>
+  [ 16] pushsymb 1 .............................. <#init>
+  [ 18] pusharglist 2 ........................... <me, #init>
+  [ 20] objcall 221 ............................. <me.modifyParams(#init)>
+  [ 22] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 24] getlocal 0 .............................. <i>
+  [ 26] pushsymb 292 ............................ <#callingPrg>
+  [ 29] pushsymb 22 ............................. <#none>
+  [ 31] pusharglistnoret 3 ...................... <i, #callingPrg, #none>
+  [ 33] objcall 37 .............................. i[#callingPrg] = #none
+  [ 35] getlocal 0 .............................. <i>
+  [ 37] pushsymb 911 ............................ <#initialValue>
+  [ 40] pushsymb 22 ............................. <#none>
+  [ 42] pusharglistnoret 3 ...................... <i, #initialValue, #none>
+  [ 44] objcall 37 .............................. i[#initialValue] = #none
+  [ 46] getlocal 0 .............................. <i>
+  [ 48] pushsymb 740 ............................ <#pingpong>
+  [ 51] pushzero ................................ <0>
+  [ 52] pusharglistnoret 3 ...................... <i, #pingpong, 0>
+  [ 54] objcall 37 .............................. i[#pingpong] = 0
+  [ 56] getlocal 0 .............................. <i>
+  [ 58] pushsymb 742 ............................ <#speed>
+  [ 61] pushint8 10 ............................. <10>
+  [ 63] getglobal 121 ........................... <gGameSpeed>
+  [ 65] mul ..................................... <10 * gGameSpeed>
+  [ 66] pusharglistnoret 3 ...................... <i, #speed, 10 * gGameSpeed>
+  [ 68] objcall 37 .............................. i[#speed] = 10 * gGameSpeed
+  [ 70] getlocal 0 .............................. <i>
+  [ 72] pushsymb 912 ............................ <#targetValue>
+  [ 75] pushsymb 22 ............................. <#none>
+  [ 77] pusharglistnoret 3 ...................... <i, #targetValue, #none>
+  [ 79] objcall 37 .............................. i[#targetValue] = #none
+  [ 81] getparam 0 .............................. <me>
+  [ 83] pusharglistnoret 1 ...................... <me>
+  [ 85] extcall 17 .............................. return me
+  [ 87] ret
+end
+
+on init me, params
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 77 ....................... <me.ancestor>
+  [  4] getparam 1 .............................. <params>
+  [  6] pusharglistnoret 2 ...................... <me.ancestor, params>
+  [  8] objcall 1 ............................... me.ancestor.init(params)
+  [ 10] getparam 1 .............................. <params>
+  [ 12] getobjprop 911 .......................... <params.initialValue>
+  [ 15] setprop 913 ............................. pCurr = params.initialValue
+  [ 18] getparam 1 .............................. <params>
+  [ 20] getobjprop 911 .......................... <params.initialValue>
+  [ 23] setprop 914 ............................. pInitialValue = params.initialValue
+  [ 26] getparam 1 .............................. <params>
+  [ 28] getobjprop 912 .......................... <params.targetValue>
+  [ 31] setprop 836 ............................. pTarget = params.targetValue
+  [ 34] getparam 1 .............................. <params>
+  [ 36] getobjprop 292 .......................... <params.callingPrg>
+  [ 39] setprop 744 ............................. pCallingPrg = params.callingPrg
+  [ 42] pushzero ................................ <0>
+  [ 43] setprop 443 ............................. pFin = 0
+  [ 46] getparam 1 .............................. <params>
+  [ 48] getobjprop 740 .......................... <params.pingpong>
+  [ 51] setprop 915 ............................. pPingPong = params.pingpong
+  [ 54] getparam 1 .............................. <params>
+  [ 56] getobjprop 742 .......................... <params.speed>
+  [ 59] setprop 916 ............................. pSpeed = params.speed
+  [ 62] ret
+end
+
+on finishConditionMet me
+  [  0] getprop 915 ............................. <pPingPong>
+  [  3] jmpifz [ 31] ............................ if pPingPong then / else
+  [  6] getprop 913 ............................. <pCurr>
+  [  9] getprop 836 ............................. <pTarget>
+  [ 12] eq ...................................... <pCurr = pTarget>
+  [ 13] jmpifz [ 28] ............................ if pCurr = pTarget then
+  [ 16] getprop 914 ............................. <pInitialValue>
+  [ 19] setprop 836 ............................. pTarget = pInitialValue
+  [ 22] getprop 913 ............................. <pCurr>
+  [ 25] setprop 914 ............................. pInitialValue = pCurr
+  [ 28] jmp [ 42]
+  [ 31] getprop 913 ............................. <pCurr>
+  [ 34] getprop 836 ............................. <pTarget>
+  [ 37] eq ...................................... <pCurr = pTarget>
+  [ 38] pusharglistnoret 1 ...................... <pCurr = pTarget>
+  [ 40] extcall 17 .............................. return pCurr = pTarget
+  [ 42] ret
+end
+
+on informCallingPrg me
+  [  0] getprop 744 ............................. <pCallingPrg>
+  [  3] pusharglistnoret 1 ...................... <pCallingPrg>
+  [  5] objcall 227 ............................. pCallingPrg.transformFin()
+  [  7] ret
+end
+
+on setCurrent me, curr
+  [  0] getparam 1 .............................. <curr>
+  [  2] setprop 913 ............................. pCurr = curr
+  [  5] getparam 0 .............................. <me>
+  [  7] pusharglistnoret 1 ...................... <me>
+  [  9] objcall 432 ............................. me.calcFin()
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] objcall 433 ............................. me.calcStart()
+  [ 19] ret
+end
+
+on setTarget me, targ
+  [  0] getparam 1 .............................. <targ>
+  [  2] setprop 836 ............................. pTarget = targ
+  [  5] getparam 0 .............................. <me>
+  [  7] pusharglistnoret 1 ...................... <me>
+  [  9] objcall 432 ............................. me.calcFin()
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] objcall 433 ............................. me.calcStart()
+  [ 19] ret
+end
+
+on setSpeed me, speed
+  [  0] getparam 1 .............................. <speed>
+  [  2] getglobal 121 ........................... <gGameSpeed>
+  [  4] mul ..................................... <speed * gGameSpeed>
+  [  5] setprop 916 ............................. pSpeed = speed * gGameSpeed
+  [  8] ret
+end
+
+on update me
+  [  0] getprop 913 ............................. <pCurr>
+  [  3] getprop 836 ............................. <pTarget>
+  [  6] getprop 916 ............................. <pSpeed>
+  [  9] pusharglist 3 ........................... <pCurr, pTarget, pSpeed>
+  [ 11] extcall 919 ............................. <VarToward(pCurr, pTarget, pSpeed)>
+  [ 14] setprop 913 ............................. pCurr = VarToward(pCurr, pTarget, pSpeed)
+  [ 17] getparam 0 .............................. <me>
+  [ 19] getchainedprop 67 ....................... <me.id>
+  [ 21] getchainedprop 66 ....................... <me.id.bigMe>
+  [ 23] pusharglistnoret 1 ...................... <me.id.bigMe>
+  [ 25] objcall 920 ............................. me.id.bigMe.updateAttribute()
+  [ 28] getparam 0 .............................. <me>
+  [ 30] pusharglistnoret 1 ...................... <me>
+  [ 32] objcall 432 ............................. me.calcFin()
+  [ 35] ret
+end

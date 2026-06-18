@@ -1,0 +1,149 @@
+property ancestor, pSpr, pstartcolor, pTargetColor, pTransformTarget
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushcons 0 .............................. <"objTransformer">
+  [  4] pusharglist 1 ........................... <"objTransformer">
+  [  6] extcall 27 .............................. <script("objTransformer")>
+  [  8] pusharglist 1 ........................... <script("objTransformer")>
+  [ 10] extcall 0 ............................... <new(script("objTransformer"))>
+  [ 12] setobjprop 77 ........................... me.ancestor = new(script("objTransformer"))
+  [ 14] getparam 0 .............................. <me>
+  [ 16] pushsymb 1 .............................. <#init>
+  [ 18] pusharglist 2 ........................... <me, #init>
+  [ 20] objcall 221 ............................. <me.modifyParams(#init)>
+  [ 22] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 24] getlocal 0 .............................. <i>
+  [ 26] pushsymb 81 ............................. <#spr>
+  [ 28] pushsymb 22 ............................. <#none>
+  [ 30] pusharglistnoret 3 ...................... <i, #spr, #none>
+  [ 32] objcall 37 .............................. i[#spr] = #none
+  [ 34] getlocal 0 .............................. <i>
+  [ 36] pushsymb 739 ............................ <#transformTarget>
+  [ 39] pushsymb 219 ............................ <#text>
+  [ 41] pusharglistnoret 3 ...................... <i, #transformTarget, #text>
+  [ 43] objcall 37 .............................. i[#transformTarget] = #text
+  [ 45] getlocal 0 .............................. <i>
+  [ 47] pushsymb 741 ............................ <#targetColor>
+  [ 50] pushint16 255 ........................... <255>
+  [ 53] pushint16 255 ........................... <255>
+  [ 56] pushzero ................................ <0>
+  [ 57] pusharglist 3 ........................... <255, 255, 0>
+  [ 59] extcall 146 ............................. <rgb(255, 255, 0)>
+  [ 61] pusharglistnoret 3 ...................... <i, #targetColor, rgb(255, 255, 0)>
+  [ 63] objcall 37 .............................. i[#targetColor] = rgb(255, 255, 0)
+  [ 65] getlocal 0 .............................. <i>
+  [ 67] pushsymb 801 ............................ <#startColor>
+  [ 70] pushsymb 1325 ........................... <#current>
+  [ 73] pusharglistnoret 3 ...................... <i, #startColor, #current>
+  [ 75] objcall 37 .............................. i[#startColor] = #current
+  [ 77] getlocal 0 .............................. <i>
+  [ 79] pushsymb 742 ............................ <#speed>
+  [ 82] pushint8 10 ............................. <10>
+  [ 84] pusharglistnoret 3 ...................... <i, #speed, 10>
+  [ 86] objcall 37 .............................. i[#speed] = 10
+  [ 88] getparam 0 .............................. <me>
+  [ 90] pusharglistnoret 1 ...................... <me>
+  [ 92] extcall 17 .............................. return me
+  [ 94] ret
+end
+
+on init me, params
+  [  0] getparam 1 .............................. <params>
+  [  2] pushzero ................................ <0>
+  [  3] setobjprop 911 .......................... params.initialValue = 0
+  [  6] getparam 0 .............................. <me>
+  [  8] getchainedprop 77 ....................... <me.ancestor>
+  [ 10] getparam 1 .............................. <params>
+  [ 12] pusharglistnoret 2 ...................... <me.ancestor, params>
+  [ 14] objcall 1 ............................... me.ancestor.init(params)
+  [ 16] getparam 0 .............................. <me>
+  [ 18] pushint8 100 ............................ <100>
+  [ 20] pusharglistnoret 2 ...................... <me, 100>
+  [ 22] objcall 295 ............................. me.setTarget(100)
+  [ 25] getparam 1 .............................. <params>
+  [ 27] getchainedprop 741 ...................... <params.targetColor>
+  [ 30] pusharglist 1 ........................... <params.targetColor>
+  [ 32] objcall 48 .............................. <params.targetColor.duplicate()>
+  [ 34] setprop 1326 ............................ pTargetColor = params.targetColor.duplicate()
+  [ 37] getparam 1 .............................. <params>
+  [ 39] getobjprop 739 .......................... <params.transformTarget>
+  [ 42] setprop 1327 ............................ pTransformTarget = params.transformTarget
+  [ 45] getparam 1 .............................. <params>
+  [ 47] getobjprop 81 ........................... <params.spr>
+  [ 49] setprop 79 .............................. pSpr = params.spr
+  [ 51] getparam 1 .............................. <params>
+  [ 53] getobjprop 801 .......................... <params.startColor>
+  [ 56] pushsymb 1325 ........................... <#current>
+  [ 59] eq ...................................... <params.startColor = #current>
+  [ 60] jmpifz [ 75] ............................ if params.startColor = #current then / else
+  [ 63] getparam 0 .............................. <me>
+  [ 65] getparam 1 .............................. <params>
+  [ 67] pusharglistnoret 2 ...................... <me, params>
+  [ 69] objcall 1324 ............................ me.initCurrentColor(params)
+  [ 72] jmp [ 87]
+  [ 75] getparam 1 .............................. <params>
+  [ 77] getchainedprop 801 ...................... <params.startColor>
+  [ 80] pusharglist 1 ........................... <params.startColor>
+  [ 82] objcall 48 .............................. <params.startColor.duplicate()>
+  [ 84] setprop 1328 ............................ pstartcolor = params.startColor.duplicate()
+  [ 87] getparam 0 .............................. <me>
+  [ 89] getparam 1 .............................. <params>
+  [ 91] getobjprop 742 .......................... <params.speed>
+  [ 94] pusharglistnoret 2 ...................... <me, params.speed>
+  [ 96] objcall 297 ............................. me.setSpeed(params.speed)
+  [ 99] ret
+end
+
+on initCurrentColor me
+  [  0] getprop 1327 ............................ <pTransformTarget>
+  [  3] peek 0 .................................. case pTransformTarget of
+  [  5] pushsymb 219 ............................ <#text>
+  [  7] eq
+  [  8] jmpifz [ 27] ............................ (case) #text:
+  [ 11] getprop 79 .............................. <pSpr>
+  [ 13] getchainedprop 158 ...................... <pSpr.member>
+  [ 15] getchainedprop 167 ...................... <pSpr.member.color>
+  [ 17] pusharglist 1 ........................... <pSpr.member.color>
+  [ 19] objcall 48 .............................. <pSpr.member.color.duplicate()>
+  [ 21] setprop 1328 ............................ pstartcolor = pSpr.member.color.duplicate()
+  [ 24] jmp [ 43]
+  [ 27] peek 0
+  [ 29] pushsymb 592 ............................ <#bitmap>
+  [ 32] eq
+  [ 33] jmpifz [ 43] ............................ (case) #bitmap:
+  [ 36] getprop 79 .............................. <pSpr>
+  [ 38] getobjprop 167 .......................... <pSpr.color>
+  [ 40] setprop 1328 ............................ pstartcolor = pSpr.color
+  [ 43] pop 1 ................................... end case
+  [ 45] ret
+end
+
+on updateAttribute me
+  [  0] getparam 0 .............................. <me>
+  [  2] getobjprop 913 .......................... <me.pCurr>
+  [  5] getprop 1328 ............................ <pstartcolor>
+  [  8] getprop 1326 ............................ <pTargetColor>
+  [ 11] pusharglist 3 ........................... <me.pCurr, pstartcolor, pTargetColor>
+  [ 13] extcall 1329 ............................ <varColRange(me.pCurr, pstartcolor, pTargetColor)>
+  [ 16] setlocal 0 .............................. newColor = varColRange(me.pCurr, pstartcolor, pTargetColor)
+  [ 18] getprop 1327 ............................ <pTransformTarget>
+  [ 21] peek 0 .................................. case pTransformTarget of
+  [ 23] pushsymb 219 ............................ <#text>
+  [ 25] eq
+  [ 26] jmpifz [ 40] ............................ (case) #text:
+  [ 29] getprop 79 .............................. <pSpr>
+  [ 31] getchainedprop 158 ...................... <pSpr.member>
+  [ 33] getlocal 0 .............................. <newColor>
+  [ 35] setobjprop 167 .......................... pSpr.member.color = newColor
+  [ 37] jmp [ 55]
+  [ 40] peek 0
+  [ 42] pushsymb 592 ............................ <#bitmap>
+  [ 45] eq
+  [ 46] jmpifz [ 55] ............................ (case) #bitmap:
+  [ 49] getprop 79 .............................. <pSpr>
+  [ 51] getlocal 0 .............................. <newColor>
+  [ 53] setobjprop 167 .......................... pSpr.color = newColor
+  [ 55] pop 1 ................................... end case
+  [ 57] ret
+end

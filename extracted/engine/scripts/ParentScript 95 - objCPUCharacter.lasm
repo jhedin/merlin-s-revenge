@@ -1,0 +1,588 @@
+property ancestor, pEnergyBar, pEnergyBarColour, pHitByHairSound, pLookCounter, pLookDelayCounter, pPathfinding, pRunReload, pTakeHitSound, pTakenHit
+global g, gGameSpeed, gFrameNum, gPlayerHair
+
+on new me
+  [  0] pushcons 0 .............................. <"objCharacter">
+  [  2] pusharglist 1 ........................... <"objCharacter">
+  [  4] extcall 34 .............................. <script("objCharacter")>
+  [  6] pusharglist 1 ........................... <script("objCharacter")>
+  [  8] extcall 0 ............................... <new(script("objCharacter"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objCharacter"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 2396 ........................... <#enemyCharacter>
+  [ 27] setobjprop 45 ........................... i.character = #enemyCharacter
+  [ 29] getlocal 0 .............................. <i>
+  [ 31] pushint16 300 ........................... <300>
+  [ 34] setobjprop 520 .......................... i.energyRecoverDelay = 300
+  [ 37] getlocal 0 .............................. <i>
+  [ 39] getchainedprop 1477 ..................... <i.flags>
+  [ 42] pushsymb 2397 ........................... <#objEnemyCharacter>
+  [ 45] pusharglistnoret 2 ...................... <i.flags, #objEnemyCharacter>
+  [ 47] objcall 256 ............................. i.flags.append(#objEnemyCharacter)
+  [ 50] getlocal 0 .............................. <i>
+  [ 52] pushsymb 2398 ........................... <#energyBarColour>
+  [ 55] pushzero ................................ <0>
+  [ 56] pushint16 255 ........................... <255>
+  [ 59] pushzero ................................ <0>
+  [ 60] pusharglist 3 ........................... <0, 255, 0>
+  [ 62] extcall 436 ............................. <rgb(0, 255, 0)>
+  [ 65] pusharglistnoret 3 ...................... <i, #energyBarColour, rgb(0, 255, 0)>
+  [ 67] objcall 48 .............................. i[#energyBarColour] = rgb(0, 255, 0)
+  [ 69] getlocal 0 .............................. <i>
+  [ 71] pushsymb 2399 ........................... <#hitByHairSound>
+  [ 74] pushsymb 49 ............................. <#none>
+  [ 76] pusharglistnoret 3 ...................... <i, #hitByHairSound, #none>
+  [ 78] objcall 48 .............................. i[#hitByHairSound] = #none
+  [ 80] getlocal 0 .............................. <i>
+  [ 82] pushsymb 2400 ........................... <#lookTimes>
+  [ 85] pushint8 4 .............................. <4>
+  [ 87] pusharglistnoret 3 ...................... <i, #lookTimes, 4>
+  [ 89] objcall 48 .............................. i[#lookTimes] = 4
+  [ 91] getlocal 0 .............................. <i>
+  [ 93] pushsymb 2401 ........................... <#lookDelay>
+  [ 96] pushint8 10 ............................. <10>
+  [ 98] pusharglistnoret 3 ...................... <i, #lookDelay, 10>
+  [100] objcall 48 .............................. i[#lookDelay] = 10
+  [102] getlocal 0 .............................. <i>
+  [104] pushsymb 2402 ........................... <#pathfinding>
+  [107] pushzero ................................ <0>
+  [108] pusharglistnoret 3 ...................... <i, #pathfinding, 0>
+  [110] objcall 48 .............................. i[#pathfinding] = 0
+  [112] getlocal 0 .............................. <i>
+  [114] pushsymb 1814 ........................... <#runReload>
+  [117] pushzero ................................ <0>
+  [118] pusharglistnoret 3 ...................... <i, #runReload, 0>
+  [120] objcall 48 .............................. i[#runReload] = 0
+  [122] getlocal 0 .............................. <i>
+  [124] pushsymb 524 ............................ <#takeHitSound>
+  [127] pushsymb 49 ............................. <#none>
+  [129] pusharglistnoret 3 ...................... <i, #takeHitSound, #none>
+  [131] objcall 48 .............................. i[#takeHitSound] = #none
+  [133] getparam 0 .............................. <me>
+  [135] pushcons 1 .............................. <"modFlasher">
+  [137] pusharglistnoret 2 ...................... <me, "modFlasher">
+  [139] objcall 1717 ............................ me.addModule("modFlasher")
+  [142] getparam 0 .............................. <me>
+  [144] pushcons 2 .............................. <"modGrave">
+  [146] pusharglistnoret 2 ...................... <me, "modGrave">
+  [148] objcall 1717 ............................ me.addModule("modGrave")
+  [151] getparam 0 .............................. <me>
+  [153] pusharglistnoret 1 ...................... <me>
+  [155] extcall 35 .............................. return me
+  [157] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pushsymb 49 ............................. <#none>
+  [ 10] setprop 2403 ............................ pEnergyBar = #none
+  [ 13] getparam 1 .............................. <params>
+  [ 15] getobjprop 2398 ......................... <params.energyBarColour>
+  [ 18] setprop 2404 ............................ pEnergyBarColour = params.energyBarColour
+  [ 21] pusharglist 0 ........................... <>
+  [ 23] extcall 529 ............................. <CounterNew()>
+  [ 26] setprop 2405 ............................ pLookCounter = CounterNew()
+  [ 29] getprop 2405 ............................ <pLookCounter>
+  [ 32] pushsymb 530 ............................ <#tim>
+  [ 35] pushint8 2 .............................. <2>
+  [ 37] getparam 1 .............................. <params>
+  [ 39] getobjprop 2400 ......................... <params.lookTimes>
+  [ 42] pusharglistnoret 4 ...................... <pLookCounter, #tim, 2, params.lookTimes>
+  [ 44] objcall 531 ............................. pLookCounter.tim[2] = params.lookTimes
+  [ 47] pusharglist 0 ........................... <>
+  [ 49] extcall 529 ............................. <CounterNew()>
+  [ 52] setprop 2406 ............................ pLookDelayCounter = CounterNew()
+  [ 55] getprop 2406 ............................ <pLookDelayCounter>
+  [ 58] pushsymb 530 ............................ <#tim>
+  [ 61] pushint8 2 .............................. <2>
+  [ 63] getparam 1 .............................. <params>
+  [ 65] getobjprop 2401 ......................... <params.lookDelay>
+  [ 68] pusharglistnoret 4 ...................... <pLookDelayCounter, #tim, 2, params.lookDelay>
+  [ 70] objcall 531 ............................. pLookDelayCounter.tim[2] = params.lookDelay
+  [ 73] getprop 2406 ............................ <pLookDelayCounter>
+  [ 76] getglobal 1854 .......................... <gGameSpeed>
+  [ 79] setobjprop 723 .......................... pLookDelayCounter.inc = gGameSpeed
+  [ 82] getparam 1 .............................. <params>
+  [ 84] getobjprop 2399 ......................... <params.hitByHairSound>
+  [ 87] setprop 2407 ............................ pHitByHairSound = params.hitByHairSound
+  [ 90] getparam 1 .............................. <params>
+  [ 92] getobjprop 2402 ......................... <params.pathfinding>
+  [ 95] setprop 2408 ............................ pPathfinding = params.pathfinding
+  [ 98] getparam 1 .............................. <params>
+  [100] getobjprop 1052 ......................... <params.reelFinishSpeed>
+  [103] setlocal 0 .............................. pReelFinishSpeed = params.reelFinishSpeed
+  [105] getparam 1 .............................. <params>
+  [107] getobjprop 559 .......................... <params.recoil>
+  [110] setlocal 1 .............................. pRecoil = params.recoil
+  [112] pusharglist 0 ........................... <>
+  [114] extcall 529 ............................. <CounterNew()>
+  [117] setlocal 2 .............................. pRecoilCounter = CounterNew()
+  [119] getlocal 2 .............................. <pRecoilCounter>
+  [121] pushzero ................................ <0>
+  [122] getparam 1 .............................. <params>
+  [124] getobjprop 1049 ......................... <params.recoilDuration>
+  [127] pusharglist 2 ........................... <[0, params.recoilDuration]>
+  [129] pushlist ................................ <[0, params.recoilDuration]>
+  [130] setobjprop 530 .......................... pRecoilCounter.tim = [0, params.recoilDuration]
+  [133] getparam 1 .............................. <params>
+  [135] getobjprop 1814 ......................... <params.runReload>
+  [138] setprop 2409 ............................ pRunReload = params.runReload
+  [141] pusharglist 0 ........................... <>
+  [143] extcall 529 ............................. <CounterNew()>
+  [146] setlocal 3 .............................. pRotationCounter = CounterNew()
+  [148] getlocal 3 .............................. <pRotationCounter>
+  [150] pushsymb 530 ............................ <#tim>
+  [153] pushint8 2 .............................. <2>
+  [155] pushint16 360 ........................... <360>
+  [158] pusharglistnoret 4 ...................... <pRotationCounter, #tim, 2, 360>
+  [160] objcall 531 ............................. pRotationCounter.tim[2] = 360
+  [163] getlocal 3 .............................. <pRotationCounter>
+  [165] getparam 1 .............................. <params>
+  [167] getobjprop 1053 ......................... <params.rotationSpeed>
+  [170] setobjprop 723 .......................... pRotationCounter.inc = params.rotationSpeed
+  [173] pusharglist 0 ........................... <>
+  [175] extcall 529 ............................. <CounterNew()>
+  [178] setlocal 4 .............................. pSitCounter = CounterNew()
+  [180] getlocal 4 .............................. <pSitCounter>
+  [182] pushsymb 530 ............................ <#tim>
+  [185] pushint8 2 .............................. <2>
+  [187] getparam 1 .............................. <params>
+  [189] getobjprop 1054 ......................... <params.sitTime>
+  [192] pusharglistnoret 4 ...................... <pSitCounter, #tim, 2, params.sitTime>
+  [194] objcall 531 ............................. pSitCounter.tim[2] = params.sitTime
+  [197] getlocal 4 .............................. <pSitCounter>
+  [199] getglobal 1854 .......................... <gGameSpeed>
+  [202] setobjprop 723 .......................... pSitCounter.inc = gGameSpeed
+  [205] getparam 1 .............................. <params>
+  [207] getobjprop 524 .......................... <params.takeHitSound>
+  [210] setprop 536 ............................. pTakeHitSound = params.takeHitSound
+  [213] pushzero ................................ <0>
+  [214] setprop 2410 ............................ pTakenHit = 0
+  [217] getparam 0 .............................. <me>
+  [219] pusharglistnoret 1 ...................... <me>
+  [221] objcall 2389 ............................ me.initEnergyBar()
+  [224] ret
+end
+
+on initEnergyBar me
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 2412 ..................... <g.EnemyEnergyMaster>
+  [  5] getparam 0 .............................. <me>
+  [  7] getchainedprop 57 ....................... <me.id>
+  [  9] getobjprop 58 ........................... <me.id.bigMe>
+  [ 11] pusharglist 2 ........................... <g.EnemyEnergyMaster, me.id.bigMe>
+  [ 13] objcall 2413 ............................ <g.EnemyEnergyMaster.requestEnergyBar(me.id.bigMe)>
+  [ 16] setprop 2403 ............................ pEnergyBar = g.EnemyEnergyMaster.requestEnergyBar(me.id.bigMe)
+  [ 19] getprop 2403 ............................ <pEnergyBar>
+  [ 22] pushsymb 49 ............................. <#none>
+  [ 24] nteq .................................... <pEnergyBar <> #none>
+  [ 25] jmpifz [ 49] ............................ if pEnergyBar <> #none then
+  [ 28] getprop 2403 ............................ <pEnergyBar>
+  [ 31] getparam 0 .............................. <me>
+  [ 33] getobjprop 527 .......................... <me.pEnergy>
+  [ 36] getparam 0 .............................. <me>
+  [ 38] getobjprop 534 .......................... <me.pMaxEnergy>
+  [ 41] getprop 2404 ............................ <pEnergyBarColour>
+  [ 44] pusharglistnoret 4 ...................... <pEnergyBar, me.pEnergy, me.pMaxEnergy, pEnergyBarColour>
+  [ 46] objcall 2029 ............................ pEnergyBar.reset(me.pEnergy, me.pMaxEnergy, pEnergyBarColour)
+  [ 49] ret
+end
+
+on finish me
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 2412 ..................... <g.EnemyEnergyMaster>
+  [  5] getprop 2403 ............................ <pEnergyBar>
+  [  8] getparam 0 .............................. <me>
+  [ 10] getchainedprop 57 ....................... <me.id>
+  [ 12] getobjprop 58 ........................... <me.id.bigMe>
+  [ 14] pusharglistnoret 3 ...................... <g.EnemyEnergyMaster, pEnergyBar, me.id.bigMe>
+  [ 16] objcall 2414 ............................ g.EnemyEnergyMaster.freeEnergyBar(pEnergyBar, me.id.bigMe)
+  [ 19] getprop 33 .............................. <ancestor>
+  [ 21] pusharglistnoret 1 ...................... <ancestor>
+  [ 23] objcall 3 ............................... ancestor.finish()
+  [ 25] ret
+end
+
+on collisionCeiling me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 2390 ............................ me.collisionVertical()
+  [  7] getprop 33 .............................. <ancestor>
+  [  9] pusharglistnoret 1 ...................... <ancestor>
+  [ 11] objcall 2135 ............................ ancestor.collisionCeiling()
+  [ 14] ret
+end
+
+on collisionPlatform me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 2390 ............................ me.collisionVertical()
+  [  7] getprop 33 .............................. <ancestor>
+  [  9] pusharglistnoret 1 ...................... <ancestor>
+  [ 11] objcall 2134 ............................ ancestor.collisionPlatform()
+  [ 14] ret
+end
+
+on collisionVertical me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 906 ...................... <me.pMoveXY>
+  [  5] pusharglist 1 ........................... <me.pMoveXY>
+  [  7] objcall 2222 ............................ <me.pMoveXY.getVectY()>
+  [ 10] setlocal 0 .............................. vectY = me.pMoveXY.getVectY()
+  [ 12] getlocal 0 .............................. <vectY>
+  [ 14] pusharglist 1 ........................... <vectY>
+  [ 16] extcall 554 ............................. <VarPositive(vectY)>
+  [ 19] setlocal 0 .............................. vectY = VarPositive(vectY)
+  [ 21] getparam 0 .............................. <me>
+  [ 23] getchainedprop 51 ....................... <me.big>
+  [ 25] pusharglist 1 ........................... <me.big>
+  [ 27] objcall 52 .............................. <me.big.getMode()>
+  [ 29] peek 0 .................................. case me.big.getMode() of
+  [ 31] pushsymb 1056 ........................... <#reel>
+  [ 34] nteq
+  [ 35] jmpifz [ 56] ............................ (case) #reel, ...
+  [ 38] peek 0
+  [ 40] pushsymb 2415 ........................... <#reel_fly>
+  [ 43] nteq
+  [ 44] jmpifz [ 56] ............................ (case) ..., #reel_fly, ...
+  [ 47] peek 0
+  [ 49] pushsymb 2416 ........................... <#reel_land>
+  [ 52] eq
+  [ 53] jmpifz [ 65] ............................ (case) ..., #reel_land:
+  [ 56] getparam 0 .............................. <me>
+  [ 58] getlocal 0 .............................. <vectY>
+  [ 60] pusharglistnoret 2 ...................... <me, vectY>
+  [ 62] objcall 514 ............................. me.takeDamage(vectY)
+  [ 65] pop 1
+  [ 67] ret
+end
+
+on collisionWall me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 906 ...................... <me.pMoveXY>
+  [  5] pusharglist 1 ........................... <me.pMoveXY>
+  [  7] objcall 1063 ............................ <me.pMoveXY.getVectX()>
+  [ 10] setlocal 0 .............................. vectX = me.pMoveXY.getVectX()
+  [ 12] getlocal 0 .............................. <vectX>
+  [ 14] pusharglist 1 ........................... <vectX>
+  [ 16] extcall 554 ............................. <VarPositive(vectX)>
+  [ 19] setlocal 1 .............................. speedX = VarPositive(vectX)
+  [ 21] getparam 0 .............................. <me>
+  [ 23] getchainedprop 51 ....................... <me.big>
+  [ 25] pusharglist 1 ........................... <me.big>
+  [ 27] objcall 52 .............................. <me.big.getMode()>
+  [ 29] peek 0 .................................. case me.big.getMode() of
+  [ 31] pushsymb 1056 ........................... <#reel>
+  [ 34] nteq
+  [ 35] jmpifz [ 56] ............................ (case) #reel, ...
+  [ 38] peek 0
+  [ 40] pushsymb 2415 ........................... <#reel_fly>
+  [ 43] nteq
+  [ 44] jmpifz [ 56] ............................ (case) ..., #reel_fly, ...
+  [ 47] peek 0
+  [ 49] pushsymb 2416 ........................... <#reel_land>
+  [ 52] eq
+  [ 53] jmpifz [ 65] ............................ (case) ..., #reel_land:
+  [ 56] getparam 0 .............................. <me>
+  [ 58] getlocal 1 .............................. <speedX>
+  [ 60] pusharglistnoret 2 ...................... <me, speedX>
+  [ 62] objcall 514 ............................. me.takeDamage(speedX)
+  [ 65] pop 1
+  [ 67] ret
+end
+
+on collisionWallLeft me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 2391 ............................ me.collisionWall()
+  [  7] getprop 33 .............................. <ancestor>
+  [  9] pusharglistnoret 1 ...................... <ancestor>
+  [ 11] objcall 2136 ............................ ancestor.collisionWallLeft()
+  [ 14] ret
+end
+
+on collisionWallRight me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 2391 ............................ me.collisionWall()
+  [  7] getprop 33 .............................. <ancestor>
+  [  9] pusharglistnoret 1 ...................... <ancestor>
+  [ 11] objcall 2137 ............................ ancestor.collisionWallRight()
+  [ 14] ret
+end
+
+on energyBarNowFree me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 2389 ............................ me.initEnergyBar()
+  [  7] ret
+end
+
+on energyChanged me
+  [  0] getprop 2403 ............................ <pEnergyBar>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] nteq .................................... <pEnergyBar <> #none>
+  [  6] jmpifz [ 22] ............................ if pEnergyBar <> #none then
+  [  9] getprop 2403 ............................ <pEnergyBar>
+  [ 12] getparam 0 .............................. <me>
+  [ 14] getobjprop 527 .......................... <me.pEnergy>
+  [ 17] pusharglistnoret 2 ...................... <pEnergyBar, me.pEnergy>
+  [ 19] objcall 2417 ............................ pEnergyBar.updateEnergy(me.pEnergy)
+  [ 22] ret
+end
+
+on flasherFinished me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushint8 1 .............................. <1>
+  [  4] setobjprop 2418 ......................... me.pDead = 1
+  [  7] getparam 0 .............................. <me>
+  [  9] pushsymb 3 .............................. <#finish>
+  [ 11] pusharglistnoret 2 ...................... <me, #finish>
+  [ 13] objcall 278 ............................. me.goMode(#finish)
+  [ 16] getparam 0 .............................. <me>
+  [ 18] pusharglistnoret 1 ...................... <me>
+  [ 20] objcall 748 ............................. me.drawGrave()
+  [ 23] getprop 33 .............................. <ancestor>
+  [ 25] pusharglistnoret 1 ...................... <ancestor>
+  [ 27] objcall 710 ............................. ancestor.flasherFinished()
+  [ 30] ret
+end
+
+on getPathFinding me
+  [  0] getprop 2408 ............................ <pPathfinding>
+  [  3] pusharglistnoret 1 ...................... <pPathfinding>
+  [  5] extcall 35 .............................. return pPathfinding
+  [  7] ret
+end
+
+on getRunReload me
+  [  0] getprop 2409 ............................ <pRunReload>
+  [  3] pusharglistnoret 1 ...................... <pRunReload>
+  [  5] extcall 35 .............................. return pRunReload
+  [  7] ret
+end
+
+on goMode me, newMode
+  [  0] getparam 0 .............................. <me>
+  [  2] getobjprop 312 .......................... <me.pmode>
+  [  5] peek 0 .................................. case me.pmode of
+  [  7] pushsymb 559 ............................ <#recoil>
+  [ 10] eq
+  [ 11] jmpifz [ 28] ............................ (case) #recoil:
+  [ 14] getparam 0 .............................. <me>
+  [ 16] pusharglistnoret 1 ...................... <me>
+  [ 18] objcall 2419 ............................ me.frictionXOn()
+  [ 21] getparam 0 .............................. <me>
+  [ 23] pusharglistnoret 1 ...................... <me>
+  [ 25] objcall 2420 ............................ me.frictionYOn()
+  [ 28] pop 1
+  [ 30] getparam 1 .............................. <newMode>
+  [ 32] peek 0 .................................. case newMode of
+  [ 34] pushsymb 3 .............................. <#finish>
+  [ 36] eq
+  [ 37] jmpifz [ 59] ............................ (case) #finish:
+  [ 40] getparam 0 .............................. <me>
+  [ 42] pusharglistnoret 1 ...................... <me>
+  [ 44] objcall 748 ............................. me.drawGrave()
+  [ 47] getparam 0 .............................. <me>
+  [ 49] pushint8 1 .............................. <1>
+  [ 51] pusharglistnoret 2 ...................... <me, 1>
+  [ 53] objcall 707 ............................. me.setDead(1)
+  [ 56] jmp [128]
+  [ 59] peek 0
+  [ 61] pushsymb 66 ............................. <#landed>
+  [ 63] nteq
+  [ 64] jmpifz [ 83] ............................ (case) #landed, ...
+  [ 67] peek 0
+  [ 69] pushsymb 74 ............................. <#reelLanded>
+  [ 71] nteq
+  [ 72] jmpifz [ 83] ............................ (case) ..., #reelLanded, ...
+  [ 75] peek 0
+  [ 77] pushsymb 63 ............................. <#walk>
+  [ 79] eq
+  [ 80] jmpifz [104] ............................ (case) ..., #walk:
+  [ 83] getparam 0 .............................. <me>
+  [ 85] getchainedprop 906 ...................... <me.pMoveXY>
+  [ 88] pushzero ................................ <0>
+  [ 89] pusharglistnoret 2 ...................... <me.pMoveXY, 0>
+  [ 91] objcall 2223 ............................ me.pMoveXY.setVectY(0)
+  [ 94] getparam 0 .............................. <me>
+  [ 96] pusharglistnoret 1 ...................... <me>
+  [ 98] objcall 1029 ............................ me.frictionNormal()
+  [101] jmp [128]
+  [104] peek 0
+  [106] pushsymb 68 ............................. <#look>
+  [108] eq
+  [109] jmpifz [128] ............................ (case) #look:
+  [112] getprop 2405 ............................ <pLookCounter>
+  [115] pusharglistnoret 1 ...................... <pLookCounter>
+  [117] extcall 706 ............................. CounterReset(pLookCounter)
+  [120] getprop 2406 ............................ <pLookDelayCounter>
+  [123] pusharglistnoret 1 ...................... <pLookDelayCounter>
+  [125] extcall 706 ............................. CounterReset(pLookDelayCounter)
+  [128] pop 1 ................................... end case
+  [130] getprop 33 .............................. <ancestor>
+  [132] getparam 1 .............................. <newMode>
+  [134] pusharglistnoret 2 ...................... <ancestor, newMode>
+  [136] objcall 278 ............................. ancestor.goMode(newMode)
+  [139] ret
+end
+
+on start me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 1590 ............................ ancestor.start()
+  [  7] ret
+end
+
+on takeHit me, collisionVect, attackingObj, owner
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 741 ............................. <me.amGhost()>
+  [  7] jmpifz [ 14] ............................ if me.amGhost() then
+  [ 10] pusharglistnoret 0 ...................... <>
+  [ 12] extcall 35 .............................. return 
+  [ 14] getparam 0 .............................. <me>
+  [ 16] getobjprop 312 .......................... <me.pmode>
+  [ 19] pushsymb 70 ............................. <#dead>
+  [ 21] nteq .................................... <me.pmode <> #dead>
+  [ 22] jmpifz [ 60] ............................ if me.pmode <> #dead then
+  [ 25] getparam 0 .............................. <me>
+  [ 27] pusharglist 1 ........................... <me>
+  [ 29] objcall 499 ............................. <me.checkDead()>
+  [ 32] pushzero ................................ <0>
+  [ 33] eq ...................................... <me.checkDead() = 0>
+  [ 34] jmpifz [ 60] ............................ if me.checkDead() = 0 then
+  [ 37] getparam 0 .............................. <me>
+  [ 39] getprop 2407 ............................ <pHitByHairSound>
+  [ 42] pusharglistnoret 2 ...................... <me, pHitByHairSound>
+  [ 44] objcall 551 ............................. me.PlaySound(pHitByHairSound)
+  [ 47] getprop 33 .............................. <ancestor>
+  [ 49] getparam 1 .............................. <collisionVect>
+  [ 51] getparam 2 .............................. <attackingObj>
+  [ 53] getparam 3 .............................. <owner>
+  [ 55] pusharglistnoret 4 ...................... <ancestor, collisionVect, attackingObj, owner>
+  [ 57] objcall 516 ............................. ancestor.takeHit(collisionVect, attackingObj, owner)
+  [ 60] pushint8 1 .............................. <1>
+  [ 62] setprop 2410 ............................ pTakenHit = 1
+  [ 65] ret
+end
+
+on update me
+  [  0] getparam 0 .............................. <me>
+  [  2] getobjprop 312 .......................... <me.pmode>
+  [  5] peek 0 .................................. case me.pmode of
+  [  7] pushsymb 70 ............................. <#dead>
+  [  9] eq
+  [ 10] jmpifz [ 39] ............................ (case) #dead:
+  [ 13] getparam 0 .............................. <me>
+  [ 15] pusharglist 1 ........................... <me>
+  [ 17] objcall 2394 ............................ <me.updateDead()>
+  [ 20] setlocal 0 .............................. fin = me.updateDead()
+  [ 22] getlocal 0 .............................. <fin>
+  [ 24] jmpifz [ 36] ............................ if fin then
+  [ 27] getparam 0 .............................. <me>
+  [ 29] pushsymb 3 .............................. <#finish>
+  [ 31] pusharglistnoret 2 ...................... <me, #finish>
+  [ 33] objcall 278 ............................. me.goMode(#finish)
+  [ 36] jmp [ 70]
+  [ 39] peek 0
+  [ 41] pushsymb 68 ............................. <#look>
+  [ 43] eq
+  [ 44] jmpifz [ 70] ............................ (case) #look:
+  [ 47] getparam 0 .............................. <me>
+  [ 49] pusharglist 1 ........................... <me>
+  [ 51] objcall 2395 ............................ <me.updateLook()>
+  [ 54] setlocal 0 .............................. fin = me.updateLook()
+  [ 56] getlocal 0 .............................. <fin>
+  [ 58] jmpifz [ 70] ............................ if fin then
+  [ 61] getparam 0 .............................. <me>
+  [ 63] pushsymb 63 ............................. <#walk>
+  [ 65] pusharglistnoret 2 ...................... <me, #walk>
+  [ 67] objcall 278 ............................. me.goMode(#walk)
+  [ 70] pop 1 ................................... end case
+  [ 72] getprop 33 .............................. <ancestor>
+  [ 74] pusharglistnoret 1 ...................... <ancestor>
+  [ 76] objcall 31 .............................. ancestor.update()
+  [ 78] ret
+end
+
+on updateAI me
+  [  0] getglobal 2421 .......................... <gPlayerHair>
+  [  3] jmpifz [ 13] ............................ if gPlayerHair then
+  [  6] getparam 0 .............................. <me>
+  [  8] pusharglistnoret 1 ...................... <me>
+  [ 10] objcall 2056 ............................ me.checkCollisionsWithHair()
+  [ 13] getprop 33 .............................. <ancestor>
+  [ 15] pusharglistnoret 1 ...................... <ancestor>
+  [ 17] objcall 1968 ............................ ancestor.updateAI()
+  [ 20] ret
+end
+
+on updateDead me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 750 ............................. <me.getGraveOn()>
+  [  7] pushint8 1 .............................. <1>
+  [  9] eq ...................................... <me.getGraveOn() = 1>
+  [ 10] jmpifz [ 33] ............................ if me.getGraveOn() = 1 then / else
+  [ 13] getparam 0 .............................. <me>
+  [ 15] pushint8 1 .............................. <1>
+  [ 17] pusharglistnoret 2 ...................... <me, 1>
+  [ 19] objcall 753 ............................. me.setFlipFromDir(1)
+  [ 22] getparam 0 .............................. <me>
+  [ 24] pusharglist 1 ........................... <me>
+  [ 26] objcall 16 .............................. <me.getAnimLooped()>
+  [ 28] setlocal 0 .............................. fin = me.getAnimLooped()
+  [ 30] jmp [ 37]
+  [ 33] pushint8 1 .............................. <1>
+  [ 35] setlocal 0 .............................. fin = 1
+  [ 37] getlocal 0 .............................. <fin>
+  [ 39] pusharglistnoret 1 ...................... <fin>
+  [ 41] extcall 35 .............................. return fin
+  [ 43] ret
+end
+
+on updateLook me
+  [  0] getprop 2406 ............................ <pLookDelayCounter>
+  [  3] getobjprop 552 .......................... <pLookDelayCounter.fin>
+  [  6] jmpifz [ 65] ............................ if pLookDelayCounter.fin then
+  [  9] getprop 2405 ............................ <pLookCounter>
+  [ 12] getobjprop 552 .......................... <pLookCounter.fin>
+  [ 15] jmpifz [ 27] ............................ if pLookCounter.fin then / else
+  [ 18] pushint8 1 .............................. <1>
+  [ 20] pusharglistnoret 1 ...................... <1>
+  [ 22] extcall 35 .............................. return 1
+  [ 24] jmp [ 65]
+  [ 27] getparam 0 .............................. <me>
+  [ 29] getobjprop 173 .......................... <me.pSpr>
+  [ 31] setlocal 0 .............................. spr = me.pSpr
+  [ 33] getlocal 0 .............................. <spr>
+  [ 35] getobjprop 917 .......................... <spr.flipH>
+  [ 38] jmpifz [ 50] ............................ if spr.flipH then / else
+  [ 41] getlocal 0 .............................. <spr>
+  [ 43] pushzero ................................ <0>
+  [ 44] setobjprop 917 .......................... spr.flipH = 0
+  [ 47] jmp [ 57]
+  [ 50] getlocal 0 .............................. <spr>
+  [ 52] pushint8 1 .............................. <1>
+  [ 54] setobjprop 917 .......................... spr.flipH = 1
+  [ 57] getprop 2405 ............................ <pLookCounter>
+  [ 60] pusharglistnoret 1 ...................... <pLookCounter>
+  [ 62] extcall 553 ............................. counter(pLookCounter)
+  [ 65] getprop 2406 ............................ <pLookDelayCounter>
+  [ 68] pusharglistnoret 1 ...................... <pLookDelayCounter>
+  [ 70] extcall 553 ............................. counter(pLookDelayCounter)
+  [ 73] pushzero ................................ <0>
+  [ 74] pusharglistnoret 1 ...................... <0>
+  [ 76] extcall 35 .............................. return 0
+  [ 78] ret
+end

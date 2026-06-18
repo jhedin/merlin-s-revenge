@@ -1,0 +1,1239 @@
+property pPlayer
+global g, q, gGameObjectLayer, gPlayerLayer
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 12 .............................. return me
+  [  6] ret
+end
+
+on init me
+  [  0] ret
+end
+
+on finishActors me
+  [  0] getglobal 21 ............................ <g>
+  [  2] getchainedprop 213 ...................... <g.objectMaster>
+  [  4] pushsymb 541 ............................ <#objGameObject>
+  [  7] pusharglistnoret 2 ...................... <g.objectMaster, #objGameObject>
+  [  9] objcall 542 ............................. g.objectMaster.finishAllWithFlag(#objGameObject)
+  [ 12] ret
+end
+
+on newActor me, typ, startLoc
+  [  0] getglobal 21 ............................ <g>
+  [  2] getchainedprop 264 ...................... <g.spriteMaster>
+  [  5] pusharglist 1 ........................... <g.spriteMaster>
+  [  7] objcall 153 ............................. <g.spriteMaster.checkFreeSprite()>
+  [  9] setlocal 0 .............................. freeSprite = g.spriteMaster.checkFreeSprite()
+  [ 11] pushsymb 15 ............................. <#none>
+  [ 13] setlocal 1 .............................. obj = #none
+  [ 15] getlocal 0 .............................. <freeSprite>
+  [ 17] jmpifz [ 49] ............................ if freeSprite then
+  [ 20] getglobal 21 ............................ <g>
+  [ 22] getchainedprop 213 ...................... <g.objectMaster>
+  [ 24] pushsymb 543 ............................ <#objPlayerCharacter>
+  [ 27] pusharglist 2 ........................... <g.objectMaster, #objPlayerCharacter>
+  [ 29] objcall 544 ............................. <g.objectMaster.getFirstOfType(#objPlayerCharacter)>
+  [ 32] setlocal 2 .............................. player = g.objectMaster.getFirstOfType(#objPlayerCharacter)
+  [ 34] getparam 0 .............................. <me>
+  [ 36] getparam 1 .............................. <typ>
+  [ 38] getparam 2 .............................. <startLoc>
+  [ 40] getlocal 2 .............................. <player>
+  [ 42] pusharglist 4 ........................... <me, typ, startLoc, player>
+  [ 44] objcall 536 ............................. <me.startActor(typ, startLoc, player)>
+  [ 47] setlocal 1 .............................. obj = me.startActor(typ, startLoc, player)
+  [ 49] getlocal 1 .............................. <obj>
+  [ 51] pusharglistnoret 1 ...................... <obj>
+  [ 53] extcall 12 .............................. return obj
+  [ 55] ret
+end
+
+on start me
+  [  0] getglobal 21 ............................ <g>
+  [  2] getchainedprop 299 ...................... <g.EnemyEnergyMaster>
+  [  5] pusharglistnoret 1 ...................... <g.EnemyEnergyMaster>
+  [  7] objcall 3 ............................... g.EnemyEnergyMaster.start()
+  [  9] getparam 0 .............................. <me>
+  [ 11] pushsymb 547 ............................ <#player>
+  [ 14] pushint8 100 ............................ <100>
+  [ 16] pushint16 250 ........................... <250>
+  [ 19] pusharglist 2 ........................... <100, 250>
+  [ 21] extcall 99 .............................. <point(100, 250)>
+  [ 23] pusharglist 3 ........................... <me, #player, point(100, 250)>
+  [ 25] objcall 536 ............................. <me.startActor(#player, point(100, 250))>
+  [ 28] setlocal 0 .............................. player = me.startActor(#player, point(100, 250))
+  [ 30] getlocal 0 .............................. <player>
+  [ 32] setprop 549 ............................. pPlayer = player
+  [ 35] pusharglist 0 ........................... <[]>
+  [ 37] pushlist ................................ <[]>
+  [ 38] setlocal 1 .............................. startActors = []
+  [ 40] getlocal 1 .............................. <startActors>
+  [ 42] pushsymb 230 ............................ <#objType>
+  [ 44] pushsymb 550 ............................ <#bat>
+  [ 47] pushsymb 551 ............................ <#quantity>
+  [ 50] pushzero ................................ <0>
+  [ 51] pusharglist 4 ........................... <[#objType: #bat, #quantity: 0]>
+  [ 53] pushproplist ............................ <[#objType: #bat, #quantity: 0]>
+  [ 54] pusharglistnoret 2 ...................... <startActors, [#objType: #bat, #quantity: 0]>
+  [ 56] objcall 38 .............................. startActors.append([#objType: #bat, #quantity: 0])
+  [ 58] getlocal 1 .............................. <startActors>
+  [ 60] pushsymb 230 ............................ <#objType>
+  [ 62] pushsymb 552 ............................ <#bigWitch>
+  [ 65] pushsymb 551 ............................ <#quantity>
+  [ 68] pushzero ................................ <0>
+  [ 69] pusharglist 4 ........................... <[#objType: #bigWitch, #quantity: 0]>
+  [ 71] pushproplist ............................ <[#objType: #bigWitch, #quantity: 0]>
+  [ 72] pusharglistnoret 2 ...................... <startActors, [#objType: #bigWitch, #quantity: 0]>
+  [ 74] objcall 38 .............................. startActors.append([#objType: #bigWitch, #quantity: 0])
+  [ 76] getlocal 1 .............................. <startActors>
+  [ 78] pushsymb 230 ............................ <#objType>
+  [ 80] pushsymb 553 ............................ <#goblin>
+  [ 83] pushsymb 551 ............................ <#quantity>
+  [ 86] pushint8 1 .............................. <1>
+  [ 88] pusharglist 4 ........................... <[#objType: #goblin, #quantity: 1]>
+  [ 90] pushproplist ............................ <[#objType: #goblin, #quantity: 1]>
+  [ 91] pusharglistnoret 2 ...................... <startActors, [#objType: #goblin, #quantity: 1]>
+  [ 93] objcall 38 .............................. startActors.append([#objType: #goblin, #quantity: 1])
+  [ 95] getlocal 1 .............................. <startActors>
+  [ 97] pushsymb 230 ............................ <#objType>
+  [ 99] pushsymb 554 ............................ <#goblinSoldier>
+  [102] pushsymb 551 ............................ <#quantity>
+  [105] pushint8 1 .............................. <1>
+  [107] pusharglist 4 ........................... <[#objType: #goblinSoldier, #quantity: 1]>
+  [109] pushproplist ............................ <[#objType: #goblinSoldier, #quantity: 1]>
+  [110] pusharglistnoret 2 ...................... <startActors, [#objType: #goblinSoldier, #quantity: 1]>
+  [112] objcall 38 .............................. startActors.append([#objType: #goblinSoldier, #quantity: 1])
+  [114] getlocal 1 .............................. <startActors>
+  [116] pushsymb 230 ............................ <#objType>
+  [118] pushsymb 555 ............................ <#hairSpider>
+  [121] pushsymb 551 ............................ <#quantity>
+  [124] pushzero ................................ <0>
+  [125] pusharglist 4 ........................... <[#objType: #hairSpider, #quantity: 0]>
+  [127] pushproplist ............................ <[#objType: #hairSpider, #quantity: 0]>
+  [128] pusharglistnoret 2 ...................... <startActors, [#objType: #hairSpider, #quantity: 0]>
+  [130] objcall 38 .............................. startActors.append([#objType: #hairSpider, #quantity: 0])
+  [132] getlocal 1 .............................. <startActors>
+  [134] pushsymb 230 ............................ <#objType>
+  [136] pushsymb 556 ............................ <#spider>
+  [139] pushsymb 551 ............................ <#quantity>
+  [142] pushzero ................................ <0>
+  [143] pusharglist 4 ........................... <[#objType: #spider, #quantity: 0]>
+  [145] pushproplist ............................ <[#objType: #spider, #quantity: 0]>
+  [146] pusharglistnoret 2 ...................... <startActors, [#objType: #spider, #quantity: 0]>
+  [148] objcall 38 .............................. startActors.append([#objType: #spider, #quantity: 0])
+  [150] getlocal 1 .............................. <startActors>
+  [152] pushsymb 230 ............................ <#objType>
+  [154] pushsymb 557 ............................ <#littleWitch>
+  [157] pushsymb 551 ............................ <#quantity>
+  [160] pushzero ................................ <0>
+  [161] pusharglist 4 ........................... <[#objType: #littleWitch, #quantity: 0]>
+  [163] pushproplist ............................ <[#objType: #littleWitch, #quantity: 0]>
+  [164] pusharglistnoret 2 ...................... <startActors, [#objType: #littleWitch, #quantity: 0]>
+  [166] objcall 38 .............................. startActors.append([#objType: #littleWitch, #quantity: 0])
+  [168] getlocal 1 .............................. <startActors>
+  [170] pushsymb 230 ............................ <#objType>
+  [172] pushsymb 558 ............................ <#fryingPan>
+  [175] pushsymb 551 ............................ <#quantity>
+  [178] pushint8 1 .............................. <1>
+  [180] pusharglist 4 ........................... <[#objType: #fryingPan, #quantity: 1]>
+  [182] pushproplist ............................ <[#objType: #fryingPan, #quantity: 1]>
+  [183] pusharglistnoret 2 ...................... <startActors, [#objType: #fryingPan, #quantity: 1]>
+  [185] objcall 38 .............................. startActors.append([#objType: #fryingPan, #quantity: 1])
+  [187] getlocal 1 .............................. <startActors>
+  [189] pushsymb 230 ............................ <#objType>
+  [191] pushsymb 559 ............................ <#hairDrop>
+  [194] pushsymb 551 ............................ <#quantity>
+  [197] pushzero ................................ <0>
+  [198] pusharglist 4 ........................... <[#objType: #hairDrop, #quantity: 0]>
+  [200] pushproplist ............................ <[#objType: #hairDrop, #quantity: 0]>
+  [201] pusharglistnoret 2 ...................... <startActors, [#objType: #hairDrop, #quantity: 0]>
+  [203] objcall 38 .............................. startActors.append([#objType: #hairDrop, #quantity: 0])
+  [205] getlocal 1 .............................. <startActors>
+  [207] pushsymb 230 ............................ <#objType>
+  [209] pushsymb 560 ............................ <#paddle>
+  [212] pushsymb 551 ............................ <#quantity>
+  [215] pushzero ................................ <0>
+  [216] pusharglist 4 ........................... <[#objType: #paddle, #quantity: 0]>
+  [218] pushproplist ............................ <[#objType: #paddle, #quantity: 0]>
+  [219] pusharglistnoret 2 ...................... <startActors, [#objType: #paddle, #quantity: 0]>
+  [221] objcall 38 .............................. startActors.append([#objType: #paddle, #quantity: 0])
+  [223] getlocal 1 .............................. <startActors>
+  [225] pushsymb 230 ............................ <#objType>
+  [227] pushsymb 561 ............................ <#pugelstick>
+  [230] pushsymb 551 ............................ <#quantity>
+  [233] pushzero ................................ <0>
+  [234] pusharglist 4 ........................... <[#objType: #pugelstick, #quantity: 0]>
+  [236] pushproplist ............................ <[#objType: #pugelstick, #quantity: 0]>
+  [237] pusharglistnoret 2 ...................... <startActors, [#objType: #pugelstick, #quantity: 0]>
+  [239] objcall 38 .............................. startActors.append([#objType: #pugelstick, #quantity: 0])
+  [241] getlocal 1 .............................. <startActors>
+  [243] pushsymb 230 ............................ <#objType>
+  [245] pushsymb 562 ............................ <#spade>
+  [248] pushsymb 551 ............................ <#quantity>
+  [251] pushzero ................................ <0>
+  [252] pusharglist 4 ........................... <[#objType: #spade, #quantity: 0]>
+  [254] pushproplist ............................ <[#objType: #spade, #quantity: 0]>
+  [255] pusharglistnoret 2 ...................... <startActors, [#objType: #spade, #quantity: 0]>
+  [257] objcall 38 .............................. startActors.append([#objType: #spade, #quantity: 0])
+  [259] getlocal 1 .............................. <startActors>
+  [261] pushsymb 230 ............................ <#objType>
+  [263] pushsymb 563 ............................ <#sword>
+  [266] pushsymb 551 ............................ <#quantity>
+  [269] pushzero ................................ <0>
+  [270] pusharglist 4 ........................... <[#objType: #sword, #quantity: 0]>
+  [272] pushproplist ............................ <[#objType: #sword, #quantity: 0]>
+  [273] pusharglistnoret 2 ...................... <startActors, [#objType: #sword, #quantity: 0]>
+  [275] objcall 38 .............................. startActors.append([#objType: #sword, #quantity: 0])
+  [277] getlocal 1 .............................. <startActors>
+  [279] pushsymb 230 ............................ <#objType>
+  [281] pushsymb 564 ............................ <#scissors>
+  [284] pushsymb 551 ............................ <#quantity>
+  [287] pushint8 1 .............................. <1>
+  [289] pusharglist 4 ........................... <[#objType: #scissors, #quantity: 1]>
+  [291] pushproplist ............................ <[#objType: #scissors, #quantity: 1]>
+  [292] pusharglistnoret 2 ...................... <startActors, [#objType: #scissors, #quantity: 1]>
+  [294] objcall 38 .............................. startActors.append([#objType: #scissors, #quantity: 1])
+  [296] getlocal 1 .............................. <startActors>
+  [298] peek 0
+  [300] pusharglist 1
+  [302] extcall 33
+  [304] pushint8 1
+  [306] peek 0
+  [308] peek 2
+  [310] lteq
+  [311] jmpifz [379] ............................ repeat with startActor in startActors
+  [314] peek 2
+  [316] peek 1
+  [318] pusharglist 2
+  [320] extcall 34
+  [322] setlocal 2
+  [324] pushint8 1 .............................. <1>
+  [326] setlocal 3
+  [328] getlocal 3
+  [330] getlocal 2 .............................. <startActor>
+  [332] getobjprop 551 .......................... <startActor.quantity>
+  [335] lteq
+  [336] jmpifz [374] ............................ repeat with i = 1 to startActor.quantity
+  [339] getparam 0 .............................. <me>
+  [341] getlocal 2 .............................. <startActor>
+  [343] getobjprop 230 .......................... <startActor.objType>
+  [345] pushint16 450 ........................... <450>
+  [348] pusharglist 1 ........................... <450>
+  [350] extcall 565 ............................. <random(450)>
+  [353] pushint16 300 ........................... <300>
+  [356] pusharglist 2 ........................... <random(450), 300>
+  [358] extcall 99 .............................. <point(random(450), 300)>
+  [360] pusharglistnoret 3 ...................... <me, startActor.objType, point(random(450), 300)>
+  [362] objcall 536 ............................. me.startActor(startActor.objType, point(random(450), 300))
+  [365] pushint8 1
+  [367] getlocal 3
+  [369] add
+  [370] setlocal 3
+  [372] endrepeat [328]
+  [374] pushint8 1
+  [376] add
+  [377] endrepeat [306]
+  [379] pop 3
+  [381] ret
+end
+
+on startActor me, typ, startLoc
+  [  0] pushsymb 15 ............................. <#none>
+  [  2] setlocal 0 .............................. AI = #none
+  [  4] pushsymb 15 ............................. <#none>
+  [  6] setlocal 1 .............................. AIType = #none
+  [  8] pushsymb 15 ............................. <#none>
+  [ 10] setlocal 2 .............................. AiTarget = #none
+  [ 12] pushsymb 15 ............................. <#none>
+  [ 14] setlocal 3 .............................. AiTargetAction = #none
+  [ 16] pushsymb 15 ............................. <#none>
+  [ 18] setlocal 4 .............................. objType = #none
+  [ 20] getparam 1 .............................. <typ>
+  [ 22] peek 0 .................................. case typ of
+  [ 24] pushsymb 567 ............................ <#star>
+  [ 27] eq
+  [ 28] jmpifz [ 39] ............................ (case) #star:
+  [ 31] pushsymb 568 ............................ <#objStar>
+  [ 34] setlocal 4 .............................. objType = #objStar
+  [ 36] jmp [366]
+  [ 39] peek 0
+  [ 41] pushsymb 550 ............................ <#bat>
+  [ 44] eq
+  [ 45] jmpifz [ 61] ............................ (case) #bat:
+  [ 48] pushsymb 569 ............................ <#objFlyingEnemyCharacter>
+  [ 51] setlocal 4 .............................. objType = #objFlyingEnemyCharacter
+  [ 53] pushsymb 570 ............................ <#objAiEnemy>
+  [ 56] setlocal 1 .............................. AIType = #objAiEnemy
+  [ 58] jmp [366]
+  [ 61] peek 0
+  [ 63] pushsymb 552 ............................ <#bigWitch>
+  [ 66] eq
+  [ 67] jmpifz [ 83] ............................ (case) #bigWitch:
+  [ 70] pushsymb 569 ............................ <#objFlyingEnemyCharacter>
+  [ 73] setlocal 4 .............................. objType = #objFlyingEnemyCharacter
+  [ 75] pushsymb 571 ............................ <#objAiFlyingBomber>
+  [ 78] setlocal 1 .............................. AIType = #objAiFlyingBomber
+  [ 80] jmp [366]
+  [ 83] peek 0
+  [ 85] pushsymb 553 ............................ <#goblin>
+  [ 88] eq
+  [ 89] jmpifz [105] ............................ (case) #goblin:
+  [ 92] pushsymb 572 ............................ <#objEnemyCharacter>
+  [ 95] setlocal 4 .............................. objType = #objEnemyCharacter
+  [ 97] pushsymb 570 ............................ <#objAiEnemy>
+  [100] setlocal 1 .............................. AIType = #objAiEnemy
+  [102] jmp [366]
+  [105] peek 0
+  [107] pushsymb 554 ............................ <#goblinSoldier>
+  [110] eq
+  [111] jmpifz [127] ............................ (case) #goblinSoldier:
+  [114] pushsymb 572 ............................ <#objEnemyCharacter>
+  [117] setlocal 4 .............................. objType = #objEnemyCharacter
+  [119] pushsymb 573 ............................ <#objAIEnemyWeaponSeek>
+  [122] setlocal 1 .............................. AIType = #objAIEnemyWeaponSeek
+  [124] jmp [366]
+  [127] peek 0
+  [129] pushsymb 555 ............................ <#hairSpider>
+  [132] eq
+  [133] jmpifz [159] ............................ (case) #hairSpider:
+  [136] pushsymb 574 ............................ <#objAttachingEnemyCharacter>
+  [139] setlocal 4 .............................. objType = #objAttachingEnemyCharacter
+  [141] pushsymb 575 ............................ <#objAiEnemyTargetSeek>
+  [144] setlocal 1 .............................. AIType = #objAiEnemyTargetSeek
+  [146] pushsymb 576 ............................ <#playerHair>
+  [149] setlocal 2 .............................. AiTarget = #playerHair
+  [151] pushsymb 577 ............................ <#attach>
+  [154] setlocal 3 .............................. AiTargetAction = #attach
+  [156] jmp [366]
+  [159] peek 0
+  [161] pushsymb 556 ............................ <#spider>
+  [164] eq
+  [165] jmpifz [181] ............................ (case) #spider:
+  [168] pushsymb 572 ............................ <#objEnemyCharacter>
+  [171] setlocal 4 .............................. objType = #objEnemyCharacter
+  [173] pushsymb 570 ............................ <#objAiEnemy>
+  [176] setlocal 1 .............................. AIType = #objAiEnemy
+  [178] jmp [366]
+  [181] peek 0
+  [183] pushsymb 557 ............................ <#littleWitch>
+  [186] eq
+  [187] jmpifz [203] ............................ (case) #littleWitch:
+  [190] pushsymb 572 ............................ <#objEnemyCharacter>
+  [193] setlocal 4 .............................. objType = #objEnemyCharacter
+  [195] pushsymb 570 ............................ <#objAiEnemy>
+  [198] setlocal 1 .............................. AIType = #objAiEnemy
+  [200] jmp [366]
+  [203] peek 0
+  [205] pushsymb 578 ............................ <#bigFireball>
+  [208] eq
+  [209] jmpifz [220] ............................ (case) #bigFireball:
+  [212] pushsymb 579 ............................ <#objBullet>
+  [215] setlocal 4 .............................. objType = #objBullet
+  [217] jmp [366]
+  [220] peek 0
+  [222] pushsymb 580 ............................ <#fireBall>
+  [225] eq
+  [226] jmpifz [237] ............................ (case) #fireBall:
+  [229] pushsymb 579 ............................ <#objBullet>
+  [232] setlocal 4 .............................. objType = #objBullet
+  [234] jmp [366]
+  [237] peek 0
+  [239] pushsymb 581 ............................ <#hair>
+  [242] eq
+  [243] jmpifz [254] ............................ (case) #hair:
+  [246] pushsymb 582 ............................ <#objHair>
+  [249] setlocal 4 .............................. objType = #objHair
+  [251] jmp [366]
+  [254] peek 0
+  [256] pushsymb 547 ............................ <#player>
+  [259] eq
+  [260] jmpifz [276] ............................ (case) #player:
+  [263] pushsymb 543 ............................ <#objPlayerCharacter>
+  [266] setlocal 4 .............................. objType = #objPlayerCharacter
+  [268] pushsymb 583 ............................ <#objAiPlayer>
+  [271] setlocal 1 .............................. AIType = #objAiPlayer
+  [273] jmp [366]
+  [276] peek 0
+  [278] pushsymb 559 ............................ <#hairDrop>
+  [281] nteq
+  [282] jmpifz [294] ............................ (case) #hairDrop, ...
+  [285] peek 0
+  [287] pushsymb 584 ............................ <#hairPowerUp>
+  [290] eq
+  [291] jmpifz [307] ............................ (case) ..., #hairPowerUp:
+  [294] pushsymb 585 ............................ <#objPowerUp>
+  [297] setlocal 4 .............................. objType = #objPowerUp
+  [299] pushsymb 586 ............................ <#objAiPowerUp>
+  [302] setlocal 1 .............................. AIType = #objAiPowerUp
+  [304] jmp [366]
+  [307] peek 0
+  [309] pushsymb 558 ............................ <#fryingPan>
+  [312] nteq
+  [313] jmpifz [361] ............................ (case) #fryingPan, ...
+  [316] peek 0
+  [318] pushsymb 560 ............................ <#paddle>
+  [321] nteq
+  [322] jmpifz [361] ............................ (case) ..., #paddle, ...
+  [325] peek 0
+  [327] pushsymb 561 ............................ <#pugelstick>
+  [330] nteq
+  [331] jmpifz [361] ............................ (case) ..., #pugelstick, ...
+  [334] peek 0
+  [336] pushsymb 562 ............................ <#spade>
+  [339] nteq
+  [340] jmpifz [361] ............................ (case) ..., #spade, ...
+  [343] peek 0
+  [345] pushsymb 564 ............................ <#scissors>
+  [348] nteq
+  [349] jmpifz [361] ............................ (case) ..., #scissors, ...
+  [352] peek 0
+  [354] pushsymb 563 ............................ <#sword>
+  [357] eq
+  [358] jmpifz [366] ............................ (case) ..., #sword:
+  [361] pushsymb 587 ............................ <#objWeapon>
+  [364] setlocal 4 .............................. objType = #objWeapon
+  [366] pop 1 ................................... end case
+  [368] getlocal 4 .............................. <objType>
+  [370] pushsymb 15 ............................. <#none>
+  [372] eq ...................................... <objType = #none>
+  [373] jmpifz [398] ............................ if objType = #none then
+  [376] pushcons 0 .............................. <"actorMaster.newActor: please define typ ">
+  [378] getglobal 589 ........................... <q>
+  [381] joinstr ................................. <"actorMaster.newActor: please define typ " & q>
+  [382] getparam 1 .............................. <typ>
+  [384] joinstr ................................. <"actorMaster.newActor: please define typ " & q & typ>
+  [385] getglobal 589 ........................... <q>
+  [388] joinstr ................................. <"actorMaster.newActor: please define typ " & q & typ & q>
+  [389] pusharglistnoret 1 ...................... <"actorMaster.newActor: please define typ " & q & typ & q>
+  [391] extcall 588 ............................. alert("actorMaster.newActor: please define typ " & q & typ & q)
+  [394] pusharglistnoret 0 ...................... <>
+  [396] extcall 217 ............................. nothing()
+  [398] getglobal 21 ............................ <g>
+  [400] getchainedprop 213 ...................... <g.objectMaster>
+  [402] getlocal 4 .............................. <objType>
+  [404] pusharglist 2 ........................... <g.objectMaster, objType>
+  [406] objcall 214 ............................. <g.objectMaster.requestObject(objType)>
+  [408] setlocal 5 .............................. obj = g.objectMaster.requestObject(objType)
+  [410] getlocal 1 .............................. <AIType>
+  [412] pushsymb 15 ............................. <#none>
+  [414] nteq .................................... <AIType <> #none>
+  [415] jmpifz [466] ............................ if AIType <> #none then
+  [418] getglobal 21 ............................ <g>
+  [420] getchainedprop 213 ...................... <g.objectMaster>
+  [422] getlocal 1 .............................. <AIType>
+  [424] pusharglist 2 ........................... <g.objectMaster, AIType>
+  [426] objcall 214 ............................. <g.objectMaster.requestObject(AIType)>
+  [428] setlocal 0 .............................. AI = g.objectMaster.requestObject(AIType)
+  [430] getlocal 0 .............................. <AI>
+  [432] getprop 549 ............................. <pPlayer>
+  [435] pusharglistnoret 2 ...................... <AI, pPlayer>
+  [437] objcall 1 ............................... AI.init(pPlayer)
+  [439] getlocal 1 .............................. <AIType>
+  [441] pushsymb 575 ............................ <#objAiEnemyTargetSeek>
+  [444] eq ...................................... <AIType = #objAiEnemyTargetSeek>
+  [445] jmpifz [466] ............................ if AIType = #objAiEnemyTargetSeek then
+  [448] getlocal 0 .............................. <AI>
+  [450] getlocal 2 .............................. <AiTarget>
+  [452] pusharglistnoret 2 ...................... <AI, AiTarget>
+  [454] objcall 590 ............................. AI.setTargetType(AiTarget)
+  [457] getlocal 0 .............................. <AI>
+  [459] getlocal 3 .............................. <AiTargetAction>
+  [461] pusharglistnoret 2 ...................... <AI, AiTargetAction>
+  [463] objcall 591 ............................. AI.setAction(AiTargetAction)
+  [466] getparam 0 .............................. <me>
+  [468] getlocal 5 .............................. <obj>
+  [470] getparam 1 .............................. <typ>
+  [472] getlocal 0 .............................. <AI>
+  [474] pusharglist 4 ........................... <me, obj, typ, AI>
+  [476] objcall 537 ............................. <me.setParams(obj, typ, AI)>
+  [479] setlocal 6 .............................. params = me.setParams(obj, typ, AI)
+  [481] getlocal 6 .............................. <params>
+  [483] getparam 2 .............................. <startLoc>
+  [485] pusharglist 1 ........................... <startLoc>
+  [487] objcall 150 ............................. <startLoc.duplicate()>
+  [489] setobjprop 592 .......................... params.initLoc = startLoc.duplicate()
+  [492] getlocal 5 .............................. <obj>
+  [494] getlocal 6 .............................. <params>
+  [496] pusharglistnoret 2 ...................... <obj, params>
+  [498] objcall 1 ............................... obj.init(params)
+  [500] getlocal 5 .............................. <obj>
+  [502] pusharglistnoret 1 ...................... <obj>
+  [504] objcall 3 ............................... obj.start()
+  [506] getlocal 5 .............................. <obj>
+  [508] pusharglistnoret 1 ...................... <obj>
+  [510] extcall 12 .............................. return obj
+  [512] ret
+end
+
+on setParams me, obj, typ, AI
+  [  0] getparam 1 .............................. <obj>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <obj, #init>
+  [  6] objcall 215 ............................. <obj.getParams(#init)>
+  [  8] setlocal 0 .............................. params = obj.getParams(#init)
+  [ 10] getparam 3 .............................. <AI>
+  [ 12] pushsymb 15 ............................. <#none>
+  [ 14] nteq .................................... <AI <> #none>
+  [ 15] jmpifz [ 25] ............................ if AI <> #none then
+  [ 18] getlocal 0 .............................. <params>
+  [ 20] getparam 3 .............................. <AI>
+  [ 22] setobjprop 594 .......................... params.AI = AI
+  [ 25] getlocal 0 .............................. <params>
+  [ 27] pushint16 450 ........................... <450>
+  [ 30] pusharglist 1 ........................... <450>
+  [ 32] extcall 565 ............................. <random(450)>
+  [ 35] pushint16 300 ........................... <300>
+  [ 38] pusharglist 2 ........................... <random(450), 300>
+  [ 40] extcall 99 .............................. <point(random(450), 300)>
+  [ 42] setobjprop 592 .......................... params.initLoc = point(random(450), 300)
+  [ 45] getlocal 0 .............................. <params>
+  [ 47] pushzero ................................ <0>
+  [ 48] pushzero ................................ <0>
+  [ 49] pusharglist 2 ........................... <0, 0>
+  [ 51] extcall 99 .............................. <point(0, 0)>
+  [ 53] setobjprop 597 .......................... params.initVect = point(0, 0)
+  [ 56] getlocal 0 .............................. <params>
+  [ 58] getglobal 598 ........................... <gGameObjectLayer>
+  [ 61] setobjprop 599 .......................... params.layerZ = gGameObjectLayer
+  [ 64] getlocal 0 .............................. <params>
+  [ 66] getparam 0 .............................. <me>
+  [ 68] setobjprop 600 .......................... params.masterPrg = me
+  [ 71] getparam 2 .............................. <typ>
+  [ 73] peek 0 .................................. case typ of
+  [ 75] pushsymb 578 ............................ <#bigFireball>
+  [ 78] eq
+  [ 79] jmpifz [146] ............................ (case) #bigFireball:
+  [ 82] getlocal 0 .............................. <params>
+  [ 84] getobjprop 82 ........................... <params.attack>
+  [ 86] setlocal 1 .............................. a = params.attack
+  [ 88] getlocal 1 .............................. <a>
+  [ 90] pushint8 7 .............................. <7>
+  [ 92] pushint8 2 .............................. <2>
+  [ 94] pusharglist 2 ........................... <7, 2>
+  [ 96] extcall 99 .............................. <point(7, 2)>
+  [ 98] setobjprop 103 .......................... a.power = point(7, 2)
+  [100] getlocal 0 .............................. <params>
+  [102] pushsymb 97 ............................. <#bullet>
+  [104] setobjprop 601 .......................... params.character = #bullet
+  [107] getlocal 0 .............................. <params>
+  [109] pushcons 1 .............................. <"bfb">
+  [111] setobjprop 35 ........................... params.name = "bfb"
+  [113] getlocal 0 .............................. <params>
+  [115] pushzero ................................ <0>
+  [116] pushzero ................................ <0>
+  [117] pusharglist 2 ........................... <0, 0>
+  [119] extcall 99 .............................. <point(0, 0)>
+  [121] setobjprop 597 .......................... params.initVect = point(0, 0)
+  [124] getlocal 0 .............................. <params>
+  [126] pushint8 5 .............................. <5>
+  [128] pushzero ................................ <0>
+  [129] pusharglist 2 ........................... <5, 0>
+  [131] extcall 99 .............................. <point(5, 0)>
+  [133] setobjprop 602 .......................... params.friction = point(5, 0)
+  [136] getlocal 0 .............................. <params>
+  [138] pushcons 2 .............................. <0.29999999999999999>
+  [140] setobjprop 603 .......................... params.weight = 0.29999999999999999
+  [143] jmp [557]
+  [146] peek 0
+  [148] pushsymb 580 ............................ <#fireBall>
+  [151] eq
+  [152] jmpifz [219] ............................ (case) #fireBall:
+  [155] getlocal 0 .............................. <params>
+  [157] getobjprop 82 ........................... <params.attack>
+  [159] setlocal 1 .............................. a = params.attack
+  [161] getlocal 1 .............................. <a>
+  [163] pushint8 5 .............................. <5>
+  [165] pushint8 1 .............................. <1>
+  [167] pusharglist 2 ........................... <5, 1>
+  [169] extcall 99 .............................. <point(5, 1)>
+  [171] setobjprop 103 .......................... a.power = point(5, 1)
+  [173] getlocal 0 .............................. <params>
+  [175] pushsymb 97 ............................. <#bullet>
+  [177] setobjprop 601 .......................... params.character = #bullet
+  [180] getlocal 0 .............................. <params>
+  [182] pushcons 3 .............................. <"fir">
+  [184] setobjprop 35 ........................... params.name = "fir"
+  [186] getlocal 0 .............................. <params>
+  [188] pushzero ................................ <0>
+  [189] pushzero ................................ <0>
+  [190] pusharglist 2 ........................... <0, 0>
+  [192] extcall 99 .............................. <point(0, 0)>
+  [194] setobjprop 597 .......................... params.initVect = point(0, 0)
+  [197] getlocal 0 .............................. <params>
+  [199] pushint8 5 .............................. <5>
+  [201] pushzero ................................ <0>
+  [202] pusharglist 2 ........................... <5, 0>
+  [204] extcall 99 .............................. <point(5, 0)>
+  [206] setobjprop 602 .......................... params.friction = point(5, 0)
+  [209] getlocal 0 .............................. <params>
+  [211] pushcons 4 .............................. <0.40000000000000002>
+  [213] setobjprop 603 .......................... params.weight = 0.40000000000000002
+  [216] jmp [557]
+  [219] peek 0
+  [221] pushsymb 567 ............................ <#star>
+  [224] eq
+  [225] jmpifz [258] ............................ (case) #star:
+  [228] getlocal 0 .............................. <params>
+  [230] pushsymb 567 ............................ <#star>
+  [233] setobjprop 601 .......................... params.character = #star
+  [236] getlocal 0 .............................. <params>
+  [238] pushcons 5 .............................. <"star_medium">
+  [240] pushcons 6 .............................. <"gfx">
+  [242] pusharglist 2 ........................... <"star_medium", "gfx">
+  [244] extcall 28 .............................. <member("star_medium", "gfx")>
+  [246] setobjprop 28 ........................... params.member = member("star_medium", "gfx")
+  [248] getlocal 0 .............................. <params>
+  [250] pushcons 2 .............................. <0.29999999999999999>
+  [252] setobjprop 603 .......................... params.weight = 0.29999999999999999
+  [255] jmp [557]
+  [258] peek 0
+  [260] pushsymb 581 ............................ <#hair>
+  [263] eq
+  [264] jmpifz [345] ............................ (case) #hair:
+  [267] getlocal 0 .............................. <params>
+  [269] pushsymb 581 ............................ <#hair>
+  [272] setobjprop 601 .......................... params.character = #hair
+  [275] getlocal 0 .............................. <params>
+  [277] pushint8 1 .............................. <1>
+  [279] setobjprop 604 .......................... params.collisionUseMiddle = 1
+  [282] getlocal 0 .............................. <params>
+  [284] pushfloat32 12.5 ........................ <12.5>
+  [289] pushfloat32 12.5 ........................ <12.5>
+  [294] pusharglist 2 ........................... <12.5, 12.5>
+  [296] extcall 99 .............................. <point(12.5, 12.5)>
+  [298] setobjprop 602 .......................... params.friction = point(12.5, 12.5)
+  [301] getlocal 0 .............................. <params>
+  [303] pushint8 14 ............................. <14>
+  [305] setobjprop 605 .......................... params.hairLength = 14
+  [308] getlocal 0 .............................. <params>
+  [310] pushint8 1 .............................. <1>
+  [312] setobjprop 606 .......................... params.keepVect = 1
+  [315] getlocal 0 .............................. <params>
+  [317] getglobal 607 ........................... <gPlayerLayer>
+  [320] setobjprop 599 .......................... params.layerZ = gPlayerLayer
+  [323] getlocal 0 .............................. <params>
+  [325] pushint8 10 ............................. <10>
+  [327] pushzero ................................ <0>
+  [328] pusharglist 2 ........................... <10, 0>
+  [330] extcall 99 .............................. <point(10, 0)>
+  [332] setobjprop 608 .......................... params.startLocOffset = point(10, 0)
+  [335] getlocal 0 .............................. <params>
+  [337] pushcons 7 .............................. <0.34999999999999998>
+  [339] setobjprop 603 .......................... params.weight = 0.34999999999999998
+  [342] jmp [557]
+  [345] peek 0
+  [347] pushsymb 547 ............................ <#player>
+  [350] eq
+  [351] jmpifz [394] ............................ (case) #player:
+  [354] getlocal 0 .............................. <params>
+  [356] pushsymb 609 ............................ <#playerCharacter>
+  [359] setobjprop 601 .......................... params.character = #playerCharacter
+  [362] getlocal 0 .............................. <params>
+  [364] pushint16 200 ........................... <200>
+  [367] setobjprop 610 .......................... params.energy = 200
+  [370] getlocal 0 .............................. <params>
+  [372] pushint8 10 ............................. <10>
+  [374] setobjprop 605 .......................... params.hairLength = 10
+  [377] getlocal 0 .............................. <params>
+  [379] getglobal 607 ........................... <gPlayerLayer>
+  [382] setobjprop 599 .......................... params.layerZ = gPlayerLayer
+  [385] getlocal 0 .............................. <params>
+  [387] pushcons 8 .............................. <"rap">
+  [389] setobjprop 35 ........................... params.name = "rap"
+  [391] jmp [557]
+  [394] peek 0
+  [396] pushsymb 559 ............................ <#hairDrop>
+  [399] eq
+  [400] jmpifz [426] ............................ (case) #hairDrop:
+  [403] getlocal 0 .............................. <params>
+  [405] pushsymb 559 ............................ <#hairDrop>
+  [408] setobjprop 601 .......................... params.character = #hairDrop
+  [411] getlocal 0 .............................. <params>
+  [413] pushcons 9 .............................. <"hair_drop">
+  [415] pushcons 6 .............................. <"gfx">
+  [417] pusharglist 2 ........................... <"hair_drop", "gfx">
+  [419] extcall 28 .............................. <member("hair_drop", "gfx")>
+  [421] setobjprop 28 ........................... params.member = member("hair_drop", "gfx")
+  [423] jmp [557]
+  [426] peek 0
+  [428] pushsymb 584 ............................ <#hairPowerUp>
+  [431] eq
+  [432] jmpifz [474] ............................ (case) #hairPowerUp:
+  [435] getlocal 0 .............................. <params>
+  [437] pushsymb 584 ............................ <#hairPowerUp>
+  [440] setobjprop 601 .......................... params.character = #hairPowerUp
+  [443] getlocal 0 .............................. <params>
+  [445] pushcons 10 ............................. <"raphair">
+  [447] pushcons 6 .............................. <"gfx">
+  [449] pusharglist 2 ........................... <"raphair", "gfx">
+  [451] extcall 28 .............................. <member("raphair", "gfx")>
+  [453] setobjprop 28 ........................... params.member = member("raphair", "gfx")
+  [455] getlocal 0 .............................. <params>
+  [457] pushint16 150 ........................... <150>
+  [460] pusharglist 1 ........................... <150>
+  [462] extcall 565 ............................. <random(150)>
+  [465] pushint8 30 ............................. <30>
+  [467] add ..................................... <random(150) + 30>
+  [468] setobjprop 611 .......................... params.timeAlive = random(150) + 30
+  [471] jmp [557]
+  [474] peek 0
+  [476] pushsymb 561 ............................ <#pugelstick>
+  [479] nteq
+  [480] jmpifz [528] ............................ (case) #pugelstick, ...
+  [483] peek 0
+  [485] pushsymb 558 ............................ <#fryingPan>
+  [488] nteq
+  [489] jmpifz [528] ............................ (case) ..., #fryingPan, ...
+  [492] peek 0
+  [494] pushsymb 562 ............................ <#spade>
+  [497] nteq
+  [498] jmpifz [528] ............................ (case) ..., #spade, ...
+  [501] peek 0
+  [503] pushsymb 560 ............................ <#paddle>
+  [506] nteq
+  [507] jmpifz [528] ............................ (case) ..., #paddle, ...
+  [510] peek 0
+  [512] pushsymb 564 ............................ <#scissors>
+  [515] nteq
+  [516] jmpifz [528] ............................ (case) ..., #scissors, ...
+  [519] peek 0
+  [521] pushsymb 563 ............................ <#sword>
+  [524] eq
+  [525] jmpifz [544] ............................ (case) ..., #sword:
+  [528] getparam 0 .............................. <me>
+  [530] getparam 2 .............................. <typ>
+  [532] getlocal 0 .............................. <params>
+  [534] pusharglist 3 ........................... <me, typ, params>
+  [536] objcall 539 ............................. <me.setParamsWeapon(typ, params)>
+  [539] setlocal 0 .............................. params = me.setParamsWeapon(typ, params)
+  [541] jmp [557] ............................... (case) otherwise:
+  [544] getparam 0 .............................. <me>
+  [546] getparam 2 .............................. <typ>
+  [548] getlocal 0 .............................. <params>
+  [550] pusharglist 3 ........................... <me, typ, params>
+  [552] objcall 538 ............................. <me.setParamsEnemy(typ, params)>
+  [555] setlocal 0 .............................. params = me.setParamsEnemy(typ, params)
+  [557] pop 1 ................................... end case
+  [559] getlocal 0 .............................. <params>
+  [561] pusharglistnoret 1 ...................... <params>
+  [563] extcall 12 .............................. return params
+  [565] ret
+end
+
+on setParamsEnemy me, typ, params
+  [  0] getparam 2 .............................. <params>
+  [  2] getobjprop 82 ........................... <params.attack>
+  [  4] setlocal 0 .............................. a = params.attack
+  [  6] getlocal 0 .............................. <a>
+  [  8] pushint8 15 ............................. <15>
+  [ 10] pushzero ................................ <0>
+  [ 11] pusharglist 2 ........................... <15, 0>
+  [ 13] extcall 99 .............................. <point(15, 0)>
+  [ 15] setobjprop 98 ........................... a.collisionLoc = point(15, 0)
+  [ 17] getlocal 0 .............................. <a>
+  [ 19] pushint8 15 ............................. <15>
+  [ 21] pushzero ................................ <0>
+  [ 22] pusharglist 2 ........................... <15, 0>
+  [ 24] extcall 99 .............................. <point(15, 0)>
+  [ 26] setobjprop 104 .......................... a.reach = point(15, 0)
+  [ 28] getparam 2 .............................. <params>
+  [ 30] pushcons 11 ............................. <"gob">
+  [ 32] setobjprop 35 ........................... params.name = "gob"
+  [ 34] getparam 2 .............................. <params>
+  [ 36] pushint8 5 .............................. <5>
+  [ 38] inv ..................................... <-5>
+  [ 39] setobjprop 612 .......................... params.jumpPower = -5
+  [ 42] getparam 2 .............................. <params>
+  [ 44] pushcons 12 ............................. <0.20000000000000001>
+  [ 46] setobjprop 613 .......................... params.walkAcceleration = 0.20000000000000001
+  [ 49] getparam 1 .............................. <typ>
+  [ 51] peek 0 .................................. case typ of
+  [ 53] pushsymb 550 ............................ <#bat>
+  [ 56] eq
+  [ 57] jmpifz [112] ............................ (case) #bat:
+  [ 60] getparam 2 .............................. <params>
+  [ 62] pushsymb 614 ............................ <#flyingEnemyCharacter>
+  [ 65] setobjprop 601 .......................... params.character = #flyingEnemyCharacter
+  [ 68] getparam 2 .............................. <params>
+  [ 70] pushcons 13 ............................. <"bat">
+  [ 72] setobjprop 35 ........................... params.name = "bat"
+  [ 74] getparam 2 .............................. <params>
+  [ 76] pushint8 5 .............................. <5>
+  [ 78] inv ..................................... <-5>
+  [ 79] setobjprop 612 .......................... params.jumpPower = -5
+  [ 82] getparam 2 .............................. <params>
+  [ 84] pushsymb 615 ............................ <#jump>
+  [ 87] setobjprop 616 .......................... params.jumpType = #jump
+  [ 90] getparam 2 .............................. <params>
+  [ 92] pushfloat32 12.5 ........................ <12.5>
+  [ 97] pushfloat32 12.5 ........................ <12.5>
+  [102] pusharglist 2 ........................... <12.5, 12.5>
+  [104] extcall 99 .............................. <point(12.5, 12.5)>
+  [106] setobjprop 602 .......................... params.friction = point(12.5, 12.5)
+  [109] jmp [680]
+  [112] peek 0
+  [114] pushsymb 552 ............................ <#bigWitch>
+  [117] eq
+  [118] jmpifz [265] ............................ (case) #bigWitch:
+  [121] getlocal 0 .............................. <a>
+  [123] pushsymb 578 ............................ <#bigFireball>
+  [126] setobjprop 97 ........................... a.bullet = #bigFireball
+  [128] getlocal 0 .............................. <a>
+  [130] pushsymb 617 ............................ <#ranged>
+  [133] setobjprop 105 .......................... a.type = #ranged
+  [135] getlocal 0 .............................. <a>
+  [137] pushint8 20 ............................. <20>
+  [139] pushzero ................................ <0>
+  [140] pusharglist 2 ........................... <20, 0>
+  [142] extcall 99 .............................. <point(20, 0)>
+  [144] setobjprop 98 ........................... a.collisionLoc = point(20, 0)
+  [146] getlocal 0 .............................. <a>
+  [148] pushzero ................................ <0>
+  [149] pushint16 200 ........................... <200>
+  [152] inv ..................................... <-200>
+  [153] pusharglist 2 ........................... <0, -200>
+  [155] extcall 99 .............................. <point(0, -200)>
+  [157] setobjprop 100 .......................... a.idealAttackLoc = point(0, -200)
+  [159] getlocal 0 .............................. <a>
+  [161] pushint8 50 ............................. <50>
+  [163] setobjprop 101 .......................... a.cooldown = 50
+  [165] getlocal 0 .............................. <a>
+  [167] pushint16 200 ........................... <200>
+  [170] pushint16 300 ........................... <300>
+  [173] pusharglist 2 ........................... <200, 300>
+  [175] extcall 99 .............................. <point(200, 300)>
+  [177] setobjprop 104 .......................... a.reach = point(200, 300)
+  [179] getparam 2 .............................. <params>
+  [181] pushsymb 618 ............................ <#flyingRecoilEnemyCharacter>
+  [184] setobjprop 601 .......................... params.character = #flyingRecoilEnemyCharacter
+  [187] getparam 2 .............................. <params>
+  [189] pushcons 14 ............................. <"wit">
+  [191] setobjprop 35 ........................... params.name = "wit"
+  [193] getparam 2 .............................. <params>
+  [195] pushzero ................................ <0>
+  [196] pushzero ................................ <0>
+  [197] pushzero ................................ <0>
+  [198] pusharglist 3 ........................... <0, 0, 0>
+  [200] extcall 178 ............................. <rgb(0, 0, 0)>
+  [202] setobjprop 619 .......................... params.energyBarColour = rgb(0, 0, 0)
+  [205] getparam 2 .............................. <params>
+  [207] pushint8 1 .............................. <1>
+  [209] inv ..................................... <-1>
+  [210] setobjprop 612 .......................... params.jumpPower = -1
+  [213] getparam 2 .............................. <params>
+  [215] pushsymb 620 ............................ <#lift>
+  [218] setobjprop 616 .......................... params.jumpType = #lift
+  [221] getparam 2 .............................. <params>
+  [223] pushint8 2 .............................. <2>
+  [225] pushint8 2 .............................. <2>
+  [227] pusharglist 2 ........................... <2, 2>
+  [229] extcall 99 .............................. <point(2, 2)>
+  [231] setobjprop 602 .......................... params.friction = point(2, 2)
+  [234] getparam 2 .............................. <params>
+  [236] pushint8 1 .............................. <1>
+  [238] setobjprop 621 .......................... params.flapFrame = 1
+  [241] getparam 2 .............................. <params>
+  [243] pushcons 4 .............................. <0.40000000000000002>
+  [245] setobjprop 603 .......................... params.weight = 0.40000000000000002
+  [248] getparam 2 .............................. <params>
+  [250] pushint8 1 .............................. <1>
+  [252] setobjprop 622 .......................... params.recoil = 1
+  [255] getparam 2 .............................. <params>
+  [257] pushint8 20 ............................. <20>
+  [259] setobjprop 623 .......................... params.recoilDuration = 20
+  [262] jmp [680]
+  [265] peek 0
+  [267] pushsymb 553 ............................ <#goblin>
+  [270] eq
+  [271] jmpifz [281] ............................ (case) #goblin:
+  [274] pusharglistnoret 0 ...................... <>
+  [276] extcall 217 ............................. nothing()
+  [278] jmp [680]
+  [281] peek 0
+  [283] pushsymb 554 ............................ <#goblinSoldier>
+  [286] eq
+  [287] jmpifz [380] ............................ (case) #goblinSoldier:
+  [290] getlocal 0 .............................. <a>
+  [292] pushint8 20 ............................. <20>
+  [294] pushzero ................................ <0>
+  [295] pusharglist 2 ........................... <20, 0>
+  [297] extcall 99 .............................. <point(20, 0)>
+  [299] setobjprop 98 ........................... a.collisionLoc = point(20, 0)
+  [301] getlocal 0 .............................. <a>
+  [303] pushint8 20 ............................. <20>
+  [305] pushzero ................................ <0>
+  [306] pusharglist 2 ........................... <20, 0>
+  [308] extcall 99 .............................. <point(20, 0)>
+  [310] setobjprop 104 .......................... a.reach = point(20, 0)
+  [312] getparam 2 .............................. <params>
+  [314] pushcons 15 ............................. <"gobsol">
+  [316] setobjprop 35 ........................... params.name = "gobsol"
+  [318] getparam 2 .............................. <params>
+  [320] pushint16 150 ........................... <150>
+  [323] setobjprop 610 .......................... params.energy = 150
+  [326] getparam 2 .............................. <params>
+  [328] pushint16 255 ........................... <255>
+  [331] pushint16 200 ........................... <200>
+  [334] pushzero ................................ <0>
+  [335] pusharglist 3 ........................... <255, 200, 0>
+  [337] extcall 178 ............................. <rgb(255, 200, 0)>
+  [339] setobjprop 619 .......................... params.energyBarColour = rgb(255, 200, 0)
+  [342] getparam 2 .............................. <params>
+  [344] pushint8 8 .............................. <8>
+  [346] inv ..................................... <-8>
+  [347] setobjprop 612 .......................... params.jumpPower = -8
+  [350] getparam 2 .............................. <params>
+  [352] pushint8 15 ............................. <15>
+  [354] setobjprop 624 .......................... params.rotationSpeed = 15
+  [357] getparam 2 .............................. <params>
+  [359] pushfloat32 0.25 ........................ <0.25>
+  [364] setobjprop 613 .......................... params.walkAcceleration = 0.25
+  [367] getparam 2 .............................. <params>
+  [369] pushfloat32 0.5 ......................... <0.5>
+  [374] setobjprop 603 .......................... params.weight = 0.5
+  [377] jmp [680]
+  [380] peek 0
+  [382] pushsymb 557 ............................ <#littleWitch>
+  [385] eq
+  [386] jmpifz [483] ............................ (case) #littleWitch:
+  [389] getlocal 0 .............................. <a>
+  [391] pushint8 4 .............................. <4>
+  [393] setobjprop 96 ........................... a.animframe = 4
+  [395] getlocal 0 .............................. <a>
+  [397] pushsymb 580 ............................ <#fireBall>
+  [400] setobjprop 97 ........................... a.bullet = #fireBall
+  [402] getlocal 0 .............................. <a>
+  [404] pushint16 150 ........................... <150>
+  [407] pushint16 150 ........................... <150>
+  [410] pusharglist 2 ........................... <150, 150>
+  [412] extcall 99 .............................. <point(150, 150)>
+  [414] setobjprop 104 .......................... a.reach = point(150, 150)
+  [416] getlocal 0 .............................. <a>
+  [418] pushsymb 617 ............................ <#ranged>
+  [421] setobjprop 105 .......................... a.type = #ranged
+  [423] getparam 2 .............................. <params>
+  [425] pushcons 16 ............................. <"lwi">
+  [427] setobjprop 35 ........................... params.name = "lwi"
+  [429] getparam 2 .............................. <params>
+  [431] pushint8 100 ............................ <100>
+  [433] setobjprop 610 .......................... params.energy = 100
+  [436] getparam 2 .............................. <params>
+  [438] pushint8 30 ............................. <30>
+  [440] pushint8 30 ............................. <30>
+  [442] pushint8 30 ............................. <30>
+  [444] pusharglist 3 ........................... <30, 30, 30>
+  [446] extcall 178 ............................. <rgb(30, 30, 30)>
+  [448] setobjprop 619 .......................... params.energyBarColour = rgb(30, 30, 30)
+  [451] getparam 2 .............................. <params>
+  [453] pushint8 4 .............................. <4>
+  [455] inv ..................................... <-4>
+  [456] setobjprop 612 .......................... params.jumpPower = -4
+  [459] getparam 2 .............................. <params>
+  [461] pushcons 17 ............................. <0.075>
+  [463] setobjprop 603 .......................... params.weight = 0.075
+  [466] getparam 2 .............................. <params>
+  [468] pushint8 10 ............................. <10>
+  [470] setobjprop 624 .......................... params.rotationSpeed = 10
+  [473] getparam 2 .............................. <params>
+  [475] pushcons 18 ............................. <0.14999999999999999>
+  [477] setobjprop 613 .......................... params.walkAcceleration = 0.14999999999999999
+  [480] jmp [680]
+  [483] peek 0
+  [485] pushsymb 555 ............................ <#hairSpider>
+  [488] eq
+  [489] jmpifz [586] ............................ (case) #hairSpider:
+  [492] getlocal 0 .............................. <a>
+  [494] pushint8 10 ............................. <10>
+  [496] pushzero ................................ <0>
+  [497] pusharglist 2 ........................... <10, 0>
+  [499] extcall 99 .............................. <point(10, 0)>
+  [501] setobjprop 98 ........................... a.collisionLoc = point(10, 0)
+  [503] getlocal 0 .............................. <a>
+  [505] pushint8 10 ............................. <10>
+  [507] pushzero ................................ <0>
+  [508] pusharglist 2 ........................... <10, 0>
+  [510] extcall 99 .............................. <point(10, 0)>
+  [512] setobjprop 104 .......................... a.reach = point(10, 0)
+  [514] getlocal 0 .............................. <a>
+  [516] pushint8 4 .............................. <4>
+  [518] setobjprop 96 ........................... a.animframe = 4
+  [520] getlocal 0 .............................. <a>
+  [522] pushint8 2 .............................. <2>
+  [524] pushint8 2 .............................. <2>
+  [526] inv ..................................... <-2>
+  [527] pusharglist 2 ........................... <2, -2>
+  [529] extcall 99 .............................. <point(2, -2)>
+  [531] setobjprop 103 .......................... a.power = point(2, -2)
+  [533] getparam 2 .............................. <params>
+  [535] pushint8 60 ............................. <60>
+  [537] setobjprop 625 .......................... params.attachDuration = 60
+  [540] getparam 2 .............................. <params>
+  [542] pushint16 200 ........................... <200>
+  [545] pushint16 200 ........................... <200>
+  [548] pushzero ................................ <0>
+  [549] pusharglist 3 ........................... <200, 200, 0>
+  [551] extcall 178 ............................. <rgb(200, 200, 0)>
+  [553] setobjprop 619 .......................... params.energyBarColour = rgb(200, 200, 0)
+  [556] getparam 2 .............................. <params>
+  [558] pushcons 19 ............................. <"hsp">
+  [560] setobjprop 35 ........................... params.name = "hsp"
+  [562] getparam 2 .............................. <params>
+  [564] pushint8 10 ............................. <10>
+  [566] setobjprop 624 .......................... params.rotationSpeed = 10
+  [569] getparam 2 .............................. <params>
+  [571] pushcons 20 ............................. <0.10000000000000001>
+  [573] setobjprop 603 .......................... params.weight = 0.10000000000000001
+  [576] getparam 2 .............................. <params>
+  [578] pushcons 12 ............................. <0.20000000000000001>
+  [580] setobjprop 613 .......................... params.walkAcceleration = 0.20000000000000001
+  [583] jmp [680]
+  [586] peek 0
+  [588] pushsymb 556 ............................ <#spider>
+  [591] eq
+  [592] jmpifz [680] ............................ (case) #spider:
+  [595] getlocal 0 .............................. <a>
+  [597] pushint8 10 ............................. <10>
+  [599] pushzero ................................ <0>
+  [600] pusharglist 2 ........................... <10, 0>
+  [602] extcall 99 .............................. <point(10, 0)>
+  [604] setobjprop 98 ........................... a.collisionLoc = point(10, 0)
+  [606] getlocal 0 .............................. <a>
+  [608] pushint8 10 ............................. <10>
+  [610] pushzero ................................ <0>
+  [611] pusharglist 2 ........................... <10, 0>
+  [613] extcall 99 .............................. <point(10, 0)>
+  [615] setobjprop 104 .......................... a.reach = point(10, 0)
+  [617] getlocal 0 .............................. <a>
+  [619] pushint8 4 .............................. <4>
+  [621] setobjprop 96 ........................... a.animframe = 4
+  [623] getlocal 0 .............................. <a>
+  [625] pushint8 2 .............................. <2>
+  [627] pushint8 2 .............................. <2>
+  [629] inv ..................................... <-2>
+  [630] pusharglist 2 ........................... <2, -2>
+  [632] extcall 99 .............................. <point(2, -2)>
+  [634] setobjprop 103 .......................... a.power = point(2, -2)
+  [636] getparam 2 .............................. <params>
+  [638] pushint8 92 ............................. <92>
+  [640] pushint16 148 ........................... <148>
+  [643] pushint16 133 ........................... <133>
+  [646] pusharglist 3 ........................... <92, 148, 133>
+  [648] extcall 178 ............................. <rgb(92, 148, 133)>
+  [650] setobjprop 619 .......................... params.energyBarColour = rgb(92, 148, 133)
+  [653] getparam 2 .............................. <params>
+  [655] pushcons 21 ............................. <"spi">
+  [657] setobjprop 35 ........................... params.name = "spi"
+  [659] getparam 2 .............................. <params>
+  [661] pushint8 10 ............................. <10>
+  [663] setobjprop 624 .......................... params.rotationSpeed = 10
+  [666] getparam 2 .............................. <params>
+  [668] pushcons 20 ............................. <0.10000000000000001>
+  [670] setobjprop 603 .......................... params.weight = 0.10000000000000001
+  [673] getparam 2 .............................. <params>
+  [675] pushcons 12 ............................. <0.20000000000000001>
+  [677] setobjprop 613 .......................... params.walkAcceleration = 0.20000000000000001
+  [680] pop 1 ................................... end case
+  [682] getparam 2 .............................. <params>
+  [684] pusharglistnoret 1 ...................... <params>
+  [686] extcall 12 .............................. return params
+  [688] ret
+end
+
+on setParamsWeapon me, weaponType, params
+  [  0] getparam 2 .............................. <params>
+  [  2] pushsymb 626 ............................ <#weapon>
+  [  5] setobjprop 601 .......................... params.character = #weapon
+  [  8] getparam 2 .............................. <params>
+  [ 10] pushint8 4 .............................. <4>
+  [ 12] setobjprop 627 .......................... params.minCollisionSpeed = 4
+  [ 15] getparam 2 .............................. <params>
+  [ 17] getobjprop 82 ........................... <params.attack>
+  [ 19] setlocal 0 .............................. a = params.attack
+  [ 21] getparam 1 .............................. <weaponType>
+  [ 23] peek 0 .................................. case weaponType of
+  [ 25] pushsymb 561 ............................ <#pugelstick>
+  [ 28] eq
+  [ 29] jmpifz [ 79] ............................ (case) #pugelstick:
+  [ 32] getparam 2 .............................. <params>
+  [ 34] pushcons 22 ............................. <"pug">
+  [ 36] setobjprop 35 ........................... params.name = "pug"
+  [ 38] getlocal 0 .............................. <a>
+  [ 40] pushint8 40 ............................. <40>
+  [ 42] pushzero ................................ <0>
+  [ 43] pusharglist 2 ........................... <40, 0>
+  [ 45] extcall 99 .............................. <point(40, 0)>
+  [ 47] setobjprop 98 ........................... a.collisionLoc = point(40, 0)
+  [ 49] getlocal 0 .............................. <a>
+  [ 51] pushint8 42 ............................. <42>
+  [ 53] pushzero ................................ <0>
+  [ 54] pusharglist 2 ........................... <42, 0>
+  [ 56] extcall 99 .............................. <point(42, 0)>
+  [ 58] setobjprop 104 .......................... a.reach = point(42, 0)
+  [ 60] getlocal 0 .............................. <a>
+  [ 62] pushint8 4 .............................. <4>
+  [ 64] pushfloat32 1.5 ......................... <1.5>
+  [ 69] inv ..................................... <-1.5>
+  [ 70] pusharglist 2 ........................... <4, -1.5>
+  [ 72] extcall 99 .............................. <point(4, -1.5)>
+  [ 74] setobjprop 103 .......................... a.power = point(4, -1.5)
+  [ 76] jmp [364]
+  [ 79] peek 0
+  [ 81] pushsymb 558 ............................ <#fryingPan>
+  [ 84] eq
+  [ 85] jmpifz [135] ............................ (case) #fryingPan:
+  [ 88] getparam 2 .............................. <params>
+  [ 90] pushcons 23 ............................. <"pan">
+  [ 92] setobjprop 35 ........................... params.name = "pan"
+  [ 94] getlocal 0 .............................. <a>
+  [ 96] pushint8 25 ............................. <25>
+  [ 98] pushzero ................................ <0>
+  [ 99] pusharglist 2 ........................... <25, 0>
+  [101] extcall 99 .............................. <point(25, 0)>
+  [103] setobjprop 98 ........................... a.collisionLoc = point(25, 0)
+  [105] getlocal 0 .............................. <a>
+  [107] pushint8 27 ............................. <27>
+  [109] pushzero ................................ <0>
+  [110] pusharglist 2 ........................... <27, 0>
+  [112] extcall 99 .............................. <point(27, 0)>
+  [114] setobjprop 104 .......................... a.reach = point(27, 0)
+  [116] getlocal 0 .............................. <a>
+  [118] pushint8 3 .............................. <3>
+  [120] pushfloat32 0.5 ......................... <0.5>
+  [125] inv ..................................... <-0.5>
+  [126] pusharglist 2 ........................... <3, -0.5>
+  [128] extcall 99 .............................. <point(3, -0.5)>
+  [130] setobjprop 103 .......................... a.power = point(3, -0.5)
+  [132] jmp [364]
+  [135] peek 0
+  [137] pushsymb 560 ............................ <#paddle>
+  [140] eq
+  [141] jmpifz [188] ............................ (case) #paddle:
+  [144] getparam 2 .............................. <params>
+  [146] pushcons 24 ............................. <"pad">
+  [148] setobjprop 35 ........................... params.name = "pad"
+  [150] getlocal 0 .............................. <a>
+  [152] pushint8 70 ............................. <70>
+  [154] pushzero ................................ <0>
+  [155] pusharglist 2 ........................... <70, 0>
+  [157] extcall 99 .............................. <point(70, 0)>
+  [159] setobjprop 98 ........................... a.collisionLoc = point(70, 0)
+  [161] getlocal 0 .............................. <a>
+  [163] pushint8 72 ............................. <72>
+  [165] pushzero ................................ <0>
+  [166] pusharglist 2 ........................... <72, 0>
+  [168] extcall 99 .............................. <point(72, 0)>
+  [170] setobjprop 104 .......................... a.reach = point(72, 0)
+  [172] getlocal 0 .............................. <a>
+  [174] pushint8 5 .............................. <5>
+  [176] pushint8 1 .............................. <1>
+  [178] inv ..................................... <-1>
+  [179] pusharglist 2 ........................... <5, -1>
+  [181] extcall 99 .............................. <point(5, -1)>
+  [183] setobjprop 103 .......................... a.power = point(5, -1)
+  [185] jmp [364]
+  [188] peek 0
+  [190] pushsymb 564 ............................ <#scissors>
+  [193] eq
+  [194] jmpifz [250] ............................ (case) #scissors:
+  [197] getparam 2 .............................. <params>
+  [199] pushcons 25 ............................. <"sci">
+  [201] setobjprop 35 ........................... params.name = "sci"
+  [203] getlocal 0 .............................. <a>
+  [205] pushint8 58 ............................. <58>
+  [207] pushint8 7 .............................. <7>
+  [209] inv ..................................... <-7>
+  [210] pusharglist 2 ........................... <58, -7>
+  [212] extcall 99 .............................. <point(58, -7)>
+  [214] setobjprop 98 ........................... a.collisionLoc = point(58, -7)
+  [216] getlocal 0 .............................. <a>
+  [218] pushint8 1 .............................. <1>
+  [220] setobjprop 102 .......................... a.cutHair = 1
+  [222] getlocal 0 .............................. <a>
+  [224] pushint8 70 ............................. <70>
+  [226] pushint8 10 ............................. <10>
+  [228] pusharglist 2 ........................... <70, 10>
+  [230] extcall 99 .............................. <point(70, 10)>
+  [232] setobjprop 104 .......................... a.reach = point(70, 10)
+  [234] getlocal 0 .............................. <a>
+  [236] pushint8 2 .............................. <2>
+  [238] pushint8 2 .............................. <2>
+  [240] inv ..................................... <-2>
+  [241] pusharglist 2 ........................... <2, -2>
+  [243] extcall 99 .............................. <point(2, -2)>
+  [245] setobjprop 103 .......................... a.power = point(2, -2)
+  [247] jmp [364]
+  [250] peek 0
+  [252] pushsymb 562 ............................ <#spade>
+  [255] eq
+  [256] jmpifz [306] ............................ (case) #spade:
+  [259] getparam 2 .............................. <params>
+  [261] pushcons 26 ............................. <"spd">
+  [263] setobjprop 35 ........................... params.name = "spd"
+  [265] getlocal 0 .............................. <a>
+  [267] pushint8 35 ............................. <35>
+  [269] pushzero ................................ <0>
+  [270] pusharglist 2 ........................... <35, 0>
+  [272] extcall 99 .............................. <point(35, 0)>
+  [274] setobjprop 98 ........................... a.collisionLoc = point(35, 0)
+  [276] getlocal 0 .............................. <a>
+  [278] pushint8 37 ............................. <37>
+  [280] pushzero ................................ <0>
+  [281] pusharglist 2 ........................... <37, 0>
+  [283] extcall 99 .............................. <point(37, 0)>
+  [285] setobjprop 104 .......................... a.reach = point(37, 0)
+  [287] getlocal 0 .............................. <a>
+  [289] pushfloat32 4.5 ......................... <4.5>
+  [294] pushint8 2 .............................. <2>
+  [296] inv ..................................... <-2>
+  [297] pusharglist 2 ........................... <4.5, -2>
+  [299] extcall 99 .............................. <point(4.5, -2)>
+  [301] setobjprop 103 .......................... a.power = point(4.5, -2)
+  [303] jmp [364]
+  [306] peek 0
+  [308] pushsymb 563 ............................ <#sword>
+  [311] eq
+  [312] jmpifz [364] ............................ (case) #sword:
+  [315] getparam 2 .............................. <params>
+  [317] pushcons 27 ............................. <"swd">
+  [319] setobjprop 35 ........................... params.name = "swd"
+  [321] getlocal 0 .............................. <a>
+  [323] pushint8 60 ............................. <60>
+  [325] pushint8 10 ............................. <10>
+  [327] pusharglist 2 ........................... <60, 10>
+  [329] extcall 99 .............................. <point(60, 10)>
+  [331] setobjprop 98 ........................... a.collisionLoc = point(60, 10)
+  [333] getlocal 0 .............................. <a>
+  [335] pushint8 1 .............................. <1>
+  [337] setobjprop 102 .......................... a.cutHair = 1
+  [339] getlocal 0 .............................. <a>
+  [341] pushint8 80 ............................. <80>
+  [343] pushint8 10 ............................. <10>
+  [345] pusharglist 2 ........................... <80, 10>
+  [347] extcall 99 .............................. <point(80, 10)>
+  [349] setobjprop 104 .......................... a.reach = point(80, 10)
+  [351] getlocal 0 .............................. <a>
+  [353] pushint8 8 .............................. <8>
+  [355] pushint8 2 .............................. <2>
+  [357] inv ..................................... <-2>
+  [358] pusharglist 2 ........................... <8, -2>
+  [360] extcall 99 .............................. <point(8, -2)>
+  [362] setobjprop 103 .......................... a.power = point(8, -2)
+  [364] pop 1 ................................... end case
+  [366] getparam 2 .............................. <params>
+  [368] pusharglistnoret 1 ...................... <params>
+  [370] extcall 12 .............................. return params
+  [372] ret
+end
+
+on getPlayer me
+  [  0] getprop 549 ............................. <pPlayer>
+  [  3] pusharglistnoret 1 ...................... <pPlayer>
+  [  5] extcall 12 .............................. return pPlayer
+  [  7] ret
+end
+
+on stop me
+  [  0] ret
+end

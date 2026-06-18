@@ -1,0 +1,42 @@
+on CastChangeLinkLocation theCast, newURL
+  [  0] getparam 0 .............................. <theCast>
+  [  2] pushint8 2 .............................. <2>
+  [  4] get 8 ................................... <the number of castMembers of castLib theCast>
+  [  6] setlocal 0 .............................. nummem = the number of castMembers of castLib theCast
+  [  8] pushint8 1 .............................. <1>
+  [ 10] setlocal 1
+  [ 12] getlocal 1
+  [ 14] getlocal 0 .............................. <nummem>
+  [ 16] lteq
+  [ 17] jmpifz [ 76] ............................ repeat with i = 1 to nummem
+  [ 20] getlocal 1 .............................. <i>
+  [ 22] getparam 0 .............................. <theCast>
+  [ 24] pusharglist 2 ........................... <i, theCast>
+  [ 26] extcall 1 ............................... <member(i, theCast)>
+  [ 28] setlocal 2 .............................. nMem = member(i, theCast)
+  [ 30] getlocal 2 .............................. <nMem>
+  [ 32] getobjprop 3 ............................ <nMem.fileName>
+  [ 34] pushcons 0 .............................. <EMPTY>
+  [ 36] eq ...................................... <nMem.fileName = EMPTY>
+  [ 37] jmpifz [ 43] ............................ if nMem.fileName = EMPTY then
+  [ 40] jmp [ 67] ............................... next repeat
+  [ 43] getparam 1 .............................. <newURL>
+  [ 45] getlocal 2 .............................. <nMem>
+  [ 47] getobjprop 18 ........................... <nMem.name>
+  [ 49] joinstr ................................. <newURL & nMem.name>
+  [ 50] pushcons 1 .............................. <".ls">
+  [ 52] joinstr ................................. <newURL & nMem.name & ".ls">
+  [ 53] setlocal 3 .............................. newFileName = newURL & nMem.name & ".ls"
+  [ 55] getlocal 3 .............................. <newFileName>
+  [ 57] pusharglistnoret 1 ...................... <newFileName>
+  [ 59] extcall 19 .............................. put newFileName
+  [ 61] getlocal 2 .............................. <nMem>
+  [ 63] getlocal 3 .............................. <newFileName>
+  [ 65] setobjprop 3 ............................ nMem.fileName = newFileName
+  [ 67] pushint8 1
+  [ 69] getlocal 1
+  [ 71] add
+  [ 72] setlocal 1
+  [ 74] endrepeat [ 12]
+  [ 76] ret
+end

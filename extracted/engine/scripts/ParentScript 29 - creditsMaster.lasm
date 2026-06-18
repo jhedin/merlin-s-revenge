@@ -1,0 +1,311 @@
+property pCreditsMember, pCreditsText, pCreditsURL, pLoadingMember, pLoadingTransBlend, pNetRequest, pTextScroller, pTextCreditsDefaultMember
+global g, gCreditsPage
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 3 ............................... return me
+  [  6] ret
+end
+
+on init me
+  [  0] pushcons 0 .............................. <"CreditsFull">
+  [  2] pushcons 1 .............................. <"gfx">
+  [  4] pusharglist 2 ........................... <"CreditsFull", "gfx">
+  [  6] extcall 193 ............................. <member("CreditsFull", "gfx")>
+  [  8] setprop 1327 ............................ pCreditsMember = member("CreditsFull", "gfx")
+  [ 11] getprop 1327 ............................ <pCreditsMember>
+  [ 14] pushcons 2 .............................. <EMPTY>
+  [ 16] setobjprop 392 .......................... pCreditsMember.text = EMPTY
+  [ 19] pushsymb 103 ............................ <#none>
+  [ 21] setprop 1328 ............................ pCreditsText = #none
+  [ 24] getglobal 1330 .......................... <gCreditsPage>
+  [ 27] pusharglist 1 ........................... <gCreditsPage>
+  [ 29] extcall 1310 ............................ <URLOfPage(gCreditsPage)>
+  [ 32] setprop 1329 ............................ pCreditsURL = URLOfPage(gCreditsPage)
+  [ 35] pushcons 3 .............................. <"CreditsLoading">
+  [ 37] pushcons 1 .............................. <"gfx">
+  [ 39] pusharglist 2 ........................... <"CreditsLoading", "gfx">
+  [ 41] extcall 193 ............................. <member("CreditsLoading", "gfx")>
+  [ 43] setprop 1331 ............................ pLoadingMember = member("CreditsLoading", "gfx")
+  [ 46] pushsymb 103 ............................ <#none>
+  [ 48] setprop 1332 ............................ pLoadingTransBlend = #none
+  [ 51] pushsymb 103 ............................ <#none>
+  [ 53] setprop 1309 ............................ pNetRequest = #none
+  [ 56] pushsymb 103 ............................ <#none>
+  [ 58] setprop 1333 ............................ pTextScroller = #none
+  [ 61] pushcons 4 .............................. <"txt_credits">
+  [ 63] pushcons 1 .............................. <"gfx">
+  [ 65] pusharglist 2 ........................... <"txt_credits", "gfx">
+  [ 67] extcall 193 ............................. <member("txt_credits", "gfx")>
+  [ 69] setprop 1334 ............................ pTextCreditsDefaultMember = member("txt_credits", "gfx")
+  [ 72] ret
+end
+
+on finish me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 1319 ............................ me.cancelLoadingTransBlend()
+  [  7] getprop 1309 ............................ <pNetRequest>
+  [ 10] pusharglist 1 ........................... <pNetRequest>
+  [ 12] extcall 350 ............................. <ilk(pNetRequest)>
+  [ 15] pushsymb 388 ............................ <#void>
+  [ 18] nteq .................................... <ilk(pNetRequest) <> #void>
+  [ 19] getprop 1309 ............................ <pNetRequest>
+  [ 22] pushsymb 103 ............................ <#none>
+  [ 24] nteq .................................... <pNetRequest <> #none>
+  [ 25] and ..................................... <(ilk(pNetRequest) <> #void) and (pNetRequest <> #none)>
+  [ 26] jmpifz [ 41] ............................ if (ilk(pNetRequest) <> #void) and (pNetRequest <> #none) then
+  [ 29] getprop 1309 ............................ <pNetRequest>
+  [ 32] pusharglistnoret 1 ...................... <pNetRequest>
+  [ 34] objcall 239 ............................. pNetRequest.finish()
+  [ 36] pushsymb 103 ............................ <#none>
+  [ 38] setprop 1309 ............................ pNetRequest = #none
+  [ 41] getprop 1333 ............................ <pTextScroller>
+  [ 44] pusharglist 1 ........................... <pTextScroller>
+  [ 46] extcall 350 ............................. <ilk(pTextScroller)>
+  [ 49] pushsymb 388 ............................ <#void>
+  [ 52] nteq .................................... <ilk(pTextScroller) <> #void>
+  [ 53] getprop 1333 ............................ <pTextScroller>
+  [ 56] pushsymb 103 ............................ <#none>
+  [ 58] nteq .................................... <pTextScroller <> #none>
+  [ 59] and ..................................... <(ilk(pTextScroller) <> #void) and (pTextScroller <> #none)>
+  [ 60] jmpifz [ 76] ............................ if (ilk(pTextScroller) <> #void) and (pTextScroller <> #none) then
+  [ 63] getprop 1333 ............................ <pTextScroller>
+  [ 66] pusharglistnoret 1 ...................... <pTextScroller>
+  [ 68] objcall 1335 ............................ pTextScroller.cancel()
+  [ 71] pushsymb 103 ............................ <#none>
+  [ 73] setprop 1333 ............................ pTextScroller = #none
+  [ 76] getprop 1327 ............................ <pCreditsMember>
+  [ 79] pusharglist 1 ........................... <pCreditsMember>
+  [ 81] extcall 350 ............................. <ilk(pCreditsMember)>
+  [ 84] pushsymb 388 ............................ <#void>
+  [ 87] nteq .................................... <ilk(pCreditsMember) <> #void>
+  [ 88] jmpifz [ 99] ............................ if ilk(pCreditsMember) <> #void then
+  [ 91] getprop 1327 ............................ <pCreditsMember>
+  [ 94] pushcons 2 .............................. <EMPTY>
+  [ 96] setobjprop 392 .......................... pCreditsMember.text = EMPTY
+  [ 99] ret
+end
+
+on cancelLoadingTransBlend me
+  [  0] getprop 1332 ............................ <pLoadingTransBlend>
+  [  3] pusharglist 1 ........................... <pLoadingTransBlend>
+  [  5] extcall 350 ............................. <ilk(pLoadingTransBlend)>
+  [  8] pushsymb 388 ............................ <#void>
+  [ 11] nteq .................................... <ilk(pLoadingTransBlend) <> #void>
+  [ 12] getprop 1332 ............................ <pLoadingTransBlend>
+  [ 15] pushsymb 103 ............................ <#none>
+  [ 17] nteq .................................... <pLoadingTransBlend <> #none>
+  [ 18] and ..................................... <(ilk(pLoadingTransBlend) <> #void) and (pLoadingTransBlend <> #none)>
+  [ 19] jmpifz [ 35] ............................ if (ilk(pLoadingTransBlend) <> #void) and (pLoadingTransBlend <> #none) then
+  [ 22] getprop 1332 ............................ <pLoadingTransBlend>
+  [ 25] pusharglistnoret 1 ...................... <pLoadingTransBlend>
+  [ 27] objcall 1335 ............................ pLoadingTransBlend.cancel()
+  [ 30] pushsymb 103 ............................ <#none>
+  [ 32] setprop 1332 ............................ pLoadingTransBlend = #none
+  [ 35] ret
+end
+
+on displayCreditsText me
+  [  0] getprop 1327 ............................ <pCreditsMember>
+  [  3] getprop 1328 ............................ <pCreditsText>
+  [  6] setobjprop 392 .......................... pCreditsMember.text = pCreditsText
+  [  9] getprop 1327 ............................ <pCreditsMember>
+  [ 12] pushzero ................................ <0>
+  [ 13] setobjprop 1336 ......................... pCreditsMember.scrollTop = 0
+  [ 16] getglobal 191 ........................... <g>
+  [ 18] getchainedprop 336 ...................... <g.objectMaster>
+  [ 21] pushsymb 1337 ........................... <#objTransTextScroll>
+  [ 24] pusharglist 2 ........................... <g.objectMaster, #objTransTextScroll>
+  [ 26] objcall 338 ............................. <g.objectMaster.requestObject(#objTransTextScroll)>
+  [ 29] setprop 1333 ............................ pTextScroller = g.objectMaster.requestObject(#objTransTextScroll)
+  [ 32] getprop 1333 ............................ <pTextScroller>
+  [ 35] pushsymb 1 .............................. <#init>
+  [ 37] pusharglist 2 ........................... <pTextScroller, #init>
+  [ 39] objcall 339 ............................. <pTextScroller.getParams(#init)>
+  [ 42] setlocal 0 .............................. params = pTextScroller.getParams(#init)
+  [ 44] getlocal 0 .............................. <params>
+  [ 46] getparam 0 .............................. <me>
+  [ 48] setobjprop 236 .......................... params.callingPrg = me
+  [ 50] getlocal 0 .............................. <params>
+  [ 52] pushint8 1 .............................. <1>
+  [ 54] setobjprop 296 .......................... params.speed = 1
+  [ 57] getlocal 0 .............................. <params>
+  [ 59] getglobal 191 ........................... <g>
+  [ 61] getchainedprop 496 ...................... <g.spriteMaster>
+  [ 64] getprop 1327 ............................ <pCreditsMember>
+  [ 67] pusharglist 2 ........................... <g.spriteMaster, pCreditsMember>
+  [ 69] objcall 313 ............................. <g.spriteMaster.getSpriteWithMember(pCreditsMember)>
+  [ 72] setobjprop 344 .......................... params.spr = g.spriteMaster.getSpriteWithMember(pCreditsMember)
+  [ 75] getlocal 0 .............................. <params>
+  [ 77] getprop 1327 ............................ <pCreditsMember>
+  [ 80] getobjprop 326 .......................... <pCreditsMember.height>
+  [ 83] setobjprop 1338 ......................... params.targetValue = pCreditsMember.height
+  [ 86] getprop 1333 ............................ <pTextScroller>
+  [ 89] getlocal 0 .............................. <params>
+  [ 91] pusharglistnoret 2 ...................... <pTextScroller, params>
+  [ 93] objcall 1 ............................... pTextScroller.init(params)
+  [ 95] getprop 1333 ............................ <pTextScroller>
+  [ 98] pusharglistnoret 1 ...................... <pTextScroller>
+  [100] objcall 1339 ............................ pTextScroller.calcStart()
+  [103] ret
+end
+
+on fadeLoadingText me, targetValue
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 1319 ............................ me.cancelLoadingTransBlend()
+  [  7] getglobal 191 ........................... <g>
+  [  9] getchainedprop 496 ...................... <g.spriteMaster>
+  [ 12] getprop 1331 ............................ <pLoadingMember>
+  [ 15] pusharglist 2 ........................... <g.spriteMaster, pLoadingMember>
+  [ 17] objcall 313 ............................. <g.spriteMaster.getSpriteWithMember(pLoadingMember)>
+  [ 20] setlocal 0 .............................. loadingSprite = g.spriteMaster.getSpriteWithMember(pLoadingMember)
+  [ 22] getglobal 191 ........................... <g>
+  [ 24] getchainedprop 336 ...................... <g.objectMaster>
+  [ 27] pushsymb 1340 ........................... <#objTransBlend>
+  [ 30] pusharglist 2 ........................... <g.objectMaster, #objTransBlend>
+  [ 32] objcall 338 ............................. <g.objectMaster.requestObject(#objTransBlend)>
+  [ 35] setprop 1332 ............................ pLoadingTransBlend = g.objectMaster.requestObject(#objTransBlend)
+  [ 38] getprop 1332 ............................ <pLoadingTransBlend>
+  [ 41] pushsymb 1 .............................. <#init>
+  [ 43] pusharglist 2 ........................... <pLoadingTransBlend, #init>
+  [ 45] objcall 339 ............................. <pLoadingTransBlend.getParams(#init)>
+  [ 48] setlocal 1 .............................. params = pLoadingTransBlend.getParams(#init)
+  [ 50] getlocal 1 .............................. <params>
+  [ 52] getparam 0 .............................. <me>
+  [ 54] setobjprop 236 .......................... params.callingPrg = me
+  [ 56] getlocal 1 .............................. <params>
+  [ 58] getlocal 0 .............................. <loadingSprite>
+  [ 60] setobjprop 344 .......................... params.spr = loadingSprite
+  [ 63] getlocal 1 .............................. <params>
+  [ 65] getparam 1 .............................. <targetValue>
+  [ 67] setobjprop 1338 ......................... params.targetValue = targetValue
+  [ 70] getprop 1332 ............................ <pLoadingTransBlend>
+  [ 73] getlocal 1 .............................. <params>
+  [ 75] pusharglistnoret 2 ...................... <pLoadingTransBlend, params>
+  [ 77] objcall 1 ............................... pLoadingTransBlend.init(params)
+  [ 79] getprop 1332 ............................ <pLoadingTransBlend>
+  [ 82] pusharglistnoret 1 ...................... <pLoadingTransBlend>
+  [ 84] objcall 1339 ............................ pLoadingTransBlend.calcStart()
+  [ 87] ret
+end
+
+on fadeDownLoadingText me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushint8 1 .............................. <1>
+  [  4] pusharglistnoret 2 ...................... <me, 1>
+  [  6] objcall 1321 ............................ me.fadeLoadingText(1)
+  [  9] ret
+end
+
+on fadeUpLoadingText me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushint8 100 ............................ <100>
+  [  4] pusharglistnoret 2 ...................... <me, 100>
+  [  6] objcall 1321 ............................ me.fadeLoadingText(100)
+  [  9] ret
+end
+
+on netRequestFinished me, theObj, theText
+  [  0] getparam 1 .............................. <theObj>
+  [  2] getprop 1309 ............................ <pNetRequest>
+  [  5] eq ...................................... <theObj = pNetRequest>
+  [  6] jmpifz [ 28] ............................ if theObj = pNetRequest then
+  [  9] getparam 2 .............................. <theText>
+  [ 11] setprop 1328 ............................ pCreditsText = theText
+  [ 14] getparam 0 .............................. <me>
+  [ 16] pusharglistnoret 1 ...................... <me>
+  [ 18] objcall 1320 ............................ me.displayCreditsText()
+  [ 21] getparam 0 .............................. <me>
+  [ 23] pusharglistnoret 1 ...................... <me>
+  [ 25] objcall 1322 ............................ me.fadeDownLoadingText()
+  [ 28] ret
+end
+
+on requestCreditsText me
+  [  0] getprop 1334 ............................ <pTextCreditsDefaultMember>
+  [  3] pushint8 1 .............................. <1>
+  [  5] inv ..................................... <-1>
+  [  6] pushint8 1 .............................. <1>
+  [  8] pusharglist 2 ........................... <-1, 1>
+  [ 10] extcall 193 ............................. <member(-1, 1)>
+  [ 12] nteq .................................... <pTextCreditsDefaultMember <> member(-1, 1)>
+  [ 13] getprop 1334 ............................ <pTextCreditsDefaultMember>
+  [ 16] pushsymb 103 ............................ <#none>
+  [ 18] nteq .................................... <pTextCreditsDefaultMember <> #none>
+  [ 19] and ..................................... <(pTextCreditsDefaultMember <> member(-1, 1)) and (pTextCreditsDefaultMember <> #none)>
+  [ 20] jmpifz [ 43] ............................ if (pTextCreditsDefaultMember <> member(-1, 1)) and (pTextCreditsDefaultMember <> #none) then
+  [ 23] getprop 1334 ............................ <pTextCreditsDefaultMember>
+  [ 26] getobjprop 392 .......................... <pTextCreditsDefaultMember.text>
+  [ 29] setprop 1328 ............................ pCreditsText = pTextCreditsDefaultMember.text
+  [ 32] getparam 0 .............................. <me>
+  [ 34] pusharglistnoret 1 ...................... <me>
+  [ 36] objcall 1320 ............................ me.displayCreditsText()
+  [ 39] pusharglistnoret 0 ...................... <>
+  [ 41] extcall 3 ............................... return 
+  [ 43] getprop 1309 ............................ <pNetRequest>
+  [ 46] pushsymb 103 ............................ <#none>
+  [ 48] eq ...................................... <pNetRequest = #none>
+  [ 49] jmpifz [110] ............................ if pNetRequest = #none then
+  [ 52] getglobal 191 ........................... <g>
+  [ 54] getchainedprop 336 ...................... <g.objectMaster>
+  [ 57] pushsymb 1317 ........................... <#objNetRequest>
+  [ 60] pusharglist 2 ........................... <g.objectMaster, #objNetRequest>
+  [ 62] objcall 338 ............................. <g.objectMaster.requestObject(#objNetRequest)>
+  [ 65] setprop 1309 ............................ pNetRequest = g.objectMaster.requestObject(#objNetRequest)
+  [ 68] getprop 1309 ............................ <pNetRequest>
+  [ 71] pushsymb 1 .............................. <#init>
+  [ 73] pusharglist 2 ........................... <pNetRequest, #init>
+  [ 75] objcall 339 ............................. <pNetRequest.getParams(#init)>
+  [ 78] setlocal 0 .............................. params = pNetRequest.getParams(#init)
+  [ 80] getlocal 0 .............................. <params>
+  [ 82] getparam 0 .............................. <me>
+  [ 84] setobjprop 236 .......................... params.callingPrg = me
+  [ 86] getlocal 0 .............................. <params>
+  [ 88] getprop 1329 ............................ <pCreditsURL>
+  [ 91] setobjprop 1318 ......................... params.requestURL = pCreditsURL
+  [ 94] getprop 1309 ............................ <pNetRequest>
+  [ 97] getlocal 0 .............................. <params>
+  [ 99] pusharglistnoret 2 ...................... <pNetRequest, params>
+  [101] objcall 1 ............................... pNetRequest.init(params)
+  [103] getparam 0 .............................. <me>
+  [105] pusharglistnoret 1 ...................... <me>
+  [107] objcall 1323 ............................ me.fadeUpLoadingText()
+  [110] ret
+end
+
+on start me
+  [  0] getprop 1328 ............................ <pCreditsText>
+  [  3] pushsymb 103 ............................ <#none>
+  [  5] nteq .................................... <pCreditsText <> #none>
+  [  6] jmpifz [ 19] ............................ if pCreditsText <> #none then / else
+  [  9] getparam 0 .............................. <me>
+  [ 11] pusharglistnoret 1 ...................... <me>
+  [ 13] objcall 1320 ............................ me.displayCreditsText()
+  [ 16] jmp [ 26]
+  [ 19] getparam 0 .............................. <me>
+  [ 21] pusharglistnoret 1 ...................... <me>
+  [ 23] objcall 1324 ............................ me.requestCreditsText()
+  [ 26] ret
+end
+
+on stop me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 239 ............................. me.finish()
+  [  6] ret
+end
+
+on transBlendFin me
+  [  0] pushsymb 103 ............................ <#none>
+  [  2] setprop 1332 ............................ pLoadingTransBlend = #none
+  [  5] ret
+end
+
+on transTextScrollFin me
+  [  0] pushsymb 103 ............................ <#none>
+  [  2] setprop 1333 ............................ pTextScroller = #none
+  [  5] ret
+end

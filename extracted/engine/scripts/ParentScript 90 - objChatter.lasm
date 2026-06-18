@@ -1,0 +1,162 @@
+property ancestor, pPerformed, pScriptToPerform, pTalkingMember, pTalkOnlyOnNavMode, pWaitingMember
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"objPowerUp">
+  [  2] pusharglist 1 ........................... <"objPowerUp">
+  [  4] extcall 34 .............................. <script("objPowerUp")>
+  [  6] pusharglist 1 ........................... <script("objPowerUp")>
+  [  8] extcall 0 ............................... <new(script("objPowerUp"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objPowerUp"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] getchainedprop 1477 ..................... <i.flags>
+  [ 27] pushsymb 1478 ........................... <#player>
+  [ 30] pusharglistnoret 2 ...................... <i.flags, #player>
+  [ 32] objcall 256 ............................. i.flags.append(#player)
+  [ 35] getlocal 0 .............................. <i>
+  [ 37] pushsymb 2227 ........................... <#scriptToPerform>
+  [ 40] pushsymb 49 ............................. <#none>
+  [ 42] pusharglistnoret 3 ...................... <i, #scriptToPerform, #none>
+  [ 44] objcall 48 .............................. i[#scriptToPerform] = #none
+  [ 46] getlocal 0 .............................. <i>
+  [ 48] pushsymb 2228 ........................... <#talkingMember>
+  [ 51] pushsymb 49 ............................. <#none>
+  [ 53] pusharglistnoret 3 ...................... <i, #talkingMember, #none>
+  [ 55] objcall 48 .............................. i[#talkingMember] = #none
+  [ 57] getlocal 0 .............................. <i>
+  [ 59] pushsymb 1788 ........................... <#talkOnlyOnNavMode>
+  [ 62] pushint8 1 .............................. <1>
+  [ 64] pusharglistnoret 3 ...................... <i, #talkOnlyOnNavMode, 1>
+  [ 66] objcall 48 .............................. i[#talkOnlyOnNavMode] = 1
+  [ 68] getparam 0 .............................. <me>
+  [ 70] pushcons 1 .............................. <"modProp">
+  [ 72] pusharglistnoret 2 ...................... <me, "modProp">
+  [ 74] objcall 1717 ............................ me.addModule("modProp")
+  [ 77] getparam 0 .............................. <me>
+  [ 79] pushcons 2 .............................. <"modThespian">
+  [ 81] pusharglistnoret 2 ...................... <me, "modThespian">
+  [ 83] objcall 1717 ............................ me.addModule("modThespian")
+  [ 86] getparam 0 .............................. <me>
+  [ 88] pusharglistnoret 1 ...................... <me>
+  [ 90] extcall 35 .............................. return me
+  [ 92] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 2227 ......................... <params.scriptToPerform>
+  [ 13] setprop 2229 ............................ pScriptToPerform = params.scriptToPerform
+  [ 16] getparam 1 .............................. <params>
+  [ 18] getobjprop 2228 ......................... <params.talkingMember>
+  [ 21] setprop 2230 ............................ pTalkingMember = params.talkingMember
+  [ 24] getparam 1 .............................. <params>
+  [ 26] getobjprop 1788 ......................... <params.talkOnlyOnNavMode>
+  [ 29] setprop 2231 ............................ pTalkOnlyOnNavMode = params.talkOnlyOnNavMode
+  [ 32] getparam 1 .............................. <params>
+  [ 34] getobjprop 99 ........................... <params.member>
+  [ 36] setprop 2232 ............................ pWaitingMember = params.member
+  [ 39] pushzero ................................ <0>
+  [ 40] setprop 2233 ............................ pPerformed = 0
+  [ 43] ret
+end
+
+on checkDead me
+  [  0] pushzero ................................ <0>
+  [  1] pusharglistnoret 1 ...................... <0>
+  [  3] extcall 35 .............................. return 0
+  [  5] ret
+end
+
+on collected me
+  [  0] getprop 2233 ............................ <pPerformed>
+  [  3] pushzero ................................ <0>
+  [  4] eq ...................................... <pPerformed = 0>
+  [  5] jmpifz [ 48] ............................ if pPerformed = 0 then / else
+  [  8] getparam 0 .............................. <me>
+  [ 10] pushsymb 2234 ........................... <#talking>
+  [ 13] pusharglistnoret 2 ...................... <me, #talking>
+  [ 15] objcall 278 ............................. me.goMode(#talking)
+  [ 18] getprop 2229 ............................ <pScriptToPerform>
+  [ 21] pushsymb 49 ............................. <#none>
+  [ 23] nteq .................................... <pScriptToPerform <> #none>
+  [ 24] jmpifz [ 40] ............................ if pScriptToPerform <> #none then
+  [ 27] getglobal 40 ............................ <g>
+  [ 29] getchainedprop 1032 ..................... <g.cutSceneMaster>
+  [ 32] getprop 2229 ............................ <pScriptToPerform>
+  [ 35] pusharglistnoret 2 ...................... <g.cutSceneMaster, pScriptToPerform>
+  [ 37] objcall 2235 ............................ g.cutSceneMaster.playCutScene(pScriptToPerform)
+  [ 40] pushint8 1 .............................. <1>
+  [ 42] setprop 2233 ............................ pPerformed = 1
+  [ 45] jmp [ 70]
+  [ 48] getparam 0 .............................. <me>
+  [ 50] getobjprop 312 .......................... <me.pmode>
+  [ 53] pushsymb 2234 ........................... <#talking>
+  [ 56] eq ...................................... <me.pmode = #talking>
+  [ 57] jmpifz [ 70] ............................ if me.pmode = #talking then
+  [ 60] getparam 0 .............................. <me>
+  [ 62] pushsymb 2236 ........................... <#finishedTalking>
+  [ 65] pusharglistnoret 2 ...................... <me, #finishedTalking>
+  [ 67] objcall 278 ............................. me.goMode(#finishedTalking)
+  [ 70] ret
+end
+
+on getEnergy me
+  [  0] pushint8 10 ............................. <10>
+  [  2] pusharglistnoret 1 ...................... <10>
+  [  4] extcall 35 .............................. return 10
+  [  6] ret
+end
+
+on getMaxEnergy me
+  [  0] pushint8 10 ............................. <10>
+  [  2] pusharglistnoret 1 ...................... <10>
+  [  4] extcall 35 .............................. return 10
+  [  6] ret
+end
+
+on getTalkOnlyOnNavMode me
+  [  0] getprop 2231 ............................ <pTalkOnlyOnNavMode>
+  [  3] pusharglistnoret 1 ...................... <pTalkOnlyOnNavMode>
+  [  5] extcall 35 .............................. return pTalkOnlyOnNavMode
+  [  7] ret
+end
+
+on goMode me, newMode
+  [  0] getparam 1 .............................. <newMode>
+  [  2] peek 0 .................................. case newMode of
+  [  4] pushsymb 2234 ........................... <#talking>
+  [  7] eq
+  [  8] jmpifz [ 33] ............................ (case) #talking:
+  [ 11] getprop 2230 ............................ <pTalkingMember>
+  [ 14] pushsymb 49 ............................. <#none>
+  [ 16] nteq .................................... <pTalkingMember <> #none>
+  [ 17] jmpifz [ 30] ............................ if pTalkingMember <> #none then
+  [ 20] getparam 0 .............................. <me>
+  [ 22] getprop 2230 ............................ <pTalkingMember>
+  [ 25] pusharglistnoret 2 ...................... <me, pTalkingMember>
+  [ 27] objcall 2237 ............................ me.setMember(pTalkingMember)
+  [ 30] jmp [ 52]
+  [ 33] peek 0
+  [ 35] pushsymb 2236 ........................... <#finishedTalking>
+  [ 38] eq
+  [ 39] jmpifz [ 52] ............................ (case) #finishedTalking:
+  [ 42] getparam 0 .............................. <me>
+  [ 44] getprop 2232 ............................ <pWaitingMember>
+  [ 47] pusharglistnoret 2 ...................... <me, pWaitingMember>
+  [ 49] objcall 2237 ............................ me.setMember(pWaitingMember)
+  [ 52] pop 1 ................................... end case
+  [ 54] getprop 33 .............................. <ancestor>
+  [ 56] getparam 1 .............................. <newMode>
+  [ 58] pusharglistnoret 2 ...................... <ancestor, newMode>
+  [ 60] objcall 278 ............................. ancestor.goMode(newMode)
+  [ 63] ret
+end

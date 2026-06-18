@@ -1,0 +1,69 @@
+property ancestor, pSpr
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushcons 0 .............................. <"objTransformer">
+  [  4] pusharglist 1 ........................... <"objTransformer">
+  [  6] extcall 34 .............................. <script("objTransformer")>
+  [  8] pusharglist 1 ........................... <script("objTransformer")>
+  [ 10] extcall 0 ............................... <new(script("objTransformer"))>
+  [ 12] setobjprop 33 ........................... me.ancestor = new(script("objTransformer"))
+  [ 14] getparam 0 .............................. <me>
+  [ 16] pushsymb 1 .............................. <#init>
+  [ 18] pusharglist 2 ........................... <me, #init>
+  [ 20] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 22] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 24] getlocal 0 .............................. <i>
+  [ 26] pushsymb 267 ............................ <#spr>
+  [ 29] pushsymb 49 ............................. <#none>
+  [ 31] pusharglistnoret 3 ...................... <i, #spr, #none>
+  [ 33] objcall 48 .............................. i[#spr] = #none
+  [ 35] getparam 0 .............................. <me>
+  [ 37] pusharglistnoret 1 ...................... <me>
+  [ 39] extcall 35 .............................. return me
+  [ 41] ret
+end
+
+on init me, params
+  [  0] getparam 1 .............................. <params>
+  [  2] getobjprop 267 .......................... <params.spr>
+  [  5] setprop 173 ............................. pSpr = params.spr
+  [  7] getparam 1 .............................. <params>
+  [  9] getprop 173 ............................. <pSpr>
+  [ 11] getchainedprop 99 ....................... <pSpr.member>
+  [ 13] getobjprop 3918 ......................... <pSpr.member.scrollTop>
+  [ 16] setobjprop 1391 ......................... params.initialValue = pSpr.member.scrollTop
+  [ 19] getparam 0 .............................. <me>
+  [ 21] getchainedprop 33 ....................... <me.ancestor>
+  [ 23] getparam 1 .............................. <params>
+  [ 25] pusharglistnoret 2 ...................... <me.ancestor, params>
+  [ 27] objcall 1 ............................... me.ancestor.init(params)
+  [ 29] ret
+end
+
+on informCallingPrg me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 4053 ............................ <me.getCallingPrg()>
+  [  7] setlocal 0 .............................. callingPrg = me.getCallingPrg()
+  [  9] getlocal 0 .............................. <callingPrg>
+  [ 11] pushsymb 49 ............................. <#none>
+  [ 13] nteq .................................... <callingPrg <> #none>
+  [ 14] jmpifz [ 30] ............................ if callingPrg <> #none then
+  [ 17] getlocal 0 .............................. <callingPrg>
+  [ 19] getparam 0 .............................. <me>
+  [ 21] getchainedprop 57 ....................... <me.id>
+  [ 23] getobjprop 58 ........................... <me.id.bigMe>
+  [ 25] pusharglistnoret 2 ...................... <callingPrg, me.id.bigMe>
+  [ 27] objcall 4074 ............................ callingPrg.transTextScrollFin(me.id.bigMe)
+  [ 30] ret
+end
+
+on updateAttribute me
+  [  0] getprop 173 ............................. <pSpr>
+  [  2] getchainedprop 99 ....................... <pSpr.member>
+  [  4] getparam 0 .............................. <me>
+  [  6] getobjprop 4055 ......................... <me.pCurr>
+  [  9] setobjprop 3918 ......................... pSpr.member.scrollTop = me.pCurr
+  [ 12] ret
+end

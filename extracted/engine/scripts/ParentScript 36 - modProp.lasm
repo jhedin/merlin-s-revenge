@@ -1,0 +1,527 @@
+property ancestor, pBeProducedSpeed, pBePutAwaySpeed, pPropCarried, pPropCarrier, pPropCarryLoc, pPropDropFriction, pPropDropSpeed, pPropExitStageSpeed, pPropMode, pPropProducedStartSize, pPropPutAwayEndSize, pPropStatus
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getlocal 0 .............................. <i>
+  [ 12] pushsymb 995 ............................ <#propCarryLoc>
+  [ 15] pushsymb 49 ............................. <#none>
+  [ 17] pusharglistnoret 3 ...................... <i, #propCarryLoc, #none>
+  [ 19] objcall 48 .............................. i[#propCarryLoc] = #none
+  [ 21] getlocal 0 .............................. <i>
+  [ 23] pushsymb 996 ............................ <#propStatus>
+  [ 26] pushsymb 997 ............................ <#notAProp>
+  [ 29] pusharglistnoret 3 ...................... <i, #propStatus, #notAProp>
+  [ 31] objcall 48 .............................. i[#propStatus] = #notAProp
+  [ 33] getprop 33 .............................. <ancestor>
+  [ 35] pusharglistnoret 1 ...................... <ancestor>
+  [ 37] objcall 2 ............................... ancestor.addModParams()
+  [ 39] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pushint8 1 .............................. <1>
+  [ 10] setprop 998 ............................. pBeProducedSpeed = 1
+  [ 13] pushint8 1 .............................. <1>
+  [ 15] setprop 999 ............................. pBePutAwaySpeed = 1
+  [ 18] getparam 1 .............................. <params>
+  [ 20] getobjprop 995 .......................... <params.propCarryLoc>
+  [ 23] setprop 1000 ............................ pPropCarryLoc = params.propCarryLoc
+  [ 26] pushsymb 49 ............................. <#none>
+  [ 28] setprop 1001 ............................ pPropCarried = #none
+  [ 31] pushsymb 49 ............................. <#none>
+  [ 33] setprop 1002 ............................ pPropCarrier = #none
+  [ 36] pushint8 12 ............................. <12>
+  [ 38] pushint8 12 ............................. <12>
+  [ 40] pusharglist 2 ........................... <12, 12>
+  [ 42] extcall 197 ............................. <point(12, 12)>
+  [ 44] setprop 1003 ............................ pPropDropFriction = point(12, 12)
+  [ 47] pushint8 7 .............................. <7>
+  [ 49] setprop 1004 ............................ pPropDropSpeed = 7
+  [ 52] pushint8 1 .............................. <1>
+  [ 54] setprop 1005 ............................ pPropExitStageSpeed = 1
+  [ 57] pushsymb 49 ............................. <#none>
+  [ 59] setprop 1006 ............................ pPropMode = #none
+  [ 62] pushint8 4 .............................. <4>
+  [ 64] pushint8 4 .............................. <4>
+  [ 66] pusharglist 2 ........................... <4, 4>
+  [ 68] extcall 197 ............................. <point(4, 4)>
+  [ 70] setprop 1007 ............................ pPropProducedStartSize = point(4, 4)
+  [ 73] pushint8 10 ............................. <10>
+  [ 75] pushint8 10 ............................. <10>
+  [ 77] pusharglist 2 ........................... <10, 10>
+  [ 79] extcall 197 ............................. <point(10, 10)>
+  [ 81] setprop 1008 ............................ pPropPutAwayEndSize = point(10, 10)
+  [ 84] getparam 1 .............................. <params>
+  [ 86] getobjprop 996 .......................... <params.propStatus>
+  [ 89] setprop 1009 ............................ pPropStatus = params.propStatus
+  [ 92] ret
+end
+
+on beProducedAsProp me, carrier
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 57 ....................... <me.id>
+  [  4] getobjprop 58 ........................... <me.id.bigMe>
+  [  6] setlocal 0 .............................. bigMe = me.id.bigMe
+  [  8] pushsymb 1010 ........................... <#prop>
+  [ 11] setprop 1009 ............................ pPropStatus = #prop
+  [ 14] getparam 1 .............................. <carrier>
+  [ 16] setprop 1002 ............................ pPropCarrier = carrier
+  [ 19] getlocal 0 .............................. <bigMe>
+  [ 21] pushint8 1 .............................. <1>
+  [ 23] pusharglistnoret 2 ...................... <bigMe, 1>
+  [ 25] objcall 28 .............................. bigMe.setAnimAllowStretching(1)
+  [ 27] getlocal 0 .............................. <bigMe>
+  [ 29] getprop 1007 ............................ <pPropProducedStartSize>
+  [ 32] getobjprop 540 .......................... <pPropProducedStartSize.locV>
+  [ 35] pusharglistnoret 2 ...................... <bigMe, pPropProducedStartSize.locV>
+  [ 37] objcall 1011 ............................ bigMe.setSpriteHeight(pPropProducedStartSize.locV)
+  [ 40] getlocal 0 .............................. <bigMe>
+  [ 42] getprop 1007 ............................ <pPropProducedStartSize>
+  [ 45] getobjprop 539 .......................... <pPropProducedStartSize.locH>
+  [ 48] pusharglistnoret 2 ...................... <bigMe, pPropProducedStartSize.locH>
+  [ 50] objcall 1012 ............................ bigMe.setSpriteWidth(pPropProducedStartSize.locH)
+  [ 53] getparam 0 .............................. <me>
+  [ 55] pushsymb 978 ............................ <#beProducedAsProp>
+  [ 58] pusharglistnoret 2 ...................... <me, #beProducedAsProp>
+  [ 60] objcall 983 ............................. me.goPropMode(#beProducedAsProp)
+  [ 63] getlocal 0 .............................. <bigMe>
+  [ 65] pusharglist 1 ........................... <bigMe>
+  [ 67] objcall 1013 ............................ <bigMe.getMemberSize()>
+  [ 70] setlocal 1 .............................. memberSize = bigMe.getMemberSize()
+  [ 72] getlocal 0 .............................. <bigMe>
+  [ 74] getlocal 1 .............................. <memberSize>
+  [ 76] getobjprop 539 .......................... <memberSize.locH>
+  [ 79] getlocal 1 .............................. <memberSize>
+  [ 81] getobjprop 540 .......................... <memberSize.locV>
+  [ 84] getprop 998 ............................. <pBeProducedSpeed>
+  [ 87] pusharglistnoret 4 ...................... <bigMe, memberSize.locH, memberSize.locV, pBeProducedSpeed>
+  [ 89] objcall 1014 ............................ bigMe.startStretch(memberSize.locH, memberSize.locV, pBeProducedSpeed)
+  [ 92] ret
+end
+
+on bePutAwayAsProp me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 979 ............................ <#bePutAwayAsProp>
+  [  5] pusharglistnoret 2 ...................... <me, #bePutAwayAsProp>
+  [  7] objcall 983 ............................. me.goPropMode(#bePutAwayAsProp)
+  [ 10] getparam 0 .............................. <me>
+  [ 12] getchainedprop 51 ....................... <me.big>
+  [ 14] pushint8 1 .............................. <1>
+  [ 16] pusharglistnoret 2 ...................... <me.big, 1>
+  [ 18] objcall 28 .............................. me.big.setAnimAllowStretching(1)
+  [ 20] getparam 0 .............................. <me>
+  [ 22] getchainedprop 51 ....................... <me.big>
+  [ 24] getprop 1008 ............................ <pPropPutAwayEndSize>
+  [ 27] getobjprop 539 .......................... <pPropPutAwayEndSize.locH>
+  [ 30] getprop 1008 ............................ <pPropPutAwayEndSize>
+  [ 33] getobjprop 540 .......................... <pPropPutAwayEndSize.locV>
+  [ 36] getprop 999 ............................. <pBePutAwaySpeed>
+  [ 39] pusharglistnoret 4 ...................... <me.big, pPropPutAwayEndSize.locH, pPropPutAwayEndSize.locV, pBePutAwaySpeed>
+  [ 41] objcall 1014 ............................ me.big.startStretch(pPropPutAwayEndSize.locH, pPropPutAwayEndSize.locV, pBePutAwaySpeed)
+  [ 44] ret
+end
+
+on carryProp me, theprop
+  [  0] getprop 1001 ............................ <pPropCarried>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] nteq .................................... <pPropCarried <> #none>
+  [  6] jmpifz [ 16] ............................ if pPropCarried <> #none then
+  [  9] getparam 0 .............................. <me>
+  [ 11] pusharglistnoret 1 ...................... <me>
+  [ 13] objcall 981 ............................. me.dropProp()
+  [ 16] getparam 1 .............................. <theprop>
+  [ 18] setprop 1001 ............................ pPropCarried = theprop
+  [ 21] ret
+end
+
+on dropProp me
+  [  0] getprop 1001 ............................ <pPropCarried>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] nteq .................................... <pPropCarried <> #none>
+  [  6] jmpifz [ 60] ............................ if pPropCarried <> #none then
+  [  9] getprop 1001 ............................ <pPropCarried>
+  [ 12] pusharglistnoret 1 ...................... <pPropCarried>
+  [ 14] objcall 986 ............................. pPropCarried.propDropped()
+  [ 17] getparam 0 .............................. <me>
+  [ 19] getchainedprop 51 ....................... <me.big>
+  [ 21] pusharglist 1 ........................... <me.big>
+  [ 23] objcall 1018 ............................ <me.big.getFlipAsDir()>
+  [ 26] getprop 1004 ............................ <pPropDropSpeed>
+  [ 29] mul ..................................... <me.big.getFlipAsDir() * pPropDropSpeed>
+  [ 30] setlocal 0 .............................. xVect = me.big.getFlipAsDir() * pPropDropSpeed
+  [ 32] getprop 1001 ............................ <pPropCarried>
+  [ 35] pusharglistnoret 1 ...................... <pPropCarried>
+  [ 37] objcall 1019 ............................ pPropCarried.resetStallCounter()
+  [ 40] getprop 1001 ............................ <pPropCarried>
+  [ 43] getlocal 0 .............................. <xVect>
+  [ 45] pushzero ................................ <0>
+  [ 46] pusharglist 2 ........................... <xVect, 0>
+  [ 48] extcall 197 ............................. <point(xVect, 0)>
+  [ 50] pusharglistnoret 2 ...................... <pPropCarried, point(xVect, 0)>
+  [ 52] objcall 926 ............................. pPropCarried.setVect(point(xVect, 0))
+  [ 55] pushsymb 49 ............................. <#none>
+  [ 57] setprop 1001 ............................ pPropCarried = #none
+  [ 60] ret
+end
+
+on eventNotification me, theEvent, theObj
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <theEvent>
+  [  4] getparam 2 .............................. <theObj>
+  [  6] pusharglistnoret 3 ...................... <ancestor, theEvent, theObj>
+  [  8] objcall 568 ............................. ancestor.eventNotification(theEvent, theObj)
+  [ 11] getparam 1 .............................. <theEvent>
+  [ 13] peek 0 .................................. case theEvent of
+  [ 15] pushsymb 1021 ........................... <#finishedBeingPutAway>
+  [ 18] eq
+  [ 19] jmpifz [ 52] ............................ (case) #finishedBeingPutAway:
+  [ 22] getparam 2 .............................. <theObj>
+  [ 24] getprop 1001 ............................ <pPropCarried>
+  [ 27] eq ...................................... <theObj = pPropCarried>
+  [ 28] jmpifz [ 52] ............................ if theObj = pPropCarried then
+  [ 31] getprop 1001 ............................ <pPropCarried>
+  [ 34] pusharglistnoret 1 ...................... <pPropCarried>
+  [ 36] objcall 985 ............................. pPropCarried.noLongerCarried()
+  [ 39] getprop 1001 ............................ <pPropCarried>
+  [ 42] pusharglistnoret 1 ...................... <pPropCarried>
+  [ 44] objcall 1022 ............................ pPropCarried.gotoWings()
+  [ 47] pushsymb 49 ............................. <#none>
+  [ 49] setprop 1001 ............................ pPropCarried = #none
+  [ 52] pop 1
+  [ 54] ret
+end
+
+on internalEvent me, theEvent
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <theEvent>
+  [  4] pusharglistnoret 2 ...................... <ancestor, theEvent>
+  [  6] objcall 22 .............................. ancestor.internalEvent(theEvent)
+  [  8] getparam 1 .............................. <theEvent>
+  [ 10] peek 0 .................................. case theEvent of
+  [ 12] pushsymb 1023 ........................... <#stretchFinished>
+  [ 15] eq
+  [ 16] jmpifz [ 44] ............................ (case) #stretchFinished:
+  [ 19] getprop 1006 ............................ <pPropMode>
+  [ 22] peek 0 .................................. case pPropMode of
+  [ 24] pushsymb 979 ............................ <#bePutAwayAsProp>
+  [ 27] eq
+  [ 28] jmpifz [ 42] ............................ (case) #bePutAwayAsProp:
+  [ 31] getparam 0 .............................. <me>
+  [ 33] getchainedprop 51 ....................... <me.big>
+  [ 35] pushsymb 1021 ........................... <#finishedBeingPutAway>
+  [ 38] pusharglistnoret 2 ...................... <me.big, #finishedBeingPutAway>
+  [ 40] objcall 123 ............................. me.big.eventNotify(#finishedBeingPutAway)
+  [ 42] pop 1
+  [ 44] pop 1
+  [ 46] ret
+end
+
+on getPropCarryingLoc me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 57 ....................... <me.id>
+  [  4] getobjprop 58 ........................... <me.id.bigMe>
+  [  6] setlocal 0 .............................. bigMe = me.id.bigMe
+  [  8] getlocal 0 .............................. <bigMe>
+  [ 10] pusharglist 1 ........................... <bigMe>
+  [ 12] objcall 1024 ............................ <bigMe.getSpriteWidth()>
+  [ 15] setlocal 1 .............................. mywidth = bigMe.getSpriteWidth()
+  [ 17] getlocal 0 .............................. <bigMe>
+  [ 19] pusharglist 1 ........................... <bigMe>
+  [ 21] objcall 111 ............................. <bigMe.getLoc()>
+  [ 23] setlocal 2 .............................. myloc = bigMe.getLoc()
+  [ 25] getlocal 0 .............................. <bigMe>
+  [ 27] pusharglist 1 ........................... <bigMe>
+  [ 29] objcall 1018 ............................ <bigMe.getFlipAsDir()>
+  [ 32] setlocal 3 .............................. myDir = bigMe.getFlipAsDir()
+  [ 34] pushzero ................................ <0>
+  [ 35] pushzero ................................ <0>
+  [ 36] pusharglist 2 ........................... <0, 0>
+  [ 38] extcall 197 ............................. <point(0, 0)>
+  [ 40] setlocal 4 .............................. carryLoc = point(0, 0)
+  [ 42] getprop 1000 ............................ <pPropCarryLoc>
+  [ 45] pushsymb 49 ............................. <#none>
+  [ 47] eq ...................................... <pPropCarryLoc = #none>
+  [ 48] jmpifz [ 69] ............................ if pPropCarryLoc = #none then / else
+  [ 51] getlocal 1 .............................. <mywidth>
+  [ 53] pushint8 2 .............................. <2>
+  [ 55] div ..................................... <mywidth / 2>
+  [ 56] getlocal 3 .............................. <myDir>
+  [ 58] mul ..................................... <mywidth / 2 * myDir>
+  [ 59] pushzero ................................ <0>
+  [ 60] pusharglist 2 ........................... <mywidth / 2 * myDir, 0>
+  [ 62] extcall 197 ............................. <point(mywidth / 2 * myDir, 0)>
+  [ 64] setlocal 5 .............................. propCarryLoc = point(mywidth / 2 * myDir, 0)
+  [ 66] jmp [ 91]
+  [ 69] getprop 1000 ............................ <pPropCarryLoc>
+  [ 72] pusharglist 1 ........................... <pPropCarryLoc>
+  [ 74] objcall 175 ............................. <pPropCarryLoc.duplicate()>
+  [ 76] setlocal 5 .............................. propCarryLoc = pPropCarryLoc.duplicate()
+  [ 78] getlocal 5 .............................. <propCarryLoc>
+  [ 80] getlocal 5 .............................. <propCarryLoc>
+  [ 82] getobjprop 539 .......................... <propCarryLoc.locH>
+  [ 85] getlocal 3 .............................. <myDir>
+  [ 87] mul ..................................... <propCarryLoc.locH * myDir>
+  [ 88] setobjprop 539 .......................... propCarryLoc.locH = propCarryLoc.locH * myDir
+  [ 91] getlocal 2 .............................. <myloc>
+  [ 93] getlocal 5 .............................. <propCarryLoc>
+  [ 95] add ..................................... <myloc + propCarryLoc>
+  [ 96] setlocal 4 .............................. carryLoc = myloc + propCarryLoc
+  [ 98] getlocal 4 .............................. <carryLoc>
+  [100] pusharglistnoret 1 ...................... <carryLoc>
+  [102] extcall 35 .............................. return carryLoc
+  [104] ret
+end
+
+on goPropMode me, newMode
+  [  0] getparam 1 .............................. <newMode>
+  [  2] setprop 1006 ............................ pPropMode = newMode
+  [  5] ret
+end
+
+on getPropStatus me
+  [  0] getprop 1009 ............................ <pPropStatus>
+  [  3] pusharglistnoret 1 ...................... <pPropStatus>
+  [  5] extcall 35 .............................. return pPropStatus
+  [  7] ret
+end
+
+on moveXYFin me
+  [  0] getprop 1006 ............................ <pPropMode>
+  [  3] peek 0 .................................. case pPropMode of
+  [  5] pushsymb 1028 ........................... <#droppedAsProp>
+  [  8] eq
+  [  9] jmpifz [ 24] ............................ (case) #droppedAsProp:
+  [ 12] getparam 0 .............................. <me>
+  [ 14] getchainedprop 51 ....................... <me.big>
+  [ 16] pusharglistnoret 1 ...................... <me.big>
+  [ 18] objcall 1029 ............................ me.big.frictionNormal()
+  [ 21] jmp [ 51]
+  [ 24] peek 0
+  [ 26] pushsymb 1030 ........................... <#propExit>
+  [ 29] eq
+  [ 30] jmpifz [ 51] ............................ (case) #propExit:
+  [ 33] getparam 0 .............................. <me>
+  [ 35] getchainedprop 51 ....................... <me.big>
+  [ 37] pusharglistnoret 1 ...................... <me.big>
+  [ 39] objcall 1029 ............................ me.big.frictionNormal()
+  [ 42] getparam 0 .............................. <me>
+  [ 44] getchainedprop 51 ....................... <me.big>
+  [ 46] pusharglistnoret 1 ...................... <me.big>
+  [ 48] objcall 1022 ............................ me.big.gotoWings()
+  [ 51] pop 1 ................................... end case
+  [ 53] getparam 0 .............................. <me>
+  [ 55] pushsymb 49 ............................. <#none>
+  [ 57] pusharglistnoret 2 ...................... <me, #none>
+  [ 59] objcall 983 ............................. me.goPropMode(#none)
+  [ 62] getprop 33 .............................. <ancestor>
+  [ 64] pusharglistnoret 1 ...................... <ancestor>
+  [ 66] objcall 907 ............................. ancestor.moveXYFin()
+  [ 69] ret
+end
+
+on noLongerCarried me
+  [  0] pushsymb 49 ............................. <#none>
+  [  2] setprop 1002 ............................ pPropCarrier = #none
+  [  5] ret
+end
+
+on propDropped me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 51 ....................... <me.big>
+  [  4] getprop 1003 ............................ <pPropDropFriction>
+  [  7] pusharglistnoret 2 ...................... <me.big, pPropDropFriction>
+  [  9] objcall 1031 ............................ me.big.frictionSet(pPropDropFriction)
+  [ 12] getparam 0 .............................. <me>
+  [ 14] getchainedprop 51 ....................... <me.big>
+  [ 16] getparam 0 .............................. <me>
+  [ 18] pushsymb 114 ............................ <#bottom>
+  [ 20] getglobal 40 ............................ <g>
+  [ 22] getchainedprop 1032 ..................... <g.cutSceneMaster>
+  [ 25] pusharglist 1 ........................... <g.cutSceneMaster>
+  [ 27] objcall 1033 ............................ <g.cutSceneMaster.getStageFloor()>
+  [ 30] pusharglist 3 ........................... <me, #bottom, g.cutSceneMaster.getStageFloor()>
+  [ 32] objcall 965 ............................. <me.positionEdge(#bottom, g.cutSceneMaster.getStageFloor())>
+  [ 35] pusharglistnoret 2 ...................... <me.big, me.positionEdge(#bottom, g.cutSceneMaster.getStageFloor())>
+  [ 37] objcall 1034 ............................ me.big.setLocY(me.positionEdge(#bottom, g.cutSceneMaster.getStageFloor()))
+  [ 40] getparam 0 .............................. <me>
+  [ 42] pushsymb 1028 ........................... <#droppedAsProp>
+  [ 45] pusharglistnoret 2 ...................... <me, #droppedAsProp>
+  [ 47] objcall 983 ............................. me.goPropMode(#droppedAsProp)
+  [ 50] pushsymb 49 ............................. <#none>
+  [ 52] setprop 1002 ............................ pPropCarrier = #none
+  [ 55] ret
+end
+
+on propExitStageLeft me
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 0 .............................. <me>
+  [  4] getchainedprop 51 ....................... <me.big>
+  [  6] pusharglist 1 ........................... <me.big>
+  [  8] objcall 1035 ............................ <me.big.calcStageLeftOffLoc()>
+  [ 11] pusharglistnoret 2 ...................... <me, me.big.calcStageLeftOffLoc()>
+  [ 13] objcall 989 ............................. me.propExitStage(me.big.calcStageLeftOffLoc())
+  [ 16] ret
+end
+
+on propExitStageRight me
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 0 .............................. <me>
+  [  4] getchainedprop 51 ....................... <me.big>
+  [  6] pusharglist 1 ........................... <me.big>
+  [  8] objcall 1036 ............................ <me.big.calcStageRightOffLoc()>
+  [ 11] pusharglistnoret 2 ...................... <me, me.big.calcStageRightOffLoc()>
+  [ 13] objcall 989 ............................. me.propExitStage(me.big.calcStageRightOffLoc())
+  [ 16] ret
+end
+
+on propExitStage me, exitLoc
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1030 ........................... <#propExit>
+  [  5] pusharglistnoret 2 ...................... <me, #propExit>
+  [  7] objcall 983 ............................. me.goPropMode(#propExit)
+  [ 10] getparam 0 .............................. <me>
+  [ 12] pushzero ................................ <0>
+  [ 13] pushzero ................................ <0>
+  [ 14] pusharglist 2 ........................... <0, 0>
+  [ 16] extcall 197 ............................. <point(0, 0)>
+  [ 18] pusharglistnoret 2 ...................... <me, point(0, 0)>
+  [ 20] objcall 1031 ............................ me.frictionSet(point(0, 0))
+  [ 23] getparam 0 .............................. <me>
+  [ 25] getchainedprop 51 ....................... <me.big>
+  [ 27] getchainedprop 906 ...................... <me.big.pMoveXY>
+  [ 30] pushsymb 1037 ........................... <#moveToTarget>
+  [ 33] pusharglist 2 ........................... <me.big.pMoveXY, #moveToTarget>
+  [ 35] objcall 230 ............................. <me.big.pMoveXY.getParams(#moveToTarget)>
+  [ 37] setlocal 0 .............................. params = me.big.pMoveXY.getParams(#moveToTarget)
+  [ 39] getlocal 0 .............................. <params>
+  [ 41] getparam 1 .............................. <exitLoc>
+  [ 43] getparam 0 .............................. <me>
+  [ 45] pushsymb 114 ............................ <#bottom>
+  [ 47] getglobal 40 ............................ <g>
+  [ 49] getchainedprop 1032 ..................... <g.cutSceneMaster>
+  [ 52] pusharglist 1 ........................... <g.cutSceneMaster>
+  [ 54] objcall 1033 ............................ <g.cutSceneMaster.getStageFloor()>
+  [ 57] pusharglist 3 ........................... <me, #bottom, g.cutSceneMaster.getStageFloor()>
+  [ 59] objcall 965 ............................. <me.positionEdge(#bottom, g.cutSceneMaster.getStageFloor())>
+  [ 62] pusharglist 2 ........................... <exitLoc, me.positionEdge(#bottom, g.cutSceneMaster.getStageFloor())>
+  [ 64] extcall 197 ............................. <point(exitLoc, me.positionEdge(#bottom, g.cutSceneMaster.getStageFloor()))>
+  [ 66] setobjprop 216 .......................... params.targetloc = point(exitLoc, me.positionEdge(#bottom, g.cutSceneMaster.getStageFloor()))
+  [ 68] getlocal 0 .............................. <params>
+  [ 70] getprop 1005 ............................ <pPropExitStageSpeed>
+  [ 73] setobjprop 215 .......................... params.speed = pPropExitStageSpeed
+  [ 75] getparam 0 .............................. <me>
+  [ 77] getchainedprop 51 ....................... <me.big>
+  [ 79] getlocal 0 .............................. <params>
+  [ 81] pusharglistnoret 2 ...................... <me.big, params>
+  [ 83] objcall 1037 ............................ me.big.moveToTarget(params)
+  [ 86] ret
+end
+
+on propFinishedBeingPutAway me
+  [  0] getprop 1001 ............................ <pPropCarried>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] nteq .................................... <pPropCarried <> #none>
+  [  6] jmpifz [ 22] ............................ if pPropCarried <> #none then
+  [  9] pushsymb 49 ............................. <#none>
+  [ 11] setprop 1001 ............................ pPropCarried = #none
+  [ 14] getprop 1001 ............................ <pPropCarried>
+  [ 17] pusharglistnoret 1 ...................... <pPropCarried>
+  [ 19] objcall 1022 ............................ pPropCarried.gotoWings()
+  [ 22] ret
+end
+
+on putAwayProp me
+  [  0] getprop 1001 ............................ <pPropCarried>
+  [  3] pusharglistnoret 1 ...................... <pPropCarried>
+  [  5] objcall 979 ............................. pPropCarried.bePutAwayAsProp()
+  [  8] getparam 0 .............................. <me>
+  [ 10] getchainedprop 51 ....................... <me.big>
+  [ 12] getprop 1001 ............................ <pPropCarried>
+  [ 15] pushsymb 1021 ........................... <#finishedBeingPutAway>
+  [ 18] pushsymb 628 ............................ <#once>
+  [ 21] pusharglistnoret 4 ...................... <me.big, pPropCarried, #finishedBeingPutAway, #once>
+  [ 23] objcall 629 ............................. me.big.keepMePosted(pPropCarried, #finishedBeingPutAway, #once)
+  [ 26] ret
+end
+
+on setPropStatus me, newVal
+  [  0] getparam 1 .............................. <newVal>
+  [  2] setprop 1009 ............................ pPropStatus = newVal
+  [  5] ret
+end
+
+on stopPropExit me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 49 ............................. <#none>
+  [  4] pusharglistnoret 2 ...................... <me, #none>
+  [  6] objcall 983 ............................. me.goPropMode(#none)
+  [  9] getparam 0 .............................. <me>
+  [ 11] getchainedprop 51 ....................... <me.big>
+  [ 13] pushzero ................................ <0>
+  [ 14] pushzero ................................ <0>
+  [ 15] pusharglist 2 ........................... <0, 0>
+  [ 17] extcall 197 ............................. <point(0, 0)>
+  [ 19] pusharglistnoret 2 ...................... <me.big, point(0, 0)>
+  [ 21] objcall 926 ............................. me.big.setVect(point(0, 0))
+  [ 24] getparam 0 .............................. <me>
+  [ 26] getchainedprop 51 ....................... <me.big>
+  [ 28] pusharglistnoret 1 ...................... <me.big>
+  [ 30] objcall 1029 ............................ me.big.frictionNormal()
+  [ 33] ret
+end
+
+on update me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 31 .............................. ancestor.update()
+  [  6] getprop 1002 ............................ <pPropCarrier>
+  [  9] pushsymb 49 ............................. <#none>
+  [ 11] nteq .................................... <pPropCarrier <> #none>
+  [ 12] jmpifz [ 22] ............................ if pPropCarrier <> #none then
+  [ 15] getparam 0 .............................. <me>
+  [ 17] pusharglistnoret 1 ...................... <me>
+  [ 19] objcall 994 ............................. me.updateBeCarried()
+  [ 22] ret
+end
+
+on updateBeCarried me
+  [  0] getprop 1002 ............................ <pPropCarrier>
+  [  3] pusharglist 1 ........................... <pPropCarrier>
+  [  5] objcall 982 ............................. <pPropCarrier.getPropCarryingLoc()>
+  [  8] setlocal 0 .............................. carryingLoc = pPropCarrier.getPropCarryingLoc()
+  [ 10] getparam 0 .............................. <me>
+  [ 12] getchainedprop 51 ....................... <me.big>
+  [ 14] getlocal 0 .............................. <carryingLoc>
+  [ 16] pusharglistnoret 2 ...................... <me.big, carryingLoc>
+  [ 18] objcall 669 ............................. me.big.setLoc(carryingLoc)
+  [ 21] getparam 0 .............................. <me>
+  [ 23] getchainedprop 51 ....................... <me.big>
+  [ 25] getprop 1002 ............................ <pPropCarrier>
+  [ 28] pusharglist 1 ........................... <pPropCarrier>
+  [ 30] objcall 1018 ............................ <pPropCarrier.getFlipAsDir()>
+  [ 33] pusharglistnoret 2 ...................... <me.big, pPropCarrier.getFlipAsDir()>
+  [ 35] objcall 753 ............................. me.big.setFlipFromDir(pPropCarrier.getFlipAsDir())
+  [ 38] ret
+end

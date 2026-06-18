@@ -1,0 +1,302 @@
+property pCollisionMap, pCollisionWithPlatform, pPlayAreaRect, pPlayAreaRectToFindLeaveDir, pExitsOpen
+global g, gStageSize
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 3 ............................... return me
+  [  6] ret
+end
+
+on init me
+  [  0] pushsymb 103 ............................ <#none>
+  [  2] setprop 732 ............................. pCollisionMap = #none
+  [  5] pushzero ................................ <0>
+  [  6] setprop 733 ............................. pCollisionWithPlatform = 0
+  [  9] pushzero ................................ <0>
+  [ 10] setprop 734 ............................. pExitsOpen = 0
+  [ 13] getparam 0 .............................. <me>
+  [ 15] pusharglistnoret 1 ...................... <me>
+  [ 17] objcall 656 ............................. me.initPlayArea()
+  [ 20] ret
+end
+
+on initPlayArea me
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 735 ...................... <g.gamemaster>
+  [  5] pusharglist 1 ........................... <g.gamemaster>
+  [  7] objcall 597 ............................. <g.gamemaster.getCurrentMap()>
+  [ 10] setlocal 0 .............................. currentMap = g.gamemaster.getCurrentMap()
+  [ 12] getlocal 0 .............................. <currentMap>
+  [ 14] pushsymb 103 ............................ <#none>
+  [ 16] eq ...................................... <currentMap = #none>
+  [ 17] jmpifz [ 45] ............................ if currentMap = #none then / else
+  [ 20] pushzero ................................ <0>
+  [ 21] pushzero ................................ <0>
+  [ 22] getglobal 737 ........................... <gStageSize>
+  [ 25] pushint8 1 .............................. <1>
+  [ 27] pusharglist 2 ........................... <gStageSize, 1>
+  [ 29] objcall 301 ............................. <gStageSize[1]>
+  [ 32] pushint16 288 ........................... <288>
+  [ 35] pusharglist 4 ........................... <0, 0, gStageSize[1], 288>
+  [ 37] extcall 200 ............................. <rect(0, 0, gStageSize[1], 288)>
+  [ 39] setprop 736 ............................. pPlayAreaRect = rect(0, 0, gStageSize[1], 288)
+  [ 42] jmp [ 55]
+  [ 45] getlocal 0 .............................. <currentMap>
+  [ 47] pusharglist 1 ........................... <currentMap>
+  [ 49] objcall 738 ............................. <currentMap.getSpriteRect()>
+  [ 52] setprop 736 ............................. pPlayAreaRect = currentMap.getSpriteRect()
+  [ 55] getprop 736 ............................. <pPlayAreaRect>
+  [ 58] pushint8 1 .............................. <1>
+  [ 60] inv ..................................... <-1>
+  [ 61] pushint8 1 .............................. <1>
+  [ 63] inv ..................................... <-1>
+  [ 64] pusharglist 3 ........................... <pPlayAreaRect, -1, -1>
+  [ 66] objcall 698 ............................. <pPlayAreaRect.inflate(-1, -1)>
+  [ 69] setprop 739 ............................. pPlayAreaRectToFindLeaveDir = pPlayAreaRect.inflate(-1, -1)
+  [ 72] ret
+end
+
+on checkCollisions me, callingPrg, newLoc
+  [  0] getparam 1 .............................. <callingPrg>
+  [  2] pusharglist 1 ........................... <callingPrg>
+  [  4] objcall 740 ............................. <callingPrg.getVect()>
+  [  7] setlocal 0 .............................. vect = callingPrg.getVect()
+  [  9] pushzero ................................ <0>
+  [ 10] pushzero ................................ <0>
+  [ 11] pusharglist 2 ........................... <0, 0>
+  [ 13] extcall 122 ............................. <point(0, 0)>
+  [ 15] getlocal 0 .............................. <vect>
+  [ 17] pusharglist 2 ........................... <point(0, 0), vect>
+  [ 19] extcall 741 ............................. <PointDirPoint(point(0, 0), vect)>
+  [ 22] setlocal 1 .............................. Dir = PointDirPoint(point(0, 0), vect)
+  [ 24] getprop 732 ............................. <pCollisionMap>
+  [ 27] getparam 1 .............................. <callingPrg>
+  [ 29] getparam 2 .............................. <newLoc>
+  [ 31] getlocal 1 .............................. <Dir>
+  [ 33] pusharglist 4 ........................... <pCollisionMap, callingPrg, newLoc, Dir>
+  [ 35] objcall 722 ............................. <pCollisionMap.checkCollisions(callingPrg, newLoc, Dir)>
+  [ 38] setparam 2 .............................. newLoc = pCollisionMap.checkCollisions(callingPrg, newLoc, Dir)
+  [ 40] getprop 734 ............................. <pExitsOpen>
+  [ 43] jmpifz [ 59] ............................ if pExitsOpen then
+  [ 46] getparam 0 .............................. <me>
+  [ 48] getparam 1 .............................. <callingPrg>
+  [ 50] getparam 2 .............................. <newLoc>
+  [ 52] pusharglist 3 ........................... <me, callingPrg, newLoc>
+  [ 54] objcall 724 ............................. <me.checkLeaveScreen(callingPrg, newLoc)>
+  [ 57] setparam 2 .............................. newLoc = me.checkLeaveScreen(callingPrg, newLoc)
+  [ 59] getparam 2 .............................. <newLoc>
+  [ 61] pusharglistnoret 1 ...................... <newLoc>
+  [ 63] extcall 3 ............................... return newLoc
+  [ 65] ret
+end
+
+on checkCollisionsNewObject me, theObj
+  [  0] pushint8 1 .............................. <1>
+  [  2] setlocal 0 .............................. collisionsOk = 1
+  [  4] getparam 1 .............................. <theObj>
+  [  6] pusharglist 1 ........................... <theObj>
+  [  8] objcall 744 ............................. <theObj.getCollisionDetection()>
+  [ 11] pushzero ................................ <0>
+  [ 12] eq ...................................... <theObj.getCollisionDetection() = 0>
+  [ 13] jmpifz [ 22] ............................ if theObj.getCollisionDetection() = 0 then
+  [ 16] getlocal 0 .............................. <collisionsOk>
+  [ 18] pusharglistnoret 1 ...................... <collisionsOk>
+  [ 20] extcall 3 ............................... return collisionsOk
+  [ 22] getparam 1 .............................. <theObj>
+  [ 24] pusharglist 1 ........................... <theObj>
+  [ 26] objcall 745 ............................. <theObj.getLoc()>
+  [ 29] setlocal 1 .............................. objLoc = theObj.getLoc()
+  [ 31] getlocal 1 .............................. <objLoc>
+  [ 33] getprop 736 ............................. <pPlayAreaRect>
+  [ 36] pusharglist 2 ........................... <objLoc, pPlayAreaRect>
+  [ 38] objcall 706 ............................. <objLoc.inside(pPlayAreaRect)>
+  [ 41] jmpifz [152] ............................ if objLoc.inside(pPlayAreaRect) then
+  [ 44] getparam 1 .............................. <theObj>
+  [ 46] pusharglist 1 ........................... <theObj>
+  [ 48] objcall 740 ............................. <theObj.getVect()>
+  [ 51] setlocal 2 .............................. objVect = theObj.getVect()
+  [ 53] getparam 1 .............................. <theObj>
+  [ 55] pushint8 1 .............................. <1>
+  [ 57] pushint8 1 .............................. <1>
+  [ 59] pusharglist 2 ........................... <1, 1>
+  [ 61] extcall 122 ............................. <point(1, 1)>
+  [ 63] pusharglistnoret 2 ...................... <theObj, point(1, 1)>
+  [ 65] objcall 746 ............................. theObj.setVect(point(1, 1))
+  [ 68] getparam 0 .............................. <me>
+  [ 70] getparam 1 .............................. <theObj>
+  [ 72] getlocal 1 .............................. <objLoc>
+  [ 74] pusharglist 1 ........................... <objLoc>
+  [ 76] objcall 302 ............................. <objLoc.duplicate()>
+  [ 79] pusharglist 3 ........................... <me, theObj, objLoc.duplicate()>
+  [ 81] objcall 722 ............................. <me.checkCollisions(theObj, objLoc.duplicate())>
+  [ 84] setlocal 3 .............................. newLoc = me.checkCollisions(theObj, objLoc.duplicate())
+  [ 86] getlocal 3 .............................. <newLoc>
+  [ 88] getlocal 1 .............................. <objLoc>
+  [ 90] nteq .................................... <newLoc <> objLoc>
+  [ 91] jmpifz [ 97] ............................ if newLoc <> objLoc then
+  [ 94] pushzero ................................ <0>
+  [ 95] setlocal 0 .............................. collisionsOk = 0
+  [ 97] getparam 1 .............................. <theObj>
+  [ 99] pushint8 1 .............................. <1>
+  [101] inv ..................................... <-1>
+  [102] pushint8 1 .............................. <1>
+  [104] inv ..................................... <-1>
+  [105] pusharglist 2 ........................... <-1, -1>
+  [107] extcall 122 ............................. <point(-1, -1)>
+  [109] pusharglistnoret 2 ...................... <theObj, point(-1, -1)>
+  [111] objcall 746 ............................. theObj.setVect(point(-1, -1))
+  [114] getparam 0 .............................. <me>
+  [116] getparam 1 .............................. <theObj>
+  [118] getlocal 1 .............................. <objLoc>
+  [120] pusharglist 1 ........................... <objLoc>
+  [122] objcall 302 ............................. <objLoc.duplicate()>
+  [125] pusharglist 3 ........................... <me, theObj, objLoc.duplicate()>
+  [127] objcall 722 ............................. <me.checkCollisions(theObj, objLoc.duplicate())>
+  [130] setlocal 3 .............................. newLoc = me.checkCollisions(theObj, objLoc.duplicate())
+  [132] getlocal 3 .............................. <newLoc>
+  [134] getlocal 1 .............................. <objLoc>
+  [136] nteq .................................... <newLoc <> objLoc>
+  [137] jmpifz [143] ............................ if newLoc <> objLoc then
+  [140] pushzero ................................ <0>
+  [141] setlocal 0 .............................. collisionsOk = 0
+  [143] getparam 1 .............................. <theObj>
+  [145] getlocal 2 .............................. <objVect>
+  [147] pusharglistnoret 2 ...................... <theObj, objVect>
+  [149] objcall 746 ............................. theObj.setVect(objVect)
+  [152] getlocal 0 .............................. <collisionsOk>
+  [154] pusharglistnoret 1 ...................... <collisionsOk>
+  [156] extcall 3 ............................... return collisionsOk
+  [158] ret
+end
+
+on checkLeaveScreen me, callingPrg, newLoc
+  [  0] getparam 2 .............................. <newLoc>
+  [  2] getprop 736 ............................. <pPlayAreaRect>
+  [  5] pusharglist 2 ........................... <newLoc, pPlayAreaRect>
+  [  7] extcall 706 ............................. <inside(newLoc, pPlayAreaRect)>
+  [ 10] jmpifz [ 21] ............................ if inside(newLoc, pPlayAreaRect) then / else
+  [ 13] pusharglistnoret 0 ...................... <>
+  [ 15] extcall 438 ............................. nothing()
+  [ 18] jmp [ 32]
+  [ 21] getparam 1 .............................. <callingPrg>
+  [ 23] getparam 2 .............................. <newLoc>
+  [ 25] pusharglist 2 ........................... <callingPrg, newLoc>
+  [ 27] objcall 753 ............................. <callingPrg.exitedPlayArea(newLoc)>
+  [ 30] setparam 2 .............................. newLoc = callingPrg.exitedPlayArea(newLoc)
+  [ 32] getparam 2 .............................. <newLoc>
+  [ 34] pusharglistnoret 1 ...................... <newLoc>
+  [ 36] extcall 3 ............................... return newLoc
+  [ 38] ret
+end
+
+on constrainToPlayArea me, theObj, newLoc
+  [  0] getparam 1 .............................. <theObj>
+  [  2] getparam 1 .............................. <theObj>
+  [  4] pusharglist 1 ........................... <theObj>
+  [  6] objcall 745 ............................. <theObj.getLoc()>
+  [  9] pusharglist 2 ........................... <theObj, theObj.getLoc()>
+  [ 11] objcall 754 ............................. <theObj.calcCollisionRect(theObj.getLoc())>
+  [ 14] setlocal 0 .............................. collisionRect = theObj.calcCollisionRect(theObj.getLoc())
+  [ 16] getlocal 0 .............................. <collisionRect>
+  [ 18] getobjprop 258 .......................... <collisionRect.edgeOffset>
+  [ 21] setlocal 1 .............................. edgeOffset = collisionRect.edgeOffset
+  [ 23] getprop 736 ............................. <pPlayAreaRect>
+  [ 26] pusharglist 1 ........................... <pPlayAreaRect>
+  [ 28] objcall 302 ............................. <pPlayAreaRect.duplicate()>
+  [ 31] setlocal 2 .............................. modifiedPlayArea = pPlayAreaRect.duplicate()
+  [ 33] getlocal 2 .............................. <modifiedPlayArea>
+  [ 35] getlocal 2 .............................. <modifiedPlayArea>
+  [ 37] getobjprop 170 .......................... <modifiedPlayArea.left>
+  [ 39] getlocal 1 .............................. <edgeOffset>
+  [ 41] getobjprop 170 .......................... <edgeOffset.left>
+  [ 43] sub ..................................... <modifiedPlayArea.left - edgeOffset.left>
+  [ 44] setobjprop 170 .......................... modifiedPlayArea.left = modifiedPlayArea.left - edgeOffset.left
+  [ 46] getlocal 2 .............................. <modifiedPlayArea>
+  [ 48] getlocal 2 .............................. <modifiedPlayArea>
+  [ 50] getobjprop 168 .......................... <modifiedPlayArea.top>
+  [ 52] getlocal 1 .............................. <edgeOffset>
+  [ 54] getobjprop 168 .......................... <edgeOffset.top>
+  [ 56] sub ..................................... <modifiedPlayArea.top - edgeOffset.top>
+  [ 57] setobjprop 168 .......................... modifiedPlayArea.top = modifiedPlayArea.top - edgeOffset.top
+  [ 59] getlocal 2 .............................. <modifiedPlayArea>
+  [ 61] getlocal 2 .............................. <modifiedPlayArea>
+  [ 63] getobjprop 171 .......................... <modifiedPlayArea.right>
+  [ 65] getlocal 1 .............................. <edgeOffset>
+  [ 67] getobjprop 171 .......................... <edgeOffset.right>
+  [ 69] sub ..................................... <modifiedPlayArea.right - edgeOffset.right>
+  [ 70] setobjprop 171 .......................... modifiedPlayArea.right = modifiedPlayArea.right - edgeOffset.right
+  [ 72] getlocal 2 .............................. <modifiedPlayArea>
+  [ 74] getlocal 2 .............................. <modifiedPlayArea>
+  [ 76] getobjprop 169 .......................... <modifiedPlayArea.bottom>
+  [ 78] getlocal 1 .............................. <edgeOffset>
+  [ 80] getobjprop 169 .......................... <edgeOffset.bottom>
+  [ 82] sub ..................................... <modifiedPlayArea.bottom - edgeOffset.bottom>
+  [ 83] setobjprop 169 .......................... modifiedPlayArea.bottom = modifiedPlayArea.bottom - edgeOffset.bottom
+  [ 85] getparam 2 .............................. <newLoc>
+  [ 87] getlocal 2 .............................. <modifiedPlayArea>
+  [ 89] pusharglist 2 ........................... <newLoc, modifiedPlayArea>
+  [ 91] extcall 755 ............................. <PointConstrainToRect(newLoc, modifiedPlayArea)>
+  [ 94] pusharglistnoret 1 ...................... <PointConstrainToRect(newLoc, modifiedPlayArea)>
+  [ 96] extcall 3 ............................... return PointConstrainToRect(newLoc, modifiedPlayArea)
+  [ 98] ret
+end
+
+on constrainLocToPlayArea me, newLoc
+  [  0] getparam 1 .............................. <newLoc>
+  [  2] getprop 736 ............................. <pPlayAreaRect>
+  [  5] pusharglist 2 ........................... <newLoc, pPlayAreaRect>
+  [  7] extcall 755 ............................. <PointConstrainToRect(newLoc, pPlayAreaRect)>
+  [ 10] pusharglistnoret 1 ...................... <PointConstrainToRect(newLoc, pPlayAreaRect)>
+  [ 12] extcall 3 ............................... return PointConstrainToRect(newLoc, pPlayAreaRect)
+  [ 14] ret
+end
+
+on getPlayArea me
+  [  0] getprop 736 ............................. <pPlayAreaRect>
+  [  3] pusharglist 1 ........................... <pPlayAreaRect>
+  [  5] objcall 302 ............................. <pPlayAreaRect.duplicate()>
+  [  8] pusharglistnoret 1 ...................... <pPlayAreaRect.duplicate()>
+  [ 10] extcall 3 ............................... return pPlayAreaRect.duplicate()
+  [ 12] ret
+end
+
+on notifyOfScreenExit me, callingPrg, newLoc
+  [  0] getparam 2 .............................. <newLoc>
+  [  2] getprop 739 ............................. <pPlayAreaRectToFindLeaveDir>
+  [  5] pusharglist 2 ........................... <newLoc, pPlayAreaRectToFindLeaveDir>
+  [  7] extcall 758 ............................. <PointDirRect(newLoc, pPlayAreaRectToFindLeaveDir)>
+  [ 10] setlocal 0 .............................. exitDir = PointDirRect(newLoc, pPlayAreaRectToFindLeaveDir)
+  [ 12] getlocal 0 .............................. <exitDir>
+  [ 14] pushint8 1 .............................. <1>
+  [ 16] inv ..................................... <-1>
+  [ 17] mul ..................................... <exitDir * -1>
+  [ 18] setlocal 0 .............................. exitDir = exitDir * -1
+  [ 20] getparam 1 .............................. <callingPrg>
+  [ 22] getlocal 0 .............................. <exitDir>
+  [ 24] pusharglistnoret 2 ...................... <callingPrg, exitDir>
+  [ 26] objcall 759 ............................. callingPrg.outsidePlayArea(exitDir)
+  [ 29] ret
+end
+
+on setCollisionMap me, themap
+  [  0] getparam 1 .............................. <themap>
+  [  2] setprop 732 ............................. pCollisionMap = themap
+  [  5] ret
+end
+
+on setCollisionWithPlatform me, newVal
+  [  0] getparam 1 .............................. <newVal>
+  [  2] setprop 733 ............................. pCollisionWithPlatform = newVal
+  [  5] ret
+end
+
+on setExitsOpen me, newVal
+  [  0] getparam 1 .............................. <newVal>
+  [  2] setprop 734 ............................. pExitsOpen = newVal
+  [  5] ret
+end
+
+on stop me
+  [  0] ret
+end

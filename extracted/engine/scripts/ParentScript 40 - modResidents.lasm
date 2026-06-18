@@ -1,0 +1,519 @@
+property ancestor, pCurrentGroupSize, pGroupInProduction, pGroupProductionCounter, pReleaseCounter, pResidentGroups, pResidentMode, pResidentsRemainingCounter, pTotalResidents, pFinished
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getlocal 0 .............................. <i>
+  [ 12] pushsymb 1119 ........................... <#residentGroups>
+  [ 15] pusharglist 0 ........................... <[]>
+  [ 17] pushlist ................................ <[]>
+  [ 18] pusharglistnoret 3 ...................... <i, #residentGroups, []>
+  [ 20] objcall 48 .............................. i[#residentGroups] = []
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 1120 ........................... <#totalResidents>
+  [ 27] pushint8 10 ............................. <10>
+  [ 29] pusharglistnoret 3 ...................... <i, #totalResidents, 10>
+  [ 31] objcall 48 .............................. i[#totalResidents] = 10
+  [ 33] getprop 33 .............................. <ancestor>
+  [ 35] pusharglistnoret 1 ...................... <ancestor>
+  [ 37] objcall 2 ............................... ancestor.addModParams()
+  [ 39] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pusharglist 0 ........................... <>
+  [ 10] extcall 529 ............................. <CounterNew()>
+  [ 13] setprop 1121 ............................ pCurrentGroupSize = CounterNew()
+  [ 16] getprop 1121 ............................ <pCurrentGroupSize>
+  [ 19] pushint8 1 .............................. <1>
+  [ 21] inv ..................................... <-1>
+  [ 22] setobjprop 723 .......................... pCurrentGroupSize.inc = -1
+  [ 25] getprop 1121 ............................ <pCurrentGroupSize>
+  [ 28] pushzero ................................ <0>
+  [ 29] pushint8 1 .............................. <1>
+  [ 31] pusharglist 2 ........................... <[0, 1]>
+  [ 33] pushlist ................................ <[0, 1]>
+  [ 34] setobjprop 530 .......................... pCurrentGroupSize.tim = [0, 1]
+  [ 37] pushsymb 49 ............................. <#none>
+  [ 39] setprop 1122 ............................ pGroupInProduction = #none
+  [ 42] pusharglist 0 ........................... <>
+  [ 44] extcall 529 ............................. <CounterNew()>
+  [ 47] setprop 1123 ............................ pGroupProductionCounter = CounterNew()
+  [ 50] pusharglist 0 ........................... <>
+  [ 52] extcall 529 ............................. <CounterNew()>
+  [ 55] setprop 1124 ............................ pReleaseCounter = CounterNew()
+  [ 58] getparam 1 .............................. <params>
+  [ 60] getobjprop 1119 ......................... <params.residentGroups>
+  [ 63] setprop 1125 ............................ pResidentGroups = params.residentGroups
+  [ 66] pushsymb 49 ............................. <#none>
+  [ 68] setprop 1126 ............................ pResidentMode = #none
+  [ 71] pusharglist 0 ........................... <>
+  [ 73] extcall 529 ............................. <CounterNew()>
+  [ 76] setprop 1127 ............................ pResidentsRemainingCounter = CounterNew()
+  [ 79] getprop 1127 ............................ <pResidentsRemainingCounter>
+  [ 82] pushint8 1 .............................. <1>
+  [ 84] inv ..................................... <-1>
+  [ 85] setobjprop 723 .......................... pResidentsRemainingCounter.inc = -1
+  [ 88] getprop 1127 ............................ <pResidentsRemainingCounter>
+  [ 91] pushzero ................................ <0>
+  [ 92] getparam 1 .............................. <params>
+  [ 94] getobjprop 1120 ......................... <params.totalResidents>
+  [ 97] pusharglist 2 ........................... <[0, params.totalResidents]>
+  [ 99] pushlist ................................ <[0, params.totalResidents]>
+  [100] setobjprop 530 .......................... pResidentsRemainingCounter.tim = [0, params.totalResidents]
+  [103] getprop 1127 ............................ <pResidentsRemainingCounter>
+  [106] pusharglistnoret 1 ...................... <pResidentsRemainingCounter>
+  [108] extcall 706 ............................. CounterReset(pResidentsRemainingCounter)
+  [111] getparam 1 .............................. <params>
+  [113] getobjprop 1120 ......................... <params.totalResidents>
+  [116] setprop 1128 ............................ pTotalResidents = params.totalResidents
+  [119] ret
+end
+
+on finish me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 3 ............................... ancestor.finish()
+  [  6] getprop 1126 ............................ <pResidentMode>
+  [  9] pushsymb 1129 ........................... <#releaseCountdown>
+  [ 12] eq ...................................... <pResidentMode = #releaseCountdown>
+  [ 13] jmpifz [ 32] ............................ if pResidentMode = #releaseCountdown then
+  [ 16] getglobal 40 ............................ <g>
+  [ 18] getchainedprop 1130 ..................... <g.reservationsMaster>
+  [ 21] getparam 0 .............................. <me>
+  [ 23] getchainedprop 57 ....................... <me.id>
+  [ 25] getobjprop 58 ........................... <me.id.bigMe>
+  [ 27] pusharglistnoret 2 ...................... <g.reservationsMaster, me.id.bigMe>
+  [ 29] objcall 1131 ............................ g.reservationsMaster.cancelReservation(me.id.bigMe)
+  [ 32] pushint8 1 .............................. <1>
+  [ 34] setprop 1132 ............................ pFinished = 1
+  [ 37] ret
+end
+
+on calculateExperienceFromResidents me
+  [  0] getprop 1125 ............................ <pResidentGroups>
+  [  3] getobjprop 257 .......................... <pResidentGroups.count>
+  [  6] setlocal 0 .............................. numGroups = pResidentGroups.count
+  [  8] getprop 1127 ............................ <pResidentsRemainingCounter>
+  [ 11] getobjprop 737 .......................... <pResidentsRemainingCounter.theCount>
+  [ 14] getlocal 0 .............................. <numGroups>
+  [ 16] div ..................................... <pResidentsRemainingCounter.theCount / numGroups>
+  [ 17] pushfloat32 1.0 ......................... <1.0>
+  [ 22] mul ..................................... <pResidentsRemainingCounter.theCount / numGroups * 1.0>
+  [ 23] setlocal 1 .............................. numInGroup = pResidentsRemainingCounter.theCount / numGroups * 1.0
+  [ 25] pushzero ................................ <0>
+  [ 26] setlocal 2 .............................. totalExp = 0
+  [ 28] getprop 1125 ............................ <pResidentGroups>
+  [ 31] peek 0
+  [ 33] pusharglist 1
+  [ 35] extcall 257
+  [ 38] pushint8 1
+  [ 40] peek 0
+  [ 42] peek 2
+  [ 44] lteq
+  [ 45] jmpifz [ 99] ............................ repeat with residentInfo in pResidentGroups
+  [ 48] peek 2
+  [ 50] peek 1
+  [ 52] pusharglist 2
+  [ 54] extcall 109
+  [ 56] setlocal 3
+  [ 58] getlocal 3 .............................. <residentInfo>
+  [ 60] getobjprop 232 .......................... <residentInfo.typ>
+  [ 62] setlocal 4 .............................. residentType = residentInfo.typ
+  [ 64] getglobal 40 ............................ <g>
+  [ 66] getchainedprop 228 ...................... <g.actorMaster>
+  [ 68] getlocal 4 .............................. <residentType>
+  [ 70] pusharglist 2 ........................... <g.actorMaster, residentType>
+  [ 72] objcall 1133 ............................ <g.actorMaster.getActorData(residentType)>
+  [ 75] setlocal 5 .............................. actorData = g.actorMaster.getActorData(residentType)
+  [ 77] getlocal 5 .............................. <actorData>
+  [ 79] getobjprop 585 .......................... <actorData.experienceImWorth>
+  [ 82] getlocal 1 .............................. <numInGroup>
+  [ 84] mul ..................................... <actorData.experienceImWorth * numInGroup>
+  [ 85] setlocal 6 .............................. groupExp = actorData.experienceImWorth * numInGroup
+  [ 87] getlocal 2 .............................. <totalExp>
+  [ 89] getlocal 6 .............................. <groupExp>
+  [ 91] add ..................................... <totalExp + groupExp>
+  [ 92] setlocal 2 .............................. totalExp = totalExp + groupExp
+  [ 94] pushint8 1
+  [ 96] add
+  [ 97] endrepeat [ 40]
+  [ 99] pop 3
+  [101] getlocal 2 .............................. <totalExp>
+  [103] pusharglistnoret 1 ...................... <totalExp>
+  [105] extcall 35 .............................. return totalExp
+  [107] ret
+end
+
+on checkEndOfGroup me
+  [  0] getprop 1121 ............................ <pCurrentGroupSize>
+  [  3] getobjprop 552 .......................... <pCurrentGroupSize.fin>
+  [  6] pusharglistnoret 1 ...................... <pCurrentGroupSize.fin>
+  [  8] extcall 35 .............................. return pCurrentGroupSize.fin
+  [ 10] ret
+end
+
+on die me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 501 ............................. ancestor.die()
+  [  7] getparam 0 .............................. <me>
+  [  9] pushsymb 70 ............................. <#dead>
+  [ 11] pusharglistnoret 2 ...................... <me, #dead>
+  [ 13] objcall 1110 ............................ me.goResidentMode(#dead)
+  [ 16] ret
+end
+
+on getCurrentGroupSize me
+  [  0] getprop 1121 ............................ <pCurrentGroupSize>
+  [  3] getobjprop 737 .......................... <pCurrentGroupSize.theCount>
+  [  6] pusharglistnoret 1 ...................... <pCurrentGroupSize.theCount>
+  [  8] extcall 35 .............................. return pCurrentGroupSize.theCount
+  [ 10] ret
+end
+
+on getResidentTeamCategory me
+  [  0] pushsymb 1141 ........................... <#enemies>
+  [  3] pusharglistnoret 1 ...................... <#enemies>
+  [  5] extcall 35 .............................. return #enemies
+  [  7] ret
+end
+
+on getResidentMode me
+  [  0] getprop 1126 ............................ <pResidentMode>
+  [  3] pusharglistnoret 1 ...................... <pResidentMode>
+  [  5] extcall 35 .............................. return pResidentMode
+  [  7] ret
+end
+
+on goResidentMode me, newMode
+  [  0] getparam 1 .............................. <newMode>
+  [  2] peek 0 .................................. case newMode of
+  [  4] pushsymb 1129 ........................... <#releaseCountdown>
+  [  7] eq
+  [  8] jmpifz [ 18] ............................ (case) #releaseCountdown:
+  [ 11] getparam 0 .............................. <me>
+  [ 13] pusharglistnoret 1 ...................... <me>
+  [ 15] objcall 1114 ............................ me.resetReleaseCounter()
+  [ 18] pop 1
+  [ 20] getparam 1 .............................. <newMode>
+  [ 22] setprop 1126 ............................ pResidentMode = newMode
+  [ 25] ret
+end
+
+on isDwelling me
+  [  0] getprop 1125 ............................ <pResidentGroups>
+  [  3] pusharglist 0 ........................... <[]>
+  [  5] pushlist ................................ <[]>
+  [  6] eq ...................................... <pResidentGroups = []>
+  [  7] jmpifz [ 18] ............................ if pResidentGroups = [] then / else
+  [ 10] pushzero ................................ <0>
+  [ 11] pusharglistnoret 1 ...................... <0>
+  [ 13] extcall 35 .............................. return 0
+  [ 15] jmp [ 24]
+  [ 18] pushint8 1 .............................. <1>
+  [ 20] pusharglistnoret 1 ...................... <1>
+  [ 22] extcall 35 .............................. return 1
+  [ 24] ret
+end
+
+on outOfEnergy me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 484 ............................. ancestor.outOfEnergy()
+  [  7] getparam 0 .............................. <me>
+  [  9] pushsymb 70 ............................. <#dead>
+  [ 11] pusharglistnoret 2 ...................... <me, #dead>
+  [ 13] objcall 1110 ............................ me.goResidentMode(#dead)
+  [ 16] ret
+end
+
+on postReleaseResident me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 1107 ............................ <me.checkEndOfGroup()>
+  [  7] jmpifz [ 20] ............................ if me.checkEndOfGroup() then / else
+  [ 10] getparam 0 .............................. <me>
+  [ 12] pusharglistnoret 1 ...................... <me>
+  [ 14] objcall 1112 ............................ me.produceNextGroupOrDie()
+  [ 17] jmp [ 30]
+  [ 20] getparam 0 .............................. <me>
+  [ 22] pushsymb 1129 ........................... <#releaseCountdown>
+  [ 25] pusharglistnoret 2 ...................... <me, #releaseCountdown>
+  [ 27] objcall 1110 ............................ me.goResidentMode(#releaseCountdown)
+  [ 30] ret
+end
+
+on produceNextGroupOrDie me
+  [  0] getprop 1127 ............................ <pResidentsRemainingCounter>
+  [  3] getobjprop 552 .......................... <pResidentsRemainingCounter.fin>
+  [  6] jmpifz [ 33] ............................ if pResidentsRemainingCounter.fin then / else
+  [  9] getparam 0 .............................. <me>
+  [ 11] getchainedprop 57 ....................... <me.id>
+  [ 13] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 15] pusharglistnoret 1 ...................... <me.id.bigMe>
+  [ 17] objcall 1142 ............................ me.id.bigMe.noMoreResidents()
+  [ 20] getparam 0 .............................. <me>
+  [ 22] pushsymb 1143 ........................... <#empty>
+  [ 25] pusharglistnoret 2 ...................... <me, #empty>
+  [ 27] objcall 1110 ............................ me.goResidentMode(#empty)
+  [ 30] jmp [ 40]
+  [ 33] getparam 0 .............................. <me>
+  [ 35] pusharglistnoret 1 ...................... <me>
+  [ 37] objcall 1115 ............................ me.startProduction()
+  [ 40] ret
+end
+
+on releaseResident me
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 228 ...................... <g.actorMaster>
+  [  4] pushsymb 229 ............................ <#newActor>
+  [  6] pusharglist 2 ........................... <g.actorMaster, #newActor>
+  [  8] objcall 230 ............................. <g.actorMaster.getParams(#newActor)>
+  [ 10] setlocal 0 .............................. params = g.actorMaster.getParams(#newActor)
+  [ 12] getlocal 0 .............................. <params>
+  [ 14] getprop 1122 ............................ <pGroupInProduction>
+  [ 17] getobjprop 232 .......................... <pGroupInProduction.typ>
+  [ 19] setobjprop 232 .......................... params.typ = pGroupInProduction.typ
+  [ 21] getlocal 0 .............................. <params>
+  [ 23] getparam 0 .............................. <me>
+  [ 25] getchainedprop 57 ....................... <me.id>
+  [ 27] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 29] pusharglist 1 ........................... <me.id.bigMe>
+  [ 31] objcall 111 ............................. <me.id.bigMe.getLoc()>
+  [ 33] setobjprop 233 .......................... params.startLoc = me.id.bigMe.getLoc()
+  [ 35] getlocal 0 .............................. <params>
+  [ 37] pushzero ................................ <0>
+  [ 38] setobjprop 234 .......................... params.useOffset = 0
+  [ 40] getglobal 40 ............................ <g>
+  [ 42] getchainedprop 228 ...................... <g.actorMaster>
+  [ 44] getlocal 0 .............................. <params>
+  [ 46] pusharglist 2 ........................... <g.actorMaster, params>
+  [ 48] objcall 229 ............................. <g.actorMaster.newActor(params)>
+  [ 50] setlocal 1 .............................. newUnit = g.actorMaster.newActor(params)
+  [ 52] getparam 0 .............................. <me>
+  [ 54] getchainedprop 51 ....................... <me.big>
+  [ 56] pusharglist 1 ........................... <me.big>
+  [ 58] objcall 573 ............................. <me.big.getExperienceLevel()>
+  [ 61] pushzero ................................ <0>
+  [ 62] gt ...................................... <me.big.getExperienceLevel() > 0>
+  [ 63] jmpifz [ 86] ............................ if me.big.getExperienceLevel() > 0 then
+  [ 66] getlocal 1 .............................. <newUnit>
+  [ 68] getparam 0 .............................. <me>
+  [ 70] getchainedprop 51 ....................... <me.big>
+  [ 72] pusharglist 1 ........................... <me.big>
+  [ 74] objcall 573 ............................. <me.big.getExperienceLevel()>
+  [ 77] pusharglist 1 ........................... <me.big.getExperienceLevel()>
+  [ 79] extcall 158 ............................. <random(me.big.getExperienceLevel())>
+  [ 81] pusharglistnoret 2 ...................... <newUnit, random(me.big.getExperienceLevel())>
+  [ 83] objcall 580 ............................. newUnit.setStartingLevel(random(me.big.getExperienceLevel()))
+  [ 86] getprop 1121 ............................ <pCurrentGroupSize>
+  [ 89] pusharglistnoret 1 ...................... <pCurrentGroupSize>
+  [ 91] extcall 767 ............................. CounterOnce(pCurrentGroupSize)
+  [ 94] getprop 1127 ............................ <pResidentsRemainingCounter>
+  [ 97] pusharglistnoret 1 ...................... <pResidentsRemainingCounter>
+  [ 99] extcall 767 ............................. CounterOnce(pResidentsRemainingCounter)
+  [102] getglobal 40 ............................ <g>
+  [104] getchainedprop 1130 ..................... <g.reservationsMaster>
+  [107] getparam 0 .............................. <me>
+  [109] getobjprop 51 ........................... <me.big>
+  [111] pusharglistnoret 2 ...................... <g.reservationsMaster, me.big>
+  [113] objcall 1144 ............................ g.reservationsMaster.objectReleasedFromReservation(me.big)
+  [116] getparam 0 .............................. <me>
+  [118] getchainedprop 51 ....................... <me.big>
+  [120] pusharglistnoret 1 ...................... <me.big>
+  [122] objcall 310 ............................. me.big.levelUp()
+  [125] ret
+end
+
+on resetReleaseCounter me
+  [  0] getprop 1124 ............................ <pReleaseCounter>
+  [  3] pushsymb 530 ............................ <#tim>
+  [  6] pushint8 2 .............................. <2>
+  [  8] getprop 1122 ............................ <pGroupInProduction>
+  [ 11] getobjprop 1147 ......................... <pGroupInProduction.releaseInterval>
+  [ 14] pusharglist 1 ........................... <pGroupInProduction.releaseInterval>
+  [ 16] extcall 1146 ............................ <VarRndRange(pGroupInProduction.releaseInterval)>
+  [ 19] pusharglistnoret 4 ...................... <pReleaseCounter, #tim, 2, VarRndRange(pGroupInProduction.releaseInterval)>
+  [ 21] objcall 531 ............................. pReleaseCounter.tim[2] = VarRndRange(pGroupInProduction.releaseInterval)
+  [ 24] getprop 1124 ............................ <pReleaseCounter>
+  [ 27] pusharglistnoret 1 ...................... <pReleaseCounter>
+  [ 29] extcall 706 ............................. CounterReset(pReleaseCounter)
+  [ 32] ret
+end
+
+on startProduction me
+  [  0] pushint8 1 .............................. <1>
+  [  2] getprop 1125 ............................ <pResidentGroups>
+  [  5] getobjprop 257 .......................... <pResidentGroups.count>
+  [  8] pusharglist 2 ........................... <1, pResidentGroups.count>
+  [ 10] extcall 1146 ............................ <VarRndRange(1, pResidentGroups.count)>
+  [ 13] setlocal 0 .............................. groupPos = VarRndRange(1, pResidentGroups.count)
+  [ 15] getprop 1125 ............................ <pResidentGroups>
+  [ 18] getlocal 0 .............................. <groupPos>
+  [ 20] pusharglist 2 ........................... <pResidentGroups, groupPos>
+  [ 22] objcall 109 ............................. <pResidentGroups[groupPos]>
+  [ 24] setprop 1122 ............................ pGroupInProduction = pResidentGroups[groupPos]
+  [ 27] getprop 1121 ............................ <pCurrentGroupSize>
+  [ 30] pushsymb 530 ............................ <#tim>
+  [ 33] pushint8 2 .............................. <2>
+  [ 35] getprop 1122 ............................ <pGroupInProduction>
+  [ 38] getobjprop 1148 ......................... <pGroupInProduction.groupSize>
+  [ 41] pusharglist 1 ........................... <pGroupInProduction.groupSize>
+  [ 43] extcall 1146 ............................ <VarRndRange(pGroupInProduction.groupSize)>
+  [ 46] getprop 1127 ............................ <pResidentsRemainingCounter>
+  [ 49] getobjprop 737 .......................... <pResidentsRemainingCounter.theCount>
+  [ 52] pusharglist 2 ........................... <VarRndRange(pGroupInProduction.groupSize), pResidentsRemainingCounter.theCount>
+  [ 54] extcall 152 ............................. <min(VarRndRange(pGroupInProduction.groupSize), pResidentsRemainingCounter.theCount)>
+  [ 56] pusharglistnoret 4 ...................... <pCurrentGroupSize, #tim, 2, min(VarRndRange(pGroupInProduction.groupSize), pResidentsRemainingCounter.theCount)>
+  [ 58] objcall 531 ............................. pCurrentGroupSize.tim[2] = min(VarRndRange(pGroupInProduction.groupSize), pResidentsRemainingCounter.theCount)
+  [ 61] getprop 1121 ............................ <pCurrentGroupSize>
+  [ 64] pusharglistnoret 1 ...................... <pCurrentGroupSize>
+  [ 66] extcall 706 ............................. CounterReset(pCurrentGroupSize)
+  [ 69] getprop 1122 ............................ <pGroupInProduction>
+  [ 72] getobjprop 1149 ......................... <pGroupInProduction.buildTime>
+  [ 75] pusharglist 1 ........................... <pGroupInProduction.buildTime>
+  [ 77] extcall 1146 ............................ <VarRndRange(pGroupInProduction.buildTime)>
+  [ 80] setlocal 1 .............................. timeToBuildSingle = VarRndRange(pGroupInProduction.buildTime)
+  [ 82] getprop 1121 ............................ <pCurrentGroupSize>
+  [ 85] getlocal 1 .............................. <timeToBuildSingle>
+  [ 87] mul ..................................... <pCurrentGroupSize * timeToBuildSingle>
+  [ 88] setlocal 2 .............................. productionTime = pCurrentGroupSize * timeToBuildSingle
+  [ 90] getprop 1123 ............................ <pGroupProductionCounter>
+  [ 93] pushsymb 530 ............................ <#tim>
+  [ 96] pushint8 2 .............................. <2>
+  [ 98] getlocal 2 .............................. <productionTime>
+  [100] pusharglistnoret 4 ...................... <pGroupProductionCounter, #tim, 2, productionTime>
+  [102] objcall 531 ............................. pGroupProductionCounter.tim[2] = productionTime
+  [105] getprop 1123 ............................ <pGroupProductionCounter>
+  [108] pusharglistnoret 1 ...................... <pGroupProductionCounter>
+  [110] extcall 706 ............................. CounterReset(pGroupProductionCounter)
+  [113] pushsymb 1150 ........................... <#produceGroup>
+  [116] setprop 1126 ............................ pResidentMode = #produceGroup
+  [119] ret
+end
+
+on update me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 31 .............................. ancestor.update()
+  [  6] getprop 1126 ............................ <pResidentMode>
+  [  9] peek 0 .................................. case pResidentMode of
+  [ 11] pushsymb 1150 ........................... <#produceGroup>
+  [ 14] eq
+  [ 15] jmpifz [ 45] ............................ (case) #produceGroup:
+  [ 18] getparam 0 .............................. <me>
+  [ 20] pusharglist 1 ........................... <me>
+  [ 22] objcall 1117 ............................ <me.updateProduceGroup()>
+  [ 25] setlocal 0 .............................. fin = me.updateProduceGroup()
+  [ 27] getlocal 0 .............................. <fin>
+  [ 29] jmpifz [ 42] ............................ if fin then
+  [ 32] getparam 0 .............................. <me>
+  [ 34] pushsymb 1154 ........................... <#awaitPermission>
+  [ 37] pusharglistnoret 2 ...................... <me, #awaitPermission>
+  [ 39] objcall 1110 ............................ me.goResidentMode(#awaitPermission)
+  [ 42] jmp [118]
+  [ 45] peek 0
+  [ 47] pushsymb 1154 ........................... <#awaitPermission>
+  [ 50] eq
+  [ 51] jmpifz [ 81] ............................ (case) #awaitPermission:
+  [ 54] getparam 0 .............................. <me>
+  [ 56] pusharglist 1 ........................... <me>
+  [ 58] objcall 1116 ............................ <me.updateAwaitPermission()>
+  [ 61] setlocal 0 .............................. fin = me.updateAwaitPermission()
+  [ 63] getlocal 0 .............................. <fin>
+  [ 65] jmpifz [ 78] ............................ if fin then
+  [ 68] getparam 0 .............................. <me>
+  [ 70] pushsymb 1129 ........................... <#releaseCountdown>
+  [ 73] pusharglistnoret 2 ...................... <me, #releaseCountdown>
+  [ 75] objcall 1110 ............................ me.goResidentMode(#releaseCountdown)
+  [ 78] jmp [118]
+  [ 81] peek 0
+  [ 83] pushsymb 1129 ........................... <#releaseCountdown>
+  [ 86] eq
+  [ 87] jmpifz [118] ............................ (case) #releaseCountdown:
+  [ 90] getparam 0 .............................. <me>
+  [ 92] pusharglist 1 ........................... <me>
+  [ 94] objcall 1118 ............................ <me.updateReleaseCountdown()>
+  [ 97] setlocal 0 .............................. fin = me.updateReleaseCountdown()
+  [ 99] getlocal 0 .............................. <fin>
+  [101] jmpifz [118] ............................ if fin then
+  [104] getparam 0 .............................. <me>
+  [106] pusharglistnoret 1 ...................... <me>
+  [108] objcall 1113 ............................ me.releaseResident()
+  [111] getparam 0 .............................. <me>
+  [113] pusharglistnoret 1 ...................... <me>
+  [115] objcall 1111 ............................ me.postReleaseResident()
+  [118] pop 1 ................................... end case
+  [120] ret
+end
+
+on updateAwaitPermission me
+  [  0] getprop 1121 ............................ <pCurrentGroupSize>
+  [  3] getobjprop 737 .......................... <pCurrentGroupSize.theCount>
+  [  6] setlocal 0 .............................. numToRelease = pCurrentGroupSize.theCount
+  [  8] getglobal 40 ............................ <g>
+  [ 10] getchainedprop 1130 ..................... <g.reservationsMaster>
+  [ 13] getparam 0 .............................. <me>
+  [ 15] getchainedprop 57 ....................... <me.id>
+  [ 17] getobjprop 58 ........................... <me.id.bigMe>
+  [ 19] getlocal 0 .............................. <numToRelease>
+  [ 21] pusharglist 3 ........................... <g.reservationsMaster, me.id.bigMe, numToRelease>
+  [ 23] objcall 1155 ............................ <g.reservationsMaster.getPermissionToRelease(me.id.bigMe, numToRelease)>
+  [ 26] setlocal 1 .............................. fin = g.reservationsMaster.getPermissionToRelease(me.id.bigMe, numToRelease)
+  [ 28] getlocal 1 .............................. <fin>
+  [ 30] pusharglistnoret 1 ...................... <fin>
+  [ 32] extcall 35 .............................. return fin
+  [ 34] ret
+end
+
+on updateProduceGroup me
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. fin = 0
+  [  3] getprop 1123 ............................ <pGroupProductionCounter>
+  [  6] pusharglistnoret 1 ...................... <pGroupProductionCounter>
+  [  8] extcall 553 ............................. counter(pGroupProductionCounter)
+  [ 11] getprop 1123 ............................ <pGroupProductionCounter>
+  [ 14] getobjprop 552 .......................... <pGroupProductionCounter.fin>
+  [ 17] jmpifz [ 24] ............................ if pGroupProductionCounter.fin then
+  [ 20] pushint8 1 .............................. <1>
+  [ 22] setlocal 0 .............................. fin = 1
+  [ 24] getlocal 0 .............................. <fin>
+  [ 26] pusharglistnoret 1 ...................... <fin>
+  [ 28] extcall 35 .............................. return fin
+  [ 30] ret
+end
+
+on updateReleaseCountdown me
+  [  0] getprop 1124 ............................ <pReleaseCounter>
+  [  3] pusharglistnoret 1 ...................... <pReleaseCounter>
+  [  5] extcall 553 ............................. counter(pReleaseCounter)
+  [  8] getprop 1124 ............................ <pReleaseCounter>
+  [ 11] getobjprop 552 .......................... <pReleaseCounter.fin>
+  [ 14] setlocal 0 .............................. fin = pReleaseCounter.fin
+  [ 16] getlocal 0 .............................. <fin>
+  [ 18] pusharglistnoret 1 ...................... <fin>
+  [ 20] extcall 35 .............................. return fin
+  [ 22] ret
+end

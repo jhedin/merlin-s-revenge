@@ -1,0 +1,477 @@
+property ancestor, pCurrentRoom, pCurrentTileSet, pCurrentTool, pGridSelectors, pMap, pTools
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"objPalette">
+  [  2] pusharglist 1 ........................... <"objPalette">
+  [  4] extcall 27 .............................. <script("objPalette")>
+  [  6] pusharglist 1 ........................... <script("objPalette")>
+  [  8] extcall 0 ............................... <new(script("objPalette"))>
+  [ 10] setprop 77 .............................. ancestor = new(script("objPalette"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 221 ............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushint16 200 ........................... <200>
+  [ 27] pushint8 4 .............................. <4>
+  [ 29] pusharglist 2 ........................... <200, 4>
+  [ 31] extcall 215 ............................. <point(200, 4)>
+  [ 33] setobjprop 525 .......................... i.location = point(200, 4)
+  [ 36] getlocal 0 .............................. <i>
+  [ 38] pushcons 1 .............................. <"tlk_tools">
+  [ 40] pusharglist 1 ........................... <"tlk_tools">
+  [ 42] extcall 158 ............................. <member("tlk_tools")>
+  [ 44] setobjprop 158 .......................... i.member = member("tlk_tools")
+  [ 46] getparam 0 .............................. <me>
+  [ 48] pusharglistnoret 1 ...................... <me>
+  [ 50] extcall 17 .............................. return me
+  [ 52] ret
+end
+
+on init me, params
+  [  0] getprop 77 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pushsymb 22 ............................. <#none>
+  [ 10] setprop 1188 ............................ pCurrentRoom = #none
+  [ 13] pushsymb 22 ............................. <#none>
+  [ 15] setprop 1450 ............................ pCurrentTileSet = #none
+  [ 18] getglobal 101 ........................... <g>
+  [ 20] getchainedprop 458 ...................... <g.structMaster>
+  [ 23] pushsymb 1452 ........................... <#toolPaletteGridSelectors>
+  [ 26] pusharglist 2 ........................... <g.structMaster, #toolPaletteGridSelectors>
+  [ 28] objcall 460 ............................. <g.structMaster.getStruct(#toolPaletteGridSelectors)>
+  [ 31] setprop 1451 ............................ pGridSelectors = g.structMaster.getStruct(#toolPaletteGridSelectors)
+  [ 34] getparam 1 .............................. <params>
+  [ 36] getobjprop 829 .......................... <params.targetObject>
+  [ 39] setprop 1006 ............................ pMap = params.targetObject
+  [ 42] pusharglist 0 ........................... <[:]>
+  [ 44] pushproplist ............................ <[:]>
+  [ 45] setprop 1453 ............................ pTools = [:]
+  [ 48] getparam 0 .............................. <me>
+  [ 50] pusharglistnoret 1 ...................... <me>
+  [ 52] objcall 1443 ............................ me.initMap()
+  [ 55] getparam 0 .............................. <me>
+  [ 57] pusharglistnoret 1 ...................... <me>
+  [ 59] objcall 1444 ............................ me.initTools()
+  [ 62] ret
+end
+
+on initMap me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 1447 ............................ me.refreshRoomAndTileSetObjects()
+  [  7] getprop 1188 ............................ <pCurrentRoom>
+  [ 10] pusharglist 1 ........................... <pCurrentRoom>
+  [ 12] objcall 654 ............................. <pCurrentRoom.getSpriteRect()>
+  [ 15] setlocal 0 .............................. roomRect = pCurrentRoom.getSpriteRect()
+  [ 17] getlocal 0 .............................. <roomRect>
+  [ 19] pushint8 1 .............................. <1>
+  [ 21] pusharglist 2 ........................... <roomRect, 1>
+  [ 23] objcall 38 .............................. <roomRect[1]>
+  [ 25] getlocal 0 .............................. <roomRect>
+  [ 27] pushint8 4 .............................. <4>
+  [ 29] pusharglist 2 ........................... <roomRect, 4>
+  [ 31] objcall 38 .............................. <roomRect[4]>
+  [ 33] pushint8 16 ............................. <16>
+  [ 35] add ..................................... <roomRect[4] + 16>
+  [ 36] pusharglist 2 ........................... <roomRect[1], roomRect[4] + 16>
+  [ 38] extcall 215 ............................. <point(roomRect[1], roomRect[4] + 16)>
+  [ 40] setlocal 1 .............................. roomMapLoc = point(roomRect[1], roomRect[4] + 16)
+  [ 42] getprop 1006 ............................ <pMap>
+  [ 45] getlocal 1 .............................. <roomMapLoc>
+  [ 47] pusharglistnoret 2 ...................... <pMap, roomMapLoc>
+  [ 49] objcall 1182 ............................ pMap.setRoomMapLoc(roomMapLoc)
+  [ 52] getprop 1006 ............................ <pMap>
+  [ 55] pusharglistnoret 1 ...................... <pMap>
+  [ 57] objcall 1170 ............................ pMap.displayRoomMap()
+  [ 60] getparam 0 .............................. <me>
+  [ 62] pusharglistnoret 1 ...................... <me>
+  [ 64] objcall 1448 ............................ me.refreshTileSetDisplay()
+  [ 67] getparam 0 .............................. <me>
+  [ 69] pushsymb 254 ............................ <#map>
+  [ 71] getprop 1006 ............................ <pMap>
+  [ 74] pusharglistnoret 3 ...................... <me, #map, pMap>
+  [ 76] objcall 1445 ............................ me.newGridSelector(#map, pMap)
+  [ 79] getparam 0 .............................. <me>
+  [ 81] pushsymb 954 ............................ <#room>
+  [ 84] getprop 1188 ............................ <pCurrentRoom>
+  [ 87] pusharglistnoret 3 ...................... <me, #room, pCurrentRoom>
+  [ 89] objcall 1445 ............................ me.newGridSelector(#room, pCurrentRoom)
+  [ 92] getparam 0 .............................. <me>
+  [ 94] pushsymb 532 ............................ <#tileSet>
+  [ 97] getprop 1450 ............................ <pCurrentTileSet>
+  [100] pusharglistnoret 3 ...................... <me, #tileSet, pCurrentTileSet>
+  [102] objcall 1445 ............................ me.newGridSelector(#tileSet, pCurrentTileSet)
+  [105] ret
+end
+
+on initParams me, params, toolSym
+  [  0] getparam 2 .............................. <toolSym>
+  [  2] peek 0 .................................. case toolSym of
+  [  4] pushsymb 970 ............................ <#brush>
+  [  7] eq
+  [  8] jmpifz [ 14] ............................ (case) #brush:
+  [ 11] jmp [ 23]
+  [ 14] peek 0
+  [ 16] pushsymb 1456 ........................... <#grabber>
+  [ 19] eq
+  [ 20] jmpifz [ 23] ............................ (case) #grabber:
+  [ 23] pop 1 ................................... end case
+  [ 25] getparam 1 .............................. <params>
+  [ 27] pusharglistnoret 1 ...................... <params>
+  [ 29] extcall 17 .............................. return params
+  [ 31] ret
+end
+
+on initTools me
+  [  0] pusharglist 0 ........................... <[:]>
+  [  2] pushproplist ............................ <[:]>
+  [  3] setprop 1453 ............................ pTools = [:]
+  [  6] getparam 0 .............................. <me>
+  [  8] getchainedprop 537 ...................... <me.pDefinition>
+  [ 11] getobjprop 1338 ......................... <me.pDefinition.theKey>
+  [ 14] setlocal 0 .............................. theKey = me.pDefinition.theKey
+  [ 16] pushint8 1 .............................. <1>
+  [ 18] setlocal 1
+  [ 20] getlocal 1
+  [ 22] getlocal 0 .............................. <theKey>
+  [ 24] getobjprop 28 ........................... <theKey.count>
+  [ 26] lteq
+  [ 27] jmpifz [133] ............................ repeat with i = 1 to theKey.count
+  [ 30] getlocal 0 .............................. <theKey>
+  [ 32] getlocal 1 .............................. <i>
+  [ 34] pusharglist 2 ........................... <theKey, i>
+  [ 36] objcall 29 .............................. <theKey.getPropAt(i)>
+  [ 38] setlocal 2 .............................. nToolSym = theKey.getPropAt(i)
+  [ 40] pushcons 2 .............................. <"obj">
+  [ 42] getlocal 2 .............................. <nToolSym>
+  [ 44] pusharglist 1 ........................... <nToolSym>
+  [ 46] extcall 61 .............................. <string(nToolSym)>
+  [ 48] joinstr ................................. <"obj" & string(nToolSym)>
+  [ 49] pushcons 3 .............................. <"Tool">
+  [ 51] joinstr ................................. <"obj" & string(nToolSym) & "Tool">
+  [ 52] pusharglist 1 ........................... <"obj" & string(nToolSym) & "Tool">
+  [ 54] extcall 1458 ............................ <StringToSymbol("obj" & string(nToolSym) & "Tool")>
+  [ 57] setlocal 3 .............................. nObjSym = StringToSymbol("obj" & string(nToolSym) & "Tool")
+  [ 59] getglobal 101 ........................... <g>
+  [ 61] getchainedprop 102 ...................... <g.objectMaster>
+  [ 63] getlocal 3 .............................. <nObjSym>
+  [ 65] pusharglist 2 ........................... <g.objectMaster, nObjSym>
+  [ 67] objcall 3 ............................... <g.objectMaster.requestObject(nObjSym)>
+  [ 69] setlocal 4 .............................. nObj = g.objectMaster.requestObject(nObjSym)
+  [ 71] getlocal 4 .............................. <nObj>
+  [ 73] pushsymb 1 .............................. <#init>
+  [ 75] pusharglist 2 ........................... <nObj, #init>
+  [ 77] objcall 136 ............................. <nObj.getParams(#init)>
+  [ 79] setlocal 5 .............................. params = nObj.getParams(#init)
+  [ 81] getlocal 5 .............................. <params>
+  [ 83] getparam 0 .............................. <me>
+  [ 85] getchainedprop 67 ....................... <me.id>
+  [ 87] getobjprop 66 ........................... <me.id.bigMe>
+  [ 89] setobjprop 679 .......................... params.toolPalette = me.id.bigMe
+  [ 92] getparam 0 .............................. <me>
+  [ 94] getlocal 5 .............................. <params>
+  [ 96] getlocal 2 .............................. <nToolSym>
+  [ 98] pusharglist 3 ........................... <me, params, nToolSym>
+  [100] objcall 1331 ............................ <me.initParams(params, nToolSym)>
+  [103] setlocal 5 .............................. params = me.initParams(params, nToolSym)
+  [105] getlocal 4 .............................. <nObj>
+  [107] getlocal 5 .............................. <params>
+  [109] pusharglistnoret 2 ...................... <nObj, params>
+  [111] objcall 1 ............................... nObj.init(params)
+  [113] getprop 1453 ............................ <pTools>
+  [116] getlocal 2 .............................. <nToolSym>
+  [118] getlocal 4 .............................. <nObj>
+  [120] pusharglistnoret 3 ...................... <pTools, nToolSym, nObj>
+  [122] objcall 37 .............................. pTools[nToolSym] = nObj
+  [124] pushint8 1
+  [126] getlocal 1
+  [128] add
+  [129] setlocal 1
+  [131] endrepeat [ 20]
+  [133] getparam 0 .............................. <me>
+  [135] getlocal 0 .............................. <theKey>
+  [137] pushint8 1 .............................. <1>
+  [139] pusharglist 2 ........................... <theKey, 1>
+  [141] objcall 29 .............................. <theKey.getPropAt(1)>
+  [143] pusharglistnoret 2 ...................... <me, theKey.getPropAt(1)>
+  [145] objcall 972 ............................. me.setCurrentTool(theKey.getPropAt(1))
+  [148] ret
+end
+
+on finish me
+  [  0] getglobal 101 ........................... <g>
+  [  2] getchainedprop 102 ...................... <g.objectMaster>
+  [  4] getprop 1453 ............................ <pTools>
+  [  7] pusharglistnoret 2 ...................... <g.objectMaster, pTools>
+  [  9] objcall 7 ............................... g.objectMaster.finishObjects(pTools)
+  [ 11] getglobal 101 ........................... <g>
+  [ 13] getchainedprop 102 ...................... <g.objectMaster>
+  [ 15] getprop 1451 ............................ <pGridSelectors>
+  [ 18] pusharglistnoret 2 ...................... <g.objectMaster, pGridSelectors>
+  [ 20] objcall 7 ............................... g.objectMaster.finishObjects(pGridSelectors)
+  [ 22] getprop 77 .............................. <ancestor>
+  [ 24] pusharglistnoret 1 ...................... <ancestor>
+  [ 26] objcall 39 .............................. ancestor.finish()
+  [ 28] ret
+end
+
+on clearCurrentTileset me
+  [  0] pushsymb 22 ............................. <#none>
+  [  2] setprop 1450 ............................ pCurrentTileSet = #none
+  [  5] ret
+end
+
+on activateGridSelectors me
+  [  0] pushsymb 273 ............................ <#activate>
+  [  3] getprop 1451 ............................ <pGridSelectors>
+  [  6] pusharglistnoret 2 ...................... <#activate, pGridSelectors>
+  [  8] extcall 265 ............................. call(#activate, pGridSelectors)
+  [ 11] ret
+end
+
+on deactivateGridSelectors me
+  [  0] pushsymb 434 ............................ <#deactivate>
+  [  3] getprop 1451 ............................ <pGridSelectors>
+  [  6] pusharglistnoret 2 ...................... <#deactivate, pGridSelectors>
+  [  8] extcall 265 ............................. call(#deactivate, pGridSelectors)
+  [ 11] ret
+end
+
+on getCurrentMap me
+  [  0] getprop 1006 ............................ <pMap>
+  [  3] pusharglistnoret 1 ...................... <pMap>
+  [  5] extcall 17 .............................. return pMap
+  [  7] ret
+end
+
+on getCurrentRoom me
+  [  0] getprop 1188 ............................ <pCurrentRoom>
+  [  3] pusharglistnoret 1 ...................... <pCurrentRoom>
+  [  5] extcall 17 .............................. return pCurrentRoom
+  [  7] ret
+end
+
+on getCurrentTileSet me
+  [  0] getprop 1450 ............................ <pCurrentTileSet>
+  [  3] pusharglistnoret 1 ...................... <pCurrentTileSet>
+  [  5] extcall 17 .............................. return pCurrentTileSet
+  [  7] ret
+end
+
+on getGridSelectors me
+  [  0] getprop 1451 ............................ <pGridSelectors>
+  [  3] pusharglistnoret 1 ...................... <pGridSelectors>
+  [  5] extcall 17 .............................. return pGridSelectors
+  [  7] ret
+end
+
+on getTool me, which
+  [  0] getprop 1453 ............................ <pTools>
+  [  3] getparam 1 .............................. <which>
+  [  5] pusharglist 2 ........................... <pTools, which>
+  [  7] objcall 38 .............................. <pTools[which]>
+  [  9] pusharglistnoret 1 ...................... <pTools[which]>
+  [ 11] extcall 17 .............................. return pTools[which]
+  [ 13] ret
+end
+
+on newGridSelector me, objSym, targetObj
+  [  0] getglobal 101 ........................... <g>
+  [  2] getchainedprop 102 ...................... <g.objectMaster>
+  [  4] pushsymb 1130 ........................... <#objGridSelector>
+  [  7] pusharglist 2 ........................... <g.objectMaster, #objGridSelector>
+  [  9] objcall 3 ............................... <g.objectMaster.requestObject(#objGridSelector)>
+  [ 11] setlocal 0 .............................. nSel = g.objectMaster.requestObject(#objGridSelector)
+  [ 13] getlocal 0 .............................. <nSel>
+  [ 15] pusharglist 1 ........................... <nSel>
+  [ 17] objcall 136 ............................. <nSel.getParams()>
+  [ 19] setlocal 1 .............................. params = nSel.getParams()
+  [ 21] getlocal 1 .............................. <params>
+  [ 23] getparam 0 .............................. <me>
+  [ 25] getchainedprop 67 ....................... <me.id>
+  [ 27] getobjprop 66 ........................... <me.id.bigMe>
+  [ 29] setobjprop 529 .......................... params.requester = me.id.bigMe
+  [ 32] getlocal 1 .............................. <params>
+  [ 34] getparam 2 .............................. <targetObj>
+  [ 36] setobjprop 829 .......................... params.targetObject = targetObj
+  [ 39] getparam 1 .............................. <objSym>
+  [ 41] peek 0 .................................. case objSym of
+  [ 43] pushsymb 954 ............................ <#room>
+  [ 46] eq
+  [ 47] jmpifz [ 60] ............................ (case) #room:
+  [ 50] getlocal 1 .............................. <params>
+  [ 52] pushint8 1 .............................. <1>
+  [ 54] setobjprop 828 .......................... params.selectOnPress = 1
+  [ 57] jmp [ 76]
+  [ 60] peek 0
+  [ 62] pushsymb 532 ............................ <#tileSet>
+  [ 65] eq
+  [ 66] jmpifz [ 76] ............................ (case) #tileSet:
+  [ 69] getlocal 1 .............................. <params>
+  [ 71] pushint8 1 .............................. <1>
+  [ 73] setobjprop 827 .......................... params.allowRangeSelections = 1
+  [ 76] pop 1 ................................... end case
+  [ 78] getlocal 0 .............................. <nSel>
+  [ 80] getlocal 1 .............................. <params>
+  [ 82] pusharglistnoret 2 ...................... <nSel, params>
+  [ 84] objcall 1 ............................... nSel.init(params)
+  [ 86] getprop 1451 ............................ <pGridSelectors>
+  [ 89] getparam 1 .............................. <objSym>
+  [ 91] getlocal 0 .............................. <nSel>
+  [ 93] pusharglistnoret 3 ...................... <pGridSelectors, objSym, nSel>
+  [ 95] objcall 37 .............................. pGridSelectors[objSym] = nSel
+  [ 97] ret
+end
+
+on refreshGridSelectorTargets me
+  [  0] getprop 1451 ............................ <pGridSelectors>
+  [  3] pushsymb 954 ............................ <#room>
+  [  6] pusharglist 2 ........................... <pGridSelectors, #room>
+  [  8] objcall 38 .............................. <pGridSelectors[#room]>
+  [ 10] getprop 1188 ............................ <pCurrentRoom>
+  [ 13] pusharglistnoret 2 ...................... <pGridSelectors[#room], pCurrentRoom>
+  [ 15] objcall 295 ............................. pGridSelectors[#room].setTarget(pCurrentRoom)
+  [ 18] getprop 1451 ............................ <pGridSelectors>
+  [ 21] pushsymb 532 ............................ <#tileSet>
+  [ 24] pusharglist 2 ........................... <pGridSelectors, #tileSet>
+  [ 26] objcall 38 .............................. <pGridSelectors[#tileSet]>
+  [ 28] getprop 1450 ............................ <pCurrentTileSet>
+  [ 31] pusharglistnoret 2 ...................... <pGridSelectors[#tileSet], pCurrentTileSet>
+  [ 33] objcall 295 ............................. pGridSelectors[#tileSet].setTarget(pCurrentTileSet)
+  [ 36] ret
+end
+
+on refreshRoomAndTileSet me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 1447 ............................ me.refreshRoomAndTileSetObjects()
+  [  7] getparam 0 .............................. <me>
+  [  9] pusharglistnoret 1 ...................... <me>
+  [ 11] objcall 1448 ............................ me.refreshTileSetDisplay()
+  [ 14] getparam 0 .............................. <me>
+  [ 16] pusharglistnoret 1 ...................... <me>
+  [ 18] objcall 1446 ............................ me.refreshGridSelectorTargets()
+  [ 21] ret
+end
+
+on refreshRoomAndTileSetObjects me
+  [  0] pushsymb 22 ............................. <#none>
+  [  2] setprop 1188 ............................ pCurrentRoom = #none
+  [  5] getprop 1450 ............................ <pCurrentTileSet>
+  [  8] pushsymb 22 ............................. <#none>
+  [ 10] nteq .................................... <pCurrentTileSet <> #none>
+  [ 11] jmpifz [ 21] ............................ if pCurrentTileSet <> #none then
+  [ 14] getprop 1450 ............................ <pCurrentTileSet>
+  [ 17] pusharglistnoret 1 ...................... <pCurrentTileSet>
+  [ 19] objcall 222 ............................. pCurrentTileSet.offscreen()
+  [ 21] getprop 1006 ............................ <pMap>
+  [ 24] pusharglist 1 ........................... <pMap>
+  [ 26] objcall 956 ............................. <pMap.getCurrentRoom()>
+  [ 29] setprop 1188 ............................ pCurrentRoom = pMap.getCurrentRoom()
+  [ 32] getprop 1006 ............................ <pMap>
+  [ 35] pusharglist 1 ........................... <pMap>
+  [ 37] objcall 963 ............................. <pMap.getCurrentTileSet()>
+  [ 40] setprop 1450 ............................ pCurrentTileSet = pMap.getCurrentTileSet()
+  [ 43] ret
+end
+
+on refreshTileSetDisplay me
+  [  0] getprop 1188 ............................ <pCurrentRoom>
+  [  3] pusharglist 1 ........................... <pCurrentRoom>
+  [  5] objcall 654 ............................. <pCurrentRoom.getSpriteRect()>
+  [  8] setlocal 0 .............................. roomRect = pCurrentRoom.getSpriteRect()
+  [ 10] getlocal 0 .............................. <roomRect>
+  [ 12] pushint8 3 .............................. <3>
+  [ 14] pusharglist 2 ........................... <roomRect, 3>
+  [ 16] objcall 38 .............................. <roomRect[3]>
+  [ 18] pushint8 16 ............................. <16>
+  [ 20] add ..................................... <roomRect[3] + 16>
+  [ 21] getlocal 0 .............................. <roomRect>
+  [ 23] pushint8 2 .............................. <2>
+  [ 25] pusharglist 2 ........................... <roomRect, 2>
+  [ 27] objcall 38 .............................. <roomRect[2]>
+  [ 29] pusharglist 2 ........................... <roomRect[3] + 16, roomRect[2]>
+  [ 31] extcall 215 ............................. <point(roomRect[3] + 16, roomRect[2])>
+  [ 33] setlocal 1 .............................. tileSetLoc = point(roomRect[3] + 16, roomRect[2])
+  [ 35] getprop 1450 ............................ <pCurrentTileSet>
+  [ 38] getlocal 1 .............................. <tileSetLoc>
+  [ 40] pusharglistnoret 2 ...................... <pCurrentTileSet, tileSetLoc>
+  [ 42] objcall 584 ............................. pCurrentTileSet.displayImage(tileSetLoc)
+  [ 45] ret
+end
+
+on selectionMade me, theSel, theObj
+  [  0] getparam 2 .............................. <theObj>
+  [  2] peek 0 .................................. case theObj of
+  [  4] getparam 0 .............................. <me>
+  [  6] eq
+  [  7] jmpifz [ 33] ............................ (case) me:
+  [ 10] getparam 0 .............................. <me>
+  [ 12] getparam 1 .............................. <theSel>
+  [ 14] pusharglist 2 ........................... <me, theSel>
+  [ 16] objcall 1333 ............................ <me.getTileSymbol(theSel)>
+  [ 19] setlocal 0 .............................. toolSym = me.getTileSymbol(theSel)
+  [ 21] getparam 0 .............................. <me>
+  [ 23] getlocal 0 .............................. <toolSym>
+  [ 25] pusharglistnoret 2 ...................... <me, toolSym>
+  [ 27] objcall 972 ............................. me.setCurrentTool(toolSym)
+  [ 30] jmp [ 96]
+  [ 33] peek 0
+  [ 35] getprop 1450 ............................ <pCurrentTileSet>
+  [ 38] eq
+  [ 39] jmpifz [ 55] ............................ (case) pCurrentTileSet:
+  [ 42] getprop 1465 ............................ <pCurrentTool>
+  [ 45] getparam 1 .............................. <theSel>
+  [ 47] pusharglistnoret 2 ...................... <pCurrentTool, theSel>
+  [ 49] objcall 951 ............................. pCurrentTool.tileSetSelected(theSel)
+  [ 52] jmp [ 96]
+  [ 55] peek 0
+  [ 57] getprop 1188 ............................ <pCurrentRoom>
+  [ 60] eq
+  [ 61] jmpifz [ 77] ............................ (case) pCurrentRoom:
+  [ 64] getprop 1465 ............................ <pCurrentTool>
+  [ 67] getparam 1 .............................. <theSel>
+  [ 69] pusharglistnoret 2 ...................... <pCurrentTool, theSel>
+  [ 71] objcall 950 ............................. pCurrentTool.roomSelected(theSel)
+  [ 74] jmp [ 96]
+  [ 77] peek 0
+  [ 79] getprop 1006 ............................ <pMap>
+  [ 82] eq
+  [ 83] jmpifz [ 96] ............................ (case) pMap:
+  [ 86] getprop 1006 ............................ <pMap>
+  [ 89] getparam 1 .............................. <theSel>
+  [ 91] pusharglistnoret 2 ...................... <pMap, theSel>
+  [ 93] objcall 1175 ............................ pMap.moveToRoom(theSel)
+  [ 96] pop 1 ................................... end case
+  [ 98] ret
+end
+
+on setCurrentTool me, toolSym
+  [  0] getprop 1453 ............................ <pTools>
+  [  3] getparam 1 .............................. <toolSym>
+  [  5] pusharglist 2 ........................... <pTools, toolSym>
+  [  7] objcall 38 .............................. <pTools[toolSym]>
+  [  9] setprop 1465 ............................ pCurrentTool = pTools[toolSym]
+  [ 12] getprop 1465 ............................ <pCurrentTool>
+  [ 15] getprop 1451 ............................ <pGridSelectors>
+  [ 18] pusharglistnoret 2 ...................... <pCurrentTool, pGridSelectors>
+  [ 20] objcall 949 ............................. pCurrentTool.adjustGridSelectors(pGridSelectors)
+  [ 23] ret
+end
+
+on setLocation me, newLoc
+  [  0] getparam 1 .............................. <newLoc>
+  [  2] pusharglist 1 ........................... <newLoc>
+  [  4] objcall 48 .............................. <newLoc.duplicate()>
+  [  6] setlocal 0 .............................. pLocation = newLoc.duplicate()
+  [  8] getparam 0 .............................. <me>
+  [ 10] getlocal 0 .............................. <pLocation>
+  [ 12] pusharglistnoret 2 ...................... <me, pLocation>
+  [ 14] objcall 662 ............................. me.setSpriteLoc(pLocation)
+  [ 17] ret
+end

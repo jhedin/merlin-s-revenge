@@ -1,0 +1,240 @@
+property ancestor, pBoundingRect, player, pStarsImage, pStarsRect, pUnitRect, pUnitToDisplay, pYGap
+global g, gGlobalDisplayLayer
+
+on new me
+  [  0] pushcons 0 .............................. <"objModules">
+  [  2] pusharglist 1 ........................... <"objModules">
+  [  4] extcall 34 .............................. <script("objModules")>
+  [  6] pusharglist 1 ........................... <script("objModules")>
+  [  8] extcall 0 ............................... <new(script("objModules"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objModules"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 1352 ........................... <#layer>
+  [ 27] getglobal 2491 .......................... <gGlobalDisplayLayer>
+  [ 30] pusharglistnoret 3 ...................... <i, #layer, gGlobalDisplayLayer>
+  [ 32] objcall 48 .............................. i[#layer] = gGlobalDisplayLayer
+  [ 34] getparam 0 .............................. <me>
+  [ 36] pushcons 1 .............................. <"modSpriteMembers">
+  [ 38] pusharglistnoret 2 ...................... <me, "modSpriteMembers">
+  [ 40] objcall 1717 ............................ me.addModule("modSpriteMembers")
+  [ 43] getparam 0 .............................. <me>
+  [ 45] pusharglistnoret 1 ...................... <me>
+  [ 47] extcall 35 .............................. return me
+  [ 49] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pushsymb 49 ............................. <#none>
+  [ 10] setprop 4078 ............................ pBoundingRect = #none
+  [ 13] getparam 1 .............................. <params>
+  [ 15] getobjprop 1352 ......................... <params.layer>
+  [ 18] setprop 1478 ............................ player = params.layer
+  [ 21] pushsymb 49 ............................. <#none>
+  [ 23] setprop 4079 ............................ pStarsImage = #none
+  [ 26] pushsymb 49 ............................. <#none>
+  [ 28] setprop 4080 ............................ pUnitRect = #none
+  [ 31] pushsymb 49 ............................. <#none>
+  [ 33] setprop 4081 ............................ pUnitToDisplay = #none
+  [ 36] pushint8 4 .............................. <4>
+  [ 38] setprop 4082 ............................ pYGap = 4
+  [ 41] ret
+end
+
+on calcBoundingRect me, theUnit, theloc
+  [  0] getparam 1 .............................. <theUnit>
+  [  2] setprop 4081 ............................ pUnitToDisplay = theUnit
+  [  5] getglobal 40 ............................ <g>
+  [  7] getchainedprop 120 ...................... <g.armyMaster>
+  [  9] pusharglist 1 ........................... <g.armyMaster>
+  [ 11] objcall 4083 ............................ <g.armyMaster.getLevelBar()>
+  [ 14] setlocal 0 .............................. levelBar = g.armyMaster.getLevelBar()
+  [ 16] getparam 1 .............................. <theUnit>
+  [ 18] getobjprop 593 .......................... <theUnit.pExperienceLevel>
+  [ 21] setlocal 1 .............................. unitLevel = theUnit.pExperienceLevel
+  [ 23] getlocal 0 .............................. <levelBar>
+  [ 25] getlocal 1 .............................. <unitLevel>
+  [ 27] pusharglist 2 ........................... <levelBar, unitLevel>
+  [ 29] objcall 3362 ............................ <levelBar.drawStarsImage(unitLevel)>
+  [ 32] setprop 4079 ............................ pStarsImage = levelBar.drawStarsImage(unitLevel)
+  [ 35] pushzero ................................ <0>
+  [ 36] pushzero ................................ <0>
+  [ 37] pushzero ................................ <0>
+  [ 38] pushzero ................................ <0>
+  [ 39] pusharglist 4 ........................... <0, 0, 0, 0>
+  [ 41] extcall 263 ............................. <rect(0, 0, 0, 0)>
+  [ 44] setprop 4084 ............................ pStarsRect = rect(0, 0, 0, 0)
+  [ 47] getprop 4084 ............................ <pStarsRect>
+  [ 50] getprop 4079 ............................ <pStarsImage>
+  [ 53] getobjprop 424 .......................... <pStarsImage.width>
+  [ 56] setobjprop 266 .......................... pStarsRect.right = pStarsImage.width
+  [ 59] getprop 4084 ............................ <pStarsRect>
+  [ 62] getprop 4079 ............................ <pStarsImage>
+  [ 65] getobjprop 423 .......................... <pStarsImage.height>
+  [ 68] getlocal 0 .............................. <levelBar>
+  [ 70] pusharglist 1 ........................... <levelBar>
+  [ 72] objcall 3364 ............................ <levelBar.getYGap()>
+  [ 75] add ..................................... <pStarsImage.height + levelBar.getYGap()>
+  [ 76] setobjprop 114 .......................... pStarsRect.bottom = pStarsImage.height + levelBar.getYGap()
+  [ 78] pushzero ................................ <0>
+  [ 79] pushzero ................................ <0>
+  [ 80] pushzero ................................ <0>
+  [ 81] pushzero ................................ <0>
+  [ 82] pusharglist 4 ........................... <0, 0, 0, 0>
+  [ 84] extcall 263 ............................. <rect(0, 0, 0, 0)>
+  [ 87] setprop 4080 ............................ pUnitRect = rect(0, 0, 0, 0)
+  [ 90] getprop 4080 ............................ <pUnitRect>
+  [ 93] getprop 4084 ............................ <pStarsRect>
+  [ 96] getobjprop 114 .......................... <pStarsRect.bottom>
+  [ 98] setobjprop 265 .......................... pUnitRect.top = pStarsRect.bottom
+  [101] getprop 4080 ............................ <pUnitRect>
+  [104] getparam 1 .............................. <theUnit>
+  [106] getobjprop 424 .......................... <theUnit.width>
+  [109] setobjprop 266 .......................... pUnitRect.right = theUnit.width
+  [112] getprop 4080 ............................ <pUnitRect>
+  [115] getprop 4080 ............................ <pUnitRect>
+  [118] getobjprop 265 .......................... <pUnitRect.top>
+  [121] getparam 1 .............................. <theUnit>
+  [123] getobjprop 423 .......................... <theUnit.height>
+  [126] add ..................................... <pUnitRect.top + theUnit.height>
+  [127] getprop 4082 ............................ <pYGap>
+  [130] add ..................................... <pUnitRect.top + theUnit.height + pYGap>
+  [131] setobjprop 114 .......................... pUnitRect.bottom = pUnitRect.top + theUnit.height + pYGap
+  [133] pushzero ................................ <0>
+  [134] pushzero ................................ <0>
+  [135] pushzero ................................ <0>
+  [136] pushzero ................................ <0>
+  [137] pusharglist 4 ........................... <0, 0, 0, 0>
+  [139] extcall 263 ............................. <rect(0, 0, 0, 0)>
+  [142] setprop 4078 ............................ pBoundingRect = rect(0, 0, 0, 0)
+  [145] getprop 4078 ............................ <pBoundingRect>
+  [148] getprop 4084 ............................ <pStarsRect>
+  [151] getobjprop 424 .......................... <pStarsRect.width>
+  [154] getprop 4080 ............................ <pUnitRect>
+  [157] getobjprop 424 .......................... <pUnitRect.width>
+  [160] pusharglist 2 ........................... <pStarsRect.width, pUnitRect.width>
+  [162] extcall 425 ............................. <max(pStarsRect.width, pUnitRect.width)>
+  [165] setobjprop 266 .......................... pBoundingRect.right = max(pStarsRect.width, pUnitRect.width)
+  [168] getprop 4078 ............................ <pBoundingRect>
+  [171] getprop 4084 ............................ <pStarsRect>
+  [174] getobjprop 423 .......................... <pStarsRect.height>
+  [177] getprop 4080 ............................ <pUnitRect>
+  [180] getobjprop 423 .......................... <pUnitRect.height>
+  [183] add ..................................... <pStarsRect.height + pUnitRect.height>
+  [184] setobjprop 114 .......................... pBoundingRect.bottom = pStarsRect.height + pUnitRect.height
+  [186] getprop 4078 ............................ <pBoundingRect>
+  [189] getparam 2 .............................. <theloc>
+  [191] getparam 2 .............................. <theloc>
+  [193] pusharglist 2 ........................... <theloc, theloc>
+  [195] extcall 263 ............................. <rect(theloc, theloc)>
+  [198] add ..................................... <pBoundingRect + rect(theloc, theloc)>
+  [199] setlocal 2 .............................. boundingRectOffset = pBoundingRect + rect(theloc, theloc)
+  [201] getlocal 2 .............................. <boundingRectOffset>
+  [203] pusharglistnoret 1 ...................... <boundingRectOffset>
+  [205] extcall 35 .............................. return boundingRectOffset
+  [207] ret
+end
+
+on displayUnit me, theloc
+  [  0] getparam 1 .............................. <theloc>
+  [  2] getparam 1 .............................. <theloc>
+  [  4] getobjprop 540 .......................... <theloc.locV>
+  [  7] getprop 4078 ............................ <pBoundingRect>
+  [ 10] getobjprop 423 .......................... <pBoundingRect.height>
+  [ 13] sub ..................................... <theloc.locV - pBoundingRect.height>
+  [ 14] setobjprop 540 .......................... theloc.locV = theloc.locV - pBoundingRect.height
+  [ 17] getprop 4078 ............................ <pBoundingRect>
+  [ 20] getparam 1 .............................. <theloc>
+  [ 22] getparam 1 .............................. <theloc>
+  [ 24] pusharglist 2 ........................... <theloc, theloc>
+  [ 26] extcall 263 ............................. <rect(theloc, theloc)>
+  [ 29] add ..................................... <pBoundingRect + rect(theloc, theloc)>
+  [ 30] setlocal 0 .............................. boundingRectOffset = pBoundingRect + rect(theloc, theloc)
+  [ 32] getparam 0 .............................. <me>
+  [ 34] pusharglist 1 ........................... <me>
+  [ 36] objcall 1347 ............................ <me.newSpriteMember()>
+  [ 39] setlocal 1 .............................. newSprMem = me.newSpriteMember()
+  [ 41] getlocal 1 .............................. <newSprMem>
+  [ 43] getprop 4079 ............................ <pStarsImage>
+  [ 46] getlocal 0 .............................. <boundingRectOffset>
+  [ 48] getobjprop 264 .......................... <boundingRectOffset.left>
+  [ 51] getlocal 0 .............................. <boundingRectOffset>
+  [ 53] getobjprop 265 .......................... <boundingRectOffset.top>
+  [ 56] pusharglist 2 ........................... <boundingRectOffset.left, boundingRectOffset.top>
+  [ 58] extcall 197 ............................. <point(boundingRectOffset.left, boundingRectOffset.top)>
+  [ 60] pusharglistnoret 3 ...................... <newSprMem, pStarsImage, point(boundingRectOffset.left, boundingRectOffset.top)>
+  [ 62] objcall 2502 ............................ newSprMem.displayImageAtLoc(pStarsImage, point(boundingRectOffset.left, boundingRectOffset.top))
+  [ 65] getlocal 1 .............................. <newSprMem>
+  [ 67] getlocal 0 .............................. <boundingRectOffset>
+  [ 69] getobjprop 264 .......................... <boundingRectOffset.left>
+  [ 72] getlocal 0 .............................. <boundingRectOffset>
+  [ 74] getobjprop 266 .......................... <boundingRectOffset.right>
+  [ 77] pusharglistnoret 3 ...................... <newSprMem, boundingRectOffset.left, boundingRectOffset.right>
+  [ 79] objcall 3895 ............................ newSprMem.centerAlign(boundingRectOffset.left, boundingRectOffset.right)
+  [ 82] getprop 4081 ............................ <pUnitToDisplay>
+  [ 85] getchainedprop 99 ....................... <pUnitToDisplay.member>
+  [ 87] getobjprop 800 .......................... <pUnitToDisplay.member.image>
+  [ 90] setlocal 2 .............................. unitImage = pUnitToDisplay.member.image
+  [ 92] getparam 0 .............................. <me>
+  [ 94] pusharglist 1 ........................... <me>
+  [ 96] objcall 1347 ............................ <me.newSpriteMember()>
+  [ 99] setlocal 1 .............................. newSprMem = me.newSpriteMember()
+  [101] getlocal 1 .............................. <newSprMem>
+  [103] getlocal 2 .............................. <unitImage>
+  [105] getlocal 0 .............................. <boundingRectOffset>
+  [107] getobjprop 264 .......................... <boundingRectOffset.left>
+  [110] getlocal 0 .............................. <boundingRectOffset>
+  [112] getobjprop 265 .......................... <boundingRectOffset.top>
+  [115] getprop 4080 ............................ <pUnitRect>
+  [118] getobjprop 265 .......................... <pUnitRect.top>
+  [121] add ..................................... <boundingRectOffset.top + pUnitRect.top>
+  [122] pusharglist 2 ........................... <boundingRectOffset.left, boundingRectOffset.top + pUnitRect.top>
+  [124] extcall 197 ............................. <point(boundingRectOffset.left, boundingRectOffset.top + pUnitRect.top)>
+  [126] pusharglistnoret 3 ...................... <newSprMem, unitImage, point(boundingRectOffset.left, boundingRectOffset.top + pUnitRect.top)>
+  [128] objcall 2502 ............................ newSprMem.displayImageAtLoc(unitImage, point(boundingRectOffset.left, boundingRectOffset.top + pUnitRect.top))
+  [131] getlocal 1 .............................. <newSprMem>
+  [133] pushint8 1 .............................. <1>
+  [135] inv ..................................... <-1>
+  [136] pusharglistnoret 2 ...................... <newSprMem, -1>
+  [138] objcall 910 ............................. newSprMem.setSpriteFlipFromDir(-1)
+  [141] getlocal 1 .............................. <newSprMem>
+  [143] getprop 4081 ............................ <pUnitToDisplay>
+  [146] getobjprop 423 .......................... <pUnitToDisplay.height>
+  [149] pusharglistnoret 2 ...................... <newSprMem, pUnitToDisplay.height>
+  [151] objcall 1011 ............................ newSprMem.setSpriteHeight(pUnitToDisplay.height)
+  [154] getlocal 1 .............................. <newSprMem>
+  [156] getprop 4081 ............................ <pUnitToDisplay>
+  [159] getobjprop 424 .......................... <pUnitToDisplay.width>
+  [162] pusharglistnoret 2 ...................... <newSprMem, pUnitToDisplay.width>
+  [164] objcall 1012 ............................ newSprMem.setSpriteWidth(pUnitToDisplay.width)
+  [167] getlocal 1 .............................. <newSprMem>
+  [169] getlocal 0 .............................. <boundingRectOffset>
+  [171] getobjprop 264 .......................... <boundingRectOffset.left>
+  [174] getlocal 0 .............................. <boundingRectOffset>
+  [176] getobjprop 266 .......................... <boundingRectOffset.right>
+  [179] pusharglistnoret 3 ...................... <newSprMem, boundingRectOffset.left, boundingRectOffset.right>
+  [181] objcall 3895 ............................ newSprMem.centerAlign(boundingRectOffset.left, boundingRectOffset.right)
+  [184] ret
+end
+
+on getBoundingRect me
+  [  0] getprop 4078 ............................ <pBoundingRect>
+  [  3] pusharglistnoret 1 ...................... <pBoundingRect>
+  [  5] extcall 35 .............................. return pBoundingRect
+  [  7] ret
+end
+
+on getLayer me
+  [  0] getprop 1478 ............................ <player>
+  [  3] pusharglistnoret 1 ...................... <player>
+  [  5] extcall 35 .............................. return player
+  [  7] ret
+end

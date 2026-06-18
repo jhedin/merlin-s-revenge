@@ -1,0 +1,46 @@
+on GeomMirrorPoint thepoint, mirrorpoint, safeDist
+  [  0] pushzero ................................ <0>
+  [  1] pushzero ................................ <0>
+  [  2] pusharglist 2 ........................... <0, 0>
+  [  4] extcall 97 .............................. <point(0, 0)>
+  [  6] setlocal 0 .............................. destPoint = point(0, 0)
+  [  8] getparam 2 .............................. <safeDist>
+  [ 10] pushint8 20 ............................. <20>
+  [ 12] mul ..................................... <safeDist * 20>
+  [ 13] setparam 2 .............................. safeDist = safeDist * 20
+  [ 15] getparam 0 .............................. <thepoint>
+  [ 17] getparam 1 .............................. <mirrorpoint>
+  [ 19] sub ..................................... <thepoint - mirrorpoint>
+  [ 20] setlocal 1 .............................. mirvect = thepoint - mirrorpoint
+  [ 22] getlocal 1 .............................. <mirvect>
+  [ 24] getobjprop 158 .......................... <mirvect.locH>
+  [ 26] getlocal 1 .............................. <mirvect>
+  [ 28] getobjprop 159 .......................... <mirvect.locV>
+  [ 30] pushzero ................................ <0>
+  [ 31] pusharglist 3 ........................... <mirvect.locH, mirvect.locV, 0>
+  [ 33] extcall 555 ............................. <vector(mirvect.locH, mirvect.locV, 0)>
+  [ 36] setlocal 2 .............................. destVect = vector(mirvect.locH, mirvect.locV, 0)
+  [ 38] getlocal 2 .............................. <destVect>
+  [ 40] pusharglistnoret 1 ...................... <destVect>
+  [ 42] objcall 556 ............................. destVect.normalize()
+  [ 45] getlocal 1 .............................. <mirvect>
+  [ 47] getlocal 2 .............................. <destVect>
+  [ 49] getobjprop 208 .......................... <destVect.x>
+  [ 51] getparam 2 .............................. <safeDist>
+  [ 53] mul ..................................... <destVect.x * safeDist>
+  [ 54] setobjprop 158 .......................... mirvect.locH = destVect.x * safeDist
+  [ 56] getlocal 1 .............................. <mirvect>
+  [ 58] getlocal 2 .............................. <destVect>
+  [ 60] getobjprop 207 .......................... <destVect.y>
+  [ 62] getparam 2 .............................. <safeDist>
+  [ 64] mul ..................................... <destVect.y * safeDist>
+  [ 65] setobjprop 159 .......................... mirvect.locV = destVect.y * safeDist
+  [ 67] getparam 0 .............................. <thepoint>
+  [ 69] getlocal 1 .............................. <mirvect>
+  [ 71] sub ..................................... <thepoint - mirvect>
+  [ 72] setlocal 0 .............................. destPoint = thepoint - mirvect
+  [ 74] getlocal 0 .............................. <destPoint>
+  [ 76] pusharglistnoret 1 ...................... <destPoint>
+  [ 78] extcall 3 ............................... return destPoint
+  [ 80] ret
+end

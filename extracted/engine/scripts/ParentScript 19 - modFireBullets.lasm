@@ -1,0 +1,232 @@
+property ancestor, pFireDelayCounter
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getprop 33 .............................. <ancestor>
+  [ 12] pusharglistnoret 1 ...................... <ancestor>
+  [ 14] objcall 2 ............................... ancestor.addModParams()
+  [ 16] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pusharglist 0 ........................... <>
+  [ 10] extcall 529 ............................. <CounterNew()>
+  [ 13] setprop 698 ............................. pFireDelayCounter = CounterNew()
+  [ 16] ret
+end
+
+on addSaveData me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 4 ............................... ancestor.addSaveData(sd)
+  [  8] getparam 1 .............................. <sd>
+  [ 10] pushsymb 698 ............................ <#pFireDelayCounter>
+  [ 13] getprop 698 ............................. <pFireDelayCounter>
+  [ 16] pusharglistnoret 3 ...................... <sd, #pFireDelayCounter, pFireDelayCounter>
+  [ 18] objcall 48 .............................. sd[#pFireDelayCounter] = pFireDelayCounter
+  [ 20] ret
+end
+
+on fireBullet me
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. fin = 0
+  [  3] getparam 0 .............................. <me>
+  [  5] getchainedprop 51 ....................... <me.big>
+  [  7] pusharglist 1 ........................... <me.big>
+  [  9] objcall 699 ............................. <me.big.getCharge()>
+  [ 12] setlocal 1 .............................. charge = me.big.getCharge()
+  [ 14] getparam 0 .............................. <me>
+  [ 16] getchainedprop 51 ....................... <me.big>
+  [ 18] pusharglist 1 ........................... <me.big>
+  [ 20] objcall 141 ............................. <me.big.getAttack()>
+  [ 22] getobjprop 700 .......................... <me.big.getAttack().chargePerUnit>
+  [ 25] setlocal 2 .............................. chargePerUnit = me.big.getAttack().chargePerUnit
+  [ 27] getlocal 1 .............................. <charge>
+  [ 29] getlocal 2 .............................. <chargePerUnit>
+  [ 31] sub ..................................... <charge - chargePerUnit>
+  [ 32] setlocal 1 .............................. charge = charge - chargePerUnit
+  [ 34] getlocal 1 .............................. <charge>
+  [ 36] pushzero ................................ <0>
+  [ 37] lt ...................................... <charge < 0>
+  [ 38] jmpifz [ 48] ............................ if charge < 0 then / else
+  [ 41] pushint8 1 .............................. <1>
+  [ 43] setlocal 0 .............................. fin = 1
+  [ 45] jmp [ 59]
+  [ 48] getparam 0 .............................. <me>
+  [ 50] getchainedprop 51 ....................... <me.big>
+  [ 52] getlocal 1 .............................. <charge>
+  [ 54] pusharglistnoret 2 ...................... <me.big, charge>
+  [ 56] objcall 701 ............................. me.big.setCurrentCharge(charge)
+  [ 59] getparam 0 .............................. <me>
+  [ 61] getchainedprop 51 ....................... <me.big>
+  [ 63] pusharglist 1 ........................... <me.big>
+  [ 65] objcall 141 ............................. <me.big.getAttack()>
+  [ 67] getobjprop 4567 ......................... <me.big.getAttack().beam>
+  [ 70] setlocal 3 .............................. beam = me.big.getAttack().beam
+  [ 72] getlocal 3 .............................. <beam>
+  [ 74] jmpifz [ 89] ............................ if beam then / else
+  [ 77] getparam 0 .............................. <me>
+  [ 79] getchainedprop 51 ....................... <me.big>
+  [ 81] pusharglistnoret 1 ...................... <me.big>
+  [ 83] objcall 4571 ............................ me.big.performBeamAttack()
+  [ 86] jmp [ 97]
+  [ 89] getparam 0 .............................. <me>
+  [ 91] getchainedprop 51 ....................... <me.big>
+  [ 93] pusharglistnoret 1 ...................... <me.big>
+  [ 95] objcall 143 ............................. me.big.performRangedAttack()
+  [ 97] getlocal 0 .............................. <fin>
+  [ 99] pusharglistnoret 1 ...................... <fin>
+  [101] extcall 35 .............................. return fin
+  [103] ret
+end
+
+on getTargetLoc me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 51 ....................... <me.big>
+  [  4] pusharglist 1 ........................... <me.big>
+  [  6] objcall 240 ............................. <me.big.getOwner()>
+  [  8] setlocal 0 .............................. owner = me.big.getOwner()
+  [ 10] getlocal 0 .............................. <owner>
+  [ 12] pusharglist 1 ........................... <owner>
+  [ 14] objcall 223 ............................. <owner.getTargetLoc()>
+  [ 16] pusharglistnoret 1 ...................... <owner.getTargetLoc()>
+  [ 18] extcall 35 .............................. return owner.getTargetLoc()
+  [ 20] ret
+end
+
+on internalEvent me, theEvent
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <theEvent>
+  [  4] pusharglistnoret 2 ...................... <ancestor, theEvent>
+  [  6] objcall 22 .............................. ancestor.internalEvent(theEvent)
+  [  8] getparam 1 .............................. <theEvent>
+  [ 10] peek 0 .................................. case theEvent of
+  [ 12] pushsymb 702 ............................ <#spellReleased>
+  [ 15] eq
+  [ 16] jmpifz [ 74] ............................ (case) #spellReleased:
+  [ 19] getparam 0 .............................. <me>
+  [ 21] getchainedprop 51 ....................... <me.big>
+  [ 23] pusharglist 1 ........................... <me.big>
+  [ 25] objcall 141 ............................. <me.big.getAttack()>
+  [ 27] getobjprop 703 .......................... <me.big.getAttack().releaseFunction>
+  [ 30] pushsymb 704 ............................ <#fireBullets>
+  [ 33] eq ...................................... <me.big.getAttack().releaseFunction = #fireBullets>
+  [ 34] jmpifz [ 74] ............................ if me.big.getAttack().releaseFunction = #fireBullets then
+  [ 37] getparam 0 .............................. <me>
+  [ 39] getparam 0 .............................. <me>
+  [ 41] getchainedprop 51 ....................... <me.big>
+  [ 43] pusharglist 1 ........................... <me.big>
+  [ 45] objcall 141 ............................. <me.big.getAttack()>
+  [ 47] getobjprop 705 .......................... <me.big.getAttack().fireDelay>
+  [ 50] pusharglistnoret 2 ...................... <me, me.big.getAttack().fireDelay>
+  [ 52] objcall 696 ............................. me.setFireDelay(me.big.getAttack().fireDelay)
+  [ 55] getparam 0 .............................. <me>
+  [ 57] pusharglistnoret 1 ...................... <me>
+  [ 59] objcall 695 ............................. me.resetFireDelay()
+  [ 62] getparam 0 .............................. <me>
+  [ 64] getchainedprop 51 ....................... <me.big>
+  [ 66] pushsymb 704 ............................ <#fireBullets>
+  [ 69] pusharglistnoret 2 ...................... <me.big, #fireBullets>
+  [ 71] objcall 278 ............................. me.big.goMode(#fireBullets)
+  [ 74] pop 1
+  [ 76] ret
+end
+
+on resetFireDelay me
+  [  0] getprop 698 ............................. <pFireDelayCounter>
+  [  3] pusharglistnoret 1 ...................... <pFireDelayCounter>
+  [  5] extcall 706 ............................. CounterReset(pFireDelayCounter)
+  [  8] ret
+end
+
+on restoreFromSave me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 26 .............................. ancestor.restoreFromSave(sd)
+  [  8] getparam 1 .............................. <sd>
+  [ 10] getobjprop 698 .......................... <sd.pFireDelayCounter>
+  [ 13] setprop 698 ............................. pFireDelayCounter = sd.pFireDelayCounter
+  [ 16] ret
+end
+
+on setFireDelay me, theAmount
+  [  0] getprop 698 ............................. <pFireDelayCounter>
+  [  3] pushsymb 530 ............................ <#tim>
+  [  6] pushint8 2 .............................. <2>
+  [  8] getparam 1 .............................. <theAmount>
+  [ 10] pusharglistnoret 4 ...................... <pFireDelayCounter, #tim, 2, theAmount>
+  [ 12] objcall 531 ............................. pFireDelayCounter.tim[2] = theAmount
+  [ 15] ret
+end
+
+on update me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 31 .............................. ancestor.update()
+  [  6] getparam 0 .............................. <me>
+  [  8] getchainedprop 51 ....................... <me.big>
+  [ 10] pusharglist 1 ........................... <me.big>
+  [ 12] objcall 52 .............................. <me.big.getMode()>
+  [ 14] pushsymb 704 ............................ <#fireBullets>
+  [ 17] eq ...................................... <me.big.getMode() = #fireBullets>
+  [ 18] jmpifz [ 46] ............................ if me.big.getMode() = #fireBullets then
+  [ 21] getparam 0 .............................. <me>
+  [ 23] pusharglist 1 ........................... <me>
+  [ 25] objcall 697 ............................. <me.updateFireBullets()>
+  [ 28] setlocal 0 .............................. fin = me.updateFireBullets()
+  [ 30] getlocal 0 .............................. <fin>
+  [ 32] jmpifz [ 46] ............................ if fin then
+  [ 35] getparam 0 .............................. <me>
+  [ 37] getchainedprop 51 ....................... <me.big>
+  [ 39] pushint8 1 .............................. <1>
+  [ 41] pusharglistnoret 2 ...................... <me.big, 1>
+  [ 43] objcall 707 ............................. me.big.setDead(1)
+  [ 46] ret
+end
+
+on updateFireBullets me
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. fin = 0
+  [  3] getprop 698 ............................. <pFireDelayCounter>
+  [  6] getobjprop 552 .......................... <pFireDelayCounter.fin>
+  [  9] jmpifz [ 31] ............................ if pFireDelayCounter.fin then / else
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglist 1 ........................... <me>
+  [ 16] objcall 694 ............................. <me.fireBullet()>
+  [ 19] setlocal 0 .............................. fin = me.fireBullet()
+  [ 21] getparam 0 .............................. <me>
+  [ 23] pusharglistnoret 1 ...................... <me>
+  [ 25] objcall 695 ............................. me.resetFireDelay()
+  [ 28] jmp [ 39]
+  [ 31] getprop 698 ............................. <pFireDelayCounter>
+  [ 34] pusharglistnoret 1 ...................... <pFireDelayCounter>
+  [ 36] extcall 553 ............................. counter(pFireDelayCounter)
+  [ 39] getlocal 0 .............................. <fin>
+  [ 41] pusharglistnoret 1 ...................... <fin>
+  [ 43] extcall 35 .............................. return fin
+  [ 45] ret
+end

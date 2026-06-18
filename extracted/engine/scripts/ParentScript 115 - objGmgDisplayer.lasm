@@ -1,0 +1,82 @@
+property ancestor, pDisplayLoc, pOffMember, pOnMember, pSpacer, pVerticalSpacerForDisplayCounter
+global g, gGlobalDisplayLayer
+
+on new me
+  [  0] pushcons 0 .............................. <"objSpriteMember">
+  [  2] pusharglist 1 ........................... <"objSpriteMember">
+  [  4] extcall 34 .............................. <script("objSpriteMember")>
+  [  6] pusharglist 1 ........................... <script("objSpriteMember")>
+  [  8] extcall 0 ............................... <new(script("objSpriteMember"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objSpriteMember"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] getglobal 2491 .......................... <gGlobalDisplayLayer>
+  [ 27] setobjprop 1352 ......................... i.layer = gGlobalDisplayLayer
+  [ 30] getlocal 0 .............................. <i>
+  [ 32] pushsymb 2493 ........................... <#displayLoc>
+  [ 35] pushzero ................................ <0>
+  [ 36] pushzero ................................ <0>
+  [ 37] pusharglist 2 ........................... <0, 0>
+  [ 39] extcall 197 ............................. <point(0, 0)>
+  [ 41] pusharglistnoret 3 ...................... <i, #displayLoc, point(0, 0)>
+  [ 43] objcall 48 .............................. i[#displayLoc] = point(0, 0)
+  [ 45] getlocal 0 .............................. <i>
+  [ 47] pushsymb 3155 ........................... <#onMember>
+  [ 50] pushsymb 49 ............................. <#none>
+  [ 52] pusharglistnoret 3 ...................... <i, #onMember, #none>
+  [ 54] objcall 48 .............................. i[#onMember] = #none
+  [ 56] getlocal 0 .............................. <i>
+  [ 58] pushsymb 3156 ........................... <#offMember>
+  [ 61] pushsymb 49 ............................. <#none>
+  [ 63] pusharglistnoret 3 ...................... <i, #offMember, #none>
+  [ 65] objcall 48 .............................. i[#offMember] = #none
+  [ 67] getparam 0 .............................. <me>
+  [ 69] pusharglistnoret 1 ...................... <me>
+  [ 71] extcall 35 .............................. return me
+  [ 73] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 2493 ......................... <params.displayLoc>
+  [ 13] setprop 2495 ............................ pDisplayLoc = params.displayLoc
+  [ 16] getparam 1 .............................. <params>
+  [ 18] getobjprop 3156 ......................... <params.offMember>
+  [ 21] setprop 3159 ............................ pOffMember = params.offMember
+  [ 24] getparam 1 .............................. <params>
+  [ 26] getobjprop 3155 ......................... <params.onMember>
+  [ 29] setprop 3160 ............................ pOnMember = params.onMember
+  [ 32] ret
+end
+
+on finish me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 3 ............................... ancestor.finish()
+  [  6] ret
+end
+
+on updateActive me, Active
+  [  0] getparam 1 .............................. <Active>
+  [  2] jmpifz [ 13] ............................ if Active then / else
+  [  5] getprop 3160 ............................ <pOnMember>
+  [  8] setlocal 0 .............................. currentMember = pOnMember
+  [ 10] jmp [ 18]
+  [ 13] getprop 3159 ............................ <pOffMember>
+  [ 16] setlocal 0 .............................. currentMember = pOffMember
+  [ 18] getparam 0 .............................. <me>
+  [ 20] getlocal 0 .............................. <currentMember>
+  [ 22] getobjprop 800 .......................... <currentMember.image>
+  [ 25] getprop 2495 ............................ <pDisplayLoc>
+  [ 28] pusharglistnoret 3 ...................... <me, currentMember.image, pDisplayLoc>
+  [ 30] objcall 2502 ............................ me.displayImageAtLoc(currentMember.image, pDisplayLoc)
+  [ 33] ret
+end

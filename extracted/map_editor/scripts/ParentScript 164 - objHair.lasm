@@ -1,0 +1,625 @@
+property ancestor, pDownChain, pHairLength, pHairAdjustmentRect, pGrowHair, pGrowHairNum, pGrowHairTarget, pmode, pParasite, pPosInChain, pStartLocOffset, pUpChain
+global g, gPlayerLayer
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushcons 0 .............................. <"objGameObject">
+  [  4] pusharglist 1 ........................... <"objGameObject">
+  [  6] extcall 27 .............................. <script("objGameObject")>
+  [  8] pusharglist 1 ........................... <script("objGameObject")>
+  [ 10] extcall 0 ............................... <new(script("objGameObject"))>
+  [ 12] setobjprop 77 ........................... me.ancestor = new(script("objGameObject"))
+  [ 14] getparam 0 .............................. <me>
+  [ 16] getchainedprop 140 ...................... <me.pParams>
+  [ 18] getobjprop 1 ............................ <me.pParams.init>
+  [ 20] setlocal 0 .............................. i = me.pParams.init
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 1272 ........................... <#hairAdjustmentRect>
+  [ 27] pushint8 3 .............................. <3>
+  [ 29] pushzero ................................ <0>
+  [ 30] pushint8 10 ............................. <10>
+  [ 32] inv ..................................... <-10>
+  [ 33] pushzero ................................ <0>
+  [ 34] pusharglist 4 ........................... <3, 0, -10, 0>
+  [ 36] extcall 160 ............................. <rect(3, 0, -10, 0)>
+  [ 38] pusharglistnoret 3 ...................... <i, #hairAdjustmentRect, rect(3, 0, -10, 0)>
+  [ 40] objcall 37 .............................. i[#hairAdjustmentRect] = rect(3, 0, -10, 0)
+  [ 42] getlocal 0 .............................. <i>
+  [ 44] pushsymb 1273 ........................... <#hairLength>
+  [ 47] pushint8 14 ............................. <14>
+  [ 49] pusharglistnoret 3 ...................... <i, #hairLength, 14>
+  [ 51] objcall 37 .............................. i[#hairLength] = 14
+  [ 53] getlocal 0 .............................. <i>
+  [ 55] pushsymb 1274 ........................... <#startLocOffset>
+  [ 58] pushint8 10 ............................. <10>
+  [ 60] pushzero ................................ <0>
+  [ 61] pusharglist 2 ........................... <10, 0>
+  [ 63] extcall 215 ............................. <point(10, 0)>
+  [ 65] pusharglistnoret 3 ...................... <i, #startLocOffset, point(10, 0)>
+  [ 67] objcall 37 .............................. i[#startLocOffset] = point(10, 0)
+  [ 69] getparam 0 .............................. <me>
+  [ 71] pusharglistnoret 1 ...................... <me>
+  [ 73] extcall 17 .............................. return me
+  [ 75] ret
+end
+
+on init me, params
+  [  0] getprop 77 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pushsymb 22 ............................. <#none>
+  [ 10] setprop 1275 ............................ pDownChain = #none
+  [ 13] pushzero ................................ <0>
+  [ 14] setprop 1276 ............................ pGrowHair = 0
+  [ 17] pushzero ................................ <0>
+  [ 18] setprop 1277 ............................ pGrowHairNum = 0
+  [ 21] pushint8 2 .............................. <2>
+  [ 23] setprop 1278 ............................ pGrowHairTarget = 2
+  [ 26] getparam 1 .............................. <params>
+  [ 28] getobjprop 1272 ......................... <params.hairAdjustmentRect>
+  [ 31] setprop 1279 ............................ pHairAdjustmentRect = params.hairAdjustmentRect
+  [ 34] getparam 1 .............................. <params>
+  [ 36] getobjprop 1273 ......................... <params.hairLength>
+  [ 39] setprop 1280 ............................ pHairLength = params.hairLength
+  [ 42] pushsymb 22 ............................. <#none>
+  [ 44] setprop 1281 ............................ pParasite = #none
+  [ 47] getparam 1 .............................. <params>
+  [ 49] getobjprop 1274 ......................... <params.startLocOffset>
+  [ 52] setprop 1282 ............................ pStartLocOffset = params.startLocOffset
+  [ 55] getparam 0 .............................. <me>
+  [ 57] getobjprop 79 ........................... <me.pSpr>
+  [ 59] pushcons 1 .............................. <"raphair">
+  [ 61] pusharglist 1 ........................... <"raphair">
+  [ 63] extcall 158 ............................. <member("raphair")>
+  [ 65] pusharglistnoret 2 ...................... <me.pSpr, member("raphair")>
+  [ 67] extcall 212 ............................. SpriteSetMember(me.pSpr, member("raphair"))
+  [ 69] getparam 0 .............................. <me>
+  [ 71] pushsymb 326 ............................ <#norm>
+  [ 74] pusharglistnoret 2 ...................... <me, #norm>
+  [ 76] objcall 76 .............................. me.goMode(#norm)
+  [ 78] ret
+end
+
+on calcStartLoc me
+  [  0] getprop 1283 ............................ <pUpChain>
+  [  3] pusharglist 1 ........................... <pUpChain>
+  [  5] objcall 1265 ............................ <pUpChain.getHairLoc()>
+  [  8] setlocal 0 .............................. upLoc = pUpChain.getHairLoc()
+  [ 10] getlocal 0 .............................. <upLoc>
+  [ 12] getprop 1282 ............................ <pStartLocOffset>
+  [ 15] add ..................................... <upLoc + pStartLocOffset>
+  [ 16] setlocal 1 .............................. startLoc = upLoc + pStartLocOffset
+  [ 18] getlocal 1 .............................. <startLoc>
+  [ 20] pusharglistnoret 1 ...................... <startLoc>
+  [ 22] extcall 17 .............................. return startLoc
+  [ 24] ret
+end
+
+on checkCollisions me, newLoc, oldloc
+  [  0] getprop 77 .............................. <ancestor>
+  [  2] getparam 1 .............................. <newLoc>
+  [  4] getparam 2 .............................. <oldloc>
+  [  6] pusharglist 3 ........................... <ancestor, newLoc, oldloc>
+  [  8] objcall 747 ............................. <ancestor.checkCollisions(newLoc, oldloc)>
+  [ 11] setparam 1 .............................. newLoc = ancestor.checkCollisions(newLoc, oldloc)
+  [ 13] getparam 0 .............................. <me>
+  [ 15] getparam 1 .............................. <newLoc>
+  [ 17] pusharglist 2 ........................... <me, newLoc>
+  [ 19] objcall 1261 ............................ <me.constrainHair(newLoc)>
+  [ 22] setparam 1 .............................. newLoc = me.constrainHair(newLoc)
+  [ 24] getparam 1 .............................. <newLoc>
+  [ 26] pusharglistnoret 1 ...................... <newLoc>
+  [ 28] extcall 17 .............................. return newLoc
+  [ 30] ret
+end
+
+on checkHairCollisions me, therect, minCollisionSpeed
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 1265 ............................ <me.getHairLoc()>
+  [  7] setlocal 0 .............................. myloc = me.getHairLoc()
+  [  9] getlocal 0 .............................. <myloc>
+  [ 11] getparam 1 .............................. <therect>
+  [ 13] pusharglist 2 ........................... <myloc, therect>
+  [ 15] extcall 384 ............................. <inside(myloc, therect)>
+  [ 18] jmpifz [ 72] ............................ if inside(myloc, therect) then
+  [ 21] getparam 0 .............................. <me>
+  [ 23] pusharglist 1 ........................... <me>
+  [ 25] objcall 761 ............................. <me.getVect()>
+  [ 28] pusharglist 1 ........................... <me.getVect()>
+  [ 30] extcall 279 ............................. <PointPositive(me.getVect())>
+  [ 33] setlocal 1 .............................. hairSpeed = PointPositive(me.getVect())
+  [ 35] getlocal 1 .............................. <hairSpeed>
+  [ 37] pushint8 1 .............................. <1>
+  [ 39] pusharglist 2 ........................... <hairSpeed, 1>
+  [ 41] objcall 38 .............................. <hairSpeed[1]>
+  [ 43] getparam 2 .............................. <minCollisionSpeed>
+  [ 45] gt ...................................... <hairSpeed[1] > minCollisionSpeed>
+  [ 46] getlocal 1 .............................. <hairSpeed>
+  [ 48] pushint8 2 .............................. <2>
+  [ 50] pusharglist 2 ........................... <hairSpeed, 2>
+  [ 52] objcall 38 .............................. <hairSpeed[2]>
+  [ 54] getparam 2 .............................. <minCollisionSpeed>
+  [ 56] gt ...................................... <hairSpeed[2] > minCollisionSpeed>
+  [ 57] or ...................................... <(hairSpeed[1] > minCollisionSpeed) or (hairSpeed[2] > minCollisionSpeed)>
+  [ 58] jmpifz [ 72] ............................ if (hairSpeed[1] > minCollisionSpeed) or (hairSpeed[2] > minCollisionSpeed) then
+  [ 61] getparam 0 .............................. <me>
+  [ 63] pusharglist 1 ........................... <me>
+  [ 65] objcall 761 ............................. <me.getVect()>
+  [ 68] pusharglistnoret 1 ...................... <me.getVect()>
+  [ 70] extcall 17 .............................. return me.getVect()
+  [ 72] getprop 1275 ............................ <pDownChain>
+  [ 75] pushsymb 22 ............................. <#none>
+  [ 77] eq ...................................... <pDownChain = #none>
+  [ 78] jmpifz [ 89] ............................ if pDownChain = #none then / else
+  [ 81] pushzero ................................ <0>
+  [ 82] pusharglistnoret 1 ...................... <0>
+  [ 84] extcall 17 .............................. return 0
+  [ 86] jmp [105]
+  [ 89] getprop 1275 ............................ <pDownChain>
+  [ 92] getparam 1 .............................. <therect>
+  [ 94] getparam 2 .............................. <minCollisionSpeed>
+  [ 96] pusharglist 3 ........................... <pDownChain, therect, minCollisionSpeed>
+  [ 98] objcall 794 ............................. <pDownChain.checkHairCollisions(therect, minCollisionSpeed)>
+  [101] pusharglistnoret 1 ...................... <pDownChain.checkHairCollisions(therect, minCollisionSpeed)>
+  [103] extcall 17 .............................. return pDownChain.checkHairCollisions(therect, minCollisionSpeed)
+  [105] ret
+end
+
+on checkHairCollisionsObj me, theloc
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 383 ............................. <me.getRect()>
+  [  7] setlocal 0 .............................. myRect = me.getRect()
+  [  9] getparam 1 .............................. <theloc>
+  [ 11] getlocal 0 .............................. <myRect>
+  [ 13] pusharglist 2 ........................... <theloc, myRect>
+  [ 15] extcall 384 ............................. <inside(theloc, myRect)>
+  [ 18] jmpifz [ 30] ............................ if inside(theloc, myRect) then / else
+  [ 21] getparam 0 .............................. <me>
+  [ 23] pusharglistnoret 1 ...................... <me>
+  [ 25] extcall 17 .............................. return me
+  [ 27] jmp [ 62]
+  [ 30] getprop 1275 ............................ <pDownChain>
+  [ 33] pushsymb 22 ............................. <#none>
+  [ 35] eq ...................................... <pDownChain = #none>
+  [ 36] jmpifz [ 48] ............................ if pDownChain = #none then / else
+  [ 39] pushsymb 22 ............................. <#none>
+  [ 41] pusharglistnoret 1 ...................... <#none>
+  [ 43] extcall 17 .............................. return #none
+  [ 45] jmp [ 62]
+  [ 48] getprop 1275 ............................ <pDownChain>
+  [ 51] getparam 1 .............................. <theloc>
+  [ 53] pusharglist 2 ........................... <pDownChain, theloc>
+  [ 55] objcall 403 ............................. <pDownChain.checkHairCollisionsObj(theloc)>
+  [ 58] pusharglistnoret 1 ...................... <pDownChain.checkHairCollisionsObj(theloc)>
+  [ 60] extcall 17 .............................. return pDownChain.checkHairCollisionsObj(theloc)
+  [ 62] ret
+end
+
+on collisionCeiling me
+  [  0] ret
+end
+
+on collisionNoPlatform me
+  [  0] ret
+end
+
+on collisionPlatform me
+  [  0] getprop 83 .............................. <pmode>
+  [  2] pushsymb 405 ............................ <#cutOff>
+  [  5] eq ...................................... <pmode = #cutOff>
+  [  6] jmpifz [ 37] ............................ if pmode = #cutOff then
+  [  9] getglobal 101 ........................... <g>
+  [ 11] getchainedprop 387 ...................... <g.actorMaster>
+  [ 14] pushsymb 1287 ........................... <#hairPowerUp>
+  [ 17] getparam 0 .............................. <me>
+  [ 19] pusharglist 1 ........................... <me>
+  [ 21] objcall 74 .............................. <me.getLoc()>
+  [ 23] pusharglistnoret 3 ...................... <g.actorMaster, #hairPowerUp, me.getLoc()>
+  [ 25] objcall 388 ............................. g.actorMaster.newActor(#hairPowerUp, me.getLoc())
+  [ 28] getparam 0 .............................. <me>
+  [ 30] pushsymb 361 ............................ <#dead>
+  [ 33] pusharglistnoret 2 ...................... <me, #dead>
+  [ 35] objcall 76 .............................. me.goMode(#dead)
+  [ 37] ret
+end
+
+on collisionWallLeft me
+  [  0] ret
+end
+
+on collisionWallRight me
+  [  0] ret
+end
+
+on constrainHair me, newLoc
+  [  0] getprop 83 .............................. <pmode>
+  [  2] pushsymb 326 ............................ <#norm>
+  [  5] eq ...................................... <pmode = #norm>
+  [  6] jmpifz [100] ............................ if pmode = #norm then
+  [  9] getprop 1283 ............................ <pUpChain>
+  [ 12] pusharglist 1 ........................... <pUpChain>
+  [ 14] objcall 1265 ............................ <pUpChain.getHairLoc()>
+  [ 17] setlocal 0 .............................. hairLoc = pUpChain.getHairLoc()
+  [ 19] getparam 1 .............................. <newLoc>
+  [ 21] pusharglist 1 ........................... <newLoc>
+  [ 23] objcall 48 .............................. <newLoc.duplicate()>
+  [ 25] pusharglist 1 ........................... <newLoc.duplicate()>
+  [ 27] extcall 906 ............................. <PointInteger(newLoc.duplicate())>
+  [ 30] setlocal 1 .............................. newLocInt = PointInteger(newLoc.duplicate())
+  [ 32] getlocal 1 .............................. <newLocInt>
+  [ 34] getlocal 0 .............................. <hairLoc>
+  [ 36] sub ..................................... <newLocInt - hairLoc>
+  [ 37] pusharglist 1 ........................... <newLocInt - hairLoc>
+  [ 39] extcall 1288 ............................ <GeomAngle(newLocInt - hairLoc)>
+  [ 42] setlocal 2 .............................. hairAngle = GeomAngle(newLocInt - hairLoc)
+  [ 44] getlocal 0 .............................. <hairLoc>
+  [ 46] getparam 1 .............................. <newLoc>
+  [ 48] pusharglist 2 ........................... <hairLoc, newLoc>
+  [ 50] extcall 1289 ............................ <GeomDist(hairLoc, newLoc)>
+  [ 53] getprop 1280 ............................ <pHairLength>
+  [ 56] gt ...................................... <GeomDist(hairLoc, newLoc) > pHairLength>
+  [ 57] jmpifz [ 78] ............................ if GeomDist(hairLoc, newLoc) > pHairLength then
+  [ 60] getlocal 0 .............................. <hairLoc>
+  [ 62] getprop 1280 ............................ <pHairLength>
+  [ 65] pushint16 360 ........................... <360>
+  [ 68] getlocal 2 .............................. <hairAngle>
+  [ 70] sub ..................................... <360 - hairAngle>
+  [ 71] pusharglist 3 ........................... <hairLoc, pHairLength, 360 - hairAngle>
+  [ 73] extcall 1290 ............................ <GeomPointOnCircle(hairLoc, pHairLength, 360 - hairAngle)>
+  [ 76] setparam 1 .............................. newLoc = GeomPointOnCircle(hairLoc, pHairLength, 360 - hairAngle)
+  [ 78] getparam 0 .............................. <me>
+  [ 80] getchainedprop 79 ....................... <me.pSpr>
+  [ 82] getlocal 2 .............................. <hairAngle>
+  [ 84] pushint8 1 .............................. <1>
+  [ 86] pushint16 360 ........................... <360>
+  [ 89] pushint16 180 ........................... <180>
+  [ 92] pusharglist 4 ........................... <hairAngle, 1, 360, 180>
+  [ 94] extcall 1291 ............................ <VarChangeinRange(hairAngle, 1, 360, 180)>
+  [ 97] setobjprop 1292 ......................... me.pSpr.rotation = VarChangeinRange(hairAngle, 1, 360, 180)
+  [100] getparam 1 .............................. <newLoc>
+  [102] pusharglistnoret 1 ...................... <newLoc>
+  [104] extcall 17 .............................. return newLoc
+  [106] ret
+end
+
+on cutOff me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 405 ............................ <#cutOff>
+  [  5] pusharglistnoret 2 ...................... <me, #cutOff>
+  [  7] objcall 76 .............................. me.goMode(#cutOff)
+  [  9] getprop 1281 ............................ <pParasite>
+  [ 12] pushsymb 22 ............................. <#none>
+  [ 14] nteq .................................... <pParasite <> #none>
+  [ 15] jmpifz [ 26] ............................ if pParasite <> #none then
+  [ 18] getprop 1281 ............................ <pParasite>
+  [ 21] pusharglistnoret 1 ...................... <pParasite>
+  [ 23] objcall 1296 ............................ pParasite.targetGone()
+  [ 26] getprop 1283 ............................ <pUpChain>
+  [ 29] pusharglistnoret 1 ...................... <pUpChain>
+  [ 31] objcall 1262 ............................ pUpChain.downChainGone()
+  [ 34] getprop 1275 ............................ <pDownChain>
+  [ 37] pushsymb 22 ............................. <#none>
+  [ 39] eq ...................................... <pDownChain = #none>
+  [ 40] jmpifz [ 51] ............................ if pDownChain = #none then / else
+  [ 43] pusharglistnoret 0 ...................... <>
+  [ 45] extcall 404 ............................. nothing()
+  [ 48] jmp [ 59]
+  [ 51] getprop 1275 ............................ <pDownChain>
+  [ 54] pusharglistnoret 1 ...................... <pDownChain>
+  [ 56] objcall 405 ............................. pDownChain.cutOff()
+  [ 59] ret
+end
+
+on downChainGone me
+  [  0] pushsymb 22 ............................. <#none>
+  [  2] setprop 1275 ............................ pDownChain = #none
+  [  5] ret
+end
+
+on finishConditionMet me
+  [  0] pushzero ................................ <0>
+  [  1] pusharglistnoret 1 ...................... <0>
+  [  3] extcall 17 .............................. return 0
+  [  5] ret
+end
+
+on finish me
+  [  0] getprop 1281 ............................ <pParasite>
+  [  3] pushsymb 22 ............................. <#none>
+  [  5] nteq .................................... <pParasite <> #none>
+  [  6] jmpifz [ 17] ............................ if pParasite <> #none then
+  [  9] getprop 1281 ............................ <pParasite>
+  [ 12] pusharglistnoret 1 ...................... <pParasite>
+  [ 14] objcall 1296 ............................ pParasite.targetGone()
+  [ 17] getprop 1283 ............................ <pUpChain>
+  [ 20] pusharglistnoret 1 ...................... <pUpChain>
+  [ 22] objcall 1262 ............................ pUpChain.downChainGone()
+  [ 25] getprop 77 .............................. <ancestor>
+  [ 27] pusharglistnoret 1 ...................... <ancestor>
+  [ 29] objcall 39 .............................. ancestor.finish()
+  [ 31] ret
+end
+
+on getHairAtPos me, thePos, upPos
+  [  0] getparam 2 .............................. <upPos>
+  [  2] pushint8 1 .............................. <1>
+  [  4] add ..................................... <upPos + 1>
+  [  5] setlocal 0 .............................. mypos = upPos + 1
+  [  7] getlocal 0 .............................. <mypos>
+  [  9] getparam 1 .............................. <thePos>
+  [ 11] eq ...................................... <mypos = thePos>
+  [ 12] jmpifz [ 24] ............................ if mypos = thePos then / else
+  [ 15] getparam 0 .............................. <me>
+  [ 17] pusharglistnoret 1 ...................... <me>
+  [ 19] extcall 17 .............................. return me
+  [ 21] jmp [ 40]
+  [ 24] getprop 1275 ............................ <pDownChain>
+  [ 27] getparam 1 .............................. <thePos>
+  [ 29] getlocal 0 .............................. <mypos>
+  [ 31] pusharglist 3 ........................... <pDownChain, thePos, mypos>
+  [ 33] objcall 1263 ............................ <pDownChain.getHairAtPos(thePos, mypos)>
+  [ 36] pusharglistnoret 1 ...................... <pDownChain.getHairAtPos(thePos, mypos)>
+  [ 38] extcall 17 .............................. return pDownChain.getHairAtPos(thePos, mypos)
+  [ 40] ret
+end
+
+on getHairLength me, len
+  [  0] getparam 1 .............................. <len>
+  [  2] pushint8 1 .............................. <1>
+  [  4] add ..................................... <len + 1>
+  [  5] setparam 1 .............................. len = len + 1
+  [  7] getprop 1275 ............................ <pDownChain>
+  [ 10] pushsymb 22 ............................. <#none>
+  [ 12] eq ...................................... <pDownChain = #none>
+  [ 13] jmpifz [ 25] ............................ if pDownChain = #none then / else
+  [ 16] getparam 1 .............................. <len>
+  [ 18] pusharglistnoret 1 ...................... <len>
+  [ 20] extcall 17 .............................. return len
+  [ 22] jmp [ 39]
+  [ 25] getprop 1275 ............................ <pDownChain>
+  [ 28] getparam 1 .............................. <len>
+  [ 30] pusharglist 2 ........................... <pDownChain, len>
+  [ 32] objcall 1264 ............................ <pDownChain.getHairLength(len)>
+  [ 35] pusharglistnoret 1 ...................... <pDownChain.getHairLength(len)>
+  [ 37] extcall 17 .............................. return pDownChain.getHairLength(len)
+  [ 39] ret
+end
+
+on getHairLoc me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 79 ....................... <me.pSpr>
+  [  4] getchainedprop 216 ...................... <me.pSpr.loc>
+  [  6] pusharglist 1 ........................... <me.pSpr.loc>
+  [  8] objcall 48 .............................. <me.pSpr.loc.duplicate()>
+  [ 10] pusharglistnoret 1 ...................... <me.pSpr.loc.duplicate()>
+  [ 12] extcall 17 .............................. return me.pSpr.loc.duplicate()
+  [ 14] ret
+end
+
+on getRect me
+  [  0] getprop 77 .............................. <ancestor>
+  [  2] pusharglist 1 ........................... <ancestor>
+  [  4] objcall 383 ............................. <ancestor.getRect()>
+  [  7] setlocal 0 .............................. myRect = ancestor.getRect()
+  [  9] getlocal 0 .............................. <myRect>
+  [ 11] getprop 1279 ............................ <pHairAdjustmentRect>
+  [ 14] add ..................................... <myRect + pHairAdjustmentRect>
+  [ 15] setlocal 0 .............................. myRect = myRect + pHairAdjustmentRect
+  [ 17] getlocal 0 .............................. <myRect>
+  [ 19] pusharglistnoret 1 ...................... <myRect>
+  [ 21] extcall 17 .............................. return myRect
+  [ 23] ret
+end
+
+on goMode me, newMode
+  [  0] getparam 1 .............................. <newMode>
+  [  2] peek 0 .................................. case newMode of
+  [  4] pushsymb 405 ............................ <#cutOff>
+  [  7] eq
+  [  8] jmpifz [ 19] ............................ (case) #cutOff:
+  [ 11] getprop 1283 ............................ <pUpChain>
+  [ 14] pusharglistnoret 1 ...................... <pUpChain>
+  [ 16] objcall 1262 ............................ pUpChain.downChainGone()
+  [ 19] pop 1
+  [ 21] getparam 1 .............................. <newMode>
+  [ 23] setprop 83 .............................. pmode = newMode
+  [ 25] ret
+end
+
+on growHair me
+  [  0] getprop 1275 ............................ <pDownChain>
+  [  3] pushsymb 22 ............................. <#none>
+  [  5] eq ...................................... <pDownChain = #none>
+  [  6] jmpifz [ 59] ............................ if pDownChain = #none then / else
+  [  9] getglobal 101 ........................... <g>
+  [ 11] getchainedprop 387 ...................... <g.actorMaster>
+  [ 14] pushsymb 1301 ........................... <#hair>
+  [ 17] getparam 0 .............................. <me>
+  [ 19] pusharglist 1 ........................... <me>
+  [ 21] objcall 1265 ............................ <me.getHairLoc()>
+  [ 24] pusharglist 3 ........................... <g.actorMaster, #hair, me.getHairLoc()>
+  [ 26] objcall 388 ............................. <g.actorMaster.newActor(#hair, me.getHairLoc())>
+  [ 29] setprop 1275 ............................ pDownChain = g.actorMaster.newActor(#hair, me.getHairLoc())
+  [ 32] getprop 1275 ............................ <pDownChain>
+  [ 35] getparam 0 .............................. <me>
+  [ 37] pusharglistnoret 2 ...................... <pDownChain, me>
+  [ 39] objcall 1270 ............................ pDownChain.setUpChain(me)
+  [ 42] getprop 1275 ............................ <pDownChain>
+  [ 45] getprop 1302 ............................ <pPosInChain>
+  [ 48] pushint8 1 .............................. <1>
+  [ 50] add ..................................... <pPosInChain + 1>
+  [ 51] pusharglistnoret 2 ...................... <pDownChain, pPosInChain + 1>
+  [ 53] objcall 1269 ............................ pDownChain.setPosInChain(pPosInChain + 1)
+  [ 56] jmp [ 67]
+  [ 59] getprop 1275 ............................ <pDownChain>
+  [ 62] pusharglistnoret 1 ...................... <pDownChain>
+  [ 64] objcall 412 ............................. pDownChain.growHair()
+  [ 67] ret
+end
+
+on growHairSequence me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 759 ............................. me.flashWhite()
+  [  7] pushint8 1 .............................. <1>
+  [  9] setprop 1276 ............................ pGrowHair = 1
+  [ 12] getprop 1277 ............................ <pGrowHairNum>
+  [ 15] pushint8 1 .............................. <1>
+  [ 17] add ..................................... <pGrowHairNum + 1>
+  [ 18] setprop 1277 ............................ pGrowHairNum = pGrowHairNum + 1
+  [ 21] ret
+end
+
+on growHairSequencePass me
+  [  0] pushint8 1 .............................. <1>
+  [  2] setlocal 0
+  [  4] getlocal 0
+  [  6] getprop 1277 ............................ <pGrowHairNum>
+  [  9] lteq
+  [ 10] jmpifz [ 49] ............................ repeat with i = 1 to pGrowHairNum
+  [ 13] getprop 1275 ............................ <pDownChain>
+  [ 16] pushsymb 22 ............................. <#none>
+  [ 18] eq ...................................... <pDownChain = #none>
+  [ 19] jmpifz [ 32] ............................ if pDownChain = #none then
+  [ 22] getparam 0 .............................. <me>
+  [ 24] pusharglistnoret 1 ...................... <me>
+  [ 26] objcall 412 ............................. me.growHair()
+  [ 29] jmp [ 40] ............................... next repeat
+  [ 32] getprop 1275 ............................ <pDownChain>
+  [ 35] pusharglistnoret 1 ...................... <pDownChain>
+  [ 37] objcall 1266 ............................ pDownChain.growHairSequence()
+  [ 40] pushint8 1
+  [ 42] getlocal 0
+  [ 44] add
+  [ 45] setlocal 0
+  [ 47] endrepeat [  4]
+  [ 49] pushzero ................................ <0>
+  [ 50] setprop 1277 ............................ pGrowHairNum = 0
+  [ 53] ret
+end
+
+on informCallingPrg me
+  [  0] pusharglistnoret 0 ...................... <>
+  [  2] extcall 404 ............................. nothing()
+  [  5] ret
+end
+
+on moveXYFin me
+  [  0] ret
+end
+
+on registerParasite me, obj
+  [  0] getprop 1281 ............................ <pParasite>
+  [  3] pushsymb 22 ............................. <#none>
+  [  5] eq ...................................... <pParasite = #none>
+  [  6] jmpifz [ 24] ............................ if pParasite = #none then / else
+  [  9] getparam 1 .............................. <obj>
+  [ 11] setprop 1281 ............................ pParasite = obj
+  [ 14] pushsymb 1303 ........................... <#success>
+  [ 17] pusharglistnoret 1 ...................... <#success>
+  [ 19] extcall 17 .............................. return #success
+  [ 21] jmp [ 31]
+  [ 24] pushsymb 1304 ........................... <#noSpace>
+  [ 27] pusharglistnoret 1 ...................... <#noSpace>
+  [ 29] extcall 17 .............................. return #noSpace
+  [ 31] ret
+end
+
+on setPosInChain me, pos
+  [  0] getparam 1 .............................. <pos>
+  [  2] setprop 1302 ............................ pPosInChain = pos
+  [  5] getparam 0 .............................. <me>
+  [  7] getchainedprop 79 ....................... <me.pSpr>
+  [  9] getglobal 1305 .......................... <gPlayerLayer>
+  [ 12] getparam 1 .............................. <pos>
+  [ 14] add ..................................... <gPlayerLayer + pos>
+  [ 15] setobjprop 217 .......................... me.pSpr.locZ = gPlayerLayer + pos
+  [ 17] ret
+end
+
+on setUpChain me, obj
+  [  0] getparam 1 .............................. <obj>
+  [  2] setprop 1283 ............................ pUpChain = obj
+  [  5] getparam 0 .............................. <me>
+  [  7] pusharglist 1 ........................... <me>
+  [  9] objcall 1260 ............................ <me.calcStartLoc()>
+  [ 12] setlocal 0 .............................. startLoc = me.calcStartLoc()
+  [ 14] getparam 0 .............................. <me>
+  [ 16] getlocal 0 .............................. <startLoc>
+  [ 18] pusharglistnoret 2 ...................... <me, startLoc>
+  [ 20] objcall 766 ............................. me.setLoc(startLoc)
+  [ 23] ret
+end
+
+on trimHair me
+  [  0] getprop 1275 ............................ <pDownChain>
+  [  3] pushsymb 22 ............................. <#none>
+  [  5] eq ...................................... <pDownChain = #none>
+  [  6] jmpifz [ 18] ............................ if pDownChain = #none then / else
+  [  9] getparam 0 .............................. <me>
+  [ 11] pusharglistnoret 1 ...................... <me>
+  [ 13] objcall 39 .............................. me.finish()
+  [ 15] jmp [ 26]
+  [ 18] getprop 1275 ............................ <pDownChain>
+  [ 21] pusharglistnoret 1 ...................... <pDownChain>
+  [ 23] objcall 416 ............................. pDownChain.trimHair()
+  [ 26] ret
+end
+
+on unregisterParasite me, obj
+  [  0] getprop 1281 ............................ <pParasite>
+  [  3] getparam 1 .............................. <obj>
+  [  5] eq ...................................... <pParasite = obj>
+  [  6] jmpifz [ 14] ............................ if pParasite = obj then
+  [  9] pushsymb 22 ............................. <#none>
+  [ 11] setprop 1281 ............................ pParasite = #none
+  [ 14] ret
+end
+
+on update me
+  [  0] getprop 83 .............................. <pmode>
+  [  2] peek 0 .................................. case pmode of
+  [  4] pushsymb 326 ............................ <#norm>
+  [  7] eq
+  [  8] jmpifz [ 55] ............................ (case) #norm:
+  [ 11] getprop 1276 ............................ <pGrowHair>
+  [ 14] getprop 1278 ............................ <pGrowHairTarget>
+  [ 17] eq ...................................... <pGrowHair = pGrowHairTarget>
+  [ 18] jmpifz [ 35] ............................ if pGrowHair = pGrowHairTarget then / else
+  [ 21] getparam 0 .............................. <me>
+  [ 23] pusharglistnoret 1 ...................... <me>
+  [ 25] objcall 1267 ............................ me.growHairSequencePass()
+  [ 28] pushzero ................................ <0>
+  [ 29] setprop 1276 ............................ pGrowHair = 0
+  [ 32] jmp [ 52]
+  [ 35] getprop 1276 ............................ <pGrowHair>
+  [ 38] pushzero ................................ <0>
+  [ 39] gt ...................................... <pGrowHair > 0>
+  [ 40] jmpifz [ 52] ............................ if pGrowHair > 0 then
+  [ 43] getprop 1276 ............................ <pGrowHair>
+  [ 46] pushint8 1 .............................. <1>
+  [ 48] add ..................................... <pGrowHair + 1>
+  [ 49] setprop 1276 ............................ pGrowHair = pGrowHair + 1
+  [ 52] jmp [ 82]
+  [ 55] peek 0
+  [ 57] pushsymb 405 ............................ <#cutOff>
+  [ 60] eq
+  [ 61] jmpifz [ 67] ............................ (case) #cutOff:
+  [ 64] jmp [ 82]
+  [ 67] peek 0
+  [ 69] pushsymb 361 ............................ <#dead>
+  [ 72] eq
+  [ 73] jmpifz [ 82] ............................ (case) #dead:
+  [ 76] getparam 0 .............................. <me>
+  [ 78] pusharglistnoret 1 ...................... <me>
+  [ 80] objcall 39 .............................. me.finish()
+  [ 82] pop 1 ................................... end case
+  [ 84] ret
+end
+
+on updateAI me
+  [  0] ret
+end

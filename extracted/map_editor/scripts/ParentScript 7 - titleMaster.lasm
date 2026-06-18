@@ -1,0 +1,77 @@
+global g
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 12 .............................. return me
+  [  6] ret
+end
+
+on init me
+  [  0] ret
+end
+
+on start me
+  [  0] getglobal 21 ............................ <g>
+  [  2] getchainedprop 290 ...................... <g.screenMaster>
+  [  5] pushsymb 234 ............................ <#goScreen>
+  [  7] pusharglist 2 ........................... <g.screenMaster, #goScreen>
+  [  9] objcall 215 ............................. <g.screenMaster.getParams(#goScreen)>
+  [ 11] setlocal 0 .............................. params = g.screenMaster.getParams(#goScreen)
+  [ 13] getlocal 0 .............................. <params>
+  [ 15] pushsymb 291 ............................ <#titleScreen>
+  [ 18] setobjprop 245 .......................... params.screenSym = #titleScreen
+  [ 20] getlocal 0 .............................. <params>
+  [ 22] pushsymb 292 ............................ <#fade>
+  [ 25] setobjprop 246 .......................... params.transition = #fade
+  [ 27] getlocal 0 .............................. <params>
+  [ 29] getparam 0 .............................. <me>
+  [ 31] setobjprop 248 .......................... params.caller = me
+  [ 33] getglobal 21 ............................ <g>
+  [ 35] getchainedprop 290 ...................... <g.screenMaster>
+  [ 38] getlocal 0 .............................. <params>
+  [ 40] pusharglistnoret 2 ...................... <g.screenMaster, params>
+  [ 42] objcall 234 ............................. g.screenMaster.goScreen(params)
+  [ 44] ret
+end
+
+on buttClicked me, theButt
+  [  0] getparam 1 .............................. <theButt>
+  [  2] pusharglist 1 ........................... <theButt>
+  [  4] extcall 49 .............................. <string(theButt)>
+  [  6] pushcons 0 .............................. <"screen">
+  [  8] containsstr ............................. <string(theButt) contains "screen">
+  [  9] jmpifz [ 63] ............................ if string(theButt) contains "screen" then
+  [ 12] getglobal 21 ............................ <g>
+  [ 14] getchainedprop 290 ...................... <g.screenMaster>
+  [ 17] pushsymb 234 ............................ <#goScreen>
+  [ 19] pusharglist 2 ........................... <g.screenMaster, #goScreen>
+  [ 21] objcall 215 ............................. <g.screenMaster.getParams(#goScreen)>
+  [ 23] setlocal 0 .............................. params = g.screenMaster.getParams(#goScreen)
+  [ 25] getlocal 0 .............................. <params>
+  [ 27] pushsymb 292 ............................ <#fade>
+  [ 30] setobjprop 246 .......................... params.transition = #fade
+  [ 32] getparam 1 .............................. <theButt>
+  [ 34] peek 0 .................................. case theButt of
+  [ 36] pushsymb 293 ............................ <#butt_gameScreen>
+  [ 39] eq
+  [ 40] jmpifz [ 50] ............................ (case) #butt_gameScreen:
+  [ 43] getlocal 0 .............................. <params>
+  [ 45] pushsymb 294 ............................ <#gameScreen>
+  [ 48] setobjprop 245 .......................... params.screenSym = #gameScreen
+  [ 50] pop 1
+  [ 52] getglobal 21 ............................ <g>
+  [ 54] getchainedprop 290 ...................... <g.screenMaster>
+  [ 57] getlocal 0 .............................. <params>
+  [ 59] pusharglistnoret 2 ...................... <g.screenMaster, params>
+  [ 61] objcall 234 ............................. g.screenMaster.goScreen(params)
+  [ 63] ret
+end
+
+on goScreenFinished me
+  [  0] ret
+end
+
+on stop me
+  [  0] ret
+end

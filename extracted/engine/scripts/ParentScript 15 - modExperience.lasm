@@ -1,0 +1,690 @@
+property ancestor, pExperienceAmountForNextLevel, pExperienceGained, pExperienceImWorth, pExperienceLevel, pExperienceRequiredForNextLevel, pExperienceRequiredInc, pStartingLevel, pReleaseStarOnLevel, pReleaseStarOnLevelOld, pResizeOnLevel, pKills, pLevelData, pExperienceAmountForLastLevel, pinitExperienceAmountNeeded
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getlocal 0 .............................. <i>
+  [ 12] pushsymb 582 ............................ <#experienceAmountForNextLevel>
+  [ 15] pushzero ................................ <0>
+  [ 16] pusharglistnoret 3 ...................... <i, #experienceAmountForNextLevel, 0>
+  [ 18] objcall 48 .............................. i[#experienceAmountForNextLevel] = 0
+  [ 20] getlocal 0 .............................. <i>
+  [ 22] pushsymb 583 ............................ <#experienceRequiredForNextLevel>
+  [ 25] pushint8 3 .............................. <3>
+  [ 27] pusharglistnoret 3 ...................... <i, #experienceRequiredForNextLevel, 3>
+  [ 29] objcall 48 .............................. i[#experienceRequiredForNextLevel] = 3
+  [ 31] getlocal 0 .............................. <i>
+  [ 33] pushsymb 584 ............................ <#experienceRequiredInc>
+  [ 36] pushint8 2 .............................. <2>
+  [ 38] pusharglistnoret 3 ...................... <i, #experienceRequiredInc, 2>
+  [ 40] objcall 48 .............................. i[#experienceRequiredInc] = 2
+  [ 42] getlocal 0 .............................. <i>
+  [ 44] pushsymb 585 ............................ <#experienceImWorth>
+  [ 47] pushint8 3 .............................. <3>
+  [ 49] pusharglistnoret 3 ...................... <i, #experienceImWorth, 3>
+  [ 51] objcall 48 .............................. i[#experienceImWorth] = 3
+  [ 53] getlocal 0 .............................. <i>
+  [ 55] pushsymb 586 ............................ <#startingLevel>
+  [ 58] pushzero ................................ <0>
+  [ 59] pusharglistnoret 3 ...................... <i, #startingLevel, 0>
+  [ 61] objcall 48 .............................. i[#startingLevel] = 0
+  [ 63] getprop 33 .............................. <ancestor>
+  [ 65] pusharglistnoret 1 ...................... <ancestor>
+  [ 67] objcall 2 ............................... ancestor.addModParams()
+  [ 69] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 582 .......................... <params.experienceAmountForNextLevel>
+  [ 13] setprop 587 ............................. pExperienceAmountForNextLevel = params.experienceAmountForNextLevel
+  [ 16] getprop 587 ............................. <pExperienceAmountForNextLevel>
+  [ 19] setprop 588 ............................. pinitExperienceAmountNeeded = pExperienceAmountForNextLevel
+  [ 22] pushzero ................................ <0>
+  [ 23] setprop 589 ............................. pExperienceGained = 0
+  [ 26] getparam 1 .............................. <params>
+  [ 28] getobjprop 585 .......................... <params.experienceImWorth>
+  [ 31] setprop 590 ............................. pExperienceImWorth = params.experienceImWorth
+  [ 34] getparam 1 .............................. <params>
+  [ 36] getobjprop 583 .......................... <params.experienceRequiredForNextLevel>
+  [ 39] setprop 591 ............................. pExperienceRequiredForNextLevel = params.experienceRequiredForNextLevel
+  [ 42] getparam 1 .............................. <params>
+  [ 44] getobjprop 584 .......................... <params.experienceRequiredInc>
+  [ 47] setprop 592 ............................. pExperienceRequiredInc = params.experienceRequiredInc
+  [ 50] pushzero ................................ <0>
+  [ 51] setprop 593 ............................. pExperienceLevel = 0
+  [ 54] pusharglist 0 ........................... <[:]>
+  [ 56] pushproplist ............................ <[:]>
+  [ 57] setprop 594 ............................. pKills = [:]
+  [ 60] pushint8 1 .............................. <1>
+  [ 62] setprop 595 ............................. pReleaseStarOnLevel = 1
+  [ 65] pushint8 1 .............................. <1>
+  [ 67] setprop 596 ............................. pReleaseStarOnLevelOld = 1
+  [ 70] pushint8 1 .............................. <1>
+  [ 72] setprop 597 ............................. pResizeOnLevel = 1
+  [ 75] getparam 1 .............................. <params>
+  [ 77] getobjprop 586 .......................... <params.startingLevel>
+  [ 80] setprop 598 ............................. pStartingLevel = params.startingLevel
+  [ 83] pusharglist 0 ........................... <[:]>
+  [ 85] pushproplist ............................ <[:]>
+  [ 86] setprop 599 ............................. pLevelData = [:]
+  [ 89] getprop 599 ............................. <pLevelData>
+  [ 92] pushsymb 600 ............................ <#expToNxtLvl>
+  [ 95] getprop 587 ............................. <pExperienceAmountForNextLevel>
+  [ 98] pusharglistnoret 3 ...................... <pLevelData, #expToNxtLvl, pExperienceAmountForNextLevel>
+  [100] objcall 48 .............................. pLevelData[#expToNxtLvl] = pExperienceAmountForNextLevel
+  [102] getprop 599 ............................. <pLevelData>
+  [105] pushsymb 601 ............................ <#expPnts>
+  [108] pushzero ................................ <0>
+  [109] pusharglistnoret 3 ...................... <pLevelData, #expPnts, 0>
+  [111] objcall 48 .............................. pLevelData[#expPnts] = 0
+  [113] getprop 599 ............................. <pLevelData>
+  [116] pushsymb 602 ............................ <#percentToNxt>
+  [119] pushzero ................................ <0>
+  [120] pusharglistnoret 3 ...................... <pLevelData, #percentToNxt, 0>
+  [122] objcall 48 .............................. pLevelData[#percentToNxt] = 0
+  [124] pushzero ................................ <0>
+  [125] setprop 603 ............................. pExperienceAmountForLastLevel = 0
+  [128] ret
+end
+
+on addSaveData me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 4 ............................... ancestor.addSaveData(sd)
+  [  8] getparam 0 .............................. <me>
+  [ 10] getparam 1 .............................. <sd>
+  [ 12] pusharglistnoret 2 ...................... <me, sd>
+  [ 14] objcall 6 ............................... me.addToSaveData(sd)
+  [ 16] ret
+end
+
+on addToArmyDetails me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 51 ....................... <me.big>
+  [  4] pusharglist 1 ........................... <me.big>
+  [  6] objcall 54 .............................. <me.big.getArmyDetails()>
+  [  8] setlocal 0 .............................. ad = me.big.getArmyDetails()
+  [ 10] getparam 0 .............................. <me>
+  [ 12] getlocal 0 .............................. <ad>
+  [ 14] pusharglistnoret 2 ...................... <me, ad>
+  [ 16] objcall 6 ............................... me.addToSaveData(ad)
+  [ 18] ret
+end
+
+on addToSaveData me, sd
+  [  0] getparam 1 .............................. <sd>
+  [  2] pushsymb 587 ............................ <#pExperienceAmountForNextLevel>
+  [  5] getprop 587 ............................. <pExperienceAmountForNextLevel>
+  [  8] pusharglistnoret 3 ...................... <sd, #pExperienceAmountForNextLevel, pExperienceAmountForNextLevel>
+  [ 10] objcall 48 .............................. sd[#pExperienceAmountForNextLevel] = pExperienceAmountForNextLevel
+  [ 12] getparam 1 .............................. <sd>
+  [ 14] pushsymb 589 ............................ <#pExperienceGained>
+  [ 17] getprop 589 ............................. <pExperienceGained>
+  [ 20] pusharglistnoret 3 ...................... <sd, #pExperienceGained, pExperienceGained>
+  [ 22] objcall 48 .............................. sd[#pExperienceGained] = pExperienceGained
+  [ 24] getparam 1 .............................. <sd>
+  [ 26] pushsymb 593 ............................ <#pExperienceLevel>
+  [ 29] getprop 593 ............................. <pExperienceLevel>
+  [ 32] pusharglistnoret 3 ...................... <sd, #pExperienceLevel, pExperienceLevel>
+  [ 34] objcall 48 .............................. sd[#pExperienceLevel] = pExperienceLevel
+  [ 36] getparam 1 .............................. <sd>
+  [ 38] pushsymb 591 ............................ <#pExperienceRequiredForNextLevel>
+  [ 41] getprop 591 ............................. <pExperienceRequiredForNextLevel>
+  [ 44] pusharglistnoret 3 ...................... <sd, #pExperienceRequiredForNextLevel, pExperienceRequiredForNextLevel>
+  [ 46] objcall 48 .............................. sd[#pExperienceRequiredForNextLevel] = pExperienceRequiredForNextLevel
+  [ 48] getparam 1 .............................. <sd>
+  [ 50] pushsymb 594 ............................ <#pKills>
+  [ 53] getprop 594 ............................. <pKills>
+  [ 56] pusharglistnoret 3 ...................... <sd, #pKills, pKills>
+  [ 58] objcall 48 .............................. sd[#pKills] = pKills
+  [ 60] getparam 1 .............................. <sd>
+  [ 62] pushsymb 599 ............................ <#pLevelData>
+  [ 65] getprop 599 ............................. <pLevelData>
+  [ 68] pusharglistnoret 3 ...................... <sd, #pLevelData, pLevelData>
+  [ 70] objcall 48 .............................. sd[#pLevelData] = pLevelData
+  [ 72] ret
+end
+
+on attemptToLevelUp me
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. levelled = 0
+  [  3] getprop 589 ............................. <pExperienceGained>
+  [  6] getprop 587 ............................. <pExperienceAmountForNextLevel>
+  [  9] gteq .................................... <pExperienceGained >= pExperienceAmountForNextLevel>
+  [ 10] jmpifz [ 97] ............................ if pExperienceGained >= pExperienceAmountForNextLevel then
+  [ 13] getprop 587 ............................. <pExperienceAmountForNextLevel>
+  [ 16] setprop 603 ............................. pExperienceAmountForLastLevel = pExperienceAmountForNextLevel
+  [ 19] getprop 593 ............................. <pExperienceLevel>
+  [ 22] getprop 593 ............................. <pExperienceLevel>
+  [ 25] mul ..................................... <pExperienceLevel * pExperienceLevel>
+  [ 26] getprop 593 ............................. <pExperienceLevel>
+  [ 29] mul ..................................... <pExperienceLevel * pExperienceLevel * pExperienceLevel>
+  [ 30] getprop 593 ............................. <pExperienceLevel>
+  [ 33] getprop 593 ............................. <pExperienceLevel>
+  [ 36] mul ..................................... <pExperienceLevel * pExperienceLevel>
+  [ 37] add ..................................... <(pExperienceLevel * pExperienceLevel * pExperienceLevel) + (pExperienceLevel * pExperienceLevel)>
+  [ 38] getprop 587 ............................. <pExperienceAmountForNextLevel>
+  [ 41] getprop 593 ............................. <pExperienceLevel>
+  [ 44] pushint8 1 .............................. <1>
+  [ 46] add ..................................... <pExperienceLevel + 1>
+  [ 47] div ..................................... <pExperienceAmountForNextLevel / (pExperienceLevel + 1)>
+  [ 48] add ..................................... <(pExperienceLevel * pExperienceLevel * pExperienceLevel) + (pExperienceLevel * pExperienceLevel) + (pExperienceAmountForNextLevel / (pExperienceLevel + 1))>
+  [ 49] pushint8 5 .............................. <5>
+  [ 51] add ..................................... <(pExperienceLevel * pExperienceLevel * pExperienceLevel) + (pExperienceLevel * pExperienceLevel) + (pExperienceAmountForNextLevel / (pExperienceLevel + 1)) + 5>
+  [ 52] getprop 588 ............................. <pinitExperienceAmountNeeded>
+  [ 55] add ..................................... <(pExperienceLevel * pExperienceLevel * pExperienceLevel) + (pExperienceLevel * pExperienceLevel) + (pExperienceAmountForNextLevel / (pExperienceLevel + 1)) + 5 + pinitExperienceAmountNeeded>
+  [ 56] setprop 587 ............................. pExperienceAmountForNextLevel = (pExperienceLevel * pExperienceLevel * pExperienceLevel) + (pExperienceLevel * pExperienceLevel) + (pExperienceAmountForNextLevel / (pExperienceLevel + 1)) + 5 + pinitExperienceAmountNeeded
+  [ 59] getparam 0 .............................. <me>
+  [ 61] pusharglistnoret 1 ...................... <me>
+  [ 63] objcall 310 ............................. me.levelUp()
+  [ 66] pushint8 1 .............................. <1>
+  [ 68] setlocal 0 .............................. levelled = 1
+  [ 70] getprop 599 ............................. <pLevelData>
+  [ 73] pushsymb 600 ............................ <#expToNxtLvl>
+  [ 76] getprop 587 ............................. <pExperienceAmountForNextLevel>
+  [ 79] getprop 603 ............................. <pExperienceAmountForLastLevel>
+  [ 82] sub ..................................... <pExperienceAmountForNextLevel - pExperienceAmountForLastLevel>
+  [ 83] pusharglistnoret 3 ...................... <pLevelData, #expToNxtLvl, pExperienceAmountForNextLevel - pExperienceAmountForLastLevel>
+  [ 85] objcall 48 .............................. pLevelData[#expToNxtLvl] = pExperienceAmountForNextLevel - pExperienceAmountForLastLevel
+  [ 87] getprop 591 ............................. <pExperienceRequiredForNextLevel>
+  [ 90] getprop 592 ............................. <pExperienceRequiredInc>
+  [ 93] add ..................................... <pExperienceRequiredForNextLevel + pExperienceRequiredInc>
+  [ 94] setprop 591 ............................. pExperienceRequiredForNextLevel = pExperienceRequiredForNextLevel + pExperienceRequiredInc
+  [ 97] getlocal 0 .............................. <levelled>
+  [ 99] pusharglistnoret 1 ...................... <levelled>
+  [101] extcall 35 .............................. return levelled
+  [103] ret
+end
+
+on attributeExperience me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 51 ....................... <me.big>
+  [  4] pushsymb 605 ............................ <#lastAttacker>
+  [  7] pusharglist 2 ........................... <me.big, #lastAttacker>
+  [  9] objcall 606 ............................. <me.big.getRelation(#lastAttacker)>
+  [ 12] setlocal 0 .............................. lastAttacker = me.big.getRelation(#lastAttacker)
+  [ 14] getlocal 0 .............................. <lastAttacker>
+  [ 16] pushsymb 49 ............................. <#none>
+  [ 18] nteq .................................... <lastAttacker <> #none>
+  [ 19] jmpifz [111] ............................ if lastAttacker <> #none then
+  [ 22] getparam 0 .............................. <me>
+  [ 24] pusharglist 1 ........................... <me>
+  [ 26] objcall 607 ............................. <me.isDwelling()>
+  [ 29] jmpifz [ 42] ............................ if me.isDwelling() then
+  [ 32] getparam 0 .............................. <me>
+  [ 34] pusharglist 1 ........................... <me>
+  [ 36] objcall 608 ............................. <me.calculateExperienceFromResidents()>
+  [ 39] setprop 590 ............................. pExperienceImWorth = me.calculateExperienceFromResidents()
+  [ 42] getprop 593 ............................. <pExperienceLevel>
+  [ 45] pushint8 1 .............................. <1>
+  [ 47] add ..................................... <pExperienceLevel + 1>
+  [ 48] setlocal 1 .............................. myLevel = pExperienceLevel + 1
+  [ 50] getlocal 0 .............................. <lastAttacker>
+  [ 52] pusharglist 1 ........................... <lastAttacker>
+  [ 54] objcall 609 ............................. <lastAttacker.getType()>
+  [ 57] pushsymb 610 ............................ <#objBullet>
+  [ 60] nteq .................................... <lastAttacker.getType() <> #objBullet>
+  [ 61] jmpifz [ 97] ............................ if lastAttacker.getType() <> #objBullet then
+  [ 64] getlocal 0 .............................. <lastAttacker>
+  [ 66] getprop 590 ............................. <pExperienceImWorth>
+  [ 69] getprop 589 ............................. <pExperienceGained>
+  [ 72] pushint8 2 .............................. <2>
+  [ 74] div ..................................... <pExperienceGained / 2>
+  [ 75] add ..................................... <pExperienceImWorth + (pExperienceGained / 2)>
+  [ 76] pusharglistnoret 2 ...................... <lastAttacker, pExperienceImWorth + (pExperienceGained / 2)>
+  [ 78] objcall 569 ............................. lastAttacker.gainExperience(pExperienceImWorth + (pExperienceGained / 2))
+  [ 81] getlocal 0 .............................. <lastAttacker>
+  [ 83] getparam 0 .............................. <me>
+  [ 85] getchainedprop 51 ....................... <me.big>
+  [ 87] pusharglist 1 ........................... <me.big>
+  [ 89] objcall 611 ............................. <me.big.getActorType()>
+  [ 92] pusharglistnoret 2 ...................... <lastAttacker, me.big.getActorType()>
+  [ 94] objcall 577 ............................. lastAttacker.recordKill(me.big.getActorType())
+  [ 97] getparam 0 .............................. <me>
+  [ 99] getchainedprop 51 ....................... <me.big>
+  [101] pushsymb 605 ............................ <#lastAttacker>
+  [104] pushsymb 49 ............................. <#none>
+  [106] pusharglistnoret 3 ...................... <me.big, #lastAttacker, #none>
+  [108] objcall 612 ............................. me.big.setRelation(#lastAttacker, #none)
+  [111] ret
+end
+
+on disableLevelUpStars me
+  [  0] getprop 595 ............................. <pReleaseStarOnLevel>
+  [  3] setprop 596 ............................. pReleaseStarOnLevelOld = pReleaseStarOnLevel
+  [  6] pushzero ................................ <0>
+  [  7] setprop 595 ............................. pReleaseStarOnLevel = 0
+  [ 10] ret
+end
+
+on eventNotification me, theEvent, theObj
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <theEvent>
+  [  4] getparam 2 .............................. <theObj>
+  [  6] pusharglistnoret 3 ...................... <ancestor, theEvent, theObj>
+  [  8] objcall 568 ............................. ancestor.eventNotification(theEvent, theObj)
+  [ 11] getparam 1 .............................. <theEvent>
+  [ 13] peek 0 .................................. case theEvent of
+  [ 15] pushsymb 122 ............................ <#leaveGame>
+  [ 17] eq
+  [ 18] jmpifz [ 53] ............................ (case) #leaveGame:
+  [ 21] getparam 2 .............................. <theObj>
+  [ 23] getparam 0 .............................. <me>
+  [ 25] getchainedprop 51 ....................... <me.big>
+  [ 27] pushsymb 605 ............................ <#lastAttacker>
+  [ 30] pusharglist 2 ........................... <me.big, #lastAttacker>
+  [ 32] objcall 606 ............................. <me.big.getRelation(#lastAttacker)>
+  [ 35] eq ...................................... <theObj = me.big.getRelation(#lastAttacker)>
+  [ 36] jmpifz [ 53] ............................ if theObj = me.big.getRelation(#lastAttacker) then
+  [ 39] getparam 0 .............................. <me>
+  [ 41] getchainedprop 51 ....................... <me.big>
+  [ 43] getparam 2 .............................. <theObj>
+  [ 45] pushsymb 605 ............................ <#lastAttacker>
+  [ 48] pusharglistnoret 3 ...................... <me.big, theObj, #lastAttacker>
+  [ 50] objcall 614 ............................. me.big.breakRelationship(theObj, #lastAttacker)
+  [ 53] pop 1
+  [ 55] ret
+end
+
+on gainExperience me, theAmount
+  [  0] getprop 589 ............................. <pExperienceGained>
+  [  3] getparam 1 .............................. <theAmount>
+  [  5] add ..................................... <pExperienceGained + theAmount>
+  [  6] setprop 589 ............................. pExperienceGained = pExperienceGained + theAmount
+  [  9] pushint8 1 .............................. <1>
+  [ 11] setlocal 0 .............................. levelled = 1
+  [ 13] getlocal 0 .............................. <levelled>
+  [ 15] pushint8 1 .............................. <1>
+  [ 17] eq ...................................... <levelled = 1>
+  [ 18] jmpifz [ 32] ............................ repeat while levelled = 1
+  [ 21] getparam 0 .............................. <me>
+  [ 23] pusharglist 1 ........................... <me>
+  [ 25] objcall 565 ............................. <me.attemptToLevelUp()>
+  [ 28] setlocal 0 .............................. levelled = me.attemptToLevelUp()
+  [ 30] endrepeat [ 13]
+  [ 32] getprop 599 ............................. <pLevelData>
+  [ 35] pushsymb 601 ............................ <#expPnts>
+  [ 38] getprop 589 ............................. <pExperienceGained>
+  [ 41] getprop 603 ............................. <pExperienceAmountForLastLevel>
+  [ 44] sub ..................................... <pExperienceGained - pExperienceAmountForLastLevel>
+  [ 45] pusharglistnoret 3 ...................... <pLevelData, #expPnts, pExperienceGained - pExperienceAmountForLastLevel>
+  [ 47] objcall 48 .............................. pLevelData[#expPnts] = pExperienceGained - pExperienceAmountForLastLevel
+  [ 49] getprop 599 ............................. <pLevelData>
+  [ 52] pushsymb 600 ............................ <#expToNxtLvl>
+  [ 55] pusharglist 2 ........................... <pLevelData, #expToNxtLvl>
+  [ 57] objcall 109 ............................. <pLevelData[#expToNxtLvl]>
+  [ 59] pushzero ................................ <0>
+  [ 60] eq ...................................... <pLevelData[#expToNxtLvl] = 0>
+  [ 61] jmpifz [ 78] ............................ if pLevelData[#expToNxtLvl] = 0 then / else
+  [ 64] getprop 599 ............................. <pLevelData>
+  [ 67] pushsymb 602 ............................ <#percentToNxt>
+  [ 70] pushzero ................................ <0>
+  [ 71] pusharglistnoret 3 ...................... <pLevelData, #percentToNxt, 0>
+  [ 73] objcall 48 .............................. pLevelData[#percentToNxt] = 0
+  [ 75] jmp [107]
+  [ 78] getprop 599 ............................. <pLevelData>
+  [ 81] pushsymb 602 ............................ <#percentToNxt>
+  [ 84] getprop 599 ............................. <pLevelData>
+  [ 87] getobjprop 601 .......................... <pLevelData.expPnts>
+  [ 90] pushfloat32 0.0 ......................... <0.0>
+  [ 95] add ..................................... <pLevelData.expPnts + 0.0>
+  [ 96] getprop 599 ............................. <pLevelData>
+  [ 99] getobjprop 600 .......................... <pLevelData.expToNxtLvl>
+  [102] div ..................................... <(pLevelData.expPnts + 0.0) / pLevelData.expToNxtLvl>
+  [103] pusharglistnoret 3 ...................... <pLevelData, #percentToNxt, (pLevelData.expPnts + 0.0) / pLevelData.expToNxtLvl>
+  [105] objcall 48 .............................. pLevelData[#percentToNxt] = (pLevelData.expPnts + 0.0) / pLevelData.expToNxtLvl
+  [107] ret
+end
+
+on gainExperienceFromHealing me, theHealedObj, theAmount
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 2 .............................. <theAmount>
+  [  4] pusharglistnoret 2 ...................... <me, theAmount>
+  [  6] objcall 569 ............................. me.gainExperience(theAmount)
+  [  9] ret
+end
+
+on gainExperienceFromTransfer me, amount
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 567 ............................. me.disableLevelUpStars()
+  [  7] getparam 0 .............................. <me>
+  [  9] getparam 1 .............................. <amount>
+  [ 11] pusharglistnoret 2 ...................... <me, amount>
+  [ 13] objcall 569 ............................. me.gainExperience(amount)
+  [ 16] getparam 0 .............................. <me>
+  [ 18] pusharglistnoret 1 ...................... <me>
+  [ 20] objcall 578 ............................. me.restoreLevelUpStars()
+  [ 23] ret
+end
+
+on getExperience me
+  [  0] getprop 589 ............................. <pExperienceGained>
+  [  3] pusharglistnoret 1 ...................... <pExperienceGained>
+  [  5] extcall 35 .............................. return pExperienceGained
+  [  7] ret
+end
+
+on getExperienceLevel me
+  [  0] getprop 593 ............................. <pExperienceLevel>
+  [  3] pusharglistnoret 1 ...................... <pExperienceLevel>
+  [  5] extcall 35 .............................. return pExperienceLevel
+  [  7] ret
+end
+
+on getExperienceData me
+  [  0] getprop 599 ............................. <pLevelData>
+  [  3] pusharglistnoret 1 ...................... <pLevelData>
+  [  5] extcall 35 .............................. return pLevelData
+  [  7] ret
+end
+
+on internalEvent me, theEvent
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <theEvent>
+  [  4] pusharglistnoret 2 ...................... <ancestor, theEvent>
+  [  6] objcall 22 .............................. ancestor.internalEvent(theEvent)
+  [  8] getparam 1 .............................. <theEvent>
+  [ 10] peek 0 .................................. case theEvent of
+  [ 12] pushsymb 5 .............................. <#addToArmyDetails>
+  [ 14] eq
+  [ 15] jmpifz [ 27] ............................ (case) #addToArmyDetails:
+  [ 18] getparam 0 .............................. <me>
+  [ 20] pusharglistnoret 1 ...................... <me>
+  [ 22] objcall 5 ............................... me.addToArmyDetails()
+  [ 24] jmp [106]
+  [ 27] peek 0
+  [ 29] pushsymb 482 ............................ <#buildingFinished>
+  [ 32] eq
+  [ 33] jmpifz [ 54] ............................ (case) #buildingFinished:
+  [ 36] getprop 598 ............................. <pStartingLevel>
+  [ 39] pushzero ................................ <0>
+  [ 40] gt ...................................... <pStartingLevel > 0>
+  [ 41] jmpifz [ 51] ............................ if pStartingLevel > 0 then
+  [ 44] getparam 0 .............................. <me>
+  [ 46] pusharglistnoret 1 ...................... <me>
+  [ 48] objcall 575 ............................. me.levelUpToStartingLevel()
+  [ 51] jmp [106]
+  [ 54] peek 0
+  [ 56] pushsymb 484 ............................ <#outOfEnergy>
+  [ 59] eq
+  [ 60] jmpifz [ 73] ............................ (case) #outOfEnergy:
+  [ 63] getparam 0 .............................. <me>
+  [ 65] pusharglistnoret 1 ...................... <me>
+  [ 67] objcall 566 ............................. me.attributeExperience()
+  [ 70] jmp [106]
+  [ 73] peek 0
+  [ 75] pushsymb 618 ............................ <#reincarnated>
+  [ 78] eq
+  [ 79] jmpifz [ 92] ............................ (case) #reincarnated:
+  [ 82] getparam 0 .............................. <me>
+  [ 84] pusharglistnoret 1 ...................... <me>
+  [ 86] objcall 581 ............................. me.transferExperience()
+  [ 89] jmp [106]
+  [ 92] peek 0
+  [ 94] pushsymb 25 ............................. <#restoreFromArmyDetails>
+  [ 96] eq
+  [ 97] jmpifz [106] ............................ (case) #restoreFromArmyDetails:
+  [100] getparam 0 .............................. <me>
+  [102] pusharglistnoret 1 ...................... <me>
+  [104] objcall 25 .............................. me.restoreFromArmyDetails()
+  [106] pop 1 ................................... end case
+  [108] ret
+end
+
+on levelUp me
+  [  0] getprop 593 ............................. <pExperienceLevel>
+  [  3] pushint8 1 .............................. <1>
+  [  5] add ..................................... <pExperienceLevel + 1>
+  [  6] setprop 593 ............................. pExperienceLevel = pExperienceLevel + 1
+  [  9] getprop 595 ............................. <pReleaseStarOnLevel>
+  [ 12] jmpifz [ 37] ............................ if pReleaseStarOnLevel then
+  [ 15] getparam 0 .............................. <me>
+  [ 17] getchainedprop 51 ....................... <me.big>
+  [ 19] pusharglistnoret 1 ...................... <me.big>
+  [ 21] objcall 619 ............................. me.big.releaseStar()
+  [ 24] getparam 0 .............................. <me>
+  [ 26] getchainedprop 51 ....................... <me.big>
+  [ 28] pushcons 1 .............................. <"level_up">
+  [ 30] pushint8 100 ............................ <100>
+  [ 32] pusharglistnoret 3 ...................... <me.big, "level_up", 100>
+  [ 34] objcall 551 ............................. me.big.PlaySound("level_up", 100)
+  [ 37] getparam 0 .............................. <me>
+  [ 39] getchainedprop 51 ....................... <me.big>
+  [ 41] pusharglistnoret 1 ...................... <me.big>
+  [ 43] objcall 620 ............................. me.big.incWalkAcceleration()
+  [ 46] getparam 0 .............................. <me>
+  [ 48] getchainedprop 51 ....................... <me.big>
+  [ 50] pushsymb 310 ............................ <#levelUp>
+  [ 53] pusharglistnoret 2 ...................... <me.big, #levelUp>
+  [ 55] objcall 22 .............................. me.big.internalEvent(#levelUp)
+  [ 57] getparam 0 .............................. <me>
+  [ 59] pushsymb 310 ............................ <#levelUp>
+  [ 62] pusharglistnoret 2 ...................... <me, #levelUp>
+  [ 64] objcall 123 ............................. me.eventNotify(#levelUp)
+  [ 66] ret
+end
+
+on levelUpToStartingLevel me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 567 ............................. me.disableLevelUpStars()
+  [  7] pushint8 1 .............................. <1>
+  [  9] setlocal 0
+  [ 11] getlocal 0
+  [ 13] getprop 598 ............................. <pStartingLevel>
+  [ 16] lteq
+  [ 17] jmpifz [ 36] ............................ repeat with i = 1 to pStartingLevel
+  [ 20] getparam 0 .............................. <me>
+  [ 22] pusharglistnoret 1 ...................... <me>
+  [ 24] objcall 310 ............................. me.levelUp()
+  [ 27] pushint8 1
+  [ 29] getlocal 0
+  [ 31] add
+  [ 32] setlocal 0
+  [ 34] endrepeat [ 11]
+  [ 36] getparam 0 .............................. <me>
+  [ 38] pusharglistnoret 1 ...................... <me>
+  [ 40] objcall 578 ............................. me.restoreLevelUpStars()
+  [ 43] ret
+end
+
+on mergeExperience me, targetUnit
+  [  0] getprop 590 ............................. <pExperienceImWorth>
+  [  3] getprop 589 ............................. <pExperienceGained>
+  [  6] add ..................................... <pExperienceImWorth + pExperienceGained>
+  [  7] setlocal 0 .............................. experience = pExperienceImWorth + pExperienceGained
+  [  9] getparam 1 .............................. <targetUnit>
+  [ 11] getlocal 0 .............................. <experience>
+  [ 13] pusharglistnoret 2 ...................... <targetUnit, experience>
+  [ 15] objcall 569 ............................. targetUnit.gainExperience(experience)
+  [ 18] getparam 1 .............................. <targetUnit>
+  [ 20] pusharglistnoret 1 ...................... <targetUnit>
+  [ 22] objcall 447 ............................. targetUnit.glowPink()
+  [ 25] ret
+end
+
+on recordKill me, actorType
+  [  0] getprop 594 ............................. <pKills>
+  [  3] getparam 1 .............................. <actorType>
+  [  5] pusharglist 2 ........................... <pKills, actorType>
+  [  7] objcall 109 ............................. <pKills[actorType]>
+  [  9] pusharglist 0 ........................... <>
+  [ 11] extcall 166 ............................. <VOID>
+  [ 13] eq ...................................... <pKills[actorType] = VOID>
+  [ 14] jmpifz [ 27] ............................ if pKills[actorType] = VOID then
+  [ 17] getprop 594 ............................. <pKills>
+  [ 20] getparam 1 .............................. <actorType>
+  [ 22] pushzero ................................ <0>
+  [ 23] pusharglistnoret 3 ...................... <pKills, actorType, 0>
+  [ 25] objcall 48 .............................. pKills[actorType] = 0
+  [ 27] getprop 594 ............................. <pKills>
+  [ 30] getparam 1 .............................. <actorType>
+  [ 32] getprop 594 ............................. <pKills>
+  [ 35] getparam 1 .............................. <actorType>
+  [ 37] pusharglist 2 ........................... <pKills, actorType>
+  [ 39] objcall 109 ............................. <pKills[actorType]>
+  [ 41] pushint8 1 .............................. <1>
+  [ 43] add ..................................... <pKills[actorType] + 1>
+  [ 44] pusharglistnoret 3 ...................... <pKills, actorType, pKills[actorType] + 1>
+  [ 46] objcall 48 .............................. pKills[actorType] = pKills[actorType] + 1
+  [ 48] ret
+end
+
+on restoreFromArmyDetails me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 51 ....................... <me.big>
+  [  4] pusharglist 1 ........................... <me.big>
+  [  6] objcall 54 .............................. <me.big.getArmyDetails()>
+  [  8] setlocal 0 .............................. ad = me.big.getArmyDetails()
+  [ 10] getparam 0 .............................. <me>
+  [ 12] getlocal 0 .............................. <ad>
+  [ 14] pusharglistnoret 2 ...................... <me, ad>
+  [ 16] objcall 27 .............................. me.restoreFromSaveData(ad)
+  [ 18] ret
+end
+
+on restoreFromSave me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 26 .............................. ancestor.restoreFromSave(sd)
+  [  8] getparam 0 .............................. <me>
+  [ 10] getparam 1 .............................. <sd>
+  [ 12] pusharglistnoret 2 ...................... <me, sd>
+  [ 14] objcall 27 .............................. me.restoreFromSaveData(sd)
+  [ 16] ret
+end
+
+on restoreFromSaveData me, sd
+  [  0] getparam 1 .............................. <sd>
+  [  2] getobjprop 587 .......................... <sd.pExperienceAmountForNextLevel>
+  [  5] setprop 587 ............................. pExperienceAmountForNextLevel = sd.pExperienceAmountForNextLevel
+  [  8] getparam 1 .............................. <sd>
+  [ 10] getobjprop 589 .......................... <sd.pExperienceGained>
+  [ 13] setprop 589 ............................. pExperienceGained = sd.pExperienceGained
+  [ 16] getparam 1 .............................. <sd>
+  [ 18] getobjprop 593 .......................... <sd.pExperienceLevel>
+  [ 21] setprop 593 ............................. pExperienceLevel = sd.pExperienceLevel
+  [ 24] getparam 1 .............................. <sd>
+  [ 26] getobjprop 591 .......................... <sd.pExperienceRequiredForNextLevel>
+  [ 29] setprop 591 ............................. pExperienceRequiredForNextLevel = sd.pExperienceRequiredForNextLevel
+  [ 32] getparam 1 .............................. <sd>
+  [ 34] getobjprop 594 .......................... <sd.pKills>
+  [ 37] setprop 594 ............................. pKills = sd.pKills
+  [ 40] getparam 1 .............................. <sd>
+  [ 42] getobjprop 599 .......................... <sd.pLevelData>
+  [ 45] setprop 599 ............................. pLevelData = sd.pLevelData
+  [ 48] getparam 0 .............................. <me>
+  [ 50] pusharglistnoret 1 ...................... <me>
+  [ 52] objcall 579 ............................. me.setSpriteSizeFromLevel()
+  [ 55] ret
+end
+
+on restoreLevelUpStars me
+  [  0] getprop 596 ............................. <pReleaseStarOnLevelOld>
+  [  3] setprop 595 ............................. pReleaseStarOnLevel = pReleaseStarOnLevelOld
+  [  6] ret
+end
+
+on setSpriteSizeFromLevel me
+  [  0] ret
+end
+
+on setStartingLevel me, newVal
+  [  0] getparam 1 .............................. <newVal>
+  [  2] setprop 598 ............................. pStartingLevel = newVal
+  [  5] getprop 598 ............................. <pStartingLevel>
+  [  8] pushzero ................................ <0>
+  [  9] gt ...................................... <pStartingLevel > 0>
+  [ 10] jmpifz [ 20] ............................ if pStartingLevel > 0 then
+  [ 13] getparam 0 .............................. <me>
+  [ 15] pusharglistnoret 1 ...................... <me>
+  [ 17] objcall 575 ............................. me.levelUpToStartingLevel()
+  [ 20] ret
+end
+
+on takeHit me, collisionVect, attackingObj, owner
+  [  0] getparam 3 .............................. <owner>
+  [  2] pushsymb 49 ............................. <#none>
+  [  4] nteq .................................... <owner <> #none>
+  [  5] jmpifz [ 39] ............................ if owner <> #none then
+  [  8] getparam 0 .............................. <me>
+  [ 10] getchainedprop 51 ....................... <me.big>
+  [ 12] getparam 3 .............................. <owner>
+  [ 14] pushsymb 605 ............................ <#lastAttacker>
+  [ 17] pushsymb 626 ............................ <#exclusive>
+  [ 20] pusharglistnoret 4 ...................... <me.big, owner, #lastAttacker, #exclusive>
+  [ 22] objcall 627 ............................. me.big.formRelationship(owner, #lastAttacker, #exclusive)
+  [ 25] getparam 0 .............................. <me>
+  [ 27] getparam 3 .............................. <owner>
+  [ 29] pushsymb 122 ............................ <#leaveGame>
+  [ 31] pushsymb 628 ............................ <#once>
+  [ 34] pusharglistnoret 4 ...................... <me, owner, #leaveGame, #once>
+  [ 36] objcall 629 ............................. me.keepMePosted(owner, #leaveGame, #once)
+  [ 39] getprop 33 .............................. <ancestor>
+  [ 41] getparam 1 .............................. <collisionVect>
+  [ 43] getparam 2 .............................. <attackingObj>
+  [ 45] getparam 3 .............................. <owner>
+  [ 47] pusharglistnoret 4 ...................... <ancestor, collisionVect, attackingObj, owner>
+  [ 49] objcall 516 ............................. ancestor.takeHit(collisionVect, attackingObj, owner)
+  [ 52] ret
+end
+
+on takeHeal me, collisionVect, healingObj, owner
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <collisionVect>
+  [  4] getparam 2 .............................. <healingObj>
+  [  6] getparam 3 .............................. <owner>
+  [  8] pusharglistnoret 4 ...................... <ancestor, collisionVect, healingObj, owner>
+  [ 10] objcall 515 ............................. ancestor.takeHeal(collisionVect, healingObj, owner)
+  [ 13] getparam 3 .............................. <owner>
+  [ 15] getparam 0 .............................. <me>
+  [ 17] getobjprop 51 ........................... <me.big>
+  [ 19] getparam 1 .............................. <collisionVect>
+  [ 21] getobjprop 539 .......................... <collisionVect.locH>
+  [ 24] getparam 1 .............................. <collisionVect>
+  [ 26] getobjprop 540 .......................... <collisionVect.locV>
+  [ 29] add ..................................... <collisionVect.locH + collisionVect.locV>
+  [ 30] pusharglistnoret 3 ...................... <owner, me.big, collisionVect.locH + collisionVect.locV>
+  [ 32] objcall 570 ............................. owner.gainExperienceFromHealing(me.big, collisionVect.locH + collisionVect.locV)
+  [ 35] ret
+end
+
+on transferExperience me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 51 ....................... <me.big>
+  [  4] pusharglist 1 ........................... <me.big>
+  [  6] objcall 630 ............................. <me.big.getReincarnatedMe()>
+  [  9] setlocal 0 .............................. reincarnatedMe = me.big.getReincarnatedMe()
+  [ 11] getlocal 0 .............................. <reincarnatedMe>
+  [ 13] getprop 589 ............................. <pExperienceGained>
+  [ 16] pushint8 2 .............................. <2>
+  [ 18] div ..................................... <pExperienceGained / 2>
+  [ 19] pusharglistnoret 2 ...................... <reincarnatedMe, pExperienceGained / 2>
+  [ 21] objcall 571 ............................. reincarnatedMe.gainExperienceFromTransfer(pExperienceGained / 2)
+  [ 24] ret
+end

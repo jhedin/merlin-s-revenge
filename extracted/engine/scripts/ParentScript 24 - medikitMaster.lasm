@@ -1,0 +1,90 @@
+property pLoc, pMedikitDisplayer
+global g
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 3 ............................... return me
+  [  6] ret
+end
+
+on init me
+  [  0] pushzero ................................ <0>
+  [  1] pushzero ................................ <0>
+  [  2] pusharglist 2 ........................... <0, 0>
+  [  4] extcall 122 ............................. <point(0, 0)>
+  [  6] setprop 1135 ............................ pLoc = point(0, 0)
+  [  9] pushsymb 103 ............................ <#none>
+  [ 11] setprop 1136 ............................ pMedikitDisplayer = #none
+  [ 14] ret
+end
+
+on finish me
+  [  0] getprop 1136 ............................ <pMedikitDisplayer>
+  [  3] pusharglist 1 ........................... <pMedikitDisplayer>
+  [  5] extcall 350 ............................. <ilk(pMedikitDisplayer)>
+  [  8] pushsymb 388 ............................ <#void>
+  [ 11] nteq .................................... <ilk(pMedikitDisplayer) <> #void>
+  [ 12] getprop 1136 ............................ <pMedikitDisplayer>
+  [ 15] pushsymb 103 ............................ <#none>
+  [ 17] nteq .................................... <pMedikitDisplayer <> #none>
+  [ 18] and ..................................... <(ilk(pMedikitDisplayer) <> #void) and (pMedikitDisplayer <> #none)>
+  [ 19] jmpifz [ 34] ............................ if (ilk(pMedikitDisplayer) <> #void) and (pMedikitDisplayer <> #none) then
+  [ 22] getprop 1136 ............................ <pMedikitDisplayer>
+  [ 25] pusharglistnoret 1 ...................... <pMedikitDisplayer>
+  [ 27] objcall 239 ............................. pMedikitDisplayer.finish()
+  [ 29] pushsymb 103 ............................ <#none>
+  [ 31] setprop 1136 ............................ pMedikitDisplayer = #none
+  [ 34] ret
+end
+
+on start me, theloc
+  [  0] getparam 1 .............................. <theloc>
+  [  2] setprop 1135 ............................ pLoc = theloc
+  [  5] getglobal 191 ........................... <g>
+  [  7] getchainedprop 336 ...................... <g.objectMaster>
+  [ 10] pushsymb 1137 ........................... <#objMedikitDisplayer>
+  [ 13] pusharglist 2 ........................... <g.objectMaster, #objMedikitDisplayer>
+  [ 15] objcall 338 ............................. <g.objectMaster.requestObject(#objMedikitDisplayer)>
+  [ 18] setprop 1136 ............................ pMedikitDisplayer = g.objectMaster.requestObject(#objMedikitDisplayer)
+  [ 21] getprop 1136 ............................ <pMedikitDisplayer>
+  [ 24] pushsymb 1 .............................. <#init>
+  [ 26] pusharglist 2 ........................... <pMedikitDisplayer, #init>
+  [ 28] objcall 339 ............................. <pMedikitDisplayer.getParams(#init)>
+  [ 31] setlocal 0 .............................. params = pMedikitDisplayer.getParams(#init)
+  [ 33] getlocal 0 .............................. <params>
+  [ 35] getparam 1 .............................. <theloc>
+  [ 37] setobjprop 1138 ......................... params.displayLoc = theloc
+  [ 40] getlocal 0 .............................. <params>
+  [ 42] pushcons 0 .............................. <"medikit_off">
+  [ 44] pushcons 1 .............................. <"gfx">
+  [ 46] pusharglist 2 ........................... <"medikit_off", "gfx">
+  [ 48] extcall 193 ............................. <member("medikit_off", "gfx")>
+  [ 50] setobjprop 1139 ......................... params.offMember = member("medikit_off", "gfx")
+  [ 53] getlocal 0 .............................. <params>
+  [ 55] pushcons 2 .............................. <"medikit_on">
+  [ 57] pushcons 1 .............................. <"gfx">
+  [ 59] pusharglist 2 ........................... <"medikit_on", "gfx">
+  [ 61] extcall 193 ............................. <member("medikit_on", "gfx")>
+  [ 63] setobjprop 1140 ......................... params.onMember = member("medikit_on", "gfx")
+  [ 66] getprop 1136 ............................ <pMedikitDisplayer>
+  [ 69] getlocal 0 .............................. <params>
+  [ 71] pusharglistnoret 2 ...................... <pMedikitDisplayer, params>
+  [ 73] objcall 1 ............................... pMedikitDisplayer.init(params)
+  [ 75] ret
+end
+
+on stop me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 239 ............................. me.finish()
+  [  6] ret
+end
+
+on updateDisplay me, theObj
+  [  0] getprop 1136 ............................ <pMedikitDisplayer>
+  [  3] getparam 1 .............................. <theObj>
+  [  5] pusharglistnoret 2 ...................... <pMedikitDisplayer, theObj>
+  [  7] objcall 1141 ............................ pMedikitDisplayer.updateDisplayFromObj(theObj)
+  [ 10] ret
+end

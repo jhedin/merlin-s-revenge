@@ -1,0 +1,25 @@
+property ancestor, pSpr
+
+on new me
+  me.ancestor = new(script("objTransformer"))
+  i = me.modifyParams(#init)
+  i[#spr] = #none
+  return me
+end
+
+on init me, params
+  pSpr = params.spr
+  params.initialValue = pSpr.member.scrollTop
+  me.ancestor.init(params)
+end
+
+on informCallingPrg me
+  callingPrg = me.getCallingPrg()
+  if callingPrg <> #none then
+    callingPrg.transTextScrollFin(me.id.bigMe)
+  end if
+end
+
+on updateAttribute me
+  pSpr.member.scrollTop = me.pCurr
+end

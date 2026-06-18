@@ -1,0 +1,891 @@
+property ancestor, pLineCounter, pTheScript
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"objParams">
+  [  2] pusharglist 1 ........................... <"objParams">
+  [  4] extcall 34 .............................. <script("objParams")>
+  [  6] pusharglist 1 ........................... <script("objParams")>
+  [  8] extcall 0 ............................... <new(script("objParams"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objParams"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 99 ............................. <#member>
+  [ 26] pushsymb 49 ............................. <#none>
+  [ 28] pusharglistnoret 3 ...................... <i, #member, #none>
+  [ 30] objcall 48 .............................. i[#member] = #none
+  [ 32] getparam 0 .............................. <me>
+  [ 34] pusharglistnoret 1 ...................... <me>
+  [ 36] extcall 35 .............................. return me
+  [ 38] ret
+end
+
+on init me, params
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <params>
+  [  4] getchainedprop 99 ....................... <params.member>
+  [  6] getobjprop 670 .......................... <params.member.text>
+  [  9] pusharglistnoret 2 ...................... <me, params.member.text>
+  [ 11] objcall 3758 ............................ me.interpretScript(params.member.text)
+  [ 14] pusharglist 0 ........................... <>
+  [ 16] extcall 529 ............................. <CounterNew()>
+  [ 19] setprop 3768 ............................ pLineCounter = CounterNew()
+  [ 22] getprop 3768 ............................ <pLineCounter>
+  [ 25] pushsymb 530 ............................ <#tim>
+  [ 28] pushint8 2 .............................. <2>
+  [ 30] getprop 3769 ............................ <pTheScript>
+  [ 33] pushsymb 3770 ........................... <#theLines>
+  [ 36] pusharglist 2 ........................... <pTheScript, #theLines>
+  [ 38] objcall 257 ............................. <pTheScript.theLines.count>
+  [ 41] pusharglistnoret 4 ...................... <pLineCounter, #tim, 2, pTheScript.theLines.count>
+  [ 43] objcall 531 ............................. pLineCounter.tim[2] = pTheScript.theLines.count
+  [ 46] getprop 33 .............................. <ancestor>
+  [ 48] getparam 1 .............................. <params>
+  [ 50] pusharglistnoret 2 ...................... <ancestor, params>
+  [ 52] objcall 1 ............................... ancestor.init(params)
+  [ 54] ret
+end
+
+on calcFirstLine me, theText, firstWord
+  [  0] getparam 1 .............................. <theText>
+  [  2] getparam 2 .............................. <firstWord>
+  [  4] pusharglist 2 ........................... <theText, firstWord>
+  [  6] extcall 3771 ............................ <TextGetLineNoWithFirstWord(theText, firstWord)>
+  [  9] setlocal 0 .............................. firstLine = TextGetLineNoWithFirstWord(theText, firstWord)
+  [ 11] getlocal 0 .............................. <firstLine>
+  [ 13] pushsymb 49 ............................. <#none>
+  [ 15] nteq .................................... <firstLine <> #none>
+  [ 16] jmpifz [ 26] ............................ if firstLine <> #none then
+  [ 19] getlocal 0 .............................. <firstLine>
+  [ 21] pushint8 1 .............................. <1>
+  [ 23] add ..................................... <firstLine + 1>
+  [ 24] setlocal 0 .............................. firstLine = firstLine + 1
+  [ 26] getlocal 0 .............................. <firstLine>
+  [ 28] pusharglistnoret 1 ...................... <firstLine>
+  [ 30] extcall 35 .............................. return firstLine
+  [ 32] ret
+end
+
+on correctLineEndings me, theText
+  [  0] getmovieprop 3774 ....................... <the itemDelimiter>
+  [  3] setlocal 0 .............................. originalDelimiter = the itemDelimiter
+  [  5] pushint8 10 ............................. <10>
+  [  7] pusharglist 1 ........................... <10>
+  [  9] extcall 3775 ............................ <numToChar(10)>
+  [ 12] setmovieprop 3774 ....................... the itemDelimiter = numToChar(10)
+  [ 15] getparam 1 .............................. <theText>
+  [ 17] pushsymb 3234 ........................... <#items>
+  [ 20] pusharglist 2 ........................... <theText, #items>
+  [ 22] objcall 257 ............................. <theText.items.count>
+  [ 25] setlocal 1 .............................. numItems = theText.items.count
+  [ 27] getparam 1 .............................. <theText>
+  [ 29] pushsymb 3257 ........................... <#lines>
+  [ 32] pusharglist 2 ........................... <theText, #lines>
+  [ 34] objcall 257 ............................. <theText.lines.count>
+  [ 37] setlocal 2 .............................. numLines = theText.lines.count
+  [ 39] getlocal 1 .............................. <numItems>
+  [ 41] pushzero ................................ <0>
+  [ 42] gt ...................................... <numItems > 0>
+  [ 43] jmpifz [111] ............................ if numItems > 0 then
+  [ 46] pushcons 1 .............................. <EMPTY>
+  [ 48] setlocal 3 .............................. newText = EMPTY
+  [ 50] pushint8 1 .............................. <1>
+  [ 52] setlocal 4
+  [ 54] getlocal 4
+  [ 56] getparam 1 .............................. <theText>
+  [ 58] pushsymb 3234 ........................... <#items>
+  [ 61] pusharglist 2 ........................... <theText, #items>
+  [ 63] objcall 257 ............................. <theText.items.count>
+  [ 66] lteq
+  [ 67] jmpifz [107] ............................ repeat with i = 1 to theText.items.count
+  [ 70] getparam 1 .............................. <theText>
+  [ 72] pushsymb 3776 ........................... <#item>
+  [ 75] getlocal 4 .............................. <i>
+  [ 77] pusharglist 3 ........................... <theText, #item, i>
+  [ 79] objcall 381 ............................. <theText.item[i]>
+  [ 82] setlocal 5 .............................. nItem = theText.item[i]
+  [ 84] getlocal 5 .............................. <nItem>
+  [ 86] pushcons 2 .............................. <RETURN>
+  [ 88] joinstr ................................. <nItem & RETURN>
+  [ 89] setlocal 5 .............................. nItem = nItem & RETURN
+  [ 91] getlocal 3 .............................. <newText>
+  [ 93] getlocal 5 .............................. <nItem>
+  [ 95] joinstr ................................. <newText & nItem>
+  [ 96] setlocal 3 .............................. newText = newText & nItem
+  [ 98] pushint8 1
+  [100] getlocal 4
+  [102] add
+  [103] setlocal 4
+  [105] endrepeat [ 54]
+  [107] getlocal 3 .............................. <newText>
+  [109] setparam 1 .............................. theText = newText
+  [111] getparam 1 .............................. <theText>
+  [113] pushsymb 3257 ........................... <#lines>
+  [116] pusharglist 2 ........................... <theText, #lines>
+  [118] objcall 257 ............................. <theText.lines.count>
+  [121] setlocal 2 .............................. numLines = theText.lines.count
+  [123] getlocal 0 .............................. <originalDelimiter>
+  [125] setmovieprop 3774 ....................... the itemDelimiter = originalDelimiter
+  [128] getparam 1 .............................. <theText>
+  [130] pusharglistnoret 1 ...................... <theText>
+  [132] extcall 35 .............................. return theText
+  [134] ret
+end
+
+on getNextLine me
+  [  0] getprop 3768 ............................ <pLineCounter>
+  [  3] getobjprop 2969 ......................... <pLineCounter.looped>
+  [  6] jmpifz [ 16] ............................ if pLineCounter.looped then
+  [  9] pushsymb 2072 ........................... <#finished>
+  [ 12] pusharglistnoret 1 ...................... <#finished>
+  [ 14] extcall 35 .............................. return #finished
+  [ 16] getprop 3769 ............................ <pTheScript>
+  [ 19] pushsymb 3770 ........................... <#theLines>
+  [ 22] getprop 3768 ............................ <pLineCounter>
+  [ 25] getobjprop 737 .......................... <pLineCounter.theCount>
+  [ 28] pusharglist 3 ........................... <pTheScript, #theLines, pLineCounter.theCount>
+  [ 30] objcall 381 ............................. <pTheScript.theLines[pLineCounter.theCount]>
+  [ 33] setlocal 0 .............................. nextLine = pTheScript.theLines[pLineCounter.theCount]
+  [ 35] getprop 3768 ............................ <pLineCounter>
+  [ 38] pusharglistnoret 1 ...................... <pLineCounter>
+  [ 40] extcall 553 ............................. counter(pLineCounter)
+  [ 43] getlocal 0 .............................. <nextLine>
+  [ 45] pusharglistnoret 1 ...................... <nextLine>
+  [ 47] extcall 35 .............................. return nextLine
+  [ 49] ret
+end
+
+on getPlayers me
+  [  0] getprop 3769 ............................ <pTheScript>
+  [  3] getchainedprop 3782 ..................... <pTheScript.players>
+  [  6] pusharglist 1 ........................... <pTheScript.players>
+  [  8] objcall 175 ............................. <pTheScript.players.duplicate()>
+  [ 10] pusharglistnoret 1 ...................... <pTheScript.players.duplicate()>
+  [ 12] extcall 35 .............................. return pTheScript.players.duplicate()
+  [ 14] ret
+end
+
+on interpretScript me, theText
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <theText>
+  [  4] pusharglist 2 ........................... <me, theText>
+  [  6] objcall 3756 ............................ <me.correctLineEndings(theText)>
+  [  9] setparam 1 .............................. theText = me.correctLineEndings(theText)
+  [ 11] getglobal 40 ............................ <g>
+  [ 13] getchainedprop 1168 ..................... <g.structMaster>
+  [ 16] pushsymb 3783 ........................... <#plotScript>
+  [ 19] pusharglist 2 ........................... <g.structMaster, #plotScript>
+  [ 21] objcall 1170 ............................ <g.structMaster.getStruct(#plotScript)>
+  [ 24] setprop 3769 ............................ pTheScript = g.structMaster.getStruct(#plotScript)
+  [ 27] getparam 0 .............................. <me>
+  [ 29] getparam 1 .............................. <theText>
+  [ 31] pusharglistnoret 2 ...................... <me, theText>
+  [ 33] objcall 3759 ............................ me.interpretPlayers(theText)
+  [ 36] getparam 0 .............................. <me>
+  [ 38] getparam 1 .............................. <theText>
+  [ 40] pusharglistnoret 2 ...................... <me, theText>
+  [ 42] objcall 3760 ............................ me.interpretLines(theText)
+  [ 45] ret
+end
+
+on interpretPlayers me, theText
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <theText>
+  [  4] pushcons 3 .............................. <"characters">
+  [  6] pusharglist 3 ........................... <me, theText, "characters">
+  [  8] objcall 3755 ............................ <me.calcFirstLine(theText, "characters")>
+  [ 11] setlocal 0 .............................. firstLine = me.calcFirstLine(theText, "characters")
+  [ 13] getlocal 0 .............................. <firstLine>
+  [ 15] setlocal 1
+  [ 17] getlocal 1
+  [ 19] getparam 1 .............................. <theText>
+  [ 21] pushsymb 3257 ........................... <#lines>
+  [ 24] pusharglist 2 ........................... <theText, #lines>
+  [ 26] objcall 257 ............................. <theText.lines.count>
+  [ 29] lteq
+  [ 30] jmpifz [169] ............................ repeat with i = firstLine to theText.lines.count
+  [ 33] getparam 1 .............................. <theText>
+  [ 35] pushsymb 3258 ........................... <#line>
+  [ 38] getlocal 1 .............................. <i>
+  [ 40] pusharglist 3 ........................... <theText, #line, i>
+  [ 42] objcall 381 ............................. <theText.line[i]>
+  [ 45] setlocal 2 .............................. nLine = theText.line[i]
+  [ 47] getlocal 2 .............................. <nLine>
+  [ 49] pushsymb 1560 ........................... <#word>
+  [ 52] pushint8 1 .............................. <1>
+  [ 54] pusharglist 3 ........................... <nLine, #word, 1>
+  [ 56] objcall 381 ............................. <nLine.word[1]>
+  [ 59] pushcons 1 .............................. <EMPTY>
+  [ 61] eq ...................................... <nLine.word[1] = EMPTY>
+  [ 62] jmpifz [ 68] ............................ if nLine.word[1] = EMPTY then
+  [ 65] jmp [160] ............................... next repeat
+  [ 68] getlocal 2 .............................. <nLine>
+  [ 70] pushsymb 1560 ........................... <#word>
+  [ 73] pushint8 1 .............................. <1>
+  [ 75] pusharglist 3 ........................... <nLine, #word, 1>
+  [ 77] objcall 381 ............................. <nLine.word[1]>
+  [ 80] pushcons 4 .............................. <"lines">
+  [ 82] eq ...................................... <nLine.word[1] = "lines">
+  [ 83] jmpifz [ 89] ............................ if nLine.word[1] = "lines" then
+  [ 86] jmp [169] ............................... exit repeat
+  [ 89] getglobal 40 ............................ <g>
+  [ 91] getchainedprop 1168 ..................... <g.structMaster>
+  [ 94] pushsymb 3784 ........................... <#scriptPlayer>
+  [ 97] pusharglist 2 ........................... <g.structMaster, #scriptPlayer>
+  [ 99] objcall 1170 ............................ <g.structMaster.getStruct(#scriptPlayer)>
+  [102] setlocal 3 .............................. nScriptPlayer = g.structMaster.getStruct(#scriptPlayer)
+  [104] getlocal 3 .............................. <nScriptPlayer>
+  [106] getlocal 2 .............................. <nLine>
+  [108] pushsymb 1560 ........................... <#word>
+  [111] pushint8 1 .............................. <1>
+  [113] pusharglist 3 ........................... <nLine, #word, 1>
+  [115] objcall 381 ............................. <nLine.word[1]>
+  [118] pusharglist 1 ........................... <nLine.word[1]>
+  [120] extcall 1562 ............................ <value(nLine.word[1])>
+  [123] setobjprop 1580 ......................... nScriptPlayer.objCharacter = value(nLine.word[1])
+  [126] getlocal 3 .............................. <nScriptPlayer>
+  [128] getlocal 2 .............................. <nLine>
+  [130] pushsymb 1560 ........................... <#word>
+  [133] pushint8 3 .............................. <3>
+  [135] pusharglist 3 ........................... <nLine, #word, 3>
+  [137] objcall 381 ............................. <nLine.word[3]>
+  [140] setobjprop 3785 ......................... nScriptPlayer.scriptname = nLine.word[3]
+  [143] getprop 3769 ............................ <pTheScript>
+  [146] getchainedprop 3782 ..................... <pTheScript.players>
+  [149] getlocal 3 .............................. <nScriptPlayer>
+  [151] pusharglist 1 ........................... <nScriptPlayer>
+  [153] objcall 175 ............................. <nScriptPlayer.duplicate()>
+  [155] pusharglistnoret 2 ...................... <pTheScript.players, nScriptPlayer.duplicate()>
+  [157] objcall 256 ............................. pTheScript.players.append(nScriptPlayer.duplicate())
+  [160] pushint8 1
+  [162] getlocal 1
+  [164] add
+  [165] setlocal 1
+  [167] endrepeat [ 17]
+  [169] ret
+end
+
+on interpretLines me, theText
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <theText>
+  [  4] pushcons 4 .............................. <"lines">
+  [  6] pusharglist 3 ........................... <me, theText, "lines">
+  [  8] objcall 3755 ............................ <me.calcFirstLine(theText, "lines")>
+  [ 11] setlocal 0 .............................. firstLine = me.calcFirstLine(theText, "lines")
+  [ 13] getlocal 0 .............................. <firstLine>
+  [ 15] setlocal 1
+  [ 17] getlocal 1
+  [ 19] getparam 1 .............................. <theText>
+  [ 21] pushsymb 3257 ........................... <#lines>
+  [ 24] pusharglist 2 ........................... <theText, #lines>
+  [ 26] objcall 257 ............................. <theText.lines.count>
+  [ 29] lteq
+  [ 30] jmpifz [184] ............................ repeat with i = firstLine to theText.lines.count
+  [ 33] getparam 1 .............................. <theText>
+  [ 35] pushsymb 3258 ........................... <#line>
+  [ 38] getlocal 1 .............................. <i>
+  [ 40] pusharglist 3 ........................... <theText, #line, i>
+  [ 42] objcall 381 ............................. <theText.line[i]>
+  [ 45] setlocal 2 .............................. nLine = theText.line[i]
+  [ 47] getlocal 2 .............................. <nLine>
+  [ 49] pushsymb 1560 ........................... <#word>
+  [ 52] pushint8 1 .............................. <1>
+  [ 54] pusharglist 3 ........................... <nLine, #word, 1>
+  [ 56] objcall 381 ............................. <nLine.word[1]>
+  [ 59] pushcons 1 .............................. <EMPTY>
+  [ 61] eq ...................................... <nLine.word[1] = EMPTY>
+  [ 62] jmpifz [ 68] ............................ if nLine.word[1] = EMPTY then
+  [ 65] jmp [175] ............................... next repeat
+  [ 68] getglobal 40 ............................ <g>
+  [ 70] getchainedprop 1168 ..................... <g.structMaster>
+  [ 73] pushsymb 3787 ........................... <#scriptLine>
+  [ 76] pusharglist 2 ........................... <g.structMaster, #scriptLine>
+  [ 78] objcall 1170 ............................ <g.structMaster.getStruct(#scriptLine)>
+  [ 81] setlocal 3 .............................. nScriptLine = g.structMaster.getStruct(#scriptLine)
+  [ 83] getlocal 3 .............................. <nScriptLine>
+  [ 85] getparam 0 .............................. <me>
+  [ 87] getlocal 2 .............................. <nLine>
+  [ 89] pushsymb 1560 ........................... <#word>
+  [ 92] pushint8 1 .............................. <1>
+  [ 94] pusharglist 3 ........................... <nLine, #word, 1>
+  [ 96] objcall 381 ............................. <nLine.word[1]>
+  [ 99] pusharglist 2 ........................... <me, nLine.word[1]>
+  [101] objcall 3767 ............................ <me.translateScriptNameToObjCharacter(nLine.word[1])>
+  [104] setobjprop 1580 ......................... nScriptLine.objCharacter = me.translateScriptNameToObjCharacter(nLine.word[1])
+  [107] getlocal 3 .............................. <nScriptLine>
+  [109] getparam 0 .............................. <me>
+  [111] getlocal 2 .............................. <nLine>
+  [113] pushsymb 1560 ........................... <#word>
+  [116] pushint8 1 .............................. <1>
+  [118] pusharglist 3 ........................... <nLine, #word, 1>
+  [120] objcall 381 ............................. <nLine.word[1]>
+  [123] getlocal 2 .............................. <nLine>
+  [125] pushsymb 1560 ........................... <#word>
+  [128] pushint8 2 .............................. <2>
+  [130] pusharglist 3 ........................... <nLine, #word, 2>
+  [132] objcall 381 ............................. <nLine.word[2]>
+  [135] pusharglist 3 ........................... <me, nLine.word[1], nLine.word[2]>
+  [137] objcall 3765 ............................ <me.interpretLineCommand(nLine.word[1], nLine.word[2])>
+  [140] setobjprop 1568 ......................... nScriptLine.theCommand = me.interpretLineCommand(nLine.word[1], nLine.word[2])
+  [143] getlocal 3 .............................. <nScriptLine>
+  [145] getparam 0 .............................. <me>
+  [147] getlocal 3 .............................. <nScriptLine>
+  [149] getobjprop 1568 ......................... <nScriptLine.theCommand>
+  [152] getlocal 2 .............................. <nLine>
+  [154] pusharglist 3 ........................... <me, nScriptLine.theCommand, nLine>
+  [156] objcall 3761 ............................ <me.interpretLineArgs(nScriptLine.theCommand, nLine)>
+  [159] setobjprop 1554 ......................... nScriptLine.args = me.interpretLineArgs(nScriptLine.theCommand, nLine)
+  [162] getprop 3769 ............................ <pTheScript>
+  [165] getchainedprop 3770 ..................... <pTheScript.theLines>
+  [168] getlocal 3 .............................. <nScriptLine>
+  [170] pusharglistnoret 2 ...................... <pTheScript.theLines, nScriptLine>
+  [172] objcall 256 ............................. pTheScript.theLines.append(nScriptLine)
+  [175] pushint8 1
+  [177] getlocal 1
+  [179] add
+  [180] setlocal 1
+  [182] endrepeat [ 17]
+  [184] ret
+end
+
+on interpretLineArgs me, theCommand, theLine
+  [  0] getparam 1 .............................. <theCommand>
+  [  2] peek 0 .................................. case theCommand of
+  [  4] pushsymb 1444 ........................... <#at>
+  [  7] eq
+  [  8] jmpifz [ 47] ............................ (case) #at:
+  [ 11] pop 1
+  [ 13] getparam 2 .............................. <theLine>
+  [ 15] pushsymb 1560 ........................... <#word>
+  [ 18] pushint8 3 .............................. <3>
+  [ 20] getparam 2 .............................. <theLine>
+  [ 22] pushsymb 1559 ........................... <#words>
+  [ 25] pusharglist 2 ........................... <theLine, #words>
+  [ 27] objcall 257 ............................. <theLine.words.count>
+  [ 30] pusharglist 4 ........................... <theLine, #word, 3, theLine.words.count>
+  [ 32] objcall 381 ............................. <theLine.word[3..theLine.words.count]>
+  [ 35] pusharglist 1 ........................... <theLine.word[3..theLine.words.count]>
+  [ 37] extcall 1562 ............................ <value(theLine.word[3..theLine.words.count])>
+  [ 40] pusharglistnoret 1 ...................... <value(theLine.word[3..theLine.words.count])>
+  [ 42] extcall 35 .............................. return value(theLine.word[3..theLine.words.count])
+  [ 44] jmp [691]
+  [ 47] peek 0
+  [ 49] pushsymb 1445 ........................... <#atPlayer>
+  [ 52] eq
+  [ 53] jmpifz [ 84] ............................ (case) #atPlayer:
+  [ 56] pop 1
+  [ 58] getparam 0 .............................. <me>
+  [ 60] getparam 2 .............................. <theLine>
+  [ 62] pushsymb 1560 ........................... <#word>
+  [ 65] pushint8 3 .............................. <3>
+  [ 67] pusharglist 3 ........................... <theLine, #word, 3>
+  [ 69] objcall 381 ............................. <theLine.word[3]>
+  [ 72] pusharglist 2 ........................... <me, theLine.word[3]>
+  [ 74] objcall 3767 ............................ <me.translateScriptNameToObjCharacter(theLine.word[3])>
+  [ 77] pusharglistnoret 1 ...................... <me.translateScriptNameToObjCharacter(theLine.word[3])>
+  [ 79] extcall 35 .............................. return me.translateScriptNameToObjCharacter(theLine.word[3])
+  [ 81] jmp [691]
+  [ 84] peek 0
+  [ 86] pushsymb 3789 ........................... <#backgroundColour>
+  [ 89] nteq
+  [ 90] jmpifz [102] ............................ (case) #backgroundColour, ...
+  [ 93] peek 0
+  [ 95] pushsymb 3790 ........................... <#backgroundColourTo>
+  [ 98] eq
+  [ 99] jmpifz [138] ............................ (case) ..., #backgroundColourTo:
+  [102] pop 1
+  [104] getparam 2 .............................. <theLine>
+  [106] pushsymb 1560 ........................... <#word>
+  [109] pushint8 2 .............................. <2>
+  [111] getparam 2 .............................. <theLine>
+  [113] pushsymb 1559 ........................... <#words>
+  [116] pusharglist 2 ........................... <theLine, #words>
+  [118] objcall 257 ............................. <theLine.words.count>
+  [121] pusharglist 4 ........................... <theLine, #word, 2, theLine.words.count>
+  [123] objcall 381 ............................. <theLine.word[2..theLine.words.count]>
+  [126] pusharglist 1 ........................... <theLine.word[2..theLine.words.count]>
+  [128] extcall 1562 ............................ <value(theLine.word[2..theLine.words.count])>
+  [131] pusharglistnoret 1 ...................... <value(theLine.word[2..theLine.words.count])>
+  [133] extcall 35 .............................. return value(theLine.word[2..theLine.words.count])
+  [135] jmp [691]
+  [138] peek 0
+  [140] pushsymb 3791 ........................... <#backgroundColourRandomFlash>
+  [143] eq
+  [144] jmpifz [173] ............................ (case) #backgroundColourRandomFlash:
+  [147] pop 1
+  [149] getparam 2 .............................. <theLine>
+  [151] pushsymb 1560 ........................... <#word>
+  [154] pushint8 2 .............................. <2>
+  [156] pusharglist 3 ........................... <theLine, #word, 2>
+  [158] objcall 381 ............................. <theLine.word[2]>
+  [161] pusharglist 1 ........................... <theLine.word[2]>
+  [163] extcall 1562 ............................ <value(theLine.word[2])>
+  [166] pusharglistnoret 1 ...................... <value(theLine.word[2])>
+  [168] extcall 35 .............................. return value(theLine.word[2])
+  [170] jmp [691]
+  [173] peek 0
+  [175] pushsymb 1453 ........................... <#fadeDown>
+  [178] eq
+  [179] jmpifz [208] ............................ (case) #fadeDown:
+  [182] pop 1
+  [184] getparam 2 .............................. <theLine>
+  [186] pushsymb 1560 ........................... <#word>
+  [189] pushint8 3 .............................. <3>
+  [191] pusharglist 3 ........................... <theLine, #word, 3>
+  [193] objcall 381 ............................. <theLine.word[3]>
+  [196] pusharglist 1 ........................... <theLine.word[3]>
+  [198] extcall 1562 ............................ <value(theLine.word[3])>
+  [201] pusharglistnoret 1 ...................... <value(theLine.word[3])>
+  [203] extcall 35 .............................. return value(theLine.word[3])
+  [205] jmp [691]
+  [208] peek 0
+  [210] pushsymb 278 ............................ <#goMode>
+  [213] eq
+  [214] jmpifz [243] ............................ (case) #goMode:
+  [217] pop 1
+  [219] getparam 2 .............................. <theLine>
+  [221] pushsymb 1560 ........................... <#word>
+  [224] pushint8 3 .............................. <3>
+  [226] pusharglist 3 ........................... <theLine, #word, 3>
+  [228] objcall 381 ............................. <theLine.word[3]>
+  [231] pusharglist 1 ........................... <theLine.word[3]>
+  [233] extcall 1562 ............................ <value(theLine.word[3])>
+  [236] pusharglistnoret 1 ...................... <value(theLine.word[3])>
+  [238] extcall 35 .............................. return value(theLine.word[3])
+  [240] jmp [691]
+  [243] peek 0
+  [245] pushsymb 3451 ........................... <#playMusic>
+  [248] eq
+  [249] jmpifz [270] ............................ (case) #playMusic:
+  [252] pop 1
+  [254] getparam 0 .............................. <me>
+  [256] getparam 2 .............................. <theLine>
+  [258] pusharglist 2 ........................... <me, theLine>
+  [260] objcall 3762 ............................ <me.interpretLineArgsPlayMusic(theLine)>
+  [263] pusharglistnoret 1 ...................... <me.interpretLineArgsPlayMusic(theLine)>
+  [265] extcall 35 .............................. return me.interpretLineArgsPlayMusic(theLine)
+  [267] jmp [691]
+  [270] peek 0
+  [272] pushsymb 551 ............................ <#PlaySound>
+  [275] eq
+  [276] jmpifz [297] ............................ (case) #PlaySound:
+  [279] pop 1
+  [281] getparam 0 .............................. <me>
+  [283] getparam 2 .............................. <theLine>
+  [285] pusharglist 2 ........................... <me, theLine>
+  [287] objcall 3763 ............................ <me.interpretLineArgsPlaySound(theLine)>
+  [290] pusharglistnoret 1 ...................... <me.interpretLineArgsPlaySound(theLine)>
+  [292] extcall 35 .............................. return me.interpretLineArgsPlaySound(theLine)
+  [294] jmp [691]
+  [297] peek 0
+  [299] pushsymb 1463 ........................... <#produceProp>
+  [302] eq
+  [303] jmpifz [334] ............................ (case) #produceProp:
+  [306] pop 1
+  [308] getparam 0 .............................. <me>
+  [310] getparam 2 .............................. <theLine>
+  [312] pushsymb 1560 ........................... <#word>
+  [315] pushint8 3 .............................. <3>
+  [317] pusharglist 3 ........................... <theLine, #word, 3>
+  [319] objcall 381 ............................. <theLine.word[3]>
+  [322] pusharglist 2 ........................... <me, theLine.word[3]>
+  [324] objcall 3767 ............................ <me.translateScriptNameToObjCharacter(theLine.word[3])>
+  [327] pusharglistnoret 1 ...................... <me.translateScriptNameToObjCharacter(theLine.word[3])>
+  [329] extcall 35 .............................. return me.translateScriptNameToObjCharacter(theLine.word[3])
+  [331] jmp [691]
+  [334] peek 0
+  [336] pushsymb 1573 ........................... <#propAt>
+  [339] eq
+  [340] jmpifz [379] ............................ (case) #propAt:
+  [343] pop 1
+  [345] getparam 2 .............................. <theLine>
+  [347] pushsymb 1560 ........................... <#word>
+  [350] pushint8 3 .............................. <3>
+  [352] getparam 2 .............................. <theLine>
+  [354] pushsymb 1559 ........................... <#words>
+  [357] pusharglist 2 ........................... <theLine, #words>
+  [359] objcall 257 ............................. <theLine.words.count>
+  [362] pusharglist 4 ........................... <theLine, #word, 3, theLine.words.count>
+  [364] objcall 381 ............................. <theLine.word[3..theLine.words.count]>
+  [367] pusharglist 1 ........................... <theLine.word[3..theLine.words.count]>
+  [369] extcall 1562 ............................ <value(theLine.word[3..theLine.words.count])>
+  [372] pusharglistnoret 1 ...................... <value(theLine.word[3..theLine.words.count])>
+  [374] extcall 35 .............................. return value(theLine.word[3..theLine.words.count])
+  [376] jmp [691]
+  [379] peek 0
+  [381] pushsymb 2427 ........................... <#showTitle>
+  [384] eq
+  [385] jmpifz [419] ............................ (case) #showTitle:
+  [388] pop 1
+  [390] getparam 2 .............................. <theLine>
+  [392] pushsymb 1560 ........................... <#word>
+  [395] pushint8 2 .............................. <2>
+  [397] getparam 2 .............................. <theLine>
+  [399] pushsymb 1559 ........................... <#words>
+  [402] pusharglist 2 ........................... <theLine, #words>
+  [404] objcall 257 ............................. <theLine.words.count>
+  [407] pusharglist 4 ........................... <theLine, #word, 2, theLine.words.count>
+  [409] objcall 381 ............................. <theLine.word[2..theLine.words.count]>
+  [412] pusharglistnoret 1 ...................... <theLine.word[2..theLine.words.count]>
+  [414] extcall 35 .............................. return theLine.word[2..theLine.words.count]
+  [416] jmp [691]
+  [419] peek 0
+  [421] pushsymb 112 ............................ <#teleportInAt>
+  [423] eq
+  [424] jmpifz [463] ............................ (case) #teleportInAt:
+  [427] pop 1
+  [429] getparam 2 .............................. <theLine>
+  [431] pushsymb 1560 ........................... <#word>
+  [434] pushint8 3 .............................. <3>
+  [436] getparam 2 .............................. <theLine>
+  [438] pushsymb 1559 ........................... <#words>
+  [441] pusharglist 2 ........................... <theLine, #words>
+  [443] objcall 257 ............................. <theLine.words.count>
+  [446] pusharglist 4 ........................... <theLine, #word, 3, theLine.words.count>
+  [448] objcall 381 ............................. <theLine.word[3..theLine.words.count]>
+  [451] pusharglist 1 ........................... <theLine.word[3..theLine.words.count]>
+  [453] extcall 1562 ............................ <value(theLine.word[3..theLine.words.count])>
+  [456] pusharglistnoret 1 ...................... <value(theLine.word[3..theLine.words.count])>
+  [458] extcall 35 .............................. return value(theLine.word[3..theLine.words.count])
+  [460] jmp [691]
+  [463] peek 0
+  [465] pushsymb 1469 ........................... <#turnToFace>
+  [468] eq
+  [469] jmpifz [500] ............................ (case) #turnToFace:
+  [472] pop 1
+  [474] getparam 0 .............................. <me>
+  [476] getparam 2 .............................. <theLine>
+  [478] pushsymb 1560 ........................... <#word>
+  [481] pushint8 3 .............................. <3>
+  [483] pusharglist 3 ........................... <theLine, #word, 3>
+  [485] objcall 381 ............................. <theLine.word[3]>
+  [488] pusharglist 2 ........................... <me, theLine.word[3]>
+  [490] objcall 3767 ............................ <me.translateScriptNameToObjCharacter(theLine.word[3])>
+  [493] pusharglistnoret 1 ...................... <me.translateScriptNameToObjCharacter(theLine.word[3])>
+  [495] extcall 35 .............................. return me.translateScriptNameToObjCharacter(theLine.word[3])
+  [497] jmp [691]
+  [500] peek 0
+  [502] pushsymb 1468 ........................... <#speakLine>
+  [505] eq
+  [506] jmpifz [540] ............................ (case) #speakLine:
+  [509] pop 1
+  [511] getparam 2 .............................. <theLine>
+  [513] pushsymb 1560 ........................... <#word>
+  [516] pushint8 2 .............................. <2>
+  [518] getparam 2 .............................. <theLine>
+  [520] pushsymb 1559 ........................... <#words>
+  [523] pusharglist 2 ........................... <theLine, #words>
+  [525] objcall 257 ............................. <theLine.words.count>
+  [528] pusharglist 4 ........................... <theLine, #word, 2, theLine.words.count>
+  [530] objcall 381 ............................. <theLine.word[2..theLine.words.count]>
+  [533] pusharglistnoret 1 ...................... <theLine.word[2..theLine.words.count]>
+  [535] extcall 35 .............................. return theLine.word[2..theLine.words.count]
+  [537] jmp [691]
+  [540] peek 0
+  [542] pushsymb 1475 ........................... <#walkTo>
+  [545] eq
+  [546] jmpifz [585] ............................ (case) #walkTo:
+  [549] pop 1
+  [551] getparam 2 .............................. <theLine>
+  [553] pushsymb 1560 ........................... <#word>
+  [556] pushint8 3 .............................. <3>
+  [558] getparam 2 .............................. <theLine>
+  [560] pushsymb 1559 ........................... <#words>
+  [563] pusharglist 2 ........................... <theLine, #words>
+  [565] objcall 257 ............................. <theLine.words.count>
+  [568] pusharglist 4 ........................... <theLine, #word, 3, theLine.words.count>
+  [570] objcall 381 ............................. <theLine.word[3..theLine.words.count]>
+  [573] pusharglist 1 ........................... <theLine.word[3..theLine.words.count]>
+  [575] extcall 1562 ............................ <value(theLine.word[3..theLine.words.count])>
+  [578] pusharglistnoret 1 ...................... <value(theLine.word[3..theLine.words.count])>
+  [580] extcall 35 .............................. return value(theLine.word[3..theLine.words.count])
+  [582] jmp [691]
+  [585] peek 0
+  [587] pushsymb 1476 ........................... <#walkToPlayer>
+  [590] eq
+  [591] jmpifz [622] ............................ (case) #walkToPlayer:
+  [594] pop 1
+  [596] getparam 0 .............................. <me>
+  [598] getparam 2 .............................. <theLine>
+  [600] pushsymb 1560 ........................... <#word>
+  [603] pushint8 3 .............................. <3>
+  [605] pusharglist 3 ........................... <theLine, #word, 3>
+  [607] objcall 381 ............................. <theLine.word[3]>
+  [610] pusharglist 2 ........................... <me, theLine.word[3]>
+  [612] objcall 3767 ............................ <me.translateScriptNameToObjCharacter(theLine.word[3])>
+  [615] pusharglistnoret 1 ...................... <me.translateScriptNameToObjCharacter(theLine.word[3])>
+  [617] extcall 35 .............................. return me.translateScriptNameToObjCharacter(theLine.word[3])
+  [619] jmp [691]
+  [622] peek 0
+  [624] pushsymb 3792 ........................... <#walkScroll>
+  [627] eq
+  [628] jmpifz [649] ............................ (case) #walkScroll:
+  [631] pop 1
+  [633] getparam 0 .............................. <me>
+  [635] getparam 2 .............................. <theLine>
+  [637] pusharglist 2 ........................... <me, theLine>
+  [639] objcall 3764 ............................ <me.interpretLineArgsWalkScroll(theLine)>
+  [642] pusharglistnoret 1 ...................... <me.interpretLineArgsWalkScroll(theLine)>
+  [644] extcall 35 .............................. return me.interpretLineArgsWalkScroll(theLine)
+  [646] jmp [691]
+  [649] peek 0
+  [651] pushsymb 3793 ........................... <#wait>
+  [654] eq
+  [655] jmpifz [691] ............................ (case) #wait:
+  [658] pop 1
+  [660] getparam 2 .............................. <theLine>
+  [662] pushsymb 1560 ........................... <#word>
+  [665] pushint8 2 .............................. <2>
+  [667] getparam 2 .............................. <theLine>
+  [669] pushsymb 1559 ........................... <#words>
+  [672] pusharglist 2 ........................... <theLine, #words>
+  [674] objcall 257 ............................. <theLine.words.count>
+  [677] pusharglist 4 ........................... <theLine, #word, 2, theLine.words.count>
+  [679] objcall 381 ............................. <theLine.word[2..theLine.words.count]>
+  [682] pusharglist 1 ........................... <theLine.word[2..theLine.words.count]>
+  [684] extcall 1562 ............................ <value(theLine.word[2..theLine.words.count])>
+  [687] pusharglistnoret 1 ...................... <value(theLine.word[2..theLine.words.count])>
+  [689] extcall 35 .............................. return value(theLine.word[2..theLine.words.count])
+  [691] pop 1 ................................... end case
+  [693] ret
+end
+
+on interpretLineArgsPlayMusic me, theLine
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <theLine>
+  [  4] pusharglist 2 ........................... <me, theLine>
+  [  6] objcall 3763 ............................ <me.interpretLineArgsPlaySound(theLine)>
+  [  9] pusharglistnoret 1 ...................... <me.interpretLineArgsPlaySound(theLine)>
+  [ 11] extcall 35 .............................. return me.interpretLineArgsPlaySound(theLine)
+  [ 13] ret
+end
+
+on interpretLineArgsPlaySound me, theLine
+  [  0] getparam 1 .............................. <theLine>
+  [  2] pushsymb 1560 ........................... <#word>
+  [  5] pushint8 2 .............................. <2>
+  [  7] pusharglist 3 ........................... <theLine, #word, 2>
+  [  9] objcall 381 ............................. <theLine.word[2]>
+  [ 12] setlocal 0 .............................. memberToPlay = theLine.word[2]
+  [ 14] getparam 1 .............................. <theLine>
+  [ 16] pushsymb 1560 ........................... <#word>
+  [ 19] pushint8 3 .............................. <3>
+  [ 21] pusharglist 3 ........................... <theLine, #word, 3>
+  [ 23] objcall 381 ............................. <theLine.word[3]>
+  [ 26] pusharglist 1 ........................... <theLine.word[3]>
+  [ 28] extcall 1562 ............................ <value(theLine.word[3])>
+  [ 31] setlocal 1 .............................. volumeLevel = value(theLine.word[3])
+  [ 33] getlocal 1 .............................. <volumeLevel>
+  [ 35] pusharglist 0 ........................... <>
+  [ 37] extcall 166 ............................. <VOID>
+  [ 39] eq ...................................... <volumeLevel = VOID>
+  [ 40] jmpifz [ 48] ............................ if volumeLevel = VOID then
+  [ 43] pushint16 255 ........................... <255>
+  [ 46] setlocal 1 .............................. volumeLevel = 255
+  [ 48] getglobal 40 ............................ <g>
+  [ 50] getchainedprop 1168 ..................... <g.structMaster>
+  [ 53] pushsymb 3794 ........................... <#playSoundArgs>
+  [ 56] pusharglist 2 ........................... <g.structMaster, #playSoundArgs>
+  [ 58] objcall 1170 ............................ <g.structMaster.getStruct(#playSoundArgs)>
+  [ 61] setlocal 2 .............................. args = g.structMaster.getStruct(#playSoundArgs)
+  [ 63] getlocal 2 .............................. <args>
+  [ 65] getlocal 0 .............................. <memberToPlay>
+  [ 67] setobjprop 3795 ......................... args.memberToPlay = memberToPlay
+  [ 70] getlocal 2 .............................. <args>
+  [ 72] getlocal 1 .............................. <volumeLevel>
+  [ 74] setobjprop 3796 ......................... args.volumeLevel = volumeLevel
+  [ 77] getlocal 2 .............................. <args>
+  [ 79] pusharglistnoret 1 ...................... <args>
+  [ 81] extcall 35 .............................. return args
+  [ 83] ret
+end
+
+on interpretLineArgsWalkScroll me, theLine
+  [  0] getparam 1 .............................. <theLine>
+  [  2] pushsymb 1560 ........................... <#word>
+  [  5] pushint8 2 .............................. <2>
+  [  7] pusharglist 3 ........................... <theLine, #word, 2>
+  [  9] objcall 381 ............................. <theLine.word[2]>
+  [ 12] pusharglist 1 ........................... <theLine.word[2]>
+  [ 14] extcall 1417 ............................ <symbol(theLine.word[2])>
+  [ 17] setlocal 0 .............................. Dir = symbol(theLine.word[2])
+  [ 19] getparam 1 .............................. <theLine>
+  [ 21] pushsymb 1560 ........................... <#word>
+  [ 24] pushint8 3 .............................. <3>
+  [ 26] pusharglist 3 ........................... <theLine, #word, 3>
+  [ 28] objcall 381 ............................. <theLine.word[3]>
+  [ 31] pusharglist 1 ........................... <theLine.word[3]>
+  [ 33] extcall 1562 ............................ <value(theLine.word[3])>
+  [ 36] setlocal 1 .............................. speed = value(theLine.word[3])
+  [ 38] getparam 0 .............................. <me>
+  [ 40] getparam 1 .............................. <theLine>
+  [ 42] pushsymb 1560 ........................... <#word>
+  [ 45] pushint8 4 .............................. <4>
+  [ 47] getparam 1 .............................. <theLine>
+  [ 49] pushsymb 1559 ........................... <#words>
+  [ 52] pusharglist 2 ........................... <theLine, #words>
+  [ 54] objcall 257 ............................. <theLine.words.count>
+  [ 57] pusharglist 4 ........................... <theLine, #word, 4, theLine.words.count>
+  [ 59] objcall 381 ............................. <theLine.word[4..theLine.words.count]>
+  [ 62] pusharglist 2 ........................... <me, theLine.word[4..theLine.words.count]>
+  [ 64] objcall 3766 ............................ <me.translateScriptNamesToCharacterList(theLine.word[4..theLine.words.count])>
+  [ 67] setlocal 2 .............................. characters = me.translateScriptNamesToCharacterList(theLine.word[4..theLine.words.count])
+  [ 69] getglobal 40 ............................ <g>
+  [ 71] getchainedprop 1168 ..................... <g.structMaster>
+  [ 74] pushsymb 3797 ........................... <#walkScrollArgs>
+  [ 77] pusharglist 2 ........................... <g.structMaster, #walkScrollArgs>
+  [ 79] objcall 1170 ............................ <g.structMaster.getStruct(#walkScrollArgs)>
+  [ 82] setlocal 3 .............................. args = g.structMaster.getStruct(#walkScrollArgs)
+  [ 84] getlocal 3 .............................. <args>
+  [ 86] getlocal 0 .............................. <Dir>
+  [ 88] setobjprop 176 .......................... args.Dir = Dir
+  [ 90] getlocal 3 .............................. <args>
+  [ 92] getlocal 1 .............................. <speed>
+  [ 94] setobjprop 215 .......................... args.speed = speed
+  [ 96] getlocal 3 .............................. <args>
+  [ 98] getlocal 2 .............................. <characters>
+  [100] setobjprop 3798 ......................... args.characters = characters
+  [103] getlocal 3 .............................. <args>
+  [105] pusharglistnoret 1 ...................... <args>
+  [107] extcall 35 .............................. return args
+  [109] ret
+end
+
+on interpretLineCommand me, lineWord1, lineWord2
+  [  0] getparam 1 .............................. <lineWord1>
+  [  2] pushsymb 2713 ........................... <#char>
+  [  5] getparam 1 .............................. <lineWord1>
+  [  7] pushsymb 1536 ........................... <#chars>
+  [ 10] pusharglist 2 ........................... <lineWord1, #chars>
+  [ 12] objcall 257 ............................. <lineWord1.chars.count>
+  [ 15] pusharglist 3 ........................... <lineWord1, #char, lineWord1.chars.count>
+  [ 17] objcall 381 ............................. <lineWord1.char[lineWord1.chars.count]>
+  [ 20] pushcons 5 .............................. <":">
+  [ 22] eq ...................................... <lineWord1.char[lineWord1.chars.count] = ":">
+  [ 23] jmpifz [ 33] ............................ if lineWord1.char[lineWord1.chars.count] = ":" then
+  [ 26] pushsymb 1468 ........................... <#speakLine>
+  [ 29] pusharglistnoret 1 ...................... <#speakLine>
+  [ 31] extcall 35 .............................. return #speakLine
+  [ 33] getparam 0 .............................. <me>
+  [ 35] getparam 1 .............................. <lineWord1>
+  [ 37] pusharglist 2 ........................... <me, lineWord1>
+  [ 39] objcall 3767 ............................ <me.translateScriptNameToObjCharacter(lineWord1)>
+  [ 42] pushsymb 49 ............................. <#none>
+  [ 44] nteq .................................... <me.translateScriptNameToObjCharacter(lineWord1) <> #none>
+  [ 45] jmpifz [ 59] ............................ if me.translateScriptNameToObjCharacter(lineWord1) <> #none then
+  [ 48] getparam 2 .............................. <lineWord2>
+  [ 50] pusharglist 1 ........................... <lineWord2>
+  [ 52] extcall 1417 ............................ <symbol(lineWord2)>
+  [ 55] pusharglistnoret 1 ...................... <symbol(lineWord2)>
+  [ 57] extcall 35 .............................. return symbol(lineWord2)
+  [ 59] getparam 1 .............................. <lineWord1>
+  [ 61] pusharglist 1 ........................... <lineWord1>
+  [ 63] extcall 1417 ............................ <symbol(lineWord1)>
+  [ 66] pusharglistnoret 1 ...................... <symbol(lineWord1)>
+  [ 68] extcall 35 .............................. return symbol(lineWord1)
+  [ 70] ret
+end
+
+on reset me
+  [  0] getprop 3768 ............................ <pLineCounter>
+  [  3] pusharglist 1 ........................... <pLineCounter>
+  [  5] extcall 706 ............................. <CounterReset(pLineCounter)>
+  [  8] setprop 3768 ............................ pLineCounter = CounterReset(pLineCounter)
+  [ 11] ret
+end
+
+on translateScriptNamesToCharacterList me, nameString
+  [  0] getparam 1 .............................. <nameString>
+  [  2] pushsymb 1559 ........................... <#words>
+  [  5] pusharglist 2 ........................... <nameString, #words>
+  [  7] objcall 257 ............................. <nameString.words.count>
+  [ 10] setlocal 0 .............................. numOfWords = nameString.words.count
+  [ 12] pusharglist 0 ........................... <[]>
+  [ 14] pushlist ................................ <[]>
+  [ 15] setlocal 1 .............................. characterList = []
+  [ 17] pushint8 1 .............................. <1>
+  [ 19] setlocal 2
+  [ 21] getlocal 2
+  [ 23] getlocal 0 .............................. <numOfWords>
+  [ 25] lteq
+  [ 26] jmpifz [ 72] ............................ repeat with i = 1 to numOfWords
+  [ 29] getparam 1 .............................. <nameString>
+  [ 31] pushsymb 1560 ........................... <#word>
+  [ 34] getlocal 2 .............................. <i>
+  [ 36] pusharglist 3 ........................... <nameString, #word, i>
+  [ 38] objcall 381 ............................. <nameString.word[i]>
+  [ 41] setlocal 3 .............................. nScriptName = nameString.word[i]
+  [ 43] getparam 0 .............................. <me>
+  [ 45] getlocal 3 .............................. <nScriptName>
+  [ 47] pusharglist 2 ........................... <me, nScriptName>
+  [ 49] objcall 3767 ............................ <me.translateScriptNameToObjCharacter(nScriptName)>
+  [ 52] setlocal 4 .............................. nCharacterName = me.translateScriptNameToObjCharacter(nScriptName)
+  [ 54] getlocal 1 .............................. <characterList>
+  [ 56] getlocal 4 .............................. <nCharacterName>
+  [ 58] pusharglistnoret 2 ...................... <characterList, nCharacterName>
+  [ 60] objcall 256 ............................. characterList.append(nCharacterName)
+  [ 63] pushint8 1
+  [ 65] getlocal 2
+  [ 67] add
+  [ 68] setlocal 2
+  [ 70] endrepeat [ 21]
+  [ 72] getlocal 1 .............................. <characterList>
+  [ 74] pusharglistnoret 1 ...................... <characterList>
+  [ 76] extcall 35 .............................. return characterList
+  [ 78] ret
+end
+
+on translateScriptNameToObjCharacter me, scriptname
+  [  0] getprop 3769 ............................ <pTheScript>
+  [  3] getobjprop 3782 ......................... <pTheScript.players>
+  [  6] setlocal 0 .............................. thePlayers = pTheScript.players
+  [  8] getparam 1 .............................. <scriptname>
+  [ 10] pushsymb 2713 ........................... <#char>
+  [ 13] getparam 1 .............................. <scriptname>
+  [ 15] pushsymb 1536 ........................... <#chars>
+  [ 18] pusharglist 2 ........................... <scriptname, #chars>
+  [ 20] objcall 257 ............................. <scriptname.chars.count>
+  [ 23] pusharglist 3 ........................... <scriptname, #char, scriptname.chars.count>
+  [ 25] objcall 381 ............................. <scriptname.char[scriptname.chars.count]>
+  [ 28] pushcons 5 .............................. <":">
+  [ 30] eq ...................................... <scriptname.char[scriptname.chars.count] = ":">
+  [ 31] jmpifz [ 61] ............................ if scriptname.char[scriptname.chars.count] = ":" then
+  [ 34] getparam 1 .............................. <scriptname>
+  [ 36] pushsymb 2713 ........................... <#char>
+  [ 39] pushint8 1 .............................. <1>
+  [ 41] getparam 1 .............................. <scriptname>
+  [ 43] pushsymb 1536 ........................... <#chars>
+  [ 46] pusharglist 2 ........................... <scriptname, #chars>
+  [ 48] objcall 257 ............................. <scriptname.chars.count>
+  [ 51] pushint8 1 .............................. <1>
+  [ 53] sub ..................................... <scriptname.chars.count - 1>
+  [ 54] pusharglist 4 ........................... <scriptname, #char, 1, scriptname.chars.count - 1>
+  [ 56] objcall 381 ............................. <scriptname.char[1..scriptname.chars.count - 1]>
+  [ 59] setparam 1 .............................. scriptname = scriptname.char[1..scriptname.chars.count - 1]
+  [ 61] getlocal 0 .............................. <thePlayers>
+  [ 63] pushsymb 3785 ........................... <#scriptname>
+  [ 66] getparam 1 .............................. <scriptname>
+  [ 68] pusharglist 3 ........................... <thePlayers, #scriptname, scriptname>
+  [ 70] extcall 2607 ............................ <ListGetPosByProp(thePlayers, #scriptname, scriptname)>
+  [ 73] setlocal 1 .............................. pos = ListGetPosByProp(thePlayers, #scriptname, scriptname)
+  [ 75] getlocal 1 .............................. <pos>
+  [ 77] pushzero ................................ <0>
+  [ 78] eq ...................................... <pos = 0>
+  [ 79] jmpifz [ 91] ............................ if pos = 0 then / else
+  [ 82] pushsymb 49 ............................. <#none>
+  [ 84] pusharglistnoret 1 ...................... <#none>
+  [ 86] extcall 35 .............................. return #none
+  [ 88] jmp [106]
+  [ 91] getlocal 0 .............................. <thePlayers>
+  [ 93] getlocal 1 .............................. <pos>
+  [ 95] pusharglist 2 ........................... <thePlayers, pos>
+  [ 97] objcall 109 ............................. <thePlayers[pos]>
+  [ 99] getobjprop 1580 ......................... <thePlayers[pos].objCharacter>
+  [102] pusharglistnoret 1 ...................... <thePlayers[pos].objCharacter>
+  [104] extcall 35 .............................. return thePlayers[pos].objCharacter
+  [106] ret
+end

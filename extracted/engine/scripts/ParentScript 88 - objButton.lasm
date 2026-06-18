@@ -1,0 +1,371 @@
+property ancestor, pBaseColor, pCaller, pCommSym, pParamsCopy, pHiColor, pMouseIn, pMouseDown, pName, pPulse, pShadowed, pShadowedColor, pSpr, pMemberType, pTransColor, pTransColorFin
+global g, gButtonBaseColour, gButtonHiColour, gButtonPulse, gButtonShadowedColour
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushcons 0 .............................. <"objAutoUpdate">
+  [  4] pusharglist 1 ........................... <"objAutoUpdate">
+  [  6] extcall 34 .............................. <script("objAutoUpdate")>
+  [  8] pusharglist 1 ........................... <script("objAutoUpdate")>
+  [ 10] extcall 0 ............................... <new(script("objAutoUpdate"))>
+  [ 12] setobjprop 33 ........................... me.ancestor = new(script("objAutoUpdate"))
+  [ 14] getparam 0 .............................. <me>
+  [ 16] pushsymb 1 .............................. <#init>
+  [ 18] pusharglist 2 ........................... <me, #init>
+  [ 20] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 22] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 24] getlocal 0 .............................. <i>
+  [ 26] pushsymb 2171 ........................... <#baseColor>
+  [ 29] getglobal 2172 .......................... <gButtonBaseColour>
+  [ 32] pusharglistnoret 3 ...................... <i, #baseColor, gButtonBaseColour>
+  [ 34] objcall 48 .............................. i[#baseColor] = gButtonBaseColour
+  [ 36] getlocal 0 .............................. <i>
+  [ 38] pushsymb 474 ............................ <#callingPrg>
+  [ 41] pushsymb 49 ............................. <#none>
+  [ 43] pusharglistnoret 3 ...................... <i, #callingPrg, #none>
+  [ 45] objcall 48 .............................. i[#callingPrg] = #none
+  [ 47] getlocal 0 .............................. <i>
+  [ 49] pushsymb 2173 ........................... <#commSym>
+  [ 52] pushsymb 49 ............................. <#none>
+  [ 54] pusharglistnoret 3 ...................... <i, #commSym, #none>
+  [ 56] objcall 48 .............................. i[#commSym] = #none
+  [ 58] getlocal 0 .............................. <i>
+  [ 60] pushsymb 2174 ........................... <#hiColor>
+  [ 63] getglobal 2175 .......................... <gButtonHiColour>
+  [ 66] pusharglistnoret 3 ...................... <i, #hiColor, gButtonHiColour>
+  [ 68] objcall 48 .............................. i[#hiColor] = gButtonHiColour
+  [ 70] getlocal 0 .............................. <i>
+  [ 72] pushsymb 2176 ........................... <#pulse>
+  [ 75] getglobal 2177 .......................... <gButtonPulse>
+  [ 78] pusharglistnoret 3 ...................... <i, #pulse, gButtonPulse>
+  [ 80] objcall 48 .............................. i[#pulse] = gButtonPulse
+  [ 82] getlocal 0 .............................. <i>
+  [ 84] pushsymb 2178 ........................... <#shadowedColor>
+  [ 87] getglobal 2179 .......................... <gButtonShadowedColour>
+  [ 90] pusharglistnoret 3 ...................... <i, #shadowedColor, gButtonShadowedColour>
+  [ 92] objcall 48 .............................. i[#shadowedColor] = gButtonShadowedColour
+  [ 94] getlocal 0 .............................. <i>
+  [ 96] pushsymb 2180 ........................... <#shadowed>
+  [ 99] pushzero ................................ <0>
+  [100] pusharglistnoret 3 ...................... <i, #shadowed, 0>
+  [102] objcall 48 .............................. i[#shadowed] = 0
+  [104] getlocal 0 .............................. <i>
+  [106] pushsymb 267 ............................ <#spr>
+  [109] pushsymb 49 ............................. <#none>
+  [111] pusharglistnoret 3 ...................... <i, #spr, #none>
+  [113] objcall 48 .............................. i[#spr] = #none
+  [115] getparam 0 .............................. <me>
+  [117] pushcons 1 .............................. <"modFader">
+  [119] pusharglistnoret 2 ...................... <me, "modFader">
+  [121] objcall 1717 ............................ me.addModule("modFader")
+  [124] getparam 0 .............................. <me>
+  [126] pusharglistnoret 1 ...................... <me>
+  [128] extcall 35 .............................. return me
+  [130] ret
+end
+
+on init me, params
+  [  0] getparam 1 .............................. <params>
+  [  2] setprop 2181 ............................ pParamsCopy = params
+  [  5] getparam 1 .............................. <params>
+  [  7] getobjprop 474 .......................... <params.callingPrg>
+  [ 10] setprop 2182 ............................ pCaller = params.callingPrg
+  [ 13] getparam 1 .............................. <params>
+  [ 15] getobjprop 2173 ......................... <params.commSym>
+  [ 18] setprop 2183 ............................ pCommSym = params.commSym
+  [ 21] getparam 1 .............................. <params>
+  [ 23] getobjprop 2171 ......................... <params.baseColor>
+  [ 26] setprop 2184 ............................ pBaseColor = params.baseColor
+  [ 29] getparam 1 .............................. <params>
+  [ 31] getobjprop 2174 ......................... <params.hiColor>
+  [ 34] setprop 2185 ............................ pHiColor = params.hiColor
+  [ 37] getparam 1 .............................. <params>
+  [ 39] getobjprop 267 .......................... <params.spr>
+  [ 42] setprop 173 ............................. pSpr = params.spr
+  [ 44] getprop 173 ............................. <pSpr>
+  [ 46] getchainedprop 99 ....................... <pSpr.member>
+  [ 48] getobjprop 178 .......................... <pSpr.member.type>
+  [ 50] setprop 2186 ............................ pMemberType = pSpr.member.type
+  [ 53] pushzero ................................ <0>
+  [ 54] setprop 2187 ............................ pMouseIn = 0
+  [ 57] pushzero ................................ <0>
+  [ 58] setprop 2188 ............................ pMouseDown = 0
+  [ 61] getprop 173 ............................. <pSpr>
+  [ 63] getchainedprop 99 ....................... <pSpr.member>
+  [ 65] getobjprop 44 ........................... <pSpr.member.name>
+  [ 67] setprop 2037 ............................ pName = pSpr.member.name
+  [ 70] getparam 1 .............................. <params>
+  [ 72] getobjprop 2176 ......................... <params.pulse>
+  [ 75] setprop 2189 ............................ pPulse = params.pulse
+  [ 78] getparam 1 .............................. <params>
+  [ 80] getobjprop 2180 ......................... <params.shadowed>
+  [ 83] setprop 2190 ............................ pShadowed = params.shadowed
+  [ 86] getparam 1 .............................. <params>
+  [ 88] getobjprop 2178 ......................... <params.shadowedColor>
+  [ 91] setprop 2191 ............................ pShadowedColor = params.shadowedColor
+  [ 94] getprop 2183 ............................ <pCommSym>
+  [ 97] pushsymb 49 ............................. <#none>
+  [ 99] eq ...................................... <pCommSym = #none>
+  [100] jmpifz [123] ............................ if pCommSym = #none then
+  [103] getprop 2037 ............................ <pName>
+  [106] pusharglist 1 ........................... <pName>
+  [108] extcall 2192 ............................ <StringRemoveLocZ(pName)>
+  [111] setlocal 0 .............................. nam = StringRemoveLocZ(pName)
+  [113] getlocal 0 .............................. <nam>
+  [115] pusharglist 1 ........................... <nam>
+  [117] extcall 1417 ............................ <symbol(nam)>
+  [120] setprop 2183 ............................ pCommSym = symbol(nam)
+  [123] pushint8 1 .............................. <1>
+  [125] setprop 2193 ............................ pTransColorFin = 1
+  [128] getprop 2190 ............................ <pShadowed>
+  [131] pushint8 1 .............................. <1>
+  [133] eq ...................................... <pShadowed = 1>
+  [134] jmpifz [150] ............................ if pShadowed = 1 then / else
+  [137] getparam 0 .............................. <me>
+  [139] getprop 2191 ............................ <pShadowedColor>
+  [142] pusharglistnoret 2 ...................... <me, pShadowedColor>
+  [144] objcall 2168 ............................ me.setColour(pShadowedColor)
+  [147] jmp [160]
+  [150] getparam 0 .............................. <me>
+  [152] getprop 2184 ............................ <pBaseColor>
+  [155] pusharglistnoret 2 ...................... <me, pBaseColor>
+  [157] objcall 2168 ............................ me.setColour(pBaseColor)
+  [160] getprop 33 .............................. <ancestor>
+  [162] getparam 1 .............................. <params>
+  [164] pusharglistnoret 2 ...................... <ancestor, params>
+  [166] objcall 1 ............................... ancestor.init(params)
+  [168] ret
+end
+
+on activate me
+  [  0] getprop 2190 ............................ <pShadowed>
+  [  3] pushzero ................................ <0>
+  [  4] eq ...................................... <pShadowed = 0>
+  [  5] jmpifz [ 24] ............................ if pShadowed = 0 then
+  [  8] getprop 33 .............................. <ancestor>
+  [ 10] getprop 2181 ............................ <pParamsCopy>
+  [ 13] pusharglistnoret 2 ...................... <ancestor, pParamsCopy>
+  [ 15] objcall 1 ............................... ancestor.init(pParamsCopy)
+  [ 17] getparam 0 .............................. <me>
+  [ 19] pusharglistnoret 1 ...................... <me>
+  [ 21] objcall 692 ............................. me.calcStart()
+  [ 24] ret
+end
+
+on checkclick me
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. click = 0
+  [  3] getprop 2188 ............................ <pMouseDown>
+  [  6] pusharglist 0 ........................... <>
+  [  8] thebuiltin 2195 ......................... <the mouseUp>
+  [ 11] and ..................................... <pMouseDown and the mouseUp>
+  [ 12] jmpifz [ 19] ............................ if pMouseDown and the mouseUp then
+  [ 15] pushint8 1 .............................. <1>
+  [ 17] setlocal 0 .............................. click = 1
+  [ 19] pusharglist 0 ........................... <>
+  [ 21] thebuiltin 2196 ......................... <the mouseDown>
+  [ 24] setprop 2188 ............................ pMouseDown = the mouseDown
+  [ 27] getlocal 0 .............................. <click>
+  [ 29] pusharglistnoret 1 ...................... <click>
+  [ 31] extcall 35 .............................. return click
+  [ 33] ret
+end
+
+on finish me
+  [  0] getprop 2193 ............................ <pTransColorFin>
+  [  3] pushzero ................................ <0>
+  [  4] eq ...................................... <pTransColorFin = 0>
+  [  5] jmpifz [ 16] ............................ if pTransColorFin = 0 then
+  [  8] getprop 466 ............................. <pTransColor>
+  [ 11] pusharglistnoret 1 ...................... <pTransColor>
+  [ 13] objcall 467 ............................. pTransColor.cancel()
+  [ 16] getparam 0 .............................. <me>
+  [ 18] getchainedprop 33 ....................... <me.ancestor>
+  [ 20] pusharglistnoret 1 ...................... <me.ancestor>
+  [ 22] objcall 3 ............................... me.ancestor.finish()
+  [ 24] ret
+end
+
+on getSprite me
+  [  0] getprop 173 ............................. <pSpr>
+  [  2] pusharglistnoret 1 ...................... <pSpr>
+  [  4] extcall 35 .............................. return pSpr
+  [  6] ret
+end
+
+on informCallingPrg me
+  [  0] pusharglistnoret 0 ...................... <>
+  [  2] extcall 185 ............................. nothing()
+  [  4] ret
+end
+
+on mouseEnter me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 2198 ........................... <#hi>
+  [  5] pusharglistnoret 2 ...................... <me, #hi>
+  [  7] objcall 2170 ............................ me.transColor(#hi)
+  [ 10] ret
+end
+
+on mouseLeave me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 2199 ........................... <#base>
+  [  5] pusharglistnoret 2 ...................... <me, #base>
+  [  7] objcall 2170 ............................ me.transColor(#base)
+  [ 10] ret
+end
+
+on setColour me, theColor
+  [  0] getprop 2186 ............................ <pMemberType>
+  [  3] pushsymb 670 ............................ <#text>
+  [  6] eq ...................................... <pMemberType = #text>
+  [  7] jmpifz [ 26] ............................ if pMemberType = #text then / else
+  [ 10] getprop 173 ............................. <pSpr>
+  [ 12] getchainedprop 99 ....................... <pSpr.member>
+  [ 14] getparam 1 .............................. <theColor>
+  [ 16] pusharglist 1 ........................... <theColor>
+  [ 18] objcall 175 ............................. <theColor.duplicate()>
+  [ 20] setobjprop 437 .......................... pSpr.member.color = theColor.duplicate()
+  [ 23] jmp [ 37]
+  [ 26] getprop 173 ............................. <pSpr>
+  [ 28] getparam 1 .............................. <theColor>
+  [ 30] pusharglist 1 ........................... <theColor>
+  [ 32] objcall 175 ............................. <theColor.duplicate()>
+  [ 34] setobjprop 437 .......................... pSpr.color = theColor.duplicate()
+  [ 37] ret
+end
+
+on startFadeIn me
+  [  0] getprop 173 ............................. <pSpr>
+  [  2] pushzero ................................ <0>
+  [  3] setobjprop 687 .......................... pSpr.blend = 0
+  [  6] getparam 0 .............................. <me>
+  [  8] pusharglistnoret 1 ...................... <me>
+  [ 10] objcall 680 ............................. me.startQuickFadeIn()
+  [ 13] ret
+end
+
+on transColor me, Dir
+  [  0] getprop 2193 ............................ <pTransColorFin>
+  [  3] pushzero ................................ <0>
+  [  4] eq ...................................... <pTransColorFin = 0>
+  [  5] jmpifz [ 16] ............................ if pTransColorFin = 0 then
+  [  8] getprop 466 ............................. <pTransColor>
+  [ 11] pusharglistnoret 1 ...................... <pTransColor>
+  [ 13] objcall 467 ............................. pTransColor.cancel()
+  [ 16] getglobal 40 ............................ <g>
+  [ 18] getchainedprop 41 ....................... <g.objectMaster>
+  [ 20] pushsymb 473 ............................ <#objTransColor>
+  [ 23] pusharglist 2 ........................... <g.objectMaster, #objTransColor>
+  [ 25] objcall 43 .............................. <g.objectMaster.requestObject(#objTransColor)>
+  [ 27] setprop 466 ............................. pTransColor = g.objectMaster.requestObject(#objTransColor)
+  [ 30] getprop 466 ............................. <pTransColor>
+  [ 33] pushsymb 1 .............................. <#init>
+  [ 35] pusharglist 2 ........................... <pTransColor, #init>
+  [ 37] objcall 230 ............................. <pTransColor.getParams(#init)>
+  [ 39] setlocal 0 .............................. params = pTransColor.getParams(#init)
+  [ 41] getlocal 0 .............................. <params>
+  [ 43] getparam 0 .............................. <me>
+  [ 45] setobjprop 474 .......................... params.callingPrg = me
+  [ 48] getlocal 0 .............................. <params>
+  [ 50] getprop 173 ............................. <pSpr>
+  [ 52] setobjprop 267 .......................... params.spr = pSpr
+  [ 55] getlocal 0 .............................. <params>
+  [ 57] getprop 2186 ............................ <pMemberType>
+  [ 60] setobjprop 476 .......................... params.transformTarget = pMemberType
+  [ 63] getlocal 0 .............................. <params>
+  [ 65] getprop 2189 ............................ <pPulse>
+  [ 68] setobjprop 472 .......................... params.pingpong = pPulse
+  [ 71] getparam 1 .............................. <Dir>
+  [ 73] peek 0 .................................. case Dir of
+  [ 75] pushsymb 2198 ........................... <#hi>
+  [ 78] eq
+  [ 79] jmpifz [118] ............................ (case) #hi:
+  [ 82] getlocal 0 .............................. <params>
+  [ 84] getprop 2185 ............................ <pHiColor>
+  [ 87] pusharglist 1 ........................... <pHiColor>
+  [ 89] objcall 175 ............................. <pHiColor.duplicate()>
+  [ 91] setobjprop 462 .......................... params.targetColor = pHiColor.duplicate()
+  [ 94] getprop 2189 ............................ <pPulse>
+  [ 97] jmpifz [109] ............................ if pPulse then / else
+  [100] getlocal 0 .............................. <params>
+  [102] pushint8 15 ............................. <15>
+  [104] setobjprop 215 .......................... params.speed = 15
+  [106] jmp [115]
+  [109] getlocal 0 .............................. <params>
+  [111] pushint8 35 ............................. <35>
+  [113] setobjprop 215 .......................... params.speed = 35
+  [115] jmp [166]
+  [118] peek 0
+  [120] pushsymb 2199 ........................... <#base>
+  [123] eq
+  [124] jmpifz [166] ............................ (case) #base:
+  [127] getlocal 0 .............................. <params>
+  [129] getprop 2184 ............................ <pBaseColor>
+  [132] pusharglist 1 ........................... <pBaseColor>
+  [134] objcall 175 ............................. <pBaseColor.duplicate()>
+  [136] setobjprop 462 .......................... params.targetColor = pBaseColor.duplicate()
+  [139] getlocal 0 .............................. <params>
+  [141] pushzero ................................ <0>
+  [142] setobjprop 472 .......................... params.pingpong = 0
+  [145] getprop 2189 ............................ <pPulse>
+  [148] jmpifz [160] ............................ if pPulse then / else
+  [151] getlocal 0 .............................. <params>
+  [153] pushint8 15 ............................. <15>
+  [155] setobjprop 215 .......................... params.speed = 15
+  [157] jmp [166]
+  [160] getlocal 0 .............................. <params>
+  [162] pushint8 5 .............................. <5>
+  [164] setobjprop 215 .......................... params.speed = 5
+  [166] pop 1 ................................... end case
+  [168] getprop 466 ............................. <pTransColor>
+  [171] getlocal 0 .............................. <params>
+  [173] pusharglistnoret 2 ...................... <pTransColor, params>
+  [175] objcall 1 ............................... pTransColor.init(params)
+  [177] pushzero ................................ <0>
+  [178] setprop 2193 ............................ pTransColorFin = 0
+  [181] ret
+end
+
+on transColorFin me
+  [  0] pushint8 1 .............................. <1>
+  [  2] setprop 2193 ............................ pTransColorFin = 1
+  [  5] ret
+end
+
+on update me
+  [  0] getmovieprop 860 ........................ <the mouseLoc>
+  [  3] getprop 173 ............................. <pSpr>
+  [  5] getobjprop 263 .......................... <pSpr.rect>
+  [  8] pusharglist 2 ........................... <the mouseLoc, pSpr.rect>
+  [ 10] extcall 195 ............................. <inside(the mouseLoc, pSpr.rect)>
+  [ 12] jmpifz [ 59] ............................ if inside(the mouseLoc, pSpr.rect) then / else
+  [ 15] getprop 2187 ............................ <pMouseIn>
+  [ 18] pushzero ................................ <0>
+  [ 19] eq ...................................... <pMouseIn = 0>
+  [ 20] jmpifz [ 35] ............................ if pMouseIn = 0 then
+  [ 23] getparam 0 .............................. <me>
+  [ 25] pusharglistnoret 1 ...................... <me>
+  [ 27] objcall 2166 ............................ me.mouseEnter()
+  [ 30] pushint8 1 .............................. <1>
+  [ 32] setprop 2187 ............................ pMouseIn = 1
+  [ 35] getparam 0 .............................. <me>
+  [ 37] pusharglist 1 ........................... <me>
+  [ 39] objcall 2165 ............................ <me.checkclick()>
+  [ 42] jmpifz [ 56] ............................ if me.checkclick() then
+  [ 45] getprop 2182 ............................ <pCaller>
+  [ 48] getprop 2183 ............................ <pCommSym>
+  [ 51] pusharglistnoret 2 ...................... <pCaller, pCommSym>
+  [ 53] objcall 2200 ............................ pCaller.buttClicked(pCommSym)
+  [ 56] jmp [ 79]
+  [ 59] getprop 2187 ............................ <pMouseIn>
+  [ 62] pushint8 1 .............................. <1>
+  [ 64] eq ...................................... <pMouseIn = 1>
+  [ 65] jmpifz [ 79] ............................ if pMouseIn = 1 then
+  [ 68] getparam 0 .............................. <me>
+  [ 70] pusharglistnoret 1 ...................... <me>
+  [ 72] objcall 2167 ............................ me.mouseLeave()
+  [ 75] pushzero ................................ <0>
+  [ 76] setprop 2187 ............................ pMouseIn = 0
+  [ 79] ret
+end

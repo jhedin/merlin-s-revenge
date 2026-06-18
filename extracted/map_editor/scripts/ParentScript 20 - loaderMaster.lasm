@@ -1,0 +1,391 @@
+property fxObj, fioObj
+global g
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 12 .............................. return me
+  [  6] ret
+end
+
+on init me
+  [  0] ret
+end
+
+on findPosOfFirstTextFile me, folderList
+  [  0] pushint8 1 .............................. <1>
+  [  2] setlocal 0 .............................. pos = 1
+  [  4] pushint8 1 .............................. <1>
+  [  6] inv ..................................... <-1>
+  [  7] setlocal 1 .............................. txtPos = -1
+  [  9] getparam 1 .............................. <folderList>
+  [ 11] peek 0
+  [ 13] pusharglist 1
+  [ 15] extcall 33
+  [ 17] pushint8 1
+  [ 19] peek 0
+  [ 21] peek 2
+  [ 23] lteq
+  [ 24] jmpifz [ 88] ............................ repeat with f in folderList
+  [ 27] peek 2
+  [ 29] peek 1
+  [ 31] pusharglist 2
+  [ 33] extcall 34
+  [ 35] setlocal 2
+  [ 37] getlocal 2 .............................. <f>
+  [ 39] getobjprop 744 .......................... <f.length>
+  [ 42] setlocal 3 .............................. strLen = f.length
+  [ 44] getlocal 2 .............................. <f>
+  [ 46] pushsymb 36 ............................. <#char>
+  [ 48] getlocal 3 .............................. <strLen>
+  [ 50] pushint8 3 .............................. <3>
+  [ 52] sub ..................................... <strLen - 3>
+  [ 53] getlocal 3 .............................. <strLen>
+  [ 55] pusharglist 4 ........................... <f, #char, strLen - 3, strLen>
+  [ 57] objcall 37 .............................. <f.char[strLen - 3..strLen]>
+  [ 59] setlocal 4 .............................. ext = f.char[strLen - 3..strLen]
+  [ 61] getlocal 4 .............................. <ext>
+  [ 63] pushcons 0 .............................. <".txt">
+  [ 65] eq ...................................... <ext = ".txt">
+  [ 66] jmpifz [ 76] ............................ if ext = ".txt" then
+  [ 69] getlocal 0 .............................. <pos>
+  [ 71] setlocal 1 .............................. txtPos = pos
+  [ 73] jmp [ 88] ............................... exit repeat
+  [ 76] getlocal 0 .............................. <pos>
+  [ 78] pushint8 1 .............................. <1>
+  [ 80] add ..................................... <pos + 1>
+  [ 81] setlocal 0 .............................. pos = pos + 1
+  [ 83] pushint8 1
+  [ 85] add
+  [ 86] endrepeat [ 19]
+  [ 88] pop 3
+  [ 90] getlocal 1 .............................. <txtPos>
+  [ 92] pusharglistnoret 1 ...................... <txtPos>
+  [ 94] extcall 12 .............................. return txtPos
+  [ 96] ret
+end
+
+on getListOfTextFilePos me, folderList
+  [  0] pusharglist 0 ........................... <[]>
+  [  2] pushlist ................................ <[]>
+  [  3] setlocal 0 .............................. poslist = []
+  [  5] pushint8 1 .............................. <1>
+  [  7] setlocal 1 .............................. pos = 1
+  [  9] pushint8 1 .............................. <1>
+  [ 11] inv ..................................... <-1>
+  [ 12] setlocal 2 .............................. txtPos = -1
+  [ 14] getparam 1 .............................. <folderList>
+  [ 16] peek 0
+  [ 18] pusharglist 1
+  [ 20] extcall 33
+  [ 22] pushint8 1
+  [ 24] peek 0
+  [ 26] peek 2
+  [ 28] lteq
+  [ 29] jmpifz [ 98] ............................ repeat with f in folderList
+  [ 32] peek 2
+  [ 34] peek 1
+  [ 36] pusharglist 2
+  [ 38] extcall 34
+  [ 40] setlocal 3
+  [ 42] getlocal 3 .............................. <f>
+  [ 44] getobjprop 744 .......................... <f.length>
+  [ 47] setlocal 4 .............................. strLen = f.length
+  [ 49] getlocal 3 .............................. <f>
+  [ 51] pushsymb 36 ............................. <#char>
+  [ 53] getlocal 4 .............................. <strLen>
+  [ 55] pushint8 3 .............................. <3>
+  [ 57] sub ..................................... <strLen - 3>
+  [ 58] getlocal 4 .............................. <strLen>
+  [ 60] pusharglist 4 ........................... <f, #char, strLen - 3, strLen>
+  [ 62] objcall 37 .............................. <f.char[strLen - 3..strLen]>
+  [ 64] setlocal 5 .............................. ext = f.char[strLen - 3..strLen]
+  [ 66] getlocal 5 .............................. <ext>
+  [ 68] pushcons 0 .............................. <".txt">
+  [ 70] eq ...................................... <ext = ".txt">
+  [ 71] jmpifz [ 86] ............................ if ext = ".txt" then
+  [ 74] getlocal 1 .............................. <pos>
+  [ 76] setlocal 2 .............................. txtPos = pos
+  [ 78] getlocal 0 .............................. <poslist>
+  [ 80] getlocal 1 .............................. <pos>
+  [ 82] pusharglistnoret 2 ...................... <poslist, pos>
+  [ 84] objcall 38 .............................. poslist.append(pos)
+  [ 86] getlocal 1 .............................. <pos>
+  [ 88] pushint8 1 .............................. <1>
+  [ 90] add ..................................... <pos + 1>
+  [ 91] setlocal 1 .............................. pos = pos + 1
+  [ 93] pushint8 1
+  [ 95] add
+  [ 96] endrepeat [ 24]
+  [ 98] pop 3
+  [100] getlocal 0 .............................. <poslist>
+  [102] pusharglistnoret 1 ...................... <poslist>
+  [104] extcall 12 .............................. return poslist
+  [106] ret
+end
+
+on loadFiles me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushcons 1 .............................. <"map_to_play\\">
+  [  4] pushcons 2 .............................. <"dd_map_to_play">
+  [  6] pushcons 3 .............................. <"gfx">
+  [  8] pusharglistnoret 4 ...................... <me, "map_to_play\\", "dd_map_to_play", "gfx">
+  [ 10] objcall 62 .............................. me.loadFirstInDir("map_to_play\\", "dd_map_to_play", "gfx")
+  [ 12] ret
+end
+
+on loadAllInDir me, dirPath
+  [  0] pushcons 4 .............................. <"FileXtra4">
+  [  2] pusharglist 1 ........................... <"FileXtra4">
+  [  4] extcall 751 ............................. <xtra("FileXtra4")>
+  [  7] pusharglist 1 ........................... <xtra("FileXtra4")>
+  [  9] objcall 0 ............................... <xtra("FileXtra4").new()>
+  [ 11] setprop 750 ............................. fxObj = xtra("FileXtra4").new()
+  [ 14] pushcons 5 .............................. <"FileIO">
+  [ 16] pusharglist 1 ........................... <"FileIO">
+  [ 18] extcall 751 ............................. <xtra("FileIO")>
+  [ 21] pusharglist 1 ........................... <xtra("FileIO")>
+  [ 23] extcall 0 ............................... <new(xtra("FileIO"))>
+  [ 25] setprop 752 ............................. fioObj = new(xtra("FileIO"))
+  [ 28] getmovieprop 753 ........................ <the moviePath>
+  [ 31] getparam 1 .............................. <dirPath>
+  [ 33] joinstr ................................. <the moviePath & dirPath>
+  [ 34] setlocal 0 .............................. fullPath = the moviePath & dirPath
+  [ 36] getprop 750 ............................. <fxObj>
+  [ 39] getlocal 0 .............................. <fullPath>
+  [ 41] pusharglist 2 ........................... <fxObj, fullPath>
+  [ 43] objcall 754 ............................. <fxObj.fx_FolderToList(fullPath)>
+  [ 46] setlocal 1 .............................. folderList = fxObj.fx_FolderToList(fullPath)
+  [ 48] getparam 0 .............................. <me>
+  [ 50] getlocal 1 .............................. <folderList>
+  [ 52] pusharglist 2 ........................... <me, folderList>
+  [ 54] objcall 792 ............................. <me.getListOfTextFilePos(folderList)>
+  [ 57] setlocal 2 .............................. textFiles = me.getListOfTextFilePos(folderList)
+  [ 59] getlocal 2 .............................. <textFiles>
+  [ 61] pusharglist 1 ........................... <textFiles>
+  [ 63] objcall 33 .............................. <textFiles.count()>
+  [ 65] pushzero ................................ <0>
+  [ 66] eq ...................................... <textFiles.count() = 0>
+  [ 67] jmpifz [ 82] ............................ if textFiles.count() = 0 then
+  [ 70] pushcons 6 .............................. <"Error: no maps found">
+  [ 72] pusharglistnoret 1 ...................... <"Error: no maps found">
+  [ 74] extcall 755 ............................. put "Error: no maps found"
+  [ 77] pusharglistnoret 0 ...................... <>
+  [ 79] extcall 756 ............................. halt()
+  [ 82] pusharglist 0 ........................... <[]>
+  [ 84] pushlist ................................ <[]>
+  [ 85] setlocal 3 .............................. Files = []
+  [ 87] getlocal 2 .............................. <textFiles>
+  [ 89] peek 0
+  [ 91] pusharglist 1
+  [ 93] extcall 33
+  [ 95] pushint8 1
+  [ 97] peek 0
+  [ 99] peek 2
+  [101] lteq
+  [102] jmpifz [227] ............................ repeat with num in textFiles
+  [105] peek 2
+  [107] peek 1
+  [109] pusharglist 2
+  [111] extcall 34
+  [113] setlocal 4
+  [115] getlocal 1 .............................. <folderList>
+  [117] getlocal 4 .............................. <num>
+  [119] pusharglist 2 ........................... <folderList, num>
+  [121] objcall 34 .............................. <folderList[num]>
+  [123] setlocal 5 .............................. f = folderList[num]
+  [125] getlocal 0 .............................. <fullPath>
+  [127] getlocal 5 .............................. <f>
+  [129] joinstr ................................. <fullPath & f>
+  [130] setlocal 6 .............................. filePath = fullPath & f
+  [132] getprop 752 ............................. <fioObj>
+  [135] getlocal 6 .............................. <filePath>
+  [137] pushint8 1 .............................. <1>
+  [139] pusharglistnoret 3 ...................... <fioObj, filePath, 1>
+  [141] extcall 757 ............................. openfile(fioObj, filePath, 1)
+  [144] getprop 752 ............................. <fioObj>
+  [147] pusharglist 1 ........................... <fioObj>
+  [149] objcall 758 ............................. <fioObj.readFile()>
+  [152] setlocal 7 .............................. fileText = fioObj.readFile()
+  [154] getlocal 5 .............................. <f>
+  [156] getobjprop 744 .......................... <f.length>
+  [159] setlocal 8 .............................. strLen = f.length
+  [161] getlocal 5 .............................. <f>
+  [163] pushsymb 36 ............................. <#char>
+  [165] pushint8 1 .............................. <1>
+  [167] getlocal 8 .............................. <strLen>
+  [169] pushint8 4 .............................. <4>
+  [171] sub ..................................... <strLen - 4>
+  [172] pusharglist 4 ........................... <f, #char, 1, strLen - 4>
+  [174] objcall 37 .............................. <f.char[1..strLen - 4]>
+  [176] setlocal 9 .............................. mapName = f.char[1..strLen - 4]
+  [178] pushcons 7 .............................. <"dd_map_">
+  [180] getlocal 9 .............................. <mapName>
+  [182] joinstr ................................. <"dd_map_" & mapName>
+  [183] setlocal 10 ............................. memname = "dd_map_" & mapName
+  [185] getglobal 21 ............................ <g>
+  [187] getchainedprop 57 ....................... <g.memberMaster>
+  [189] pushsymb 58 ............................. <#field>
+  [191] getlocal 10 ............................. <memname>
+  [193] pusharglist 3 ........................... <g.memberMaster, #field, memname>
+  [195] objcall 59 .............................. <g.memberMaster.requestMember(#field, memname)>
+  [197] setlocal 11 ............................. fileMem = g.memberMaster.requestMember(#field, memname)
+  [199] getlocal 11 ............................. <fileMem>
+  [201] getlocal 7 .............................. <fileText>
+  [203] setobjprop 398 .......................... fileMem.text = fileText
+  [206] getlocal 3 .............................. <Files>
+  [208] getlocal 9 .............................. <mapName>
+  [210] pusharglistnoret 2 ...................... <Files, mapName>
+  [212] objcall 38 .............................. Files.append(mapName)
+  [214] getprop 752 ............................. <fioObj>
+  [217] pusharglistnoret 1 ...................... <fioObj>
+  [219] extcall 808 ............................. closeFile(fioObj)
+  [222] pushint8 1
+  [224] add
+  [225] endrepeat [ 97]
+  [227] pop 3
+  [229] pushzero ................................ <0>
+  [230] setprop 750 ............................. fxObj = 0
+  [233] pushzero ................................ <0>
+  [234] setprop 752 ............................. fioObj = 0
+  [237] getlocal 3 .............................. <Files>
+  [239] pusharglistnoret 1 ...................... <Files>
+  [241] extcall 12 .............................. return Files
+  [243] ret
+end
+
+on loadFirstInDir me, dirPath, memname, castname
+  [  0] pushcons 4 .............................. <"FileXtra4">
+  [  2] pusharglist 1 ........................... <"FileXtra4">
+  [  4] extcall 751 ............................. <xtra("FileXtra4")>
+  [  7] pusharglist 1 ........................... <xtra("FileXtra4")>
+  [  9] objcall 0 ............................... <xtra("FileXtra4").new()>
+  [ 11] setprop 750 ............................. fxObj = xtra("FileXtra4").new()
+  [ 14] pushcons 5 .............................. <"FileIO">
+  [ 16] pusharglist 1 ........................... <"FileIO">
+  [ 18] extcall 751 ............................. <xtra("FileIO")>
+  [ 21] pusharglist 1 ........................... <xtra("FileIO")>
+  [ 23] extcall 0 ............................... <new(xtra("FileIO"))>
+  [ 25] setprop 752 ............................. fioObj = new(xtra("FileIO"))
+  [ 28] getmovieprop 753 ........................ <the moviePath>
+  [ 31] getparam 1 .............................. <dirPath>
+  [ 33] joinstr ................................. <the moviePath & dirPath>
+  [ 34] setlocal 0 .............................. fullPath = the moviePath & dirPath
+  [ 36] getprop 750 ............................. <fxObj>
+  [ 39] getlocal 0 .............................. <fullPath>
+  [ 41] pusharglist 2 ........................... <fxObj, fullPath>
+  [ 43] objcall 754 ............................. <fxObj.fx_FolderToList(fullPath)>
+  [ 46] setlocal 1 .............................. folderList = fxObj.fx_FolderToList(fullPath)
+  [ 48] getparam 0 .............................. <me>
+  [ 50] getlocal 1 .............................. <folderList>
+  [ 52] pusharglist 2 ........................... <me, folderList>
+  [ 54] objcall 742 ............................. <me.findPosOfFirstTextFile(folderList)>
+  [ 57] setlocal 2 .............................. firstFile = me.findPosOfFirstTextFile(folderList)
+  [ 59] getlocal 2 .............................. <firstFile>
+  [ 61] pushint8 1 .............................. <1>
+  [ 63] inv ..................................... <-1>
+  [ 64] eq ...................................... <firstFile = -1>
+  [ 65] jmpifz [ 80] ............................ if firstFile = -1 then
+  [ 68] pushcons 8 .............................. <"Error: map not found">
+  [ 70] pusharglistnoret 1 ...................... <"Error: map not found">
+  [ 72] extcall 755 ............................. put "Error: map not found"
+  [ 75] pusharglistnoret 0 ...................... <>
+  [ 77] extcall 756 ............................. halt()
+  [ 80] getlocal 0 .............................. <fullPath>
+  [ 82] getlocal 1 .............................. <folderList>
+  [ 84] getlocal 2 .............................. <firstFile>
+  [ 86] pusharglist 2 ........................... <folderList, firstFile>
+  [ 88] objcall 34 .............................. <folderList[firstFile]>
+  [ 90] joinstr ................................. <fullPath & folderList[firstFile]>
+  [ 91] setlocal 3 .............................. filePath = fullPath & folderList[firstFile]
+  [ 93] getprop 752 ............................. <fioObj>
+  [ 96] getlocal 3 .............................. <filePath>
+  [ 98] pushint8 1 .............................. <1>
+  [100] pusharglistnoret 3 ...................... <fioObj, filePath, 1>
+  [102] extcall 757 ............................. openfile(fioObj, filePath, 1)
+  [105] getprop 752 ............................. <fioObj>
+  [108] pusharglist 1 ........................... <fioObj>
+  [110] objcall 758 ............................. <fioObj.readFile()>
+  [113] setlocal 4 .............................. fileText = fioObj.readFile()
+  [115] getparam 2 .............................. <memname>
+  [117] getparam 3 .............................. <castname>
+  [119] pusharglist 2 ........................... <memname, castname>
+  [121] extcall 28 .............................. <member(memname, castname)>
+  [123] getlocal 4 .............................. <fileText>
+  [125] setobjprop 398 .......................... member(memname, castname).text = fileText
+  [128] getprop 752 ............................. <fioObj>
+  [131] pusharglistnoret 1 ...................... <fioObj>
+  [133] extcall 808 ............................. closeFile(fioObj)
+  [136] pushzero ................................ <0>
+  [137] setprop 750 ............................. fxObj = 0
+  [140] pushzero ................................ <0>
+  [141] setprop 752 ............................. fioObj = 0
+  [144] getlocal 1 .............................. <folderList>
+  [146] getlocal 2 .............................. <firstFile>
+  [148] pusharglist 2 ........................... <folderList, firstFile>
+  [150] objcall 34 .............................. <folderList[firstFile]>
+  [152] pusharglistnoret 1 ...................... <folderList[firstFile]>
+  [154] extcall 12 .............................. return folderList[firstFile]
+  [156] ret
+end
+
+on saveToFile me, filePath, themem, theCast
+  [  0] getparam 2 .............................. <themem>
+  [  2] getparam 3 .............................. <theCast>
+  [  4] pusharglist 2 ........................... <themem, theCast>
+  [  6] extcall 28 .............................. <member(themem, theCast)>
+  [  8] getobjprop 398 .......................... <member(themem, theCast).text>
+  [ 11] setlocal 0 .............................. theText = member(themem, theCast).text
+  [ 13] pushcons 5 .............................. <"FileIO">
+  [ 15] pusharglist 1 ........................... <"FileIO">
+  [ 17] extcall 751 ............................. <xtra("FileIO")>
+  [ 20] pusharglist 1 ........................... <xtra("FileIO")>
+  [ 22] extcall 0 ............................... <new(xtra("FileIO"))>
+  [ 24] setprop 752 ............................. fioObj = new(xtra("FileIO"))
+  [ 27] getmovieprop 753 ........................ <the moviePath>
+  [ 30] getparam 1 .............................. <filePath>
+  [ 32] joinstr ................................. <the moviePath & filePath>
+  [ 33] setlocal 1 .............................. fullPath = the moviePath & filePath
+  [ 35] getprop 752 ............................. <fioObj>
+  [ 38] getlocal 1 .............................. <fullPath>
+  [ 40] pushint8 2 .............................. <2>
+  [ 42] pusharglistnoret 3 ...................... <fioObj, fullPath, 2>
+  [ 44] extcall 757 ............................. openfile(fioObj, fullPath, 2)
+  [ 47] getprop 752 ............................. <fioObj>
+  [ 50] getlocal 0 .............................. <theText>
+  [ 52] pusharglistnoret 2 ...................... <fioObj, theText>
+  [ 54] extcall 772 ............................. writeString(fioObj, theText)
+  [ 57] getprop 752 ............................. <fioObj>
+  [ 60] getprop 752 ............................. <fioObj>
+  [ 63] pusharglist 1 ........................... <fioObj>
+  [ 65] extcall 767 ............................. <status(fioObj)>
+  [ 68] pusharglist 2 ........................... <fioObj, status(fioObj)>
+  [ 70] extcall 766 ............................. <error(fioObj, status(fioObj))>
+  [ 73] pushcons 9 .............................. <"OK">
+  [ 75] nteq .................................... <error(fioObj, status(fioObj)) <> "OK">
+  [ 76] jmpifz [109] ............................ if error(fioObj, status(fioObj)) <> "OK" then
+  [ 79] pushcons 10 ............................. <"Save Attempted">
+  [ 81] pushcons 11 ............................. <RETURN>
+  [ 83] joinstr ................................. <"Save Attempted" & RETURN>
+  [ 84] pushcons 12 ............................. <"Status: ">
+  [ 86] joinstr ................................. <"Save Attempted" & RETURN & "Status: ">
+  [ 87] getprop 752 ............................. <fioObj>
+  [ 90] getprop 752 ............................. <fioObj>
+  [ 93] pusharglist 1 ........................... <fioObj>
+  [ 95] extcall 767 ............................. <status(fioObj)>
+  [ 98] pusharglist 2 ........................... <fioObj, status(fioObj)>
+  [100] extcall 766 ............................. <error(fioObj, status(fioObj))>
+  [103] joinstr ................................. <"Save Attempted" & RETURN & "Status: " & error(fioObj, status(fioObj))>
+  [104] pusharglistnoret 1 ...................... <"Save Attempted" & RETURN & "Status: " & error(fioObj, status(fioObj))>
+  [106] extcall 588 ............................. alert("Save Attempted" & RETURN & "Status: " & error(fioObj, status(fioObj)))
+  [109] getprop 752 ............................. <fioObj>
+  [112] pusharglistnoret 1 ...................... <fioObj>
+  [114] extcall 808 ............................. closeFile(fioObj)
+  [117] pushzero ................................ <0>
+  [118] setprop 752 ............................. fioObj = 0
+  [121] ret
+end
+
+on stop me
+  [  0] ret
+end

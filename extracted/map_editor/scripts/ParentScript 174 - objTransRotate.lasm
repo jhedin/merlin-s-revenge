@@ -1,0 +1,77 @@
+property ancestor, pSpr
+
+on new me
+  [  0] pushcons 0 .............................. <"objTransformer">
+  [  2] pusharglist 1 ........................... <"objTransformer">
+  [  4] extcall 27 .............................. <script("objTransformer")>
+  [  6] pusharglist 1 ........................... <script("objTransformer")>
+  [  8] extcall 0 ............................... <new(script("objTransformer"))>
+  [ 10] setprop 77 .............................. ancestor = new(script("objTransformer"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 221 ............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 81 ............................. <#spr>
+  [ 26] pushsymb 22 ............................. <#none>
+  [ 28] pusharglistnoret 3 ...................... <i, #spr, #none>
+  [ 30] objcall 37 .............................. i[#spr] = #none
+  [ 32] getparam 0 .............................. <me>
+  [ 34] pusharglistnoret 1 ...................... <me>
+  [ 36] extcall 17 .............................. return me
+  [ 38] ret
+end
+
+on init me, params
+  [  0] getparam 1 .............................. <params>
+  [  2] getobjprop 81 ........................... <params.spr>
+  [  4] setprop 79 .............................. pSpr = params.spr
+  [  6] getparam 1 .............................. <params>
+  [  8] getprop 79 .............................. <pSpr>
+  [ 10] getobjprop 1292 ......................... <pSpr.rotation>
+  [ 13] setobjprop 911 .......................... params.initialValue = pSpr.rotation
+  [ 16] getparam 0 .............................. <me>
+  [ 18] getchainedprop 77 ....................... <me.ancestor>
+  [ 20] getparam 1 .............................. <params>
+  [ 22] pusharglistnoret 2 ...................... <me.ancestor, params>
+  [ 24] objcall 1 ............................... me.ancestor.init(params)
+  [ 26] getparam 0 .............................. <me>
+  [ 28] pushint16 360 ........................... <360>
+  [ 31] pusharglistnoret 2 ...................... <me, 360>
+  [ 33] objcall 295 ............................. me.setTarget(360)
+  [ 36] ret
+end
+
+on cancel me
+  [  0] getprop 79 .............................. <pSpr>
+  [  2] pushzero ................................ <0>
+  [  3] setobjprop 1292 ......................... pSpr.rotation = 0
+  [  6] getprop 77 .............................. <ancestor>
+  [  8] pusharglistnoret 1 ...................... <ancestor>
+  [ 10] objcall 431 ............................. ancestor.cancel()
+  [ 13] ret
+end
+
+on finishConditionMet me
+  [  0] getprop 77 .............................. <ancestor>
+  [  2] pusharglist 1 ........................... <ancestor>
+  [  4] objcall 444 ............................. <ancestor.finishConditionMet()>
+  [  7] jmpifz [ 18] ............................ if ancestor.finishConditionMet() then
+  [ 10] getparam 0 .............................. <me>
+  [ 12] pushzero ................................ <0>
+  [ 13] pusharglistnoret 2 ...................... <me, 0>
+  [ 15] objcall 910 ............................. me.setCurrent(0)
+  [ 18] pushzero ................................ <0>
+  [ 19] pusharglistnoret 1 ...................... <0>
+  [ 21] extcall 17 .............................. return 0
+  [ 23] ret
+end
+
+on updateAttribute me
+  [  0] getprop 79 .............................. <pSpr>
+  [  2] getparam 0 .............................. <me>
+  [  4] getobjprop 913 .......................... <me.pCurr>
+  [  7] setobjprop 1292 ......................... pSpr.rotation = me.pCurr
+  [ 10] ret
+end

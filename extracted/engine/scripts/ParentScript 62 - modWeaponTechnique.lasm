@@ -1,0 +1,299 @@
+property ancestor, pAdditionalFramesCounter, pFrameValue, pWeaponTechnique, pWeaponTechniqueCache, pWeaponTechniqueInc
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getlocal 0 .............................. <i>
+  [ 12] pushsymb 1687 ........................... <#weaponTechnique>
+  [ 15] pushzero ................................ <0>
+  [ 16] pusharglistnoret 3 ...................... <i, #weaponTechnique, 0>
+  [ 18] objcall 48 .............................. i[#weaponTechnique] = 0
+  [ 20] getprop 33 .............................. <ancestor>
+  [ 22] pusharglistnoret 1 ...................... <ancestor>
+  [ 24] objcall 2 ............................... ancestor.addModParams()
+  [ 26] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pusharglist 0 ........................... <>
+  [ 10] extcall 529 ............................. <CounterNew()>
+  [ 13] setprop 1688 ............................ pAdditionalFramesCounter = CounterNew()
+  [ 16] getprop 1688 ............................ <pAdditionalFramesCounter>
+  [ 19] pushsymb 530 ............................ <#tim>
+  [ 22] pushint8 2 .............................. <2>
+  [ 24] pushint8 1 .............................. <1>
+  [ 26] pusharglistnoret 4 ...................... <pAdditionalFramesCounter, #tim, 2, 1>
+  [ 28] objcall 531 ............................. pAdditionalFramesCounter.tim[2] = 1
+  [ 31] pushint8 100 ............................ <100>
+  [ 33] setprop 1689 ............................ pFrameValue = 100
+  [ 36] getparam 1 .............................. <params>
+  [ 38] getobjprop 1687 ......................... <params.weaponTechnique>
+  [ 41] setprop 1690 ............................ pWeaponTechnique = params.weaponTechnique
+  [ 44] pushzero ................................ <0>
+  [ 45] setprop 1691 ............................ pWeaponTechniqueCache = 0
+  [ 48] pushint8 2 .............................. <2>
+  [ 50] setprop 1692 ............................ pWeaponTechniqueInc = 2
+  [ 53] ret
+end
+
+on addFramesForWeaponTechnique me
+  [  0] getprop 1691 ............................ <pWeaponTechniqueCache>
+  [  3] getprop 1689 ............................ <pFrameValue>
+  [  6] pushint8 1 .............................. <1>
+  [  8] inv ..................................... <-1>
+  [  9] mul ..................................... <pFrameValue * -1>
+  [ 10] lt ...................................... <pWeaponTechniqueCache < (pFrameValue * -1)>
+  [ 11] jmpifz [ 69] ............................ repeat while pWeaponTechniqueCache < (pFrameValue * -1)
+  [ 14] pushint8 1 .............................. <1>
+  [ 16] setlocal 0 .............................. delayAmount = 1
+  [ 18] getparam 0 .............................. <me>
+  [ 20] getchainedprop 51 ....................... <me.big>
+  [ 22] getlocal 0 .............................. <delayAmount>
+  [ 24] pusharglistnoret 2 ...................... <me.big, delayAmount>
+  [ 26] objcall 8 ............................... me.big.frameExtendDelay(delayAmount)
+  [ 28] getprop 1688 ............................ <pAdditionalFramesCounter>
+  [ 31] pushsymb 530 ............................ <#tim>
+  [ 34] pushint8 2 .............................. <2>
+  [ 36] getprop 1688 ............................ <pAdditionalFramesCounter>
+  [ 39] pushsymb 530 ............................ <#tim>
+  [ 42] pushint8 2 .............................. <2>
+  [ 44] pusharglist 3 ........................... <pAdditionalFramesCounter, #tim, 2>
+  [ 46] objcall 381 ............................. <pAdditionalFramesCounter.tim[2]>
+  [ 49] pushint8 1 .............................. <1>
+  [ 51] add ..................................... <pAdditionalFramesCounter.tim[2] + 1>
+  [ 52] pusharglistnoret 4 ...................... <pAdditionalFramesCounter, #tim, 2, pAdditionalFramesCounter.tim[2] + 1>
+  [ 54] objcall 531 ............................. pAdditionalFramesCounter.tim[2] = pAdditionalFramesCounter.tim[2] + 1
+  [ 57] getprop 1691 ............................ <pWeaponTechniqueCache>
+  [ 60] getprop 1689 ............................ <pFrameValue>
+  [ 63] add ..................................... <pWeaponTechniqueCache + pFrameValue>
+  [ 64] setprop 1691 ............................ pWeaponTechniqueCache = pWeaponTechniqueCache + pFrameValue
+  [ 67] endrepeat [  0]
+  [ 69] ret
+end
+
+on addSaveData me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 4 ............................... ancestor.addSaveData(sd)
+  [  8] getparam 0 .............................. <me>
+  [ 10] getparam 1 .............................. <sd>
+  [ 12] pusharglistnoret 2 ...................... <me, sd>
+  [ 14] objcall 6 ............................... me.addToSaveData(sd)
+  [ 16] ret
+end
+
+on addToArmyDetails me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 51 ....................... <me.big>
+  [  4] pusharglist 1 ........................... <me.big>
+  [  6] objcall 54 .............................. <me.big.getArmyDetails()>
+  [  8] setlocal 0 .............................. ad = me.big.getArmyDetails()
+  [ 10] getparam 0 .............................. <me>
+  [ 12] getlocal 0 .............................. <ad>
+  [ 14] pusharglistnoret 2 ...................... <me, ad>
+  [ 16] objcall 6 ............................... me.addToSaveData(ad)
+  [ 18] ret
+end
+
+on addToSaveData me, sd
+  [  0] getparam 1 .............................. <sd>
+  [  2] pushsymb 1690 ........................... <#pWeaponTechnique>
+  [  5] getprop 1690 ............................ <pWeaponTechnique>
+  [  8] pusharglistnoret 3 ...................... <sd, #pWeaponTechnique, pWeaponTechnique>
+  [ 10] objcall 48 .............................. sd[#pWeaponTechnique] = pWeaponTechnique
+  [ 12] ret
+end
+
+on exchangeWeaponTechniqueForFrames me
+  [  0] getprop 1691 ............................ <pWeaponTechniqueCache>
+  [  3] getprop 1689 ............................ <pFrameValue>
+  [  6] gt ...................................... <pWeaponTechniqueCache > pFrameValue>
+  [  7] jmpifz [ 17] ............................ if pWeaponTechniqueCache > pFrameValue then
+  [ 10] getparam 0 .............................. <me>
+  [ 12] pusharglistnoret 1 ...................... <me>
+  [ 14] objcall 1685 ............................ me.skipFramesForWeaponTechnique()
+  [ 17] getprop 1691 ............................ <pWeaponTechniqueCache>
+  [ 20] getprop 1689 ............................ <pFrameValue>
+  [ 23] pushint8 1 .............................. <1>
+  [ 25] inv ..................................... <-1>
+  [ 26] mul ..................................... <pFrameValue * -1>
+  [ 27] lt ...................................... <pWeaponTechniqueCache < (pFrameValue * -1)>
+  [ 28] jmpifz [ 38] ............................ if pWeaponTechniqueCache < (pFrameValue * -1) then
+  [ 31] getparam 0 .............................. <me>
+  [ 33] pusharglistnoret 1 ...................... <me>
+  [ 35] objcall 1681 ............................ me.addFramesForWeaponTechnique()
+  [ 38] ret
+end
+
+on internalEvent me, theEvent
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <theEvent>
+  [  4] pusharglistnoret 2 ...................... <ancestor, theEvent>
+  [  6] objcall 22 .............................. ancestor.internalEvent(theEvent)
+  [  8] getparam 1 .............................. <theEvent>
+  [ 10] peek 0 .................................. case theEvent of
+  [ 12] pushsymb 5 .............................. <#addToArmyDetails>
+  [ 14] eq
+  [ 15] jmpifz [ 27] ............................ (case) #addToArmyDetails:
+  [ 18] getparam 0 .............................. <me>
+  [ 20] pusharglistnoret 1 ...................... <me>
+  [ 22] objcall 5 ............................... me.addToArmyDetails()
+  [ 24] jmp [ 60]
+  [ 27] peek 0
+  [ 29] pushsymb 310 ............................ <#levelUp>
+  [ 32] eq
+  [ 33] jmpifz [ 46] ............................ (case) #levelUp:
+  [ 36] getparam 0 .............................. <me>
+  [ 38] pusharglistnoret 1 ...................... <me>
+  [ 40] objcall 1683 ............................ me.increaseWeaponTechnique()
+  [ 43] jmp [ 60]
+  [ 46] peek 0
+  [ 48] pushsymb 25 ............................. <#restoreFromArmyDetails>
+  [ 50] eq
+  [ 51] jmpifz [ 60] ............................ (case) #restoreFromArmyDetails:
+  [ 54] getparam 0 .............................. <me>
+  [ 56] pusharglistnoret 1 ...................... <me>
+  [ 58] objcall 25 .............................. me.restoreFromArmyDetails()
+  [ 60] pop 1 ................................... end case
+  [ 62] ret
+end
+
+on increaseWeaponTechnique me
+  [  0] getprop 1690 ............................ <pWeaponTechnique>
+  [  3] getprop 1692 ............................ <pWeaponTechniqueInc>
+  [  6] add ..................................... <pWeaponTechnique + pWeaponTechniqueInc>
+  [  7] setprop 1690 ............................ pWeaponTechnique = pWeaponTechnique + pWeaponTechniqueInc
+  [ 10] ret
+end
+
+on increaseWeaponTechniqueCache me
+  [  0] getprop 1691 ............................ <pWeaponTechniqueCache>
+  [  3] getprop 1690 ............................ <pWeaponTechnique>
+  [  6] add ..................................... <pWeaponTechniqueCache + pWeaponTechnique>
+  [  7] setprop 1691 ............................ pWeaponTechniqueCache = pWeaponTechniqueCache + pWeaponTechnique
+  [ 10] ret
+end
+
+on restoreFromArmyDetails me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 51 ....................... <me.big>
+  [  4] pusharglist 1 ........................... <me.big>
+  [  6] objcall 54 .............................. <me.big.getArmyDetails()>
+  [  8] setlocal 0 .............................. ad = me.big.getArmyDetails()
+  [ 10] getparam 0 .............................. <me>
+  [ 12] getlocal 0 .............................. <ad>
+  [ 14] pusharglistnoret 2 ...................... <me, ad>
+  [ 16] objcall 27 .............................. me.restoreFromSaveData(ad)
+  [ 18] ret
+end
+
+on restoreFromSave me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 26 .............................. ancestor.restoreFromSave(sd)
+  [  8] getparam 0 .............................. <me>
+  [ 10] getparam 1 .............................. <sd>
+  [ 12] pusharglistnoret 2 ...................... <me, sd>
+  [ 14] objcall 27 .............................. me.restoreFromSaveData(sd)
+  [ 16] ret
+end
+
+on restoreFromSaveData me, sd
+  [  0] getparam 1 .............................. <sd>
+  [  2] getobjprop 1690 ......................... <sd.pWeaponTechnique>
+  [  5] setprop 1690 ............................ pWeaponTechnique = sd.pWeaponTechnique
+  [  8] ret
+end
+
+on skipFramesForWeaponTechnique me
+  [  0] getprop 1691 ............................ <pWeaponTechniqueCache>
+  [  3] getprop 1689 ............................ <pFrameValue>
+  [  6] gt ...................................... <pWeaponTechniqueCache > pFrameValue>
+  [  7] jmpifz [ 41] ............................ repeat while pWeaponTechniqueCache > pFrameValue
+  [ 10] getparam 0 .............................. <me>
+  [ 12] getchainedprop 51 ....................... <me.big>
+  [ 14] pushsymb 1693 ........................... <#attackFrameSkipped>
+  [ 17] pusharglistnoret 2 ...................... <me.big, #attackFrameSkipped>
+  [ 19] objcall 22 .............................. me.big.internalEvent(#attackFrameSkipped)
+  [ 21] getparam 0 .............................. <me>
+  [ 23] getchainedprop 51 ....................... <me.big>
+  [ 25] pusharglistnoret 1 ...................... <me.big>
+  [ 27] objcall 7 ............................... me.big.frameAdvance()
+  [ 29] getprop 1691 ............................ <pWeaponTechniqueCache>
+  [ 32] getprop 1689 ............................ <pFrameValue>
+  [ 35] sub ..................................... <pWeaponTechniqueCache - pFrameValue>
+  [ 36] setprop 1691 ............................ pWeaponTechniqueCache = pWeaponTechniqueCache - pFrameValue
+  [ 39] endrepeat [  0]
+  [ 41] ret
+end
+
+on update me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 31 .............................. ancestor.update()
+  [  6] getparam 0 .............................. <me>
+  [  8] getchainedprop 51 ....................... <me.big>
+  [ 10] pusharglist 1 ........................... <me.big>
+  [ 12] objcall 1694 ............................ <me.big.getAI()>
+  [ 15] pusharglist 1 ........................... <me.big.getAI()>
+  [ 17] objcall 52 .............................. <me.big.getAI().getMode()>
+  [ 19] setlocal 0 .............................. aiMode = me.big.getAI().getMode()
+  [ 21] getlocal 0 .............................. <aiMode>
+  [ 23] peek 0 .................................. case aiMode of
+  [ 25] pushsymb 145 ............................ <#attack>
+  [ 27] eq
+  [ 28] jmpifz [ 38] ............................ (case) #attack:
+  [ 31] getparam 0 .............................. <me>
+  [ 33] pusharglistnoret 1 ...................... <me>
+  [ 35] objcall 1686 ............................ me.updateWeaponTechnique()
+  [ 38] pop 1
+  [ 40] ret
+end
+
+on updateWeaponTechnique me
+  [  0] getprop 1688 ............................ <pAdditionalFramesCounter>
+  [  3] getobjprop 552 .......................... <pAdditionalFramesCounter.fin>
+  [  6] jmpifz [ 49] ............................ if pAdditionalFramesCounter.fin then / else
+  [  9] getprop 1688 ............................ <pAdditionalFramesCounter>
+  [ 12] pushsymb 530 ............................ <#tim>
+  [ 15] pushint8 2 .............................. <2>
+  [ 17] pushint8 1 .............................. <1>
+  [ 19] pusharglistnoret 4 ...................... <pAdditionalFramesCounter, #tim, 2, 1>
+  [ 21] objcall 531 ............................. pAdditionalFramesCounter.tim[2] = 1
+  [ 24] getprop 1688 ............................ <pAdditionalFramesCounter>
+  [ 27] pusharglistnoret 1 ...................... <pAdditionalFramesCounter>
+  [ 29] extcall 706 ............................. CounterReset(pAdditionalFramesCounter)
+  [ 32] getparam 0 .............................. <me>
+  [ 34] pusharglistnoret 1 ...................... <me>
+  [ 36] objcall 1684 ............................ me.increaseWeaponTechniqueCache()
+  [ 39] getparam 0 .............................. <me>
+  [ 41] pusharglistnoret 1 ...................... <me>
+  [ 43] objcall 1682 ............................ me.exchangeWeaponTechniqueForFrames()
+  [ 46] jmp [ 57]
+  [ 49] getprop 1688 ............................ <pAdditionalFramesCounter>
+  [ 52] pusharglistnoret 1 ...................... <pAdditionalFramesCounter>
+  [ 54] extcall 767 ............................. CounterOnce(pAdditionalFramesCounter)
+  [ 57] ret
+end

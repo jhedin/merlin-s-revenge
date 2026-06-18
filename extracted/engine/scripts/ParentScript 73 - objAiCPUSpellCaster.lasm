@@ -1,0 +1,649 @@
+property ancestor, pBulletSafeDistance, pEnemySafeDistance, pEnemyGoodShootingDistance, pRefreshDestinationCounter, pSpellCasterMode, pBufferDistance
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"objAiCPU">
+  [  2] pusharglist 1 ........................... <"objAiCPU">
+  [  4] extcall 34 .............................. <script("objAiCPU")>
+  [  6] pusharglist 1 ........................... <script("objAiCPU")>
+  [  8] extcall 0 ............................... <new(script("objAiCPU"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objAiCPU"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 1896 ........................... <#enemyGoodShootingDistance>
+  [ 27] pushint16 150 ........................... <150>
+  [ 30] pusharglistnoret 3 ...................... <i, #enemyGoodShootingDistance, 150>
+  [ 32] objcall 48 .............................. i[#enemyGoodShootingDistance] = 150
+  [ 34] getparam 0 .............................. <me>
+  [ 36] pusharglistnoret 1 ...................... <me>
+  [ 38] extcall 35 .............................. return me
+  [ 40] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pushint8 100 ............................ <100>
+  [ 10] setprop 1897 ............................ pBulletSafeDistance = 100
+  [ 13] pushint8 100 ............................ <100>
+  [ 15] setprop 1898 ............................ pEnemySafeDistance = 100
+  [ 18] pushint8 20 ............................. <20>
+  [ 20] setprop 4564 ............................ pBufferDistance = 20
+  [ 23] getparam 1 .............................. <params>
+  [ 25] getobjprop 1896 ......................... <params.enemyGoodShootingDistance>
+  [ 28] setprop 1899 ............................ pEnemyGoodShootingDistance = params.enemyGoodShootingDistance
+  [ 31] pusharglist 0 ........................... <>
+  [ 33] extcall 529 ............................. <CounterNew()>
+  [ 36] setprop 1900 ............................ pRefreshDestinationCounter = CounterNew()
+  [ 39] getprop 1900 ............................ <pRefreshDestinationCounter>
+  [ 42] pushsymb 530 ............................ <#tim>
+  [ 45] pushint8 2 .............................. <2>
+  [ 47] pushint8 1 .............................. <1>
+  [ 49] pusharglistnoret 4 ...................... <pRefreshDestinationCounter, #tim, 2, 1>
+  [ 51] objcall 531 ............................. pRefreshDestinationCounter.tim[2] = 1
+  [ 54] pushsymb 1902 ........................... <#moveToOptimumPosition>
+  [ 57] setprop 1901 ............................ pSpellCasterMode = #moveToOptimumPosition
+  [ 60] ret
+end
+
+on attackFin me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 49 ............................. <#none>
+  [  4] pusharglistnoret 2 ...................... <me, #none>
+  [  6] objcall 236 ............................. me.setTarget(#none)
+  [  8] getprop 33 .............................. <ancestor>
+  [ 10] pusharglistnoret 1 ...................... <ancestor>
+  [ 12] objcall 1731 ............................ ancestor.attackFin()
+  [ 15] ret
+end
+
+on characterModeChanged me, newMode
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <newMode>
+  [  4] pusharglistnoret 2 ...................... <ancestor, newMode>
+  [  6] objcall 1720 ............................ ancestor.characterModeChanged(newMode)
+  [  9] getparam 1 .............................. <newMode>
+  [ 11] peek 0 .................................. case newMode of
+  [ 13] pushsymb 70 ............................. <#dead>
+  [ 15] nteq
+  [ 16] jmpifz [ 28] ............................ (case) #dead, ...
+  [ 19] peek 0
+  [ 21] pushsymb 1056 ........................... <#reel>
+  [ 24] eq
+  [ 25] jmpifz [ 45] ............................ (case) ..., #reel:
+  [ 28] pushsymb 49 ............................. <#none>
+  [ 30] setprop 1901 ............................ pSpellCasterMode = #none
+  [ 33] getparam 0 .............................. <me>
+  [ 35] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [ 37] pusharglistnoret 1 ...................... <me.pCharacterPrg>
+  [ 39] objcall 872 ............................. me.pCharacterPrg.cancelMoveToLoc()
+  [ 42] jmp [ 63]
+  [ 45] peek 0
+  [ 47] pushsymb 63 ............................. <#walk>
+  [ 49] eq
+  [ 50] jmpifz [ 63] ............................ (case) #walk:
+  [ 53] getparam 0 .............................. <me>
+  [ 55] pushsymb 1902 ........................... <#moveToOptimumPosition>
+  [ 58] pusharglistnoret 2 ...................... <me, #moveToOptimumPosition>
+  [ 60] objcall 1891 ............................ me.goSpellCasterMode(#moveToOptimumPosition)
+  [ 63] pop 1 ................................... end case
+  [ 65] ret
+end
+
+on eventNotification me, theEvent, theObj
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <theEvent>
+  [  4] getparam 2 .............................. <theObj>
+  [  6] pusharglistnoret 3 ...................... <ancestor, theEvent, theObj>
+  [  8] objcall 568 ............................. ancestor.eventNotification(theEvent, theObj)
+  [ 11] getparam 0 .............................. <me>
+  [ 13] pusharglist 1 ........................... <me>
+  [ 15] objcall 1075 ............................ <me.getCurrentSpell()>
+  [ 18] setlocal 0 .............................. currentSpell = me.getCurrentSpell()
+  [ 20] getparam 2 .............................. <theObj>
+  [ 22] getlocal 0 .............................. <currentSpell>
+  [ 24] eq ...................................... <theObj = currentSpell>
+  [ 25] jmpifz [ 50] ............................ if theObj = currentSpell then
+  [ 28] getparam 1 .............................. <theEvent>
+  [ 30] peek 0 .................................. case theEvent of
+  [ 32] pushsymb 1102 ........................... <#chargeLimited>
+  [ 35] eq
+  [ 36] jmpifz [ 48] ............................ (case) #chargeLimited:
+  [ 39] getparam 0 .............................. <me>
+  [ 41] pushsymb 1761 ........................... <#spellCharged>
+  [ 44] pusharglistnoret 2 ...................... <me, #spellCharged>
+  [ 46] objcall 22 .............................. me.internalEvent(#spellCharged)
+  [ 48] pop 1
+  [ 50] ret
+end
+
+on goSpellCasterMode me, newMode
+  [  0] getparam 1 .............................. <newMode>
+  [  2] setprop 1901 ............................ pSpellCasterMode = newMode
+  [  5] ret
+end
+
+on runFromObjects me, objectsToRunFrom, safeDistance
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <objectsToRunFrom>
+  [  4] getparam 2 .............................. <safeDistance>
+  [  6] pushsymb 1903 ........................... <#away>
+  [  9] pusharglist 4 ........................... <me, objectsToRunFrom, safeDistance, #away>
+  [ 11] objcall 1894 ............................ <me.runToFromObjects(objectsToRunFrom, safeDistance, #away)>
+  [ 14] setlocal 0 .............................. runStatus = me.runToFromObjects(objectsToRunFrom, safeDistance, #away)
+  [ 16] getlocal 0 .............................. <runStatus>
+  [ 18] pusharglistnoret 1 ...................... <runStatus>
+  [ 20] extcall 35 .............................. return runStatus
+  [ 22] ret
+end
+
+on runTowardObjects me, objectsToRunTowards, safeDistance
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <objectsToRunTowards>
+  [  4] getparam 2 .............................. <safeDistance>
+  [  6] pushsymb 1907 ........................... <#towards>
+  [  9] pusharglist 4 ........................... <me, objectsToRunTowards, safeDistance, #towards>
+  [ 11] objcall 1894 ............................ <me.runToFromObjects(objectsToRunTowards, safeDistance, #towards)>
+  [ 14] setlocal 0 .............................. runStatus = me.runToFromObjects(objectsToRunTowards, safeDistance, #towards)
+  [ 16] getlocal 0 .............................. <runStatus>
+  [ 18] pusharglistnoret 1 ...................... <runStatus>
+  [ 20] extcall 35 .............................. return runStatus
+  [ 22] ret
+end
+
+on runToFromObjects me, objectsToRunToFrom, safeDistance, runDir
+  [  0] pushsymb 1909 ........................... <#notRunning>
+  [  3] setlocal 0 .............................. runStatus = #notRunning
+  [  5] getparam 1 .............................. <objectsToRunToFrom>
+  [  7] pushsymb 49 ............................. <#none>
+  [  9] nteq .................................... <objectsToRunToFrom <> #none>
+  [ 10] jmpifz [306] ............................ if objectsToRunToFrom <> #none then
+  [ 13] getparam 1 .............................. <objectsToRunToFrom>
+  [ 15] getobjprop 1910 ......................... <objectsToRunToFrom.closestPos>
+  [ 18] setlocal 1 .............................. closestPos = objectsToRunToFrom.closestPos
+  [ 20] getparam 1 .............................. <objectsToRunToFrom>
+  [ 22] getobjprop 1911 ......................... <objectsToRunToFrom.closestList>
+  [ 25] setlocal 2 .............................. closestList = objectsToRunToFrom.closestList
+  [ 27] getlocal 2 .............................. <closestList>
+  [ 29] getlocal 1 .............................. <closestPos>
+  [ 31] pusharglist 2 ........................... <closestList, closestPos>
+  [ 33] objcall 109 ............................. <closestList[closestPos]>
+  [ 35] setlocal 3 .............................. closestObject = closestList[closestPos]
+  [ 37] getlocal 3 .............................. <closestObject>
+  [ 39] getchainedprop 1088 ..................... <closestObject.obj>
+  [ 42] pusharglist 1 ........................... <closestObject.obj>
+  [ 44] objcall 141 ............................. <closestObject.obj.getAttack()>
+  [ 46] setlocal 4 .............................. weaponDist = closestObject.obj.getAttack()
+  [ 48] getlocal 4 .............................. <weaponDist>
+  [ 50] getobjprop 1623 ......................... <weaponDist.reach>
+  [ 53] pusharglist 0 ........................... <>
+  [ 55] extcall 166 ............................. <VOID>
+  [ 57] nteq .................................... <weaponDist.reach <> VOID>
+  [ 58] getlocal 4 .............................. <weaponDist>
+  [ 60] getobjprop 1623 ......................... <weaponDist.reach>
+  [ 63] pushint16 9999 .......................... <9999>
+  [ 66] nteq .................................... <weaponDist.reach <> 9999>
+  [ 67] and ..................................... <(weaponDist.reach <> VOID) and (weaponDist.reach <> 9999)>
+  [ 68] getlocal 4 .............................. <weaponDist>
+  [ 70] getobjprop 1623 ......................... <weaponDist.reach>
+  [ 73] getparam 2 .............................. <safeDistance>
+  [ 75] gt ...................................... <weaponDist.reach > safeDistance>
+  [ 76] and ..................................... <(weaponDist.reach <> VOID) and (weaponDist.reach <> 9999) and (weaponDist.reach > safeDistance)>
+  [ 77] jmpifz [ 90] ............................ if (weaponDist.reach <> VOID) and (weaponDist.reach <> 9999) and (weaponDist.reach > safeDistance) then
+  [ 80] getlocal 4 .............................. <weaponDist>
+  [ 82] getobjprop 1623 ......................... <weaponDist.reach>
+  [ 85] pushint8 25 ............................. <25>
+  [ 87] add ..................................... <weaponDist.reach + 25>
+  [ 88] setparam 2 .............................. safeDistance = weaponDist.reach + 25
+  [ 90] pushzero ................................ <0>
+  [ 91] setlocal 5 .............................. runRequired = 0
+  [ 93] getparam 3 .............................. <runDir>
+  [ 95] peek 0 .................................. case runDir of
+  [ 97] pushsymb 1903 ........................... <#away>
+  [100] eq
+  [101] jmpifz [121] ............................ (case) #away:
+  [104] getlocal 3 .............................. <closestObject>
+  [106] getobjprop 192 .......................... <closestObject.dist>
+  [108] getparam 2 .............................. <safeDistance>
+  [110] lt ...................................... <closestObject.dist < safeDistance>
+  [111] jmpifz [118] ............................ if closestObject.dist < safeDistance then
+  [114] pushint8 1 .............................. <1>
+  [116] setlocal 5 .............................. runRequired = 1
+  [118] jmp [144]
+  [121] peek 0
+  [123] pushsymb 1907 ........................... <#towards>
+  [126] eq
+  [127] jmpifz [144] ............................ (case) #towards:
+  [130] getlocal 3 .............................. <closestObject>
+  [132] getobjprop 192 .......................... <closestObject.dist>
+  [134] getparam 2 .............................. <safeDistance>
+  [136] gt ...................................... <closestObject.dist > safeDistance>
+  [137] jmpifz [144] ............................ if closestObject.dist > safeDistance then
+  [140] pushint8 1 .............................. <1>
+  [142] setlocal 5 .............................. runRequired = 1
+  [144] pop 1 ................................... end case
+  [146] getlocal 5 .............................. <runRequired>
+  [148] jmpifz [306] ............................ if runRequired then
+  [151] getlocal 1 .............................. <closestPos>
+  [153] pushint8 1 .............................. <1>
+  [155] eq ...................................... <closestPos = 1>
+  [156] jmpifz [163] ............................ if closestPos = 1 then
+  [159] pushint8 2 .............................. <2>
+  [161] setlocal 6 .............................. furthestPos = 2
+  [163] getlocal 1 .............................. <closestPos>
+  [165] pushint8 2 .............................. <2>
+  [167] eq ...................................... <closestPos = 2>
+  [168] jmpifz [175] ............................ if closestPos = 2 then
+  [171] pushint8 1 .............................. <1>
+  [173] setlocal 6 .............................. furthestPos = 1
+  [175] getlocal 2 .............................. <closestList>
+  [177] getlocal 6 .............................. <furthestPos>
+  [179] pusharglist 2 ........................... <closestList, furthestPos>
+  [181] objcall 109 ............................. <closestList[furthestPos]>
+  [183] setlocal 7 .............................. furthestObject = closestList[furthestPos]
+  [185] getlocal 3 .............................. <closestObject>
+  [187] getchainedprop 1088 ..................... <closestObject.obj>
+  [190] pusharglist 1 ........................... <closestObject.obj>
+  [192] objcall 111 ............................. <closestObject.obj.getLoc()>
+  [194] setlocal 8 .............................. objLoc1 = closestObject.obj.getLoc()
+  [196] getlocal 7 .............................. <furthestObject>
+  [198] getobjprop 1088 ......................... <furthestObject.obj>
+  [201] pushsymb 49 ............................. <#none>
+  [203] nteq .................................... <furthestObject.obj <> #none>
+  [204] jmpifz [221] ............................ if furthestObject.obj <> #none then / else
+  [207] getlocal 7 .............................. <furthestObject>
+  [209] getchainedprop 1088 ..................... <furthestObject.obj>
+  [212] pusharglist 1 ........................... <furthestObject.obj>
+  [214] objcall 111 ............................. <furthestObject.obj.getLoc()>
+  [216] setlocal 9 .............................. objLoc2 = furthestObject.obj.getLoc()
+  [218] jmp [229]
+  [221] getlocal 8 .............................. <objLoc1>
+  [223] pusharglist 1 ........................... <objLoc1>
+  [225] objcall 175 ............................. <objLoc1.duplicate()>
+  [227] setlocal 9 .............................. objLoc2 = objLoc1.duplicate()
+  [229] pushint8 50 ............................. <50>
+  [231] getlocal 8 .............................. <objLoc1>
+  [233] getlocal 9 .............................. <objLoc2>
+  [235] pusharglist 2 ........................... <[objLoc1, objLoc2]>
+  [237] pushlist ................................ <[objLoc1, objLoc2]>
+  [238] pusharglist 2 ........................... <50, [objLoc1, objLoc2]>
+  [240] extcall 1912 ............................ <PointValRange(50, [objLoc1, objLoc2])>
+  [243] setlocal 10 ............................. averageLoc = PointValRange(50, [objLoc1, objLoc2])
+  [245] getparam 3 .............................. <runDir>
+  [247] peek 0 .................................. case runDir of
+  [249] pushsymb 1903 ........................... <#away>
+  [252] eq
+  [253] jmpifz [276] ............................ (case) #away:
+  [256] getlocal 10 ............................. <averageLoc>
+  [258] getparam 0 .............................. <me>
+  [260] pusharglist 1 ........................... <me>
+  [262] objcall 111 ............................. <me.getLoc()>
+  [264] getparam 2 .............................. <safeDistance>
+  [266] pusharglist 3 ........................... <averageLoc, me.getLoc(), safeDistance>
+  [268] extcall 914 ............................. <GeomMirrorPoint(averageLoc, me.getLoc(), safeDistance)>
+  [271] setlocal 11 ............................. runDestination = GeomMirrorPoint(averageLoc, me.getLoc(), safeDistance)
+  [273] jmp [289]
+  [276] peek 0
+  [278] pushsymb 1907 ........................... <#towards>
+  [281] eq
+  [282] jmpifz [289] ............................ (case) #towards:
+  [285] getlocal 10 ............................. <averageLoc>
+  [287] setlocal 11 ............................. runDestination = averageLoc
+  [289] pop 1 ................................... end case
+  [291] getparam 0 .............................. <me>
+  [293] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [295] getlocal 11 ............................. <runDestination>
+  [297] pusharglistnoret 2 ...................... <me.pCharacterPrg, runDestination>
+  [299] objcall 67 .............................. me.pCharacterPrg.moveToLoc(runDestination)
+  [301] pushsymb 1913 ........................... <#running>
+  [304] setlocal 0 .............................. runStatus = #running
+  [306] getlocal 0 .............................. <runStatus>
+  [308] pusharglistnoret 1 ...................... <runStatus>
+  [310] extcall 35 .............................. return runStatus
+  [312] ret
+end
+
+on runTowardsObject me, theObj
+  [  0] pushsymb 1909 ........................... <#notRunning>
+  [  3] setlocal 0 .............................. runStatus = #notRunning
+  [  5] getparam 1 .............................. <theObj>
+  [  7] pushsymb 49 ............................. <#none>
+  [  9] nteq .................................... <theObj <> #none>
+  [ 10] jmpifz [ 71] ............................ if theObj <> #none then
+  [ 13] getparam 1 .............................. <theObj>
+  [ 15] pusharglist 1 ........................... <theObj>
+  [ 17] objcall 111 ............................. <theObj.getLoc()>
+  [ 19] setlocal 1 .............................. runDestination = theObj.getLoc()
+  [ 21] getparam 0 .............................. <me>
+  [ 23] pusharglist 1 ........................... <me>
+  [ 25] objcall 111 ............................. <me.getLoc()>
+  [ 27] getlocal 1 .............................. <runDestination>
+  [ 29] pusharglist 2 ........................... <me.getLoc(), runDestination>
+  [ 31] extcall 190 ............................. <GeomDistSqr(me.getLoc(), runDestination)>
+  [ 33] setlocal 2 .............................. dist = GeomDistSqr(me.getLoc(), runDestination)
+  [ 35] getlocal 2 .............................. <dist>
+  [ 37] getprop 1898 ............................ <pEnemySafeDistance>
+  [ 40] getprop 1898 ............................ <pEnemySafeDistance>
+  [ 43] mul ..................................... <pEnemySafeDistance * pEnemySafeDistance>
+  [ 44] sub ..................................... <dist - (pEnemySafeDistance * pEnemySafeDistance)>
+  [ 45] getprop 4564 ............................ <pBufferDistance>
+  [ 48] getprop 4564 ............................ <pBufferDistance>
+  [ 51] mul ..................................... <pBufferDistance * pBufferDistance>
+  [ 52] gt ...................................... <(dist - (pEnemySafeDistance * pEnemySafeDistance)) > (pBufferDistance * pBufferDistance)>
+  [ 53] jmpifz [ 71] ............................ if (dist - (pEnemySafeDistance * pEnemySafeDistance)) > (pBufferDistance * pBufferDistance) then
+  [ 56] getparam 0 .............................. <me>
+  [ 58] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [ 60] getlocal 1 .............................. <runDestination>
+  [ 62] pusharglistnoret 2 ...................... <me.pCharacterPrg, runDestination>
+  [ 64] objcall 67 .............................. me.pCharacterPrg.moveToLoc(runDestination)
+  [ 66] pushsymb 1913 ........................... <#running>
+  [ 69] setlocal 0 .............................. runStatus = #running
+  [ 71] getlocal 0 .............................. <runStatus>
+  [ 73] pusharglistnoret 1 ...................... <runStatus>
+  [ 75] extcall 35 .............................. return runStatus
+  [ 77] ret
+end
+
+on runTangentToObjects me, objectsToRunToFrom, safeDistance
+  [  0] pushsymb 1909 ........................... <#notRunning>
+  [  3] setlocal 0 .............................. runStatus = #notRunning
+  [  5] getparam 1 .............................. <objectsToRunToFrom>
+  [  7] pushsymb 49 ............................. <#none>
+  [  9] eq ...................................... <objectsToRunToFrom = #none>
+  [ 10] jmpifz [ 19] ............................ if objectsToRunToFrom = #none then
+  [ 13] getlocal 0 .............................. <runStatus>
+  [ 15] pusharglistnoret 1 ...................... <runStatus>
+  [ 17] extcall 35 .............................. return runStatus
+  [ 19] getparam 1 .............................. <objectsToRunToFrom>
+  [ 21] getobjprop 1910 ......................... <objectsToRunToFrom.closestPos>
+  [ 24] setlocal 1 .............................. closestPos = objectsToRunToFrom.closestPos
+  [ 26] getparam 1 .............................. <objectsToRunToFrom>
+  [ 28] getobjprop 1911 ......................... <objectsToRunToFrom.closestList>
+  [ 31] setlocal 2 .............................. closestList = objectsToRunToFrom.closestList
+  [ 33] getlocal 2 .............................. <closestList>
+  [ 35] getlocal 1 .............................. <closestPos>
+  [ 37] pusharglist 2 ........................... <closestList, closestPos>
+  [ 39] objcall 109 ............................. <closestList[closestPos]>
+  [ 41] setlocal 3 .............................. closestObject = closestList[closestPos]
+  [ 43] pushzero ................................ <0>
+  [ 44] setlocal 4 .............................. runRequired = 0
+  [ 46] getlocal 3 .............................. <closestObject>
+  [ 48] getobjprop 192 .......................... <closestObject.dist>
+  [ 50] getparam 2 .............................. <safeDistance>
+  [ 52] lt ...................................... <closestObject.dist < safeDistance>
+  [ 53] jmpifz [ 60] ............................ if closestObject.dist < safeDistance then
+  [ 56] pushint8 1 .............................. <1>
+  [ 58] setlocal 4 .............................. runRequired = 1
+  [ 60] getlocal 4 .............................. <runRequired>
+  [ 62] jmpifz [443] ............................ if runRequired then
+  [ 65] getlocal 1 .............................. <closestPos>
+  [ 67] pushint8 1 .............................. <1>
+  [ 69] eq ...................................... <closestPos = 1>
+  [ 70] jmpifz [ 77] ............................ if closestPos = 1 then
+  [ 73] pushint8 2 .............................. <2>
+  [ 75] setlocal 5 .............................. furthestPos = 2
+  [ 77] getlocal 1 .............................. <closestPos>
+  [ 79] pushint8 2 .............................. <2>
+  [ 81] eq ...................................... <closestPos = 2>
+  [ 82] jmpifz [ 89] ............................ if closestPos = 2 then
+  [ 85] pushint8 1 .............................. <1>
+  [ 87] setlocal 5 .............................. furthestPos = 1
+  [ 89] getlocal 2 .............................. <closestList>
+  [ 91] getlocal 5 .............................. <furthestPos>
+  [ 93] pusharglist 2 ........................... <closestList, furthestPos>
+  [ 95] objcall 109 ............................. <closestList[furthestPos]>
+  [ 97] setlocal 6 .............................. furthestObject = closestList[furthestPos]
+  [ 99] getlocal 3 .............................. <closestObject>
+  [101] getchainedprop 1088 ..................... <closestObject.obj>
+  [104] pusharglist 1 ........................... <closestObject.obj>
+  [106] objcall 111 ............................. <closestObject.obj.getLoc()>
+  [108] setlocal 7 .............................. objLoc1 = closestObject.obj.getLoc()
+  [110] getlocal 7 .............................. <objLoc1>
+  [112] getparam 0 .............................. <me>
+  [114] pusharglist 1 ........................... <me>
+  [116] objcall 111 ............................. <me.getLoc()>
+  [118] sub ..................................... <objLoc1 - me.getLoc()>
+  [119] setlocal 8 .............................. refVect = objLoc1 - me.getLoc()
+  [121] getlocal 6 .............................. <furthestObject>
+  [123] getobjprop 1088 ......................... <furthestObject.obj>
+  [126] pushsymb 49 ............................. <#none>
+  [128] nteq .................................... <furthestObject.obj <> #none>
+  [129] jmpifz [409] ............................ if furthestObject.obj <> #none then / else
+  [132] getlocal 6 .............................. <furthestObject>
+  [134] getchainedprop 1088 ..................... <furthestObject.obj>
+  [137] pusharglist 1 ........................... <furthestObject.obj>
+  [139] objcall 111 ............................. <furthestObject.obj.getLoc()>
+  [141] setlocal 9 .............................. objLoc2 = furthestObject.obj.getLoc()
+  [143] pushint8 50 ............................. <50>
+  [145] getlocal 7 .............................. <objLoc1>
+  [147] getlocal 9 .............................. <objLoc2>
+  [149] pusharglist 2 ........................... <[objLoc1, objLoc2]>
+  [151] pushlist ................................ <[objLoc1, objLoc2]>
+  [152] pusharglist 2 ........................... <50, [objLoc1, objLoc2]>
+  [154] extcall 1912 ............................ <PointValRange(50, [objLoc1, objLoc2])>
+  [157] setlocal 10 ............................. averageLoc = PointValRange(50, [objLoc1, objLoc2])
+  [159] pushzero ................................ <0>
+  [160] pushzero ................................ <0>
+  [161] pusharglist 2 ........................... <0, 0>
+  [163] extcall 197 ............................. <point(0, 0)>
+  [165] setlocal 11 ............................. refDir = point(0, 0)
+  [167] getlocal 9 .............................. <objLoc2>
+  [169] getlocal 7 .............................. <objLoc1>
+  [171] sub ..................................... <objLoc2 - objLoc1>
+  [172] setlocal 12 ............................. locVect = objLoc2 - objLoc1
+  [174] getlocal 8 .............................. <refVect>
+  [176] getobjprop 539 .......................... <refVect.locH>
+  [179] pushzero ................................ <0>
+  [180] eq ...................................... <refVect.locH = 0>
+  [181] jmpifz [211] ............................ if refVect.locH = 0 then / else
+  [184] getlocal 12 ............................. <locVect>
+  [186] getobjprop 539 .......................... <locVect.locH>
+  [189] setlocal 13 ............................. temp = locVect.locH
+  [191] getlocal 12 ............................. <locVect>
+  [193] getlocal 12 ............................. <locVect>
+  [195] getobjprop 540 .......................... <locVect.locV>
+  [198] setobjprop 539 .......................... locVect.locH = locVect.locV
+  [201] getlocal 12 ............................. <locVect>
+  [203] getlocal 13 ............................. <temp>
+  [205] setobjprop 540 .......................... locVect.locV = temp
+  [208] jmp [239]
+  [211] getlocal 8 .............................. <refVect>
+  [213] getobjprop 539 .......................... <refVect.locH>
+  [216] pushzero ................................ <0>
+  [217] gt ...................................... <refVect.locH > 0>
+  [218] jmpifz [231] ............................ if refVect.locH > 0 then / else
+  [221] getlocal 11 ............................. <refDir>
+  [223] pushint8 1 .............................. <1>
+  [225] setobjprop 539 .......................... refDir.locH = 1
+  [228] jmp [239]
+  [231] getlocal 11 ............................. <refDir>
+  [233] pushint8 1 .............................. <1>
+  [235] inv ..................................... <-1>
+  [236] setobjprop 539 .......................... refDir.locH = -1
+  [239] getlocal 8 .............................. <refVect>
+  [241] getobjprop 540 .......................... <refVect.locV>
+  [244] pushzero ................................ <0>
+  [245] gteq .................................... <refVect.locV >= 0>
+  [246] jmpifz [259] ............................ if refVect.locV >= 0 then / else
+  [249] getlocal 11 ............................. <refDir>
+  [251] pushint8 1 .............................. <1>
+  [253] setobjprop 540 .......................... refDir.locV = 1
+  [256] jmp [267]
+  [259] getlocal 11 ............................. <refDir>
+  [261] pushint8 1 .............................. <1>
+  [263] inv ..................................... <-1>
+  [264] setobjprop 540 .......................... refDir.locV = -1
+  [267] getlocal 12 ............................. <locVect>
+  [269] getlocal 8 .............................. <refVect>
+  [271] mul ..................................... <locVect * refVect>
+  [272] setlocal 12 ............................. locVect = locVect * refVect
+  [274] getlocal 12 ............................. <locVect>
+  [276] getobjprop 540 .......................... <locVect.locV>
+  [279] getlocal 12 ............................. <locVect>
+  [281] getobjprop 539 .......................... <locVect.locH>
+  [284] mul ..................................... <locVect.locV * locVect.locH>
+  [285] pushzero ................................ <0>
+  [286] gt ...................................... <(locVect.locV * locVect.locH) > 0>
+  [287] jmpifz [325] ............................ if (locVect.locV * locVect.locH) > 0 then / else
+  [290] getlocal 12 ............................. <locVect>
+  [292] getobjprop 539 .......................... <locVect.locH>
+  [295] getlocal 12 ............................. <locVect>
+  [297] getobjprop 540 .......................... <locVect.locV>
+  [300] sub ..................................... <locVect.locH - locVect.locV>
+  [301] setlocal 14 ............................. locDiff = locVect.locH - locVect.locV
+  [303] getlocal 14 ............................. <locDiff>
+  [305] pushzero ................................ <0>
+  [306] gt ...................................... <locDiff > 0>
+  [307] jmpifz [317] ............................ if locDiff > 0 then / else
+  [310] pushint8 1 .............................. <1>
+  [312] setlocal 15 ............................. Dir = 1
+  [314] jmp [322]
+  [317] pushint8 1 .............................. <1>
+  [319] inv ..................................... <-1>
+  [320] setlocal 16 ............................. dif = -1
+  [322] jmp [347]
+  [325] getlocal 12 ............................. <locVect>
+  [327] getobjprop 540 .......................... <locVect.locV>
+  [330] pushzero ................................ <0>
+  [331] gt ...................................... <locVect.locV > 0>
+  [332] jmpifz [342] ............................ if locVect.locV > 0 then / else
+  [335] pushint8 1 .............................. <1>
+  [337] setlocal 15 ............................. Dir = 1
+  [339] jmp [347]
+  [342] pushint8 1 .............................. <1>
+  [344] inv ..................................... <-1>
+  [345] setlocal 15 ............................. Dir = -1
+  [347] getlocal 7 .............................. <objLoc1>
+  [349] getparam 0 .............................. <me>
+  [351] pusharglist 1 ........................... <me>
+  [353] objcall 111 ............................. <me.getLoc()>
+  [355] getlocal 15 ............................. <Dir>
+  [357] getparam 2 .............................. <safeDistance>
+  [359] pusharglist 4 ........................... <objLoc1, me.getLoc(), Dir, safeDistance>
+  [361] extcall 4512 ............................ <GeomTangentPoint(objLoc1, me.getLoc(), Dir, safeDistance)>
+  [364] setlocal 17 ............................. runDestination = GeomTangentPoint(objLoc1, me.getLoc(), Dir, safeDistance)
+  [366] getlocal 10 ............................. <averageLoc>
+  [368] getparam 0 .............................. <me>
+  [370] pusharglist 1 ........................... <me>
+  [372] objcall 111 ............................. <me.getLoc()>
+  [374] getparam 2 .............................. <safeDistance>
+  [376] pusharglist 3 ........................... <averageLoc, me.getLoc(), safeDistance>
+  [378] extcall 914 ............................. <GeomMirrorPoint(averageLoc, me.getLoc(), safeDistance)>
+  [381] setlocal 18 ............................. runDest = GeomMirrorPoint(averageLoc, me.getLoc(), safeDistance)
+  [383] pushint8 25 ............................. <25>
+  [385] pushint8 50 ............................. <50>
+  [387] pusharglist 1 ........................... <50>
+  [389] extcall 158 ............................. <random(50)>
+  [391] add ..................................... <25 + random(50)>
+  [392] getlocal 17 ............................. <runDestination>
+  [394] getlocal 18 ............................. <runDest>
+  [396] pusharglist 2 ........................... <[runDestination, runDest]>
+  [398] pushlist ................................ <[runDestination, runDest]>
+  [399] pusharglist 2 ........................... <25 + random(50), [runDestination, runDest]>
+  [401] extcall 1912 ............................ <PointValRange(25 + random(50), [runDestination, runDest])>
+  [404] setlocal 17 ............................. runDestination = PointValRange(25 + random(50), [runDestination, runDest])
+  [406] jmp [428]
+  [409] getlocal 7 .............................. <objLoc1>
+  [411] getparam 0 .............................. <me>
+  [413] pusharglist 1 ........................... <me>
+  [415] objcall 111 ............................. <me.getLoc()>
+  [417] pushint8 1 .............................. <1>
+  [419] getparam 2 .............................. <safeDistance>
+  [421] pusharglist 4 ........................... <objLoc1, me.getLoc(), 1, safeDistance>
+  [423] extcall 4512 ............................ <GeomTangentPoint(objLoc1, me.getLoc(), 1, safeDistance)>
+  [426] setlocal 17 ............................. runDestination = GeomTangentPoint(objLoc1, me.getLoc(), 1, safeDistance)
+  [428] getparam 0 .............................. <me>
+  [430] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [432] getlocal 17 ............................. <runDestination>
+  [434] pusharglistnoret 2 ...................... <me.pCharacterPrg, runDestination>
+  [436] objcall 67 .............................. me.pCharacterPrg.moveToLoc(runDestination)
+  [438] pushsymb 1913 ........................... <#running>
+  [441] setlocal 0 .............................. runStatus = #running
+  [443] getlocal 0 .............................. <runStatus>
+  [445] pusharglistnoret 1 ...................... <runStatus>
+  [447] extcall 35 .............................. return runStatus
+  [449] ret
+end
+
+on update me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 31 .............................. ancestor.update()
+  [  6] getprop 1901 ............................ <pSpellCasterMode>
+  [  9] pushsymb 1902 ........................... <#moveToOptimumPosition>
+  [ 12] eq ...................................... <pSpellCasterMode = #moveToOptimumPosition>
+  [ 13] jmpifz [ 39] ............................ if pSpellCasterMode = #moveToOptimumPosition then
+  [ 16] getparam 0 .............................. <me>
+  [ 18] pusharglist 1 ........................... <me>
+  [ 20] objcall 141 ............................. <me.getAttack()>
+  [ 22] getobjprop 1623 ......................... <me.getAttack().reach>
+  [ 25] pushint16 9999 .......................... <9999>
+  [ 28] eq ...................................... <me.getAttack().reach = 9999>
+  [ 29] jmpifz [ 39] ............................ if me.getAttack().reach = 9999 then
+  [ 32] getparam 0 .............................. <me>
+  [ 34] pusharglistnoret 1 ...................... <me>
+  [ 36] objcall 1895 ............................ me.updateMoveToOptimumPosition()
+  [ 39] ret
+end
+
+on updateMoveToOptimumPosition me
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 642 ...................... <g.teamMaster>
+  [  5] getparam 0 .............................. <me>
+  [  7] getobjprop 147 .......................... <me.pCharacterPrg>
+  [  9] pusharglist 2 ........................... <g.teamMaster, me.pCharacterPrg>
+  [ 11] objcall 1924 ............................ <g.teamMaster.findNearestEnemyBullets(me.pCharacterPrg)>
+  [ 14] setlocal 0 .............................. nearestBullets = g.teamMaster.findNearestEnemyBullets(me.pCharacterPrg)
+  [ 16] getparam 0 .............................. <me>
+  [ 18] getlocal 0 .............................. <nearestBullets>
+  [ 20] getprop 1897 ............................ <pBulletSafeDistance>
+  [ 23] pusharglist 3 ........................... <me, nearestBullets, pBulletSafeDistance>
+  [ 25] objcall 4511 ............................ <me.runTangentToObjects(nearestBullets, pBulletSafeDistance)>
+  [ 28] setlocal 1 .............................. runStatus = me.runTangentToObjects(nearestBullets, pBulletSafeDistance)
+  [ 30] getlocal 1 .............................. <runStatus>
+  [ 32] pushsymb 1909 ........................... <#notRunning>
+  [ 35] eq ...................................... <runStatus = #notRunning>
+  [ 36] jmpifz [ 69] ............................ if runStatus = #notRunning then
+  [ 39] getglobal 40 ............................ <g>
+  [ 41] getchainedprop 642 ...................... <g.teamMaster>
+  [ 44] getparam 0 .............................. <me>
+  [ 46] getobjprop 147 .......................... <me.pCharacterPrg>
+  [ 48] pusharglist 2 ........................... <g.teamMaster, me.pCharacterPrg>
+  [ 50] objcall 1925 ............................ <g.teamMaster.findNearestEnemies(me.pCharacterPrg)>
+  [ 53] setlocal 2 .............................. nearestEnemies = g.teamMaster.findNearestEnemies(me.pCharacterPrg)
+  [ 55] getparam 0 .............................. <me>
+  [ 57] getlocal 2 .............................. <nearestEnemies>
+  [ 59] getprop 1898 ............................ <pEnemySafeDistance>
+  [ 62] pusharglist 3 ........................... <me, nearestEnemies, pEnemySafeDistance>
+  [ 64] objcall 1892 ............................ <me.runFromObjects(nearestEnemies, pEnemySafeDistance)>
+  [ 67] setlocal 1 .............................. runStatus = me.runFromObjects(nearestEnemies, pEnemySafeDistance)
+  [ 69] getlocal 1 .............................. <runStatus>
+  [ 71] pushsymb 1909 ........................... <#notRunning>
+  [ 74] eq ...................................... <runStatus = #notRunning>
+  [ 75] jmpifz [101] ............................ if runStatus = #notRunning then
+  [ 78] getparam 0 .............................. <me>
+  [ 80] pushsymb 1091 ........................... <#target>
+  [ 83] pusharglist 2 ........................... <me, #target>
+  [ 85] objcall 606 ............................. <me.getRelation(#target)>
+  [ 88] setlocal 3 .............................. myTarget = me.getRelation(#target)
+  [ 90] getparam 0 .............................. <me>
+  [ 92] getlocal 3 .............................. <myTarget>
+  [ 94] pusharglist 2 ........................... <me, myTarget>
+  [ 96] objcall 4492 ............................ <me.runTowardsObject(myTarget)>
+  [ 99] setlocal 1 .............................. runStatus = me.runTowardsObject(myTarget)
+  [101] getlocal 1 .............................. <runStatus>
+  [103] pushsymb 1909 ........................... <#notRunning>
+  [106] eq ...................................... <runStatus = #notRunning>
+  [107] jmpifz [119] ............................ if runStatus = #notRunning then
+  [110] getparam 0 .............................. <me>
+  [112] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [114] pusharglistnoret 1 ...................... <me.pCharacterPrg>
+  [116] objcall 887 ............................. me.pCharacterPrg.stopMoving()
+  [119] ret
+end

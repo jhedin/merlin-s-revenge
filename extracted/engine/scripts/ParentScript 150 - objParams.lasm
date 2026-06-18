@@ -1,0 +1,86 @@
+property ancestor, pParams
+
+on new me
+  [  0] pushcons 0 .............................. <"objEventNotify">
+  [  2] pusharglist 1 ........................... <"objEventNotify">
+  [  4] extcall 34 .............................. <script("objEventNotify")>
+  [  6] pusharglist 1 ........................... <script("objEventNotify")>
+  [  8] extcall 0 ............................... <new(script("objEventNotify"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objEventNotify"))
+  [ 12] pusharglist 0 ........................... <[:]>
+  [ 14] pushproplist ............................ <[:]>
+  [ 15] setprop 2816 ............................ pParams = [:]
+  [ 18] getprop 2816 ............................ <pParams>
+  [ 21] pushsymb 1 .............................. <#init>
+  [ 23] pusharglist 0 ........................... <[:]>
+  [ 25] pushproplist ............................ <[:]>
+  [ 26] pusharglistnoret 3 ...................... <pParams, #init, [:]>
+  [ 28] objcall 48 .............................. pParams[#init] = [:]
+  [ 30] getprop 2816 ............................ <pParams>
+  [ 33] getobjprop 1 ............................ <pParams.init>
+  [ 35] setlocal 0 .............................. i = pParams.init
+  [ 37] getlocal 0 .............................. <i>
+  [ 39] pushsymb 1477 ........................... <#flags>
+  [ 42] pusharglist 0 ........................... <[]>
+  [ 44] pushlist ................................ <[]>
+  [ 45] pusharglistnoret 3 ...................... <i, #flags, []>
+  [ 47] objcall 48 .............................. i[#flags] = []
+  [ 49] getparam 0 .............................. <me>
+  [ 51] pusharglistnoret 1 ...................... <me>
+  [ 53] extcall 35 .............................. return me
+  [ 55] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 1 ............................... ancestor.init()
+  [  6] getparam 0 .............................. <me>
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 1477 ......................... <params.flags>
+  [ 13] setobjprop 2089 ......................... me.pFlags = params.flags
+  [ 16] ret
+end
+
+on getParams me, function
+  [  0] getparam 1 .............................. <function>
+  [  2] pusharglist 0 ........................... <>
+  [  4] extcall 166 ............................. <VOID>
+  [  6] eq ...................................... <function = VOID>
+  [  7] jmpifz [ 14] ............................ if function = VOID then
+  [ 10] pushsymb 1 .............................. <#init>
+  [ 12] setparam 1 .............................. function = #init
+  [ 14] getprop 2816 ............................ <pParams>
+  [ 17] getparam 1 .............................. <function>
+  [ 19] pusharglist 2 ........................... <pParams, function>
+  [ 21] objcall 109 ............................. <pParams[function]>
+  [ 23] pusharglist 1 ........................... <pParams[function]>
+  [ 25] objcall 175 ............................. <pParams[function].duplicate()>
+  [ 27] pusharglistnoret 1 ...................... <pParams[function].duplicate()>
+  [ 29] extcall 35 .............................. return pParams[function].duplicate()
+  [ 31] ret
+end
+
+on modifyParams me, function
+  [  0] getprop 2816 ............................ <pParams>
+  [  3] getparam 1 .............................. <function>
+  [  5] pusharglist 2 ........................... <pParams, function>
+  [  7] objcall 109 ............................. <pParams[function]>
+  [  9] pusharglist 0 ........................... <>
+  [ 11] extcall 166 ............................. <VOID>
+  [ 13] eq ...................................... <pParams[function] = VOID>
+  [ 14] jmpifz [ 29] ............................ if pParams[function] = VOID then
+  [ 17] getprop 2816 ............................ <pParams>
+  [ 20] getparam 1 .............................. <function>
+  [ 22] pusharglist 0 ........................... <[:]>
+  [ 24] pushproplist ............................ <[:]>
+  [ 25] pusharglistnoret 3 ...................... <pParams, function, [:]>
+  [ 27] objcall 48 .............................. pParams[function] = [:]
+  [ 29] getprop 2816 ............................ <pParams>
+  [ 32] getparam 1 .............................. <function>
+  [ 34] pusharglist 2 ........................... <pParams, function>
+  [ 36] objcall 109 ............................. <pParams[function]>
+  [ 38] pusharglistnoret 1 ...................... <pParams[function]>
+  [ 40] extcall 35 .............................. return pParams[function]
+  [ 42] ret
+end

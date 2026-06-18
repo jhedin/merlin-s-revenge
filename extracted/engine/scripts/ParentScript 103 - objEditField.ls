@@ -1,0 +1,24 @@
+property ancestor, player, pLocation
+
+on new me
+  ancestor = new(script("objSpriteMember"))
+  i = me.modifyParams(#init)
+  i.memberType = #field
+  i[#location] = point(10, 10)
+  i[#layer] = 99
+  return me
+end
+
+on init me, params
+  player = params.layer
+  pLocation = params.location
+  ancestor.init(params)
+end
+
+on display me
+  me.requestMember()
+  me.setMember()
+  me.setMemberName("inputBox")
+  me.setSpriteLayer(player)
+  me.setSpriteLoc(pLocation)
+end

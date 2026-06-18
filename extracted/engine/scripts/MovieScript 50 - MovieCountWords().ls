@@ -1,0 +1,15 @@
+on MovieCountWords
+  totalWords = 0
+  numCasts = the number of castLibs
+  repeat with cst = 1 to numCasts
+    numMems = the number of castMembers of castLib cst
+    repeat with mem = 1 to numMems
+      nMember = member(mem, cst)
+      typ = nMember.type
+      if typ = #script then
+        totalWords = totalWords + nMember.scriptText.words.count
+      end if
+    end repeat
+  end repeat
+  put "totalWords = " & totalWords
+end

@@ -1,0 +1,576 @@
+property ancestor, pAnimKeepSize, pAnimPaused, pAnimSet
+global g, gGameView
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on init me, params
+  [  0] pushzero ................................ <0>
+  [  1] setprop 37 .............................. pAnimKeepSize = 0
+  [  3] pushzero ................................ <0>
+  [  4] setprop 38 .............................. pAnimPaused = 0
+  [  6] getglobal 40 ............................ <g>
+  [  8] getchainedprop 41 ....................... <g.objectMaster>
+  [ 10] pushsymb 42 ............................. <#objAnimSet>
+  [ 12] pusharglist 2 ........................... <g.objectMaster, #objAnimSet>
+  [ 14] objcall 43 .............................. <g.objectMaster.requestObject(#objAnimSet)>
+  [ 16] setprop 39 .............................. pAnimSet = g.objectMaster.requestObject(#objAnimSet)
+  [ 18] getprop 39 .............................. <pAnimSet>
+  [ 20] getparam 1 .............................. <params>
+  [ 22] getobjprop 44 ........................... <params.name>
+  [ 24] getparam 1 .............................. <params>
+  [ 26] getobjprop 45 ........................... <params.character>
+  [ 28] pusharglistnoret 3 ...................... <pAnimSet, params.name, params.character>
+  [ 30] objcall 1 ............................... pAnimSet.init(params.name, params.character)
+  [ 32] getprop 33 .............................. <ancestor>
+  [ 34] getparam 1 .............................. <params>
+  [ 36] pusharglistnoret 2 ...................... <ancestor, params>
+  [ 38] objcall 1 ............................... ancestor.init(params)
+  [ 40] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getlocal 0 .............................. <i>
+  [ 12] pushsymb 44 ............................. <#name>
+  [ 14] pushcons 1 .............................. <EMPTY>
+  [ 16] pusharglistnoret 3 ...................... <i, #name, EMPTY>
+  [ 18] objcall 48 .............................. i[#name] = EMPTY
+  [ 20] getlocal 0 .............................. <i>
+  [ 22] pushsymb 45 ............................. <#character>
+  [ 24] pushsymb 49 ............................. <#none>
+  [ 26] pusharglistnoret 3 ...................... <i, #character, #none>
+  [ 28] objcall 48 .............................. i[#character] = #none
+  [ 30] getprop 33 .............................. <ancestor>
+  [ 32] pusharglistnoret 1 ...................... <ancestor>
+  [ 34] objcall 2 ............................... ancestor.addModParams()
+  [ 36] ret
+end
+
+on finish me
+  [  0] getprop 39 .............................. <pAnimSet>
+  [  2] pushsymb 49 ............................. <#none>
+  [  4] nteq .................................... <pAnimSet <> #none>
+  [  5] getparam 0 .............................. <me>
+  [  7] getchainedprop 51 ....................... <me.big>
+  [  9] pusharglist 1 ........................... <me.big>
+  [ 11] objcall 52 .............................. <me.big.getMode()>
+  [ 13] pushsymb 3 .............................. <#finish>
+  [ 15] eq ...................................... <me.big.getMode() = #finish>
+  [ 16] and ..................................... <(pAnimSet <> #none) and (me.big.getMode() = #finish)>
+  [ 17] jmpifz [ 30] ............................ if (pAnimSet <> #none) and (me.big.getMode() = #finish) then
+  [ 20] getprop 39 .............................. <pAnimSet>
+  [ 22] pusharglistnoret 1 ...................... <pAnimSet>
+  [ 24] objcall 3 ............................... pAnimSet.finish()
+  [ 26] pushsymb 49 ............................. <#none>
+  [ 28] setprop 39 .............................. pAnimSet = #none
+  [ 30] getprop 33 .............................. <ancestor>
+  [ 32] pusharglistnoret 1 ...................... <ancestor>
+  [ 34] objcall 3 ............................... ancestor.finish()
+  [ 36] ret
+end
+
+on addSaveData me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 4 ............................... ancestor.addSaveData(sd)
+  [  8] getparam 0 .............................. <me>
+  [ 10] getparam 1 .............................. <sd>
+  [ 12] pusharglistnoret 2 ...................... <me, sd>
+  [ 14] objcall 6 ............................... me.addToSaveData(sd)
+  [ 16] ret
+end
+
+on addToArmyDetails me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 51 ....................... <me.big>
+  [  4] pusharglist 1 ........................... <me.big>
+  [  6] objcall 54 .............................. <me.big.getArmyDetails()>
+  [  8] setlocal 0 .............................. ad = me.big.getArmyDetails()
+  [ 10] getparam 0 .............................. <me>
+  [ 12] getlocal 0 .............................. <ad>
+  [ 14] pusharglistnoret 2 ...................... <me, ad>
+  [ 16] objcall 6 ............................... me.addToSaveData(ad)
+  [ 18] ret
+end
+
+on addToSaveData me, sd
+  [  0] getparam 1 .............................. <sd>
+  [  2] pushsymb 37 ............................. <#pAnimKeepSize>
+  [  4] getprop 37 .............................. <pAnimKeepSize>
+  [  6] pusharglistnoret 3 ...................... <sd, #pAnimKeepSize, pAnimKeepSize>
+  [  8] objcall 48 .............................. sd[#pAnimKeepSize] = pAnimKeepSize
+  [ 10] getparam 1 .............................. <sd>
+  [ 12] pushsymb 38 ............................. <#pAnimPaused>
+  [ 14] getprop 38 .............................. <pAnimPaused>
+  [ 16] pusharglistnoret 3 ...................... <sd, #pAnimPaused, pAnimPaused>
+  [ 18] objcall 48 .............................. sd[#pAnimPaused] = pAnimPaused
+  [ 20] pusharglist 0 ........................... <[:]>
+  [ 22] pushproplist ............................ <[:]>
+  [ 23] setlocal 0 .............................. saveData = [:]
+  [ 25] getprop 39 .............................. <pAnimSet>
+  [ 27] getlocal 0 .............................. <saveData>
+  [ 29] pusharglistnoret 2 ...................... <pAnimSet, saveData>
+  [ 31] objcall 4 ............................... pAnimSet.addSaveData(saveData)
+  [ 33] getparam 1 .............................. <sd>
+  [ 35] pushsymb 39 ............................. <#pAnimSet>
+  [ 37] getlocal 0 .............................. <saveData>
+  [ 39] pusharglistnoret 3 ...................... <sd, #pAnimSet, saveData>
+  [ 41] objcall 48 .............................. sd[#pAnimSet] = saveData
+  [ 43] ret
+end
+
+on frameAdvance me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 32 .............................. me.updateAnim()
+  [  6] getparam 0 .............................. <me>
+  [  8] getchainedprop 57 ....................... <me.id>
+  [ 10] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 12] pusharglistnoret 1 ...................... <me.id.bigMe>
+  [ 14] objcall 9 ............................... me.id.bigMe.animUpdated()
+  [ 16] getparam 0 .............................. <me>
+  [ 18] pushsymb 9 .............................. <#animUpdated>
+  [ 20] pusharglistnoret 2 ...................... <me, #animUpdated>
+  [ 22] objcall 22 .............................. me.internalEvent(#animUpdated)
+  [ 24] ret
+end
+
+on frameExtendDelay me, delayAmount
+  [  0] getprop 39 .............................. <pAnimSet>
+  [  2] getparam 0 .............................. <me>
+  [  4] getchainedprop 51 ....................... <me.big>
+  [  6] pushsymb 49 ............................. <#none>
+  [  8] pusharglist 2 ........................... <me.big, #none>
+  [ 10] objcall 10 .............................. <me.big.getAnimSym(#none)>
+  [ 12] getparam 1 .............................. <delayAmount>
+  [ 14] pusharglistnoret 3 ...................... <pAnimSet, me.big.getAnimSym(#none), delayAmount>
+  [ 16] objcall 59 .............................. pAnimSet.extendDelay(me.big.getAnimSym(#none), delayAmount)
+  [ 18] ret
+end
+
+on animUpdated me
+  [  0] ret
+end
+
+on getAnimSym me, sym
+  [  0] getparam 1 .............................. <sym>
+  [  2] pushsymb 49 ............................. <#none>
+  [  4] eq ...................................... <sym = #none>
+  [  5] jmpifz [ 20] ............................ if sym = #none then
+  [  8] getparam 0 .............................. <me>
+  [ 10] getchainedprop 57 ....................... <me.id>
+  [ 12] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 14] pusharglist 1 ........................... <me.id.bigMe>
+  [ 16] objcall 52 .............................. <me.id.bigMe.getMode()>
+  [ 18] setparam 1 .............................. sym = me.id.bigMe.getMode()
+  [ 20] getparam 1 .............................. <sym>
+  [ 22] peek 0 .................................. case sym of
+  [ 24] pushsymb 61 ............................. <#build>
+  [ 26] eq
+  [ 27] jmpifz [ 50] ............................ (case) #build:
+  [ 30] getparam 0 .............................. <me>
+  [ 32] getchainedprop 51 ....................... <me.big>
+  [ 34] pusharglist 1 ........................... <me.big>
+  [ 36] objcall 62 .............................. <me.big.checkMyBuildingInRange()>
+  [ 38] pushzero ................................ <0>
+  [ 39] eq ...................................... <me.big.checkMyBuildingInRange() = 0>
+  [ 40] jmpifz [ 47] ............................ if me.big.checkMyBuildingInRange() = 0 then
+  [ 43] pushsymb 63 ............................. <#walk>
+  [ 45] setparam 1 .............................. sym = #walk
+  [ 47] jmp [131]
+  [ 50] peek 0
+  [ 52] pushsymb 64 ............................. <#fall>
+  [ 54] eq
+  [ 55] jmpifz [ 65] ............................ (case) #fall:
+  [ 58] pushsymb 65 ............................. <#jump>
+  [ 60] setparam 1 .............................. sym = #jump
+  [ 62] jmp [131]
+  [ 65] peek 0
+  [ 67] pushsymb 66 ............................. <#landed>
+  [ 69] nteq
+  [ 70] jmpifz [ 81] ............................ (case) #landed, ...
+  [ 73] peek 0
+  [ 75] pushsymb 67 ............................. <#moveToLoc>
+  [ 77] eq
+  [ 78] jmpifz [ 88] ............................ (case) ..., #moveToLoc:
+  [ 81] pushsymb 63 ............................. <#walk>
+  [ 83] setparam 1 .............................. sym = #walk
+  [ 85] jmp [131]
+  [ 88] peek 0
+  [ 90] pushsymb 68 ............................. <#look>
+  [ 92] eq
+  [ 93] jmpifz [103] ............................ (case) #look:
+  [ 96] pushsymb 69 ............................. <#stand>
+  [ 98] setparam 1 .............................. sym = #stand
+  [100] jmp [131]
+  [103] peek 0
+  [105] pushsymb 70 ............................. <#dead>
+  [107] nteq
+  [108] jmpifz [127] ............................ (case) #dead, ...
+  [111] peek 0
+  [113] pushsymb 3 .............................. <#finish>
+  [115] nteq
+  [116] jmpifz [127] ............................ (case) ..., #finish, ...
+  [119] peek 0
+  [121] pushsymb 71 ............................. <#reelSit>
+  [123] eq
+  [124] jmpifz [131] ............................ (case) ..., #reelSit:
+  [127] pushsymb 76 ............................. <#grave>
+  [129] setparam 1 .............................. sym = #grave
+  [131] pop 1 ................................... end case
+  [133] getparam 1 .............................. <sym>
+  [135] pushsymb 63 ............................. <#walk>
+  [137] eq ...................................... <sym = #walk>
+  [138] jmpifz [158] ............................ if sym = #walk then
+  [141] getparam 0 .............................. <me>
+  [143] getchainedprop 51 ....................... <me.big>
+  [145] pusharglist 1 ........................... <me.big>
+  [147] objcall 77 .............................. <me.big.getMoving()>
+  [149] pushzero ................................ <0>
+  [150] eq ...................................... <me.big.getMoving() = 0>
+  [151] jmpifz [158] ............................ if me.big.getMoving() = 0 then
+  [154] pushsymb 69 ............................. <#stand>
+  [156] setparam 1 .............................. sym = #stand
+  [158] getparam 0 .............................. <me>
+  [160] getchainedprop 51 ....................... <me.big>
+  [162] pusharglist 1 ........................... <me.big>
+  [164] objcall 4520 ............................ <me.big.getGmgOn()>
+  [167] pushint8 1 .............................. <1>
+  [169] nteq .................................... <me.big.getGmgOn() <> 1>
+  [170] jmpifz [222] ............................ if me.big.getGmgOn() <> 1 then / else
+  [173] getparam 1 .............................. <sym>
+  [175] pushsymb 78 ............................. <#charge>
+  [177] eq ...................................... <sym = #charge>
+  [178] jmpifz [196] ............................ if sym = #charge then
+  [181] getparam 0 .............................. <me>
+  [183] getchainedprop 51 ....................... <me.big>
+  [185] pusharglist 1 ........................... <me.big>
+  [187] objcall 77 .............................. <me.big.getMoving()>
+  [189] jmpifz [196] ............................ if me.big.getMoving() then
+  [192] pushsymb 79 ............................. <#chargewalk>
+  [194] setparam 1 .............................. sym = #chargewalk
+  [196] getparam 1 .............................. <sym>
+  [198] pushsymb 80 ............................. <#release>
+  [200] eq ...................................... <sym = #release>
+  [201] jmpifz [219] ............................ if sym = #release then
+  [204] getparam 0 .............................. <me>
+  [206] getchainedprop 51 ....................... <me.big>
+  [208] pusharglist 1 ........................... <me.big>
+  [210] objcall 77 .............................. <me.big.getMoving()>
+  [212] jmpifz [219] ............................ if me.big.getMoving() then
+  [215] pushsymb 81 ............................. <#releasewalk>
+  [217] setparam 1 .............................. sym = #releasewalk
+  [219] jmp [246]
+  [222] getparam 0 .............................. <me>
+  [224] getchainedprop 51 ....................... <me.big>
+  [226] pusharglist 1 ........................... <me.big>
+  [228] objcall 77 .............................. <me.big.getMoving()>
+  [230] jmpifz [241] ............................ if me.big.getMoving() then / else
+  [233] pushsymb 4521 ........................... <#weaponMagicWalk>
+  [236] setparam 1 .............................. sym = #weaponMagicWalk
+  [238] jmp [246]
+  [241] pushsymb 4522 ........................... <#weaponMagic>
+  [244] setparam 1 .............................. sym = #weaponMagic
+  [246] getparam 1 .............................. <sym>
+  [248] pusharglistnoret 1 ...................... <sym>
+  [250] extcall 35 .............................. return sym
+  [252] ret
+end
+
+on getAnimFrame me
+  [  0] getprop 39 .............................. <pAnimSet>
+  [  2] getparam 0 .............................. <me>
+  [  4] getchainedprop 57 ....................... <me.id>
+  [  6] getchainedprop 58 ....................... <me.id.bigMe>
+  [  8] pushsymb 49 ............................. <#none>
+  [ 10] pusharglist 2 ........................... <me.id.bigMe, #none>
+  [ 12] objcall 10 .............................. <me.id.bigMe.getAnimSym(#none)>
+  [ 14] pusharglist 2 ........................... <pAnimSet, me.id.bigMe.getAnimSym(#none)>
+  [ 16] objcall 83 .............................. <pAnimSet.getFrame(me.id.bigMe.getAnimSym(#none))>
+  [ 18] pusharglistnoret 1 ...................... <pAnimSet.getFrame(me.id.bigMe.getAnimSym(#none))>
+  [ 20] extcall 35 .............................. return pAnimSet.getFrame(me.id.bigMe.getAnimSym(#none))
+  [ 22] ret
+end
+
+on getAnimFrameFresh me
+  [  0] getprop 39 .............................. <pAnimSet>
+  [  2] getparam 0 .............................. <me>
+  [  4] getchainedprop 57 ....................... <me.id>
+  [  6] getchainedprop 58 ....................... <me.id.bigMe>
+  [  8] pushsymb 49 ............................. <#none>
+  [ 10] pusharglist 2 ........................... <me.id.bigMe, #none>
+  [ 12] objcall 10 .............................. <me.id.bigMe.getAnimSym(#none)>
+  [ 14] pusharglist 2 ........................... <pAnimSet, me.id.bigMe.getAnimSym(#none)>
+  [ 16] objcall 84 .............................. <pAnimSet.getFrameFresh(me.id.bigMe.getAnimSym(#none))>
+  [ 18] pusharglistnoret 1 ...................... <pAnimSet.getFrameFresh(me.id.bigMe.getAnimSym(#none))>
+  [ 20] extcall 35 .............................. return pAnimSet.getFrameFresh(me.id.bigMe.getAnimSym(#none))
+  [ 22] ret
+end
+
+on getAnimImage me
+  [  0] getprop 39 .............................. <pAnimSet>
+  [  2] getparam 0 .............................. <me>
+  [  4] getchainedprop 51 ....................... <me.big>
+  [  6] pushsymb 49 ............................. <#none>
+  [  8] pusharglist 2 ........................... <me.big, #none>
+  [ 10] objcall 10 .............................. <me.big.getAnimSym(#none)>
+  [ 12] pusharglist 2 ........................... <pAnimSet, me.big.getAnimSym(#none)>
+  [ 14] objcall 85 .............................. <pAnimSet.getImage(me.big.getAnimSym(#none))>
+  [ 16] pusharglistnoret 1 ...................... <pAnimSet.getImage(me.big.getAnimSym(#none))>
+  [ 18] extcall 35 .............................. return pAnimSet.getImage(me.big.getAnimSym(#none))
+  [ 20] ret
+end
+
+on getAnimImageFromStrip me, animSym
+  [  0] getprop 39 .............................. <pAnimSet>
+  [  2] getparam 1 .............................. <animSym>
+  [  4] pusharglist 2 ........................... <pAnimSet, animSym>
+  [  6] objcall 85 .............................. <pAnimSet.getImage(animSym)>
+  [  8] pusharglistnoret 1 ...................... <pAnimSet.getImage(animSym)>
+  [ 10] extcall 35 .............................. return pAnimSet.getImage(animSym)
+  [ 12] ret
+end
+
+on getAnimKeepSize me
+  [  0] getprop 37 .............................. <pAnimKeepSize>
+  [  2] pusharglistnoret 1 ...................... <pAnimKeepSize>
+  [  4] extcall 35 .............................. return pAnimKeepSize
+  [  6] ret
+end
+
+on getAnimLooped me
+  [  0] getprop 39 .............................. <pAnimSet>
+  [  2] pushsymb 49 ............................. <#none>
+  [  4] eq ...................................... <pAnimSet = #none>
+  [  5] jmpifz [ 14] ............................ if pAnimSet = #none then
+  [  8] pushint8 1 .............................. <1>
+  [ 10] pusharglistnoret 1 ...................... <1>
+  [ 12] extcall 35 .............................. return 1
+  [ 14] getprop 39 .............................. <pAnimSet>
+  [ 16] getparam 0 .............................. <me>
+  [ 18] getchainedprop 57 ....................... <me.id>
+  [ 20] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 22] pushsymb 49 ............................. <#none>
+  [ 24] pusharglist 2 ........................... <me.id.bigMe, #none>
+  [ 26] objcall 10 .............................. <me.id.bigMe.getAnimSym(#none)>
+  [ 28] pusharglist 2 ........................... <pAnimSet, me.id.bigMe.getAnimSym(#none)>
+  [ 30] objcall 87 .............................. <pAnimSet.getLooped(me.id.bigMe.getAnimSym(#none))>
+  [ 32] pusharglistnoret 1 ...................... <pAnimSet.getLooped(me.id.bigMe.getAnimSym(#none))>
+  [ 34] extcall 35 .............................. return pAnimSet.getLooped(me.id.bigMe.getAnimSym(#none))
+  [ 36] ret
+end
+
+on getAnimMember me
+  [  0] getprop 39 .............................. <pAnimSet>
+  [  2] getparam 0 .............................. <me>
+  [  4] getchainedprop 51 ....................... <me.big>
+  [  6] pushsymb 49 ............................. <#none>
+  [  8] pusharglist 2 ........................... <me.big, #none>
+  [ 10] objcall 10 .............................. <me.big.getAnimSym(#none)>
+  [ 12] pusharglist 2 ........................... <pAnimSet, me.big.getAnimSym(#none)>
+  [ 14] objcall 88 .............................. <pAnimSet.getCurrentMember(me.big.getAnimSym(#none))>
+  [ 16] pusharglistnoret 1 ...................... <pAnimSet.getCurrentMember(me.big.getAnimSym(#none))>
+  [ 18] extcall 35 .............................. return pAnimSet.getCurrentMember(me.big.getAnimSym(#none))
+  [ 20] ret
+end
+
+on getAnimMemberFromStrip me, animSym
+  [  0] getprop 39 .............................. <pAnimSet>
+  [  2] getparam 1 .............................. <animSym>
+  [  4] pusharglist 2 ........................... <pAnimSet, animSym>
+  [  6] objcall 88 .............................. <pAnimSet.getCurrentMember(animSym)>
+  [  8] pusharglistnoret 1 ...................... <pAnimSet.getCurrentMember(animSym)>
+  [ 10] extcall 35 .............................. return pAnimSet.getCurrentMember(animSym)
+  [ 12] ret
+end
+
+on getAnimMemberFromStripAt me, animSym, frameNo
+  [  0] getprop 39 .............................. <pAnimSet>
+  [  2] getparam 1 .............................. <animSym>
+  [  4] getparam 2 .............................. <frameNo>
+  [  6] pusharglist 3 ........................... <pAnimSet, animSym, frameNo>
+  [  8] objcall 89 .............................. <pAnimSet.getMemberAt(animSym, frameNo)>
+  [ 10] pusharglistnoret 1 ...................... <pAnimSet.getMemberAt(animSym, frameNo)>
+  [ 12] extcall 35 .............................. return pAnimSet.getMemberAt(animSym, frameNo)
+  [ 14] ret
+end
+
+on getNoOfFramesInStrip me, animSym
+  [  0] getprop 39 .............................. <pAnimSet>
+  [  2] getparam 1 .............................. <animSym>
+  [  4] pusharglist 2 ........................... <pAnimSet, animSym>
+  [  6] objcall 91 .............................. <pAnimSet.getNoOfFrames(animSym)>
+  [  8] pusharglistnoret 1 ...................... <pAnimSet.getNoOfFrames(animSym)>
+  [ 10] extcall 35 .............................. return pAnimSet.getNoOfFrames(animSym)
+  [ 12] ret
+end
+
+on gotoAnimFrame me, frameNum
+  [  0] getprop 39 .............................. <pAnimSet>
+  [  2] getparam 0 .............................. <me>
+  [  4] getchainedprop 51 ....................... <me.big>
+  [  6] pushsymb 49 ............................. <#none>
+  [  8] pusharglist 2 ........................... <me.big, #none>
+  [ 10] objcall 10 .............................. <me.big.getAnimSym(#none)>
+  [ 12] getparam 1 .............................. <frameNum>
+  [ 14] pusharglist 3 ........................... <pAnimSet, me.big.getAnimSym(#none), frameNum>
+  [ 16] objcall 21 .............................. <pAnimSet.gotoAnimFrame(me.big.getAnimSym(#none), frameNum)>
+  [ 18] pusharglistnoret 1 ...................... <pAnimSet.gotoAnimFrame(me.big.getAnimSym(#none), frameNum)>
+  [ 20] extcall 35 .............................. return pAnimSet.gotoAnimFrame(me.big.getAnimSym(#none), frameNum)
+  [ 22] ret
+end
+
+on internalEvent me, theEvent
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <theEvent>
+  [  4] pusharglistnoret 2 ...................... <ancestor, theEvent>
+  [  6] objcall 22 .............................. ancestor.internalEvent(theEvent)
+  [  8] getparam 1 .............................. <theEvent>
+  [ 10] peek 0 .................................. case theEvent of
+  [ 12] pushsymb 5 .............................. <#addToArmyDetails>
+  [ 14] eq
+  [ 15] jmpifz [ 27] ............................ (case) #addToArmyDetails:
+  [ 18] getparam 0 .............................. <me>
+  [ 20] pusharglistnoret 1 ...................... <me>
+  [ 22] objcall 5 ............................... me.addToArmyDetails()
+  [ 24] jmp [ 41]
+  [ 27] peek 0
+  [ 29] pushsymb 25 ............................. <#restoreFromArmyDetails>
+  [ 31] eq
+  [ 32] jmpifz [ 41] ............................ (case) #restoreFromArmyDetails:
+  [ 35] getparam 0 .............................. <me>
+  [ 37] pusharglistnoret 1 ...................... <me>
+  [ 39] objcall 25 .............................. me.restoreFromArmyDetails()
+  [ 41] pop 1 ................................... end case
+  [ 43] ret
+end
+
+on pauseAnim me
+  [  0] pushint8 1 .............................. <1>
+  [  2] setprop 38 .............................. pAnimPaused = 1
+  [  4] ret
+end
+
+on resetAnim me, animSym
+  [  0] getprop 39 .............................. <pAnimSet>
+  [  2] getparam 1 .............................. <animSym>
+  [  4] pusharglistnoret 2 ...................... <pAnimSet, animSym>
+  [  6] objcall 24 .............................. pAnimSet.resetAnim(animSym)
+  [  8] ret
+end
+
+on restoreFromArmyDetails me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 51 ....................... <me.big>
+  [  4] pusharglist 1 ........................... <me.big>
+  [  6] objcall 54 .............................. <me.big.getArmyDetails()>
+  [  8] setlocal 0 .............................. ad = me.big.getArmyDetails()
+  [ 10] getparam 0 .............................. <me>
+  [ 12] getlocal 0 .............................. <ad>
+  [ 14] pusharglistnoret 2 ...................... <me, ad>
+  [ 16] objcall 27 .............................. me.restoreFromSaveData(ad)
+  [ 18] ret
+end
+
+on restoreFromSave me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 26 .............................. ancestor.restoreFromSave(sd)
+  [  8] getparam 0 .............................. <me>
+  [ 10] getparam 1 .............................. <sd>
+  [ 12] pusharglistnoret 2 ...................... <me, sd>
+  [ 14] objcall 27 .............................. me.restoreFromSaveData(sd)
+  [ 16] ret
+end
+
+on restoreFromSaveData me, sd
+  [  0] getparam 1 .............................. <sd>
+  [  2] getobjprop 37 ........................... <sd.pAnimKeepSize>
+  [  4] setprop 37 .............................. pAnimKeepSize = sd.pAnimKeepSize
+  [  6] getparam 1 .............................. <sd>
+  [  8] getobjprop 38 ........................... <sd.pAnimPaused>
+  [ 10] setprop 38 .............................. pAnimPaused = sd.pAnimPaused
+  [ 12] getprop 39 .............................. <pAnimSet>
+  [ 14] getparam 1 .............................. <sd>
+  [ 16] getobjprop 39 ........................... <sd.pAnimSet>
+  [ 18] pusharglistnoret 2 ...................... <pAnimSet, sd.pAnimSet>
+  [ 20] objcall 26 .............................. pAnimSet.restoreFromSave(sd.pAnimSet)
+  [ 22] ret
+end
+
+on setAnimAllowStretching me, newVal
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <newVal>
+  [  4] pusharglistnoret 2 ...................... <me, newVal>
+  [  6] objcall 29 .............................. me.setAnimKeepSize(newVal)
+  [  8] ret
+end
+
+on setAnimKeepSize me, newVal
+  [  0] getparam 1 .............................. <newVal>
+  [  2] setprop 37 .............................. pAnimKeepSize = newVal
+  [  4] ret
+end
+
+on unpauseAnim me
+  [  0] pushzero ................................ <0>
+  [  1] setprop 38 .............................. pAnimPaused = 0
+  [  3] ret
+end
+
+on update me
+  [  0] getprop 38 .............................. <pAnimPaused>
+  [  2] pushzero ................................ <0>
+  [  3] eq ...................................... <pAnimPaused = 0>
+  [  4] jmpifz [ 13] ............................ if pAnimPaused = 0 then
+  [  7] getparam 0 .............................. <me>
+  [  9] pusharglistnoret 1 ...................... <me>
+  [ 11] objcall 7 ............................... me.frameAdvance()
+  [ 13] getprop 33 .............................. <ancestor>
+  [ 15] pusharglistnoret 1 ...................... <ancestor>
+  [ 17] objcall 31 .............................. ancestor.update()
+  [ 19] ret
+end
+
+on updateAnim me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 57 ....................... <me.id>
+  [  4] getchainedprop 58 ....................... <me.id.bigMe>
+  [  6] pushsymb 49 ............................. <#none>
+  [  8] pusharglist 2 ........................... <me.id.bigMe, #none>
+  [ 10] objcall 10 .............................. <me.id.bigMe.getAnimSym(#none)>
+  [ 12] setlocal 0 .............................. sym = me.id.bigMe.getAnimSym(#none)
+  [ 14] getprop 39 .............................. <pAnimSet>
+  [ 16] getlocal 0 .............................. <sym>
+  [ 18] pusharglist 2 ........................... <pAnimSet, sym>
+  [ 20] objcall 95 .............................. <pAnimSet.getMember(sym)>
+  [ 22] setlocal 1 .............................. member = pAnimSet.getMember(sym)
+  [ 24] getparam 0 .............................. <me>
+  [ 26] getchainedprop 57 ....................... <me.id>
+  [ 28] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 30] pusharglist 1 ........................... <me.id.bigMe>
+  [ 32] objcall 97 .............................. <me.id.bigMe.getSprite()>
+  [ 34] getlocal 1 .............................. <member>
+  [ 36] pushsymb 98 ............................. <#gameChar>
+  [ 38] getprop 37 .............................. <pAnimKeepSize>
+  [ 40] pusharglistnoret 4 ...................... <me.id.bigMe.getSprite(), member, #gameChar, pAnimKeepSize>
+  [ 42] extcall 96 .............................. SpriteSetMember(me.id.bigMe.getSprite(), member, #gameChar, pAnimKeepSize)
+  [ 44] ret
+end

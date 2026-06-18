@@ -1,0 +1,253 @@
+property ancestor, pFreezeCounter, pFrozen, pFreezeTime, pPreviousWalkSpeed, pGlowTeal
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getprop 33 .............................. <ancestor>
+  [ 12] pusharglistnoret 1 ...................... <ancestor>
+  [ 14] objcall 2 ............................... ancestor.addModParams()
+  [ 16] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pusharglist 0 ........................... <>
+  [ 10] extcall 529 ............................. <CounterNew()>
+  [ 13] setprop 722 ............................. pFreezeCounter = CounterNew()
+  [ 16] getprop 722 ............................. <pFreezeCounter>
+  [ 19] pushint8 1 .............................. <1>
+  [ 21] setobjprop 723 .......................... pFreezeCounter.inc = 1
+  [ 24] getprop 722 ............................. <pFreezeCounter>
+  [ 27] pushzero ................................ <0>
+  [ 28] pushint16 1000 .......................... <1000>
+  [ 31] pusharglist 2 ........................... <[0, 1000]>
+  [ 33] pushlist ................................ <[0, 1000]>
+  [ 34] setobjprop 530 .......................... pFreezeCounter.tim = [0, 1000]
+  [ 37] pushzero ................................ <0>
+  [ 38] setprop 724 ............................. pFrozen = 0
+  [ 41] pushzero ................................ <0>
+  [ 42] setprop 726 ............................. pGlowTeal = 0
+  [ 45] ret
+end
+
+on defrost me
+  [  0] pushzero ................................ <0>
+  [  1] setprop 724 ............................. pFrozen = 0
+  [  4] getparam 0 .............................. <me>
+  [  6] pusharglist 1 ........................... <me>
+  [  8] objcall 718 ............................. <me.getSpeed()>
+  [ 11] setlocal 0 .............................. currSpeed = me.getSpeed()
+  [ 13] pushint8 2 .............................. <2>
+  [ 15] getlocal 0 .............................. <currSpeed>
+  [ 17] mul ..................................... <2 * currSpeed>
+  [ 18] getprop 725 ............................. <pPreviousWalkSpeed>
+  [ 21] sub ..................................... <(2 * currSpeed) - pPreviousWalkSpeed>
+  [ 22] pushint8 2 .............................. <2>
+  [ 24] div ..................................... <((2 * currSpeed) - pPreviousWalkSpeed) / 2>
+  [ 25] setlocal 1 .............................. speedChange = ((2 * currSpeed) - pPreviousWalkSpeed) / 2
+  [ 27] pushint8 2 .............................. <2>
+  [ 29] getlocal 0 .............................. <currSpeed>
+  [ 31] mul ..................................... <2 * currSpeed>
+  [ 32] getlocal 1 .............................. <speedChange>
+  [ 34] sub ..................................... <(2 * currSpeed) - speedChange>
+  [ 35] setlocal 2 .............................. walkSpeed = (2 * currSpeed) - speedChange
+  [ 37] getparam 0 .............................. <me>
+  [ 39] getlocal 2 .............................. <walkSpeed>
+  [ 41] pusharglistnoret 2 ...................... <me, walkSpeed>
+  [ 43] objcall 719 ............................. me.setSpeed(walkSpeed)
+  [ 46] getprop 726 ............................. <pGlowTeal>
+  [ 49] pushint8 1 .............................. <1>
+  [ 51] eq ...................................... <pGlowTeal = 1>
+  [ 52] jmpifz [ 68] ............................ if pGlowTeal = 1 then
+  [ 55] getparam 0 .............................. <me>
+  [ 57] getchainedprop 51 ....................... <me.big>
+  [ 59] pusharglistnoret 1 ...................... <me.big>
+  [ 61] objcall 456 ............................. me.big.stopGlowTeal()
+  [ 64] pushzero ................................ <0>
+  [ 65] setprop 726 ............................. pGlowTeal = 0
+  [ 68] ret
+end
+
+on getSpeed me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 51 ....................... <me.big>
+  [  4] pushsymb 4489 ........................... <#modNavMode>
+  [  7] pusharglist 2 ........................... <me.big, #modNavMode>
+  [  9] objcall 3329 ............................ <me.big.modIsInstalled(#modNavMode)>
+  [ 12] jmpifz [ 31] ............................ if me.big.modIsInstalled(#modNavMode) then / else
+  [ 15] getparam 0 .............................. <me>
+  [ 17] getchainedprop 51 ....................... <me.big>
+  [ 19] pusharglist 1 ........................... <me.big>
+  [ 21] objcall 731 ............................. <me.big.getAcceleration()>
+  [ 24] pusharglistnoret 1 ...................... <me.big.getAcceleration()>
+  [ 26] extcall 35 .............................. return me.big.getAcceleration()
+  [ 28] jmp [ 44]
+  [ 31] getparam 0 .............................. <me>
+  [ 33] getchainedprop 51 ....................... <me.big>
+  [ 35] pusharglist 1 ........................... <me.big>
+  [ 37] objcall 732 ............................. <me.big.getWalkSpeed()>
+  [ 40] pusharglistnoret 1 ...................... <me.big.getWalkSpeed()>
+  [ 42] extcall 35 .............................. return me.big.getWalkSpeed()
+  [ 44] ret
+end
+
+on internalEvent me, theEvent
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <theEvent>
+  [  4] pusharglistnoret 2 ...................... <ancestor, theEvent>
+  [  6] objcall 22 .............................. ancestor.internalEvent(theEvent)
+  [  8] getparam 1 .............................. <theEvent>
+  [ 10] peek 0 .................................. case theEvent of
+  [ 12] pushsymb 478 ............................ <#colourTransformFin>
+  [ 15] eq
+  [ 16] jmpifz [ 34] ............................ (case) #colourTransformFin:
+  [ 19] getprop 726 ............................. <pGlowTeal>
+  [ 22] jmpifz [ 34] ............................ if pGlowTeal then
+  [ 25] getparam 0 .............................. <me>
+  [ 27] getchainedprop 51 ....................... <me.big>
+  [ 29] pusharglistnoret 1 ...................... <me.big>
+  [ 31] objcall 450 ............................. me.big.glowTeal()
+  [ 34] pop 1
+  [ 36] ret
+end
+
+on setSpeed me, newVal
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 51 ....................... <me.big>
+  [  4] pushsymb 4489 ........................... <#modNavMode>
+  [  7] pusharglist 2 ........................... <me.big, #modNavMode>
+  [  9] objcall 3329 ............................ <me.big.modIsInstalled(#modNavMode)>
+  [ 12] jmpifz [ 33] ............................ if me.big.modIsInstalled(#modNavMode) then / else
+  [ 15] getparam 0 .............................. <me>
+  [ 17] getchainedprop 51 ....................... <me.big>
+  [ 19] getparam 1 .............................. <newVal>
+  [ 21] pusharglist 2 ........................... <me.big, newVal>
+  [ 23] objcall 733 ............................. <me.big.setAcceleration(newVal)>
+  [ 26] pusharglistnoret 1 ...................... <me.big.setAcceleration(newVal)>
+  [ 28] extcall 35 .............................. return me.big.setAcceleration(newVal)
+  [ 30] jmp [ 48]
+  [ 33] getparam 0 .............................. <me>
+  [ 35] getchainedprop 51 ....................... <me.big>
+  [ 37] getparam 1 .............................. <newVal>
+  [ 39] pusharglist 2 ........................... <me.big, newVal>
+  [ 41] objcall 734 ............................. <me.big.setWalkSpeed(newVal)>
+  [ 44] pusharglistnoret 1 ...................... <me.big.setWalkSpeed(newVal)>
+  [ 46] extcall 35 .............................. return me.big.setWalkSpeed(newVal)
+  [ 48] ret
+end
+
+on takeFreeze me, collisionVect, attackingObj, owner
+  [  0] getprop 724 ............................. <pFrozen>
+  [  3] pushzero ................................ <0>
+  [  4] eq ...................................... <pFrozen = 0>
+  [  5] jmpifz [ 84] ............................ if pFrozen = 0 then
+  [  8] pushint8 1 .............................. <1>
+  [ 10] setprop 724 ............................. pFrozen = 1
+  [ 13] getprop 722 ............................. <pFreezeCounter>
+  [ 16] pusharglistnoret 1 ...................... <pFreezeCounter>
+  [ 18] extcall 706 ............................. CounterReset(pFreezeCounter)
+  [ 21] getprop 722 ............................. <pFreezeCounter>
+  [ 24] pushint16 999 ........................... <999>
+  [ 27] pusharglistnoret 2 ...................... <pFreezeCounter, 999>
+  [ 29] extcall 735 ............................. CounterSetCount(pFreezeCounter, 999)
+  [ 32] getparam 0 .............................. <me>
+  [ 34] pusharglist 1 ........................... <me>
+  [ 36] objcall 718 ............................. <me.getSpeed()>
+  [ 39] setprop 725 ............................. pPreviousWalkSpeed = me.getSpeed()
+  [ 42] getparam 0 .............................. <me>
+  [ 44] pushfloat32 0.5 ......................... <0.5>
+  [ 49] getprop 725 ............................. <pPreviousWalkSpeed>
+  [ 52] mul ..................................... <0.5 * pPreviousWalkSpeed>
+  [ 53] pusharglistnoret 2 ...................... <me, 0.5 * pPreviousWalkSpeed>
+  [ 55] objcall 719 ............................. me.setSpeed(0.5 * pPreviousWalkSpeed)
+  [ 58] getparam 2 .............................. <attackingObj>
+  [ 60] pusharglist 1 ........................... <attackingObj>
+  [ 62] objcall 141 ............................. <attackingObj.getAttack()>
+  [ 64] getobjprop 450 .......................... <attackingObj.getAttack().glowTeal>
+  [ 67] jmpifz [ 84] ............................ if attackingObj.getAttack().glowTeal then
+  [ 70] getparam 0 .............................. <me>
+  [ 72] getchainedprop 51 ....................... <me.big>
+  [ 74] pusharglistnoret 1 ...................... <me.big>
+  [ 76] objcall 450 ............................. me.big.glowTeal()
+  [ 79] pushint8 1 .............................. <1>
+  [ 81] setprop 726 ............................. pGlowTeal = 1
+  [ 84] getparam 1 .............................. <collisionVect>
+  [ 86] pushint8 1 .............................. <1>
+  [ 88] pusharglist 2 ........................... <collisionVect, 1>
+  [ 90] objcall 109 ............................. <collisionVect[1]>
+  [ 92] pusharglist 1 ........................... <collisionVect[1]>
+  [ 94] extcall 554 ............................. <VarPositive(collisionVect[1])>
+  [ 97] setlocal 0 .............................. collSpeedX = VarPositive(collisionVect[1])
+  [ 99] getparam 1 .............................. <collisionVect>
+  [101] pushint8 2 .............................. <2>
+  [103] pusharglist 2 ........................... <collisionVect, 2>
+  [105] objcall 109 ............................. <collisionVect[2]>
+  [107] pusharglist 1 ........................... <collisionVect[2]>
+  [109] extcall 554 ............................. <VarPositive(collisionVect[2])>
+  [112] setlocal 1 .............................. collSpeedY = VarPositive(collisionVect[2])
+  [114] getparam 2 .............................. <attackingObj>
+  [116] pusharglist 1 ........................... <attackingObj>
+  [118] objcall 141 ............................. <attackingObj.getAttack()>
+  [120] getobjprop 736 .......................... <attackingObj.getAttack().freezeMultiplier>
+  [123] setlocal 2 .............................. multiplier = attackingObj.getAttack().freezeMultiplier
+  [125] getlocal 0 .............................. <collSpeedX>
+  [127] getlocal 1 .............................. <collSpeedY>
+  [129] add ..................................... <collSpeedX + collSpeedY>
+  [130] getlocal 2 .............................. <multiplier>
+  [132] mul ..................................... <(collSpeedX + collSpeedY) * multiplier>
+  [133] pushint8 4 .............................. <4>
+  [135] mul ..................................... <(collSpeedX + collSpeedY) * multiplier * 4>
+  [136] setlocal 3 .............................. freezeTime = (collSpeedX + collSpeedY) * multiplier * 4
+  [138] getprop 722 ............................. <pFreezeCounter>
+  [141] getprop 722 ............................. <pFreezeCounter>
+  [144] getobjprop 737 .......................... <pFreezeCounter.theCount>
+  [147] getlocal 3 .............................. <freezeTime>
+  [149] sub ..................................... <pFreezeCounter.theCount - freezeTime>
+  [150] pusharglistnoret 2 ...................... <pFreezeCounter, pFreezeCounter.theCount - freezeTime>
+  [152] extcall 735 ............................. CounterSetCount(pFreezeCounter, pFreezeCounter.theCount - freezeTime)
+  [155] ret
+end
+
+on update me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 31 .............................. ancestor.update()
+  [  6] getprop 724 ............................. <pFrozen>
+  [  9] jmpifz [ 19] ............................ if pFrozen then
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] objcall 721 ............................. me.updateFreeze()
+  [ 19] ret
+end
+
+on updateFreeze me
+  [  0] getprop 722 ............................. <pFreezeCounter>
+  [  3] pusharglistnoret 1 ...................... <pFreezeCounter>
+  [  5] extcall 553 ............................. counter(pFreezeCounter)
+  [  8] getprop 722 ............................. <pFreezeCounter>
+  [ 11] getobjprop 552 .......................... <pFreezeCounter.fin>
+  [ 14] jmpifz [ 24] ............................ if pFreezeCounter.fin then
+  [ 17] getparam 0 .............................. <me>
+  [ 19] pusharglistnoret 1 ...................... <me>
+  [ 21] objcall 717 ............................. me.defrost()
+  [ 24] ret
+end

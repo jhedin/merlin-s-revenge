@@ -1,0 +1,42 @@
+on ListGetPosByProp thelist, theValueSym, theValue
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. i = 0
+  [  3] pushzero ................................ <0>
+  [  4] setlocal 1 .............................. pos = 0
+  [  6] getparam 0 .............................. <thelist>
+  [  8] peek 0
+  [ 10] pusharglist 1
+  [ 12] extcall 17
+  [ 14] pushint8 1
+  [ 16] peek 0
+  [ 18] peek 2
+  [ 20] lteq
+  [ 21] jmpifz [ 67] ............................ repeat with nPropList in thelist
+  [ 24] peek 2
+  [ 26] peek 1
+  [ 28] pusharglist 2
+  [ 30] extcall 18
+  [ 32] setlocal 2
+  [ 34] getlocal 0 .............................. <i>
+  [ 36] pushint8 1 .............................. <1>
+  [ 38] add ..................................... <i + 1>
+  [ 39] setlocal 0 .............................. i = i + 1
+  [ 41] getlocal 2 .............................. <nPropList>
+  [ 43] getparam 1 .............................. <theValueSym>
+  [ 45] pusharglist 2 ........................... <nPropList, theValueSym>
+  [ 47] objcall 18 .............................. <nPropList[theValueSym]>
+  [ 49] getparam 2 .............................. <theValue>
+  [ 51] eq ...................................... <nPropList[theValueSym] = theValue>
+  [ 52] jmpifz [ 62] ............................ if nPropList[theValueSym] = theValue then
+  [ 55] getlocal 0 .............................. <i>
+  [ 57] setlocal 1 .............................. pos = i
+  [ 59] jmp [ 67] ............................... exit repeat
+  [ 62] pushint8 1
+  [ 64] add
+  [ 65] endrepeat [ 16]
+  [ 67] pop 3
+  [ 69] getlocal 1 .............................. <pos>
+  [ 71] pusharglistnoret 1 ...................... <pos>
+  [ 73] extcall 3 ............................... return pos
+  [ 75] ret
+end

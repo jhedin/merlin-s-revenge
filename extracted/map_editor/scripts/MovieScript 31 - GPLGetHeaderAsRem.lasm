@@ -1,0 +1,48 @@
+on GPLGetHeaderAsRem
+  [  0] pushcons 0 .............................. <"Licence">
+  [  2] pusharglist 1 ........................... <"Licence">
+  [  4] extcall 1 ............................... <member("Licence")>
+  [  6] setlocal 0 .............................. licenceMem = member("Licence")
+  [  8] pushcons 1 .............................. <EMPTY>
+  [ 10] setlocal 1 .............................. newText = EMPTY
+  [ 12] pushint8 1 .............................. <1>
+  [ 14] setlocal 2
+  [ 16] getlocal 2
+  [ 18] getlocal 0 .............................. <licenceMem>
+  [ 20] pushsymb 63 ............................. <#lines>
+  [ 22] pusharglist 2 ........................... <licenceMem, #lines>
+  [ 24] objcall 64 .............................. <licenceMem.lines.count>
+  [ 26] lteq
+  [ 27] jmpifz [ 68] ............................ repeat with i = 1 to licenceMem.lines.count
+  [ 30] getlocal 0 .............................. <licenceMem>
+  [ 32] pushsymb 5 .............................. <#line>
+  [ 34] getlocal 2 .............................. <i>
+  [ 36] pusharglist 3 ........................... <licenceMem, #line, i>
+  [ 38] objcall 6 ............................... <licenceMem.line[i]>
+  [ 40] setlocal 3 .............................. nLine = licenceMem.line[i]
+  [ 42] pushcons 2 .............................. <"-- ">
+  [ 44] getlocal 3 .............................. <nLine>
+  [ 46] joinstr ................................. <"-- " & nLine>
+  [ 47] pushcons 3 .............................. <RETURN>
+  [ 49] joinstr ................................. <"-- " & nLine & RETURN>
+  [ 50] setlocal 3 .............................. nLine = "-- " & nLine & RETURN
+  [ 52] getlocal 1 .............................. <newText>
+  [ 54] getlocal 3 .............................. <nLine>
+  [ 56] joinstr ................................. <newText & nLine>
+  [ 57] setlocal 1 .............................. newText = newText & nLine
+  [ 59] pushint8 1
+  [ 61] getlocal 2
+  [ 63] add
+  [ 64] setlocal 2
+  [ 66] endrepeat [ 16]
+  [ 68] getlocal 1 .............................. <newText>
+  [ 70] pushcons 3 .............................. <RETURN>
+  [ 72] joinpadstr .............................. <newText && RETURN>
+  [ 73] pushcons 3 .............................. <RETURN>
+  [ 75] joinpadstr .............................. <newText && RETURN && RETURN>
+  [ 76] setlocal 1 .............................. newText = newText && RETURN && RETURN
+  [ 78] getlocal 1 .............................. <newText>
+  [ 80] pusharglistnoret 1 ...................... <newText>
+  [ 82] extcall 24 .............................. return newText
+  [ 84] ret
+end

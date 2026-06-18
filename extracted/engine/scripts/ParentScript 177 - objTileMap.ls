@@ -1,0 +1,167 @@
+property ancestor, pCopyPixelsParams, pDefaultScale, pGap, pGapColour, pTileSet
+global g
+
+on new me
+  ancestor = new(script("objDataMap"))
+  i = me.modifyParams(#init)
+  i[#copyPixelsParams] = [#useFastQuads: 1, #ink: 36]
+  i[#defaultScale] = 1
+  i[#gap] = 0
+  i[#gapColour] = rgb(0, 0, 0)
+  i[#tileSet] = #none
+  return me
+end
+
+on init me, params
+  me.ancestor.init(params)
+  pCopyPixelsParams = params.copyPixelsParams
+  pDefaultScale = params.defaultScale
+  pGap = params.gap
+  pGapColour = params.gapColour
+  pTileSet = params.tileSet
+end
+
+on convertToKey me
+  convertMap = me.getMap()
+  objConvertMap = g.objectMaster.requestObject(#objTileMap)
+  params = objConvertMap.getParams(#init)
+  params.map = convertMap
+  objConvertMap.init(params)
+  mapSize = me.getSize()
+  peekPoint = point(0, 0)
+  repeat with y = 1 to mapSize[2]
+    repeat with x = 1 to mapSize[1]
+      peekPoint[1] = x
+      peekPoint[2] = y
+      nTileNo = me.peek(peekPoint)
+      nSym = pTileSet.getTileSymbolByNum(nTileNo)
+      objConvertMap.poke(peekPoint, nSym)
+    end repeat
+  end repeat
+  return objConvertMap
+end
+
+on getKeyList me
+  keyList = []
+  tileCount = me.getCount()
+  repeat with i = 1 to tileCount
+    nTileNo = me.peekEntryNo(i)
+    nSym = pTileSet.getTileSymbolByNum(nTileNo)
+    if keyList.getPos(nSym) = 0 then
+      keyList.append(nSym)
+    end if
+  end repeat
+  return keyList
+end
+
+on getImage me
+  return me.getScaleImage(pDefaultScale)
+end
+
+on getMiniMapStatus me, forWhat
+  case forWhat of
+    #miniMap:
+      statusStruct = #miniMapStatusProgression
+    #exitArrows:
+      statusStruct = #exitArrowsStatusProgression
+  end case
+  statusProgression = g.structMaster.getStruct(statusStruct)
+  miniMapStatus = statusProgression[1]
+  keyList = me.getKeyList()
+  repeat with nKey in keyList
+    if nKey = #none then
+      next repeat
+    end if
+    actStatus = g.actorMaster.getMiniMapStatusForSymbol(nKey)
+    if statusProgression.getPos(actStatus) > statusProgression.getPos(miniMapStatus) then
+      miniMapStatus = actStatus
+    end if
+  end repeat
+  return miniMapStatus
+end
+
+on getScaleImage me, theScale
+  tilesize = pTileSet.getTileSize()
+  mapSize = me.getSize()
+  tileScaleSize = tilesize * theScale
+  imageSize = tileScaleSize * mapSize
+  gapSize = point((mapSize[1] - 1) * pGap, (mapSize[2] - 1) * pGap)
+  imageSize = imageSize + gapSize
+  myImage = image(imageSize[1], imageSize[2], 32)
+  if pGap > 0 then
+    myImage.fill(myImage.rect, pGapColour)
+  end if
+  me.tileImage(myImage, theScale)
+  return myImage
+end
+
+on getTileSize me
+  return pTileSet.getTileSize()
+end
+
+on getTilesInSelection me, theSel
+  startX = theSel[1][1]
+  startY = theSel[1][2]
+  endX = theSel[2][1]
+  endY = theSel[2][2]
+  theTiles = []
+  repeat with y = startY to endY
+    nRow = []
+    repeat with x = startX to endX
+      nTile = me.peekNum(point(x, y))
+      nRow.append(nTile)
+    end repeat
+    theTiles.append(nRow)
+  end repeat
+  return theTiles
+end
+
+on peekNum me, theloc
+  val = me.peek(theloc)
+  if ilk(val, #symbol) then
+    if val = #errorOutsidMap then
+      halt()
+    else
+      val = pTileSet.getTileNum(val)
+    end if
+  end if
+  return val
+end
+
+on showTileSet me, theMode, theloc
+  pTileSet.show(theMode, theloc)
+end
+
+on setBlendLevel me, theVal
+  pCopyPixelsParams[#blendLevel] = theVal
+end
+
+on setCopyPixelsParams me, theVal
+  pCopyPixelsParams = theVal
+end
+
+on tileImage me, myImage, theScale
+  tilesize = pTileSet.getTileSize()
+  tileScaleSize = tilesize * theScale
+  mapSize = me.getSize()
+  tileSpacing = tileScaleSize + point(pGap, pGap)
+  repeat with yNum = 0 to mapSize[2] - 1
+    repeat with xNum = 0 to mapSize[1] - 1
+      xLoc = xNum + 1
+      yLoc = yNum + 1
+      nImageNum = me.peekNum(point(xLoc, yLoc))
+      nImage = pTileSet.getTileNo(nImageNum)
+      if ilk(nImage) = #image then
+        iwidth = nImage.width
+        iheight = nImage.height
+        iRect = nImage.rect * theScale
+        xStart = xNum * tileSpacing[1]
+        yStart = yNum * tileSpacing[2]
+        xFin = xStart + tileScaleSize[1]
+        yFin = yStart + tileScaleSize[2]
+        myImage.copyPixels(nImage, rect(xStart, yStart, xFin, yFin), nImage.rect, pCopyPixelsParams)
+      end if
+    end repeat
+  end repeat
+  return myImage
+end

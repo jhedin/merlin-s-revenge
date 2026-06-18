@@ -1,0 +1,40 @@
+on CounterSetCount theCounter, theCount
+  [  0] getparam 0 .............................. <theCounter>
+  [  2] getparam 1 .............................. <theCount>
+  [  4] setobjprop 127 .......................... theCounter.theCount = theCount
+  [  6] getparam 0 .............................. <theCounter>
+  [  8] pushzero ................................ <0>
+  [  9] setobjprop 126 .......................... theCounter.looped = 0
+  [ 11] getparam 0 .............................. <theCounter>
+  [ 13] getobjprop 128 .......................... <theCounter.inc>
+  [ 15] pushzero ................................ <0>
+  [ 16] pusharglist 2 ........................... <theCounter.inc, 0>
+  [ 18] extcall 136 ............................. <VarMoreLess(theCounter.inc, 0)>
+  [ 20] setlocal 0 .............................. countDir = VarMoreLess(theCounter.inc, 0)
+  [ 22] getlocal 0 .............................. <countDir>
+  [ 24] pushint8 1 .............................. <1>
+  [ 26] eq ...................................... <countDir = 1>
+  [ 27] jmpifz [ 52] ............................ if countDir = 1 then / else
+  [ 30] getparam 0 .............................. <theCounter>
+  [ 32] getparam 0 .............................. <theCounter>
+  [ 34] getobjprop 127 .......................... <theCounter.theCount>
+  [ 36] getparam 0 .............................. <theCounter>
+  [ 38] pushsymb 122 ............................ <#tim>
+  [ 40] pushint8 1 .............................. <1>
+  [ 42] pusharglist 3 ........................... <theCounter, #tim, 1>
+  [ 44] objcall 123 ............................. <theCounter.tim[1]>
+  [ 46] eq ...................................... <theCounter.theCount = theCounter.tim[1]>
+  [ 47] setobjprop 124 .......................... theCounter.fin = theCounter.theCount = theCounter.tim[1]
+  [ 49] jmp [ 71]
+  [ 52] getparam 0 .............................. <theCounter>
+  [ 54] getparam 0 .............................. <theCounter>
+  [ 56] getobjprop 127 .......................... <theCounter.theCount>
+  [ 58] getparam 0 .............................. <theCounter>
+  [ 60] pushsymb 122 ............................ <#tim>
+  [ 62] pushint8 2 .............................. <2>
+  [ 64] pusharglist 3 ........................... <theCounter, #tim, 2>
+  [ 66] objcall 123 ............................. <theCounter.tim[2]>
+  [ 68] eq ...................................... <theCounter.theCount = theCounter.tim[2]>
+  [ 69] setobjprop 124 .......................... theCounter.fin = theCounter.theCount = theCounter.tim[2]
+  [ 71] ret
+end

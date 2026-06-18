@@ -1,0 +1,214 @@
+property ancestor, pLetterKey, pLetterGap, pLetterSize, pName
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"objTileSet">
+  [  2] pusharglist 1 ........................... <"objTileSet">
+  [  4] extcall 27 .............................. <script("objTileSet")>
+  [  6] pusharglist 1 ........................... <script("objTileSet")>
+  [  8] extcall 0 ............................... <new(script("objTileSet"))>
+  [ 10] setprop 77 .............................. ancestor = new(script("objTileSet"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 221 ............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 158 ............................ <#member>
+  [ 26] pushsymb 22 ............................. <#none>
+  [ 28] pusharglistnoret 3 ...................... <i, #member, #none>
+  [ 30] objcall 37 .............................. i[#member] = #none
+  [ 32] getparam 0 .............................. <me>
+  [ 34] pusharglistnoret 1 ...................... <me>
+  [ 36] extcall 17 .............................. return me
+  [ 38] ret
+end
+
+on init me, params
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <me, params>
+  [  6] objcall 1346 ............................ me.initLetterProperties(params)
+  [  9] getparam 0 .............................. <me>
+  [ 11] getparam 1 .............................. <params>
+  [ 13] pusharglistnoret 2 ...................... <me, params>
+  [ 15] objcall 1331 ............................ me.initParams(params)
+  [ 18] getprop 77 .............................. <ancestor>
+  [ 20] getparam 1 .............................. <params>
+  [ 22] pusharglistnoret 2 ...................... <ancestor, params>
+  [ 24] objcall 1 ............................... ancestor.init(params)
+  [ 26] ret
+end
+
+on initLetterProperties me, params
+  [  0] getparam 1 .............................. <params>
+  [  2] getchainedprop 158 ...................... <params.member>
+  [  4] getobjprop 94 ........................... <params.member.name>
+  [  6] pushcons 1 .............................. <"_properties">
+  [  8] joinstr ................................. <params.member.name & "_properties">
+  [  9] setlocal 0 .............................. letterMemName = params.member.name & "_properties"
+  [ 11] getlocal 0 .............................. <letterMemName>
+  [ 13] pushcons 2 .............................. <"gfx">
+  [ 15] pusharglist 2 ........................... <letterMemName, "gfx">
+  [ 17] extcall 158 ............................. <member(letterMemName, "gfx")>
+  [ 19] setlocal 1 .............................. letterMem = member(letterMemName, "gfx")
+  [ 21] getlocal 1 .............................. <letterMem>
+  [ 23] getobjprop 219 .......................... <letterMem.text>
+  [ 25] setlocal 2 .............................. letterMemText = letterMem.text
+  [ 27] getlocal 2 .............................. <letterMemText>
+  [ 29] pusharglist 1 ........................... <letterMemText>
+  [ 31] extcall 621 ............................. <value(letterMemText)>
+  [ 34] setlocal 3 .............................. letterProperties = value(letterMemText)
+  [ 36] getlocal 3 .............................. <letterProperties>
+  [ 38] getobjprop 1338 ......................... <letterProperties.theKey>
+  [ 41] setprop 1351 ............................ pLetterKey = letterProperties.theKey
+  [ 44] getlocal 3 .............................. <letterProperties>
+  [ 46] getobjprop 1353 ......................... <letterProperties.charSize>
+  [ 49] setprop 1352 ............................ pLetterSize = letterProperties.charSize
+  [ 52] getlocal 3 .............................. <letterProperties>
+  [ 54] getobjprop 1126 ......................... <letterProperties.gap>
+  [ 57] setprop 1354 ............................ pLetterGap = letterProperties.gap
+  [ 60] ret
+end
+
+on initParams me, params
+  [  0] getparam 1 .............................. <params>
+  [  2] getchainedprop 158 ...................... <params.member>
+  [  4] getobjprop 594 .......................... <params.member.image>
+  [  7] setlocal 0 .............................. letterImage = params.member.image
+  [  9] getparam 1 .............................. <params>
+  [ 11] getlocal 0 .............................. <letterImage>
+  [ 13] setobjprop 1103 ......................... params.allTilesImage = letterImage
+  [ 16] getparam 1 .............................. <params>
+  [ 18] getprop 1352 ............................ <pLetterSize>
+  [ 21] setobjprop 602 .......................... params.tilesize = pLetterSize
+  [ 24] getparam 1 .............................. <params>
+  [ 26] pusharglistnoret 1 ...................... <params>
+  [ 28] extcall 17 .............................. return params
+  [ 30] ret
+end
+
+on getLetter me, theChar
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <theChar>
+  [  4] pusharglist 2 ........................... <me, theChar>
+  [  6] objcall 1348 ............................ <me.getLetterNum(theChar)>
+  [  9] setlocal 0 .............................. tileNum = me.getLetterNum(theChar)
+  [ 11] getparam 0 .............................. <me>
+  [ 13] getlocal 0 .............................. <tileNum>
+  [ 15] pusharglist 2 ........................... <me, tileNum>
+  [ 17] objcall 1101 ............................ <me.getTileNo(tileNum)>
+  [ 20] setlocal 1 .............................. theImage = me.getTileNo(tileNum)
+  [ 22] getlocal 1 .............................. <theImage>
+  [ 24] pusharglistnoret 1 ...................... <theImage>
+  [ 26] extcall 17 .............................. return theImage
+  [ 28] ret
+end
+
+on getLetterNum me, theChar
+  [  0] getprop 1351 ............................ <pLetterKey>
+  [  3] getparam 1 .............................. <theChar>
+  [  5] pusharglist 2 ........................... <pLetterKey, theChar>
+  [  7] extcall 614 ............................. <StringGetPos(pLetterKey, theChar)>
+  [ 10] setlocal 0 .............................. letterNum = StringGetPos(pLetterKey, theChar)
+  [ 12] getlocal 0 .............................. <letterNum>
+  [ 14] pusharglistnoret 1 ...................... <letterNum>
+  [ 16] extcall 17 .............................. return letterNum
+  [ 18] ret
+end
+
+on getString me, theString
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <theString>
+  [  4] pusharglist 2 ........................... <me, theString>
+  [  6] objcall 1350 ............................ <me.getStringMap(theString)>
+  [  9] setlocal 0 .............................. stringMap = me.getStringMap(theString)
+  [ 11] getparam 0 .............................. <me>
+  [ 13] getlocal 0 .............................. <stringMap>
+  [ 15] pusharglist 2 ........................... <me, stringMap>
+  [ 17] objcall 1349 ............................ <me.getStringImage(stringMap)>
+  [ 20] setlocal 1 .............................. stringImage = me.getStringImage(stringMap)
+  [ 22] getlocal 1 .............................. <stringImage>
+  [ 24] pusharglistnoret 1 ...................... <stringImage>
+  [ 26] extcall 17 .............................. return stringImage
+  [ 28] ret
+end
+
+on getStringImage me, stringMap
+  [  0] getparam 1 .............................. <stringMap>
+  [  2] pusharglist 1 ........................... <stringMap>
+  [  4] objcall 510 ............................. <stringMap.getImage()>
+  [  7] pusharglistnoret 1 ...................... <stringMap.getImage()>
+  [  9] extcall 17 .............................. return stringMap.getImage()
+  [ 11] ret
+end
+
+on getStringMap me, theString
+  [  0] getparam 1 .............................. <theString>
+  [  2] pushsymb 317 ............................ <#chars>
+  [  5] pusharglist 2 ........................... <theString, #chars>
+  [  7] objcall 28 .............................. <theString.chars.count>
+  [  9] setlocal 0 .............................. strLen = theString.chars.count
+  [ 11] getglobal 101 ........................... <g>
+  [ 13] getchainedprop 102 ...................... <g.objectMaster>
+  [ 15] pushsymb 600 ............................ <#objTileMap>
+  [ 18] pusharglist 2 ........................... <g.objectMaster, #objTileMap>
+  [ 20] objcall 3 ............................... <g.objectMaster.requestObject(#objTileMap)>
+  [ 22] setlocal 1 .............................. wordMap = g.objectMaster.requestObject(#objTileMap)
+  [ 24] getlocal 1 .............................. <wordMap>
+  [ 26] pushsymb 1 .............................. <#init>
+  [ 28] pusharglist 2 ........................... <wordMap, #init>
+  [ 30] objcall 136 ............................. <wordMap.getParams(#init)>
+  [ 32] setlocal 2 .............................. params = wordMap.getParams(#init)
+  [ 34] getlocal 2 .............................. <params>
+  [ 36] getparam 0 .............................. <me>
+  [ 38] setobjprop 532 .......................... params.tileSet = me
+  [ 41] getlocal 2 .............................. <params>
+  [ 43] getlocal 0 .............................. <strLen>
+  [ 45] pushint8 1 .............................. <1>
+  [ 47] pusharglist 2 ........................... <strLen, 1>
+  [ 49] extcall 215 ............................. <point(strLen, 1)>
+  [ 51] setobjprop 601 .......................... params.mapSize = point(strLen, 1)
+  [ 54] getlocal 1 .............................. <wordMap>
+  [ 56] getlocal 2 .............................. <params>
+  [ 58] pusharglistnoret 2 ...................... <wordMap, params>
+  [ 60] objcall 1 ............................... wordMap.init(params)
+  [ 62] pushint8 1 .............................. <1>
+  [ 64] setlocal 3
+  [ 66] getlocal 3
+  [ 68] getlocal 0 .............................. <strLen>
+  [ 70] lteq
+  [ 71] jmpifz [131] ............................ repeat with i = 1 to strLen
+  [ 74] getparam 1 .............................. <theString>
+  [ 76] pushsymb 620 ............................ <#char>
+  [ 79] getlocal 3 .............................. <i>
+  [ 81] pusharglist 3 ........................... <theString, #char, i>
+  [ 83] objcall 209 ............................. <theString.char[i]>
+  [ 85] setlocal 4 .............................. nChr = theString.char[i]
+  [ 87] getparam 0 .............................. <me>
+  [ 89] getlocal 4 .............................. <nChr>
+  [ 91] pusharglist 2 ........................... <me, nChr>
+  [ 93] objcall 1348 ............................ <me.getLetterNum(nChr)>
+  [ 96] setlocal 5 .............................. nNum = me.getLetterNum(nChr)
+  [ 98] getlocal 5 .............................. <nNum>
+  [100] pushzero ................................ <0>
+  [101] gt ...................................... <nNum > 0>
+  [102] jmpifz [122] ............................ if nNum > 0 then
+  [105] getlocal 1 .............................. <wordMap>
+  [107] getlocal 3 .............................. <i>
+  [109] pushint8 1 .............................. <1>
+  [111] pusharglist 2 ........................... <i, 1>
+  [113] extcall 215 ............................. <point(i, 1)>
+  [115] getlocal 5 .............................. <nNum>
+  [117] pusharglistnoret 3 ...................... <wordMap, point(i, 1), nNum>
+  [119] objcall 628 ............................. wordMap.poke(point(i, 1), nNum)
+  [122] pushint8 1
+  [124] getlocal 3
+  [126] add
+  [127] setlocal 3
+  [129] endrepeat [ 66]
+  [131] getlocal 1 .............................. <wordMap>
+  [133] pusharglistnoret 1 ...................... <wordMap>
+  [135] extcall 17 .............................. return wordMap
+  [137] ret
+end

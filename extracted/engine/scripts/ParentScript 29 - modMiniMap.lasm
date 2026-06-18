@@ -1,0 +1,721 @@
+property ancestor, pBlendDistances, pBlendLevels, pBorder, pMapData, pMember, pMyLayer, pScale, pSprite, pStatusImages, pShowMiniMap
+global g, gGameTextLayer
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getlocal 0 .............................. <i>
+  [ 12] pushsymb 794 ............................ <#blendDistances>
+  [ 15] pushint8 60 ............................. <60>
+  [ 17] pushint16 200 ........................... <200>
+  [ 20] pusharglist 2 ........................... <[60, 200]>
+  [ 22] pushlist ................................ <[60, 200]>
+  [ 23] pusharglistnoret 3 ...................... <i, #blendDistances, [60, 200]>
+  [ 25] objcall 48 .............................. i[#blendDistances] = [60, 200]
+  [ 27] getlocal 0 .............................. <i>
+  [ 29] pushsymb 795 ............................ <#blendLevels>
+  [ 32] pushint8 10 ............................. <10>
+  [ 34] pushint8 90 ............................. <90>
+  [ 36] pusharglist 2 ........................... <[10, 90]>
+  [ 38] pushlist ................................ <[10, 90]>
+  [ 39] pusharglistnoret 3 ...................... <i, #blendLevels, [10, 90]>
+  [ 41] objcall 48 .............................. i[#blendLevels] = [10, 90]
+  [ 43] getlocal 0 .............................. <i>
+  [ 45] pushsymb 796 ............................ <#border>
+  [ 48] pushint8 1 .............................. <1>
+  [ 50] pushint8 1 .............................. <1>
+  [ 52] pushint8 2 .............................. <2>
+  [ 54] pushint8 2 .............................. <2>
+  [ 56] pusharglist 4 ........................... <1, 1, 2, 2>
+  [ 58] extcall 263 ............................. <rect(1, 1, 2, 2)>
+  [ 61] pusharglistnoret 3 ...................... <i, #border, rect(1, 1, 2, 2)>
+  [ 63] objcall 48 .............................. i[#border] = rect(1, 1, 2, 2)
+  [ 65] getlocal 0 .............................. <i>
+  [ 67] pushsymb 797 ............................ <#scale>
+  [ 70] pushint8 2 .............................. <2>
+  [ 72] pusharglistnoret 3 ...................... <i, #scale, 2>
+  [ 74] objcall 48 .............................. i[#scale] = 2
+  [ 76] getlocal 0 .............................. <i>
+  [ 78] pushsymb 798 ............................ <#statusImages>
+  [ 81] pusharglist 0 ........................... <[:]>
+  [ 83] pushproplist ............................ <[:]>
+  [ 84] pusharglistnoret 3 ...................... <i, #statusImages, [:]>
+  [ 86] objcall 48 .............................. i[#statusImages] = [:]
+  [ 88] getlocal 0 .............................. <i>
+  [ 90] getobjprop 798 .......................... <i.statusImages>
+  [ 93] setlocal 1 .............................. s = i.statusImages
+  [ 95] getlocal 1 .............................. <s>
+  [ 97] pushsymb 799 ............................ <#clr>
+  [100] pushcons 1 .............................. <"miniClear">
+  [102] pushcons 2 .............................. <"gfx">
+  [104] pusharglist 2 ........................... <"miniClear", "gfx">
+  [106] extcall 99 .............................. <member("miniClear", "gfx")>
+  [108] getobjprop 800 .......................... <member("miniClear", "gfx").image>
+  [111] pusharglistnoret 3 ...................... <s, #clr, member("miniClear", "gfx").image>
+  [113] objcall 48 .............................. s[#clr] = member("miniClear", "gfx").image
+  [115] getlocal 1 .............................. <s>
+  [117] pushsymb 801 ............................ <#cur>
+  [120] pushcons 3 .............................. <"miniCurrent">
+  [122] pushcons 2 .............................. <"gfx">
+  [124] pusharglist 2 ........................... <"miniCurrent", "gfx">
+  [126] extcall 99 .............................. <member("miniCurrent", "gfx")>
+  [128] getobjprop 800 .......................... <member("miniCurrent", "gfx").image>
+  [131] pusharglistnoret 3 ...................... <s, #cur, member("miniCurrent", "gfx").image>
+  [133] objcall 48 .............................. s[#cur] = member("miniCurrent", "gfx").image
+  [135] getlocal 1 .............................. <s>
+  [137] pushsymb 802 ............................ <#fre>
+  [140] pushcons 4 .............................. <"miniFriendly">
+  [142] pushcons 2 .............................. <"gfx">
+  [144] pusharglist 2 ........................... <"miniFriendly", "gfx">
+  [146] extcall 99 .............................. <member("miniFriendly", "gfx")>
+  [148] getobjprop 800 .......................... <member("miniFriendly", "gfx").image>
+  [151] pusharglistnoret 3 ...................... <s, #fre, member("miniFriendly", "gfx").image>
+  [153] objcall 48 .............................. s[#fre] = member("miniFriendly", "gfx").image
+  [155] getlocal 1 .............................. <s>
+  [157] pushsymb 803 ............................ <#inf>
+  [160] pushcons 5 .............................. <"miniInfested">
+  [162] pushcons 2 .............................. <"gfx">
+  [164] pusharglist 2 ........................... <"miniInfested", "gfx">
+  [166] extcall 99 .............................. <member("miniInfested", "gfx")>
+  [168] getobjprop 800 .......................... <member("miniInfested", "gfx").image>
+  [171] pusharglistnoret 3 ...................... <s, #inf, member("miniInfested", "gfx").image>
+  [173] objcall 48 .............................. s[#inf] = member("miniInfested", "gfx").image
+  [175] getlocal 1 .............................. <s>
+  [177] pushsymb 804 ............................ <#spe>
+  [180] pushcons 6 .............................. <"miniSpecial">
+  [182] pushcons 2 .............................. <"gfx">
+  [184] pusharglist 2 ........................... <"miniSpecial", "gfx">
+  [186] extcall 99 .............................. <member("miniSpecial", "gfx")>
+  [188] getobjprop 800 .......................... <member("miniSpecial", "gfx").image>
+  [191] pusharglistnoret 3 ...................... <s, #spe, member("miniSpecial", "gfx").image>
+  [193] objcall 48 .............................. s[#spe] = member("miniSpecial", "gfx").image
+  [195] getprop 33 .............................. <ancestor>
+  [197] pusharglistnoret 1 ...................... <ancestor>
+  [199] objcall 2 ............................... ancestor.addModParams()
+  [201] ret
+end
+
+on init me, params
+  [  0] getparam 1 .............................. <params>
+  [  2] getobjprop 795 .......................... <params.blendLevels>
+  [  5] setprop 806 ............................. pBlendLevels = params.blendLevels
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 794 .......................... <params.blendDistances>
+  [ 13] setprop 807 ............................. pBlendDistances = params.blendDistances
+  [ 16] getparam 1 .............................. <params>
+  [ 18] getobjprop 796 .......................... <params.border>
+  [ 21] setprop 808 ............................. pBorder = params.border
+  [ 24] getparam 1 .............................. <params>
+  [ 26] getobjprop 797 .......................... <params.scale>
+  [ 29] setprop 809 ............................. pScale = params.scale
+  [ 32] getparam 1 .............................. <params>
+  [ 34] getobjprop 798 .......................... <params.statusImages>
+  [ 37] setprop 810 ............................. pStatusImages = params.statusImages
+  [ 40] pushzero ................................ <0>
+  [ 41] setprop 811 ............................. pShowMiniMap = 0
+  [ 44] pushsymb 49 ............................. <#none>
+  [ 46] setprop 812 ............................. pMapData = #none
+  [ 49] pushsymb 49 ............................. <#none>
+  [ 51] setprop 813 ............................. pMember = #none
+  [ 54] getglobal 815 ........................... <gGameTextLayer>
+  [ 57] setprop 814 ............................. pMyLayer = gGameTextLayer
+  [ 60] pushsymb 49 ............................. <#none>
+  [ 62] setprop 816 ............................. pSprite = #none
+  [ 65] getparam 0 .............................. <me>
+  [ 67] getchainedprop 57 ....................... <me.id>
+  [ 69] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 71] getparam 0 .............................. <me>
+  [ 73] pusharglistnoret 2 ...................... <me.id.bigMe, me>
+  [ 75] objcall 817 ............................. me.id.bigMe.registerMinimap(me)
+  [ 78] getprop 33 .............................. <ancestor>
+  [ 80] getparam 1 .............................. <params>
+  [ 82] pusharglistnoret 2 ...................... <ancestor, params>
+  [ 84] objcall 1 ............................... ancestor.init(params)
+  [ 86] ret
+end
+
+on initMiniMapData me
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 41 ....................... <g.objectMaster>
+  [  4] pushsymb 818 ............................ <#objDataMap>
+  [  7] pusharglist 2 ........................... <g.objectMaster, #objDataMap>
+  [  9] objcall 43 .............................. <g.objectMaster.requestObject(#objDataMap)>
+  [ 11] setprop 812 ............................. pMapData = g.objectMaster.requestObject(#objDataMap)
+  [ 14] getprop 812 ............................. <pMapData>
+  [ 17] pushsymb 1 .............................. <#init>
+  [ 19] pusharglist 2 ........................... <pMapData, #init>
+  [ 21] objcall 230 ............................. <pMapData.getParams(#init)>
+  [ 23] setlocal 0 .............................. params = pMapData.getParams(#init)
+  [ 25] getlocal 0 .............................. <params>
+  [ 27] getparam 0 .............................. <me>
+  [ 29] getchainedprop 57 ....................... <me.id>
+  [ 31] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 33] pusharglist 1 ........................... <me.id.bigMe>
+  [ 35] objcall 819 ............................. <me.id.bigMe.getSize()>
+  [ 38] setobjprop 820 .......................... params.mapSize = me.id.bigMe.getSize()
+  [ 41] getprop 812 ............................. <pMapData>
+  [ 44] getlocal 0 .............................. <params>
+  [ 46] pusharglistnoret 2 ...................... <pMapData, params>
+  [ 48] objcall 1 ............................... pMapData.init(params)
+  [ 50] getparam 0 .............................. <me>
+  [ 52] getchainedprop 57 ....................... <me.id>
+  [ 54] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 56] pusharglist 1 ........................... <me.id.bigMe>
+  [ 58] objcall 821 ............................. <me.id.bigMe.getCount()>
+  [ 61] setlocal 1 .............................. roomCount = me.id.bigMe.getCount()
+  [ 63] pushint8 1 .............................. <1>
+  [ 65] setlocal 2
+  [ 67] getlocal 2
+  [ 69] getlocal 1 .............................. <roomCount>
+  [ 71] lteq
+  [ 72] jmpifz [145] ............................ repeat with i = 1 to roomCount
+  [ 75] getparam 0 .............................. <me>
+  [ 77] getchainedprop 57 ....................... <me.id>
+  [ 79] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 81] getlocal 2 .............................. <i>
+  [ 83] pusharglist 2 ........................... <me.id.bigMe, i>
+  [ 85] objcall 822 ............................. <me.id.bigMe.peekEntryNo(i)>
+  [ 88] setlocal 3 .............................. nRoomNum = me.id.bigMe.peekEntryNo(i)
+  [ 90] getparam 0 .............................. <me>
+  [ 92] getchainedprop 57 ....................... <me.id>
+  [ 94] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 96] getlocal 3 .............................. <nRoomNum>
+  [ 98] pusharglist 2 ........................... <me.id.bigMe, nRoomNum>
+  [100] objcall 823 ............................. <me.id.bigMe.getRoom(nRoomNum)>
+  [103] setlocal 4 .............................. nRoom = me.id.bigMe.getRoom(nRoomNum)
+  [105] getlocal 4 .............................. <nRoom>
+  [107] pusharglist 1 ........................... <nRoom>
+  [109] objcall 824 ............................. <nRoom.getMiniMapStatus()>
+  [112] setlocal 5 .............................. nMiniMapStatus = nRoom.getMiniMapStatus()
+  [114] pushzero ................................ <0>
+  [115] pushzero ................................ <0>
+  [116] pusharglist 2 ........................... <0, 0>
+  [118] extcall 197 ............................. <point(0, 0)>
+  [120] setlocal 6 .............................. pokeLoc = point(0, 0)
+  [122] getprop 812 ............................. <pMapData>
+  [125] getlocal 2 .............................. <i>
+  [127] getlocal 5 .............................. <nMiniMapStatus>
+  [129] getlocal 6 .............................. <pokeLoc>
+  [131] pusharglistnoret 4 ...................... <pMapData, i, nMiniMapStatus, pokeLoc>
+  [133] objcall 825 ............................. pMapData.pokeEntryNo(i, nMiniMapStatus, pokeLoc)
+  [136] pushint8 1
+  [138] getlocal 2
+  [140] add
+  [141] setlocal 2
+  [143] endrepeat [ 67]
+  [145] getprop 811 ............................. <pShowMiniMap>
+  [148] jmpifz [165] ............................ if pShowMiniMap then
+  [151] getparam 0 .............................. <me>
+  [153] pusharglistnoret 1 ...................... <me>
+  [155] objcall 791 ............................. me.miniMapOffScreen()
+  [158] getparam 0 .............................. <me>
+  [160] pusharglistnoret 1 ...................... <me>
+  [162] objcall 786 ............................. me.displayMiniMap()
+  [165] ret
+end
+
+on finish me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 791 ............................. me.miniMapOffScreen()
+  [  7] getprop 33 .............................. <ancestor>
+  [  9] pusharglistnoret 1 ...................... <ancestor>
+  [ 11] objcall 3 ............................... ancestor.finish()
+  [ 13] ret
+end
+
+on addSaveData me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 4 ............................... ancestor.addSaveData(sd)
+  [  8] getparam 1 .............................. <sd>
+  [ 10] pushsymb 811 ............................ <#pShowMiniMap>
+  [ 13] getprop 811 ............................. <pShowMiniMap>
+  [ 16] pusharglistnoret 3 ...................... <sd, #pShowMiniMap, pShowMiniMap>
+  [ 18] objcall 48 .............................. sd[#pShowMiniMap] = pShowMiniMap
+  [ 20] ret
+end
+
+on displayMiniMap me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 788 ............................. <me.getMiniMapData()>
+  [  7] setlocal 0 .............................. mapData = me.getMiniMapData()
+  [  9] getparam 0 .............................. <me>
+  [ 11] getlocal 0 .............................. <mapData>
+  [ 13] pusharglist 2 ........................... <me, mapData>
+  [ 15] objcall 787 ............................. <me.drawMap(mapData)>
+  [ 18] setlocal 1 .............................. mapImage = me.drawMap(mapData)
+  [ 20] getparam 0 .............................. <me>
+  [ 22] getlocal 1 .............................. <mapImage>
+  [ 24] pusharglistnoret 2 ...................... <me, mapImage>
+  [ 26] objcall 793 ............................. me.setupSprite(mapImage)
+  [ 29] getparam 0 .............................. <me>
+  [ 31] getchainedprop 57 ....................... <me.id>
+  [ 33] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 35] pusharglist 1 ........................... <me.id.bigMe>
+  [ 37] objcall 755 ............................. <me.id.bigMe.getCurrentRoom()>
+  [ 40] setlocal 2 .............................. currentRoom = me.id.bigMe.getCurrentRoom()
+  [ 42] getprop 816 ............................. <pSprite>
+  [ 45] getlocal 2 .............................. <currentRoom>
+  [ 47] pusharglist 1 ........................... <currentRoom>
+  [ 49] objcall 831 ............................. <currentRoom.getMiniMapLoc()>
+  [ 52] setobjprop 832 .......................... pSprite.loc = currentRoom.getMiniMapLoc()
+  [ 55] getglobal 40 ............................ <g>
+  [ 57] getchainedprop 833 ...................... <g.updater>
+  [ 60] getparam 0 .............................. <me>
+  [ 62] getchainedprop 57 ....................... <me.id>
+  [ 64] getobjprop 58 ........................... <me.id.bigMe>
+  [ 66] pushsymb 834 ............................ <#lo>
+  [ 69] pusharglistnoret 3 ...................... <g.updater, me.id.bigMe, #lo>
+  [ 71] objcall 835 ............................. g.updater.addPrg(me.id.bigMe, #lo)
+  [ 74] pushint8 1 .............................. <1>
+  [ 76] setprop 811 ............................. pShowMiniMap = 1
+  [ 79] ret
+end
+
+on drawMap me, mapData
+  [  0] getprop 810 ............................. <pStatusImages>
+  [  3] getobjprop 799 .......................... <pStatusImages.clr>
+  [  6] setlocal 0 .............................. clearImage = pStatusImages.clr
+  [  8] getparam 1 .............................. <mapData>
+  [ 10] pusharglist 1 ........................... <mapData>
+  [ 12] objcall 819 ............................. <mapData.getSize()>
+  [ 15] getlocal 0 .............................. <clearImage>
+  [ 17] getobjprop 424 .......................... <clearImage.width>
+  [ 20] getlocal 0 .............................. <clearImage>
+  [ 22] getobjprop 423 .......................... <clearImage.height>
+  [ 25] pusharglist 2 ........................... <clearImage.width, clearImage.height>
+  [ 27] extcall 197 ............................. <point(clearImage.width, clearImage.height)>
+  [ 29] mul ..................................... <mapData.getSize() * point(clearImage.width, clearImage.height)>
+  [ 30] setlocal 1 .............................. imageSize = mapData.getSize() * point(clearImage.width, clearImage.height)
+  [ 32] getlocal 1 .............................. <imageSize>
+  [ 34] getprop 808 ............................. <pBorder>
+  [ 37] getobjprop 264 .......................... <pBorder.left>
+  [ 40] getprop 808 ............................. <pBorder>
+  [ 43] getobjprop 266 .......................... <pBorder.right>
+  [ 46] add ..................................... <pBorder.left + pBorder.right>
+  [ 47] getprop 808 ............................. <pBorder>
+  [ 50] getobjprop 265 .......................... <pBorder.top>
+  [ 53] getprop 808 ............................. <pBorder>
+  [ 56] getobjprop 114 .......................... <pBorder.bottom>
+  [ 58] add ..................................... <pBorder.top + pBorder.bottom>
+  [ 59] pusharglist 2 ........................... <pBorder.left + pBorder.right, pBorder.top + pBorder.bottom>
+  [ 61] extcall 197 ............................. <point(pBorder.left + pBorder.right, pBorder.top + pBorder.bottom)>
+  [ 63] add ..................................... <imageSize + point(pBorder.left + pBorder.right, pBorder.top + pBorder.bottom)>
+  [ 64] setlocal 1 .............................. imageSize = imageSize + point(pBorder.left + pBorder.right, pBorder.top + pBorder.bottom)
+  [ 66] getlocal 1 .............................. <imageSize>
+  [ 68] pushint8 1 .............................. <1>
+  [ 70] pusharglist 2 ........................... <imageSize, 1>
+  [ 72] objcall 109 ............................. <imageSize[1]>
+  [ 74] getlocal 1 .............................. <imageSize>
+  [ 76] pushint8 2 .............................. <2>
+  [ 78] pusharglist 2 ........................... <imageSize, 2>
+  [ 80] objcall 109 ............................. <imageSize[2]>
+  [ 82] pushint8 32 ............................. <32>
+  [ 84] pushzero ................................ <0>
+  [ 85] pusharglist 4 ........................... <imageSize[1], imageSize[2], 32, 0>
+  [ 87] extcall 800 ............................. <image(imageSize[1], imageSize[2], 32, 0)>
+  [ 90] setlocal 2 .............................. mapImage = image(imageSize[1], imageSize[2], 32, 0)
+  [ 92] getlocal 2 .............................. <mapImage>
+  [ 94] getlocal 2 .............................. <mapImage>
+  [ 96] getobjprop 263 .......................... <mapImage.rect>
+  [ 99] pushzero ................................ <0>
+  [100] pushzero ................................ <0>
+  [101] pushzero ................................ <0>
+  [102] pusharglist 3 ........................... <0, 0, 0>
+  [104] extcall 436 ............................. <rgb(0, 0, 0)>
+  [107] pusharglistnoret 3 ...................... <mapImage, mapImage.rect, rgb(0, 0, 0)>
+  [109] objcall 838 ............................. mapImage.fill(mapImage.rect, rgb(0, 0, 0))
+  [112] getparam 1 .............................. <mapData>
+  [114] getchainedprop 57 ....................... <mapData.id>
+  [116] getchainedprop 58 ....................... <mapData.id.bigMe>
+  [118] pusharglist 1 ........................... <mapData.id.bigMe>
+  [120] objcall 821 ............................. <mapData.id.bigMe.getCount()>
+  [123] setlocal 3 .............................. numRooms = mapData.id.bigMe.getCount()
+  [125] pushzero ................................ <0>
+  [126] pushzero ................................ <0>
+  [127] pusharglist 2 ........................... <0, 0>
+  [129] extcall 197 ............................. <point(0, 0)>
+  [131] setlocal 4 .............................. roomLoc = point(0, 0)
+  [133] pushint8 1 .............................. <1>
+  [135] setlocal 5
+  [137] getlocal 5
+  [139] getlocal 3 .............................. <numRooms>
+  [141] lteq
+  [142] jmpifz [279] ............................ repeat with i = 1 to numRooms
+  [145] getparam 1 .............................. <mapData>
+  [147] getlocal 5 .............................. <i>
+  [149] getlocal 4 .............................. <roomLoc>
+  [151] pusharglist 3 ........................... <mapData, i, roomLoc>
+  [153] objcall 822 ............................. <mapData.peekEntryNo(i, roomLoc)>
+  [156] setlocal 6 .............................. nStatus = mapData.peekEntryNo(i, roomLoc)
+  [158] getprop 808 ............................. <pBorder>
+  [161] getobjprop 264 .......................... <pBorder.left>
+  [164] getlocal 4 .............................. <roomLoc>
+  [166] getobjprop 539 .......................... <roomLoc.locH>
+  [169] pushint8 1 .............................. <1>
+  [171] sub ..................................... <roomLoc.locH - 1>
+  [172] getlocal 0 .............................. <clearImage>
+  [174] getobjprop 424 .......................... <clearImage.width>
+  [177] mul ..................................... <(roomLoc.locH - 1) * clearImage.width>
+  [178] add ..................................... <pBorder.left + ((roomLoc.locH - 1) * clearImage.width)>
+  [179] setlocal 7 .............................. nStartX = pBorder.left + ((roomLoc.locH - 1) * clearImage.width)
+  [181] getprop 808 ............................. <pBorder>
+  [184] getobjprop 265 .......................... <pBorder.top>
+  [187] getlocal 4 .............................. <roomLoc>
+  [189] getobjprop 540 .......................... <roomLoc.locV>
+  [192] pushint8 1 .............................. <1>
+  [194] sub ..................................... <roomLoc.locV - 1>
+  [195] getlocal 0 .............................. <clearImage>
+  [197] getobjprop 423 .......................... <clearImage.height>
+  [200] mul ..................................... <(roomLoc.locV - 1) * clearImage.height>
+  [201] add ..................................... <pBorder.top + ((roomLoc.locV - 1) * clearImage.height)>
+  [202] setlocal 8 .............................. nStartY = pBorder.top + ((roomLoc.locV - 1) * clearImage.height)
+  [204] getlocal 7 .............................. <nStartX>
+  [206] getlocal 0 .............................. <clearImage>
+  [208] getobjprop 424 .......................... <clearImage.width>
+  [211] add ..................................... <nStartX + clearImage.width>
+  [212] setlocal 9 .............................. nEndX = nStartX + clearImage.width
+  [214] getlocal 8 .............................. <nStartY>
+  [216] getlocal 0 .............................. <clearImage>
+  [218] getobjprop 423 .......................... <clearImage.height>
+  [221] add ..................................... <nStartY + clearImage.height>
+  [222] setlocal 10 ............................. nEndY = nStartY + clearImage.height
+  [224] getlocal 2 .............................. <mapImage>
+  [226] getprop 810 ............................. <pStatusImages>
+  [229] getlocal 6 .............................. <nStatus>
+  [231] pusharglist 2 ........................... <pStatusImages, nStatus>
+  [233] objcall 109 ............................. <pStatusImages[nStatus]>
+  [235] getlocal 7 .............................. <nStartX>
+  [237] getlocal 8 .............................. <nStartY>
+  [239] getlocal 9 .............................. <nEndX>
+  [241] getlocal 10 ............................. <nEndY>
+  [243] pusharglist 4 ........................... <nStartX, nStartY, nEndX, nEndY>
+  [245] extcall 263 ............................. <rect(nStartX, nStartY, nEndX, nEndY)>
+  [248] getlocal 0 .............................. <clearImage>
+  [250] getobjprop 263 .......................... <clearImage.rect>
+  [253] pushsymb 839 ............................ <#useFastQuads>
+  [256] pushint8 1 .............................. <1>
+  [258] pushsymb 840 ............................ <#ink>
+  [261] pushzero ................................ <0>
+  [262] pusharglist 4 ........................... <[#useFastQuads: 1, #ink: 0]>
+  [264] pushproplist ............................ <[#useFastQuads: 1, #ink: 0]>
+  [265] pusharglistnoret 5 ...................... <mapImage, pStatusImages[nStatus], rect(nStartX, nStartY, nEndX, nEndY), clearImage.rect, [#useFastQuads: 1, #ink: 0]>
+  [267] objcall 841 ............................. mapImage.copyPixels(pStatusImages[nStatus], rect(nStartX, nStartY, nEndX, nEndY), clearImage.rect, [#useFastQuads: 1, #ink: 0])
+  [270] pushint8 1
+  [272] getlocal 5
+  [274] add
+  [275] setlocal 5
+  [277] endrepeat [137]
+  [279] getlocal 2 .............................. <mapImage>
+  [281] pusharglistnoret 1 ...................... <mapImage>
+  [283] extcall 35 .............................. return mapImage
+  [285] ret
+end
+
+on getMiniMapData me
+  [  0] pushint8 1 .............................. <1>
+  [  2] pushint8 1 .............................. <1>
+  [  4] inv ..................................... <-1>
+  [  5] pusharglist 2 ........................... <[1, -1]>
+  [  7] pushlist ................................ <[1, -1]>
+  [  8] peek 0
+  [ 10] pusharglist 1
+  [ 12] extcall 257
+  [ 15] pushint8 1
+  [ 17] peek 0
+  [ 19] peek 2
+  [ 21] lteq
+  [ 22] jmpifz [234] ............................ repeat with i in [1, -1]
+  [ 25] peek 2
+  [ 27] peek 1
+  [ 29] pusharglist 2
+  [ 31] extcall 109
+  [ 33] setlocal 0
+  [ 35] getparam 0 .............................. <me>
+  [ 37] getchainedprop 57 ....................... <me.id>
+  [ 39] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 41] pusharglist 1 ........................... <me.id.bigMe>
+  [ 43] objcall 851 ............................. <me.id.bigMe.getCurrentRoomLoc()>
+  [ 46] setlocal 1 .............................. nRoomLoc = me.id.bigMe.getCurrentRoomLoc()
+  [ 48] getlocal 1 .............................. <nRoomLoc>
+  [ 50] getlocal 1 .............................. <nRoomLoc>
+  [ 52] getobjprop 539 .......................... <nRoomLoc.locH>
+  [ 55] getlocal 0 .............................. <i>
+  [ 57] add ..................................... <nRoomLoc.locH + i>
+  [ 58] setobjprop 539 .......................... nRoomLoc.locH = nRoomLoc.locH + i
+  [ 61] getparam 0 .............................. <me>
+  [ 63] getchainedprop 57 ....................... <me.id>
+  [ 65] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 67] getlocal 1 .............................. <nRoomLoc>
+  [ 69] pusharglist 2 ........................... <me.id.bigMe, nRoomLoc>
+  [ 71] objcall 852 ............................. <me.id.bigMe.getRoomAt(nRoomLoc)>
+  [ 74] setlocal 2 .............................. nRoomNum = me.id.bigMe.getRoomAt(nRoomLoc)
+  [ 76] getlocal 2 .............................. <nRoomNum>
+  [ 78] peek 0 .................................. case nRoomNum of
+  [ 80] pushsymb 853 ............................ <#errorOutsideMap>
+  [ 83] eq
+  [ 84] jmpifz [ 94] ............................ (case) #errorOutsideMap:
+  [ 87] pusharglistnoret 0 ...................... <>
+  [ 89] extcall 185 ............................. nothing()
+  [ 91] jmp [130] ............................... (case) otherwise:
+  [ 94] getparam 0 .............................. <me>
+  [ 96] getchainedprop 57 ....................... <me.id>
+  [ 98] getchainedprop 58 ....................... <me.id.bigMe>
+  [100] getlocal 2 .............................. <nRoomNum>
+  [102] pusharglist 2 ........................... <me.id.bigMe, nRoomNum>
+  [104] objcall 823 ............................. <me.id.bigMe.getRoom(nRoomNum)>
+  [107] setlocal 3 .............................. nRoom = me.id.bigMe.getRoom(nRoomNum)
+  [109] getlocal 3 .............................. <nRoom>
+  [111] pusharglist 1 ........................... <nRoom>
+  [113] objcall 824 ............................. <nRoom.getMiniMapStatus()>
+  [116] setlocal 4 .............................. nMiniMapStatus = nRoom.getMiniMapStatus()
+  [118] getprop 812 ............................. <pMapData>
+  [121] getlocal 1 .............................. <nRoomLoc>
+  [123] getlocal 4 .............................. <nMiniMapStatus>
+  [125] pusharglistnoret 3 ...................... <pMapData, nRoomLoc, nMiniMapStatus>
+  [127] objcall 854 ............................. pMapData.poke(nRoomLoc, nMiniMapStatus)
+  [130] pop 1 ................................... end case
+  [132] getparam 0 .............................. <me>
+  [134] getchainedprop 57 ....................... <me.id>
+  [136] getchainedprop 58 ....................... <me.id.bigMe>
+  [138] pusharglist 1 ........................... <me.id.bigMe>
+  [140] objcall 851 ............................. <me.id.bigMe.getCurrentRoomLoc()>
+  [143] setlocal 1 .............................. nRoomLoc = me.id.bigMe.getCurrentRoomLoc()
+  [145] getlocal 1 .............................. <nRoomLoc>
+  [147] getlocal 1 .............................. <nRoomLoc>
+  [149] getobjprop 540 .......................... <nRoomLoc.locV>
+  [152] getlocal 0 .............................. <i>
+  [154] add ..................................... <nRoomLoc.locV + i>
+  [155] setobjprop 540 .......................... nRoomLoc.locV = nRoomLoc.locV + i
+  [158] getparam 0 .............................. <me>
+  [160] getchainedprop 57 ....................... <me.id>
+  [162] getchainedprop 58 ....................... <me.id.bigMe>
+  [164] getlocal 1 .............................. <nRoomLoc>
+  [166] pusharglist 2 ........................... <me.id.bigMe, nRoomLoc>
+  [168] objcall 852 ............................. <me.id.bigMe.getRoomAt(nRoomLoc)>
+  [171] setlocal 2 .............................. nRoomNum = me.id.bigMe.getRoomAt(nRoomLoc)
+  [173] getlocal 2 .............................. <nRoomNum>
+  [175] peek 0 .................................. case nRoomNum of
+  [177] pushsymb 853 ............................ <#errorOutsideMap>
+  [180] eq
+  [181] jmpifz [191] ............................ (case) #errorOutsideMap:
+  [184] pusharglistnoret 0 ...................... <>
+  [186] extcall 185 ............................. nothing()
+  [188] jmp [227] ............................... (case) otherwise:
+  [191] getparam 0 .............................. <me>
+  [193] getchainedprop 57 ....................... <me.id>
+  [195] getchainedprop 58 ....................... <me.id.bigMe>
+  [197] getlocal 2 .............................. <nRoomNum>
+  [199] pusharglist 2 ........................... <me.id.bigMe, nRoomNum>
+  [201] objcall 823 ............................. <me.id.bigMe.getRoom(nRoomNum)>
+  [204] setlocal 3 .............................. nRoom = me.id.bigMe.getRoom(nRoomNum)
+  [206] getlocal 3 .............................. <nRoom>
+  [208] pusharglist 1 ........................... <nRoom>
+  [210] objcall 824 ............................. <nRoom.getMiniMapStatus()>
+  [213] setlocal 4 .............................. nMiniMapStatus = nRoom.getMiniMapStatus()
+  [215] getprop 812 ............................. <pMapData>
+  [218] getlocal 1 .............................. <nRoomLoc>
+  [220] getlocal 4 .............................. <nMiniMapStatus>
+  [222] pusharglistnoret 3 ...................... <pMapData, nRoomLoc, nMiniMapStatus>
+  [224] objcall 854 ............................. pMapData.poke(nRoomLoc, nMiniMapStatus)
+  [227] pop 1 ................................... end case
+  [229] pushint8 1
+  [231] add
+  [232] endrepeat [ 17]
+  [234] pop 3
+  [236] getparam 0 .............................. <me>
+  [238] getchainedprop 57 ....................... <me.id>
+  [240] getchainedprop 58 ....................... <me.id.bigMe>
+  [242] pusharglist 1 ........................... <me.id.bigMe>
+  [244] objcall 851 ............................. <me.id.bigMe.getCurrentRoomLoc()>
+  [247] setlocal 5 .............................. currentRoomLoc = me.id.bigMe.getCurrentRoomLoc()
+  [249] getprop 812 ............................. <pMapData>
+  [252] getlocal 5 .............................. <currentRoomLoc>
+  [254] pushsymb 801 ............................ <#cur>
+  [257] pusharglistnoret 3 ...................... <pMapData, currentRoomLoc, #cur>
+  [259] objcall 854 ............................. pMapData.poke(currentRoomLoc, #cur)
+  [262] getprop 812 ............................. <pMapData>
+  [265] pusharglistnoret 1 ...................... <pMapData>
+  [267] extcall 35 .............................. return pMapData
+  [269] ret
+end
+
+on goNavMode me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 786 ............................. me.displayMiniMap()
+  [  7] ret
+end
+
+on leaveNavMode me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 791 ............................. me.miniMapOffScreen()
+  [  7] ret
+end
+
+on miniMapOffScreen me
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 833 ...................... <g.updater>
+  [  5] getparam 0 .............................. <me>
+  [  7] getchainedprop 57 ....................... <me.id>
+  [  9] getobjprop 58 ........................... <me.id.bigMe>
+  [ 11] pusharglistnoret 2 ...................... <g.updater, me.id.bigMe>
+  [ 13] objcall 857 ............................. g.updater.removePrg(me.id.bigMe)
+  [ 16] getprop 816 ............................. <pSprite>
+  [ 19] pushsymb 49 ............................. <#none>
+  [ 21] nteq .................................... <pSprite <> #none>
+  [ 22] jmpifz [ 42] ............................ if pSprite <> #none then
+  [ 25] getglobal 40 ............................ <g>
+  [ 27] getchainedprop 254 ...................... <g.spriteMaster>
+  [ 29] getprop 816 ............................. <pSprite>
+  [ 32] pusharglistnoret 2 ...................... <g.spriteMaster, pSprite>
+  [ 34] objcall 270 ............................. g.spriteMaster.freeSprite(pSprite)
+  [ 37] pushsymb 49 ............................. <#none>
+  [ 39] setprop 816 ............................. pSprite = #none
+  [ 42] getprop 813 ............................. <pMember>
+  [ 45] pushsymb 49 ............................. <#none>
+  [ 47] nteq .................................... <pMember <> #none>
+  [ 48] jmpifz [ 69] ............................ if pMember <> #none then
+  [ 51] getglobal 40 ............................ <g>
+  [ 53] getchainedprop 858 ...................... <g.memberMaster>
+  [ 56] getprop 813 ............................. <pMember>
+  [ 59] pusharglistnoret 2 ...................... <g.memberMaster, pMember>
+  [ 61] objcall 859 ............................. g.memberMaster.freeMember(pMember)
+  [ 64] pushsymb 49 ............................. <#none>
+  [ 66] setprop 813 ............................. pMember = #none
+  [ 69] pushzero ................................ <0>
+  [ 70] setprop 811 ............................. pShowMiniMap = 0
+  [ 73] ret
+end
+
+on restoreFromSave me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 26 .............................. ancestor.restoreFromSave(sd)
+  [  8] getparam 0 .............................. <me>
+  [ 10] pusharglistnoret 1 ...................... <me>
+  [ 12] objcall 791 ............................. me.miniMapOffScreen()
+  [ 15] ret
+end
+
+on setBlendForMouseOrPlayer me
+  [  0] getmovieprop 860 ........................ <the mouseLoc>
+  [  3] setlocal 0 .............................. mouloc = the mouseLoc
+  [  5] getglobal 40 ............................ <g>
+  [  7] getchainedprop 228 ...................... <g.actorMaster>
+  [  9] pusharglist 1 ........................... <g.actorMaster>
+  [ 11] objcall 861 ............................. <g.actorMaster.getPlayer()>
+  [ 14] pusharglist 1 ........................... <g.actorMaster.getPlayer()>
+  [ 16] objcall 111 ............................. <g.actorMaster.getPlayer().getLoc()>
+  [ 18] setlocal 1 .............................. playerLoc = g.actorMaster.getPlayer().getLoc()
+  [ 20] getprop 816 ............................. <pSprite>
+  [ 23] getobjprop 832 .......................... <pSprite.loc>
+  [ 26] setlocal 2 .............................. myloc = pSprite.loc
+  [ 28] getlocal 0 .............................. <mouloc>
+  [ 30] getlocal 2 .............................. <myloc>
+  [ 32] pusharglist 2 ........................... <mouloc, myloc>
+  [ 34] extcall 862 ............................. <geomPixelDist(mouloc, myloc)>
+  [ 37] setlocal 3 .............................. mouDist = geomPixelDist(mouloc, myloc)
+  [ 39] getlocal 1 .............................. <playerLoc>
+  [ 41] getlocal 2 .............................. <myloc>
+  [ 43] pusharglist 2 ........................... <playerLoc, myloc>
+  [ 45] extcall 862 ............................. <geomPixelDist(playerLoc, myloc)>
+  [ 48] setlocal 4 .............................. playerDist = geomPixelDist(playerLoc, myloc)
+  [ 50] getlocal 3 .............................. <mouDist>
+  [ 52] getlocal 4 .............................. <playerDist>
+  [ 54] pusharglist 2 ........................... <mouDist, playerDist>
+  [ 56] extcall 152 ............................. <min(mouDist, playerDist)>
+  [ 58] setlocal 5 .............................. minDist = min(mouDist, playerDist)
+  [ 60] getlocal 5 .............................. <minDist>
+  [ 62] getprop 807 ............................. <pBlendDistances>
+  [ 65] getprop 806 ............................. <pBlendLevels>
+  [ 68] pusharglist 3 ........................... <minDist, pBlendDistances, pBlendLevels>
+  [ 70] extcall 863 ............................. <varMapRange(minDist, pBlendDistances, pBlendLevels)>
+  [ 73] setlocal 6 .............................. theBlend = varMapRange(minDist, pBlendDistances, pBlendLevels)
+  [ 75] getprop 816 ............................. <pSprite>
+  [ 78] getlocal 6 .............................. <theBlend>
+  [ 80] setobjprop 687 .......................... pSprite.blend = theBlend
+  [ 83] ret
+end
+
+on setupSprite me, mapImage
+  [  0] getprop 816 ............................. <pSprite>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] eq ...................................... <pSprite = #none>
+  [  6] jmpifz [ 29] ............................ if pSprite = #none then
+  [  9] getglobal 40 ............................ <g>
+  [ 11] getchainedprop 254 ...................... <g.spriteMaster>
+  [ 13] pusharglist 1 ........................... <g.spriteMaster>
+  [ 15] objcall 255 ............................. <g.spriteMaster.requestSprite()>
+  [ 17] setprop 816 ............................. pSprite = g.spriteMaster.requestSprite()
+  [ 20] getprop 816 ............................. <pSprite>
+  [ 23] getprop 814 ............................. <pMyLayer>
+  [ 26] setobjprop 259 .......................... pSprite.locZ = pMyLayer
+  [ 29] getprop 813 ............................. <pMember>
+  [ 32] pushsymb 49 ............................. <#none>
+  [ 34] eq ...................................... <pMember = #none>
+  [ 35] jmpifz [ 56] ............................ if pMember = #none then
+  [ 38] getglobal 40 ............................ <g>
+  [ 40] getchainedprop 858 ...................... <g.memberMaster>
+  [ 43] pushsymb 477 ............................ <#bitmap>
+  [ 46] pushcons 7 .............................. <"miniMap">
+  [ 48] pusharglist 3 ........................... <g.memberMaster, #bitmap, "miniMap">
+  [ 50] objcall 870 ............................. <g.memberMaster.requestMember(#bitmap, "miniMap")>
+  [ 53] setprop 813 ............................. pMember = g.memberMaster.requestMember(#bitmap, "miniMap")
+  [ 56] getprop 813 ............................. <pMember>
+  [ 59] getparam 1 .............................. <mapImage>
+  [ 61] setobjprop 800 .......................... pMember.image = mapImage
+  [ 64] getprop 813 ............................. <pMember>
+  [ 67] getprop 813 ............................. <pMember>
+  [ 70] getobjprop 424 .......................... <pMember.width>
+  [ 73] getprop 813 ............................. <pMember>
+  [ 76] getobjprop 423 .......................... <pMember.height>
+  [ 79] pusharglist 2 ........................... <pMember.width, pMember.height>
+  [ 81] extcall 197 ............................. <point(pMember.width, pMember.height)>
+  [ 83] setobjprop 422 .......................... pMember.regPoint = point(pMember.width, pMember.height)
+  [ 86] getprop 816 ............................. <pSprite>
+  [ 89] getprop 813 ............................. <pMember>
+  [ 92] pusharglistnoret 2 ...................... <pSprite, pMember>
+  [ 94] extcall 96 .............................. SpriteSetMember(pSprite, pMember)
+  [ 96] getprop 816 ............................. <pSprite>
+  [ 99] getprop 816 ............................. <pSprite>
+  [102] getobjprop 424 .......................... <pSprite.width>
+  [105] getprop 809 ............................. <pScale>
+  [108] mul ..................................... <pSprite.width * pScale>
+  [109] setobjprop 424 .......................... pSprite.width = pSprite.width * pScale
+  [112] getprop 816 ............................. <pSprite>
+  [115] getprop 816 ............................. <pSprite>
+  [118] getobjprop 423 .......................... <pSprite.height>
+  [121] getprop 809 ............................. <pScale>
+  [124] mul ..................................... <pSprite.height * pScale>
+  [125] setobjprop 423 .......................... pSprite.height = pSprite.height * pScale
+  [128] ret
+end
+
+on update me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 792 ............................. me.setBlendForMouseOrPlayer()
+  [  7] ret
+end

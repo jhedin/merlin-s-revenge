@@ -1,0 +1,30 @@
+property ancestor, pPlayer
+global g
+
+on new me
+  ancestor = new(script("objAi"))
+  return me
+end
+
+on init me, params
+  ancestor.init(params)
+  pPlayer = g.actorMaster.getPlayer()
+  me.goMode(#norm)
+end
+
+on refreshPlayer me
+  if pPlayer = #none then
+    pPlayer = g.actorMaster.getPlayer()
+  end if
+end
+
+on update me
+  case me.pmode of
+    #norm:
+      if me.pCharacterPrg.checkForCollisionWithPlayer() then
+        me.refreshPlayer()
+        me.pCharacterPrg.collected(pPlayer)
+        me.goMode(#dead)
+      end if
+  end case
+end

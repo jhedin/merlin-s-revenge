@@ -1,0 +1,125 @@
+property pDelayCount, pScreenList, pTransitionList
+global g
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 12 .............................. return me
+  [  6] ret
+end
+
+on init me
+  [  0] pusharglist 0 ........................... <>
+  [  2] extcall 476 ............................. <CounterNew()>
+  [  5] setprop 665 ............................. pDelayCount = CounterNew()
+  [  8] getprop 665 ............................. <pDelayCount>
+  [ 11] pushsymb 477 ............................ <#tim>
+  [ 14] pushint8 2 .............................. <2>
+  [ 16] pushint8 30 ............................. <30>
+  [ 18] pusharglistnoret 4 ...................... <pDelayCount, #tim, 2, 30>
+  [ 20] objcall 166 ............................. pDelayCount.tim[2] = 30
+  [ 22] getprop 665 ............................. <pDelayCount>
+  [ 25] pushint8 1 .............................. <1>
+  [ 27] setobjprop 495 .......................... pDelayCount.fin = 1
+  [ 30] getglobal 21 ............................ <g>
+  [ 32] getchainedprop 213 ...................... <g.objectMaster>
+  [ 34] pushsymb 667 ............................ <#objlist>
+  [ 37] pusharglist 2 ........................... <g.objectMaster, #objlist>
+  [ 39] objcall 214 ............................. <g.objectMaster.requestObject(#objlist)>
+  [ 41] setprop 666 ............................. pScreenList = g.objectMaster.requestObject(#objlist)
+  [ 44] getprop 666 ............................. <pScreenList>
+  [ 47] pushsymb 668 ............................ <#merlinScreen>
+  [ 50] pushsymb 669 ............................ <#steveScreen>
+  [ 53] pushsymb 670 ............................ <#newScreen>
+  [ 56] pushsymb 291 ............................ <#titleScreen>
+  [ 59] pusharglist 4 ........................... <[#merlinScreen, #steveScreen, #newScreen, #titleScreen]>
+  [ 61] pushlist ................................ <[#merlinScreen, #steveScreen, #newScreen, #titleScreen]>
+  [ 62] pusharglistnoret 2 ...................... <pScreenList, [#merlinScreen, #steveScreen, #newScreen, #titleScreen]>
+  [ 64] objcall 1 ............................... pScreenList.init([#merlinScreen, #steveScreen, #newScreen, #titleScreen])
+  [ 66] getglobal 21 ............................ <g>
+  [ 68] getchainedprop 213 ...................... <g.objectMaster>
+  [ 70] pushsymb 667 ............................ <#objlist>
+  [ 73] pusharglist 2 ........................... <g.objectMaster, #objlist>
+  [ 75] objcall 214 ............................. <g.objectMaster.requestObject(#objlist)>
+  [ 77] setprop 671 ............................. pTransitionList = g.objectMaster.requestObject(#objlist)
+  [ 80] getprop 671 ............................. <pTransitionList>
+  [ 83] pushsymb 672 ............................ <#overlay>
+  [ 86] pushsymb 673 ............................ <#blast>
+  [ 89] pusharglist 2 ........................... <[#overlay, #blast]>
+  [ 91] pushlist ................................ <[#overlay, #blast]>
+  [ 92] pusharglistnoret 2 ...................... <pTransitionList, [#overlay, #blast]>
+  [ 94] objcall 1 ............................... pTransitionList.init([#overlay, #blast])
+  [ 96] ret
+end
+
+on goNextScreen me
+  [  0] getprop 666 ............................. <pScreenList>
+  [  3] pusharglist 1 ........................... <pScreenList>
+  [  5] objcall 674 ............................. <pScreenList.nextValue()>
+  [  8] setlocal 0 .............................. nScreen = pScreenList.nextValue()
+  [ 10] getglobal 21 ............................ <g>
+  [ 12] getchainedprop 290 ...................... <g.screenMaster>
+  [ 15] pushsymb 234 ............................ <#goScreen>
+  [ 17] pusharglist 2 ........................... <g.screenMaster, #goScreen>
+  [ 19] objcall 215 ............................. <g.screenMaster.getParams(#goScreen)>
+  [ 21] setlocal 1 .............................. params = g.screenMaster.getParams(#goScreen)
+  [ 23] getlocal 1 .............................. <params>
+  [ 25] getparam 0 .............................. <me>
+  [ 27] setobjprop 248 .......................... params.caller = me
+  [ 29] getlocal 1 .............................. <params>
+  [ 31] getprop 671 ............................. <pTransitionList>
+  [ 34] pusharglist 1 ........................... <pTransitionList>
+  [ 36] objcall 674 ............................. <pTransitionList.nextValue()>
+  [ 39] setobjprop 246 .......................... params.transition = pTransitionList.nextValue()
+  [ 41] getlocal 1 .............................. <params>
+  [ 43] getlocal 0 .............................. <nScreen>
+  [ 45] setobjprop 245 .......................... params.screenSym = nScreen
+  [ 47] getglobal 21 ............................ <g>
+  [ 49] getchainedprop 290 ...................... <g.screenMaster>
+  [ 52] getlocal 1 .............................. <params>
+  [ 54] pusharglistnoret 2 ...................... <g.screenMaster, params>
+  [ 56] objcall 234 ............................. g.screenMaster.goScreen(params)
+  [ 58] ret
+end
+
+on goScreenFinished me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 3 ............................... me.start()
+  [  6] ret
+end
+
+on start me
+  [  0] getglobal 21 ............................ <g>
+  [  2] getchainedprop 284 ...................... <g.updater>
+  [  5] getparam 0 .............................. <me>
+  [  7] pushsymb 300 ............................ <#med>
+  [ 10] pusharglistnoret 3 ...................... <g.updater, me, #med>
+  [ 12] objcall 286 ............................. g.updater.addPrg(me, #med)
+  [ 15] ret
+end
+
+on stop me
+  [  0] getglobal 21 ............................ <g>
+  [  2] getchainedprop 284 ...................... <g.updater>
+  [  5] getparam 0 .............................. <me>
+  [  7] pusharglistnoret 2 ...................... <g.updater, me>
+  [  9] objcall 498 ............................. g.updater.removePrg(me)
+  [ 12] ret
+end
+
+on update me
+  [  0] getprop 665 ............................. <pDelayCount>
+  [  3] getobjprop 495 .......................... <pDelayCount.fin>
+  [  6] jmpifz [ 22] ............................ if pDelayCount.fin then
+  [  9] getparam 0 .............................. <me>
+  [ 11] pusharglistnoret 1 ...................... <me>
+  [ 13] objcall 11 .............................. me.stop()
+  [ 15] getparam 0 .............................. <me>
+  [ 17] pusharglistnoret 1 ...................... <me>
+  [ 19] objcall 664 ............................. me.goNextScreen()
+  [ 22] getprop 665 ............................. <pDelayCount>
+  [ 25] pusharglistnoret 1 ...................... <pDelayCount>
+  [ 27] extcall 494 ............................. counter(pDelayCount)
+  [ 30] ret
+end

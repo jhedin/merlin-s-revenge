@@ -1,0 +1,149 @@
+on UtilsTestGeomDist
+  [  0] getglobal 43 ............................ <g>
+  [  2] getobjprop 464 .......................... <g.profileMaster>
+  [  5] setlocal 0 .............................. pm = g.profileMaster
+  [  7] pushint16 10000 ......................... <10000>
+  [ 10] setlocal 1 .............................. reps = 10000
+  [ 12] pushint8 30 ............................. <30>
+  [ 14] pushint8 30 ............................. <30>
+  [ 16] pusharglist 2 ........................... <30, 30>
+  [ 18] extcall 97 .............................. <point(30, 30)>
+  [ 20] setlocal 2 .............................. point1 = point(30, 30)
+  [ 22] pushint16 256 ........................... <256>
+  [ 25] pushint16 256 ........................... <256>
+  [ 28] pusharglist 2 ........................... <256, 256>
+  [ 30] extcall 97 .............................. <point(256, 256)>
+  [ 32] setlocal 3 .............................. point2 = point(256, 256)
+  [ 34] getlocal 0 .............................. <pm>
+  [ 36] pushcons 0 .............................. <"GeomDist, Sine Dist, Geom Pixel Dist, Geom Dist Squared, and Add Dist">
+  [ 38] pusharglistnoret 2 ...................... <pm, "GeomDist, Sine Dist, Geom Pixel Dist, Geom Dist Squared, and Add Dist">
+  [ 40] objcall 465 ............................. pm.setTitle("GeomDist, Sine Dist, Geom Pixel Dist, Geom Dist Squared, and Add Dist")
+  [ 43] getlocal 0 .............................. <pm>
+  [ 45] pushsymb 150 ............................ <#GeomDist>
+  [ 47] pusharglistnoret 2 ...................... <pm, #GeomDist>
+  [ 49] objcall 466 ............................. pm.startProfile(#GeomDist)
+  [ 52] pushint8 1 .............................. <1>
+  [ 54] setlocal 4
+  [ 56] getlocal 4
+  [ 58] getlocal 1 .............................. <reps>
+  [ 60] lteq
+  [ 61] jmpifz [ 83] ............................ repeat with i = 1 to reps
+  [ 64] getlocal 2 .............................. <point1>
+  [ 66] getlocal 3 .............................. <point2>
+  [ 68] pusharglist 2 ........................... <point1, point2>
+  [ 70] extcall 150 ............................. <GeomDist(point1, point2)>
+  [ 72] setlocal 5 .............................. dist = GeomDist(point1, point2)
+  [ 74] pushint8 1
+  [ 76] getlocal 4
+  [ 78] add
+  [ 79] setlocal 4
+  [ 81] endrepeat [ 56]
+  [ 83] getlocal 0 .............................. <pm>
+  [ 85] pushsymb 150 ............................ <#GeomDist>
+  [ 87] pusharglistnoret 2 ...................... <pm, #GeomDist>
+  [ 89] objcall 467 ............................. pm.stopProfile(#GeomDist)
+  [ 92] getlocal 0 .............................. <pm>
+  [ 94] pushsymb 96 ............................. <#SineDist>
+  [ 96] pusharglistnoret 2 ...................... <pm, #SineDist>
+  [ 98] objcall 466 ............................. pm.startProfile(#SineDist)
+  [101] pushint8 1 .............................. <1>
+  [103] setlocal 4
+  [105] getlocal 4
+  [107] getlocal 1 .............................. <reps>
+  [109] lteq
+  [110] jmpifz [132] ............................ repeat with i = 1 to reps
+  [113] getlocal 2 .............................. <point1>
+  [115] getlocal 3 .............................. <point2>
+  [117] pusharglist 2 ........................... <point1, point2>
+  [119] extcall 96 .............................. <SineDist(point1, point2)>
+  [121] setlocal 5 .............................. dist = SineDist(point1, point2)
+  [123] pushint8 1
+  [125] getlocal 4
+  [127] add
+  [128] setlocal 4
+  [130] endrepeat [105]
+  [132] getlocal 0 .............................. <pm>
+  [134] pushsymb 96 ............................. <#SineDist>
+  [136] pusharglistnoret 2 ...................... <pm, #SineDist>
+  [138] objcall 467 ............................. pm.stopProfile(#SineDist)
+  [141] getlocal 0 .............................. <pm>
+  [143] pushsymb 179 ............................ <#geomPixelDist>
+  [145] pusharglistnoret 2 ...................... <pm, #geomPixelDist>
+  [147] objcall 466 ............................. pm.startProfile(#geomPixelDist)
+  [150] pushint8 1 .............................. <1>
+  [152] setlocal 4
+  [154] getlocal 4
+  [156] getlocal 1 .............................. <reps>
+  [158] lteq
+  [159] jmpifz [181] ............................ repeat with i = 1 to reps
+  [162] getlocal 2 .............................. <point1>
+  [164] getlocal 3 .............................. <point2>
+  [166] pusharglist 2 ........................... <point1, point2>
+  [168] extcall 179 ............................. <geomPixelDist(point1, point2)>
+  [170] setlocal 5 .............................. dist = geomPixelDist(point1, point2)
+  [172] pushint8 1
+  [174] getlocal 4
+  [176] add
+  [177] setlocal 4
+  [179] endrepeat [154]
+  [181] getlocal 0 .............................. <pm>
+  [183] pushsymb 179 ............................ <#geomPixelDist>
+  [185] pusharglistnoret 2 ...................... <pm, #geomPixelDist>
+  [187] objcall 467 ............................. pm.stopProfile(#geomPixelDist)
+  [190] getlocal 0 .............................. <pm>
+  [192] pushsymb 157 ............................ <#GeomDistSqr>
+  [194] pusharglistnoret 2 ...................... <pm, #GeomDistSqr>
+  [196] objcall 466 ............................. pm.startProfile(#GeomDistSqr)
+  [199] pushint8 1 .............................. <1>
+  [201] setlocal 4
+  [203] getlocal 4
+  [205] getlocal 1 .............................. <reps>
+  [207] lteq
+  [208] jmpifz [237] ............................ repeat with i = 1 to reps
+  [211] getlocal 2 .............................. <point1>
+  [213] getlocal 3 .............................. <point2>
+  [215] pusharglist 2 ........................... <point1, point2>
+  [217] extcall 157 ............................. <GeomDistSqr(point1, point2)>
+  [219] setlocal 5 .............................. dist = GeomDistSqr(point1, point2)
+  [221] pushint8 100 ............................ <100>
+  [223] pushint8 100 ............................ <100>
+  [225] mul ..................................... <100 * 100>
+  [226] setlocal 5 .............................. dist = 100 * 100
+  [228] pushint8 1
+  [230] getlocal 4
+  [232] add
+  [233] setlocal 4
+  [235] endrepeat [203]
+  [237] getlocal 0 .............................. <pm>
+  [239] pushsymb 157 ............................ <#GeomDistSqr>
+  [241] pusharglistnoret 2 ...................... <pm, #GeomDistSqr>
+  [243] objcall 467 ............................. pm.stopProfile(#GeomDistSqr)
+  [246] getlocal 0 .............................. <pm>
+  [248] pushsymb 554 ............................ <#AddDist>
+  [251] pusharglistnoret 2 ...................... <pm, #AddDist>
+  [253] objcall 466 ............................. pm.startProfile(#AddDist)
+  [256] pushint8 1 .............................. <1>
+  [258] setlocal 4
+  [260] getlocal 4
+  [262] getlocal 1 .............................. <reps>
+  [264] lteq
+  [265] jmpifz [288] ............................ repeat with i = 1 to reps
+  [268] getlocal 2 .............................. <point1>
+  [270] getlocal 3 .............................. <point2>
+  [272] pusharglist 2 ........................... <point1, point2>
+  [274] extcall 554 ............................. <AddDist(point1, point2)>
+  [277] setlocal 5 .............................. dist = AddDist(point1, point2)
+  [279] pushint8 1
+  [281] getlocal 4
+  [283] add
+  [284] setlocal 4
+  [286] endrepeat [260]
+  [288] getlocal 0 .............................. <pm>
+  [290] pushsymb 554 ............................ <#AddDist>
+  [293] pusharglistnoret 2 ...................... <pm, #AddDist>
+  [295] objcall 467 ............................. pm.stopProfile(#AddDist)
+  [298] getlocal 0 .............................. <pm>
+  [300] pusharglistnoret 1 ...................... <pm>
+  [302] objcall 468 ............................. pm.writeReport()
+  [305] ret
+end

@@ -1,0 +1,222 @@
+property pSaveVersion
+global g, gGameSaveFile
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 3 ............................... return me
+  [  6] ret
+end
+
+on init me
+  [  0] pushint8 12 ............................. <12>
+  [  2] setprop 1343 ............................ pSaveVersion = 12
+  [  5] ret
+end
+
+on finish me
+  [  0] ret
+end
+
+on isLoadAvailable me
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. available = 0
+  [  3] gettoplevelprop 2127 .................... <_player>
+  [  6] getglobal 1345 .......................... <gGameSaveFile>
+  [  9] pusharglist 2 ........................... <_player, gGameSaveFile>
+  [ 11] objcall 1344 ............................ <_player.getPref(gGameSaveFile)>
+  [ 14] setlocal 1 .............................. sd = _player.getPref(gGameSaveFile)
+  [ 16] getlocal 1 .............................. <sd>
+  [ 18] pusharglist 0 ........................... <>
+  [ 20] extcall 388 ............................. <VOID>
+  [ 23] nteq .................................... <sd <> VOID>
+  [ 24] jmpifz [ 65] ............................ if sd <> VOID then
+  [ 27] getlocal 1 .............................. <sd>
+  [ 29] pusharglist 1 ........................... <sd>
+  [ 31] extcall 912 ............................. <value(sd)>
+  [ 34] setlocal 1 .............................. sd = value(sd)
+  [ 36] getlocal 1 .............................. <sd>
+  [ 38] pusharglist 0 ........................... <>
+  [ 40] extcall 388 ............................. <VOID>
+  [ 43] nteq .................................... <sd <> VOID>
+  [ 44] jmpifz [ 65] ............................ if sd <> VOID then
+  [ 47] getlocal 1 .............................. <sd>
+  [ 49] getobjprop 1346 ......................... <sd.ver>
+  [ 52] getprop 1343 ............................ <pSaveVersion>
+  [ 55] eq ...................................... <sd.ver = pSaveVersion>
+  [ 56] jmpifz [ 65] ............................ if sd.ver = pSaveVersion then
+  [ 59] pushint8 1 .............................. <1>
+  [ 61] pusharglistnoret 1 ...................... <1>
+  [ 63] extcall 3 ............................... return 1
+  [ 65] getlocal 0 .............................. <available>
+  [ 67] pusharglistnoret 1 ...................... <available>
+  [ 69] extcall 3 ............................... return available
+  [ 71] ret
+end
+
+on loadGame me
+  [  0] getglobal 1345 .......................... <gGameSaveFile>
+  [  3] pusharglist 1 ........................... <gGameSaveFile>
+  [  5] extcall 1344 ............................ <getPref(gGameSaveFile)>
+  [  8] setlocal 0 .............................. sd = getPref(gGameSaveFile)
+  [ 10] getlocal 0 .............................. <sd>
+  [ 12] pusharglist 1 ........................... <sd>
+  [ 14] extcall 912 ............................. <value(sd)>
+  [ 17] setlocal 0 .............................. sd = value(sd)
+  [ 19] getlocal 0 .............................. <sd>
+  [ 21] pusharglist 0 ........................... <>
+  [ 23] extcall 388 ............................. <VOID>
+  [ 26] eq ...................................... <sd = VOID>
+  [ 27] jmpifz [ 34] ............................ if sd = VOID then
+  [ 30] pusharglistnoret 0 ...................... <>
+  [ 32] extcall 3 ............................... return 
+  [ 34] getglobal 191 ........................... <g>
+  [ 36] getchainedprop 735 ...................... <g.gamemaster>
+  [ 39] pusharglist 1 ........................... <g.gamemaster>
+  [ 41] objcall 597 ............................. <g.gamemaster.getCurrentMap()>
+  [ 44] setlocal 1 .............................. currentMap = g.gamemaster.getCurrentMap()
+  [ 46] getlocal 1 .............................. <currentMap>
+  [ 48] getlocal 0 .............................. <sd>
+  [ 50] getobjprop 631 .......................... <sd.currentMap>
+  [ 53] pusharglistnoret 2 ...................... <currentMap, sd.currentMap>
+  [ 55] objcall 835 ............................. currentMap.restoreFromSave(sd.currentMap)
+  [ 58] getglobal 191 ........................... <g>
+  [ 60] getchainedprop 1348 ..................... <g.potionMaster>
+  [ 63] getlocal 0 .............................. <sd>
+  [ 65] getobjprop 1349 ......................... <sd.g_potionMaster>
+  [ 68] pusharglistnoret 2 ...................... <g.potionMaster, sd.g_potionMaster>
+  [ 70] objcall 835 ............................. g.potionMaster.restoreFromSave(sd.g_potionMaster)
+  [ 73] getglobal 191 ........................... <g>
+  [ 75] getchainedprop 634 ...................... <g.soundmaster>
+  [ 78] getlocal 0 .............................. <sd>
+  [ 80] getobjprop 1350 ......................... <sd.g_soundMaster>
+  [ 83] pusharglistnoret 2 ...................... <g.soundmaster, sd.g_soundMaster>
+  [ 85] objcall 835 ............................. g.soundmaster.restoreFromSave(sd.g_soundMaster)
+  [ 88] getglobal 191 ........................... <g>
+  [ 90] getchainedprop 674 ...................... <g.armyMaster>
+  [ 93] getlocal 0 .............................. <sd>
+  [ 95] getobjprop 1351 ......................... <sd.g_armyMaster>
+  [ 98] pusharglistnoret 2 ...................... <g.armyMaster, sd.g_armyMaster>
+  [100] objcall 835 ............................. g.armyMaster.restoreFromSave(sd.g_armyMaster)
+  [103] getglobal 191 ........................... <g>
+  [105] getchainedprop 647 ...................... <g.characterEnergyRollOverMaster>
+  [108] pusharglistnoret 1 ...................... <g.characterEnergyRollOverMaster>
+  [110] objcall 835 ............................. g.characterEnergyRollOverMaster.restoreFromSave()
+  [113] ret
+end
+
+on isMenuItemShadowed me, theComm
+  [  0] getparam 1 .............................. <theComm>
+  [  2] peek 0 .................................. case theComm of
+  [  4] pushsymb 547 ............................ <#loadGame>
+  [  7] eq
+  [  8] jmpifz [ 31] ............................ (case) #loadGame:
+  [ 11] getparam 0 .............................. <me>
+  [ 13] pusharglist 1 ........................... <me>
+  [ 15] objcall 1342 ............................ <me.isLoadAvailable()>
+  [ 18] jmpifz [ 27] ............................ if me.isLoadAvailable() then / else
+  [ 21] pushzero ................................ <0>
+  [ 22] setlocal 0 .............................. shadowed = 0
+  [ 24] jmp [ 31]
+  [ 27] pushint8 1 .............................. <1>
+  [ 29] setlocal 0 .............................. shadowed = 1
+  [ 31] pop 1
+  [ 33] getlocal 0 .............................. <shadowed>
+  [ 35] pusharglistnoret 1 ...................... <shadowed>
+  [ 37] extcall 3 ............................... return shadowed
+  [ 39] ret
+end
+
+on saveGame me
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 735 ...................... <g.gamemaster>
+  [  5] pusharglist 1 ........................... <g.gamemaster>
+  [  7] objcall 597 ............................. <g.gamemaster.getCurrentMap()>
+  [ 10] setlocal 0 .............................. currentMap = g.gamemaster.getCurrentMap()
+  [ 12] pusharglist 0 ........................... <[:]>
+  [ 14] pushproplist ............................ <[:]>
+  [ 15] setlocal 1 .............................. sd = [:]
+  [ 17] getlocal 1 .............................. <sd>
+  [ 19] pushsymb 1346 ........................... <#ver>
+  [ 22] getprop 1343 ............................ <pSaveVersion>
+  [ 25] pusharglistnoret 3 ...................... <sd, #ver, pSaveVersion>
+  [ 27] objcall 54 .............................. sd[#ver] = pSaveVersion
+  [ 29] pusharglist 0 ........................... <[:]>
+  [ 31] pushproplist ............................ <[:]>
+  [ 32] setlocal 2 .............................. saveData = [:]
+  [ 34] getlocal 0 .............................. <currentMap>
+  [ 36] getlocal 2 .............................. <saveData>
+  [ 38] pusharglistnoret 2 ...................... <currentMap, saveData>
+  [ 40] objcall 830 ............................. currentMap.addSaveData(saveData)
+  [ 43] getlocal 1 .............................. <sd>
+  [ 45] pushsymb 631 ............................ <#currentMap>
+  [ 48] getlocal 2 .............................. <saveData>
+  [ 50] pusharglistnoret 3 ...................... <sd, #currentMap, saveData>
+  [ 52] objcall 54 .............................. sd[#currentMap] = saveData
+  [ 54] pusharglist 0 ........................... <[:]>
+  [ 56] pushproplist ............................ <[:]>
+  [ 57] setlocal 2 .............................. saveData = [:]
+  [ 59] getglobal 191 ........................... <g>
+  [ 61] getchainedprop 1348 ..................... <g.potionMaster>
+  [ 64] getlocal 2 .............................. <saveData>
+  [ 66] pusharglistnoret 2 ...................... <g.potionMaster, saveData>
+  [ 68] objcall 830 ............................. g.potionMaster.addSaveData(saveData)
+  [ 71] getlocal 1 .............................. <sd>
+  [ 73] pushsymb 1349 ........................... <#g_potionMaster>
+  [ 76] getlocal 2 .............................. <saveData>
+  [ 78] pusharglistnoret 3 ...................... <sd, #g_potionMaster, saveData>
+  [ 80] objcall 54 .............................. sd[#g_potionMaster] = saveData
+  [ 82] pusharglist 0 ........................... <[:]>
+  [ 84] pushproplist ............................ <[:]>
+  [ 85] setlocal 2 .............................. saveData = [:]
+  [ 87] getglobal 191 ........................... <g>
+  [ 89] getchainedprop 634 ...................... <g.soundmaster>
+  [ 92] getlocal 2 .............................. <saveData>
+  [ 94] pusharglistnoret 2 ...................... <g.soundmaster, saveData>
+  [ 96] objcall 830 ............................. g.soundmaster.addSaveData(saveData)
+  [ 99] getlocal 1 .............................. <sd>
+  [101] pushsymb 1350 ........................... <#g_soundMaster>
+  [104] getlocal 2 .............................. <saveData>
+  [106] pusharglistnoret 3 ...................... <sd, #g_soundMaster, saveData>
+  [108] objcall 54 .............................. sd[#g_soundMaster] = saveData
+  [110] pusharglist 0 ........................... <[:]>
+  [112] pushproplist ............................ <[:]>
+  [113] setlocal 2 .............................. saveData = [:]
+  [115] getglobal 191 ........................... <g>
+  [117] getchainedprop 674 ...................... <g.armyMaster>
+  [120] getlocal 2 .............................. <saveData>
+  [122] pusharglistnoret 2 ...................... <g.armyMaster, saveData>
+  [124] objcall 830 ............................. g.armyMaster.addSaveData(saveData)
+  [127] getlocal 1 .............................. <sd>
+  [129] pushsymb 1351 ........................... <#g_armyMaster>
+  [132] getlocal 2 .............................. <saveData>
+  [134] pusharglistnoret 3 ...................... <sd, #g_armyMaster, saveData>
+  [136] objcall 54 .............................. sd[#g_armyMaster] = saveData
+  [138] getglobal 1345 .......................... <gGameSaveFile>
+  [141] getlocal 1 .............................. <sd>
+  [143] pusharglist 1 ........................... <sd>
+  [145] extcall 530 ............................. <string(sd)>
+  [148] pusharglistnoret 2 ...................... <gGameSaveFile, string(sd)>
+  [150] extcall 1352 ............................ setPref(gGameSaveFile, string(sd))
+  [153] getparam 0 .............................. <me>
+  [155] pusharglist 1 ........................... <me>
+  [157] objcall 1342 ............................ <me.isLoadAvailable()>
+  [160] pushint8 1 .............................. <1>
+  [162] nteq .................................... <me.isLoadAvailable() <> 1>
+  [163] jmpifz [173] ............................ if me.isLoadAvailable() <> 1 then
+  [166] pushcons 0 .............................. <"setPref failed">
+  [168] pusharglistnoret 1 ...................... <"setPref failed">
+  [170] extcall 414 ............................. put "setPref failed"
+  [173] ret
+end
+
+on start me
+  [  0] ret
+end
+
+on stop me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 239 ............................. me.finish()
+  [  6] ret
+end

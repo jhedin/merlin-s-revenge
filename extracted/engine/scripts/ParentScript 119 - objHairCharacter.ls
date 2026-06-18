@@ -1,0 +1,241 @@
+property ancestor, pDownChain, pAutoGrowHairDelayCounter, pAutoGrowHairNormalDelay, pAutoGrowHairNoPotionsDelay, pGrowHair, pGrowHairNum, pGrowHairSound, pGrowHairTarget, pHairPotionsSpare, pHairPotionsTextMember, pHairOffset, pHairLength, pMaxHairLength, pMinHairLength, pUpChain
+global g
+
+on new me
+  ancestor = new(script("objCharacter"))
+  i = me.modifyParams(#init)
+  i[#autoGrowHairNormalDelay] = 30
+  i[#autoGrowHairNoPotionsDelay] = 300
+  i[#hairLength] = 4
+  i[#growHairSound] = #none
+  i[#maxHairLength] = 0
+  i[#minHairLength] = 3
+  return me
+end
+
+on init me, params
+  ancestor.init(params)
+  pAutoGrowHairDelayCounter = CounterNew()
+  pAutoGrowHairNormalDelay = params.autoGrowHairNormalDelay
+  pAutoGrowHairNoPotionsDelay = params.autoGrowHairNoPotionsDelay
+  pDownChain = #none
+  pGrowHair = 0
+  pGrowHairNum = 0
+  pGrowHairSound = params.growHairSound
+  pGrowHairTarget = 2
+  pHairOffset = point(-7, -9)
+  pHairLength = params.hairLength
+  pHairPotionsSpare = 0
+  pHairPotionsTextMember = member("hairPotion_text", "gfx")
+  pMaxHairLength = params.maxHairLength
+  pMinHairLength = params.minHairLength
+  me.initHair(me, pHairLength)
+  me.updateHairPotionsDisplay()
+  me.checkHairPotions()
+end
+
+on initHair me
+  repeat with i = 1 to pHairLength
+    me.growHair()
+  end repeat
+end
+
+on finish me
+  pHairPotionsSpare = 0
+  me.updateHairPotionsDisplay()
+  ancestor.finish()
+end
+
+on attemptUseHairPotion me
+  if pHairPotionsSpare > 0 then
+    if me.getHairLength() < pMaxHairLength then
+      me.useHairPotion()
+    end if
+  end if
+end
+
+on checkHairCollisions me, therect, minCollisionSpeed
+  if pDownChain = #none then
+    return 0
+  else
+    return pDownChain.checkHairCollisions(therect, minCollisionSpeed)
+  end if
+end
+
+on checkHairCollisionsObj me, theloc
+  if pDownChain = #none then
+    return #none
+  else
+    return pDownChain.checkHairCollisionsObj(theloc)
+  end if
+end
+
+on checkHairPotions me
+  if pHairPotionsSpare <= 0 then
+    pAutoGrowHairDelayCounter.tim[2] = pAutoGrowHairNoPotionsDelay
+  else
+    pAutoGrowHairDelayCounter.tim[2] = pAutoGrowHairNormalDelay
+  end if
+  CounterReset(pAutoGrowHairDelayCounter)
+end
+
+on cutHairTest me
+  halfWayHair = me.getHalfWayHair()
+  if halfWayHair <> #none then
+    halfWayHair.cutOff()
+  end if
+end
+
+on downChainGone me
+  pDownChain = #none
+  me.checkHairPotions()
+end
+
+on getActualHairLength me
+  if pDownChain = #none then
+    hairLength = 0
+  else
+    hairLength = pDownChain.getHairLength(0)
+  end if
+  return hairLength
+end
+
+on getHairLoc me
+  hairOffset = pHairOffset.duplicate()
+  if me.pSpr.flipH then
+    hairOffset[1] = hairOffset[1] * -1
+  end if
+  hairLoc = me.getNewLoc() + hairOffset
+  hairLoc = PointInteger(hairLoc)
+  return hairLoc
+end
+
+on getHalfWayHair me
+  hairLength = me.getHairLength()
+  halfWay = hairLength / 2
+  hairObj = me.getHairAtPos(halfWay)
+  return hairObj
+end
+
+on getHairAtPos me, thePos
+  if (thePos = 0) or (pDownChain = #none) then
+    return #none
+  else
+    return pDownChain.getHairAtPos(thePos, 0)
+  end if
+end
+
+on getHairLength me, len
+  hairLength = me.getActualHairLength()
+  hairLength = hairLength + pGrowHairNum
+  return hairLength
+end
+
+on growHair me
+  if pDownChain = #none then
+    params = g.actorMaster.getParams(#newActor)
+    params.typ = #hair
+    params.startLoc = me.getHairLoc()
+    pDownChain = g.actorMaster.newActor(params)
+    pDownChain.setUpChain(me)
+    pDownChain.setPosInChain(1)
+  else
+    pDownChain.growHair()
+  end if
+end
+
+on growHairNoPotion me
+  me.growHairSequence()
+end
+
+on growHairSequence me
+  pGrowHairNum = pGrowHairNum + 1
+  me.flashWhite()
+  pGrowHair = 1
+  me.PlaySound(pGrowHairSound)
+end
+
+on growHairSequencePass me
+  repeat with i = 1 to pGrowHairNum
+    hairLength = me.getActualHairLength()
+    if hairLength < pMaxHairLength then
+      if pDownChain = #none then
+        me.growHair()
+        next repeat
+      end if
+      pDownChain.growHairSequence()
+    end if
+  end repeat
+  pGrowHairNum = 0
+end
+
+on hairConditionerCollected me
+  pMaxHairLength = pMaxHairLength + 1
+  me.growHairSequence()
+end
+
+on hairPotionCollected me
+  hairLength = me.getHairLength()
+  if hairLength < pMaxHairLength then
+    me.growHairSequence()
+  else
+    me.flashWhite()
+    pHairPotionsSpare = pHairPotionsSpare + 1
+    me.updateHairPotionsDisplay()
+  end if
+end
+
+on leaveRoom me, moveAmount
+  if pDownChain = #none then
+  else
+    pDownChain.leaveRoom(moveAmount)
+  end if
+end
+
+on trimHair me
+  if pDownChain = #none then
+  else
+    pDownChain.trimHair()
+  end if
+end
+
+on update me
+  if pGrowHair = pGrowHairTarget then
+    me.growHairSequencePass()
+    pGrowHair = 0
+  else
+    if pGrowHair > 0 then
+      pGrowHair = pGrowHair + 1
+    end if
+  end if
+  me.updateAutoGrowHair()
+  ancestor.update()
+end
+
+on updateAutoGrowHair me
+  if pAutoGrowHairDelayCounter.fin then
+    hairLength = me.getHairLength()
+    if hairLength < pMaxHairLength then
+      if pHairPotionsSpare > 0 then
+        me.useHairPotion()
+      else
+        if hairLength < pMinHairLength then
+          me.growHairNoPotion()
+        end if
+      end if
+    end if
+    me.checkHairPotions()
+  else
+    counter(pAutoGrowHairDelayCounter)
+  end if
+end
+
+on updateHairPotionsDisplay me
+  pHairPotionsTextMember.text = string(pHairPotionsSpare)
+end
+
+on useHairPotion me
+  pHairPotionsSpare = pHairPotionsSpare - 1
+  me.growHairSequence()
+  me.updateHairPotionsDisplay()
+end

@@ -1,0 +1,126 @@
+property ancestor, pColourRange, pNumRanges, pRangePercent
+
+on new me
+  [  0] pushcons 0 .............................. <"objEnergyBar">
+  [  2] pusharglist 1 ........................... <"objEnergyBar">
+  [  4] extcall 34 .............................. <script("objEnergyBar")>
+  [  6] pusharglist 1 ........................... <script("objEnergyBar")>
+  [  8] extcall 0 ............................... <new(script("objEnergyBar"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objEnergyBar"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 3440 ........................... <#colourRange>
+  [ 27] pushint16 255 ........................... <255>
+  [ 30] pushzero ................................ <0>
+  [ 31] pushzero ................................ <0>
+  [ 32] pusharglist 3 ........................... <255, 0, 0>
+  [ 34] extcall 436 ............................. <rgb(255, 0, 0)>
+  [ 37] pushint16 255 ........................... <255>
+  [ 40] pushint16 255 ........................... <255>
+  [ 43] pushzero ................................ <0>
+  [ 44] pusharglist 3 ........................... <255, 255, 0>
+  [ 46] extcall 436 ............................. <rgb(255, 255, 0)>
+  [ 49] pushzero ................................ <0>
+  [ 50] pushint16 200 ........................... <200>
+  [ 53] pushzero ................................ <0>
+  [ 54] pusharglist 3 ........................... <0, 200, 0>
+  [ 56] extcall 436 ............................. <rgb(0, 200, 0)>
+  [ 59] pusharglist 3 ........................... <[rgb(255, 0, 0), rgb(255, 255, 0), rgb(0, 200, 0)]>
+  [ 61] pushlist ................................ <[rgb(255, 0, 0), rgb(255, 255, 0), rgb(0, 200, 0)]>
+  [ 62] pusharglistnoret 3 ...................... <i, #colourRange, [rgb(255, 0, 0), rgb(255, 255, 0), rgb(0, 200, 0)]>
+  [ 64] objcall 48 .............................. i[#colourRange] = [rgb(255, 0, 0), rgb(255, 255, 0), rgb(0, 200, 0)]
+  [ 66] getparam 0 .............................. <me>
+  [ 68] pusharglistnoret 1 ...................... <me>
+  [ 70] extcall 35 .............................. return me
+  [ 72] ret
+end
+
+on init me, params
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <params>
+  [  4] getobjprop 3440 ......................... <params.colourRange>
+  [  7] pusharglistnoret 2 ...................... <me, params.colourRange>
+  [  9] objcall 3439 ............................ me.setColourRange(params.colourRange)
+  [ 12] getprop 33 .............................. <ancestor>
+  [ 14] getparam 1 .............................. <params>
+  [ 16] pusharglistnoret 2 ...................... <ancestor, params>
+  [ 18] objcall 1 ............................... ancestor.init(params)
+  [ 20] ret
+end
+
+on setColourRange me, colourRange
+  [  0] getparam 1 .............................. <colourRange>
+  [  2] setprop 3441 ............................ pColourRange = colourRange
+  [  5] getprop 3441 ............................ <pColourRange>
+  [  8] getobjprop 257 .......................... <pColourRange.count>
+  [ 11] pushint8 1 .............................. <1>
+  [ 13] sub ..................................... <pColourRange.count - 1>
+  [ 14] setprop 3442 ............................ pNumRanges = pColourRange.count - 1
+  [ 17] pushint8 100 ............................ <100>
+  [ 19] getprop 3442 ............................ <pNumRanges>
+  [ 22] div ..................................... <100 / pNumRanges>
+  [ 23] setprop 3443 ............................ pRangePercent = 100 / pNumRanges
+  [ 26] ret
+end
+
+on updateEnergy me, newEnergy
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <newEnergy>
+  [  4] pusharglistnoret 2 ...................... <ancestor, newEnergy>
+  [  6] objcall 2417 ............................ ancestor.updateEnergy(newEnergy)
+  [  9] getparam 0 .............................. <me>
+  [ 11] pusharglist 1 ........................... <me>
+  [ 13] objcall 2577 ............................ <me.getCurrentEnergyPercent()>
+  [ 16] pushfloat32 1.0 ......................... <1.0>
+  [ 21] mul ..................................... <me.getCurrentEnergyPercent() * 1.0>
+  [ 22] setlocal 0 .............................. energypercent = me.getCurrentEnergyPercent() * 1.0
+  [ 24] getlocal 0 .............................. <energypercent>
+  [ 26] getprop 3443 ............................ <pRangePercent>
+  [ 29] div ..................................... <energypercent / pRangePercent>
+  [ 30] pusharglist 1 ........................... <energypercent / pRangePercent>
+  [ 32] extcall 3444 ............................ <VarFloor(energypercent / pRangePercent)>
+  [ 35] pushint8 1 .............................. <1>
+  [ 37] add ..................................... <VarFloor(energypercent / pRangePercent) + 1>
+  [ 38] setlocal 1 .............................. colRange = VarFloor(energypercent / pRangePercent) + 1
+  [ 40] getlocal 0 .............................. <energypercent>
+  [ 42] pusharglist 1 ........................... <energypercent>
+  [ 44] extcall 3444 ............................ <VarFloor(energypercent)>
+  [ 47] getprop 3443 ............................ <pRangePercent>
+  [ 50] mod ..................................... <VarFloor(energypercent) mod pRangePercent>
+  [ 51] getprop 3442 ............................ <pNumRanges>
+  [ 54] mul ..................................... <VarFloor(energypercent) mod pRangePercent * pNumRanges>
+  [ 55] setlocal 2 .............................. colPercent = VarFloor(energypercent) mod pRangePercent * pNumRanges
+  [ 57] getlocal 1 .............................. <colRange>
+  [ 59] pushint8 3 .............................. <3>
+  [ 61] eq ...................................... <colRange = 3>
+  [ 62] jmpifz [ 79] ............................ if colRange = 3 then / else
+  [ 65] getprop 3441 ............................ <pColourRange>
+  [ 68] getlocal 1 .............................. <colRange>
+  [ 70] pusharglist 2 ........................... <pColourRange, colRange>
+  [ 72] objcall 109 ............................. <pColourRange[colRange]>
+  [ 74] setlocal 3 .............................. newColour = pColourRange[colRange]
+  [ 76] jmp [109]
+  [ 79] getlocal 2 .............................. <colPercent>
+  [ 81] getprop 3441 ............................ <pColourRange>
+  [ 84] getlocal 1 .............................. <colRange>
+  [ 86] pusharglist 2 ........................... <pColourRange, colRange>
+  [ 88] objcall 109 ............................. <pColourRange[colRange]>
+  [ 90] getprop 3441 ............................ <pColourRange>
+  [ 93] getlocal 1 .............................. <colRange>
+  [ 95] pushint8 1 .............................. <1>
+  [ 97] add ..................................... <colRange + 1>
+  [ 98] pusharglist 2 ........................... <pColourRange, colRange + 1>
+  [100] objcall 109 ............................. <pColourRange[colRange + 1]>
+  [102] pusharglist 3 ........................... <colPercent, pColourRange[colRange], pColourRange[colRange + 1]>
+  [104] extcall 3445 ............................ <varColRange(colPercent, pColourRange[colRange], pColourRange[colRange + 1])>
+  [107] setlocal 3 .............................. newColour = varColRange(colPercent, pColourRange[colRange], pColourRange[colRange + 1])
+  [109] getparam 0 .............................. <me>
+  [111] getlocal 3 .............................. <newColour>
+  [113] pusharglistnoret 2 ...................... <me, newColour>
+  [115] objcall 2168 ............................ me.setColour(newColour)
+  [118] ret
+end

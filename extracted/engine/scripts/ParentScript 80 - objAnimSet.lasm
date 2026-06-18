@@ -1,0 +1,411 @@
+property ancestor, pStrips
+global g
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushcons 0 .............................. <"objBasic">
+  [  4] pusharglist 1 ........................... <"objBasic">
+  [  6] extcall 34 .............................. <script("objBasic")>
+  [  8] pusharglist 1 ........................... <script("objBasic")>
+  [ 10] extcall 0 ............................... <new(script("objBasic"))>
+  [ 12] setobjprop 33 ........................... me.ancestor = new(script("objBasic"))
+  [ 14] getparam 0 .............................. <me>
+  [ 16] pusharglistnoret 1 ...................... <me>
+  [ 18] extcall 35 .............................. return me
+  [ 20] ret
+end
+
+on init me, name, charType
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 2018 ..................... <g.animStripMaster>
+  [  5] getparam 1 .............................. <name>
+  [  7] pusharglist 2 ........................... <g.animStripMaster, name>
+  [  9] objcall 2019 ............................ <g.animStripMaster.getStripDefs(name)>
+  [ 12] setlocal 0 .............................. stripDefs = g.animStripMaster.getStripDefs(name)
+  [ 14] getparam 0 .............................. <me>
+  [ 16] getlocal 0 .............................. <stripDefs>
+  [ 18] pusharglistnoret 2 ...................... <me, stripDefs>
+  [ 20] objcall 2015 ............................ me.initAnimStrips(stripDefs)
+  [ 23] ret
+end
+
+on initAnimStrips me, stripDefs
+  [  0] pusharglist 0 ........................... <[:]>
+  [  2] pushproplist ............................ <[:]>
+  [  3] setprop 2022 ............................ pStrips = [:]
+  [  6] pushint8 1 .............................. <1>
+  [  8] setlocal 0
+  [ 10] getlocal 0
+  [ 12] getparam 1 .............................. <stripDefs>
+  [ 14] getobjprop 257 .......................... <stripDefs.count>
+  [ 17] lteq
+  [ 18] jmpifz [ 85] ............................ repeat with i = 1 to stripDefs.count
+  [ 21] getparam 1 .............................. <stripDefs>
+  [ 23] getlocal 0 .............................. <i>
+  [ 25] pusharglist 2 ........................... <stripDefs, i>
+  [ 27] objcall 109 ............................. <stripDefs[i]>
+  [ 29] setlocal 1 .............................. stripDef = stripDefs[i]
+  [ 31] getparam 1 .............................. <stripDefs>
+  [ 33] getlocal 0 .............................. <i>
+  [ 35] pusharglist 2 ........................... <stripDefs, i>
+  [ 37] objcall 1092 ............................ <stripDefs.getPropAt(i)>
+  [ 40] setlocal 2 .............................. stripName = stripDefs.getPropAt(i)
+  [ 42] getglobal 40 ............................ <g>
+  [ 44] getchainedprop 41 ....................... <g.objectMaster>
+  [ 46] pushsymb 2023 ........................... <#objAnimStrip>
+  [ 49] pusharglist 2 ........................... <g.objectMaster, #objAnimStrip>
+  [ 51] objcall 43 .............................. <g.objectMaster.requestObject(#objAnimStrip)>
+  [ 53] setlocal 3 .............................. nStrip = g.objectMaster.requestObject(#objAnimStrip)
+  [ 55] getlocal 3 .............................. <nStrip>
+  [ 57] getlocal 1 .............................. <stripDef>
+  [ 59] getlocal 2 .............................. <stripName>
+  [ 61] pusharglistnoret 3 ...................... <nStrip, stripDef, stripName>
+  [ 63] objcall 1 ............................... nStrip.init(stripDef, stripName)
+  [ 65] getprop 2022 ............................ <pStrips>
+  [ 68] getlocal 2 .............................. <stripName>
+  [ 70] getlocal 3 .............................. <nStrip>
+  [ 72] pusharglistnoret 3 ...................... <pStrips, stripName, nStrip>
+  [ 74] objcall 48 .............................. pStrips[stripName] = nStrip
+  [ 76] pushint8 1
+  [ 78] getlocal 0
+  [ 80] add
+  [ 81] setlocal 0
+  [ 83] endrepeat [ 10]
+  [ 85] ret
+end
+
+on finish me
+  [  0] getprop 2022 ............................ <pStrips>
+  [  3] peek 0
+  [  5] pusharglist 1
+  [  7] extcall 257
+  [ 10] pushint8 1
+  [ 12] peek 0
+  [ 14] peek 2
+  [ 16] lteq
+  [ 17] jmpifz [ 41] ............................ repeat with strip in pStrips
+  [ 20] peek 2
+  [ 22] peek 1
+  [ 24] pusharglist 2
+  [ 26] extcall 109
+  [ 28] setlocal 0
+  [ 30] getlocal 0 .............................. <strip>
+  [ 32] pusharglistnoret 1 ...................... <strip>
+  [ 34] objcall 3 ............................... strip.finish()
+  [ 36] pushint8 1
+  [ 38] add
+  [ 39] endrepeat [ 12]
+  [ 41] pop 3
+  [ 43] pusharglist 0 ........................... <[:]>
+  [ 45] pushproplist ............................ <[:]>
+  [ 46] setprop 2022 ............................ pStrips = [:]
+  [ 49] getprop 33 .............................. <ancestor>
+  [ 51] pusharglistnoret 1 ...................... <ancestor>
+  [ 53] objcall 3 ............................... ancestor.finish()
+  [ 55] ret
+end
+
+on addSaveData me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 4 ............................... ancestor.addSaveData(sd)
+  [  8] pusharglist 0 ........................... <[]>
+  [ 10] pushlist ................................ <[]>
+  [ 11] setlocal 0 .............................. stripsData = []
+  [ 13] getprop 2022 ............................ <pStrips>
+  [ 16] peek 0
+  [ 18] pusharglist 1
+  [ 20] extcall 257
+  [ 23] pushint8 1
+  [ 25] peek 0
+  [ 27] peek 2
+  [ 29] lteq
+  [ 30] jmpifz [ 70] ............................ repeat with strip in pStrips
+  [ 33] peek 2
+  [ 35] peek 1
+  [ 37] pusharglist 2
+  [ 39] extcall 109
+  [ 41] setlocal 1
+  [ 43] pusharglist 0 ........................... <[:]>
+  [ 45] pushproplist ............................ <[:]>
+  [ 46] setlocal 2 .............................. saveData = [:]
+  [ 48] getlocal 1 .............................. <strip>
+  [ 50] getlocal 2 .............................. <saveData>
+  [ 52] pusharglistnoret 2 ...................... <strip, saveData>
+  [ 54] objcall 4 ............................... strip.addSaveData(saveData)
+  [ 56] getlocal 0 .............................. <stripsData>
+  [ 58] getlocal 2 .............................. <saveData>
+  [ 60] pusharglistnoret 2 ...................... <stripsData, saveData>
+  [ 62] objcall 256 ............................. stripsData.append(saveData)
+  [ 65] pushint8 1
+  [ 67] add
+  [ 68] endrepeat [ 25]
+  [ 70] pop 3
+  [ 72] getparam 1 .............................. <sd>
+  [ 74] pushsymb 2022 ........................... <#pStrips>
+  [ 77] getlocal 0 .............................. <stripsData>
+  [ 79] pusharglistnoret 3 ...................... <sd, #pStrips, stripsData>
+  [ 81] objcall 48 .............................. sd[#pStrips] = stripsData
+  [ 83] ret
+end
+
+on symExistsOrDefault me, sym
+  [  0] getprop 2022 ............................ <pStrips>
+  [  3] getparam 1 .............................. <sym>
+  [  5] pusharglist 2 ........................... <pStrips, sym>
+  [  7] objcall 109 ............................. <pStrips[sym]>
+  [  9] pusharglist 0 ........................... <>
+  [ 11] extcall 166 ............................. <VOID>
+  [ 13] eq ...................................... <pStrips[sym] = VOID>
+  [ 14] jmpifz [ 21] ............................ if pStrips[sym] = VOID then
+  [ 17] pushsymb 69 ............................. <#stand>
+  [ 19] setparam 1 .............................. sym = #stand
+  [ 21] getparam 1 .............................. <sym>
+  [ 23] pusharglistnoret 1 ...................... <sym>
+  [ 25] extcall 35 .............................. return sym
+  [ 27] ret
+end
+
+on extendDelay me, sym, delayAmount
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <sym>
+  [  4] pusharglist 2 ........................... <me, sym>
+  [  6] objcall 2016 ............................ <me.symExistsOrDefault(sym)>
+  [  9] setparam 1 .............................. sym = me.symExistsOrDefault(sym)
+  [ 11] getprop 2022 ............................ <pStrips>
+  [ 14] getparam 1 .............................. <sym>
+  [ 16] pusharglist 2 ........................... <pStrips, sym>
+  [ 18] objcall 109 ............................. <pStrips[sym]>
+  [ 20] getparam 2 .............................. <delayAmount>
+  [ 22] pusharglistnoret 2 ...................... <pStrips[sym], delayAmount>
+  [ 24] objcall 59 .............................. pStrips[sym].extendDelay(delayAmount)
+  [ 26] ret
+end
+
+on getCurrentMember me, sym
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <sym>
+  [  4] pusharglist 2 ........................... <me, sym>
+  [  6] objcall 2016 ............................ <me.symExistsOrDefault(sym)>
+  [  9] setparam 1 .............................. sym = me.symExistsOrDefault(sym)
+  [ 11] getprop 2022 ............................ <pStrips>
+  [ 14] getparam 1 .............................. <sym>
+  [ 16] pusharglist 2 ........................... <pStrips, sym>
+  [ 18] objcall 109 ............................. <pStrips[sym]>
+  [ 20] pusharglist 1 ........................... <pStrips[sym]>
+  [ 22] objcall 88 .............................. <pStrips[sym].getCurrentMember()>
+  [ 24] pusharglistnoret 1 ...................... <pStrips[sym].getCurrentMember()>
+  [ 26] extcall 35 .............................. return pStrips[sym].getCurrentMember()
+  [ 28] ret
+end
+
+on getFin me, sym
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <sym>
+  [  4] pusharglist 2 ........................... <me, sym>
+  [  6] objcall 2016 ............................ <me.symExistsOrDefault(sym)>
+  [  9] setparam 1 .............................. sym = me.symExistsOrDefault(sym)
+  [ 11] getprop 2022 ............................ <pStrips>
+  [ 14] getparam 1 .............................. <sym>
+  [ 16] pusharglist 2 ........................... <pStrips, sym>
+  [ 18] objcall 109 ............................. <pStrips[sym]>
+  [ 20] pusharglist 1 ........................... <pStrips[sym]>
+  [ 22] objcall 2017 ............................ <pStrips[sym].getFin()>
+  [ 25] pusharglistnoret 1 ...................... <pStrips[sym].getFin()>
+  [ 27] extcall 35 .............................. return pStrips[sym].getFin()
+  [ 29] ret
+end
+
+on getFrame me, sym
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <sym>
+  [  4] pusharglist 2 ........................... <me, sym>
+  [  6] objcall 2016 ............................ <me.symExistsOrDefault(sym)>
+  [  9] setparam 1 .............................. sym = me.symExistsOrDefault(sym)
+  [ 11] getprop 2022 ............................ <pStrips>
+  [ 14] getparam 1 .............................. <sym>
+  [ 16] pusharglist 2 ........................... <pStrips, sym>
+  [ 18] objcall 109 ............................. <pStrips[sym]>
+  [ 20] pusharglist 1 ........................... <pStrips[sym]>
+  [ 22] objcall 83 .............................. <pStrips[sym].getFrame()>
+  [ 24] pusharglistnoret 1 ...................... <pStrips[sym].getFrame()>
+  [ 26] extcall 35 .............................. return pStrips[sym].getFrame()
+  [ 28] ret
+end
+
+on getFrameFresh me, sym
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <sym>
+  [  4] pusharglist 2 ........................... <me, sym>
+  [  6] objcall 2016 ............................ <me.symExistsOrDefault(sym)>
+  [  9] setparam 1 .............................. sym = me.symExistsOrDefault(sym)
+  [ 11] getprop 2022 ............................ <pStrips>
+  [ 14] getparam 1 .............................. <sym>
+  [ 16] pusharglist 2 ........................... <pStrips, sym>
+  [ 18] objcall 109 ............................. <pStrips[sym]>
+  [ 20] pusharglist 1 ........................... <pStrips[sym]>
+  [ 22] objcall 84 .............................. <pStrips[sym].getFrameFresh()>
+  [ 24] pusharglistnoret 1 ...................... <pStrips[sym].getFrameFresh()>
+  [ 26] extcall 35 .............................. return pStrips[sym].getFrameFresh()
+  [ 28] ret
+end
+
+on getImage me, sym
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <sym>
+  [  4] pusharglist 2 ........................... <me, sym>
+  [  6] objcall 2016 ............................ <me.symExistsOrDefault(sym)>
+  [  9] setparam 1 .............................. sym = me.symExistsOrDefault(sym)
+  [ 11] getprop 2022 ............................ <pStrips>
+  [ 14] getparam 1 .............................. <sym>
+  [ 16] pusharglist 2 ........................... <pStrips, sym>
+  [ 18] objcall 109 ............................. <pStrips[sym]>
+  [ 20] pusharglist 1 ........................... <pStrips[sym]>
+  [ 22] objcall 85 .............................. <pStrips[sym].getImage()>
+  [ 24] pusharglistnoret 1 ...................... <pStrips[sym].getImage()>
+  [ 26] extcall 35 .............................. return pStrips[sym].getImage()
+  [ 28] ret
+end
+
+on getLooped me, sym
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <sym>
+  [  4] pusharglist 2 ........................... <me, sym>
+  [  6] objcall 2016 ............................ <me.symExistsOrDefault(sym)>
+  [  9] setparam 1 .............................. sym = me.symExistsOrDefault(sym)
+  [ 11] getprop 2022 ............................ <pStrips>
+  [ 14] getparam 1 .............................. <sym>
+  [ 16] pusharglist 2 ........................... <pStrips, sym>
+  [ 18] objcall 109 ............................. <pStrips[sym]>
+  [ 20] pusharglist 1 ........................... <pStrips[sym]>
+  [ 22] objcall 87 .............................. <pStrips[sym].getLooped()>
+  [ 24] pusharglistnoret 1 ...................... <pStrips[sym].getLooped()>
+  [ 26] extcall 35 .............................. return pStrips[sym].getLooped()
+  [ 28] ret
+end
+
+on getMember me, sym
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <sym>
+  [  4] pusharglist 2 ........................... <me, sym>
+  [  6] objcall 2016 ............................ <me.symExistsOrDefault(sym)>
+  [  9] setparam 1 .............................. sym = me.symExistsOrDefault(sym)
+  [ 11] getprop 2022 ............................ <pStrips>
+  [ 14] getparam 1 .............................. <sym>
+  [ 16] pusharglist 2 ........................... <pStrips, sym>
+  [ 18] objcall 109 ............................. <pStrips[sym]>
+  [ 20] pusharglist 1 ........................... <pStrips[sym]>
+  [ 22] objcall 95 .............................. <pStrips[sym].getMember()>
+  [ 24] pusharglistnoret 1 ...................... <pStrips[sym].getMember()>
+  [ 26] extcall 35 .............................. return pStrips[sym].getMember()
+  [ 28] ret
+end
+
+on getMemberAt me, sym, frameNo
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <sym>
+  [  4] pusharglist 2 ........................... <me, sym>
+  [  6] objcall 2016 ............................ <me.symExistsOrDefault(sym)>
+  [  9] setparam 1 .............................. sym = me.symExistsOrDefault(sym)
+  [ 11] getprop 2022 ............................ <pStrips>
+  [ 14] getparam 1 .............................. <sym>
+  [ 16] pusharglist 2 ........................... <pStrips, sym>
+  [ 18] objcall 109 ............................. <pStrips[sym]>
+  [ 20] getparam 2 .............................. <frameNo>
+  [ 22] pusharglist 2 ........................... <pStrips[sym], frameNo>
+  [ 24] objcall 89 .............................. <pStrips[sym].getMemberAt(frameNo)>
+  [ 26] pusharglistnoret 1 ...................... <pStrips[sym].getMemberAt(frameNo)>
+  [ 28] extcall 35 .............................. return pStrips[sym].getMemberAt(frameNo)
+  [ 30] ret
+end
+
+on getNoOfFrames me, sym
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <sym>
+  [  4] pusharglist 2 ........................... <me, sym>
+  [  6] objcall 2016 ............................ <me.symExistsOrDefault(sym)>
+  [  9] setparam 1 .............................. sym = me.symExistsOrDefault(sym)
+  [ 11] getprop 2022 ............................ <pStrips>
+  [ 14] getparam 1 .............................. <sym>
+  [ 16] pusharglist 2 ........................... <pStrips, sym>
+  [ 18] objcall 109 ............................. <pStrips[sym]>
+  [ 20] pusharglist 1 ........................... <pStrips[sym]>
+  [ 22] objcall 91 .............................. <pStrips[sym].getNoOfFrames()>
+  [ 24] pusharglistnoret 1 ...................... <pStrips[sym].getNoOfFrames()>
+  [ 26] extcall 35 .............................. return pStrips[sym].getNoOfFrames()
+  [ 28] ret
+end
+
+on gotoAnimFrame me, sym, frameNum
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <sym>
+  [  4] pusharglist 2 ........................... <me, sym>
+  [  6] objcall 2016 ............................ <me.symExistsOrDefault(sym)>
+  [  9] setparam 1 .............................. sym = me.symExistsOrDefault(sym)
+  [ 11] getprop 2022 ............................ <pStrips>
+  [ 14] getparam 1 .............................. <sym>
+  [ 16] pusharglist 2 ........................... <pStrips, sym>
+  [ 18] objcall 109 ............................. <pStrips[sym]>
+  [ 20] getparam 2 .............................. <frameNum>
+  [ 22] pusharglistnoret 2 ...................... <pStrips[sym], frameNum>
+  [ 24] objcall 21 .............................. pStrips[sym].gotoAnimFrame(frameNum)
+  [ 26] ret
+end
+
+on resetAnim me, sym
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <sym>
+  [  4] pusharglist 2 ........................... <me, sym>
+  [  6] objcall 2016 ............................ <me.symExistsOrDefault(sym)>
+  [  9] setparam 1 .............................. sym = me.symExistsOrDefault(sym)
+  [ 11] getprop 2022 ............................ <pStrips>
+  [ 14] getparam 1 .............................. <sym>
+  [ 16] pusharglist 2 ........................... <pStrips, sym>
+  [ 18] objcall 109 ............................. <pStrips[sym]>
+  [ 20] pusharglistnoret 1 ...................... <pStrips[sym]>
+  [ 22] objcall 2029 ............................ pStrips[sym].reset()
+  [ 25] ret
+end
+
+on restoreFromSave me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 26 .............................. ancestor.restoreFromSave(sd)
+  [  8] getparam 1 .............................. <sd>
+  [ 10] getobjprop 2022 ......................... <sd.pStrips>
+  [ 13] setlocal 0 .............................. stripsData = sd.pStrips
+  [ 15] pushint8 1 .............................. <1>
+  [ 17] setlocal 1 .............................. stripNum = 1
+  [ 19] getlocal 0 .............................. <stripsData>
+  [ 21] peek 0
+  [ 23] pusharglist 1
+  [ 25] extcall 257
+  [ 28] pushint8 1
+  [ 30] peek 0
+  [ 32] peek 2
+  [ 34] lteq
+  [ 35] jmpifz [ 75] ............................ repeat with stripData in stripsData
+  [ 38] peek 2
+  [ 40] peek 1
+  [ 42] pusharglist 2
+  [ 44] extcall 109
+  [ 46] setlocal 2
+  [ 48] getprop 2022 ............................ <pStrips>
+  [ 51] getlocal 1 .............................. <stripNum>
+  [ 53] pusharglist 2 ........................... <pStrips, stripNum>
+  [ 55] objcall 109 ............................. <pStrips[stripNum]>
+  [ 57] getlocal 2 .............................. <stripData>
+  [ 59] pusharglistnoret 2 ...................... <pStrips[stripNum], stripData>
+  [ 61] objcall 26 .............................. pStrips[stripNum].restoreFromSave(stripData)
+  [ 63] getlocal 1 .............................. <stripNum>
+  [ 65] pushint8 1 .............................. <1>
+  [ 67] add ..................................... <stripNum + 1>
+  [ 68] setlocal 1 .............................. stripNum = stripNum + 1
+  [ 70] pushint8 1
+  [ 72] add
+  [ 73] endrepeat [ 30]
+  [ 75] pop 3
+  [ 77] ret
+end

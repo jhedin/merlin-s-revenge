@@ -1,0 +1,516 @@
+property ancestor, pRelationships, pRelationshipDetails
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getprop 33 .............................. <ancestor>
+  [ 12] pusharglistnoret 1 ...................... <ancestor>
+  [ 14] objcall 2 ............................... ancestor.addModParams()
+  [ 16] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pusharglist 0 ........................... <[:]>
+  [ 10] pushproplist ............................ <[:]>
+  [ 11] setprop 1079 ............................ pRelationships = [:]
+  [ 14] ret
+end
+
+on finish me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 3 ............................... ancestor.finish()
+  [  6] getparam 0 .............................. <me>
+  [  8] pusharglistnoret 1 ...................... <me>
+  [ 10] objcall 1074 ............................ me.breakAllRelationships()
+  [ 13] ret
+end
+
+on addToRelationships me, targetOfRelationship, relationship, exclusivity
+  [  0] getprop 1079 ............................ <pRelationships>
+  [  3] setlocal 0 .............................. rels = pRelationships
+  [  5] getlocal 0 .............................. <rels>
+  [  7] getparam 2 .............................. <relationship>
+  [  9] pusharglist 2 ........................... <rels, relationship>
+  [ 11] objcall 109 ............................. <rels[relationship]>
+  [ 13] pusharglist 0 ........................... <>
+  [ 15] extcall 166 ............................. <VOID>
+  [ 17] eq ...................................... <rels[relationship] = VOID>
+  [ 18] jmpifz [ 32] ............................ if rels[relationship] = VOID then
+  [ 21] getlocal 0 .............................. <rels>
+  [ 23] getparam 2 .............................. <relationship>
+  [ 25] pusharglist 0 ........................... <[]>
+  [ 27] pushlist ................................ <[]>
+  [ 28] pusharglistnoret 3 ...................... <rels, relationship, []>
+  [ 30] objcall 48 .............................. rels[relationship] = []
+  [ 32] getlocal 0 .............................. <rels>
+  [ 34] getparam 2 .............................. <relationship>
+  [ 36] pusharglist 2 ........................... <rels, relationship>
+  [ 38] objcall 109 ............................. <rels[relationship]>
+  [ 40] setlocal 1 .............................. relList = rels[relationship]
+  [ 42] getparam 3 .............................. <exclusivity>
+  [ 44] peek 0 .................................. case exclusivity of
+  [ 46] pushsymb 626 ............................ <#exclusive>
+  [ 49] eq
+  [ 50] jmpifz [ 66] ............................ (case) #exclusive:
+  [ 53] getlocal 1 .............................. <relList>
+  [ 55] pushint8 1 .............................. <1>
+  [ 57] getparam 1 .............................. <targetOfRelationship>
+  [ 59] pusharglistnoret 3 ...................... <relList, 1, targetOfRelationship>
+  [ 61] objcall 48 .............................. relList[1] = targetOfRelationship
+  [ 63] jmp [101]
+  [ 66] peek 0
+  [ 68] pushsymb 1080 ........................... <#nonexclusive>
+  [ 71] eq
+  [ 72] jmpifz [101] ............................ (case) #nonexclusive:
+  [ 75] getlocal 1 .............................. <relList>
+  [ 77] getparam 1 .............................. <targetOfRelationship>
+  [ 79] pusharglist 2 ........................... <relList, targetOfRelationship>
+  [ 81] objcall 219 ............................. <relList.getPos(targetOfRelationship)>
+  [ 83] setlocal 2 .............................. objpos = relList.getPos(targetOfRelationship)
+  [ 85] getlocal 2 .............................. <objpos>
+  [ 87] pushzero ................................ <0>
+  [ 88] eq ...................................... <objpos = 0>
+  [ 89] jmpifz [101] ............................ if objpos = 0 then
+  [ 92] getlocal 1 .............................. <relList>
+  [ 94] getparam 1 .............................. <targetOfRelationship>
+  [ 96] pusharglistnoret 2 ...................... <relList, targetOfRelationship>
+  [ 98] objcall 256 ............................. relList.append(targetOfRelationship)
+  [101] pop 1 ................................... end case
+  [103] ret
+end
+
+on addSaveData me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 4 ............................... ancestor.addSaveData(sd)
+  [  8] getparam 1 .............................. <sd>
+  [ 10] pushsymb 1079 ........................... <#pRelationships>
+  [ 13] getparam 0 .............................. <me>
+  [ 15] pusharglist 1 ........................... <me>
+  [ 17] objcall 1076 ............................ <me.getRelationshipsTargetDetails()>
+  [ 20] pusharglistnoret 3 ...................... <sd, #pRelationships, me.getRelationshipsTargetDetails()>
+  [ 22] objcall 48 .............................. sd[#pRelationships] = me.getRelationshipsTargetDetails()
+  [ 24] ret
+end
+
+on breakAllRelationships me
+  [  0] pusharglist 0 ........................... <[:]>
+  [  2] pushproplist ............................ <[:]>
+  [  3] setprop 1079 ............................ pRelationships = [:]
+  [  6] ret
+end
+
+on breakRelationship me, obj, relationship
+  [  0] getprop 1079 ............................ <pRelationships>
+  [  3] getparam 2 .............................. <relationship>
+  [  5] pusharglist 2 ........................... <pRelationships, relationship>
+  [  7] objcall 109 ............................. <pRelationships[relationship]>
+  [  9] setlocal 0 .............................. relList = pRelationships[relationship]
+  [ 11] getlocal 0 .............................. <relList>
+  [ 13] getparam 1 .............................. <obj>
+  [ 15] pusharglist 2 ........................... <relList, obj>
+  [ 17] objcall 219 ............................. <relList.getPos(obj)>
+  [ 19] setlocal 1 .............................. objpos = relList.getPos(obj)
+  [ 21] getlocal 1 .............................. <objpos>
+  [ 23] pushzero ................................ <0>
+  [ 24] gt ...................................... <objpos > 0>
+  [ 25] jmpifz [ 37] ............................ if objpos > 0 then
+  [ 28] getlocal 0 .............................. <relList>
+  [ 30] getlocal 1 .............................. <objpos>
+  [ 32] pusharglistnoret 2 ...................... <relList, objpos>
+  [ 34] objcall 1087 ............................ relList.deleteAt(objpos)
+  [ 37] ret
+end
+
+on eventNotification me, theEvent, theObj
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <theEvent>
+  [  4] getparam 2 .............................. <theObj>
+  [  6] pusharglistnoret 3 ...................... <ancestor, theEvent, theObj>
+  [  8] objcall 568 ............................. ancestor.eventNotification(theEvent, theObj)
+  [ 11] getparam 1 .............................. <theEvent>
+  [ 13] peek 0 .................................. case theEvent of
+  [ 15] pushsymb 122 ............................ <#leaveGame>
+  [ 17] eq
+  [ 18] jmpifz [ 45] ............................ (case) #leaveGame:
+  [ 21] getparam 0 .............................. <me>
+  [ 23] pusharglist 1 ........................... <me>
+  [ 25] objcall 240 ............................. <me.getOwner()>
+  [ 27] setlocal 0 .............................. owner = me.getOwner()
+  [ 29] getlocal 0 .............................. <owner>
+  [ 31] getparam 2 .............................. <theObj>
+  [ 33] eq ...................................... <owner = theObj>
+  [ 34] jmpifz [ 45] ............................ if owner = theObj then
+  [ 37] getparam 0 .............................. <me>
+  [ 39] pushsymb 49 ............................. <#none>
+  [ 41] pusharglistnoret 2 ...................... <me, #none>
+  [ 43] objcall 241 ............................. me.setOwner(#none)
+  [ 45] pop 1
+  [ 47] ret
+end
+
+on formRelationship me, targetOfRelationship, relationship, exclusivity
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <targetOfRelationship>
+  [  4] getparam 2 .............................. <relationship>
+  [  6] getparam 3 .............................. <exclusivity>
+  [  8] pusharglistnoret 4 ...................... <me, targetOfRelationship, relationship, exclusivity>
+  [ 10] objcall 1073 ............................ me.addToRelationships(targetOfRelationship, relationship, exclusivity)
+  [ 13] ret
+end
+
+on getCurrentSpell me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1089 ........................... <#currentSpell>
+  [  5] pusharglist 2 ........................... <me, #currentSpell>
+  [  7] objcall 606 ............................. <me.getRelation(#currentSpell)>
+  [ 10] pusharglistnoret 1 ...................... <me.getRelation(#currentSpell)>
+  [ 12] extcall 35 .............................. return me.getRelation(#currentSpell)
+  [ 14] ret
+end
+
+on getOwner me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 561 ............................ <#owner>
+  [  5] pusharglist 2 ........................... <me, #owner>
+  [  7] objcall 606 ............................. <me.getRelation(#owner)>
+  [ 10] pusharglistnoret 1 ...................... <me.getRelation(#owner)>
+  [ 12] extcall 35 .............................. return me.getRelation(#owner)
+  [ 14] ret
+end
+
+on getRelation me, relationship
+  [  0] pushsymb 49 ............................. <#none>
+  [  2] setlocal 0 .............................. relation = #none
+  [  4] getprop 1079 ............................ <pRelationships>
+  [  7] getparam 1 .............................. <relationship>
+  [  9] pusharglist 2 ........................... <pRelationships, relationship>
+  [ 11] objcall 109 ............................. <pRelationships[relationship]>
+  [ 13] pusharglist 0 ........................... <>
+  [ 15] extcall 166 ............................. <VOID>
+  [ 17] nteq .................................... <pRelationships[relationship] <> VOID>
+  [ 18] jmpifz [ 55] ............................ if pRelationships[relationship] <> VOID then
+  [ 21] getprop 1079 ............................ <pRelationships>
+  [ 24] getparam 1 .............................. <relationship>
+  [ 26] pusharglist 2 ........................... <pRelationships, relationship>
+  [ 28] objcall 109 ............................. <pRelationships[relationship]>
+  [ 30] getobjprop 257 .......................... <pRelationships[relationship].count>
+  [ 33] pushzero ................................ <0>
+  [ 34] gt ...................................... <pRelationships[relationship].count > 0>
+  [ 35] jmpifz [ 55] ............................ if pRelationships[relationship].count > 0 then
+  [ 38] getprop 1079 ............................ <pRelationships>
+  [ 41] getparam 1 .............................. <relationship>
+  [ 43] pusharglist 2 ........................... <pRelationships, relationship>
+  [ 45] objcall 109 ............................. <pRelationships[relationship]>
+  [ 47] pushint8 1 .............................. <1>
+  [ 49] pusharglist 2 ........................... <pRelationships[relationship], 1>
+  [ 51] objcall 109 ............................. <pRelationships[relationship][1]>
+  [ 53] setlocal 0 .............................. relation = pRelationships[relationship][1]
+  [ 55] getlocal 0 .............................. <relation>
+  [ 57] pusharglistnoret 1 ...................... <relation>
+  [ 59] extcall 35 .............................. return relation
+  [ 61] ret
+end
+
+on getTarget me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1091 ........................... <#target>
+  [  5] pusharglist 2 ........................... <me, #target>
+  [  7] objcall 606 ............................. <me.getRelation(#target)>
+  [ 10] pusharglistnoret 1 ...................... <me.getRelation(#target)>
+  [ 12] extcall 35 .............................. return me.getRelation(#target)
+  [ 14] ret
+end
+
+on getRelationshipsTargetDetails me
+  [  0] pusharglist 0 ........................... <[:]>
+  [  2] pushproplist ............................ <[:]>
+  [  3] setlocal 0 .............................. relTargetDetails = [:]
+  [  5] pushint8 1 .............................. <1>
+  [  7] setlocal 1
+  [  9] getlocal 1
+  [ 11] getprop 1079 ............................ <pRelationships>
+  [ 14] getobjprop 257 .......................... <pRelationships.count>
+  [ 17] lteq
+  [ 18] jmpifz [120] ............................ repeat with i = 1 to pRelationships.count
+  [ 21] getprop 1079 ............................ <pRelationships>
+  [ 24] getlocal 1 .............................. <i>
+  [ 26] pusharglist 2 ........................... <pRelationships, i>
+  [ 28] objcall 1092 ............................ <pRelationships.getPropAt(i)>
+  [ 31] setlocal 2 .............................. relProp = pRelationships.getPropAt(i)
+  [ 33] getprop 1079 ............................ <pRelationships>
+  [ 36] getlocal 1 .............................. <i>
+  [ 38] pusharglist 2 ........................... <pRelationships, i>
+  [ 40] objcall 109 ............................. <pRelationships[i]>
+  [ 42] setlocal 3 .............................. relList = pRelationships[i]
+  [ 44] getlocal 0 .............................. <relTargetDetails>
+  [ 46] getlocal 2 .............................. <relProp>
+  [ 48] pusharglist 0 ........................... <[]>
+  [ 50] pushlist ................................ <[]>
+  [ 51] pusharglistnoret 3 ...................... <relTargetDetails, relProp, []>
+  [ 53] objcall 48 .............................. relTargetDetails[relProp] = []
+  [ 55] getlocal 3 .............................. <relList>
+  [ 57] peek 0
+  [ 59] pusharglist 1
+  [ 61] extcall 257
+  [ 64] pushint8 1
+  [ 66] peek 0
+  [ 68] peek 2
+  [ 70] lteq
+  [ 71] jmpifz [109] ............................ repeat with relTarget in relList
+  [ 74] peek 2
+  [ 76] peek 1
+  [ 78] pusharglist 2
+  [ 80] extcall 109
+  [ 82] setlocal 4
+  [ 84] getlocal 0 .............................. <relTargetDetails>
+  [ 86] getlocal 2 .............................. <relProp>
+  [ 88] pusharglist 2 ........................... <relTargetDetails, relProp>
+  [ 90] objcall 109 ............................. <relTargetDetails[relProp]>
+  [ 92] getlocal 4 .............................. <relTarget>
+  [ 94] pusharglist 1 ........................... <relTarget>
+  [ 96] objcall 1093 ............................ <relTarget.getTargetDetails()>
+  [ 99] pusharglistnoret 2 ...................... <relTargetDetails[relProp], relTarget.getTargetDetails()>
+  [101] objcall 256 ............................. relTargetDetails[relProp].append(relTarget.getTargetDetails())
+  [104] pushint8 1
+  [106] add
+  [107] endrepeat [ 66]
+  [109] pop 3
+  [111] pushint8 1
+  [113] getlocal 1
+  [115] add
+  [116] setlocal 1
+  [118] endrepeat [  9]
+  [120] getlocal 0 .............................. <relTargetDetails>
+  [122] pusharglistnoret 1 ...................... <relTargetDetails>
+  [124] extcall 35 .............................. return relTargetDetails
+  [126] ret
+end
+
+on restoreFromSave me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 26 .............................. ancestor.restoreFromSave(sd)
+  [  8] getparam 1 .............................. <sd>
+  [ 10] getobjprop 1079 ......................... <sd.pRelationships>
+  [ 13] setprop 1097 ............................ pRelationshipDetails = sd.pRelationships
+  [ 16] ret
+end
+
+on restoreRelationships me
+  [  0] getprop 1097 ............................ <pRelationshipDetails>
+  [  3] setlocal 0 .............................. relDetails = pRelationshipDetails
+  [  5] pushint8 1 .............................. <1>
+  [  7] setlocal 1
+  [  9] getlocal 1
+  [ 11] getlocal 0 .............................. <relDetails>
+  [ 13] getobjprop 257 .......................... <relDetails.count>
+  [ 16] lteq
+  [ 17] jmpifz [193] ............................ repeat with i = 1 to relDetails.count
+  [ 20] getlocal 0 .............................. <relDetails>
+  [ 22] getlocal 1 .............................. <i>
+  [ 24] pusharglist 2 ........................... <relDetails, i>
+  [ 26] objcall 1092 ............................ <relDetails.getPropAt(i)>
+  [ 29] setlocal 2 .............................. relProp = relDetails.getPropAt(i)
+  [ 31] getlocal 0 .............................. <relDetails>
+  [ 33] getlocal 1 .............................. <i>
+  [ 35] pusharglist 2 ........................... <relDetails, i>
+  [ 37] objcall 109 ............................. <relDetails[i]>
+  [ 39] setlocal 3 .............................. relList = relDetails[i]
+  [ 41] getprop 1079 ............................ <pRelationships>
+  [ 44] getlocal 2 .............................. <relProp>
+  [ 46] pusharglist 0 ........................... <[]>
+  [ 48] pushlist ................................ <[]>
+  [ 49] pusharglistnoret 3 ...................... <pRelationships, relProp, []>
+  [ 51] objcall 48 .............................. pRelationships[relProp] = []
+  [ 53] getlocal 3 .............................. <relList>
+  [ 55] peek 0
+  [ 57] pusharglist 1
+  [ 59] extcall 257
+  [ 62] pushint8 1
+  [ 64] peek 0
+  [ 66] peek 2
+  [ 68] lteq
+  [ 69] jmpifz [182] ............................ repeat with relTargetDetails in relList
+  [ 72] peek 2
+  [ 74] peek 1
+  [ 76] pusharglist 2
+  [ 78] extcall 109
+  [ 80] setlocal 4
+  [ 82] getglobal 40 ............................ <g>
+  [ 84] getchainedprop 642 ...................... <g.teamMaster>
+  [ 87] getlocal 4 .............................. <relTargetDetails>
+  [ 89] pusharglist 2 ........................... <g.teamMaster, relTargetDetails>
+  [ 91] objcall 1098 ............................ <g.teamMaster.restoreTarget(relTargetDetails)>
+  [ 94] setlocal 5 .............................. targetObj = g.teamMaster.restoreTarget(relTargetDetails)
+  [ 96] getlocal 2 .............................. <relProp>
+  [ 98] peek 0 .................................. case relProp of
+  [100] pushsymb 1089 ........................... <#currentSpell>
+  [103] eq
+  [104] jmpifz [119] ............................ (case) #currentSpell:
+  [107] getparam 0 .............................. <me>
+  [109] getlocal 5 .............................. <targetObj>
+  [111] pusharglistnoret 2 ...................... <me, targetObj>
+  [113] objcall 1078 ............................ me.setCurrentSpell(targetObj)
+  [116] jmp [175]
+  [119] peek 0
+  [121] pushsymb 561 ............................ <#owner>
+  [124] eq
+  [125] jmpifz [139] ............................ (case) #owner:
+  [128] getparam 0 .............................. <me>
+  [130] getlocal 5 .............................. <targetObj>
+  [132] pusharglistnoret 2 ...................... <me, targetObj>
+  [134] objcall 241 ............................. me.setOwner(targetObj)
+  [136] jmp [175]
+  [139] peek 0
+  [141] pushsymb 1091 ........................... <#target>
+  [144] eq
+  [145] jmpifz [159] ............................ (case) #target:
+  [148] getparam 0 .............................. <me>
+  [150] getlocal 5 .............................. <targetObj>
+  [152] pusharglistnoret 2 ...................... <me, targetObj>
+  [154] objcall 236 ............................. me.setTarget(targetObj)
+  [156] jmp [175] ............................... (case) otherwise:
+  [159] getprop 1079 ............................ <pRelationships>
+  [162] getlocal 2 .............................. <relProp>
+  [164] pusharglist 2 ........................... <pRelationships, relProp>
+  [166] objcall 109 ............................. <pRelationships[relProp]>
+  [168] getlocal 5 .............................. <targetObj>
+  [170] pusharglistnoret 2 ...................... <pRelationships[relProp], targetObj>
+  [172] objcall 256 ............................. pRelationships[relProp].append(targetObj)
+  [175] pop 1 ................................... end case
+  [177] pushint8 1
+  [179] add
+  [180] endrepeat [ 64]
+  [182] pop 3
+  [184] pushint8 1
+  [186] getlocal 1
+  [188] add
+  [189] setlocal 1
+  [191] endrepeat [  9]
+  [193] getparam 0 .............................. <me>
+  [195] getchainedprop 51 ....................... <me.big>
+  [197] pushsymb 1099 ........................... <#relationshipsRestored>
+  [200] pusharglistnoret 2 ...................... <me.big, #relationshipsRestored>
+  [202] objcall 22 .............................. me.big.internalEvent(#relationshipsRestored)
+  [204] ret
+end
+
+on setCurrentSpell me, newSpell
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1089 ........................... <#currentSpell>
+  [  5] getparam 1 .............................. <newSpell>
+  [  7] pusharglistnoret 3 ...................... <me, #currentSpell, newSpell>
+  [  9] objcall 612 ............................. me.setRelation(#currentSpell, newSpell)
+  [ 12] getparam 1 .............................. <newSpell>
+  [ 14] pushsymb 49 ............................. <#none>
+  [ 16] nteq .................................... <newSpell <> #none>
+  [ 17] jmpifz [ 50] ............................ if newSpell <> #none then
+  [ 20] getparam 0 .............................. <me>
+  [ 22] getparam 1 .............................. <newSpell>
+  [ 24] pushsymb 1101 ........................... <#fullyCharged>
+  [ 27] pushsymb 628 ............................ <#once>
+  [ 30] pusharglistnoret 4 ...................... <me, newSpell, #fullyCharged, #once>
+  [ 32] objcall 629 ............................. me.keepMePosted(newSpell, #fullyCharged, #once)
+  [ 35] getparam 0 .............................. <me>
+  [ 37] getparam 1 .............................. <newSpell>
+  [ 39] pushsymb 1102 ........................... <#chargeLimited>
+  [ 42] pushsymb 908 ............................ <#always>
+  [ 45] pusharglistnoret 4 ...................... <me, newSpell, #chargeLimited, #always>
+  [ 47] objcall 629 ............................. me.keepMePosted(newSpell, #chargeLimited, #always)
+  [ 50] ret
+end
+
+on setOwner me, newOwner
+  [  0] getparam 1 .............................. <newOwner>
+  [  2] pushsymb 49 ............................. <#none>
+  [  4] nteq .................................... <newOwner <> #none>
+  [  5] jmpifz [ 24] ............................ if newOwner <> #none then
+  [  8] getparam 0 .............................. <me>
+  [ 10] getchainedprop 51 ....................... <me.big>
+  [ 12] getparam 1 .............................. <newOwner>
+  [ 14] pushsymb 122 ............................ <#leaveGame>
+  [ 16] pushsymb 628 ............................ <#once>
+  [ 19] pusharglistnoret 4 ...................... <me.big, newOwner, #leaveGame, #once>
+  [ 21] objcall 629 ............................. me.big.keepMePosted(newOwner, #leaveGame, #once)
+  [ 24] getparam 0 .............................. <me>
+  [ 26] pushsymb 561 ............................ <#owner>
+  [ 29] getparam 1 .............................. <newOwner>
+  [ 31] pusharglistnoret 3 ...................... <me, #owner, newOwner>
+  [ 33] objcall 612 ............................. me.setRelation(#owner, newOwner)
+  [ 36] ret
+end
+
+on setRelation me, relationship, newRelation
+  [  0] getparam 2 .............................. <newRelation>
+  [  2] pushsymb 49 ............................. <#none>
+  [  4] eq ...................................... <newRelation = #none>
+  [  5] jmpifz [ 41] ............................ if newRelation = #none then / else
+  [  8] getparam 0 .............................. <me>
+  [ 10] getparam 1 .............................. <relationship>
+  [ 12] pusharglist 2 ........................... <me, relationship>
+  [ 14] objcall 606 ............................. <me.getRelation(relationship)>
+  [ 17] setlocal 0 .............................. currentRelation = me.getRelation(relationship)
+  [ 19] getlocal 0 .............................. <currentRelation>
+  [ 21] pushsymb 49 ............................. <#none>
+  [ 23] nteq .................................... <currentRelation <> #none>
+  [ 24] jmpifz [ 38] ............................ if currentRelation <> #none then
+  [ 27] getparam 0 .............................. <me>
+  [ 29] getlocal 0 .............................. <currentRelation>
+  [ 31] getparam 1 .............................. <relationship>
+  [ 33] pusharglistnoret 3 ...................... <me, currentRelation, relationship>
+  [ 35] objcall 614 ............................. me.breakRelationship(currentRelation, relationship)
+  [ 38] jmp [ 55]
+  [ 41] getparam 0 .............................. <me>
+  [ 43] getparam 2 .............................. <newRelation>
+  [ 45] getparam 1 .............................. <relationship>
+  [ 47] pushsymb 626 ............................ <#exclusive>
+  [ 50] pusharglistnoret 4 ...................... <me, newRelation, relationship, #exclusive>
+  [ 52] objcall 627 ............................. me.formRelationship(newRelation, relationship, #exclusive)
+  [ 55] ret
+end
+
+on setTarget me, theTarget
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1091 ........................... <#target>
+  [  5] getparam 1 .............................. <theTarget>
+  [  7] pusharglistnoret 3 ...................... <me, #target, theTarget>
+  [  9] objcall 612 ............................. me.setRelation(#target, theTarget)
+  [ 12] getparam 0 .............................. <me>
+  [ 14] getparam 1 .............................. <theTarget>
+  [ 16] pushsymb 484 ............................ <#outOfEnergy>
+  [ 19] pushsymb 628 ............................ <#once>
+  [ 22] pusharglistnoret 4 ...................... <me, theTarget, #outOfEnergy, #once>
+  [ 24] objcall 629 ............................. me.keepMePosted(theTarget, #outOfEnergy, #once)
+  [ 27] getparam 0 .............................. <me>
+  [ 29] getparam 1 .............................. <theTarget>
+  [ 31] pushsymb 122 ............................ <#leaveGame>
+  [ 33] pushsymb 628 ............................ <#once>
+  [ 36] pusharglistnoret 4 ...................... <me, theTarget, #leaveGame, #once>
+  [ 38] objcall 629 ............................. me.keepMePosted(theTarget, #leaveGame, #once)
+  [ 41] ret
+end

@@ -1,0 +1,583 @@
+property ancestor, pCooldownCounters, pCurrentWeapon, pStartingWeapon, pWeapons
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on init me, params
+  [  0] pusharglist 0 ........................... <[:]>
+  [  2] pushproplist ............................ <[:]>
+  [  3] setprop 1604 ............................ pCooldownCounters = [:]
+  [  6] pushsymb 49 ............................. <#none>
+  [  8] setprop 1605 ............................ pCurrentWeapon = #none
+  [ 11] getparam 1 .............................. <params>
+  [ 13] getobjprop 1607 ......................... <params.weapon>
+  [ 16] setprop 1606 ............................ pStartingWeapon = params.weapon
+  [ 19] pusharglist 0 ........................... <[:]>
+  [ 21] pushproplist ............................ <[:]>
+  [ 22] setprop 1608 ............................ pWeapons = [:]
+  [ 25] getprop 33 .............................. <ancestor>
+  [ 27] getparam 1 .............................. <params>
+  [ 29] pusharglistnoret 2 ...................... <ancestor, params>
+  [ 31] objcall 1 ............................... ancestor.init(params)
+  [ 33] ret
+end
+
+on start me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 1591 ............................ me.initNaturalAttack()
+  [  7] getparam 0 .............................. <me>
+  [  9] getprop 1606 ............................ <pStartingWeapon>
+  [ 12] pusharglistnoret 2 ...................... <me, pStartingWeapon>
+  [ 14] objcall 1592 ............................ me.initStartingWeapon(pStartingWeapon)
+  [ 17] getprop 33 .............................. <ancestor>
+  [ 19] pusharglistnoret 1 ...................... <ancestor>
+  [ 21] objcall 1590 ............................ ancestor.start()
+  [ 24] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getlocal 0 .............................. <i>
+  [ 12] pushsymb 1607 ........................... <#weapon>
+  [ 15] pushsymb 49 ............................. <#none>
+  [ 17] pusharglistnoret 3 ...................... <i, #weapon, #none>
+  [ 19] objcall 48 .............................. i[#weapon] = #none
+  [ 21] getlocal 0 .............................. <i>
+  [ 23] pushsymb 1609 ........................... <#bufferDist>
+  [ 26] pushint8 100 ............................ <100>
+  [ 28] pusharglistnoret 3 ...................... <i, #bufferDist, 100>
+  [ 30] objcall 48 .............................. i[#bufferDist] = 100
+  [ 32] getlocal 0 .............................. <i>
+  [ 34] pushsymb 1610 ........................... <#multiAttack>
+  [ 37] pushzero ................................ <0>
+  [ 38] pusharglistnoret 3 ...................... <i, #multiAttack, 0>
+  [ 40] objcall 48 .............................. i[#multiAttack] = 0
+  [ 42] getprop 33 .............................. <ancestor>
+  [ 44] pusharglistnoret 1 ...................... <ancestor>
+  [ 46] objcall 2 ............................... ancestor.addModParams()
+  [ 48] ret
+end
+
+on addSaveData me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 4 ............................... ancestor.addSaveData(sd)
+  [  8] getparam 1 .............................. <sd>
+  [ 10] pushsymb 1604 ........................... <#pCooldownCounters>
+  [ 13] getprop 1604 ............................ <pCooldownCounters>
+  [ 16] pusharglistnoret 3 ...................... <sd, #pCooldownCounters, pCooldownCounters>
+  [ 18] objcall 48 .............................. sd[#pCooldownCounters] = pCooldownCounters
+  [ 20] getparam 1 .............................. <sd>
+  [ 22] pushsymb 1605 ........................... <#pCurrentWeapon>
+  [ 25] getprop 1605 ............................ <pCurrentWeapon>
+  [ 28] pusharglistnoret 3 ...................... <sd, #pCurrentWeapon, pCurrentWeapon>
+  [ 30] objcall 48 .............................. sd[#pCurrentWeapon] = pCurrentWeapon
+  [ 32] getparam 1 .............................. <sd>
+  [ 34] pushsymb 1608 ........................... <#pWeapons>
+  [ 37] getprop 1608 ............................ <pWeapons>
+  [ 40] pusharglistnoret 3 ...................... <sd, #pWeapons, pWeapons>
+  [ 42] objcall 48 .............................. sd[#pWeapons] = pWeapons
+  [ 44] ret
+end
+
+on initNaturalAttack me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 57 ....................... <me.id>
+  [  4] getchainedprop 58 ....................... <me.id.bigMe>
+  [  6] pusharglist 1 ........................... <me.id.bigMe>
+  [  8] objcall 141 ............................. <me.id.bigMe.getAttack()>
+  [ 10] setlocal 0 .............................. naturalAttack = me.id.bigMe.getAttack()
+  [ 12] getlocal 0 .............................. <naturalAttack>
+  [ 14] pushsymb 49 ............................. <#none>
+  [ 16] nteq .................................... <naturalAttack <> #none>
+  [ 17] jmpifz [ 33] ............................ if naturalAttack <> #none then
+  [ 20] getparam 0 .............................. <me>
+  [ 22] getlocal 0 .............................. <naturalAttack>
+  [ 24] getobjprop 44 ........................... <naturalAttack.name>
+  [ 26] getlocal 0 .............................. <naturalAttack>
+  [ 28] pusharglistnoret 3 ...................... <me, naturalAttack.name, naturalAttack>
+  [ 30] objcall 1593 ............................ me.addWeapon(naturalAttack.name, naturalAttack)
+  [ 33] ret
+end
+
+on initStartingWeapon me, theWeapon
+  [  0] getparam 1 .............................. <theWeapon>
+  [  2] pushsymb 49 ............................. <#none>
+  [  4] eq ...................................... <theWeapon = #none>
+  [  5] jmpifz [ 12] ............................ if theWeapon = #none then
+  [  8] pusharglistnoret 0 ...................... <>
+  [ 10] extcall 35 .............................. return 
+  [ 12] getglobal 40 ............................ <g>
+  [ 14] getchainedprop 228 ...................... <g.actorMaster>
+  [ 16] getparam 1 .............................. <theWeapon>
+  [ 18] pusharglist 2 ........................... <g.actorMaster, theWeapon>
+  [ 20] objcall 1133 ............................ <g.actorMaster.getActorData(theWeapon)>
+  [ 23] setlocal 0 .............................. weaponParams = g.actorMaster.getActorData(theWeapon)
+  [ 25] getlocal 0 .............................. <weaponParams>
+  [ 27] getobjprop 145 .......................... <weaponParams.attack>
+  [ 29] setlocal 1 .............................. theAttack = weaponParams.attack
+  [ 31] getparam 0 .............................. <me>
+  [ 33] getparam 1 .............................. <theWeapon>
+  [ 35] getlocal 1 .............................. <theAttack>
+  [ 37] pusharglistnoret 3 ...................... <me, theWeapon, theAttack>
+  [ 39] objcall 1593 ............................ me.addWeapon(theWeapon, theAttack)
+  [ 42] ret
+end
+
+on addWeapon me, theWeapon, theAttack
+  [  0] getprop 1608 ............................ <pWeapons>
+  [  3] getparam 1 .............................. <theWeapon>
+  [  5] getparam 2 .............................. <theAttack>
+  [  7] pusharglistnoret 3 ...................... <pWeapons, theWeapon, theAttack>
+  [  9] objcall 48 .............................. pWeapons[theWeapon] = theAttack
+  [ 11] getparam 0 .............................. <me>
+  [ 13] getparam 1 .............................. <theWeapon>
+  [ 15] pusharglistnoret 2 ...................... <me, theWeapon>
+  [ 17] objcall 1594 ............................ me.addCooldownCounter(theWeapon)
+  [ 20] getparam 0 .............................. <me>
+  [ 22] getparam 1 .............................. <theWeapon>
+  [ 24] pusharglistnoret 2 ...................... <me, theWeapon>
+  [ 26] objcall 1600 ............................ me.setCurrentWeapon(theWeapon)
+  [ 29] ret
+end
+
+on addCooldownCounter me, theWeapon
+  [  0] getprop 1608 ............................ <pWeapons>
+  [  3] getparam 1 .............................. <theWeapon>
+  [  5] pusharglist 2 ........................... <pWeapons, theWeapon>
+  [  7] objcall 109 ............................. <pWeapons[theWeapon]>
+  [  9] setlocal 0 .............................. theAttack = pWeapons[theWeapon]
+  [ 11] getprop 1604 ............................ <pCooldownCounters>
+  [ 14] getparam 1 .............................. <theWeapon>
+  [ 16] pusharglist 0 ........................... <>
+  [ 18] extcall 529 ............................. <CounterNew()>
+  [ 21] pusharglistnoret 3 ...................... <pCooldownCounters, theWeapon, CounterNew()>
+  [ 23] objcall 48 .............................. pCooldownCounters[theWeapon] = CounterNew()
+  [ 25] getprop 1604 ............................ <pCooldownCounters>
+  [ 28] getparam 1 .............................. <theWeapon>
+  [ 30] pusharglist 2 ........................... <pCooldownCounters, theWeapon>
+  [ 32] objcall 109 ............................. <pCooldownCounters[theWeapon]>
+  [ 34] setlocal 1 .............................. c = pCooldownCounters[theWeapon]
+  [ 36] getlocal 1 .............................. <c>
+  [ 38] pushsymb 530 ............................ <#tim>
+  [ 41] pushint8 2 .............................. <2>
+  [ 43] getlocal 0 .............................. <theAttack>
+  [ 45] getobjprop 1615 ......................... <theAttack.cooldown>
+  [ 48] pusharglistnoret 4 ...................... <c, #tim, 2, theAttack.cooldown>
+  [ 50] objcall 531 ............................. c.tim[2] = theAttack.cooldown
+  [ 53] getlocal 1 .............................. <c>
+  [ 55] pushint8 1 .............................. <1>
+  [ 57] setobjprop 552 .......................... c.fin = 1
+  [ 60] getlocal 0 .............................. <theAttack>
+  [ 62] pusharglistnoret 1 ...................... <theAttack>
+  [ 64] extcall 248 ............................. AttackSetTypeFromAnimType(theAttack)
+  [ 66] getlocal 0 .............................. <theAttack>
+  [ 68] getobjprop 178 .......................... <theAttack.type>
+  [ 70] peek 0 .................................. case theAttack.type of
+  [ 72] pushsymb 179 ............................ <#melee>
+  [ 74] eq
+  [ 75] jmpifz [ 95] ............................ (case) #melee:
+  [ 78] getlocal 1 .............................. <c>
+  [ 80] getparam 0 .............................. <me>
+  [ 82] getchainedprop 51 ....................... <me.big>
+  [ 84] pusharglist 1 ........................... <me.big>
+  [ 86] objcall 313 ............................. <me.big.getAgility()>
+  [ 89] setobjprop 723 .......................... c.inc = me.big.getAgility()
+  [ 92] jmp [143]
+  [ 95] peek 0
+  [ 97] pushsymb 1616 ........................... <#ranged>
+  [100] eq
+  [101] jmpifz [121] ............................ (case) #ranged:
+  [104] getlocal 1 .............................. <c>
+  [106] getparam 0 .............................. <me>
+  [108] getchainedprop 51 ....................... <me.big>
+  [110] pusharglist 1 ........................... <me.big>
+  [112] objcall 314 ............................. <me.big.getDexterity()>
+  [115] setobjprop 723 .......................... c.inc = me.big.getDexterity()
+  [118] jmp [143]
+  [121] peek 0
+  [123] pushsymb 181 ............................ <#magic>
+  [125] eq
+  [126] jmpifz [143] ............................ (case) #magic:
+  [129] getlocal 1 .............................. <c>
+  [131] getparam 0 .............................. <me>
+  [133] getchainedprop 51 ....................... <me.big>
+  [135] pusharglist 1 ........................... <me.big>
+  [137] objcall 316 ............................. <me.big.getManaRegeneration()>
+  [140] setobjprop 723 .......................... c.inc = me.big.getManaRegeneration()
+  [143] pop 1 ................................... end case
+  [145] ret
+end
+
+on getCooldownFin me
+  [  0] getprop 1604 ............................ <pCooldownCounters>
+  [  3] getprop 1605 ............................ <pCurrentWeapon>
+  [  6] pusharglist 2 ........................... <pCooldownCounters, pCurrentWeapon>
+  [  8] objcall 109 ............................. <pCooldownCounters[pCurrentWeapon]>
+  [ 10] getobjprop 552 .......................... <pCooldownCounters[pCurrentWeapon].fin>
+  [ 13] pusharglistnoret 1 ...................... <pCooldownCounters[pCurrentWeapon].fin>
+  [ 15] extcall 35 .............................. return pCooldownCounters[pCurrentWeapon].fin
+  [ 17] ret
+end
+
+on getCurrentWeapon me
+  [  0] getprop 1605 ............................ <pCurrentWeapon>
+  [  3] pusharglistnoret 1 ...................... <pCurrentWeapon>
+  [  5] extcall 35 .............................. return pCurrentWeapon
+  [  7] ret
+end
+
+on getWeapons me, theType
+  [  0] pusharglist 0 ........................... <[]>
+  [  2] pushlist ................................ <[]>
+  [  3] setlocal 0 .............................. weapons = []
+  [  5] pushint8 1 .............................. <1>
+  [  7] setlocal 1
+  [  9] getlocal 1
+  [ 11] getprop 1608 ............................ <pWeapons>
+  [ 14] getobjprop 257 .......................... <pWeapons.count>
+  [ 17] lteq
+  [ 18] jmpifz [ 76] ............................ repeat with i = 1 to pWeapons.count
+  [ 21] getprop 1608 ............................ <pWeapons>
+  [ 24] getlocal 1 .............................. <i>
+  [ 26] pusharglist 2 ........................... <pWeapons, i>
+  [ 28] objcall 109 ............................. <pWeapons[i]>
+  [ 30] setlocal 2 .............................. nWeapon = pWeapons[i]
+  [ 32] getparam 0 .............................. <me>
+  [ 34] getlocal 2 .............................. <nWeapon>
+  [ 36] getparam 1 .............................. <theType>
+  [ 38] pusharglist 3 ........................... <me, nWeapon, theType>
+  [ 40] objcall 1603 ............................ <me.weaponIsOfType(nWeapon, theType)>
+  [ 43] jmpifz [ 67] ............................ if me.weaponIsOfType(nWeapon, theType) then
+  [ 46] getprop 1608 ............................ <pWeapons>
+  [ 49] getlocal 1 .............................. <i>
+  [ 51] pusharglist 2 ........................... <pWeapons, i>
+  [ 53] objcall 1092 ............................ <pWeapons.getPropAt(i)>
+  [ 56] setlocal 3 .............................. nSym = pWeapons.getPropAt(i)
+  [ 58] getlocal 0 .............................. <weapons>
+  [ 60] getlocal 3 .............................. <nSym>
+  [ 62] pusharglistnoret 2 ...................... <weapons, nSym>
+  [ 64] objcall 256 ............................. weapons.append(nSym)
+  [ 67] pushint8 1
+  [ 69] getlocal 1
+  [ 71] add
+  [ 72] setlocal 1
+  [ 74] endrepeat [  9]
+  [ 76] getlocal 0 .............................. <weapons>
+  [ 78] pusharglistnoret 1 ...................... <weapons>
+  [ 80] extcall 35 .............................. return weapons
+  [ 82] ret
+end
+
+on resetCooldown me
+  [  0] getprop 1604 ............................ <pCooldownCounters>
+  [  3] getprop 1605 ............................ <pCurrentWeapon>
+  [  6] pusharglist 2 ........................... <pCooldownCounters, pCurrentWeapon>
+  [  8] objcall 109 ............................. <pCooldownCounters[pCurrentWeapon]>
+  [ 10] pusharglistnoret 1 ...................... <pCooldownCounters[pCurrentWeapon]>
+  [ 12] extcall 706 ............................. CounterReset(pCooldownCounters[pCurrentWeapon])
+  [ 15] ret
+end
+
+on restoreFromSave me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 26 .............................. ancestor.restoreFromSave(sd)
+  [  8] getparam 1 .............................. <sd>
+  [ 10] getobjprop 1604 ......................... <sd.pCooldownCounters>
+  [ 13] setprop 1604 ............................ pCooldownCounters = sd.pCooldownCounters
+  [ 16] getparam 1 .............................. <sd>
+  [ 18] getobjprop 1605 ......................... <sd.pCurrentWeapon>
+  [ 21] setprop 1605 ............................ pCurrentWeapon = sd.pCurrentWeapon
+  [ 24] getparam 1 .............................. <sd>
+  [ 26] getobjprop 1608 ......................... <sd.pWeapons>
+  [ 29] setprop 1608 ............................ pWeapons = sd.pWeapons
+  [ 32] getprop 1605 ............................ <pCurrentWeapon>
+  [ 35] pushsymb 49 ............................. <#none>
+  [ 37] nteq .................................... <pCurrentWeapon <> #none>
+  [ 38] jmpifz [ 67] ............................ if pCurrentWeapon <> #none then
+  [ 41] getprop 1608 ............................ <pWeapons>
+  [ 44] getprop 1605 ............................ <pCurrentWeapon>
+  [ 47] pusharglist 2 ........................... <pWeapons, pCurrentWeapon>
+  [ 49] objcall 109 ............................. <pWeapons[pCurrentWeapon]>
+  [ 51] pusharglist 1 ........................... <pWeapons[pCurrentWeapon]>
+  [ 53] objcall 175 ............................. <pWeapons[pCurrentWeapon].duplicate()>
+  [ 55] setlocal 0 .............................. attack = pWeapons[pCurrentWeapon].duplicate()
+  [ 57] getparam 0 .............................. <me>
+  [ 59] getchainedprop 51 ....................... <me.big>
+  [ 61] getlocal 0 .............................. <attack>
+  [ 63] pusharglistnoret 2 ...................... <me.big, attack>
+  [ 65] objcall 144 ............................. me.big.setAttack(attack)
+  [ 67] ret
+end
+
+on selectSpell me, num
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 181 ............................ <#magic>
+  [  4] pusharglist 2 ........................... <me, #magic>
+  [  6] objcall 1597 ............................ <me.getWeapons(#magic)>
+  [  9] setlocal 0 .............................. mySpells = me.getWeapons(#magic)
+  [ 11] getlocal 0 .............................. <mySpells>
+  [ 13] getobjprop 257 .......................... <mySpells.count>
+  [ 16] getparam 1 .............................. <num>
+  [ 18] gteq .................................... <mySpells.count >= num>
+  [ 19] jmpifz [ 41] ............................ if mySpells.count >= num then
+  [ 22] getlocal 0 .............................. <mySpells>
+  [ 24] getparam 1 .............................. <num>
+  [ 26] pusharglist 2 ........................... <mySpells, num>
+  [ 28] objcall 109 ............................. <mySpells[num]>
+  [ 30] setlocal 1 .............................. Spell = mySpells[num]
+  [ 32] getparam 0 .............................. <me>
+  [ 34] getlocal 1 .............................. <Spell>
+  [ 36] pusharglistnoret 2 ...................... <me, Spell>
+  [ 38] objcall 1600 ............................ me.setCurrentWeapon(Spell)
+  [ 41] ret
+end
+
+on setCurrentWeapon me, theWeapon
+  [  0] getprop 1608 ............................ <pWeapons>
+  [  3] getparam 1 .............................. <theWeapon>
+  [  5] pusharglist 2 ........................... <pWeapons, theWeapon>
+  [  7] objcall 109 ............................. <pWeapons[theWeapon]>
+  [  9] getobjprop 207 .......................... <pWeapons[theWeapon].animType>
+  [ 11] pushsymb 181 ............................ <#magic>
+  [ 13] nteq .................................... <pWeapons[theWeapon].animType <> #magic>
+  [ 14] jmpifz [ 28] ............................ if pWeapons[theWeapon].animType <> #magic then
+  [ 17] getparam 0 .............................. <me>
+  [ 19] getchainedprop 57 ....................... <me.id>
+  [ 21] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 23] pusharglistnoret 1 ...................... <me.id.bigMe>
+  [ 25] objcall 1621 ............................ me.id.bigMe.cancelAttack()
+  [ 28] getparam 1 .............................. <theWeapon>
+  [ 30] setprop 1605 ............................ pCurrentWeapon = theWeapon
+  [ 33] getprop 1608 ............................ <pWeapons>
+  [ 36] getparam 1 .............................. <theWeapon>
+  [ 38] pusharglist 2 ........................... <pWeapons, theWeapon>
+  [ 40] objcall 109 ............................. <pWeapons[theWeapon]>
+  [ 42] pusharglist 1 ........................... <pWeapons[theWeapon]>
+  [ 44] objcall 175 ............................. <pWeapons[theWeapon].duplicate()>
+  [ 46] setlocal 0 .............................. attack = pWeapons[theWeapon].duplicate()
+  [ 48] getparam 0 .............................. <me>
+  [ 50] getchainedprop 57 ....................... <me.id>
+  [ 52] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 54] getlocal 0 .............................. <attack>
+  [ 56] pusharglistnoret 2 ...................... <me.id.bigMe, attack>
+  [ 58] objcall 144 ............................. me.id.bigMe.setAttack(attack)
+  [ 60] ret
+end
+
+on update me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 31 .............................. ancestor.update()
+  [  6] getparam 0 .............................. <me>
+  [  8] pusharglistnoret 1 ...................... <me>
+  [ 10] objcall 1601 ............................ me.updateCooldowns()
+  [ 13] ret
+end
+
+on updateCooldowns me
+  [  0] getprop 1604 ............................ <pCooldownCounters>
+  [  3] peek 0
+  [  5] pusharglist 1
+  [  7] extcall 257
+  [ 10] pushint8 1
+  [ 12] peek 0
+  [ 14] peek 2
+  [ 16] lteq
+  [ 17] jmpifz [ 42] ............................ repeat with cooldownCounter in pCooldownCounters
+  [ 20] peek 2
+  [ 22] peek 1
+  [ 24] pusharglist 2
+  [ 26] extcall 109
+  [ 28] setlocal 0
+  [ 30] getlocal 0 .............................. <cooldownCounter>
+  [ 32] pusharglistnoret 1 ...................... <cooldownCounter>
+  [ 34] extcall 767 ............................. CounterOnce(cooldownCounter)
+  [ 37] pushint8 1
+  [ 39] add
+  [ 40] endrepeat [ 12]
+  [ 42] pop 3
+  [ 44] ret
+end
+
+on setMultiAttack me, multiAttack, bufferDist
+  [  0] getparam 1 .............................. <multiAttack>
+  [  2] jmpifz [274] ............................ if multiAttack then
+  [  5] getprop 1608 ............................ <pWeapons>
+  [  8] getobjprop 257 .......................... <pWeapons.count>
+  [ 11] pushint8 1 .............................. <1>
+  [ 13] gt ...................................... <pWeapons.count > 1>
+  [ 14] jmpifz [274] ............................ if pWeapons.count > 1 then
+  [ 17] getparam 0 .............................. <me>
+  [ 19] getchainedprop 57 ....................... <me.id>
+  [ 21] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 23] getchainedprop 922 ...................... <me.id.bigMe.pAI>
+  [ 26] pushsymb 1091 ........................... <#target>
+  [ 29] pusharglist 2 ........................... <me.id.bigMe.pAI, #target>
+  [ 31] objcall 606 ............................. <me.id.bigMe.pAI.getRelation(#target)>
+  [ 34] setlocal 0 .............................. targetObj = me.id.bigMe.pAI.getRelation(#target)
+  [ 36] getparam 0 .............................. <me>
+  [ 38] getchainedprop 57 ....................... <me.id>
+  [ 40] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 42] pusharglist 1 ........................... <me.id.bigMe>
+  [ 44] objcall 223 ............................. <me.id.bigMe.getTargetLoc()>
+  [ 46] setlocal 1 .............................. targetloc = me.id.bigMe.getTargetLoc()
+  [ 48] getlocal 0 .............................. <targetObj>
+  [ 50] pushsymb 49 ............................. <#none>
+  [ 52] eq ...................................... <targetObj = #none>
+  [ 53] getlocal 1 .............................. <targetloc>
+  [ 55] pushsymb 49 ............................. <#none>
+  [ 57] eq ...................................... <targetloc = #none>
+  [ 58] or ...................................... <(targetObj = #none) or (targetloc = #none)>
+  [ 59] jmpifz [ 81] ............................ if (targetObj = #none) or (targetloc = #none) then
+  [ 62] getparam 0 .............................. <me>
+  [ 64] getprop 1608 ............................ <pWeapons>
+  [ 67] pushint8 1 .............................. <1>
+  [ 69] pusharglist 2 ........................... <pWeapons, 1>
+  [ 71] objcall 109 ............................. <pWeapons[1]>
+  [ 73] getobjprop 44 ........................... <pWeapons[1].name>
+  [ 75] pusharglistnoret 2 ...................... <me, pWeapons[1].name>
+  [ 77] objcall 1600 ............................ me.setCurrentWeapon(pWeapons[1].name)
+  [ 80] ret ..................................... exit
+  [ 81] getparam 0 .............................. <me>
+  [ 83] getchainedprop 57 ....................... <me.id>
+  [ 85] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 87] pusharglist 1 ........................... <me.id.bigMe>
+  [ 89] objcall 111 ............................. <me.id.bigMe.getLoc()>
+  [ 91] setlocal 2 .............................. attackLoc = me.id.bigMe.getLoc()
+  [ 93] getlocal 1 .............................. <targetloc>
+  [ 95] getlocal 2 .............................. <attackLoc>
+  [ 97] pusharglist 2 ........................... <targetloc, attackLoc>
+  [ 99] extcall 190 ............................. <GeomDistSqr(targetloc, attackLoc)>
+  [101] setlocal 3 .............................. disttotarget = GeomDistSqr(targetloc, attackLoc)
+  [103] getprop 1608 ............................ <pWeapons>
+  [106] pushint8 2 .............................. <2>
+  [108] pusharglist 2 ........................... <pWeapons, 2>
+  [110] objcall 109 ............................. <pWeapons[2]>
+  [112] getobjprop 178 .......................... <pWeapons[2].type>
+  [114] pushsymb 1616 ........................... <#ranged>
+  [117] eq ...................................... <pWeapons[2].type = #ranged>
+  [118] jmpifz [135] ............................ if pWeapons[2].type = #ranged then
+  [121] getprop 1608 ............................ <pWeapons>
+  [124] pushint8 2 .............................. <2>
+  [126] pusharglist 2 ........................... <pWeapons, 2>
+  [128] objcall 109 ............................. <pWeapons[2]>
+  [130] getobjprop 1623 ......................... <pWeapons[2].reach>
+  [133] setparam 2 .............................. bufferDist = pWeapons[2].reach
+  [135] getlocal 3 .............................. <disttotarget>
+  [137] getparam 2 .............................. <bufferDist>
+  [139] getparam 2 .............................. <bufferDist>
+  [141] mul ..................................... <bufferDist * bufferDist>
+  [142] sub ..................................... <disttotarget - (bufferDist * bufferDist)>
+  [143] setlocal 4 .............................. attackDist = disttotarget - (bufferDist * bufferDist)
+  [145] getlocal 4 .............................. <attackDist>
+  [147] pushzero ................................ <0>
+  [148] gt ...................................... <attackDist > 0>
+  [149] jmpifz [173] ............................ if attackDist > 0 then / else
+  [152] getparam 0 .............................. <me>
+  [154] getprop 1608 ............................ <pWeapons>
+  [157] pushint8 1 .............................. <1>
+  [159] pusharglist 2 ........................... <pWeapons, 1>
+  [161] objcall 109 ............................. <pWeapons[1]>
+  [163] getobjprop 44 ........................... <pWeapons[1].name>
+  [165] pusharglistnoret 2 ...................... <me, pWeapons[1].name>
+  [167] objcall 1600 ............................ me.setCurrentWeapon(pWeapons[1].name)
+  [170] jmp [274]
+  [173] getlocal 0 .............................. <targetObj>
+  [175] pusharglist 1 ........................... <targetObj>
+  [177] objcall 141 ............................. <targetObj.getAttack()>
+  [179] getobjprop 178 .......................... <targetObj.getAttack().type>
+  [181] peek 0 .................................. case targetObj.getAttack().type of
+  [183] pushsymb 179 ............................ <#melee>
+  [185] eq
+  [186] jmpifz [254] ............................ (case) #melee:
+  [189] getlocal 3 .............................. <disttotarget>
+  [191] pushint8 20 ............................. <20>
+  [193] gt ...................................... <disttotarget > 20>
+  [194] getprop 1608 ............................ <pWeapons>
+  [197] pushint8 2 .............................. <2>
+  [199] pusharglist 2 ........................... <pWeapons, 2>
+  [201] objcall 109 ............................. <pWeapons[2]>
+  [203] getobjprop 178 .......................... <pWeapons[2].type>
+  [205] pushsymb 179 ............................ <#melee>
+  [207] eq ...................................... <pWeapons[2].type = #melee>
+  [208] and ..................................... <(disttotarget > 20) and (pWeapons[2].type = #melee)>
+  [209] jmpifz [233] ............................ if (disttotarget > 20) and (pWeapons[2].type = #melee) then / else
+  [212] getparam 0 .............................. <me>
+  [214] getprop 1608 ............................ <pWeapons>
+  [217] pushint8 1 .............................. <1>
+  [219] pusharglist 2 ........................... <pWeapons, 1>
+  [221] objcall 109 ............................. <pWeapons[1]>
+  [223] getobjprop 44 ........................... <pWeapons[1].name>
+  [225] pusharglistnoret 2 ...................... <me, pWeapons[1].name>
+  [227] objcall 1600 ............................ me.setCurrentWeapon(pWeapons[1].name)
+  [230] jmp [251]
+  [233] getparam 0 .............................. <me>
+  [235] getprop 1608 ............................ <pWeapons>
+  [238] pushint8 2 .............................. <2>
+  [240] pusharglist 2 ........................... <pWeapons, 2>
+  [242] objcall 109 ............................. <pWeapons[2]>
+  [244] getobjprop 44 ........................... <pWeapons[2].name>
+  [246] pusharglistnoret 2 ...................... <me, pWeapons[2].name>
+  [248] objcall 1600 ............................ me.setCurrentWeapon(pWeapons[2].name)
+  [251] jmp [272] ............................... (case) otherwise:
+  [254] getparam 0 .............................. <me>
+  [256] getprop 1608 ............................ <pWeapons>
+  [259] pushint8 2 .............................. <2>
+  [261] pusharglist 2 ........................... <pWeapons, 2>
+  [263] objcall 109 ............................. <pWeapons[2]>
+  [265] getobjprop 44 ........................... <pWeapons[2].name>
+  [267] pusharglistnoret 2 ...................... <me, pWeapons[2].name>
+  [269] objcall 1600 ............................ me.setCurrentWeapon(pWeapons[2].name)
+  [272] pop 1 ................................... end case
+  [274] ret
+end
+
+on weaponIsOfType me, theWeapon, theType
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. match = 0
+  [  3] getparam 2 .............................. <theType>
+  [  5] peek 0 .................................. case theType of
+  [  7] pushsymb 181 ............................ <#magic>
+  [  9] eq
+  [ 10] jmpifz [ 25] ............................ (case) #magic:
+  [ 13] getparam 1 .............................. <theWeapon>
+  [ 15] getobjprop 207 .......................... <theWeapon.animType>
+  [ 17] getparam 2 .............................. <theType>
+  [ 19] eq ...................................... <theWeapon.animType = theType>
+  [ 20] setlocal 0 .............................. match = theWeapon.animType = theType
+  [ 22] jmp [ 43]
+  [ 25] peek 0
+  [ 27] pushsymb 1625 ........................... <#nonMagic>
+  [ 30] eq
+  [ 31] jmpifz [ 43] ............................ (case) #nonMagic:
+  [ 34] getparam 1 .............................. <theWeapon>
+  [ 36] getobjprop 207 .......................... <theWeapon.animType>
+  [ 38] pushsymb 181 ............................ <#magic>
+  [ 40] nteq .................................... <theWeapon.animType <> #magic>
+  [ 41] setlocal 0 .............................. match = theWeapon.animType <> #magic
+  [ 43] pop 1 ................................... end case
+  [ 45] getlocal 0 .............................. <match>
+  [ 47] pusharglistnoret 1 ...................... <match>
+  [ 49] extcall 35 .............................. return match
+  [ 51] ret
+end

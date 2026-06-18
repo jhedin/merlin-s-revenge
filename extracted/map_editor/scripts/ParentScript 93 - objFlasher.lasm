@@ -1,0 +1,79 @@
+property ancestor, pCallingPrg, pTimeCounter, pSpr
+
+on new me
+  [  0] pushcons 0 .............................. <"objAutoUpdate">
+  [  2] pusharglist 1 ........................... <"objAutoUpdate">
+  [  4] extcall 27 .............................. <script("objAutoUpdate")>
+  [  6] pusharglist 1 ........................... <script("objAutoUpdate")>
+  [  8] extcall 0 ............................... <new(script("objAutoUpdate"))>
+  [ 10] setprop 77 .............................. ancestor = new(script("objAutoUpdate"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 17 .............................. return me
+  [ 18] ret
+end
+
+on init me, callingPrg, spr, tim
+  [  0] pusharglist 0 ........................... <>
+  [  2] extcall 120 ............................. <CounterNew()>
+  [  4] setprop 743 ............................. pTimeCounter = CounterNew()
+  [  7] getparam 1 .............................. <callingPrg>
+  [  9] setprop 744 ............................. pCallingPrg = callingPrg
+  [ 12] getparam 2 .............................. <spr>
+  [ 14] setprop 79 .............................. pSpr = spr
+  [ 16] getprop 743 ............................. <pTimeCounter>
+  [ 19] pushsymb 123 ............................ <#tim>
+  [ 21] pushint8 2 .............................. <2>
+  [ 23] getparam 3 .............................. <tim>
+  [ 25] pusharglistnoret 4 ...................... <pTimeCounter, #tim, 2, tim>
+  [ 27] objcall 124 ............................. pTimeCounter.tim[2] = tim
+  [ 29] getprop 743 ............................. <pTimeCounter>
+  [ 32] pusharglistnoret 1 ...................... <pTimeCounter>
+  [ 34] extcall 133 ............................. CounterReset(pTimeCounter)
+  [ 36] getparam 0 .............................. <me>
+  [ 38] getchainedprop 77 ....................... <me.ancestor>
+  [ 40] pusharglistnoret 1 ...................... <me.ancestor>
+  [ 42] objcall 1 ............................... me.ancestor.init()
+  [ 44] getparam 0 .............................. <me>
+  [ 46] pusharglistnoret 1 ...................... <me>
+  [ 48] objcall 433 ............................. me.calcStart()
+  [ 51] ret
+end
+
+on finishConditionMet me
+  [  0] getprop 743 ............................. <pTimeCounter>
+  [  3] getobjprop 130 .......................... <pTimeCounter.fin>
+  [  5] pusharglistnoret 1 ...................... <pTimeCounter.fin>
+  [  7] extcall 17 .............................. return pTimeCounter.fin
+  [  9] ret
+end
+
+on informCallingPrg me
+  [  0] getprop 744 ............................. <pCallingPrg>
+  [  3] pusharglistnoret 1 ...................... <pCallingPrg>
+  [  5] objcall 745 ............................. pCallingPrg.flasherFinished()
+  [  8] ret
+end
+
+on update me
+  [  0] getprop 79 .............................. <pSpr>
+  [  2] getobjprop 294 .......................... <pSpr.blend>
+  [  5] pushzero ................................ <0>
+  [  6] eq ...................................... <pSpr.blend = 0>
+  [  7] jmpifz [ 20] ............................ if pSpr.blend = 0 then / else
+  [ 10] getprop 79 .............................. <pSpr>
+  [ 12] pushint8 100 ............................ <100>
+  [ 14] setobjprop 294 .......................... pSpr.blend = 100
+  [ 17] jmp [ 26]
+  [ 20] getprop 79 .............................. <pSpr>
+  [ 22] pushzero ................................ <0>
+  [ 23] setobjprop 294 .......................... pSpr.blend = 0
+  [ 26] getprop 743 ............................. <pTimeCounter>
+  [ 29] pusharglistnoret 1 ...................... <pTimeCounter>
+  [ 31] extcall 132 ............................. counter(pTimeCounter)
+  [ 33] getparam 0 .............................. <me>
+  [ 35] getchainedprop 77 ....................... <me.ancestor>
+  [ 37] pusharglistnoret 1 ...................... <me.ancestor>
+  [ 39] objcall 432 ............................. me.ancestor.calcFin()
+  [ 42] ret
+end

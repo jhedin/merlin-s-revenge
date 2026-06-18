@@ -1,0 +1,318 @@
+property ancestor, pDisplayCounter, pDisplayLoc, pEnergyBar, pEnergyBarRect, pEnergyBarWidth, pLastActive, pLastEnergy, pOffMember, pOnMember, pSpacer, pVerticalSpacerForDisplayCounter
+global g, gGlobalDisplayLayer
+
+on new me
+  [  0] pushcons 0 .............................. <"objSpriteMember">
+  [  2] pusharglist 1 ........................... <"objSpriteMember">
+  [  4] extcall 34 .............................. <script("objSpriteMember")>
+  [  6] pusharglist 1 ........................... <script("objSpriteMember")>
+  [  8] extcall 0 ............................... <new(script("objSpriteMember"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objSpriteMember"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] getglobal 2491 .......................... <gGlobalDisplayLayer>
+  [ 27] setobjprop 1352 ......................... i.layer = gGlobalDisplayLayer
+  [ 30] getlocal 0 .............................. <i>
+  [ 32] pushsymb 2493 ........................... <#displayLoc>
+  [ 35] pushzero ................................ <0>
+  [ 36] pushzero ................................ <0>
+  [ 37] pusharglist 2 ........................... <0, 0>
+  [ 39] extcall 197 ............................. <point(0, 0)>
+  [ 41] pusharglistnoret 3 ...................... <i, #displayLoc, point(0, 0)>
+  [ 43] objcall 48 .............................. i[#displayLoc] = point(0, 0)
+  [ 45] getlocal 0 .............................. <i>
+  [ 47] pushsymb 3155 ........................... <#onMember>
+  [ 50] pushsymb 49 ............................. <#none>
+  [ 52] pusharglistnoret 3 ...................... <i, #onMember, #none>
+  [ 54] objcall 48 .............................. i[#onMember] = #none
+  [ 56] getlocal 0 .............................. <i>
+  [ 58] pushsymb 3156 ........................... <#offMember>
+  [ 61] pushsymb 49 ............................. <#none>
+  [ 63] pusharglistnoret 3 ...................... <i, #offMember, #none>
+  [ 65] objcall 48 .............................. i[#offMember] = #none
+  [ 67] getparam 0 .............................. <me>
+  [ 69] pusharglistnoret 1 ...................... <me>
+  [ 71] extcall 35 .............................. return me
+  [ 73] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 2493 ......................... <params.displayLoc>
+  [ 13] setprop 2495 ............................ pDisplayLoc = params.displayLoc
+  [ 16] pushint8 6 .............................. <6>
+  [ 18] setprop 3157 ............................ pEnergyBarWidth = 6
+  [ 21] pushsymb 49 ............................. <#none>
+  [ 23] setprop 3158 ............................ pLastActive = #none
+  [ 26] getparam 1 .............................. <params>
+  [ 28] getobjprop 3156 ......................... <params.offMember>
+  [ 31] setprop 3159 ............................ pOffMember = params.offMember
+  [ 34] getparam 1 .............................. <params>
+  [ 36] getobjprop 3155 ......................... <params.onMember>
+  [ 39] setprop 3160 ............................ pOnMember = params.onMember
+  [ 42] pushint8 1 .............................. <1>
+  [ 44] setprop 3161 ............................ pSpacer = 1
+  [ 47] pushint8 3 .............................. <3>
+  [ 49] setprop 3162 ............................ pVerticalSpacerForDisplayCounter = 3
+  [ 52] getparam 0 .............................. <me>
+  [ 54] pusharglistnoret 1 ...................... <me>
+  [ 56] objcall 2389 ............................ me.initEnergyBar()
+  [ 59] getparam 0 .............................. <me>
+  [ 61] pusharglistnoret 1 ...................... <me>
+  [ 63] objcall 3149 ............................ me.initDisplayCounter()
+  [ 66] ret
+end
+
+on initDisplayCounter me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 3150 ............................ <me.calcDisplayCounterLoc()>
+  [  7] setlocal 0 .............................. displayLoc = me.calcDisplayCounterLoc()
+  [  9] getglobal 40 ............................ <g>
+  [ 11] getchainedprop 41 ....................... <g.objectMaster>
+  [ 13] pushsymb 3164 ........................... <#objDisplayCounter>
+  [ 16] pusharglist 2 ........................... <g.objectMaster, #objDisplayCounter>
+  [ 18] objcall 43 .............................. <g.objectMaster.requestObject(#objDisplayCounter)>
+  [ 20] setprop 3163 ............................ pDisplayCounter = g.objectMaster.requestObject(#objDisplayCounter)
+  [ 23] getprop 3163 ............................ <pDisplayCounter>
+  [ 26] pushsymb 1 .............................. <#init>
+  [ 28] pusharglist 2 ........................... <pDisplayCounter, #init>
+  [ 30] objcall 230 ............................. <pDisplayCounter.getParams(#init)>
+  [ 32] setlocal 1 .............................. params = pDisplayCounter.getParams(#init)
+  [ 34] getlocal 1 .............................. <params>
+  [ 36] getlocal 0 .............................. <displayLoc>
+  [ 38] setobjprop 2493 ......................... params.displayLoc = displayLoc
+  [ 41] getprop 3163 ............................ <pDisplayCounter>
+  [ 44] getlocal 1 .............................. <params>
+  [ 46] pusharglistnoret 2 ...................... <pDisplayCounter, params>
+  [ 48] objcall 1 ............................... pDisplayCounter.init(params)
+  [ 50] ret
+end
+
+on initEnergyBar me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 3151 ............................ <me.calcEnergyBarRect()>
+  [  7] setlocal 0 .............................. energyBarRect = me.calcEnergyBarRect()
+  [  9] getglobal 40 ............................ <g>
+  [ 11] getchainedprop 41 ....................... <g.objectMaster>
+  [ 13] pushsymb 3054 ........................... <#objEnergyBar>
+  [ 16] pusharglist 2 ........................... <g.objectMaster, #objEnergyBar>
+  [ 18] objcall 43 .............................. <g.objectMaster.requestObject(#objEnergyBar)>
+  [ 20] setprop 2403 ............................ pEnergyBar = g.objectMaster.requestObject(#objEnergyBar)
+  [ 23] getprop 2403 ............................ <pEnergyBar>
+  [ 26] pusharglist 1 ........................... <pEnergyBar>
+  [ 28] objcall 230 ............................. <pEnergyBar.getParams()>
+  [ 30] setlocal 1 .............................. params = pEnergyBar.getParams()
+  [ 32] getlocal 1 .............................. <params>
+  [ 34] pushint8 1 .............................. <1>
+  [ 36] setobjprop 2582 ......................... params.barBorder = 1
+  [ 39] getlocal 1 .............................. <params>
+  [ 41] getlocal 0 .............................. <energyBarRect>
+  [ 43] setobjprop 2584 ......................... params.surroundRect = energyBarRect
+  [ 46] getlocal 1 .............................. <params>
+  [ 48] pushzero ................................ <0>
+  [ 49] pushint16 200 ........................... <200>
+  [ 52] pushzero ................................ <0>
+  [ 53] pusharglist 3 ........................... <0, 200, 0>
+  [ 55] extcall 436 ............................. <rgb(0, 200, 0)>
+  [ 58] setobjprop 2492 ......................... params.colour = rgb(0, 200, 0)
+  [ 61] getlocal 1 .............................. <params>
+  [ 63] pushzero ................................ <0>
+  [ 64] setobjprop 2583 ......................... params.currentEnergy = 0
+  [ 67] getlocal 1 .............................. <params>
+  [ 69] getglobal 2491 .......................... <gGlobalDisplayLayer>
+  [ 72] setobjprop 1352 ......................... params.layer = gGlobalDisplayLayer
+  [ 75] getlocal 1 .............................. <params>
+  [ 77] pushint8 100 ............................ <100>
+  [ 79] setobjprop 521 .......................... params.maxEnergy = 100
+  [ 82] getlocal 1 .............................. <params>
+  [ 84] pushsymb 2339 ........................... <#vertical>
+  [ 87] setobjprop 2340 ......................... params.orientation = #vertical
+  [ 90] getprop 2403 ............................ <pEnergyBar>
+  [ 93] getlocal 1 .............................. <params>
+  [ 95] pusharglistnoret 2 ...................... <pEnergyBar, params>
+  [ 97] objcall 1 ............................... pEnergyBar.init(params)
+  [ 99] getlocal 0 .............................. <energyBarRect>
+  [101] setprop 3165 ............................ pEnergyBarRect = energyBarRect
+  [104] ret
+end
+
+on finish me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 3 ............................... ancestor.finish()
+  [  6] getprop 3163 ............................ <pDisplayCounter>
+  [  9] pushsymb 49 ............................. <#none>
+  [ 11] nteq .................................... <pDisplayCounter <> #none>
+  [ 12] jmpifz [ 27] ............................ if pDisplayCounter <> #none then
+  [ 15] getprop 3163 ............................ <pDisplayCounter>
+  [ 18] pusharglistnoret 1 ...................... <pDisplayCounter>
+  [ 20] objcall 3 ............................... pDisplayCounter.finish()
+  [ 22] pushsymb 49 ............................. <#none>
+  [ 24] setprop 3163 ............................ pDisplayCounter = #none
+  [ 27] getprop 2403 ............................ <pEnergyBar>
+  [ 30] pushsymb 49 ............................. <#none>
+  [ 32] nteq .................................... <pEnergyBar <> #none>
+  [ 33] jmpifz [ 48] ............................ if pEnergyBar <> #none then
+  [ 36] getprop 2403 ............................ <pEnergyBar>
+  [ 39] pusharglistnoret 1 ...................... <pEnergyBar>
+  [ 41] objcall 3 ............................... pEnergyBar.finish()
+  [ 43] pushsymb 49 ............................. <#none>
+  [ 45] setprop 2403 ............................ pEnergyBar = #none
+  [ 48] ret
+end
+
+on calcDisplayCounterLoc me
+  [  0] pushzero ................................ <0>
+  [  1] pushzero ................................ <0>
+  [  2] pusharglist 2 ........................... <0, 0>
+  [  4] extcall 197 ............................. <point(0, 0)>
+  [  6] setlocal 0 .............................. dcLoc = point(0, 0)
+  [  8] getlocal 0 .............................. <dcLoc>
+  [ 10] getprop 2495 ............................ <pDisplayLoc>
+  [ 13] getobjprop 540 .......................... <pDisplayLoc.locV>
+  [ 16] getprop 3162 ............................ <pVerticalSpacerForDisplayCounter>
+  [ 19] add ..................................... <pDisplayLoc.locV + pVerticalSpacerForDisplayCounter>
+  [ 20] setobjprop 540 .......................... dcLoc.locV = pDisplayLoc.locV + pVerticalSpacerForDisplayCounter
+  [ 23] getlocal 0 .............................. <dcLoc>
+  [ 25] getprop 3165 ............................ <pEnergyBarRect>
+  [ 28] getobjprop 266 .......................... <pEnergyBarRect.right>
+  [ 31] getprop 3161 ............................ <pSpacer>
+  [ 34] add ..................................... <pEnergyBarRect.right + pSpacer>
+  [ 35] setobjprop 539 .......................... dcLoc.locH = pEnergyBarRect.right + pSpacer
+  [ 38] getlocal 0 .............................. <dcLoc>
+  [ 40] pusharglistnoret 1 ...................... <dcLoc>
+  [ 42] extcall 35 .............................. return dcLoc
+  [ 44] ret
+end
+
+on calcEnergyBarRect me
+  [  0] pushzero ................................ <0>
+  [  1] pushzero ................................ <0>
+  [  2] pushzero ................................ <0>
+  [  3] pushzero ................................ <0>
+  [  4] pusharglist 4 ........................... <0, 0, 0, 0>
+  [  6] extcall 263 ............................. <rect(0, 0, 0, 0)>
+  [  9] setlocal 0 .............................. ebRect = rect(0, 0, 0, 0)
+  [ 11] getlocal 0 .............................. <ebRect>
+  [ 13] getprop 2495 ............................ <pDisplayLoc>
+  [ 16] getobjprop 539 .......................... <pDisplayLoc.locH>
+  [ 19] getprop 3160 ............................ <pOnMember>
+  [ 22] getobjprop 424 .......................... <pOnMember.width>
+  [ 25] add ..................................... <pDisplayLoc.locH + pOnMember.width>
+  [ 26] getprop 3161 ............................ <pSpacer>
+  [ 29] add ..................................... <pDisplayLoc.locH + pOnMember.width + pSpacer>
+  [ 30] setobjprop 264 .......................... ebRect.left = pDisplayLoc.locH + pOnMember.width + pSpacer
+  [ 33] getlocal 0 .............................. <ebRect>
+  [ 35] getlocal 0 .............................. <ebRect>
+  [ 37] getobjprop 264 .......................... <ebRect.left>
+  [ 40] getprop 3157 ............................ <pEnergyBarWidth>
+  [ 43] add ..................................... <ebRect.left + pEnergyBarWidth>
+  [ 44] setobjprop 266 .......................... ebRect.right = ebRect.left + pEnergyBarWidth
+  [ 47] getlocal 0 .............................. <ebRect>
+  [ 49] getprop 2495 ............................ <pDisplayLoc>
+  [ 52] getobjprop 540 .......................... <pDisplayLoc.locV>
+  [ 55] setobjprop 265 .......................... ebRect.top = pDisplayLoc.locV
+  [ 58] getlocal 0 .............................. <ebRect>
+  [ 60] getlocal 0 .............................. <ebRect>
+  [ 62] getobjprop 265 .......................... <ebRect.top>
+  [ 65] getprop 3160 ............................ <pOnMember>
+  [ 68] getobjprop 423 .......................... <pOnMember.height>
+  [ 71] add ..................................... <ebRect.top + pOnMember.height>
+  [ 72] setobjprop 114 .......................... ebRect.bottom = ebRect.top + pOnMember.height
+  [ 74] getlocal 0 .............................. <ebRect>
+  [ 76] pusharglistnoret 1 ...................... <ebRect>
+  [ 78] extcall 35 .............................. return ebRect
+  [ 80] ret
+end
+
+on updateDisplayFromObj me, theObj
+  [  0] getparam 1 .............................. <theObj>
+  [  2] pusharglist 1 ........................... <theObj>
+  [  4] objcall 769 ............................. <theObj.getMedikitActive()>
+  [  7] setlocal 0 .............................. Active = theObj.getMedikitActive()
+  [  9] getparam 1 .............................. <theObj>
+  [ 11] pusharglist 1 ........................... <theObj>
+  [ 13] objcall 770 ............................. <theObj.getMedikitRemainingHitpoints()>
+  [ 16] setlocal 1 .............................. energy = theObj.getMedikitRemainingHitpoints()
+  [ 18] getparam 1 .............................. <theObj>
+  [ 20] pusharglist 1 ........................... <theObj>
+  [ 22] objcall 772 ............................. <theObj.getNumOfMedikits()>
+  [ 25] setlocal 2 .............................. numOfMedikits = theObj.getNumOfMedikits()
+  [ 27] getlocal 0 .............................. <Active>
+  [ 29] getprop 3158 ............................ <pLastActive>
+  [ 32] nteq .................................... <Active <> pLastActive>
+  [ 33] jmpifz [ 50] ............................ if Active <> pLastActive then
+  [ 36] getparam 0 .............................. <me>
+  [ 38] getlocal 0 .............................. <Active>
+  [ 40] pusharglistnoret 2 ...................... <me, Active>
+  [ 42] objcall 3153 ............................ me.updateActive(Active)
+  [ 45] getlocal 0 .............................. <Active>
+  [ 47] setprop 3158 ............................ pLastActive = Active
+  [ 50] getlocal 1 .............................. <energy>
+  [ 52] getprop 3169 ............................ <pLastEnergy>
+  [ 55] nteq .................................... <energy <> pLastEnergy>
+  [ 56] jmpifz [ 75] ............................ if energy <> pLastEnergy then
+  [ 59] getparam 0 .............................. <me>
+  [ 61] getlocal 1 .............................. <energy>
+  [ 63] getparam 1 .............................. <theObj>
+  [ 65] pusharglistnoret 3 ...................... <me, energy, theObj>
+  [ 67] objcall 2417 ............................ me.updateEnergy(energy, theObj)
+  [ 70] getlocal 1 .............................. <energy>
+  [ 72] setprop 3169 ............................ pLastEnergy = energy
+  [ 75] getparam 0 .............................. <me>
+  [ 77] getlocal 2 .............................. <numOfMedikits>
+  [ 79] pusharglistnoret 2 ...................... <me, numOfMedikits>
+  [ 81] objcall 3154 ............................ me.updateDisplayCounter(numOfMedikits)
+  [ 84] ret
+end
+
+on updateActive me, Active
+  [  0] getparam 1 .............................. <Active>
+  [  2] jmpifz [ 13] ............................ if Active then / else
+  [  5] getprop 3160 ............................ <pOnMember>
+  [  8] setlocal 0 .............................. currentMember = pOnMember
+  [ 10] jmp [ 18]
+  [ 13] getprop 3159 ............................ <pOffMember>
+  [ 16] setlocal 0 .............................. currentMember = pOffMember
+  [ 18] getparam 0 .............................. <me>
+  [ 20] getlocal 0 .............................. <currentMember>
+  [ 22] getobjprop 800 .......................... <currentMember.image>
+  [ 25] getprop 2495 ............................ <pDisplayLoc>
+  [ 28] pusharglistnoret 3 ...................... <me, currentMember.image, pDisplayLoc>
+  [ 30] objcall 2502 ............................ me.displayImageAtLoc(currentMember.image, pDisplayLoc)
+  [ 33] ret
+end
+
+on updateEnergy me, energy, theObj
+  [  0] getparam 2 .............................. <theObj>
+  [  2] pusharglist 1 ........................... <theObj>
+  [  4] objcall 771 ............................. <theObj.getMedikitMaxHitpoints()>
+  [  7] setlocal 0 .............................. maxEnergy = theObj.getMedikitMaxHitpoints()
+  [  9] getprop 2403 ............................ <pEnergyBar>
+  [ 12] getlocal 0 .............................. <maxEnergy>
+  [ 14] pusharglistnoret 2 ...................... <pEnergyBar, maxEnergy>
+  [ 16] objcall 2578 ............................ pEnergyBar.setMaxEnergy(maxEnergy)
+  [ 19] getprop 2403 ............................ <pEnergyBar>
+  [ 22] getparam 1 .............................. <energy>
+  [ 24] pusharglistnoret 2 ...................... <pEnergyBar, energy>
+  [ 26] objcall 2417 ............................ pEnergyBar.updateEnergy(energy)
+  [ 29] ret
+end
+
+on updateDisplayCounter me, numOfMedikits
+  [  0] getprop 3163 ............................ <pDisplayCounter>
+  [  3] getparam 1 .............................. <numOfMedikits>
+  [  5] pusharglistnoret 2 ...................... <pDisplayCounter, numOfMedikits>
+  [  7] objcall 2490 ............................ pDisplayCounter.updateValue(numOfMedikits)
+  [ 10] ret
+end

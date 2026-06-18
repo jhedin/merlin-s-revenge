@@ -1,0 +1,48 @@
+on StringAddChars theString, numofchars, addtostart, theChar
+  [  0] getparam 3 .............................. <theChar>
+  [  2] pusharglist 0 ........................... <>
+  [  4] extcall 26 .............................. <VOID>
+  [  6] eq ...................................... <theChar = VOID>
+  [  7] jmpifz [ 14] ............................ if theChar = VOID then
+  [ 10] pushcons 0 .............................. <" ">
+  [ 12] setparam 3 .............................. theChar = " "
+  [ 14] getparam 0 .............................. <theString>
+  [ 16] pushsymb 406 ............................ <#chars>
+  [ 19] pusharglist 2 ........................... <theString, #chars>
+  [ 21] objcall 17 .............................. <theString.chars.count>
+  [ 23] setlocal 0 .............................. thelenth = theString.chars.count
+  [ 25] getparam 1 .............................. <numofchars>
+  [ 27] getlocal 0 .............................. <thelenth>
+  [ 29] sub ..................................... <numofchars - thelenth>
+  [ 30] setlocal 1 .............................. charstoadd = numofchars - thelenth
+  [ 32] getlocal 1 .............................. <charstoadd>
+  [ 34] pushzero ................................ <0>
+  [ 35] gt ...................................... <charstoadd > 0>
+  [ 36] jmpifz [ 82] ............................ if charstoadd > 0 then
+  [ 39] pushint8 1 .............................. <1>
+  [ 41] setlocal 2
+  [ 43] getlocal 2
+  [ 45] getlocal 1 .............................. <charstoadd>
+  [ 47] lteq
+  [ 48] jmpifz [ 82] ............................ repeat with ch = 1 to charstoadd
+  [ 51] getparam 2 .............................. <addtostart>
+  [ 53] jmpifz [ 66] ............................ if addtostart then
+  [ 56] getparam 3 .............................. <theChar>
+  [ 58] getparam 0 .............................. <theString>
+  [ 60] joinstr ................................. <theChar & theString>
+  [ 61] setparam 0 .............................. theString = theChar & theString
+  [ 63] jmp [ 73] ............................... next repeat
+  [ 66] getparam 0 .............................. <theString>
+  [ 68] getparam 3 .............................. <theChar>
+  [ 70] joinstr ................................. <theString & theChar>
+  [ 71] setparam 0 .............................. theString = theString & theChar
+  [ 73] pushint8 1
+  [ 75] getlocal 2
+  [ 77] add
+  [ 78] setlocal 2
+  [ 80] endrepeat [ 43]
+  [ 82] getparam 0 .............................. <theString>
+  [ 84] pusharglistnoret 1 ...................... <theString>
+  [ 86] extcall 3 ............................... return theString
+  [ 88] ret
+end

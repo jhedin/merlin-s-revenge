@@ -1,0 +1,84 @@
+property ancestor, pGhost, pTeamWhenAlive
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getlocal 0 .............................. <i>
+  [ 12] pushsymb 108 ............................ <#ghost>
+  [ 14] pushzero ................................ <0>
+  [ 15] pusharglistnoret 3 ...................... <i, #ghost, 0>
+  [ 17] objcall 48 .............................. i[#ghost] = 0
+  [ 19] getlocal 0 .............................. <i>
+  [ 21] pushsymb 744 ............................ <#teamWhenAlive>
+  [ 24] pushsymb 745 ............................ <#ghosts>
+  [ 27] pusharglistnoret 3 ...................... <i, #teamWhenAlive, #ghosts>
+  [ 29] objcall 48 .............................. i[#teamWhenAlive] = #ghosts
+  [ 31] getprop 33 .............................. <ancestor>
+  [ 33] pusharglistnoret 1 ...................... <ancestor>
+  [ 35] objcall 2 ............................... ancestor.addModParams()
+  [ 37] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 108 .......................... <params.ghost>
+  [ 12] setprop 746 ............................. pGhost = params.ghost
+  [ 15] getparam 1 .............................. <params>
+  [ 17] getobjprop 744 .......................... <params.teamWhenAlive>
+  [ 20] setprop 747 ............................. pTeamWhenAlive = params.teamWhenAlive
+  [ 23] getprop 746 ............................. <pGhost>
+  [ 26] jmpifz [ 36] ............................ if pGhost then
+  [ 29] getparam 0 .............................. <me>
+  [ 31] pusharglistnoret 1 ...................... <me>
+  [ 33] objcall 740 ............................. me.initGhost()
+  [ 36] ret
+end
+
+on initGhost me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 51 ....................... <me.big>
+  [  4] pusharglistnoret 1 ...................... <me.big>
+  [  6] objcall 110 ............................. me.big.collisionDetectionOff()
+  [  8] ret
+end
+
+on amGhost me
+  [  0] getprop 746 ............................. <pGhost>
+  [  3] pusharglistnoret 1 ...................... <pGhost>
+  [  5] extcall 35 .............................. return pGhost
+  [  7] ret
+end
+
+on isGhost me
+  [  0] getprop 746 ............................. <pGhost>
+  [  3] pusharglistnoret 1 ...................... <pGhost>
+  [  5] extcall 35 .............................. return pGhost
+  [  7] ret
+end
+
+on getTeamWhenAlive me
+  [  0] getprop 747 ............................. <pTeamWhenAlive>
+  [  3] pusharglistnoret 1 ...................... <pTeamWhenAlive>
+  [  5] extcall 35 .............................. return pTeamWhenAlive
+  [  7] ret
+end

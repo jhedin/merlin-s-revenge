@@ -1,0 +1,65 @@
+global gIntroPutted, gLastError
+
+on alertHook me, err, msg, var1, var2
+  [  0] pushint8 1 .............................. <1>
+  [  2] setmovieprop 9 .......................... the debugPlaybackEnabled = 1
+  [  4] getglobal 116 ........................... <gIntroPutted>
+  [  6] pusharglist 0 ........................... <>
+  [  8] extcall 117 ............................. <VOID>
+  [ 10] eq ...................................... <gIntroPutted = VOID>
+  [ 11] jmpifz [ 66] ............................ if gIntroPutted = VOID then
+  [ 14] pushcons 0 .............................. <"Oops! The game has crashed!">
+  [ 16] pusharglistnoret 1 ...................... <"Oops! The game has crashed!">
+  [ 18] extcall 21 .............................. put "Oops! The game has crashed!"
+  [ 20] pushcons 1 .............................. <"To file a bug report please go to">
+  [ 22] pusharglistnoret 1 ...................... <"To file a bug report please go to">
+  [ 24] extcall 21 .............................. put "To file a bug report please go to"
+  [ 26] pushcons 2 .............................. <"http://www.themetalbox.com/bugs">
+  [ 28] pusharglistnoret 1 ...................... <"http://www.themetalbox.com/bugs">
+  [ 30] extcall 21 .............................. put "http://www.themetalbox.com/bugs"
+  [ 32] pushcons 3 .............................. <"(You will need a seperate account)">
+  [ 34] pusharglistnoret 1 ...................... <"(You will need a seperate account)">
+  [ 36] extcall 21 .............................. put "(You will need a seperate account)"
+  [ 38] pushcons 4 .............................. <"Please give as much detail as possible as to how to replicate this bug when reporting.">
+  [ 40] pusharglistnoret 1 ...................... <"Please give as much detail as possible as to how to replicate this bug when reporting.">
+  [ 42] extcall 21 .............................. put "Please give as much detail as possible as to how to replicate this bug when reporting."
+  [ 44] pushcons 5 .............................. <"Additionally, please cut and paste any error message(s) that appear below the dotted line.">
+  [ 46] pusharglistnoret 1 ...................... <"Additionally, please cut and paste any error message(s) that appear below the dotted line.">
+  [ 48] extcall 21 .............................. put "Additionally, please cut and paste any error message(s) that appear below the dotted line."
+  [ 50] pushcons 6 .............................. <"Thanks! Steve">
+  [ 52] pusharglistnoret 1 ...................... <"Thanks! Steve">
+  [ 54] extcall 21 .............................. put "Thanks! Steve"
+  [ 56] pushcons 7 .............................. <"---------------------------">
+  [ 58] pusharglistnoret 1 ...................... <"---------------------------">
+  [ 60] extcall 21 .............................. put "---------------------------"
+  [ 62] pushint8 1 .............................. <1>
+  [ 64] setglobal 116 ........................... gIntroPutted = 1
+  [ 66] getglobal 118 ........................... <gLastError>
+  [ 68] getparam 1 .............................. <err>
+  [ 70] getparam 2 .............................. <msg>
+  [ 72] joinpadstr .............................. <err && msg>
+  [ 73] pushcons 8 .............................. <". Error in">
+  [ 75] joinstr ................................. <err && msg & ". Error in">
+  [ 76] getparam 3 .............................. <var1>
+  [ 78] joinpadstr .............................. <err && msg & ". Error in" && var1>
+  [ 79] eq ...................................... <gLastError = (err && msg & ". Error in" && var1)>
+  [ 80] jmpifz [ 90] ............................ if gLastError = (err && msg & ". Error in" && var1) then / else
+  [ 83] pusharglistnoret 0 ...................... <>
+  [ 85] extcall 119 ............................. halt()
+  [ 87] jmp [109]
+  [ 90] getparam 1 .............................. <err>
+  [ 92] getparam 2 .............................. <msg>
+  [ 94] joinpadstr .............................. <err && msg>
+  [ 95] pushcons 8 .............................. <". Error in">
+  [ 97] joinstr ................................. <err && msg & ". Error in">
+  [ 98] getparam 3 .............................. <var1>
+  [100] joinpadstr .............................. <err && msg & ". Error in" && var1>
+  [101] setglobal 118 ........................... gLastError = err && msg & ". Error in" && var1
+  [103] getglobal 118 ........................... <gLastError>
+  [105] pusharglistnoret 1 ...................... <gLastError>
+  [107] extcall 21 .............................. put gLastError
+  [109] pushint8 1 .............................. <1>
+  [111] pusharglistnoret 1 ...................... <1>
+  [113] extcall 90 .............................. return 1
+  [115] ret
+end

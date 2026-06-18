@@ -1,0 +1,59 @@
+on MovieCountWords
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. totalWords = 0
+  [  3] pushint8 4 .............................. <4>
+  [  5] get 8 ................................... <the number of castLibs>
+  [  7] setlocal 1 .............................. numCasts = the number of castLibs
+  [  9] pushint8 1 .............................. <1>
+  [ 11] setlocal 2
+  [ 13] getlocal 2
+  [ 15] getlocal 1 .............................. <numCasts>
+  [ 17] lteq
+  [ 18] jmpifz [101] ............................ repeat with cst = 1 to numCasts
+  [ 21] getlocal 2 .............................. <cst>
+  [ 23] pushint8 2 .............................. <2>
+  [ 25] get 8 ................................... <the number of castMembers of castLib cst>
+  [ 27] setlocal 3 .............................. numMems = the number of castMembers of castLib cst
+  [ 29] pushint8 1 .............................. <1>
+  [ 31] setlocal 4
+  [ 33] getlocal 4
+  [ 35] getlocal 3 .............................. <numMems>
+  [ 37] lteq
+  [ 38] jmpifz [ 92] ............................ repeat with mem = 1 to numMems
+  [ 41] getlocal 4 .............................. <mem>
+  [ 43] getlocal 2 .............................. <cst>
+  [ 45] pusharglist 2 ........................... <mem, cst>
+  [ 47] extcall 34 .............................. <member(mem, cst)>
+  [ 49] setlocal 5 .............................. nMember = member(mem, cst)
+  [ 51] getlocal 5 .............................. <nMember>
+  [ 53] getobjprop 1 ............................ <nMember.type>
+  [ 55] setlocal 6 .............................. typ = nMember.type
+  [ 57] getlocal 6 .............................. <typ>
+  [ 59] pushsymb 296 ............................ <#script>
+  [ 62] eq ...................................... <typ = #script>
+  [ 63] jmpifz [ 83] ............................ if typ = #script then
+  [ 66] getlocal 0 .............................. <totalWords>
+  [ 68] getlocal 5 .............................. <nMember>
+  [ 70] getchainedprop 297 ...................... <nMember.scriptText>
+  [ 73] pushsymb 298 ............................ <#words>
+  [ 76] pusharglist 2 ........................... <nMember.scriptText, #words>
+  [ 78] objcall 17 .............................. <nMember.scriptText.words.count>
+  [ 80] add ..................................... <totalWords + nMember.scriptText.words.count>
+  [ 81] setlocal 0 .............................. totalWords = totalWords + nMember.scriptText.words.count
+  [ 83] pushint8 1
+  [ 85] getlocal 4
+  [ 87] add
+  [ 88] setlocal 4
+  [ 90] endrepeat [ 33]
+  [ 92] pushint8 1
+  [ 94] getlocal 2
+  [ 96] add
+  [ 97] setlocal 2
+  [ 99] endrepeat [ 13]
+  [101] pushcons 0 .............................. <"totalWords = ">
+  [103] getlocal 0 .............................. <totalWords>
+  [105] joinstr ................................. <"totalWords = " & totalWords>
+  [106] pusharglistnoret 1 ...................... <"totalWords = " & totalWords>
+  [108] extcall 252 ............................. put "totalWords = " & totalWords
+  [110] ret
+end

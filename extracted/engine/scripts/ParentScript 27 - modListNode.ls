@@ -1,0 +1,83 @@
+property ancestor, pNextNode, pPrevNode, pOldLoc, pType
+global g
+
+on new me
+  ancestor = new(script("modModule"))
+  pNextNode = #none
+  pPrevNode = #none
+  return me
+end
+
+on addModParams me
+  i = me.modifyParams(#init)
+  ancestor.addModParams()
+end
+
+on init me, params
+  ancestor.init(params)
+  pType = params.character
+  if pType <> #bullet then
+    pType = #unit
+  end if
+  pOldLoc = point(0, 0)
+end
+
+on linkIn me
+  pNextNode = #none
+  pPrevNode = #none
+  tileLoc = g.teamMaster.getTileLoc(me.big.getLoc())
+  pPrevNode = g.teamMaster.getFrontNode(tileLoc, pType)
+  pNextNode = pPrevNode.getNext()
+  pPrevNode.setNext(me.big)
+  if pNextNode <> #none then
+    pNextNode.setPrev(me.big)
+  end if
+end
+
+on linkToTileLoc me, tileLoc
+  pPrevNode = g.teamMaster.getFrontNode(tileLoc, pType)
+  pNextNode = pPrevNode.getNext()
+  pPrevNode.setNext(me.big)
+  if pNextNode <> #none then
+    pNextNode.setPrev(me.big)
+  end if
+end
+
+on linkOut me
+  if pNextNode <> #none then
+    pNextNode.setPrev(pPrevNode)
+  end if
+  pPrevNode.setNext(pNextNode)
+  pNextNode = #none
+  pPrevNode = #none
+end
+
+on getNext me
+  return pNextNode
+end
+
+on getPrev me
+  return pPrevNode
+end
+
+on setNext me, node
+  pNextNode = node
+end
+
+on setPrev me, node
+  pPrevNode = node
+end
+
+on update me
+  ancestor.update()
+  tileLoc = g.teamMaster.getTileLoc(me.big.getLoc())
+  if tileLoc <> pOldLoc then
+    pOldLoc = tileLoc
+    me.linkOut()
+    me.linkToTileLoc(tileLoc)
+  end if
+end
+
+on internalEvent me, theEvent
+  ancestor.internalEvent(theEvent)
+end

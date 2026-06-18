@@ -1,0 +1,33 @@
+on PointDirPoint fromPoint, toPoint
+  [  0] getparam 0 .............................. <fromPoint>
+  [  2] pushint8 1 .............................. <1>
+  [  4] pusharglist 2 ........................... <fromPoint, 1>
+  [  6] objcall 18 .............................. <fromPoint[1]>
+  [  8] getparam 1 .............................. <toPoint>
+  [ 10] pushint8 1 .............................. <1>
+  [ 12] pusharglist 2 ........................... <toPoint, 1>
+  [ 14] objcall 18 .............................. <toPoint[1]>
+  [ 16] pusharglist 2 ........................... <fromPoint[1], toPoint[1]>
+  [ 18] extcall 136 ............................. <VarMoreLess(fromPoint[1], toPoint[1])>
+  [ 20] setlocal 0 .............................. dirX = VarMoreLess(fromPoint[1], toPoint[1])
+  [ 22] getparam 0 .............................. <fromPoint>
+  [ 24] pushint8 2 .............................. <2>
+  [ 26] pusharglist 2 ........................... <fromPoint, 2>
+  [ 28] objcall 18 .............................. <fromPoint[2]>
+  [ 30] getparam 1 .............................. <toPoint>
+  [ 32] pushint8 2 .............................. <2>
+  [ 34] pusharglist 2 ........................... <toPoint, 2>
+  [ 36] objcall 18 .............................. <toPoint[2]>
+  [ 38] pusharglist 2 ........................... <fromPoint[2], toPoint[2]>
+  [ 40] extcall 136 ............................. <VarMoreLess(fromPoint[2], toPoint[2])>
+  [ 42] setlocal 1 .............................. dirY = VarMoreLess(fromPoint[2], toPoint[2])
+  [ 44] getlocal 0 .............................. <dirX>
+  [ 46] getlocal 1 .............................. <dirY>
+  [ 48] pusharglist 2 ........................... <dirX, dirY>
+  [ 50] extcall 97 .............................. <point(dirX, dirY)>
+  [ 52] setlocal 2 .............................. Dir = point(dirX, dirY)
+  [ 54] getlocal 2 .............................. <Dir>
+  [ 56] pusharglistnoret 1 ...................... <Dir>
+  [ 58] extcall 3 ............................... return Dir
+  [ 60] ret
+end

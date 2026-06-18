@@ -1,0 +1,280 @@
+property ancestor, pSprite, pMember, pMemberType
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"objParams">
+  [  2] pusharglist 1 ........................... <"objParams">
+  [  4] extcall 27 .............................. <script("objParams")>
+  [  6] pusharglist 1 ........................... <script("objParams")>
+  [  8] extcall 0 ............................... <new(script("objParams"))>
+  [ 10] setprop 77 .............................. ancestor = new(script("objParams"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 221 ............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 663 ............................ <#memberType>
+  [ 27] pushsymb 592 ............................ <#bitmap>
+  [ 30] pusharglistnoret 3 ...................... <i, #memberType, #bitmap>
+  [ 32] objcall 37 .............................. i[#memberType] = #bitmap
+  [ 34] getparam 0 .............................. <me>
+  [ 36] pusharglistnoret 1 ...................... <me>
+  [ 38] extcall 17 .............................. return me
+  [ 40] ret
+end
+
+on init me, params
+  [  0] pushsymb 22 ............................. <#none>
+  [  2] setprop 664 ............................. pSprite = #none
+  [  5] pushsymb 22 ............................. <#none>
+  [  7] setprop 665 ............................. pMember = #none
+  [ 10] getparam 1 .............................. <params>
+  [ 12] getobjprop 663 .......................... <params.memberType>
+  [ 15] setprop 666 ............................. pMemberType = params.memberType
+  [ 18] ret
+end
+
+on finish me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 222 ............................. me.offscreen()
+  [  6] ret
+end
+
+on displayImageAtLoc me, theImage, theloc
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 156 ............................. me.requestSprite()
+  [  6] getparam 0 .............................. <me>
+  [  8] pusharglistnoret 1 ...................... <me>
+  [ 10] objcall 593 ............................. me.requestMember()
+  [ 13] getparam 0 .............................. <me>
+  [ 15] getparam 1 .............................. <theImage>
+  [ 17] pusharglistnoret 2 ...................... <me, theImage>
+  [ 19] objcall 658 ............................. me.setImage(theImage)
+  [ 22] getparam 0 .............................. <me>
+  [ 24] pusharglistnoret 1 ...................... <me>
+  [ 26] objcall 660 ............................. me.setMember()
+  [ 29] getparam 0 .............................. <me>
+  [ 31] pushsymb 635 ............................ <#topLeft>
+  [ 34] pusharglistnoret 2 ...................... <me, #topLeft>
+  [ 36] objcall 659 ............................. me.setRegpoint(#topLeft)
+  [ 39] getparam 0 .............................. <me>
+  [ 41] getparam 2 .............................. <theloc>
+  [ 43] pusharglistnoret 2 ...................... <me, theloc>
+  [ 45] objcall 662 ............................. me.setSpriteLoc(theloc)
+  [ 48] ret
+end
+
+on freeSprite me
+  [  0] getprop 664 ............................. <pSprite>
+  [  3] pushsymb 22 ............................. <#none>
+  [  5] nteq .................................... <pSprite <> #none>
+  [  6] jmpifz [ 25] ............................ if pSprite <> #none then
+  [  9] getglobal 101 ........................... <g>
+  [ 11] getchainedprop 155 ...................... <g.spriteMaster>
+  [ 13] getprop 664 ............................. <pSprite>
+  [ 16] pusharglistnoret 2 ...................... <g.spriteMaster, pSprite>
+  [ 18] objcall 165 ............................. g.spriteMaster.freeSprite(pSprite)
+  [ 20] pushsymb 22 ............................. <#none>
+  [ 22] setprop 664 ............................. pSprite = #none
+  [ 25] ret
+end
+
+on freeMember me
+  [  0] getprop 665 ............................. <pMember>
+  [  3] pushsymb 22 ............................. <#none>
+  [  5] nteq .................................... <pMember <> #none>
+  [  6] jmpifz [ 27] ............................ if pMember <> #none then
+  [  9] getglobal 101 ........................... <g>
+  [ 11] getchainedprop 558 ...................... <g.memberMaster>
+  [ 14] getprop 665 ............................. <pMember>
+  [ 17] pusharglistnoret 2 ...................... <g.memberMaster, pMember>
+  [ 19] objcall 560 ............................. g.memberMaster.freeMember(pMember)
+  [ 22] pushsymb 22 ............................. <#none>
+  [ 24] setprop 665 ............................. pMember = #none
+  [ 27] ret
+end
+
+on getSpriteLoc me
+  [  0] getprop 664 ............................. <pSprite>
+  [  3] getobjprop 216 .......................... <pSprite.loc>
+  [  5] pusharglistnoret 1 ...................... <pSprite.loc>
+  [  7] extcall 17 .............................. return pSprite.loc
+  [  9] ret
+end
+
+on getSpriteRect me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 653 ............................. <me.getSpriteLoc()>
+  [  7] setlocal 0 .............................. sprloc = me.getSpriteLoc()
+  [  9] getparam 0 .............................. <me>
+  [ 11] pusharglist 1 ........................... <me>
+  [ 13] objcall 656 ............................. <me.getSpriteWidth()>
+  [ 16] setlocal 1 .............................. sprWidth = me.getSpriteWidth()
+  [ 18] getparam 0 .............................. <me>
+  [ 20] pusharglist 1 ........................... <me>
+  [ 22] objcall 655 ............................. <me.getSpriteHeight()>
+  [ 25] setlocal 2 .............................. sprHeight = me.getSpriteHeight()
+  [ 27] getlocal 0 .............................. <sprloc>
+  [ 29] pushint8 1 .............................. <1>
+  [ 31] pusharglist 2 ........................... <sprloc, 1>
+  [ 33] objcall 38 .............................. <sprloc[1]>
+  [ 35] getlocal 0 .............................. <sprloc>
+  [ 37] pushint8 2 .............................. <2>
+  [ 39] pusharglist 2 ........................... <sprloc, 2>
+  [ 41] objcall 38 .............................. <sprloc[2]>
+  [ 43] getlocal 0 .............................. <sprloc>
+  [ 45] pushint8 1 .............................. <1>
+  [ 47] pusharglist 2 ........................... <sprloc, 1>
+  [ 49] objcall 38 .............................. <sprloc[1]>
+  [ 51] getlocal 1 .............................. <sprWidth>
+  [ 53] add ..................................... <sprloc[1] + sprWidth>
+  [ 54] getlocal 0 .............................. <sprloc>
+  [ 56] pushint8 2 .............................. <2>
+  [ 58] pusharglist 2 ........................... <sprloc, 2>
+  [ 60] objcall 38 .............................. <sprloc[2]>
+  [ 62] getlocal 2 .............................. <sprHeight>
+  [ 64] add ..................................... <sprloc[2] + sprHeight>
+  [ 65] pusharglist 4 ........................... <sprloc[1], sprloc[2], sprloc[1] + sprWidth, sprloc[2] + sprHeight>
+  [ 67] extcall 160 ............................. <rect(sprloc[1], sprloc[2], sprloc[1] + sprWidth, sprloc[2] + sprHeight)>
+  [ 69] setlocal 3 .............................. myRect = rect(sprloc[1], sprloc[2], sprloc[1] + sprWidth, sprloc[2] + sprHeight)
+  [ 71] getlocal 3 .............................. <myRect>
+  [ 73] pusharglistnoret 1 ...................... <myRect>
+  [ 75] extcall 17 .............................. return myRect
+  [ 77] ret
+end
+
+on getSpriteHeight me
+  [  0] getprop 664 ............................. <pSprite>
+  [  3] getobjprop 310 .......................... <pSprite.height>
+  [  6] pusharglistnoret 1 ...................... <pSprite.height>
+  [  8] extcall 17 .............................. return pSprite.height
+  [ 10] ret
+end
+
+on getSpriteWidth me
+  [  0] getprop 664 ............................. <pSprite>
+  [  3] getobjprop 162 .......................... <pSprite.width>
+  [  5] pusharglistnoret 1 ...................... <pSprite.width>
+  [  7] extcall 17 .............................. return pSprite.width
+  [  9] ret
+end
+
+on offscreen me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 165 ............................. me.freeSprite()
+  [  6] getparam 0 .............................. <me>
+  [  8] pusharglistnoret 1 ...................... <me>
+  [ 10] objcall 560 ............................. me.freeMember()
+  [ 13] ret
+end
+
+on requestMember me
+  [  0] getprop 665 ............................. <pMember>
+  [  3] pushsymb 22 ............................. <#none>
+  [  5] eq ...................................... <pMember = #none>
+  [  6] jmpifz [ 25] ............................ if pMember = #none then
+  [  9] getglobal 101 ........................... <g>
+  [ 11] getchainedprop 558 ...................... <g.memberMaster>
+  [ 14] getprop 666 ............................. <pMemberType>
+  [ 17] pusharglist 2 ........................... <g.memberMaster, pMemberType>
+  [ 19] objcall 593 ............................. <g.memberMaster.requestMember(pMemberType)>
+  [ 22] setprop 665 ............................. pMember = g.memberMaster.requestMember(pMemberType)
+  [ 25] ret
+end
+
+on requestSprite me
+  [  0] getprop 664 ............................. <pSprite>
+  [  3] pushsymb 22 ............................. <#none>
+  [  5] eq ...................................... <pSprite = #none>
+  [  6] jmpifz [ 20] ............................ if pSprite = #none then
+  [  9] getglobal 101 ........................... <g>
+  [ 11] getchainedprop 155 ...................... <g.spriteMaster>
+  [ 13] pusharglist 1 ........................... <g.spriteMaster>
+  [ 15] objcall 156 ............................. <g.spriteMaster.requestSprite()>
+  [ 17] setprop 664 ............................. pSprite = g.spriteMaster.requestSprite()
+  [ 20] ret
+end
+
+on setSpriteLayer me, theLayer
+  [  0] getprop 664 ............................. <pSprite>
+  [  3] getparam 1 .............................. <theLayer>
+  [  5] setobjprop 217 .......................... pSprite.locZ = theLayer
+  [  7] ret
+end
+
+on setImage me, theImage
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 593 ............................. me.requestMember()
+  [  7] getprop 665 ............................. <pMember>
+  [ 10] getparam 1 .............................. <theImage>
+  [ 12] setobjprop 594 .......................... pMember.image = theImage
+  [ 15] ret
+end
+
+on setRegpoint me, where
+  [  0] getparam 1 .............................. <where>
+  [  2] pushsymb 100 ............................ <#symbol>
+  [  4] pusharglist 2 ........................... <where, #symbol>
+  [  6] extcall 205 ............................. <ilk(where, #symbol)>
+  [  8] jmpifz [ 32] ............................ if ilk(where, #symbol) then
+  [ 11] getparam 1 .............................. <where>
+  [ 13] peek 0 .................................. case where of
+  [ 15] pushsymb 635 ............................ <#topLeft>
+  [ 18] eq
+  [ 19] jmpifz [ 30] ............................ (case) #topLeft:
+  [ 22] pushzero ................................ <0>
+  [ 23] pushzero ................................ <0>
+  [ 24] pusharglist 2 ........................... <0, 0>
+  [ 26] extcall 215 ............................. <point(0, 0)>
+  [ 28] setparam 1 .............................. where = point(0, 0)
+  [ 30] pop 1
+  [ 32] getprop 665 ............................. <pMember>
+  [ 35] getparam 1 .............................. <where>
+  [ 37] pusharglist 1 ........................... <where>
+  [ 39] objcall 48 .............................. <where.duplicate()>
+  [ 41] setobjprop 595 .......................... pMember.regPoint = where.duplicate()
+  [ 44] ret
+end
+
+on setMember me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 156 ............................. me.requestSprite()
+  [  6] getprop 666 ............................. <pMemberType>
+  [  9] pushsymb 592 ............................ <#bitmap>
+  [ 12] nteq .................................... <pMemberType <> #bitmap>
+  [ 13] jmpifz [ 29] ............................ if pMemberType <> #bitmap then
+  [ 16] getprop 666 ............................. <pMemberType>
+  [ 19] setlocal 0 .............................. memType = pMemberType
+  [ 21] getprop 665 ............................. <pMember>
+  [ 24] pushint8 1 .............................. <1>
+  [ 26] setobjprop 675 .......................... pMember.editable = 1
+  [ 29] getprop 664 ............................. <pSprite>
+  [ 32] getprop 665 ............................. <pMember>
+  [ 35] getlocal 0 .............................. <memType>
+  [ 37] pusharglistnoret 3 ...................... <pSprite, pMember, memType>
+  [ 39] extcall 212 ............................. SpriteSetMember(pSprite, pMember, memType)
+  [ 41] ret
+end
+
+on setMemberName me, thename
+  [  0] getprop 665 ............................. <pMember>
+  [  3] getparam 1 .............................. <thename>
+  [  5] setobjprop 94 ........................... pMember.name = thename
+  [  7] ret
+end
+
+on setSpriteLoc me, where
+  [  0] getprop 664 ............................. <pSprite>
+  [  3] getparam 1 .............................. <where>
+  [  5] pusharglist 1 ........................... <where>
+  [  7] objcall 48 .............................. <where.duplicate()>
+  [  9] setobjprop 216 .......................... pSprite.loc = where.duplicate()
+  [ 11] ret
+end

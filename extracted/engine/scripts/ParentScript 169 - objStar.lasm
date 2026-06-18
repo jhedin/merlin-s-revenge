@@ -1,0 +1,79 @@
+property ancestor, pLifeCount
+
+on new me
+  [  0] pushcons 0 .............................. <"objGameObject">
+  [  2] pusharglist 1 ........................... <"objGameObject">
+  [  4] extcall 34 .............................. <script("objGameObject")>
+  [  6] pusharglist 1 ........................... <script("objGameObject")>
+  [  8] extcall 0 ............................... <new(script("objGameObject"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objGameObject"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushcons 1 .............................. <"modAnimSet">
+  [ 16] pusharglistnoret 2 ...................... <me, "modAnimSet">
+  [ 18] objcall 1717 ............................ me.addModule("modAnimSet")
+  [ 21] getparam 0 .............................. <me>
+  [ 23] pusharglistnoret 1 ...................... <me>
+  [ 25] extcall 35 .............................. return me
+  [ 27] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pusharglist 0 ........................... <>
+  [ 10] extcall 529 ............................. <CounterNew()>
+  [ 13] setprop 3914 ............................ pLifeCount = CounterNew()
+  [ 16] getprop 3914 ............................ <pLifeCount>
+  [ 19] pushsymb 530 ............................ <#tim>
+  [ 22] pushint8 2 .............................. <2>
+  [ 24] getparam 1 .............................. <params>
+  [ 26] getobjprop 3915 ......................... <params.lifeCount>
+  [ 29] pusharglistnoret 4 ...................... <pLifeCount, #tim, 2, params.lifeCount>
+  [ 31] objcall 531 ............................. pLifeCount.tim[2] = params.lifeCount
+  [ 34] ret
+end
+
+on checkCollisions me, newLoc, oldloc
+  [  0] getparam 1 .............................. <newLoc>
+  [  2] pusharglistnoret 1 ...................... <newLoc>
+  [  4] extcall 35 .............................. return newLoc
+  [  6] ret
+end
+
+on setLifeCount me, newLifeCount
+  [  0] getprop 3914 ............................ <pLifeCount>
+  [  3] pushsymb 530 ............................ <#tim>
+  [  6] pushint8 2 .............................. <2>
+  [  8] getparam 1 .............................. <newLifeCount>
+  [ 10] pusharglistnoret 4 ...................... <pLifeCount, #tim, 2, newLifeCount>
+  [ 12] objcall 531 ............................. pLifeCount.tim[2] = newLifeCount
+  [ 15] ret
+end
+
+on update me
+  [  0] getprop 3914 ............................ <pLifeCount>
+  [  3] getobjprop 552 .......................... <pLifeCount.fin>
+  [  6] jmpifz [ 16] ............................ if pLifeCount.fin then
+  [  9] getparam 0 .............................. <me>
+  [ 11] pushint8 1 .............................. <1>
+  [ 13] setobjprop 2418 ......................... me.pDead = 1
+  [ 16] getparam 0 .............................. <me>
+  [ 18] getchainedprop 906 ...................... <me.pMoveXY>
+  [ 21] pusharglist 1 ........................... <me.pMoveXY>
+  [ 23] objcall 3002 ............................ <me.pMoveXY.onscreen()>
+  [ 26] pushzero ................................ <0>
+  [ 27] eq ...................................... <me.pMoveXY.onscreen() = 0>
+  [ 28] jmpifz [ 38] ............................ if me.pMoveXY.onscreen() = 0 then
+  [ 31] getparam 0 .............................. <me>
+  [ 33] pushint8 1 .............................. <1>
+  [ 35] setobjprop 2418 ......................... me.pDead = 1
+  [ 38] getprop 3914 ............................ <pLifeCount>
+  [ 41] pusharglistnoret 1 ...................... <pLifeCount>
+  [ 43] extcall 553 ............................. counter(pLifeCount)
+  [ 46] getprop 33 .............................. <ancestor>
+  [ 48] pusharglistnoret 1 ...................... <ancestor>
+  [ 50] objcall 31 .............................. ancestor.update()
+  [ 52] ret
+end

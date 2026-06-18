@@ -1,0 +1,302 @@
+property ancestor, pCurrentMember, pDelay, pDelayList, pName, pMemberList
+global g, gGameSpeed
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushcons 0 .............................. <"objBasic">
+  [  4] pusharglist 1 ........................... <"objBasic">
+  [  6] extcall 34 .............................. <script("objBasic")>
+  [  8] pusharglist 1 ........................... <script("objBasic")>
+  [ 10] extcall 0 ............................... <new(script("objBasic"))>
+  [ 12] setobjprop 33 ........................... me.ancestor = new(script("objBasic"))
+  [ 14] getparam 0 .............................. <me>
+  [ 16] pusharglistnoret 1 ...................... <me>
+  [ 18] extcall 35 .............................. return me
+  [ 20] ret
+end
+
+on init me, stripDef, name
+  [  0] getparam 1 .............................. <stripDef>
+  [  2] pushsymb 2035 ........................... <#dela>
+  [  5] pusharglist 2 ........................... <stripDef, #dela>
+  [  7] extcall 2034 ............................ <ListExtractByProp(stripDef, #dela)>
+  [ 10] setlocal 0 .............................. delayValues = ListExtractByProp(stripDef, #dela)
+  [ 12] getparam 1 .............................. <stripDef>
+  [ 14] pushsymb 2036 ........................... <#mem>
+  [ 17] pusharglist 2 ........................... <stripDef, #mem>
+  [ 19] extcall 2034 ............................ <ListExtractByProp(stripDef, #mem)>
+  [ 22] setlocal 1 .............................. memberValues = ListExtractByProp(stripDef, #mem)
+  [ 24] getparam 2 .............................. <name>
+  [ 26] setprop 2037 ............................ pName = name
+  [ 29] getglobal 40 ............................ <g>
+  [ 31] getchainedprop 41 ....................... <g.objectMaster>
+  [ 33] pushsymb 2039 ........................... <#objlist>
+  [ 36] pusharglist 2 ........................... <g.objectMaster, #objlist>
+  [ 38] objcall 43 .............................. <g.objectMaster.requestObject(#objlist)>
+  [ 40] setprop 2038 ............................ pDelayList = g.objectMaster.requestObject(#objlist)
+  [ 43] getprop 2038 ............................ <pDelayList>
+  [ 46] getlocal 0 .............................. <delayValues>
+  [ 48] pusharglistnoret 2 ...................... <pDelayList, delayValues>
+  [ 50] objcall 1 ............................... pDelayList.init(delayValues)
+  [ 52] getglobal 40 ............................ <g>
+  [ 54] getchainedprop 41 ....................... <g.objectMaster>
+  [ 56] pushsymb 2039 ........................... <#objlist>
+  [ 59] pusharglist 2 ........................... <g.objectMaster, #objlist>
+  [ 61] objcall 43 .............................. <g.objectMaster.requestObject(#objlist)>
+  [ 63] setprop 2040 ............................ pMemberList = g.objectMaster.requestObject(#objlist)
+  [ 66] getprop 2040 ............................ <pMemberList>
+  [ 69] getlocal 1 .............................. <memberValues>
+  [ 71] pusharglistnoret 2 ...................... <pMemberList, memberValues>
+  [ 73] objcall 1 ............................... pMemberList.init(memberValues)
+  [ 75] pusharglist 0 ........................... <>
+  [ 77] extcall 529 ............................. <CounterNew()>
+  [ 80] setprop 2041 ............................ pDelay = CounterNew()
+  [ 83] getprop 2041 ............................ <pDelay>
+  [ 86] pushint8 1 .............................. <1>
+  [ 88] getglobal 1854 .......................... <gGameSpeed>
+  [ 91] mul ..................................... <1 * gGameSpeed>
+  [ 92] setobjprop 723 .......................... pDelay.inc = 1 * gGameSpeed
+  [ 95] getparam 0 .............................. <me>
+  [ 97] pusharglistnoret 1 ...................... <me>
+  [ 99] objcall 2032 ............................ me.moveNextFrame()
+  [102] ret
+end
+
+on finish me
+  [  0] getprop 2040 ............................ <pMemberList>
+  [  3] pusharglistnoret 1 ...................... <pMemberList>
+  [  5] objcall 3 ............................... pMemberList.finish()
+  [  7] getprop 2038 ............................ <pDelayList>
+  [ 10] pusharglistnoret 1 ...................... <pDelayList>
+  [ 12] objcall 3 ............................... pDelayList.finish()
+  [ 14] getprop 33 .............................. <ancestor>
+  [ 16] pusharglistnoret 1 ...................... <ancestor>
+  [ 18] objcall 3 ............................... ancestor.finish()
+  [ 20] ret
+end
+
+on addSaveData me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 4 ............................... ancestor.addSaveData(sd)
+  [  8] getparam 1 .............................. <sd>
+  [ 10] pushsymb 2041 ........................... <#pDelay>
+  [ 13] getprop 2041 ............................ <pDelay>
+  [ 16] pusharglistnoret 3 ...................... <sd, #pDelay, pDelay>
+  [ 18] objcall 48 .............................. sd[#pDelay] = pDelay
+  [ 20] getparam 1 .............................. <sd>
+  [ 22] pushsymb 2044 ........................... <#pDelayList_index>
+  [ 25] getprop 2038 ............................ <pDelayList>
+  [ 28] pusharglist 1 ........................... <pDelayList>
+  [ 30] objcall 2045 ............................ <pDelayList.getIndex()>
+  [ 33] pusharglistnoret 3 ...................... <sd, #pDelayList_index, pDelayList.getIndex()>
+  [ 35] objcall 48 .............................. sd[#pDelayList_index] = pDelayList.getIndex()
+  [ 37] getparam 1 .............................. <sd>
+  [ 39] pushsymb 2046 ........................... <#pMemberList_index>
+  [ 42] getprop 2040 ............................ <pMemberList>
+  [ 45] pusharglist 1 ........................... <pMemberList>
+  [ 47] objcall 2045 ............................ <pMemberList.getIndex()>
+  [ 50] pusharglistnoret 3 ...................... <sd, #pMemberList_index, pMemberList.getIndex()>
+  [ 52] objcall 48 .............................. sd[#pMemberList_index] = pMemberList.getIndex()
+  [ 54] ret
+end
+
+on extendDelay me, delayAmount
+  [  0] getprop 2041 ............................ <pDelay>
+  [  3] pushsymb 530 ............................ <#tim>
+  [  6] pushint8 2 .............................. <2>
+  [  8] getprop 2041 ............................ <pDelay>
+  [ 11] pushsymb 530 ............................ <#tim>
+  [ 14] pushint8 2 .............................. <2>
+  [ 16] pusharglist 3 ........................... <pDelay, #tim, 2>
+  [ 18] objcall 381 ............................. <pDelay.tim[2]>
+  [ 21] getparam 1 .............................. <delayAmount>
+  [ 23] add ..................................... <pDelay.tim[2] + delayAmount>
+  [ 24] pusharglistnoret 4 ...................... <pDelay, #tim, 2, pDelay.tim[2] + delayAmount>
+  [ 26] objcall 531 ............................. pDelay.tim[2] = pDelay.tim[2] + delayAmount
+  [ 29] getprop 2041 ............................ <pDelay>
+  [ 32] pusharglistnoret 1 ...................... <pDelay>
+  [ 34] extcall 706 ............................. CounterReset(pDelay)
+  [ 37] ret
+end
+
+on getCurrentMember me
+  [  0] getprop 2047 ............................ <pCurrentMember>
+  [  3] pusharglistnoret 1 ...................... <pCurrentMember>
+  [  5] extcall 35 .............................. return pCurrentMember
+  [  7] ret
+end
+
+on getFin me
+  [  0] getprop 2040 ............................ <pMemberList>
+  [  3] pusharglist 1 ........................... <pMemberList>
+  [  5] objcall 2017 ............................ <pMemberList.getFin()>
+  [  8] getprop 2041 ............................ <pDelay>
+  [ 11] getobjprop 552 .......................... <pDelay.fin>
+  [ 14] and ..................................... <pMemberList.getFin() and pDelay.fin>
+  [ 15] pusharglistnoret 1 ...................... <pMemberList.getFin() and pDelay.fin>
+  [ 17] extcall 35 .............................. return pMemberList.getFin() and pDelay.fin
+  [ 19] ret
+end
+
+on getFrame me
+  [  0] getprop 2040 ............................ <pMemberList>
+  [  3] pusharglist 1 ........................... <pMemberList>
+  [  5] objcall 2045 ............................ <pMemberList.getIndex()>
+  [  8] pusharglistnoret 1 ...................... <pMemberList.getIndex()>
+  [ 10] extcall 35 .............................. return pMemberList.getIndex()
+  [ 12] ret
+end
+
+on getFrameFresh me
+  [  0] getprop 2041 ............................ <pDelay>
+  [  3] getobjprop 552 .......................... <pDelay.fin>
+  [  6] pusharglistnoret 1 ...................... <pDelay.fin>
+  [  8] extcall 35 .............................. return pDelay.fin
+  [ 10] ret
+end
+
+on getImage me
+  [  0] getprop 2047 ............................ <pCurrentMember>
+  [  3] getobjprop 800 .......................... <pCurrentMember.image>
+  [  6] pusharglistnoret 1 ...................... <pCurrentMember.image>
+  [  8] extcall 35 .............................. return pCurrentMember.image
+  [ 10] ret
+end
+
+on getLooped me
+  [  0] getprop 2040 ............................ <pMemberList>
+  [  3] pusharglist 1 ........................... <pMemberList>
+  [  5] objcall 87 .............................. <pMemberList.getLooped()>
+  [  7] getprop 2041 ............................ <pDelay>
+  [ 10] getobjprop 552 .......................... <pDelay.fin>
+  [ 13] and ..................................... <pMemberList.getLooped() and pDelay.fin>
+  [ 14] pusharglistnoret 1 ...................... <pMemberList.getLooped() and pDelay.fin>
+  [ 16] extcall 35 .............................. return pMemberList.getLooped() and pDelay.fin
+  [ 18] ret
+end
+
+on getMember me
+  [  0] getprop 2041 ............................ <pDelay>
+  [  3] getobjprop 552 .......................... <pDelay.fin>
+  [  6] jmpifz [ 16] ............................ if pDelay.fin then
+  [  9] getparam 0 .............................. <me>
+  [ 11] pusharglistnoret 1 ...................... <me>
+  [ 13] objcall 2032 ............................ me.moveNextFrame()
+  [ 16] getprop 2041 ............................ <pDelay>
+  [ 19] pusharglistnoret 1 ...................... <pDelay>
+  [ 21] extcall 553 ............................. counter(pDelay)
+  [ 24] getprop 2047 ............................ <pCurrentMember>
+  [ 27] pusharglistnoret 1 ...................... <pCurrentMember>
+  [ 29] extcall 35 .............................. return pCurrentMember
+  [ 31] ret
+end
+
+on getMemberAt me, frameNum
+  [  0] getprop 2040 ............................ <pMemberList>
+  [  3] getparam 1 .............................. <frameNum>
+  [  5] pusharglist 2 ........................... <pMemberList, frameNum>
+  [  7] objcall 2048 ............................ <pMemberList.getValueAt(frameNum)>
+  [ 10] pusharglistnoret 1 ...................... <pMemberList.getValueAt(frameNum)>
+  [ 12] extcall 35 .............................. return pMemberList.getValueAt(frameNum)
+  [ 14] ret
+end
+
+on getNoOfFrames me
+  [  0] getprop 2038 ............................ <pDelayList>
+  [  3] pusharglist 1 ........................... <pDelayList>
+  [  5] objcall 2049 ............................ <pDelayList.getSumOfValues()>
+  [  8] pusharglistnoret 1 ...................... <pDelayList.getSumOfValues()>
+  [ 10] extcall 35 .............................. return pDelayList.getSumOfValues()
+  [ 12] ret
+end
+
+on gotoAnimFrame me, theFrameNum
+  [  0] getprop 2040 ............................ <pMemberList>
+  [  3] getparam 1 .............................. <theFrameNum>
+  [  5] pusharglistnoret 2 ...................... <pMemberList, theFrameNum>
+  [  7] objcall 2050 ............................ pMemberList.gotoValuePos(theFrameNum)
+  [ 10] getprop 2038 ............................ <pDelayList>
+  [ 13] getparam 1 .............................. <theFrameNum>
+  [ 15] pusharglistnoret 2 ...................... <pDelayList, theFrameNum>
+  [ 17] objcall 2050 ............................ pDelayList.gotoValuePos(theFrameNum)
+  [ 20] getparam 0 .............................. <me>
+  [ 22] pusharglistnoret 1 ...................... <me>
+  [ 24] objcall 2032 ............................ me.moveNextFrame()
+  [ 27] getprop 2041 ............................ <pDelay>
+  [ 30] pusharglistnoret 1 ...................... <pDelay>
+  [ 32] extcall 706 ............................. CounterReset(pDelay)
+  [ 35] ret
+end
+
+on moveNextFrame me
+  [  0] getprop 2040 ............................ <pMemberList>
+  [  3] pusharglist 1 ........................... <pMemberList>
+  [  5] objcall 2052 ............................ <pMemberList.nextValue()>
+  [  8] setprop 2047 ............................ pCurrentMember = pMemberList.nextValue()
+  [ 11] getprop 2041 ............................ <pDelay>
+  [ 14] pushsymb 530 ............................ <#tim>
+  [ 17] pushint8 2 .............................. <2>
+  [ 19] getprop 2038 ............................ <pDelayList>
+  [ 22] pusharglist 1 ........................... <pDelayList>
+  [ 24] objcall 2052 ............................ <pDelayList.nextValue()>
+  [ 27] pusharglistnoret 4 ...................... <pDelay, #tim, 2, pDelayList.nextValue()>
+  [ 29] objcall 531 ............................. pDelay.tim[2] = pDelayList.nextValue()
+  [ 32] ret
+end
+
+on reset me
+  [  0] getprop 2038 ............................ <pDelayList>
+  [  3] pusharglistnoret 1 ...................... <pDelayList>
+  [  5] objcall 2029 ............................ pDelayList.reset()
+  [  8] getprop 2040 ............................ <pMemberList>
+  [ 11] pusharglistnoret 1 ...................... <pMemberList>
+  [ 13] objcall 2029 ............................ pMemberList.reset()
+  [ 16] getparam 0 .............................. <me>
+  [ 18] pusharglistnoret 1 ...................... <me>
+  [ 20] objcall 2032 ............................ me.moveNextFrame()
+  [ 23] getprop 2041 ............................ <pDelay>
+  [ 26] pusharglistnoret 1 ...................... <pDelay>
+  [ 28] extcall 706 ............................. CounterReset(pDelay)
+  [ 31] ret
+end
+
+on restoreFromSave me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 26 .............................. ancestor.restoreFromSave(sd)
+  [  8] getprop 2038 ............................ <pDelayList>
+  [ 11] getparam 1 .............................. <sd>
+  [ 13] getobjprop 2044 ......................... <sd.pDelayList_index>
+  [ 16] pusharglistnoret 2 ...................... <pDelayList, sd.pDelayList_index>
+  [ 18] objcall 2053 ............................ pDelayList.setIndex(sd.pDelayList_index)
+  [ 21] getprop 2040 ............................ <pMemberList>
+  [ 24] getparam 1 .............................. <sd>
+  [ 26] getobjprop 2046 ......................... <sd.pMemberList_index>
+  [ 29] pusharglistnoret 2 ...................... <pMemberList, sd.pMemberList_index>
+  [ 31] objcall 2053 ............................ pMemberList.setIndex(sd.pMemberList_index)
+  [ 34] getprop 2038 ............................ <pDelayList>
+  [ 37] pusharglist 1 ........................... <pDelayList>
+  [ 39] objcall 2052 ............................ <pDelayList.nextValue()>
+  [ 42] setprop 2041 ............................ pDelay = pDelayList.nextValue()
+  [ 45] getparam 1 .............................. <sd>
+  [ 47] getobjprop 2041 ......................... <sd.pDelay>
+  [ 50] setprop 2041 ............................ pDelay = sd.pDelay
+  [ 53] getprop 2040 ............................ <pMemberList>
+  [ 56] pusharglist 1 ........................... <pMemberList>
+  [ 58] objcall 2052 ............................ <pMemberList.nextValue()>
+  [ 61] setprop 2047 ............................ pCurrentMember = pMemberList.nextValue()
+  [ 64] ret
+end
+
+on setDelay me, newDelay
+  [  0] getprop 2041 ............................ <pDelay>
+  [  3] pushsymb 530 ............................ <#tim>
+  [  6] pushint8 2 .............................. <2>
+  [  8] getparam 1 .............................. <newDelay>
+  [ 10] pusharglistnoret 4 ...................... <pDelay, #tim, 2, newDelay>
+  [ 12] objcall 531 ............................. pDelay.tim[2] = newDelay
+  [ 15] ret
+end

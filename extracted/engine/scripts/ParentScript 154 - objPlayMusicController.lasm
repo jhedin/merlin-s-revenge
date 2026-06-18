@@ -1,0 +1,62 @@
+property ancestor
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"objController">
+  [  2] pusharglist 1 ........................... <"objController">
+  [  4] extcall 34 .............................. <script("objController")>
+  [  6] pusharglist 1 ........................... <script("objController")>
+  [  8] extcall 0 ............................... <new(script("objController"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objController"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushzero ................................ <0>
+  [ 25] setobjprop 626 .......................... i.exclusive = 0
+  [ 28] getparam 0 .............................. <me>
+  [ 30] pusharglistnoret 1 ...................... <me>
+  [ 32] extcall 35 .............................. return me
+  [ 34] ret
+end
+
+on newObject me, definition, theloc, caller
+  [  0] getparam 1 .............................. <definition>
+  [  2] getobjprop 670 .......................... <definition.text>
+  [  5] pushcons 1 .............................. <RETURN>
+  [  7] pusharglist 2 ........................... <definition.text, RETURN>
+  [  9] extcall 3294 ............................ <StringEliminateChars(definition.text, RETURN)>
+  [ 12] setlocal 0 .............................. definitionText = StringEliminateChars(definition.text, RETURN)
+  [ 14] getglobal 40 ............................ <g>
+  [ 16] getchainedprop 41 ....................... <g.objectMaster>
+  [ 18] pushsymb 3501 ........................... <#objPlayMusic>
+  [ 21] pusharglist 2 ........................... <g.objectMaster, #objPlayMusic>
+  [ 23] objcall 43 .............................. <g.objectMaster.requestObject(#objPlayMusic)>
+  [ 25] setlocal 1 .............................. newObj = g.objectMaster.requestObject(#objPlayMusic)
+  [ 27] getlocal 1 .............................. <newObj>
+  [ 29] pushsymb 1 .............................. <#init>
+  [ 31] pusharglist 2 ........................... <newObj, #init>
+  [ 33] objcall 230 ............................. <newObj.getParams(#init)>
+  [ 35] setlocal 2 .............................. params = newObj.getParams(#init)
+  [ 37] getlocal 2 .............................. <params>
+  [ 39] getlocal 0 .............................. <definitionText>
+  [ 41] setobjprop 3293 ......................... params.definition = definitionText
+  [ 44] getlocal 1 .............................. <newObj>
+  [ 46] getlocal 2 .............................. <params>
+  [ 48] pusharglistnoret 2 ...................... <newObj, params>
+  [ 50] objcall 1 ............................... newObj.init(params)
+  [ 52] getlocal 1 .............................. <newObj>
+  [ 54] pusharglistnoret 1 ...................... <newObj>
+  [ 56] objcall 3451 ............................ newObj.playMusic()
+  [ 59] getparam 0 .............................. <me>
+  [ 61] getchainedprop 2385 ..................... <me.pObjects>
+  [ 64] getlocal 1 .............................. <newObj>
+  [ 66] pusharglistnoret 2 ...................... <me.pObjects, newObj>
+  [ 68] objcall 256 ............................. me.pObjects.append(newObj)
+  [ 71] getlocal 1 .............................. <newObj>
+  [ 73] pusharglistnoret 1 ...................... <newObj>
+  [ 75] extcall 35 .............................. return newObj
+  [ 77] ret
+end

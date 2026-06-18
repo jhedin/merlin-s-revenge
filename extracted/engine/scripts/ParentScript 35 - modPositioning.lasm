@@ -1,0 +1,254 @@
+property ancestor
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getprop 33 .............................. <ancestor>
+  [ 12] pusharglistnoret 1 ...................... <ancestor>
+  [ 14] objcall 2 ............................... ancestor.addModParams()
+  [ 16] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] ret
+end
+
+on getMemberHeight me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 57 ....................... <me.id>
+  [  4] getchainedprop 58 ....................... <me.id.bigMe>
+  [  6] pusharglist 1 ........................... <me.id.bigMe>
+  [  8] objcall 97 .............................. <me.id.bigMe.getSprite()>
+  [ 10] setlocal 0 .............................. spr = me.id.bigMe.getSprite()
+  [ 12] getlocal 0 .............................. <spr>
+  [ 14] getchainedprop 99 ....................... <spr.member>
+  [ 16] getobjprop 423 .......................... <spr.member.height>
+  [ 19] pusharglistnoret 1 ...................... <spr.member.height>
+  [ 21] extcall 35 .............................. return spr.member.height
+  [ 23] ret
+end
+
+on getReverseSpriteRegPoint me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 963 ............................. <me.getSpriteDimensionRect()>
+  [  7] setlocal 0 .............................. sprRect = me.getSpriteDimensionRect()
+  [  9] getparam 0 .............................. <me>
+  [ 11] pusharglist 1 ........................... <me>
+  [ 13] objcall 964 ............................. <me.getSpriteRegPoint()>
+  [ 16] setlocal 1 .............................. reg = me.getSpriteRegPoint()
+  [ 18] pushzero ................................ <0>
+  [ 19] pushzero ................................ <0>
+  [ 20] pusharglist 2 ........................... <0, 0>
+  [ 22] extcall 197 ............................. <point(0, 0)>
+  [ 24] setlocal 2 .............................. revReg = point(0, 0)
+  [ 26] getlocal 2 .............................. <revReg>
+  [ 28] getlocal 0 .............................. <sprRect>
+  [ 30] getobjprop 423 .......................... <sprRect.height>
+  [ 33] getlocal 1 .............................. <reg>
+  [ 35] getobjprop 540 .......................... <reg.locV>
+  [ 38] sub ..................................... <sprRect.height - reg.locV>
+  [ 39] setobjprop 540 .......................... revReg.locV = sprRect.height - reg.locV
+  [ 42] getlocal 2 .............................. <revReg>
+  [ 44] getlocal 0 .............................. <sprRect>
+  [ 46] getobjprop 424 .......................... <sprRect.width>
+  [ 49] getlocal 1 .............................. <reg>
+  [ 51] getobjprop 539 .......................... <reg.locH>
+  [ 54] sub ..................................... <sprRect.width - reg.locH>
+  [ 55] setobjprop 539 .......................... revReg.locH = sprRect.width - reg.locH
+  [ 58] getlocal 2 .............................. <revReg>
+  [ 60] pusharglistnoret 1 ...................... <revReg>
+  [ 62] extcall 35 .............................. return revReg
+  [ 64] ret
+end
+
+on getSpriteDimensionRect me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 57 ....................... <me.id>
+  [  4] getchainedprop 58 ....................... <me.id.bigMe>
+  [  6] pusharglist 1 ........................... <me.id.bigMe>
+  [  8] objcall 97 .............................. <me.id.bigMe.getSprite()>
+  [ 10] setlocal 0 .............................. spr = me.id.bigMe.getSprite()
+  [ 12] pushzero ................................ <0>
+  [ 13] pushzero ................................ <0>
+  [ 14] getlocal 0 .............................. <spr>
+  [ 16] getobjprop 424 .......................... <spr.width>
+  [ 19] getlocal 0 .............................. <spr>
+  [ 21] getobjprop 423 .......................... <spr.height>
+  [ 24] pusharglist 4 ........................... <0, 0, spr.width, spr.height>
+  [ 26] extcall 263 ............................. <rect(0, 0, spr.width, spr.height)>
+  [ 29] setlocal 1 .............................. dimensionRect = rect(0, 0, spr.width, spr.height)
+  [ 31] getlocal 1 .............................. <dimensionRect>
+  [ 33] pusharglistnoret 1 ...................... <dimensionRect>
+  [ 35] extcall 35 .............................. return dimensionRect
+  [ 37] ret
+end
+
+on getSpriteRegPoint me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 57 ....................... <me.id>
+  [  4] getchainedprop 58 ....................... <me.id.bigMe>
+  [  6] pusharglist 1 ........................... <me.id.bigMe>
+  [  8] objcall 97 .............................. <me.id.bigMe.getSprite()>
+  [ 10] setlocal 0 .............................. spr = me.id.bigMe.getSprite()
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglist 1 ........................... <me>
+  [ 16] objcall 963 ............................. <me.getSpriteDimensionRect()>
+  [ 19] setlocal 1 .............................. sprDimensionRect = me.getSpriteDimensionRect()
+  [ 21] getlocal 0 .............................. <spr>
+  [ 23] getobjprop 263 .......................... <spr.rect>
+  [ 26] getlocal 1 .............................. <sprDimensionRect>
+  [ 28] eq ...................................... <spr.rect = sprDimensionRect>
+  [ 29] jmpifz [ 43] ............................ if spr.rect = sprDimensionRect then
+  [ 32] getlocal 0 .............................. <spr>
+  [ 34] getchainedprop 99 ....................... <spr.member>
+  [ 36] getobjprop 422 .......................... <spr.member.regPoint>
+  [ 39] pusharglistnoret 1 ...................... <spr.member.regPoint>
+  [ 41] extcall 35 .............................. return spr.member.regPoint
+  [ 43] getlocal 0 .............................. <spr>
+  [ 45] getchainedprop 99 ....................... <spr.member>
+  [ 47] getobjprop 422 .......................... <spr.member.regPoint>
+  [ 50] getlocal 0 .............................. <spr>
+  [ 52] getchainedprop 99 ....................... <spr.member>
+  [ 54] getobjprop 263 .......................... <spr.member.rect>
+  [ 57] getlocal 1 .............................. <sprDimensionRect>
+  [ 59] pusharglist 3 ........................... <spr.member.regPoint, spr.member.rect, sprDimensionRect>
+  [ 61] extcall 970 ............................. <map(spr.member.regPoint, spr.member.rect, sprDimensionRect)>
+  [ 64] setlocal 2 .............................. sprRegPoint = map(spr.member.regPoint, spr.member.rect, sprDimensionRect)
+  [ 66] getlocal 2 .............................. <sprRegPoint>
+  [ 68] pusharglistnoret 1 ...................... <sprRegPoint>
+  [ 70] extcall 35 .............................. return sprRegPoint
+  [ 72] ret
+end
+
+on positionEdge me, theEdge, thePos
+  [  0] getparam 1 .............................. <theEdge>
+  [  2] peek 0 .................................. case theEdge of
+  [  4] pushsymb 264 ............................ <#left>
+  [  7] eq
+  [  8] jmpifz [ 25] ............................ (case) #left:
+  [ 11] getparam 0 .............................. <me>
+  [ 13] getparam 2 .............................. <thePos>
+  [ 15] pusharglist 2 ........................... <me, thePos>
+  [ 17] objcall 293 ............................. <me.positionLeftEdge(thePos)>
+  [ 20] setlocal 0 .............................. pos = me.positionLeftEdge(thePos)
+  [ 22] jmp [ 90]
+  [ 25] peek 0
+  [ 27] pushsymb 265 ............................ <#top>
+  [ 30] eq
+  [ 31] jmpifz [ 48] ............................ (case) #top:
+  [ 34] getparam 0 .............................. <me>
+  [ 36] getparam 2 .............................. <thePos>
+  [ 38] pusharglist 2 ........................... <me, thePos>
+  [ 40] objcall 966 ............................. <me.positionTopEdge(thePos)>
+  [ 43] setlocal 0 .............................. pos = me.positionTopEdge(thePos)
+  [ 45] jmp [ 90]
+  [ 48] peek 0
+  [ 50] pushsymb 266 ............................ <#right>
+  [ 53] eq
+  [ 54] jmpifz [ 71] ............................ (case) #right:
+  [ 57] getparam 0 .............................. <me>
+  [ 59] getparam 2 .............................. <thePos>
+  [ 61] pusharglist 2 ........................... <me, thePos>
+  [ 63] objcall 294 ............................. <me.positionRightEdge(thePos)>
+  [ 66] setlocal 0 .............................. pos = me.positionRightEdge(thePos)
+  [ 68] jmp [ 90]
+  [ 71] peek 0
+  [ 73] pushsymb 114 ............................ <#bottom>
+  [ 75] eq
+  [ 76] jmpifz [ 90] ............................ (case) #bottom:
+  [ 79] getparam 0 .............................. <me>
+  [ 81] getparam 2 .............................. <thePos>
+  [ 83] pusharglist 2 ........................... <me, thePos>
+  [ 85] objcall 295 ............................. <me.positionBottomEdge(thePos)>
+  [ 88] setlocal 0 .............................. pos = me.positionBottomEdge(thePos)
+  [ 90] pop 1 ................................... end case
+  [ 92] getlocal 0 .............................. <pos>
+  [ 94] pusharglistnoret 1 ...................... <pos>
+  [ 96] extcall 35 .............................. return pos
+  [ 98] ret
+end
+
+on positionLeftEdge me, thePos
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 964 ............................. <me.getSpriteRegPoint()>
+  [  7] setlocal 0 .............................. reg = me.getSpriteRegPoint()
+  [  9] getparam 1 .............................. <thePos>
+  [ 11] getlocal 0 .............................. <reg>
+  [ 13] getobjprop 539 .......................... <reg.locH>
+  [ 16] add ..................................... <thePos + reg.locH>
+  [ 17] setlocal 1 .............................. sprLocX = thePos + reg.locH
+  [ 19] getlocal 1 .............................. <sprLocX>
+  [ 21] pusharglistnoret 1 ...................... <sprLocX>
+  [ 23] extcall 35 .............................. return sprLocX
+  [ 25] ret
+end
+
+on positionTopEdge me, thePos
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 964 ............................. <me.getSpriteRegPoint()>
+  [  7] setlocal 0 .............................. reg = me.getSpriteRegPoint()
+  [  9] getparam 1 .............................. <thePos>
+  [ 11] getlocal 0 .............................. <reg>
+  [ 13] getobjprop 540 .......................... <reg.locV>
+  [ 16] add ..................................... <thePos + reg.locV>
+  [ 17] setlocal 1 .............................. sprLocY = thePos + reg.locV
+  [ 19] getlocal 1 .............................. <sprLocY>
+  [ 21] pusharglistnoret 1 ...................... <sprLocY>
+  [ 23] extcall 35 .............................. return sprLocY
+  [ 25] ret
+end
+
+on positionRightEdge me, thePos
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 962 ............................. <me.getReverseSpriteRegPoint()>
+  [  7] setlocal 0 .............................. reg = me.getReverseSpriteRegPoint()
+  [  9] getparam 1 .............................. <thePos>
+  [ 11] getlocal 0 .............................. <reg>
+  [ 13] getobjprop 539 .......................... <reg.locH>
+  [ 16] sub ..................................... <thePos - reg.locH>
+  [ 17] setlocal 1 .............................. sprLocX = thePos - reg.locH
+  [ 19] getlocal 1 .............................. <sprLocX>
+  [ 21] pusharglistnoret 1 ...................... <sprLocX>
+  [ 23] extcall 35 .............................. return sprLocX
+  [ 25] ret
+end
+
+on positionBottomEdge me, thePos
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 962 ............................. <me.getReverseSpriteRegPoint()>
+  [  7] setlocal 0 .............................. reg = me.getReverseSpriteRegPoint()
+  [  9] getparam 1 .............................. <thePos>
+  [ 11] getlocal 0 .............................. <reg>
+  [ 13] getobjprop 540 .......................... <reg.locV>
+  [ 16] sub ..................................... <thePos - reg.locV>
+  [ 17] setlocal 1 .............................. sprLocY = thePos - reg.locV
+  [ 19] getlocal 1 .............................. <sprLocY>
+  [ 21] pusharglistnoret 1 ...................... <sprLocY>
+  [ 23] extcall 35 .............................. return sprLocY
+  [ 25] ret
+end

@@ -1,0 +1,418 @@
+property pCurrentTotals, pMaxNumbers, pReservations, pReservedTotals
+global g, gMaxEnemies, gMaxFriends, gMaxNeutrals
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 3 ............................... return me
+  [  6] ret
+end
+
+on init me
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 192 ...................... <g.structMaster>
+  [  4] pushsymb 89 ............................. <#teamCategories>
+  [  6] pusharglist 2 ........................... <g.structMaster, #teamCategories>
+  [  8] objcall 51 .............................. <g.structMaster.getStruct(#teamCategories)>
+  [ 10] setprop 1414 ............................ pCurrentTotals = g.structMaster.getStruct(#teamCategories)
+  [ 13] getglobal 191 ........................... <g>
+  [ 15] getchainedprop 192 ...................... <g.structMaster>
+  [ 17] pushsymb 89 ............................. <#teamCategories>
+  [ 19] pusharglist 2 ........................... <g.structMaster, #teamCategories>
+  [ 21] objcall 51 .............................. <g.structMaster.getStruct(#teamCategories)>
+  [ 23] setprop 1415 ............................ pMaxNumbers = g.structMaster.getStruct(#teamCategories)
+  [ 26] pusharglist 0 ........................... <[:]>
+  [ 28] pushproplist ............................ <[:]>
+  [ 29] setprop 1156 ............................ pReservations = [:]
+  [ 32] getglobal 191 ........................... <g>
+  [ 34] getchainedprop 192 ...................... <g.structMaster>
+  [ 36] pushsymb 89 ............................. <#teamCategories>
+  [ 38] pusharglist 2 ........................... <g.structMaster, #teamCategories>
+  [ 40] objcall 51 .............................. <g.structMaster.getStruct(#teamCategories)>
+  [ 42] setprop 1416 ............................ pReservedTotals = g.structMaster.getStruct(#teamCategories)
+  [ 45] getparam 0 .............................. <me>
+  [ 47] pusharglistnoret 1 ...................... <me>
+  [ 49] objcall 1409 ............................ me.initMaxNumbers()
+  [ 52] ret
+end
+
+on initMaxNumbers me
+  [  0] getprop 1415 ............................ <pMaxNumbers>
+  [  3] setlocal 0 .............................. mn = pMaxNumbers
+  [  5] getlocal 0 .............................. <mn>
+  [  7] getglobal 1417 .......................... <gMaxEnemies>
+  [ 10] setobjprop 261 .......................... mn.enemies = gMaxEnemies
+  [ 13] getlocal 0 .............................. <mn>
+  [ 15] getglobal 1418 .......................... <gMaxFriends>
+  [ 18] setobjprop 273 .......................... mn.friends = gMaxFriends
+  [ 21] getlocal 0 .............................. <mn>
+  [ 23] getglobal 1419 .......................... <gMaxNeutrals>
+  [ 26] setobjprop 274 .......................... mn.neutrals = gMaxNeutrals
+  [ 29] ret
+end
+
+on finish me
+  [  0] ret
+end
+
+on countReservations me, typ
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. total = 0
+  [  3] getprop 1156 ............................ <pReservations>
+  [  6] getparam 1 .............................. <typ>
+  [  8] pusharglist 2 ........................... <pReservations, typ>
+  [ 10] objcall 301 ............................. <pReservations[typ]>
+  [ 13] peek 0
+  [ 15] pusharglist 1
+  [ 17] extcall 348
+  [ 20] pushint8 1
+  [ 22] peek 0
+  [ 24] peek 2
+  [ 26] lteq
+  [ 27] jmpifz [ 55] ............................ repeat with res in pReservations[typ]
+  [ 30] peek 2
+  [ 32] peek 1
+  [ 34] pusharglist 2
+  [ 36] extcall 301
+  [ 39] setlocal 1
+  [ 41] getlocal 0 .............................. <total>
+  [ 43] getlocal 1 .............................. <res>
+  [ 45] getobjprop 162 .......................... <res.num>
+  [ 47] add ..................................... <total + res.num>
+  [ 48] setlocal 0 .............................. total = total + res.num
+  [ 50] pushint8 1
+  [ 52] add
+  [ 53] endrepeat [ 22]
+  [ 55] pop 3
+  [ 57] getlocal 0 .............................. <total>
+  [ 59] pusharglistnoret 1 ...................... <total>
+  [ 61] extcall 3 ............................... return total
+  [ 63] ret
+end
+
+on cancelReservation me, obj
+  [  0] getparam 1 .............................. <obj>
+  [  2] pusharglist 1 ........................... <obj>
+  [  4] objcall 1422 ............................ <obj.getResidentTeamCategory()>
+  [  7] setlocal 0 .............................. typ = obj.getResidentTeamCategory()
+  [  9] getprop 1156 ............................ <pReservations>
+  [ 12] getlocal 0 .............................. <typ>
+  [ 14] pusharglist 2 ........................... <pReservations, typ>
+  [ 16] objcall 301 ............................. <pReservations[typ]>
+  [ 19] pusharglist 0 ........................... <>
+  [ 21] extcall 388 ............................. <VOID>
+  [ 24] eq ...................................... <pReservations[typ] = VOID>
+  [ 25] jmpifz [ 32] ............................ if pReservations[typ] = VOID then
+  [ 28] pusharglistnoret 0 ...................... <>
+  [ 30] extcall 3 ............................... return 
+  [ 32] getparam 0 .............................. <me>
+  [ 34] getparam 1 .............................. <obj>
+  [ 36] pusharglist 2 ........................... <me, obj>
+  [ 38] objcall 1411 ............................ <me.getReservationPos(obj)>
+  [ 41] setlocal 1 .............................. pos = me.getReservationPos(obj)
+  [ 43] getlocal 1 .............................. <pos>
+  [ 45] pushzero ................................ <0>
+  [ 46] gt ...................................... <pos > 0>
+  [ 47] jmpifz [110] ............................ if pos > 0 then
+  [ 50] getprop 1156 ............................ <pReservations>
+  [ 53] getlocal 0 .............................. <typ>
+  [ 55] pusharglist 2 ........................... <pReservations, typ>
+  [ 57] objcall 301 ............................. <pReservations[typ]>
+  [ 60] getlocal 1 .............................. <pos>
+  [ 62] pusharglist 2 ........................... <pReservations[typ], pos>
+  [ 64] objcall 301 ............................. <pReservations[typ][pos]>
+  [ 67] setlocal 2 .............................. res = pReservations[typ][pos]
+  [ 69] getprop 1416 ............................ <pReservedTotals>
+  [ 72] getlocal 0 .............................. <typ>
+  [ 74] getprop 1416 ............................ <pReservedTotals>
+  [ 77] getlocal 0 .............................. <typ>
+  [ 79] pusharglist 2 ........................... <pReservedTotals, typ>
+  [ 81] objcall 301 ............................. <pReservedTotals[typ]>
+  [ 84] getlocal 2 .............................. <res>
+  [ 86] getobjprop 162 .......................... <res.num>
+  [ 88] sub ..................................... <pReservedTotals[typ] - res.num>
+  [ 89] pusharglistnoret 3 ...................... <pReservedTotals, typ, pReservedTotals[typ] - res.num>
+  [ 91] objcall 54 .............................. pReservedTotals[typ] = pReservedTotals[typ] - res.num
+  [ 93] getprop 1156 ............................ <pReservations>
+  [ 96] getlocal 0 .............................. <typ>
+  [ 98] pusharglist 2 ........................... <pReservations, typ>
+  [100] objcall 301 ............................. <pReservations[typ]>
+  [103] getlocal 1 .............................. <pos>
+  [105] pusharglistnoret 2 ...................... <pReservations[typ], pos>
+  [107] objcall 784 ............................. pReservations[typ].deleteAt(pos)
+  [110] ret
+end
+
+on getPermissionToRelease me, obj, numToRelease
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. permission = 0
+  [  3] getparam 1 .............................. <obj>
+  [  5] pusharglist 1 ........................... <obj>
+  [  7] objcall 1422 ............................ <obj.getResidentTeamCategory()>
+  [ 10] setlocal 1 .............................. typ = obj.getResidentTeamCategory()
+  [ 12] getprop 1414 ............................ <pCurrentTotals>
+  [ 15] getlocal 1 .............................. <typ>
+  [ 17] pusharglist 2 ........................... <pCurrentTotals, typ>
+  [ 19] objcall 301 ............................. <pCurrentTotals[typ]>
+  [ 22] getprop 1416 ............................ <pReservedTotals>
+  [ 25] getlocal 1 .............................. <typ>
+  [ 27] pusharglist 2 ........................... <pReservedTotals, typ>
+  [ 29] objcall 301 ............................. <pReservedTotals[typ]>
+  [ 32] add ..................................... <pCurrentTotals[typ] + pReservedTotals[typ]>
+  [ 33] getparam 2 .............................. <numToRelease>
+  [ 35] add ..................................... <pCurrentTotals[typ] + pReservedTotals[typ] + numToRelease>
+  [ 36] getprop 1415 ............................ <pMaxNumbers>
+  [ 39] getlocal 1 .............................. <typ>
+  [ 41] pusharglist 2 ........................... <pMaxNumbers, typ>
+  [ 43] objcall 301 ............................. <pMaxNumbers[typ]>
+  [ 46] lteq .................................... <(pCurrentTotals[typ] + pReservedTotals[typ] + numToRelease) <= pMaxNumbers[typ]>
+  [ 47] jmpifz [ 65] ............................ if (pCurrentTotals[typ] + pReservedTotals[typ] + numToRelease) <= pMaxNumbers[typ] then
+  [ 50] pushint8 1 .............................. <1>
+  [ 52] setlocal 0 .............................. permission = 1
+  [ 54] getparam 0 .............................. <me>
+  [ 56] getparam 1 .............................. <obj>
+  [ 58] getparam 2 .............................. <numToRelease>
+  [ 60] pusharglistnoret 3 ...................... <me, obj, numToRelease>
+  [ 62] objcall 1148 ............................ me.makeReservation(obj, numToRelease)
+  [ 65] getlocal 0 .............................. <permission>
+  [ 67] pusharglistnoret 1 ...................... <permission>
+  [ 69] extcall 3 ............................... return permission
+  [ 71] ret
+end
+
+on getReservationPos me, obj
+  [  0] getparam 1 .............................. <obj>
+  [  2] pusharglist 1 ........................... <obj>
+  [  4] objcall 1422 ............................ <obj.getResidentTeamCategory()>
+  [  7] setlocal 0 .............................. typ = obj.getResidentTeamCategory()
+  [  9] getprop 1156 ............................ <pReservations>
+  [ 12] getlocal 0 .............................. <typ>
+  [ 14] pusharglist 2 ........................... <pReservations, typ>
+  [ 16] objcall 301 ............................. <pReservations[typ]>
+  [ 19] pushsymb 187 ............................ <#obj>
+  [ 21] getparam 1 .............................. <obj>
+  [ 23] pusharglist 3 ........................... <pReservations[typ], #obj, obj>
+  [ 25] extcall 1001 ............................ <ListGetPosByProp(pReservations[typ], #obj, obj)>
+  [ 28] setlocal 1 .............................. pos = ListGetPosByProp(pReservations[typ], #obj, obj)
+  [ 30] getlocal 1 .............................. <pos>
+  [ 32] pusharglistnoret 1 ...................... <pos>
+  [ 34] extcall 3 ............................... return pos
+  [ 36] ret
+end
+
+on makeReservation me, obj, numOfReservations
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 192 ...................... <g.structMaster>
+  [  4] pushsymb 79 ............................. <#reservation>
+  [  6] pusharglist 2 ........................... <g.structMaster, #reservation>
+  [  8] objcall 51 .............................. <g.structMaster.getStruct(#reservation)>
+  [ 10] setlocal 0 .............................. newReservation = g.structMaster.getStruct(#reservation)
+  [ 12] getlocal 0 .............................. <newReservation>
+  [ 14] getparam 1 .............................. <obj>
+  [ 16] setobjprop 187 .......................... newReservation.obj = obj
+  [ 18] getlocal 0 .............................. <newReservation>
+  [ 20] getparam 2 .............................. <numOfReservations>
+  [ 22] setobjprop 162 .......................... newReservation.num = numOfReservations
+  [ 24] getlocal 0 .............................. <newReservation>
+  [ 26] getparam 1 .............................. <obj>
+  [ 28] pusharglist 1 ........................... <obj>
+  [ 30] objcall 1422 ............................ <obj.getResidentTeamCategory()>
+  [ 33] setobjprop 260 .......................... newReservation.typ = obj.getResidentTeamCategory()
+  [ 36] getlocal 0 .............................. <newReservation>
+  [ 38] getobjprop 260 .......................... <newReservation.typ>
+  [ 41] setlocal 1 .............................. typ = newReservation.typ
+  [ 43] getprop 1156 ............................ <pReservations>
+  [ 46] getlocal 1 .............................. <typ>
+  [ 48] pusharglist 2 ........................... <pReservations, typ>
+  [ 50] objcall 301 ............................. <pReservations[typ]>
+  [ 53] pusharglist 0 ........................... <>
+  [ 55] extcall 388 ............................. <VOID>
+  [ 58] eq ...................................... <pReservations[typ] = VOID>
+  [ 59] jmpifz [ 74] ............................ if pReservations[typ] = VOID then
+  [ 62] getprop 1156 ............................ <pReservations>
+  [ 65] getlocal 1 .............................. <typ>
+  [ 67] pusharglist 0 ........................... <[]>
+  [ 69] pushlist ................................ <[]>
+  [ 70] pusharglistnoret 3 ...................... <pReservations, typ, []>
+  [ 72] objcall 54 .............................. pReservations[typ] = []
+  [ 74] getprop 1156 ............................ <pReservations>
+  [ 77] getlocal 1 .............................. <typ>
+  [ 79] pusharglist 2 ........................... <pReservations, typ>
+  [ 81] objcall 301 ............................. <pReservations[typ]>
+  [ 84] getlocal 0 .............................. <newReservation>
+  [ 86] pusharglistnoret 2 ...................... <pReservations[typ], newReservation>
+  [ 88] objcall 506 ............................. pReservations[typ].append(newReservation)
+  [ 91] getprop 1416 ............................ <pReservedTotals>
+  [ 94] getlocal 1 .............................. <typ>
+  [ 96] getprop 1416 ............................ <pReservedTotals>
+  [ 99] getlocal 1 .............................. <typ>
+  [101] pusharglist 2 ........................... <pReservedTotals, typ>
+  [103] objcall 301 ............................. <pReservedTotals[typ]>
+  [106] getparam 2 .............................. <numOfReservations>
+  [108] add ..................................... <pReservedTotals[typ] + numOfReservations>
+  [109] pusharglistnoret 3 ...................... <pReservedTotals, typ, pReservedTotals[typ] + numOfReservations>
+  [111] objcall 54 .............................. pReservedTotals[typ] = pReservedTotals[typ] + numOfReservations
+  [113] ret
+end
+
+on objectIsValid me, teamRole, obj
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. valid = 0
+  [  3] getparam 1 .............................. <teamRole>
+  [  5] pushsymb 135 ............................ <#teamMembers>
+  [  7] eq ...................................... <teamRole = #teamMembers>
+  [  8] jmpifz [ 27] ............................ if teamRole = #teamMembers then
+  [ 11] getparam 2 .............................. <obj>
+  [ 13] pushsymb 208 ............................ <#objCharacter>
+  [ 15] pusharglist 2 ........................... <obj, #objCharacter>
+  [ 17] objcall 1425 ............................ <obj.hasFlag(#objCharacter)>
+  [ 20] jmpifz [ 27] ............................ if obj.hasFlag(#objCharacter) then
+  [ 23] pushint8 1 .............................. <1>
+  [ 25] setlocal 0 .............................. valid = 1
+  [ 27] getlocal 0 .............................. <valid>
+  [ 29] pusharglistnoret 1 ...................... <valid>
+  [ 31] extcall 3 ............................... return valid
+  [ 33] ret
+end
+
+on objectJoined me, theTeam, teamRole, obj
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 2 .............................. <teamRole>
+  [  4] getparam 3 .............................. <obj>
+  [  6] pusharglist 3 ........................... <me, teamRole, obj>
+  [  8] objcall 1412 ............................ <me.objectIsValid(teamRole, obj)>
+  [ 11] jmpifz [ 42] ............................ if me.objectIsValid(teamRole, obj) then
+  [ 14] getprop 1414 ............................ <pCurrentTotals>
+  [ 17] getparam 1 .............................. <theTeam>
+  [ 19] getobjprop 279 .......................... <theTeam.category>
+  [ 22] getprop 1414 ............................ <pCurrentTotals>
+  [ 25] getparam 1 .............................. <theTeam>
+  [ 27] getobjprop 279 .......................... <theTeam.category>
+  [ 30] pusharglist 2 ........................... <pCurrentTotals, theTeam.category>
+  [ 32] objcall 301 ............................. <pCurrentTotals[theTeam.category]>
+  [ 35] pushint8 1 .............................. <1>
+  [ 37] add ..................................... <pCurrentTotals[theTeam.category] + 1>
+  [ 38] pusharglistnoret 3 ...................... <pCurrentTotals, theTeam.category, pCurrentTotals[theTeam.category] + 1>
+  [ 40] objcall 54 .............................. pCurrentTotals[theTeam.category] = pCurrentTotals[theTeam.category] + 1
+  [ 42] ret
+end
+
+on objectLeft me, theTeam, teamRole, obj
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 2 .............................. <teamRole>
+  [  4] getparam 3 .............................. <obj>
+  [  6] pusharglist 3 ........................... <me, teamRole, obj>
+  [  8] objcall 1412 ............................ <me.objectIsValid(teamRole, obj)>
+  [ 11] jmpifz [ 42] ............................ if me.objectIsValid(teamRole, obj) then
+  [ 14] getprop 1414 ............................ <pCurrentTotals>
+  [ 17] getparam 1 .............................. <theTeam>
+  [ 19] getobjprop 279 .......................... <theTeam.category>
+  [ 22] getprop 1414 ............................ <pCurrentTotals>
+  [ 25] getparam 1 .............................. <theTeam>
+  [ 27] getobjprop 279 .......................... <theTeam.category>
+  [ 30] pusharglist 2 ........................... <pCurrentTotals, theTeam.category>
+  [ 32] objcall 301 ............................. <pCurrentTotals[theTeam.category]>
+  [ 35] pushint8 1 .............................. <1>
+  [ 37] sub ..................................... <pCurrentTotals[theTeam.category] - 1>
+  [ 38] pusharglistnoret 3 ...................... <pCurrentTotals, theTeam.category, pCurrentTotals[theTeam.category] - 1>
+  [ 40] objcall 54 .............................. pCurrentTotals[theTeam.category] = pCurrentTotals[theTeam.category] - 1
+  [ 42] ret
+end
+
+on objectReleasedFromReservation me, obj
+  [  0] getparam 1 .............................. <obj>
+  [  2] pusharglist 1 ........................... <obj>
+  [  4] objcall 1422 ............................ <obj.getResidentTeamCategory()>
+  [  7] setlocal 0 .............................. typ = obj.getResidentTeamCategory()
+  [  9] getparam 0 .............................. <me>
+  [ 11] getparam 1 .............................. <obj>
+  [ 13] pusharglist 2 ........................... <me, obj>
+  [ 15] objcall 1411 ............................ <me.getReservationPos(obj)>
+  [ 18] setlocal 1 .............................. resPos = me.getReservationPos(obj)
+  [ 20] getlocal 1 .............................. <resPos>
+  [ 22] pushzero ................................ <0>
+  [ 23] eq ...................................... <resPos = 0>
+  [ 24] jmpifz [ 31] ............................ if resPos = 0 then
+  [ 27] pusharglistnoret 0 ...................... <>
+  [ 29] extcall 3 ............................... return 
+  [ 31] getprop 1156 ............................ <pReservations>
+  [ 34] getlocal 0 .............................. <typ>
+  [ 36] pusharglist 2 ........................... <pReservations, typ>
+  [ 38] objcall 301 ............................. <pReservations[typ]>
+  [ 41] getlocal 1 .............................. <resPos>
+  [ 43] pusharglist 2 ........................... <pReservations[typ], resPos>
+  [ 45] objcall 301 ............................. <pReservations[typ][resPos]>
+  [ 48] setlocal 2 .............................. res = pReservations[typ][resPos]
+  [ 50] pushzero ................................ <0>
+  [ 51] setlocal 3 .............................. objobj = 0
+  [ 53] getlocal 2 .............................. <res>
+  [ 55] getobjprop 187 .......................... <res.obj>
+  [ 57] getparam 1 .............................. <obj>
+  [ 59] eq ...................................... <res.obj = obj>
+  [ 60] jmpifz [129] ............................ if res.obj = obj then / else
+  [ 63] pushint8 1 .............................. <1>
+  [ 65] setlocal 3 .............................. objobj = 1
+  [ 67] getprop 1416 ............................ <pReservedTotals>
+  [ 70] getlocal 0 .............................. <typ>
+  [ 72] getprop 1416 ............................ <pReservedTotals>
+  [ 75] getlocal 0 .............................. <typ>
+  [ 77] pusharglist 2 ........................... <pReservedTotals, typ>
+  [ 79] objcall 301 ............................. <pReservedTotals[typ]>
+  [ 82] pushint8 1 .............................. <1>
+  [ 84] sub ..................................... <pReservedTotals[typ] - 1>
+  [ 85] pusharglistnoret 3 ...................... <pReservedTotals, typ, pReservedTotals[typ] - 1>
+  [ 87] objcall 54 .............................. pReservedTotals[typ] = pReservedTotals[typ] - 1
+  [ 89] getlocal 2 .............................. <res>
+  [ 91] getlocal 2 .............................. <res>
+  [ 93] getobjprop 162 .......................... <res.num>
+  [ 95] pushint8 1 .............................. <1>
+  [ 97] sub ..................................... <res.num - 1>
+  [ 98] setobjprop 162 .......................... res.num = res.num - 1
+  [100] getlocal 2 .............................. <res>
+  [102] getobjprop 162 .......................... <res.num>
+  [104] pushzero ................................ <0>
+  [105] eq ...................................... <res.num = 0>
+  [106] jmpifz [126] ............................ if res.num = 0 then
+  [109] getprop 1156 ............................ <pReservations>
+  [112] getlocal 0 .............................. <typ>
+  [114] pusharglist 2 ........................... <pReservations, typ>
+  [116] objcall 301 ............................. <pReservations[typ]>
+  [119] getlocal 1 .............................. <resPos>
+  [121] pusharglistnoret 2 ...................... <pReservations[typ], resPos>
+  [123] objcall 784 ............................. pReservations[typ].deleteAt(resPos)
+  [126] jmp [141]
+  [129] pushcons 0 .............................. <"reservationsMaster.objectReleasedFromReservation(): Error, object should not have released!">
+  [131] pusharglistnoret 1 ...................... <"reservationsMaster.objectReleasedFromReservation(): Error, object should not have released!">
+  [133] extcall 414 ............................. put "reservationsMaster.objectReleasedFromReservation(): Error, object should not have released!"
+  [136] pusharglistnoret 0 ...................... <>
+  [138] extcall 1427 ............................ MovieGoDebug()
+  [141] ret
+end
+
+on roomClear me
+  [  0] getprop 1416 ............................ <pReservedTotals>
+  [  3] pushsymb 261 ............................ <#enemies>
+  [  6] pusharglist 2 ........................... <pReservedTotals, #enemies>
+  [  8] objcall 301 ............................. <pReservedTotals[#enemies]>
+  [ 11] pushzero ................................ <0>
+  [ 12] nteq .................................... <pReservedTotals[#enemies] <> 0>
+  [ 13] jmpifz [ 24] ............................ if pReservedTotals[#enemies] <> 0 then / else
+  [ 16] pusharglistnoret 0 ...................... <>
+  [ 18] extcall 438 ............................. nothing()
+  [ 21] jmp [ 31]
+  [ 24] pushcons 1 .............................. <"no enemy reservations">
+  [ 26] pusharglistnoret 1 ...................... <"no enemy reservations">
+  [ 28] extcall 414 ............................. put "no enemy reservations"
+  [ 31] ret
+end
+
+on start me
+  [  0] ret
+end
+
+on stop me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 239 ............................. me.finish()
+  [  6] ret
+end

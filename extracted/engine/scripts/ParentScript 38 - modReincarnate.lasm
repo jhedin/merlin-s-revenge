@@ -1,0 +1,151 @@
+property ancestor, pReincarnatedMe, pReincarnateAs
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getlocal 0 .............................. <i>
+  [ 12] pushsymb 1068 ........................... <#reincarnateAs>
+  [ 15] pushsymb 49 ............................. <#none>
+  [ 17] pushsymb 49 ............................. <#none>
+  [ 19] pushsymb 49 ............................. <#none>
+  [ 21] pusharglist 3 ........................... <[#none, #none, #none]>
+  [ 23] pushlist ................................ <[#none, #none, #none]>
+  [ 24] pusharglistnoret 3 ...................... <i, #reincarnateAs, [#none, #none, #none]>
+  [ 26] objcall 48 .............................. i[#reincarnateAs] = [#none, #none, #none]
+  [ 28] getprop 33 .............................. <ancestor>
+  [ 30] pusharglistnoret 1 ...................... <ancestor>
+  [ 32] objcall 2 ............................... ancestor.addModParams()
+  [ 34] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 1068 ......................... <params.reincarnateAs>
+  [ 13] setprop 1069 ............................ pReincarnateAs = params.reincarnateAs
+  [ 16] pushsymb 49 ............................. <#none>
+  [ 18] setprop 1070 ............................ pReincarnatedMe = #none
+  [ 21] ret
+end
+
+on getReincarnatedMe me
+  [  0] getprop 1070 ............................ <pReincarnatedMe>
+  [  3] pusharglistnoret 1 ...................... <pReincarnatedMe>
+  [  5] extcall 35 .............................. return pReincarnatedMe
+  [  7] ret
+end
+
+on internalEvent me, theEvent
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <theEvent>
+  [  4] pusharglistnoret 2 ...................... <ancestor, theEvent>
+  [  6] objcall 22 .............................. ancestor.internalEvent(theEvent)
+  [  8] getparam 1 .............................. <theEvent>
+  [ 10] peek 0 .................................. case theEvent of
+  [ 12] pushsymb 1071 ........................... <#leftTeam>
+  [ 15] eq
+  [ 16] jmpifz [ 38] ............................ (case) #leftTeam:
+  [ 19] getparam 0 .............................. <me>
+  [ 21] getchainedprop 51 ....................... <me.big>
+  [ 23] pusharglist 1 ........................... <me.big>
+  [ 25] objcall 505 ............................. <me.big.getKilledInAction()>
+  [ 28] jmpifz [ 38] ............................ if me.big.getKilledInAction() then
+  [ 31] getparam 0 .............................. <me>
+  [ 33] pusharglistnoret 1 ...................... <me>
+  [ 35] objcall 1067 ............................ me.reincarnate()
+  [ 38] pop 1
+  [ 40] ret
+end
+
+on reincarnate me
+  [  0] getprop 1069 ............................ <pReincarnateAs>
+  [  3] peek 0
+  [  5] pusharglist 1
+  [  7] extcall 257
+  [ 10] pushint8 1
+  [ 12] peek 0
+  [ 14] peek 2
+  [ 16] lteq
+  [ 17] jmpifz [139] ............................ repeat with i in pReincarnateAs
+  [ 20] peek 2
+  [ 22] peek 1
+  [ 24] pusharglist 2
+  [ 26] extcall 109
+  [ 28] setlocal 0
+  [ 30] pushint8 1 .............................. <1>
+  [ 32] setlocal 1 .............................. j = 1
+  [ 34] getlocal 0 .............................. <i>
+  [ 36] pushsymb 49 ............................. <#none>
+  [ 38] nteq .................................... <i <> #none>
+  [ 39] jmpifz [134] ............................ if i <> #none then
+  [ 42] getglobal 40 ............................ <g>
+  [ 44] getchainedprop 228 ...................... <g.actorMaster>
+  [ 46] pushsymb 229 ............................ <#newActor>
+  [ 48] pusharglist 2 ........................... <g.actorMaster, #newActor>
+  [ 50] objcall 230 ............................. <g.actorMaster.getParams(#newActor)>
+  [ 52] setlocal 2 .............................. params = g.actorMaster.getParams(#newActor)
+  [ 54] getlocal 2 .............................. <params>
+  [ 56] getlocal 0 .............................. <i>
+  [ 58] setobjprop 232 .......................... params.typ = i
+  [ 60] getlocal 2 .............................. <params>
+  [ 62] getparam 0 .............................. <me>
+  [ 64] getchainedprop 51 ....................... <me.big>
+  [ 66] pusharglist 1 ........................... <me.big>
+  [ 68] objcall 111 ............................. <me.big.getLoc()>
+  [ 70] setobjprop 233 .......................... params.startLoc = me.big.getLoc()
+  [ 72] getlocal 1 .............................. <j>
+  [ 74] pushint8 1 .............................. <1>
+  [ 76] eq ...................................... <j = 1>
+  [ 77] jmpifz [ 88] ............................ if j = 1 then / else
+  [ 80] getlocal 2 .............................. <params>
+  [ 82] pushzero ................................ <0>
+  [ 83] setobjprop 234 .......................... params.useOffset = 0
+  [ 85] jmp [ 94]
+  [ 88] getlocal 2 .............................. <params>
+  [ 90] pushint8 1 .............................. <1>
+  [ 92] setobjprop 234 .......................... params.useOffset = 1
+  [ 94] getglobal 40 ............................ <g>
+  [ 96] getchainedprop 228 ...................... <g.actorMaster>
+  [ 98] getlocal 2 .............................. <params>
+  [100] pusharglist 2 ........................... <g.actorMaster, params>
+  [102] objcall 229 ............................. <g.actorMaster.newActor(params)>
+  [104] setprop 1070 ............................ pReincarnatedMe = g.actorMaster.newActor(params)
+  [107] getlocal 1 .............................. <j>
+  [109] pushint8 1 .............................. <1>
+  [111] add ..................................... <j + 1>
+  [112] setlocal 1 .............................. j = j + 1
+  [114] getprop 1070 ............................ <pReincarnatedMe>
+  [117] pushsymb 49 ............................. <#none>
+  [119] nteq .................................... <pReincarnatedMe <> #none>
+  [120] jmpifz [134] ............................ if pReincarnatedMe <> #none then
+  [123] getparam 0 .............................. <me>
+  [125] getchainedprop 51 ....................... <me.big>
+  [127] pushsymb 618 ............................ <#reincarnated>
+  [130] pusharglistnoret 2 ...................... <me.big, #reincarnated>
+  [132] objcall 22 .............................. me.big.internalEvent(#reincarnated)
+  [134] pushint8 1
+  [136] add
+  [137] endrepeat [ 12]
+  [139] pop 3
+  [141] ret
+end

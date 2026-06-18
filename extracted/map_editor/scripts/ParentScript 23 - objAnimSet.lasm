@@ -1,0 +1,413 @@
+property ancestor, pStripInit, pStrips
+global g
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushcons 0 .............................. <"objBasic">
+  [  4] pusharglist 1 ........................... <"objBasic">
+  [  6] extcall 27 .............................. <script("objBasic")>
+  [  8] pusharglist 1 ........................... <script("objBasic")>
+  [ 10] extcall 0 ............................... <new(script("objBasic"))>
+  [ 12] setobjprop 77 ........................... me.ancestor = new(script("objBasic"))
+  [ 14] getparam 0 .............................. <me>
+  [ 16] pusharglistnoret 1 ...................... <me>
+  [ 18] extcall 17 .............................. return me
+  [ 20] ret
+end
+
+on newStripInit me, name, delay
+  [  0] getprop 93 .............................. <pStripInit>
+  [  2] pusharglist 1 ........................... <pStripInit>
+  [  4] objcall 48 .............................. <pStripInit.duplicate()>
+  [  6] setlocal 0 .............................. stripInit = pStripInit.duplicate()
+  [  8] getlocal 0 .............................. <stripInit>
+  [ 10] getparam 1 .............................. <name>
+  [ 12] setobjprop 94 ........................... stripInit.name = name
+  [ 14] getparam 2 .............................. <delay>
+  [ 16] pusharglist 0 ........................... <>
+  [ 18] extcall 36 .............................. <VOID>
+  [ 20] nteq .................................... <delay <> VOID>
+  [ 21] jmpifz [ 30] ............................ if delay <> VOID then
+  [ 24] getlocal 0 .............................. <stripInit>
+  [ 26] getparam 2 .............................. <delay>
+  [ 28] setobjprop 95 ........................... stripInit.delay = delay
+  [ 30] getlocal 0 .............................. <stripInit>
+  [ 32] pusharglistnoret 1 ...................... <stripInit>
+  [ 34] extcall 17 .............................. return stripInit
+  [ 36] ret
+end
+
+on init me, name, charType
+  [  0] pushsymb 94 ............................. <#name>
+  [  2] pushsymb 22 ............................. <#none>
+  [  4] pushsymb 95 ............................. <#delay>
+  [  6] pushint8 3 .............................. <3>
+  [  8] pusharglist 4 ........................... <[#name: #none, #delay: 3]>
+  [ 10] pushproplist ............................ <[#name: #none, #delay: 3]>
+  [ 11] setprop 93 .............................. pStripInit = [#name: #none, #delay: 3]
+  [ 13] getparam 0 .............................. <me>
+  [ 15] getparam 2 .............................. <charType>
+  [ 17] pusharglist 2 ........................... <me, charType>
+  [ 19] objcall 91 .............................. <me.getStripInits(charType)>
+  [ 21] setlocal 0 .............................. stripInits = me.getStripInits(charType)
+  [ 23] getparam 0 .............................. <me>
+  [ 25] getparam 1 .............................. <name>
+  [ 27] getlocal 0 .............................. <stripInits>
+  [ 29] pusharglistnoret 3 ...................... <me, name, stripInits>
+  [ 31] objcall 85 .............................. me.initAnimStrips(name, stripInits)
+  [ 33] ret
+end
+
+on initAnimStrips me, name, stripInits
+  [  0] pusharglist 0 ........................... <[:]>
+  [  2] pushproplist ............................ <[:]>
+  [  3] setprop 99 .............................. pStrips = [:]
+  [  5] getparam 2 .............................. <stripInits>
+  [  7] peek 0
+  [  9] pusharglist 1
+  [ 11] extcall 28
+  [ 13] pushint8 1
+  [ 15] peek 0
+  [ 17] peek 2
+  [ 19] lteq
+  [ 20] jmpifz [100] ............................ repeat with stripInit in stripInits
+  [ 23] peek 2
+  [ 25] peek 1
+  [ 27] pusharglist 2
+  [ 29] extcall 38
+  [ 31] setlocal 0
+  [ 33] getlocal 0 .............................. <stripInit>
+  [ 35] getobjprop 94 ........................... <stripInit.name>
+  [ 37] pusharglist 1 ........................... <stripInit.name>
+  [ 39] extcall 100 ............................. <symbol(stripInit.name)>
+  [ 41] setlocal 1 .............................. nSymbol = symbol(stripInit.name)
+  [ 43] getparam 1 .............................. <name>
+  [ 45] pushcons 1 .............................. <"_">
+  [ 47] joinstr ................................. <name & "_">
+  [ 48] getlocal 0 .............................. <stripInit>
+  [ 50] getobjprop 94 ........................... <stripInit.name>
+  [ 52] joinstr ................................. <name & "_" & stripInit.name>
+  [ 53] setlocal 2 .............................. nName = name & "_" & stripInit.name
+  [ 55] getglobal 101 ........................... <g>
+  [ 57] getchainedprop 102 ...................... <g.objectMaster>
+  [ 59] pushsymb 103 ............................ <#objAnimStrip>
+  [ 61] pusharglist 2 ........................... <g.objectMaster, #objAnimStrip>
+  [ 63] objcall 3 ............................... <g.objectMaster.requestObject(#objAnimStrip)>
+  [ 65] setlocal 3 .............................. nStrip = g.objectMaster.requestObject(#objAnimStrip)
+  [ 67] getlocal 3 .............................. <nStrip>
+  [ 69] getlocal 2 .............................. <nName>
+  [ 71] pusharglistnoret 2 ...................... <nStrip, nName>
+  [ 73] objcall 1 ............................... nStrip.init(nName)
+  [ 75] getlocal 3 .............................. <nStrip>
+  [ 77] getlocal 0 .............................. <stripInit>
+  [ 79] getobjprop 95 ........................... <stripInit.delay>
+  [ 81] pusharglistnoret 2 ...................... <nStrip, stripInit.delay>
+  [ 83] objcall 104 ............................. nStrip.setDelay(stripInit.delay)
+  [ 85] getprop 99 .............................. <pStrips>
+  [ 87] getlocal 1 .............................. <nSymbol>
+  [ 89] getlocal 3 .............................. <nStrip>
+  [ 91] pusharglistnoret 3 ...................... <pStrips, nSymbol, nStrip>
+  [ 93] objcall 37 .............................. pStrips[nSymbol] = nStrip
+  [ 95] pushint8 1
+  [ 97] add
+  [ 98] endrepeat [ 15]
+  [100] pop 3
+  [102] ret
+end
+
+on finish me
+  [  0] getprop 99 .............................. <pStrips>
+  [  2] peek 0
+  [  4] pusharglist 1
+  [  6] extcall 28
+  [  8] pushint8 1
+  [ 10] peek 0
+  [ 12] peek 2
+  [ 14] lteq
+  [ 15] jmpifz [ 39] ............................ repeat with strip in pStrips
+  [ 18] peek 2
+  [ 20] peek 1
+  [ 22] pusharglist 2
+  [ 24] extcall 38
+  [ 26] setlocal 0
+  [ 28] getlocal 0 .............................. <strip>
+  [ 30] pusharglistnoret 1 ...................... <strip>
+  [ 32] objcall 39 .............................. strip.finish()
+  [ 34] pushint8 1
+  [ 36] add
+  [ 37] endrepeat [ 10]
+  [ 39] pop 3
+  [ 41] pusharglist 0 ........................... <[:]>
+  [ 43] pushproplist ............................ <[:]>
+  [ 44] setprop 99 .............................. pStrips = [:]
+  [ 46] getprop 77 .............................. <ancestor>
+  [ 48] pusharglistnoret 1 ...................... <ancestor>
+  [ 50] objcall 39 .............................. ancestor.finish()
+  [ 52] ret
+end
+
+on getFin me, sym
+  [  0] getprop 99 .............................. <pStrips>
+  [  2] getparam 1 .............................. <sym>
+  [  4] pusharglist 2 ........................... <pStrips, sym>
+  [  6] objcall 38 .............................. <pStrips[sym]>
+  [  8] pusharglist 1 ........................... <pStrips[sym]>
+  [ 10] objcall 86 .............................. <pStrips[sym].getFin()>
+  [ 12] pusharglistnoret 1 ...................... <pStrips[sym].getFin()>
+  [ 14] extcall 17 .............................. return pStrips[sym].getFin()
+  [ 16] ret
+end
+
+on getFrame me, sym
+  [  0] getprop 99 .............................. <pStrips>
+  [  2] getparam 1 .............................. <sym>
+  [  4] pusharglist 2 ........................... <pStrips, sym>
+  [  6] objcall 38 .............................. <pStrips[sym]>
+  [  8] pusharglist 1 ........................... <pStrips[sym]>
+  [ 10] objcall 87 .............................. <pStrips[sym].getFrame()>
+  [ 12] pusharglistnoret 1 ...................... <pStrips[sym].getFrame()>
+  [ 14] extcall 17 .............................. return pStrips[sym].getFrame()
+  [ 16] ret
+end
+
+on getFrameFresh me, sym
+  [  0] getprop 99 .............................. <pStrips>
+  [  2] getparam 1 .............................. <sym>
+  [  4] pusharglist 2 ........................... <pStrips, sym>
+  [  6] objcall 38 .............................. <pStrips[sym]>
+  [  8] pusharglist 1 ........................... <pStrips[sym]>
+  [ 10] objcall 88 .............................. <pStrips[sym].getFrameFresh()>
+  [ 12] pusharglistnoret 1 ...................... <pStrips[sym].getFrameFresh()>
+  [ 14] extcall 17 .............................. return pStrips[sym].getFrameFresh()
+  [ 16] ret
+end
+
+on getLooped me, sym
+  [  0] getprop 99 .............................. <pStrips>
+  [  2] getparam 1 .............................. <sym>
+  [  4] pusharglist 2 ........................... <pStrips, sym>
+  [  6] objcall 38 .............................. <pStrips[sym]>
+  [  8] pusharglist 1 ........................... <pStrips[sym]>
+  [ 10] objcall 89 .............................. <pStrips[sym].getLooped()>
+  [ 12] pusharglistnoret 1 ...................... <pStrips[sym].getLooped()>
+  [ 14] extcall 17 .............................. return pStrips[sym].getLooped()
+  [ 16] ret
+end
+
+on getMember me, sym
+  [  0] getprop 99 .............................. <pStrips>
+  [  2] getparam 1 .............................. <sym>
+  [  4] pusharglist 2 ........................... <pStrips, sym>
+  [  6] objcall 38 .............................. <pStrips[sym]>
+  [  8] pusharglist 1 ........................... <pStrips[sym]>
+  [ 10] objcall 90 .............................. <pStrips[sym].getMember()>
+  [ 12] pusharglistnoret 1 ...................... <pStrips[sym].getMember()>
+  [ 14] extcall 17 .............................. return pStrips[sym].getMember()
+  [ 16] ret
+end
+
+on getStripInits me, charType
+  [  0] pusharglist 0 ........................... <[]>
+  [  2] pushlist ................................ <[]>
+  [  3] setlocal 0 .............................. stripInits = []
+  [  5] getparam 1 .............................. <charType>
+  [  7] peek 0 .................................. case charType of
+  [  9] pushsymb 110 ............................ <#bullet>
+  [ 11] eq
+  [ 12] jmpifz [ 46] ............................ (case) #bullet:
+  [ 15] getlocal 0 .............................. <stripInits>
+  [ 17] getparam 0 .............................. <me>
+  [ 19] pushcons 2 .............................. <"stand">
+  [ 21] pusharglist 2 ........................... <me, "stand">
+  [ 23] objcall 84 .............................. <me.newStripInit("stand")>
+  [ 25] pusharglistnoret 2 ...................... <stripInits, me.newStripInit("stand")>
+  [ 27] objcall 111 ............................. stripInits.append(me.newStripInit("stand"))
+  [ 29] getlocal 0 .............................. <stripInits>
+  [ 31] getparam 0 .............................. <me>
+  [ 33] pushcons 3 .............................. <"explode">
+  [ 35] pusharglist 2 ........................... <me, "explode">
+  [ 37] objcall 84 .............................. <me.newStripInit("explode")>
+  [ 39] pusharglistnoret 2 ...................... <stripInits, me.newStripInit("explode")>
+  [ 41] objcall 111 ............................. stripInits.append(me.newStripInit("explode"))
+  [ 43] jmp [381]
+  [ 46] peek 0
+  [ 48] pushsymb 112 ............................ <#character>
+  [ 50] eq
+  [ 51] jmpifz [ 99] ............................ (case) #character:
+  [ 54] getlocal 0 .............................. <stripInits>
+  [ 56] getparam 0 .............................. <me>
+  [ 58] pushcons 4 .............................. <"jump">
+  [ 60] pusharglist 2 ........................... <me, "jump">
+  [ 62] objcall 84 .............................. <me.newStripInit("jump")>
+  [ 64] pusharglistnoret 2 ...................... <stripInits, me.newStripInit("jump")>
+  [ 66] objcall 111 ............................. stripInits.append(me.newStripInit("jump"))
+  [ 68] getlocal 0 .............................. <stripInits>
+  [ 70] getparam 0 .............................. <me>
+  [ 72] pushcons 2 .............................. <"stand">
+  [ 74] pusharglist 2 ........................... <me, "stand">
+  [ 76] objcall 84 .............................. <me.newStripInit("stand")>
+  [ 78] pusharglistnoret 2 ...................... <stripInits, me.newStripInit("stand")>
+  [ 80] objcall 111 ............................. stripInits.append(me.newStripInit("stand"))
+  [ 82] getlocal 0 .............................. <stripInits>
+  [ 84] getparam 0 .............................. <me>
+  [ 86] pushcons 5 .............................. <"walk">
+  [ 88] pusharglist 2 ........................... <me, "walk">
+  [ 90] objcall 84 .............................. <me.newStripInit("walk")>
+  [ 92] pusharglistnoret 2 ...................... <stripInits, me.newStripInit("walk")>
+  [ 94] objcall 111 ............................. stripInits.append(me.newStripInit("walk"))
+  [ 96] jmp [381]
+  [ 99] peek 0
+  [101] pushsymb 113 ............................ <#enemyCharacter>
+  [103] eq
+  [104] jmpifz [162] ............................ (case) #enemyCharacter:
+  [107] getparam 0 .............................. <me>
+  [109] pushsymb 112 ............................ <#character>
+  [111] pusharglist 2 ........................... <me, #character>
+  [113] objcall 91 .............................. <me.getStripInits(#character)>
+  [115] setlocal 0 .............................. stripInits = me.getStripInits(#character)
+  [117] getlocal 0 .............................. <stripInits>
+  [119] getparam 0 .............................. <me>
+  [121] pushcons 6 .............................. <"attack">
+  [123] pusharglist 2 ........................... <me, "attack">
+  [125] objcall 84 .............................. <me.newStripInit("attack")>
+  [127] pusharglistnoret 2 ...................... <stripInits, me.newStripInit("attack")>
+  [129] objcall 111 ............................. stripInits.append(me.newStripInit("attack"))
+  [131] getlocal 0 .............................. <stripInits>
+  [133] getparam 0 .............................. <me>
+  [135] pushcons 7 .............................. <"reel_fly">
+  [137] pusharglist 2 ........................... <me, "reel_fly">
+  [139] objcall 84 .............................. <me.newStripInit("reel_fly")>
+  [141] pusharglistnoret 2 ...................... <stripInits, me.newStripInit("reel_fly")>
+  [143] objcall 111 ............................. stripInits.append(me.newStripInit("reel_fly"))
+  [145] getlocal 0 .............................. <stripInits>
+  [147] getparam 0 .............................. <me>
+  [149] pushcons 8 .............................. <"reel_landed">
+  [151] pusharglist 2 ........................... <me, "reel_landed">
+  [153] objcall 84 .............................. <me.newStripInit("reel_landed")>
+  [155] pusharglistnoret 2 ...................... <stripInits, me.newStripInit("reel_landed")>
+  [157] objcall 111 ............................. stripInits.append(me.newStripInit("reel_landed"))
+  [159] jmp [381]
+  [162] peek 0
+  [164] pushsymb 114 ............................ <#flyingEnemyCharacter>
+  [166] eq
+  [167] jmpifz [259] ............................ (case) #flyingEnemyCharacter:
+  [170] getlocal 0 .............................. <stripInits>
+  [172] getparam 0 .............................. <me>
+  [174] pushcons 9 .............................. <"fly">
+  [176] pushint8 1 .............................. <1>
+  [178] pusharglist 3 ........................... <me, "fly", 1>
+  [180] objcall 84 .............................. <me.newStripInit("fly", 1)>
+  [182] pusharglistnoret 2 ...................... <stripInits, me.newStripInit("fly", 1)>
+  [184] objcall 111 ............................. stripInits.append(me.newStripInit("fly", 1))
+  [186] getlocal 0 .............................. <stripInits>
+  [188] getparam 0 .............................. <me>
+  [190] pushcons 10 ............................. <"glide">
+  [192] pusharglist 2 ........................... <me, "glide">
+  [194] objcall 84 .............................. <me.newStripInit("glide")>
+  [196] pusharglistnoret 2 ...................... <stripInits, me.newStripInit("glide")>
+  [198] objcall 111 ............................. stripInits.append(me.newStripInit("glide"))
+  [200] getlocal 0 .............................. <stripInits>
+  [202] getparam 0 .............................. <me>
+  [204] pushcons 2 .............................. <"stand">
+  [206] pusharglist 2 ........................... <me, "stand">
+  [208] objcall 84 .............................. <me.newStripInit("stand")>
+  [210] pusharglistnoret 2 ...................... <stripInits, me.newStripInit("stand")>
+  [212] objcall 111 ............................. stripInits.append(me.newStripInit("stand"))
+  [214] getlocal 0 .............................. <stripInits>
+  [216] getparam 0 .............................. <me>
+  [218] pushcons 6 .............................. <"attack">
+  [220] pusharglist 2 ........................... <me, "attack">
+  [222] objcall 84 .............................. <me.newStripInit("attack")>
+  [224] pusharglistnoret 2 ...................... <stripInits, me.newStripInit("attack")>
+  [226] objcall 111 ............................. stripInits.append(me.newStripInit("attack"))
+  [228] getlocal 0 .............................. <stripInits>
+  [230] getparam 0 .............................. <me>
+  [232] pushcons 7 .............................. <"reel_fly">
+  [234] pusharglist 2 ........................... <me, "reel_fly">
+  [236] objcall 84 .............................. <me.newStripInit("reel_fly")>
+  [238] pusharglistnoret 2 ...................... <stripInits, me.newStripInit("reel_fly")>
+  [240] objcall 111 ............................. stripInits.append(me.newStripInit("reel_fly"))
+  [242] getlocal 0 .............................. <stripInits>
+  [244] getparam 0 .............................. <me>
+  [246] pushcons 8 .............................. <"reel_landed">
+  [248] pusharglist 2 ........................... <me, "reel_landed">
+  [250] objcall 84 .............................. <me.newStripInit("reel_landed")>
+  [252] pusharglistnoret 2 ...................... <stripInits, me.newStripInit("reel_landed")>
+  [254] objcall 111 ............................. stripInits.append(me.newStripInit("reel_landed"))
+  [256] jmp [381]
+  [259] peek 0
+  [261] pushsymb 115 ............................ <#flyingRecoilEnemyCharacter>
+  [263] eq
+  [264] jmpifz [294] ............................ (case) #flyingRecoilEnemyCharacter:
+  [267] getparam 0 .............................. <me>
+  [269] pushsymb 114 ............................ <#flyingEnemyCharacter>
+  [271] pusharglist 2 ........................... <me, #flyingEnemyCharacter>
+  [273] objcall 91 .............................. <me.getStripInits(#flyingEnemyCharacter)>
+  [275] setlocal 0 .............................. stripInits = me.getStripInits(#flyingEnemyCharacter)
+  [277] getlocal 0 .............................. <stripInits>
+  [279] getparam 0 .............................. <me>
+  [281] pushcons 11 ............................. <"recoil">
+  [283] pusharglist 2 ........................... <me, "recoil">
+  [285] objcall 84 .............................. <me.newStripInit("recoil")>
+  [287] pusharglistnoret 2 ...................... <stripInits, me.newStripInit("recoil")>
+  [289] objcall 111 ............................. stripInits.append(me.newStripInit("recoil"))
+  [291] jmp [381]
+  [294] peek 0
+  [296] pushsymb 116 ............................ <#playerCharacter>
+  [298] eq
+  [299] jmpifz [331] ............................ (case) #playerCharacter:
+  [302] getparam 0 .............................. <me>
+  [304] pushsymb 112 ............................ <#character>
+  [306] pusharglist 2 ........................... <me, #character>
+  [308] objcall 91 .............................. <me.getStripInits(#character)>
+  [310] setlocal 0 .............................. stripInits = me.getStripInits(#character)
+  [312] getlocal 0 .............................. <stripInits>
+  [314] getparam 0 .............................. <me>
+  [316] pushcons 12 ............................. <"die">
+  [318] pushint8 1 .............................. <1>
+  [320] pusharglist 3 ........................... <me, "die", 1>
+  [322] objcall 84 .............................. <me.newStripInit("die", 1)>
+  [324] pusharglistnoret 2 ...................... <stripInits, me.newStripInit("die", 1)>
+  [326] objcall 111 ............................. stripInits.append(me.newStripInit("die", 1))
+  [328] jmp [381]
+  [331] peek 0
+  [333] pushsymb 117 ............................ <#weapon>
+  [335] eq
+  [336] jmpifz [381] ............................ (case) #weapon:
+  [339] getlocal 0 .............................. <stripInits>
+  [341] getparam 0 .............................. <me>
+  [343] pushcons 6 .............................. <"attack">
+  [345] pusharglist 2 ........................... <me, "attack">
+  [347] objcall 84 .............................. <me.newStripInit("attack")>
+  [349] pusharglistnoret 2 ...................... <stripInits, me.newStripInit("attack")>
+  [351] objcall 111 ............................. stripInits.append(me.newStripInit("attack"))
+  [353] getlocal 0 .............................. <stripInits>
+  [355] getparam 0 .............................. <me>
+  [357] pushcons 13 ............................. <"carried">
+  [359] pusharglist 2 ........................... <me, "carried">
+  [361] objcall 84 .............................. <me.newStripInit("carried")>
+  [363] pusharglistnoret 2 ...................... <stripInits, me.newStripInit("carried")>
+  [365] objcall 111 ............................. stripInits.append(me.newStripInit("carried"))
+  [367] getlocal 0 .............................. <stripInits>
+  [369] getparam 0 .............................. <me>
+  [371] pushcons 14 ............................. <"fall">
+  [373] pusharglist 2 ........................... <me, "fall">
+  [375] objcall 84 .............................. <me.newStripInit("fall")>
+  [377] pusharglistnoret 2 ...................... <stripInits, me.newStripInit("fall")>
+  [379] objcall 111 ............................. stripInits.append(me.newStripInit("fall"))
+  [381] pop 1 ................................... end case
+  [383] getlocal 0 .............................. <stripInits>
+  [385] pusharglistnoret 1 ...................... <stripInits>
+  [387] extcall 17 .............................. return stripInits
+  [389] ret
+end
+
+on resetAnim me, sym
+  [  0] getprop 99 .............................. <pStrips>
+  [  2] getparam 1 .............................. <sym>
+  [  4] pusharglist 2 ........................... <pStrips, sym>
+  [  6] objcall 38 .............................. <pStrips[sym]>
+  [  8] pusharglistnoret 1 ...................... <pStrips[sym]>
+  [ 10] objcall 118 ............................. pStrips[sym].reset()
+  [ 12] ret
+end

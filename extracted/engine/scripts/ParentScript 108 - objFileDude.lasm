@@ -1,0 +1,118 @@
+property ancestor, pFX, pDialogFilter, pLoadDialogTitle, pSaveDialogTitle, pSaveFolder, pSaveOverwritePrompt, pSaveType
+global g
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushcons 0 .............................. <"objBasic">
+  [  4] pusharglist 1 ........................... <"objBasic">
+  [  6] extcall 34 .............................. <script("objBasic")>
+  [  8] pusharglist 1 ........................... <script("objBasic")>
+  [ 10] extcall 0 ............................... <new(script("objBasic"))>
+  [ 12] setobjprop 33 ........................... me.ancestor = new(script("objBasic"))
+  [ 14] getparam 0 .............................. <me>
+  [ 16] pusharglistnoret 1 ...................... <me>
+  [ 18] extcall 35 .............................. return me
+  [ 20] ret
+end
+
+on init me
+  [  0] pushcons 1 .............................. <"fileXtra3">
+  [  2] pusharglist 1 ........................... <"fileXtra3">
+  [  4] extcall 2631 ............................ <xtra("fileXtra3")>
+  [  7] pusharglist 1 ........................... <xtra("fileXtra3")>
+  [  9] extcall 0 ............................... <new(xtra("fileXtra3"))>
+  [ 11] setprop 2630 ............................ pFX = new(xtra("fileXtra3"))
+  [ 14] pushcons 2 .............................. <"Text Files/*.txt">
+  [ 16] setprop 2632 ............................ pDialogFilter = "Text Files/*.txt"
+  [ 19] pushcons 3 .............................. <"Load a recipe">
+  [ 21] setprop 2633 ............................ pLoadDialogTitle = "Load a recipe"
+  [ 24] pushcons 4 .............................. <"Save your recipe">
+  [ 26] setprop 2634 ............................ pSaveDialogTitle = "Save your recipe"
+  [ 29] pushcons 5 .............................. <"recipes\\">
+  [ 31] setprop 2635 ............................ pSaveFolder = "recipes\\"
+  [ 34] pushint8 1 .............................. <1>
+  [ 36] setprop 2636 ............................ pSaveOverwritePrompt = 1
+  [ 39] pushcons 6 .............................. <".txt">
+  [ 41] setprop 2637 ............................ pSaveType = ".txt"
+  [ 44] ret
+end
+
+on finish me
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. pFObj = 0
+  [  3] getparam 0 .............................. <me>
+  [  5] getchainedprop 33 ....................... <me.ancestor>
+  [  7] pusharglistnoret 1 ...................... <me.ancestor>
+  [  9] objcall 3 ............................... me.ancestor.finish()
+  [ 11] ret
+end
+
+on folderConfirm me, thepath
+  [  0] getprop 2630 ............................ <pFX>
+  [  3] getparam 1 .............................. <thepath>
+  [  5] pusharglist 2 ........................... <pFX, thepath>
+  [  7] objcall 2639 ............................ <pFX.fx_FolderExists(thepath)>
+  [ 10] not ..................................... <not pFX.fx_FolderExists(thepath)>
+  [ 11] jmpifz [ 24] ............................ if not pFX.fx_FolderExists(thepath) then
+  [ 14] getprop 2630 ............................ <pFX>
+  [ 17] getparam 1 .............................. <thepath>
+  [ 19] pusharglistnoret 2 ...................... <pFX, thepath>
+  [ 21] objcall 2640 ............................ pFX.fx_FolderCreate(thepath)
+  [ 24] ret
+end
+
+on savefile me, content, filenam
+  [  0] getmovieprop 2642 ....................... <the moviePath>
+  [  3] getprop 2635 ............................ <pSaveFolder>
+  [  6] joinstr ................................. <the moviePath & pSaveFolder>
+  [  7] setlocal 0 .............................. folderPath = the moviePath & pSaveFolder
+  [  9] getparam 0 .............................. <me>
+  [ 11] getlocal 0 .............................. <folderPath>
+  [ 13] pusharglistnoret 2 ...................... <me, folderPath>
+  [ 15] objcall 2627 ............................ me.folderConfirm(folderPath)
+  [ 18] getparam 2 .............................. <filenam>
+  [ 20] getprop 2637 ............................ <pSaveType>
+  [ 23] joinstr ................................. <filenam & pSaveType>
+  [ 24] setlocal 1 .............................. savename = filenam & pSaveType
+  [ 26] getprop 2630 ............................ <pFX>
+  [ 29] getlocal 0 .............................. <folderPath>
+  [ 31] getlocal 1 .............................. <savename>
+  [ 33] getprop 2634 ............................ <pSaveDialogTitle>
+  [ 36] getprop 2636 ............................ <pSaveOverwritePrompt>
+  [ 39] pusharglist 5 ........................... <pFX, folderPath, savename, pSaveDialogTitle, pSaveOverwritePrompt>
+  [ 41] objcall 2643 ............................ <pFX.fx_FileSaveAsDialog(folderPath, savename, pSaveDialogTitle, pSaveOverwritePrompt)>
+  [ 44] setlocal 2 .............................. savePath = pFX.fx_FileSaveAsDialog(folderPath, savename, pSaveDialogTitle, pSaveOverwritePrompt)
+  [ 46] getlocal 2 .............................. <savePath>
+  [ 48] getparam 1 .............................. <content>
+  [ 50] pusharglistnoret 2 ...................... <savePath, content>
+  [ 52] extcall 2644 ............................ FileSave(savePath, content)
+  [ 55] ret
+end
+
+on loadFil me
+  [  0] getmovieprop 2642 ....................... <the moviePath>
+  [  3] getprop 2635 ............................ <pSaveFolder>
+  [  6] joinstr ................................. <the moviePath & pSaveFolder>
+  [  7] setlocal 0 .............................. folderPath = the moviePath & pSaveFolder
+  [  9] getparam 0 .............................. <me>
+  [ 11] getlocal 0 .............................. <folderPath>
+  [ 13] pusharglistnoret 2 ...................... <me, folderPath>
+  [ 15] objcall 2627 ............................ me.folderConfirm(folderPath)
+  [ 18] getprop 2630 ............................ <pFX>
+  [ 21] getlocal 0 .............................. <folderPath>
+  [ 23] getprop 2632 ............................ <pDialogFilter>
+  [ 26] getprop 2633 ............................ <pLoadDialogTitle>
+  [ 29] pushzero ................................ <0>
+  [ 30] pushint8 1 .............................. <1>
+  [ 32] pusharglist 6 ........................... <pFX, folderPath, pDialogFilter, pLoadDialogTitle, 0, 1>
+  [ 34] objcall 2650 ............................ <pFX.fx_FileOpenDialog(folderPath, pDialogFilter, pLoadDialogTitle, 0, 1)>
+  [ 37] setlocal 1 .............................. loadPath = pFX.fx_FileOpenDialog(folderPath, pDialogFilter, pLoadDialogTitle, 0, 1)
+  [ 39] getlocal 1 .............................. <loadPath>
+  [ 41] pusharglist 1 ........................... <loadPath>
+  [ 43] extcall 2651 ............................ <fileload(loadPath)>
+  [ 46] setlocal 2 .............................. content = fileload(loadPath)
+  [ 48] getlocal 2 .............................. <content>
+  [ 50] pusharglistnoret 1 ...................... <content>
+  [ 52] extcall 35 .............................. return content
+  [ 54] ret
+end

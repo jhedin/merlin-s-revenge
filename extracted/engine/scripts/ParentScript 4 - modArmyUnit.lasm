@@ -1,0 +1,265 @@
+property ancestor, pArmyDetails, pTeleportable, pTeleportOutStarted
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getlocal 0 .............................. <i>
+  [ 12] pushsymb 104 ............................ <#teleportable>
+  [ 14] pushint8 1 .............................. <1>
+  [ 16] pusharglistnoret 3 ...................... <i, #teleportable, 1>
+  [ 18] objcall 48 .............................. i[#teleportable] = 1
+  [ 20] getprop 33 .............................. <ancestor>
+  [ 22] pusharglistnoret 1 ...................... <ancestor>
+  [ 24] objcall 2 ............................... ancestor.addModParams()
+  [ 26] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pushsymb 49 ............................. <#none>
+  [ 10] setprop 105 ............................. pArmyDetails = #none
+  [ 12] getparam 1 .............................. <params>
+  [ 14] getobjprop 104 .......................... <params.teleportable>
+  [ 16] setprop 106 ............................. pTeleportable = params.teleportable
+  [ 18] pushzero ................................ <0>
+  [ 19] setprop 107 ............................. pTeleportOutStarted = 0
+  [ 21] getparam 1 .............................. <params>
+  [ 23] pushsymb 108 ............................ <#ghost>
+  [ 25] pusharglist 2 ........................... <params, #ghost>
+  [ 27] objcall 109 ............................. <params[#ghost]>
+  [ 29] pushint8 1 .............................. <1>
+  [ 31] eq ...................................... <params[#ghost] = 1>
+  [ 32] jmpifz [ 38] ............................ if params[#ghost] = 1 then
+  [ 35] pushzero ................................ <0>
+  [ 36] setprop 106 ............................. pTeleportable = 0
+  [ 38] ret
+end
+
+on addSaveData me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 4 ............................... ancestor.addSaveData(sd)
+  [  8] getparam 0 .............................. <me>
+  [ 10] getparam 1 .............................. <sd>
+  [ 12] pusharglistnoret 2 ...................... <me, sd>
+  [ 14] objcall 6 ............................... me.addToSaveData(sd)
+  [ 16] ret
+end
+
+on addToArmyDetails me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 51 ....................... <me.big>
+  [  4] pusharglist 1 ........................... <me.big>
+  [  6] objcall 54 .............................. <me.big.getArmyDetails()>
+  [  8] setlocal 0 .............................. ad = me.big.getArmyDetails()
+  [ 10] getparam 0 .............................. <me>
+  [ 12] getlocal 0 .............................. <ad>
+  [ 14] pusharglistnoret 2 ...................... <me, ad>
+  [ 16] objcall 6 ............................... me.addToSaveData(ad)
+  [ 18] ret
+end
+
+on addToSaveData me, sd
+  [  0] getparam 1 .............................. <sd>
+  [  2] pushsymb 107 ............................ <#pTeleportOutStarted>
+  [  4] getprop 107 ............................. <pTeleportOutStarted>
+  [  6] pusharglistnoret 3 ...................... <sd, #pTeleportOutStarted, pTeleportOutStarted>
+  [  8] objcall 48 .............................. sd[#pTeleportOutStarted] = pTeleportOutStarted
+  [ 10] ret
+end
+
+on armyTeleportIn me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 51 ....................... <me.big>
+  [  4] pusharglistnoret 1 ...................... <me.big>
+  [  6] objcall 110 ............................. me.big.collisionDetectionOff()
+  [  8] getparam 0 .............................. <me>
+  [ 10] getchainedprop 51 ....................... <me.big>
+  [ 12] pusharglistnoret 1 ...................... <me.big>
+  [ 14] objcall 7 ............................... me.big.frameAdvance()
+  [ 16] getparam 0 .............................. <me>
+  [ 18] getchainedprop 51 ....................... <me.big>
+  [ 20] getparam 0 .............................. <me>
+  [ 22] pusharglist 1 ........................... <me>
+  [ 24] objcall 111 ............................. <me.getLoc()>
+  [ 26] pusharglistnoret 2 ...................... <me.big, me.getLoc()>
+  [ 28] objcall 112 ............................. me.big.teleportInAt(me.getLoc())
+  [ 30] ret
+end
+
+on armyTeleportOut me
+  [  0] getprop 106 ............................. <pTeleportable>
+  [  2] pushzero ................................ <0>
+  [  3] eq ...................................... <pTeleportable = 0>
+  [  4] jmpifz [ 11] ............................ if pTeleportable = 0 then
+  [  7] pusharglistnoret 0 ...................... <>
+  [  9] extcall 35 .............................. return 
+  [ 11] getprop 107 ............................. <pTeleportOutStarted>
+  [ 13] jmpifz [ 20] ............................ if pTeleportOutStarted then
+  [ 16] pusharglistnoret 0 ...................... <>
+  [ 18] extcall 35 .............................. return 
+  [ 20] pushint8 1 .............................. <1>
+  [ 22] setprop 107 ............................. pTeleportOutStarted = 1
+  [ 24] getparam 0 .............................. <me>
+  [ 26] getchainedprop 51 ....................... <me.big>
+  [ 28] pusharglistnoret 1 ...................... <me.big>
+  [ 30] objcall 110 ............................. me.big.collisionDetectionOff()
+  [ 32] getparam 0 .............................. <me>
+  [ 34] getchainedprop 51 ....................... <me.big>
+  [ 36] pusharglist 1 ........................... <me.big>
+  [ 38] objcall 113 ............................. <me.big.getRect()>
+  [ 40] getobjprop 114 .......................... <me.big.getRect().bottom>
+  [ 42] setlocal 0 .............................. stageFloor = me.big.getRect().bottom
+  [ 44] getparam 0 .............................. <me>
+  [ 46] getchainedprop 51 ....................... <me.big>
+  [ 48] pushsymb 49 ............................. <#none>
+  [ 50] getlocal 0 .............................. <stageFloor>
+  [ 52] pusharglistnoret 3 ...................... <me.big, #none, stageFloor>
+  [ 54] objcall 115 ............................. me.big.teleportOut(#none, stageFloor)
+  [ 56] ret
+end
+
+on generateArmyDetails me
+  [  0] pusharglist 0 ........................... <[:]>
+  [  2] pushproplist ............................ <[:]>
+  [  3] setprop 105 ............................. pArmyDetails = [:]
+  [  5] getparam 0 .............................. <me>
+  [  7] getchainedprop 51 ....................... <me.big>
+  [  9] pushsymb 5 .............................. <#addToArmyDetails>
+  [ 11] pusharglistnoret 2 ...................... <me.big, #addToArmyDetails>
+  [ 13] objcall 22 .............................. me.big.internalEvent(#addToArmyDetails)
+  [ 15] getprop 105 ............................. <pArmyDetails>
+  [ 17] pusharglistnoret 1 ...................... <pArmyDetails>
+  [ 19] extcall 35 .............................. return pArmyDetails
+  [ 21] ret
+end
+
+on getArmyDetails me
+  [  0] getprop 105 ............................. <pArmyDetails>
+  [  2] pusharglistnoret 1 ...................... <pArmyDetails>
+  [  4] extcall 35 .............................. return pArmyDetails
+  [  6] ret
+end
+
+on internalEvent me, theEvent
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <theEvent>
+  [  4] pusharglistnoret 2 ...................... <ancestor, theEvent>
+  [  6] objcall 22 .............................. ancestor.internalEvent(theEvent)
+  [  8] getparam 1 .............................. <theEvent>
+  [ 10] peek 0 .................................. case theEvent of
+  [ 12] pushsymb 5 .............................. <#addToArmyDetails>
+  [ 14] eq
+  [ 15] jmpifz [ 27] ............................ (case) #addToArmyDetails:
+  [ 18] getparam 0 .............................. <me>
+  [ 20] pusharglistnoret 1 ...................... <me>
+  [ 22] objcall 5 ............................... me.addToArmyDetails()
+  [ 24] jmp [112]
+  [ 27] peek 0
+  [ 29] pushsymb 25 ............................. <#restoreFromArmyDetails>
+  [ 31] eq
+  [ 32] jmpifz [ 44] ............................ (case) #restoreFromArmyDetails:
+  [ 35] getparam 0 .............................. <me>
+  [ 37] pusharglistnoret 1 ...................... <me>
+  [ 39] objcall 25 .............................. me.restoreFromArmyDetails()
+  [ 41] jmp [112]
+  [ 44] peek 0
+  [ 46] pushsymb 117 ............................ <#teleportInFinished>
+  [ 48] eq
+  [ 49] jmpifz [ 63] ............................ (case) #teleportInFinished:
+  [ 52] getparam 0 .............................. <me>
+  [ 54] getchainedprop 51 ....................... <me.big>
+  [ 56] pusharglistnoret 1 ...................... <me.big>
+  [ 58] objcall 118 ............................. me.big.collisionDetectionOn()
+  [ 60] jmp [112]
+  [ 63] peek 0
+  [ 65] pushsymb 119 ............................ <#teleportOutFinished>
+  [ 67] eq
+  [ 68] jmpifz [112] ............................ (case) #teleportOutFinished:
+  [ 71] getprop 107 ............................. <pTeleportOutStarted>
+  [ 73] pushint8 1 .............................. <1>
+  [ 75] eq ...................................... <pTeleportOutStarted = 1>
+  [ 76] jmpifz [112] ............................ if pTeleportOutStarted = 1 then
+  [ 79] pushzero ................................ <0>
+  [ 80] setprop 107 ............................. pTeleportOutStarted = 0
+  [ 82] getglobal 40 ............................ <g>
+  [ 84] getchainedprop 120 ...................... <g.armyMaster>
+  [ 86] getparam 0 .............................. <me>
+  [ 88] getobjprop 51 ........................... <me.big>
+  [ 90] pusharglistnoret 2 ...................... <g.armyMaster, me.big>
+  [ 92] objcall 121 ............................. g.armyMaster.recordUnitDetails(me.big)
+  [ 94] getparam 0 .............................. <me>
+  [ 96] getchainedprop 51 ....................... <me.big>
+  [ 98] pusharglistnoret 1 ...................... <me.big>
+  [100] objcall 122 ............................. me.big.leaveGame()
+  [102] getparam 0 .............................. <me>
+  [104] getchainedprop 51 ....................... <me.big>
+  [106] pushsymb 122 ............................ <#leaveGame>
+  [108] pusharglistnoret 2 ...................... <me.big, #leaveGame>
+  [110] objcall 123 ............................. me.big.eventNotify(#leaveGame)
+  [112] pop 1 ................................... end case
+  [114] ret
+end
+
+on restoreArmyDetails me, armyDetails
+  [  0] getparam 1 .............................. <armyDetails>
+  [  2] setprop 105 ............................. pArmyDetails = armyDetails
+  [  4] getparam 0 .............................. <me>
+  [  6] pushsymb 25 ............................. <#restoreFromArmyDetails>
+  [  8] pusharglistnoret 2 ...................... <me, #restoreFromArmyDetails>
+  [ 10] objcall 22 .............................. me.internalEvent(#restoreFromArmyDetails)
+  [ 12] ret
+end
+
+on restoreFromArmyDetails me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 51 ....................... <me.big>
+  [  4] pusharglist 1 ........................... <me.big>
+  [  6] objcall 54 .............................. <me.big.getArmyDetails()>
+  [  8] setlocal 0 .............................. ad = me.big.getArmyDetails()
+  [ 10] getparam 0 .............................. <me>
+  [ 12] getlocal 0 .............................. <ad>
+  [ 14] pusharglistnoret 2 ...................... <me, ad>
+  [ 16] objcall 27 .............................. me.restoreFromSaveData(ad)
+  [ 18] ret
+end
+
+on restoreFromSave me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 26 .............................. ancestor.restoreFromSave(sd)
+  [  8] getparam 0 .............................. <me>
+  [ 10] getparam 1 .............................. <sd>
+  [ 12] pusharglistnoret 2 ...................... <me, sd>
+  [ 14] objcall 27 .............................. me.restoreFromSaveData(sd)
+  [ 16] ret
+end
+
+on restoreFromSaveData me, sd
+  [  0] getparam 1 .............................. <sd>
+  [  2] getobjprop 107 .......................... <sd.pTeleportOutStarted>
+  [  4] setprop 107 ............................. pTeleportOutStarted = sd.pTeleportOutStarted
+  [  6] ret
+end

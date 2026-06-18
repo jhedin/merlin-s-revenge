@@ -1,0 +1,181 @@
+property ancestor, pBerlinOn
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getprop 33 .............................. <ancestor>
+  [ 12] pusharglistnoret 1 ...................... <ancestor>
+  [ 14] objcall 2 ............................... ancestor.addModParams()
+  [ 16] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pushzero ................................ <0>
+  [  9] setprop 1394 ............................ pBerlinOn = 0
+  [ 12] ret
+end
+
+on addSaveData me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 4 ............................... ancestor.addSaveData(sd)
+  [  8] getparam 1 .............................. <sd>
+  [ 10] pushsymb 1394 ........................... <#pBerlinOn>
+  [ 13] getprop 1394 ............................ <pBerlinOn>
+  [ 16] pusharglistnoret 3 ...................... <sd, #pBerlinOn, pBerlinOn>
+  [ 18] objcall 48 .............................. sd[#pBerlinOn] = pBerlinOn
+  [ 20] ret
+end
+
+on eventNotification me, theEvent, theObj
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <theEvent>
+  [  4] getparam 2 .............................. <theObj>
+  [  6] pusharglistnoret 3 ...................... <ancestor, theEvent, theObj>
+  [  8] objcall 568 ............................. ancestor.eventNotification(theEvent, theObj)
+  [ 11] getparam 1 .............................. <theEvent>
+  [ 13] peek 0 .................................. case theEvent of
+  [ 15] pushsymb 122 ............................ <#leaveGame>
+  [ 17] eq
+  [ 18] jmpifz [ 61] ............................ (case) #leaveGame:
+  [ 21] getparam 0 .............................. <me>
+  [ 23] getchainedprop 51 ....................... <me.big>
+  [ 25] pushsymb 1395 ........................... <#berlin>
+  [ 28] pusharglist 2 ........................... <me.big, #berlin>
+  [ 30] objcall 606 ............................. <me.big.getRelation(#berlin)>
+  [ 33] setlocal 0 .............................. berlin = me.big.getRelation(#berlin)
+  [ 35] getlocal 0 .............................. <berlin>
+  [ 37] getparam 2 .............................. <theObj>
+  [ 39] eq ...................................... <berlin = theObj>
+  [ 40] jmpifz [ 61] ............................ if berlin = theObj then
+  [ 43] pushzero ................................ <0>
+  [ 44] setprop 1394 ............................ pBerlinOn = 0
+  [ 47] getparam 0 .............................. <me>
+  [ 49] getchainedprop 51 ....................... <me.big>
+  [ 51] pushsymb 1395 ........................... <#berlin>
+  [ 54] pushsymb 49 ............................. <#none>
+  [ 56] pusharglistnoret 3 ...................... <me.big, #berlin, #none>
+  [ 58] objcall 612 ............................. me.big.setRelation(#berlin, #none)
+  [ 61] pop 1
+  [ 63] ret
+end
+
+on internalEvent me, theEvent
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <theEvent>
+  [  4] pusharglistnoret 2 ...................... <ancestor, theEvent>
+  [  6] objcall 22 .............................. ancestor.internalEvent(theEvent)
+  [  8] getparam 1 .............................. <theEvent>
+  [ 10] peek 0 .................................. case theEvent of
+  [ 12] pushsymb 1396 ........................... <#noTargetFound>
+  [ 15] eq
+  [ 16] jmpifz [ 25] ............................ (case) #noTargetFound:
+  [ 19] getparam 0 .............................. <me>
+  [ 21] pusharglistnoret 1 ...................... <me>
+  [ 23] objcall 101 ............................. me.armyTeleportOut()
+  [ 25] pop 1
+  [ 27] ret
+end
+
+on restoreFromSave me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 26 .............................. ancestor.restoreFromSave(sd)
+  [  8] getparam 1 .............................. <sd>
+  [ 10] getobjprop 1394 ......................... <sd.pBerlinOn>
+  [ 13] setprop 1394 ............................ pBerlinOn = sd.pBerlinOn
+  [ 16] ret
+end
+
+on summonBerlin me
+  [  0] getprop 1394 ............................ <pBerlinOn>
+  [  3] jmpifz [ 38] ............................ if pBerlinOn then
+  [  6] getparam 0 .............................. <me>
+  [  8] getchainedprop 51 ....................... <me.big>
+  [ 10] pushsymb 1395 ........................... <#berlin>
+  [ 13] pusharglist 2 ........................... <me.big, #berlin>
+  [ 15] objcall 606 ............................. <me.big.getRelation(#berlin)>
+  [ 18] setlocal 0 .............................. berlin = me.big.getRelation(#berlin)
+  [ 20] getlocal 0 .............................. <berlin>
+  [ 22] pushsymb 49 ............................. <#none>
+  [ 24] nteq .................................... <berlin <> #none>
+  [ 25] jmpifz [ 34] ............................ if berlin <> #none then
+  [ 28] getlocal 0 .............................. <berlin>
+  [ 30] pusharglistnoret 1 ...................... <berlin>
+  [ 32] objcall 101 ............................. berlin.armyTeleportOut()
+  [ 34] pusharglistnoret 0 ...................... <>
+  [ 36] extcall 35 .............................. return 
+  [ 38] pushsymb 49 ............................. <#none>
+  [ 40] setlocal 0 .............................. berlin = #none
+  [ 42] getglobal 40 ............................ <g>
+  [ 44] getchainedprop 120 ...................... <g.armyMaster>
+  [ 46] getparam 0 .............................. <me>
+  [ 48] getchainedprop 51 ....................... <me.big>
+  [ 50] pusharglist 1 ........................... <me.big>
+  [ 52] objcall 238 ............................. <me.big.getTeam()>
+  [ 54] pushsymb 1397 ........................... <#berlinInGame>
+  [ 57] pusharglist 3 ........................... <g.armyMaster, me.big.getTeam(), #berlinInGame>
+  [ 59] objcall 1398 ............................ <g.armyMaster.lookupArmyDetails(me.big.getTeam(), #berlinInGame)>
+  [ 62] setlocal 1 .............................. berlinDetails = g.armyMaster.lookupArmyDetails(me.big.getTeam(), #berlinInGame)
+  [ 64] getlocal 1 .............................. <berlinDetails>
+  [ 66] pushsymb 49 ............................. <#none>
+  [ 68] nteq .................................... <berlinDetails <> #none>
+  [ 69] jmpifz [104] ............................ if berlinDetails <> #none then
+  [ 72] getglobal 40 ............................ <g>
+  [ 74] getchainedprop 120 ...................... <g.armyMaster>
+  [ 76] getparam 0 .............................. <me>
+  [ 78] getchainedprop 51 ....................... <me.big>
+  [ 80] pusharglist 1 ........................... <me.big>
+  [ 82] objcall 238 ............................. <me.big.getTeam()>
+  [ 84] pushsymb 1397 ........................... <#berlinInGame>
+  [ 87] getglobal 40 ............................ <g>
+  [ 89] getchainedprop 1399 ..................... <g.mouseMaster>
+  [ 92] pusharglist 1 ........................... <g.mouseMaster>
+  [ 94] objcall 1400 ............................ <g.mouseMaster.getMouseLoc()>
+  [ 97] pusharglist 4 ........................... <g.armyMaster, me.big.getTeam(), #berlinInGame, g.mouseMaster.getMouseLoc()>
+  [ 99] objcall 1401 ............................ <g.armyMaster.createUnit(me.big.getTeam(), #berlinInGame, g.mouseMaster.getMouseLoc())>
+  [102] setlocal 0 .............................. berlin = g.armyMaster.createUnit(me.big.getTeam(), #berlinInGame, g.mouseMaster.getMouseLoc())
+  [104] getlocal 0 .............................. <berlin>
+  [106] pushsymb 49 ............................. <#none>
+  [108] nteq .................................... <berlin <> #none>
+  [109] jmpifz [147] ............................ if berlin <> #none then
+  [112] pushint8 1 .............................. <1>
+  [114] setprop 1394 ............................ pBerlinOn = 1
+  [117] getparam 0 .............................. <me>
+  [119] getchainedprop 51 ....................... <me.big>
+  [121] pushsymb 1395 ........................... <#berlin>
+  [124] getlocal 0 .............................. <berlin>
+  [126] pusharglistnoret 3 ...................... <me.big, #berlin, berlin>
+  [128] objcall 612 ............................. me.big.setRelation(#berlin, berlin)
+  [131] getparam 0 .............................. <me>
+  [133] getchainedprop 51 ....................... <me.big>
+  [135] getlocal 0 .............................. <berlin>
+  [137] pushsymb 122 ............................ <#leaveGame>
+  [139] pushsymb 628 ............................ <#once>
+  [142] pusharglistnoret 4 ...................... <me.big, berlin, #leaveGame, #once>
+  [144] objcall 629 ............................. me.big.keepMePosted(berlin, #leaveGame, #once)
+  [147] ret
+end

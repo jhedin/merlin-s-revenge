@@ -1,0 +1,110 @@
+on UtilTestFloor
+  [  0] pushint16 10000 ......................... <10000>
+  [  3] setlocal 0 .............................. reps = 10000
+  [  5] pusharglist 0 ........................... <[:]>
+  [  7] pushproplist ............................ <[:]>
+  [  8] setlocal 1 .............................. timeS = [:]
+  [ 10] getmovieprop 172 ........................ <the milliSeconds>
+  [ 12] setlocal 2 .............................. stTime = the milliSeconds
+  [ 14] pushint8 1 .............................. <1>
+  [ 16] setlocal 3
+  [ 18] getlocal 3
+  [ 20] getlocal 0 .............................. <reps>
+  [ 22] lteq
+  [ 23] jmpifz [ 46] ............................ repeat with i = 1 to reps
+  [ 26] pushfloat32 3.5 ......................... <3.5>
+  [ 31] pusharglist 1 ........................... <3.5>
+  [ 33] extcall 94 .............................. <VarFloor(3.5)>
+  [ 35] setlocal 4 .............................. var = VarFloor(3.5)
+  [ 37] pushint8 1
+  [ 39] getlocal 3
+  [ 41] add
+  [ 42] setlocal 3
+  [ 44] endrepeat [ 18]
+  [ 46] getmovieprop 172 ........................ <the milliSeconds>
+  [ 48] setlocal 5 .............................. fiTime = the milliSeconds
+  [ 50] getlocal 1 .............................. <timeS>
+  [ 52] pushsymb 94 ............................. <#VarFloor>
+  [ 54] getlocal 5 .............................. <fiTime>
+  [ 56] getlocal 2 .............................. <stTime>
+  [ 58] sub ..................................... <fiTime - stTime>
+  [ 59] pusharglistnoret 3 ...................... <timeS, #VarFloor, fiTime - stTime>
+  [ 61] objcall 23 .............................. timeS[#VarFloor] = fiTime - stTime
+  [ 63] getmovieprop 172 ........................ <the milliSeconds>
+  [ 65] setlocal 2 .............................. stTime = the milliSeconds
+  [ 67] pushint8 1 .............................. <1>
+  [ 69] setlocal 3
+  [ 71] getlocal 3
+  [ 73] getlocal 0 .............................. <reps>
+  [ 75] lteq
+  [ 76] jmpifz [ 99] ............................ repeat with i = 1 to reps
+  [ 79] pushfloat32 3.5 ......................... <3.5>
+  [ 84] pusharglist 1 ........................... <3.5>
+  [ 86] extcall 173 ............................. <VarFloorStr(3.5)>
+  [ 88] setlocal 4 .............................. var = VarFloorStr(3.5)
+  [ 90] pushint8 1
+  [ 92] getlocal 3
+  [ 94] add
+  [ 95] setlocal 3
+  [ 97] endrepeat [ 71]
+  [ 99] getmovieprop 172 ........................ <the milliSeconds>
+  [101] setlocal 5 .............................. fiTime = the milliSeconds
+  [103] getlocal 1 .............................. <timeS>
+  [105] pushsymb 173 ............................ <#VarFloorStr>
+  [107] getlocal 5 .............................. <fiTime>
+  [109] getlocal 2 .............................. <stTime>
+  [111] sub ..................................... <fiTime - stTime>
+  [112] pusharglistnoret 3 ...................... <timeS, #VarFloorStr, fiTime - stTime>
+  [114] objcall 23 .............................. timeS[#VarFloorStr] = fiTime - stTime
+  [116] getmovieprop 172 ........................ <the milliSeconds>
+  [118] setlocal 2 .............................. stTime = the milliSeconds
+  [120] pushint8 1 .............................. <1>
+  [122] setlocal 3
+  [124] getlocal 3
+  [126] getlocal 0 .............................. <reps>
+  [128] lteq
+  [129] jmpifz [152] ............................ repeat with i = 1 to reps
+  [132] pushfloat32 3.5 ......................... <3.5>
+  [137] pusharglist 1 ........................... <3.5>
+  [139] extcall 174 ............................. <VarFloorMod(3.5)>
+  [141] setlocal 4 .............................. var = VarFloorMod(3.5)
+  [143] pushint8 1
+  [145] getlocal 3
+  [147] add
+  [148] setlocal 3
+  [150] endrepeat [124]
+  [152] getmovieprop 172 ........................ <the milliSeconds>
+  [154] setlocal 5 .............................. fiTime = the milliSeconds
+  [156] getlocal 1 .............................. <timeS>
+  [158] pushsymb 174 ............................ <#VarFloorMod>
+  [160] getlocal 5 .............................. <fiTime>
+  [162] getlocal 2 .............................. <stTime>
+  [164] sub ..................................... <fiTime - stTime>
+  [165] pusharglistnoret 3 ...................... <timeS, #VarFloorMod, fiTime - stTime>
+  [167] objcall 23 .............................. timeS[#VarFloorMod] = fiTime - stTime
+  [169] pushint8 1 .............................. <1>
+  [171] setlocal 3
+  [173] getlocal 3
+  [175] getlocal 1 .............................. <timeS>
+  [177] getobjprop 64 ........................... <timeS.count>
+  [179] lteq
+  [180] jmpifz [215] ............................ repeat with i = 1 to timeS.count
+  [183] getlocal 1 .............................. <timeS>
+  [185] getlocal 3 .............................. <i>
+  [187] pusharglist 2 ........................... <timeS, i>
+  [189] objcall 71 .............................. <timeS.getPropAt(i)>
+  [191] pushcons 0 .............................. <": ">
+  [193] getlocal 1 .............................. <timeS>
+  [195] getlocal 3 .............................. <i>
+  [197] pusharglist 2 ........................... <timeS, i>
+  [199] objcall 59 .............................. <timeS[i]>
+  [201] joinpadstr .............................. <": " && timeS[i]>
+  [202] pusharglistnoret 2 ...................... <timeS.getPropAt(i), ": " && timeS[i]>
+  [204] extcall 19 .............................. put timeS.getPropAt(i), ": " && timeS[i]
+  [206] pushint8 1
+  [208] getlocal 3
+  [210] add
+  [211] setlocal 3
+  [213] endrepeat [173]
+  [215] ret
+end

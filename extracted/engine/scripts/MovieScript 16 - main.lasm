@@ -1,0 +1,431 @@
+global g, q, r, gErrorTrace, gFrameNum, gStageSize, gMasterCast, gMoveSpeedLimit, gLoadError, g3DMode, gBounceyWalls, gBulletsCollideWithBackground, gButtonBaseColour, gButtonHiColour, gButtonPulse, gButtonShadowedColour, gCharacterEnergyRolloverOn, gCreditsPage, gCopyProtectionContent, gCopyProtectionPage, gCopyProtectionRedirectURL, gCutSceneSpeechLayer, gEnemyEnergyMasterOn, gExitArrows, gExitArrowThickness, gGameBulletLayer, gGameCompleteEvent, gGameCompleteScript, gGameCompleteSound, gGameEnergyBarLayer, gGameObjectLayer, gGameName, gGameOverScript, gGameSaveFile, gGameSpeed, gGameTextLayer, gGameView, gGlobalDisplayLayer, gGridSelectorLayer, gIntroScript, gKeySetFileName, gNavMode, gMagicLimit, gMapBoundary, gMapBoundaryLayer, gMapLayer, gMaxEnemies, gMaxFriends, gMaxNeutrals, gMenuBaseColour, gMenuHiColour, gMenuLayer, gMenuPulse, gMenuShadowedColour, gMenuTextLayer, gPaletteLayer, gPlayerHair, gPlayerLayer, gMineLayer
+
+on startMovie
+  [  0] pusharglistnoret 0 ...................... <>
+  [  2] extcall 8 ............................... clearGlobals()
+  [  4] pushzero ................................ <0>
+  [  5] setmovieprop 9 .......................... the debugPlaybackEnabled = 0
+  [  7] getmovieprop 10 ......................... <the runMode>
+  [  9] pushcons 0 .............................. <"Plugin">
+  [ 11] containsstr ............................. <the runMode contains "Plugin">
+  [ 12] jmpifz [ 55] ............................ if the runMode contains "Plugin" then
+  [ 15] pushint8 1 .............................. <1>
+  [ 17] setmovieprop 9 .......................... the debugPlaybackEnabled = 1
+  [ 19] pushcons 1 .............................. <"alert">
+  [ 21] pusharglist 1 ........................... <"alert">
+  [ 23] extcall 11 .............................. <script("alert")>
+  [ 25] setmovieprop 12 ......................... the alertHook = script("alert")
+  [ 27] getmovieprop 10 ......................... <the runMode>
+  [ 29] pushcons 2 .............................. <"Projector">
+  [ 31] containsstr ............................. <the runMode contains "Projector">
+  [ 32] pusharglistnoret 1 ...................... <the runMode contains "Projector">
+  [ 34] extcall 13 .............................. elseif(the runMode contains "Projector")
+  [ 36] pushint8 1 .............................. <1>
+  [ 38] setmovieprop 9 .......................... the debugPlaybackEnabled = 1
+  [ 40] pushcons 3 .............................. <"debug_projector">
+  [ 42] pusharglist 1 ........................... <"debug_projector">
+  [ 44] extcall 11 .............................. <script("debug_projector")>
+  [ 46] setmovieprop 12 ......................... the alertHook = script("debug_projector")
+  [ 48] pushsymb 15 ............................. <#ROOT>
+  [ 50] pusharglist 1 ........................... <[#ROOT]>
+  [ 52] pushlist ................................ <[#ROOT]>
+  [ 53] setglobal 14 ............................ gErrorTrace = [#ROOT]
+  [ 55] pushzero ................................ <0>
+  [ 56] setglobal 89 ............................ gLoadError = 0
+  [ 58] pusharglist 0 ........................... <>
+  [ 60] extcall 330 ............................. <loadScripts()>
+  [ 63] setlocal 0 .............................. errors = loadScripts()
+  [ 65] getlocal 0 .............................. <errors>
+  [ 67] jmpifz [ 78] ............................ if errors then
+  [ 70] pushint8 1 .............................. <1>
+  [ 72] setglobal 89 ............................ gLoadError = 1
+  [ 74] pusharglistnoret 0 ...................... <>
+  [ 76] extcall 90 .............................. return 
+  [ 78] pushcons 4 .............................. <"Loader">
+  [ 80] pusharglist 1 ........................... <"Loader">
+  [ 82] extcall 11 .............................. <script("Loader")>
+  [ 84] pusharglist 1 ........................... <script("Loader")>
+  [ 86] extcall 16 .............................. <new(script("Loader"))>
+  [ 88] setlocal 1 .............................. loader = new(script("Loader"))
+  [ 90] getlocal 1 .............................. <loader>
+  [ 92] pusharglistnoret 1 ...................... <loader>
+  [ 94] objcall 17 .............................. loader.loadFiles()
+  [ 96] pushzero ................................ <0>
+  [ 97] setlocal 1 .............................. loader = 0
+  [ 99] pusharglist 0 ........................... <[:]>
+  [101] pushproplist ............................ <[:]>
+  [102] setglobal 18 ............................ g = [:]
+  [104] pushcons 5 .............................. <QUOTE>
+  [106] setglobal 19 ............................ q = QUOTE
+  [108] pushcons 6 .............................. <RETURN>
+  [110] setglobal 20 ............................ r = RETURN
+  [112] getglobal 20 ............................ <r>
+  [114] pushcons 7 .............................. <"-- < start new movie > ">
+  [116] joinstr ................................. <r & "-- < start new movie > ">
+  [117] getglobal 20 ............................ <r>
+  [119] joinstr ................................. <r & "-- < start new movie > " & r>
+  [120] pusharglistnoret 1 ...................... <r & "-- < start new movie > " & r>
+  [122] extcall 21 .............................. put r & "-- < start new movie > " & r
+  [124] pushint8 1 .............................. <1>
+  [126] pusharglistnoret 1 ...................... <1>
+  [128] extcall 22 .............................. go(1)
+  [130] pushzero ................................ <0>
+  [131] setglobal 23 ............................ gFrameNum = 0
+  [133] pushint8 1 .............................. <1>
+  [135] setglobal 24 ............................ gMapLayer = 1
+  [137] pushint8 25 ............................. <25>
+  [139] setglobal 25 ............................ gMineLayer = 25
+  [141] pushint8 50 ............................. <50>
+  [143] setglobal 26 ............................ gGameObjectLayer = 50
+  [145] pushint8 75 ............................. <75>
+  [147] setglobal 27 ............................ gGameBulletLayer = 75
+  [149] pushint8 99 ............................. <99>
+  [151] setglobal 28 ............................ gPlayerLayer = 99
+  [153] pushint16 150 ........................... <150>
+  [156] setglobal 29 ............................ gMapBoundaryLayer = 150
+  [158] pushint16 170 ........................... <170>
+  [161] setglobal 30 ............................ gGameEnergyBarLayer = 170
+  [163] pushint16 180 ........................... <180>
+  [166] setglobal 31 ............................ gGameTextLayer = 180
+  [168] pushint16 190 ........................... <190>
+  [171] setglobal 32 ............................ gMenuLayer = 190
+  [173] pushint16 200 ........................... <200>
+  [176] setglobal 33 ............................ gMenuTextLayer = 200
+  [178] pushint16 210 ........................... <210>
+  [181] setglobal 34 ............................ gCutSceneSpeechLayer = 210
+  [183] pushint16 220 ........................... <220>
+  [186] setglobal 35 ............................ gGlobalDisplayLayer = 220
+  [188] pushint16 240 ........................... <240>
+  [191] setglobal 36 ............................ gPaletteLayer = 240
+  [193] pushint16 250 ........................... <250>
+  [196] setglobal 37 ............................ gGridSelectorLayer = 250
+  [198] pushsymb 39 ............................. <#none>
+  [200] setglobal 38 ............................ gMoveSpeedLimit = #none
+  [202] getmovieprop 42 ......................... <the stage>
+  [204] getchainedprop 43 ....................... <(the stage).rect>
+  [206] getobjprop 44 ........................... <(the stage).rect.width>
+  [208] getmovieprop 42 ......................... <the stage>
+  [210] getchainedprop 43 ....................... <(the stage).rect>
+  [212] getobjprop 45 ........................... <(the stage).rect.height>
+  [214] pusharglist 2 ........................... <(the stage).rect.width, (the stage).rect.height>
+  [216] extcall 41 .............................. <point((the stage).rect.width, (the stage).rect.height)>
+  [218] setglobal 40 ............................ gStageSize = point((the stage).rect.width, (the stage).rect.height)
+  [220] pusharglistnoret 0 ...................... <>
+  [222] localcall 1 ............................. defaultGameGlobals()
+  [224] pusharglistnoret 0 ...................... <>
+  [226] extcall 46 .............................. GameInitGlobals()
+  [228] pushcons 8 .............................. <"structMaster">
+  [230] pusharglist 1 ........................... <"structMaster">
+  [232] extcall 48 .............................. <member("structMaster")>
+  [234] getobjprop 49 ........................... <member("structMaster").castLibNum>
+  [236] setglobal 47 ............................ gMasterCast = member("structMaster").castLibNum
+  [238] pusharglistnoret 0 ...................... <>
+  [240] localcall 4 ............................. createObjects()
+  [242] pusharglistnoret 0 ...................... <>
+  [244] localcall 5 ............................. createMainObjects()
+  [246] pusharglistnoret 0 ...................... <>
+  [248] localcall 6 ............................. initMainObjects()
+  [250] getglobal 18 ............................ <g>
+  [252] getchainedprop 50 ....................... <g.movieMaster>
+  [254] pusharglistnoret 1 ...................... <g.movieMaster>
+  [256] objcall 51 .............................. g.movieMaster.start()
+  [258] ret
+end
+
+on defaultGameGlobals
+  [  0] pushzero ................................ <0>
+  [  1] setglobal 53 ............................ g3DMode = 0
+  [  3] pushint8 1 .............................. <1>
+  [  5] setglobal 54 ............................ gBounceyWalls = 1
+  [  7] pushint8 1 .............................. <1>
+  [  9] setglobal 55 ............................ gBulletsCollideWithBackground = 1
+  [ 11] pushint16 255 ........................... <255>
+  [ 14] pushint16 255 ........................... <255>
+  [ 17] pushzero ................................ <0>
+  [ 18] pusharglist 3 ........................... <255, 255, 0>
+  [ 20] extcall 57 .............................. <rgb(255, 255, 0)>
+  [ 22] setglobal 56 ............................ gButtonBaseColour = rgb(255, 255, 0)
+  [ 24] pushint16 255 ........................... <255>
+  [ 27] pushint16 255 ........................... <255>
+  [ 30] pushint16 255 ........................... <255>
+  [ 33] pusharglist 3 ........................... <255, 255, 255>
+  [ 35] extcall 57 .............................. <rgb(255, 255, 255)>
+  [ 37] setglobal 58 ............................ gButtonHiColour = rgb(255, 255, 255)
+  [ 39] pushzero ................................ <0>
+  [ 40] setglobal 59 ............................ gButtonPulse = 0
+  [ 42] pushint16 150 ........................... <150>
+  [ 45] pushint16 150 ........................... <150>
+  [ 48] pushint16 150 ........................... <150>
+  [ 51] pusharglist 3 ........................... <150, 150, 150>
+  [ 53] extcall 57 .............................. <rgb(150, 150, 150)>
+  [ 55] setglobal 60 ............................ gButtonShadowedColour = rgb(150, 150, 150)
+  [ 57] pushzero ................................ <0>
+  [ 58] setglobal 61 ............................ gCharacterEnergyRolloverOn = 0
+  [ 60] pushcons 9 .............................. <"mr4_credits.txt">
+  [ 62] setglobal 62 ............................ gCreditsPage = "mr4_credits.txt"
+  [ 64] pushint8 1 .............................. <1>
+  [ 66] setglobal 63 ............................ gEnemyEnergyMasterOn = 1
+  [ 68] pushzero ................................ <0>
+  [ 69] setglobal 64 ............................ gExitArrows = 0
+  [ 71] pushint8 16 ............................. <16>
+  [ 73] setglobal 65 ............................ gExitArrowThickness = 16
+  [ 75] pushsymb 67 ............................. <#mapClear>
+  [ 77] setglobal 66 ............................ gGameCompleteEvent = #mapClear
+  [ 79] pushsymb 69 ............................. <#demo007Complete>
+  [ 81] setglobal 68 ............................ gGameCompleteScript = #demo007Complete
+  [ 83] pushsymb 39 ............................. <#none>
+  [ 85] setglobal 70 ............................ gGameCompleteSound = #none
+  [ 87] pushsymb 39 ............................. <#none>
+  [ 89] setglobal 71 ............................ gGameName = #none
+  [ 91] pushsymb 39 ............................. <#none>
+  [ 93] setglobal 72 ............................ gGameOverScript = #none
+  [ 95] pushcons 10 ............................. <"mr4_saveGame.txt">
+  [ 97] setglobal 73 ............................ gGameSaveFile = "mr4_saveGame.txt"
+  [ 99] pushint8 1 .............................. <1>
+  [101] setglobal 74 ............................ gGameSpeed = 1
+  [103] pushsymb 372 ............................ <#topDown>
+  [106] setglobal 75 ............................ gGameView = #topDown
+  [108] pushcons 11 ............................. <"TMB_keySet.txt">
+  [110] setglobal 77 ............................ gKeySetFileName = "TMB_keySet.txt"
+  [112] pushzero ................................ <0>
+  [113] setglobal 78 ............................ gNavMode = 0
+  [115] pushint8 100 ............................ <100>
+  [117] setglobal 79 ............................ gMagicLimit = 100
+  [119] pushint8 16 ............................. <16>
+  [121] setglobal 80 ............................ gMaxEnemies = 16
+  [123] pushint8 9 .............................. <9>
+  [125] setglobal 81 ............................ gMaxFriends = 9
+  [127] pushint8 99 ............................. <99>
+  [129] setglobal 82 ............................ gMaxNeutrals = 99
+  [131] pushzero ................................ <0>
+  [132] setglobal 83 ............................ gMapBoundary = 0
+  [134] pushint16 255 ........................... <255>
+  [137] pushint16 255 ........................... <255>
+  [140] pushint16 255 ........................... <255>
+  [143] pusharglist 3 ........................... <255, 255, 255>
+  [145] extcall 57 .............................. <rgb(255, 255, 255)>
+  [147] setglobal 84 ............................ gMenuBaseColour = rgb(255, 255, 255)
+  [149] pushint8 100 ............................ <100>
+  [151] pushint8 100 ............................ <100>
+  [153] pushint8 100 ............................ <100>
+  [155] pusharglist 3 ........................... <100, 100, 100>
+  [157] extcall 57 .............................. <rgb(100, 100, 100)>
+  [159] setglobal 85 ............................ gMenuHiColour = rgb(100, 100, 100)
+  [161] pushint8 1 .............................. <1>
+  [163] setglobal 86 ............................ gMenuPulse = 1
+  [165] pushint16 150 ........................... <150>
+  [168] pushint16 150 ........................... <150>
+  [171] pushint16 150 ........................... <150>
+  [174] pusharglist 3 ........................... <150, 150, 150>
+  [176] extcall 57 .............................. <rgb(150, 150, 150)>
+  [178] setglobal 87 ............................ gMenuShadowedColour = rgb(150, 150, 150)
+  [180] pushint8 1 .............................. <1>
+  [182] setglobal 88 ............................ gPlayerHair = 1
+  [184] ret
+end
+
+on nextframe
+  [  0] getglobal 89 ............................ <gLoadError>
+  [  2] jmpifz [  9] ............................ if gLoadError then
+  [  5] pusharglistnoret 0 ...................... <>
+  [  7] extcall 90 .............................. return 
+  [  9] getglobal 23 ............................ <gFrameNum>
+  [ 11] pushint8 1 .............................. <1>
+  [ 13] add ..................................... <gFrameNum + 1>
+  [ 14] setglobal 23 ............................ gFrameNum = gFrameNum + 1
+  [ 16] getglobal 18 ............................ <g>
+  [ 18] getchainedprop 91 ....................... <g.updater>
+  [ 20] pusharglistnoret 1 ...................... <g.updater>
+  [ 22] objcall 92 .............................. g.updater.updatePrgs()
+  [ 24] getglobal 53 ............................ <g3DMode>
+  [ 26] jmpifz [ 37] ............................ if g3DMode then
+  [ 29] getglobal 18 ............................ <g>
+  [ 31] getchainedprop 93 ....................... <g.spriteMaster>
+  [ 33] pusharglistnoret 1 ...................... <g.spriteMaster>
+  [ 35] objcall 94 .............................. g.spriteMaster.updateSprites()
+  [ 37] pusharglistnoret 0 ...................... <>
+  [ 39] extcall 95 .............................. updateStage()
+  [ 41] ret
+end
+
+on stopMovie
+  [  0] pusharglistnoret 0 ...................... <>
+  [  2] localcall 7 ............................. stopMainObjects()
+  [  4] getglobal 20 ............................ <r>
+  [  6] pushcons 12 ............................. <"-- < end of movie > ">
+  [  8] joinstr ................................. <r & "-- < end of movie > ">
+  [  9] getglobal 20 ............................ <r>
+  [ 11] joinstr ................................. <r & "-- < end of movie > " & r>
+  [ 12] pusharglistnoret 1 ...................... <r & "-- < end of movie > " & r>
+  [ 14] extcall 21 .............................. put r & "-- < end of movie > " & r
+  [ 16] ret
+end
+
+on createObjects
+  [  0] getglobal 18 ............................ <g>
+  [  2] pushsymb 96 ............................. <#objectMaster>
+  [  4] pushcons 13 ............................. <"objectMaster">
+  [  6] pusharglist 1 ........................... <"objectMaster">
+  [  8] extcall 11 .............................. <script("objectMaster")>
+  [ 10] pusharglist 1 ........................... <script("objectMaster")>
+  [ 12] extcall 16 .............................. <new(script("objectMaster"))>
+  [ 14] pusharglistnoret 3 ...................... <g, #objectMaster, new(script("objectMaster"))>
+  [ 16] objcall 97 .............................. g[#objectMaster] = new(script("objectMaster"))
+  [ 18] getglobal 18 ............................ <g>
+  [ 20] getchainedprop 96 ....................... <g.objectMaster>
+  [ 22] pusharglistnoret 1 ...................... <g.objectMaster>
+  [ 24] objcall 98 .............................. g.objectMaster.init()
+  [ 26] getglobal 18 ............................ <g>
+  [ 28] pushsymb 91 ............................. <#updater>
+  [ 30] getglobal 18 ............................ <g>
+  [ 32] getchainedprop 96 ....................... <g.objectMaster>
+  [ 34] pushsymb 99 ............................. <#objUpdater>
+  [ 36] pusharglist 2 ........................... <g.objectMaster, #objUpdater>
+  [ 38] objcall 100 ............................. <g.objectMaster.requestObject(#objUpdater)>
+  [ 40] pusharglistnoret 3 ...................... <g, #updater, g.objectMaster.requestObject(#objUpdater)>
+  [ 42] objcall 97 .............................. g[#updater] = g.objectMaster.requestObject(#objUpdater)
+  [ 44] getglobal 18 ............................ <g>
+  [ 46] getchainedprop 91 ....................... <g.updater>
+  [ 48] pushsymb 101 ............................ <#hi>
+  [ 50] pushsymb 102 ............................ <#med>
+  [ 52] pushsymb 103 ............................ <#lo>
+  [ 54] pusharglist 3 ........................... <[#hi, #med, #lo]>
+  [ 56] pushlist ................................ <[#hi, #med, #lo]>
+  [ 57] pusharglistnoret 2 ...................... <g.updater, [#hi, #med, #lo]>
+  [ 59] objcall 98 .............................. g.updater.init([#hi, #med, #lo])
+  [ 61] ret
+end
+
+on createMainObjects
+  [  0] getglobal 47 ............................ <gMasterCast>
+  [  2] pusharglist 1 ........................... <gMasterCast>
+  [  4] extcall 104 ............................. <CastGetListNames(gMasterCast)>
+  [  6] setlocal 0 .............................. objects = CastGetListNames(gMasterCast)
+  [  8] getlocal 0 .............................. <objects>
+  [ 10] peek 0
+  [ 12] pusharglist 1
+  [ 14] extcall 105
+  [ 16] pushint8 1
+  [ 18] peek 0
+  [ 20] peek 2
+  [ 22] lteq
+  [ 23] jmpifz [ 94] ............................ repeat with obj in objects
+  [ 26] peek 2
+  [ 28] peek 1
+  [ 30] pusharglist 2
+  [ 32] extcall 106
+  [ 34] setlocal 1
+  [ 36] pushcons 14 ............................. <"g[#">
+  [ 38] getlocal 1 .............................. <obj>
+  [ 40] joinstr ................................. <"g[#" & obj>
+  [ 41] pushcons 15 ............................. <"] = new (script ">
+  [ 43] joinstr ................................. <"g[#" & obj & "] = new (script ">
+  [ 44] getglobal 19 ............................ <q>
+  [ 46] joinstr ................................. <"g[#" & obj & "] = new (script " & q>
+  [ 47] getlocal 1 .............................. <obj>
+  [ 49] joinstr ................................. <"g[#" & obj & "] = new (script " & q & obj>
+  [ 50] getglobal 19 ............................ <q>
+  [ 52] joinstr ................................. <"g[#" & obj & "] = new (script " & q & obj & q>
+  [ 53] pushcons 16 ............................. <")">
+  [ 55] joinstr ................................. <"g[#" & obj & "] = new (script " & q & obj & q & ")">
+  [ 56] setlocal 2 .............................. comm = "g[#" & obj & "] = new (script " & q & obj & q & ")"
+  [ 58] getlocal 2 .............................. <comm>
+  [ 60] pusharglistnoret 1 ...................... <comm>
+  [ 62] extcall 107 ............................. do(comm)
+  [ 64] pushcons 17 ............................. <"put g.">
+  [ 66] getlocal 1 .............................. <obj>
+  [ 68] joinstr ................................. <"put g." & obj>
+  [ 69] pushcons 18 ............................. <"&&">
+  [ 71] joinstr ................................. <"put g." & obj & "&&">
+  [ 72] getglobal 19 ............................ <q>
+  [ 74] joinstr ................................. <"put g." & obj & "&&" & q>
+  [ 75] pushcons 19 ............................. <"created">
+  [ 77] joinstr ................................. <"put g." & obj & "&&" & q & "created">
+  [ 78] getglobal 19 ............................ <q>
+  [ 80] joinstr ................................. <"put g." & obj & "&&" & q & "created" & q>
+  [ 81] setlocal 2 .............................. comm = "put g." & obj & "&&" & q & "created" & q
+  [ 83] getlocal 2 .............................. <comm>
+  [ 85] pusharglistnoret 1 ...................... <comm>
+  [ 87] extcall 107 ............................. do(comm)
+  [ 89] pushint8 1
+  [ 91] add
+  [ 92] endrepeat [ 18]
+  [ 94] pop 3
+  [ 96] ret
+end
+
+on initMainObjects
+  [  0] getglobal 47 ............................ <gMasterCast>
+  [  2] pusharglist 1 ........................... <gMasterCast>
+  [  4] extcall 104 ............................. <CastGetListNames(gMasterCast)>
+  [  6] setlocal 0 .............................. objects = CastGetListNames(gMasterCast)
+  [  8] getlocal 0 .............................. <objects>
+  [ 10] peek 0
+  [ 12] pusharglist 1
+  [ 14] extcall 105
+  [ 16] pushint8 1
+  [ 18] peek 0
+  [ 20] peek 2
+  [ 22] lteq
+  [ 23] jmpifz [ 57] ............................ repeat with obj in objects
+  [ 26] peek 2
+  [ 28] peek 1
+  [ 30] pusharglist 2
+  [ 32] extcall 106
+  [ 34] setlocal 1
+  [ 36] pushcons 20 ............................. <"g.">
+  [ 38] getlocal 1 .............................. <obj>
+  [ 40] joinstr ................................. <"g." & obj>
+  [ 41] pushcons 21 ............................. <".init()">
+  [ 43] joinstr ................................. <"g." & obj & ".init()">
+  [ 44] setlocal 2 .............................. comm = "g." & obj & ".init()"
+  [ 46] getlocal 2 .............................. <comm>
+  [ 48] pusharglistnoret 1 ...................... <comm>
+  [ 50] extcall 107 ............................. do(comm)
+  [ 52] pushint8 1
+  [ 54] add
+  [ 55] endrepeat [ 18]
+  [ 57] pop 3
+  [ 59] ret
+end
+
+on stopMainObjects
+  [  0] getglobal 47 ............................ <gMasterCast>
+  [  2] pusharglist 1 ........................... <gMasterCast>
+  [  4] extcall 111 ............................. <voidp(gMasterCast)>
+  [  6] jmpifz [ 13] ............................ if voidp(gMasterCast) then
+  [  9] pusharglistnoret 0 ...................... <>
+  [ 11] extcall 90 .............................. return 
+  [ 13] getglobal 47 ............................ <gMasterCast>
+  [ 15] pusharglist 1 ........................... <gMasterCast>
+  [ 17] extcall 104 ............................. <CastGetListNames(gMasterCast)>
+  [ 19] setlocal 0 .............................. objects = CastGetListNames(gMasterCast)
+  [ 21] getlocal 0 .............................. <objects>
+  [ 23] peek 0
+  [ 25] pusharglist 1
+  [ 27] extcall 105
+  [ 29] pushint8 1
+  [ 31] peek 0
+  [ 33] peek 2
+  [ 35] lteq
+  [ 36] jmpifz [ 70] ............................ repeat with obj in objects
+  [ 39] peek 2
+  [ 41] peek 1
+  [ 43] pusharglist 2
+  [ 45] extcall 106
+  [ 47] setlocal 1
+  [ 49] pushcons 20 ............................. <"g.">
+  [ 51] getlocal 1 .............................. <obj>
+  [ 53] joinstr ................................. <"g." & obj>
+  [ 54] pushcons 22 ............................. <".stop()">
+  [ 56] joinstr ................................. <"g." & obj & ".stop()">
+  [ 57] setlocal 2 .............................. comm = "g." & obj & ".stop()"
+  [ 59] getlocal 2 .............................. <comm>
+  [ 61] pusharglistnoret 1 ...................... <comm>
+  [ 63] extcall 107 ............................. do(comm)
+  [ 65] pushint8 1
+  [ 67] add
+  [ 68] endrepeat [ 31]
+  [ 70] pop 3
+  [ 72] ret
+end

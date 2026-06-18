@@ -1,0 +1,68 @@
+property ancestor, pParams
+
+on new me
+  [  0] pushcons 0 .............................. <"objBasic">
+  [  2] pusharglist 1 ........................... <"objBasic">
+  [  4] extcall 27 .............................. <script("objBasic")>
+  [  6] pusharglist 1 ........................... <script("objBasic")>
+  [  8] extcall 0 ............................... <new(script("objBasic"))>
+  [ 10] setprop 77 .............................. ancestor = new(script("objBasic"))
+  [ 12] pusharglist 0 ........................... <[:]>
+  [ 14] pushproplist ............................ <[:]>
+  [ 15] setprop 140 ............................. pParams = [:]
+  [ 17] getprop 140 ............................. <pParams>
+  [ 19] pushsymb 1 .............................. <#init>
+  [ 21] pusharglist 0 ........................... <[:]>
+  [ 23] pushproplist ............................ <[:]>
+  [ 24] pusharglistnoret 3 ...................... <pParams, #init, [:]>
+  [ 26] objcall 37 .............................. pParams[#init] = [:]
+  [ 28] getparam 0 .............................. <me>
+  [ 30] pusharglistnoret 1 ...................... <me>
+  [ 32] extcall 17 .............................. return me
+  [ 34] ret
+end
+
+on init me, params
+  [  0] ret
+end
+
+on getParams me, function
+  [  0] getparam 1 .............................. <function>
+  [  2] pusharglist 0 ........................... <>
+  [  4] extcall 36 .............................. <VOID>
+  [  6] eq ...................................... <function = VOID>
+  [  7] jmpifz [ 14] ............................ if function = VOID then
+  [ 10] pushsymb 1 .............................. <#init>
+  [ 12] setparam 1 .............................. function = #init
+  [ 14] getprop 140 ............................. <pParams>
+  [ 16] getparam 1 .............................. <function>
+  [ 18] pusharglist 2 ........................... <pParams, function>
+  [ 20] objcall 38 .............................. <pParams[function]>
+  [ 22] pusharglistnoret 1 ...................... <pParams[function]>
+  [ 24] extcall 17 .............................. return pParams[function]
+  [ 26] ret
+end
+
+on modifyParams me, function
+  [  0] getprop 140 ............................. <pParams>
+  [  2] getparam 1 .............................. <function>
+  [  4] pusharglist 2 ........................... <pParams, function>
+  [  6] objcall 38 .............................. <pParams[function]>
+  [  8] pusharglist 0 ........................... <>
+  [ 10] extcall 36 .............................. <VOID>
+  [ 12] eq ...................................... <pParams[function] = VOID>
+  [ 13] jmpifz [ 27] ............................ if pParams[function] = VOID then
+  [ 16] getprop 140 ............................. <pParams>
+  [ 18] getparam 1 .............................. <function>
+  [ 20] pusharglist 0 ........................... <[:]>
+  [ 22] pushproplist ............................ <[:]>
+  [ 23] pusharglistnoret 3 ...................... <pParams, function, [:]>
+  [ 25] objcall 37 .............................. pParams[function] = [:]
+  [ 27] getprop 140 ............................. <pParams>
+  [ 29] getparam 1 .............................. <function>
+  [ 31] pusharglist 2 ........................... <pParams, function>
+  [ 33] objcall 38 .............................. <pParams[function]>
+  [ 35] pusharglistnoret 1 ...................... <pParams[function]>
+  [ 37] extcall 17 .............................. return pParams[function]
+  [ 39] ret
+end

@@ -1,0 +1,258 @@
+property ancestor, pAttachObj, pAttachCounter
+
+on new me
+  [  0] pushcons 0 .............................. <"objEnemyCharacter">
+  [  2] pusharglist 1 ........................... <"objEnemyCharacter">
+  [  4] extcall 27 .............................. <script("objEnemyCharacter")>
+  [  6] pusharglist 1 ........................... <script("objEnemyCharacter")>
+  [  8] extcall 0 ............................... <new(script("objEnemyCharacter"))>
+  [ 10] setprop 77 .............................. ancestor = new(script("objEnemyCharacter"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] getchainedprop 140 ...................... <me.pParams>
+  [ 16] getobjprop 1 ............................ <me.pParams.init>
+  [ 18] setlocal 0 .............................. i = me.pParams.init
+  [ 20] getlocal 0 .............................. <i>
+  [ 22] pushsymb 1468 ........................... <#attachDuration>
+  [ 25] pushint8 120 ............................ <120>
+  [ 27] pusharglistnoret 3 ...................... <i, #attachDuration, 120>
+  [ 29] objcall 37 .............................. i[#attachDuration] = 120
+  [ 31] getparam 0 .............................. <me>
+  [ 33] pusharglistnoret 1 ...................... <me>
+  [ 35] extcall 17 .............................. return me
+  [ 37] ret
+end
+
+on init me, params
+  [  0] getprop 77 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pusharglist 0 ........................... <>
+  [ 10] extcall 120 ............................. <CounterNew()>
+  [ 12] setprop 1469 ............................ pAttachCounter = CounterNew()
+  [ 15] getprop 1469 ............................ <pAttachCounter>
+  [ 18] pushzero ................................ <0>
+  [ 19] getparam 1 .............................. <params>
+  [ 21] getobjprop 1468 ......................... <params.attachDuration>
+  [ 24] pusharglist 2 ........................... <[0, params.attachDuration]>
+  [ 26] pushlist ................................ <[0, params.attachDuration]>
+  [ 27] setobjprop 123 .......................... pAttachCounter.tim = [0, params.attachDuration]
+  [ 29] ret
+end
+
+on attachObjAttacked me
+  [  0] getprop 1470 ............................ <pAttachObj>
+  [  3] pusharglist 1 ........................... <pAttachObj>
+  [  5] objcall 760 ............................. <pAttachObj.getCharacter()>
+  [  8] setlocal 0 .............................. objChar = pAttachObj.getCharacter()
+  [ 10] getlocal 0 .............................. <objChar>
+  [ 12] peek 0 .................................. case objChar of
+  [ 14] pushsymb 1301 ........................... <#hair>
+  [ 17] eq
+  [ 18] jmpifz [ 29] ............................ (case) #hair:
+  [ 21] getprop 1470 ............................ <pAttachObj>
+  [ 24] pusharglistnoret 1 ...................... <pAttachObj>
+  [ 26] objcall 405 ............................. pAttachObj.cutOff()
+  [ 29] pop 1
+  [ 31] ret
+end
+
+on attachTo me, attachObj
+  [  0] getparam 1 .............................. <attachObj>
+  [  2] setprop 1470 ............................ pAttachObj = attachObj
+  [  5] getprop 1470 ............................ <pAttachObj>
+  [  8] getparam 0 .............................. <me>
+  [ 10] pusharglistnoret 2 ...................... <pAttachObj, me>
+  [ 12] objcall 1268 ............................ pAttachObj.registerParasite(me)
+  [ 15] getparam 0 .............................. <me>
+  [ 17] pushsymb 713 ............................ <#attach>
+  [ 20] pusharglistnoret 2 ...................... <me, #attach>
+  [ 22] objcall 76 .............................. me.goMode(#attach)
+  [ 24] ret
+end
+
+on loseEnergy me, amount
+  [  0] getprop 77 .............................. <ancestor>
+  [  2] getparam 1 .............................. <amount>
+  [  4] pusharglistnoret 2 ...................... <ancestor, amount>
+  [  6] objcall 1371 ............................ ancestor.loseEnergy(amount)
+  [  9] getparam 0 .............................. <me>
+  [ 11] getobjprop 83 ........................... <me.pmode>
+  [ 13] pushsymb 713 ............................ <#attach>
+  [ 16] eq ...................................... <me.pmode = #attach>
+  [ 17] jmpifz [ 29] ............................ if me.pmode = #attach then
+  [ 20] getparam 0 .............................. <me>
+  [ 22] pushsymb 364 ............................ <#reel_fly>
+  [ 25] pusharglistnoret 2 ...................... <me, #reel_fly>
+  [ 27] objcall 76 .............................. me.goMode(#reel_fly)
+  [ 29] ret
+end
+
+on checkCollisionsWithHair me
+  [  0] getparam 0 .............................. <me>
+  [  2] getobjprop 83 ........................... <me.pmode>
+  [  4] peek 0 .................................. case me.pmode of
+  [  6] pushsymb 713 ............................ <#attach>
+  [  9] eq
+  [ 10] jmpifz [ 19] ............................ (case) #attach:
+  [ 13] pop 1
+  [ 15] pusharglistnoret 0 ...................... <>
+  [ 17] extcall 17 .............................. return 
+  [ 19] pop 1
+  [ 21] getprop 77 .............................. <ancestor>
+  [ 23] pusharglistnoret 1 ...................... <ancestor>
+  [ 25] objcall 748 ............................. ancestor.checkCollisionsWithHair()
+  [ 28] ret
+end
+
+on getAnimSym me, sym
+  [  0] getparam 1 .............................. <sym>
+  [  2] pushsymb 22 ............................. <#none>
+  [  4] eq ...................................... <sym = #none>
+  [  5] jmpifz [ 14] ............................ if sym = #none then
+  [  8] getparam 0 .............................. <me>
+  [ 10] getobjprop 83 ........................... <me.pmode>
+  [ 12] setparam 1 .............................. sym = me.pmode
+  [ 14] getparam 1 .............................. <sym>
+  [ 16] peek 0 .................................. case sym of
+  [ 18] pushsymb 713 ............................ <#attach>
+  [ 21] eq
+  [ 22] jmpifz [ 33] ............................ (case) #attach:
+  [ 25] pushsymb 773 ............................ <#stand>
+  [ 28] setparam 1 .............................. sym = #stand
+  [ 30] jmp [ 47]
+  [ 33] peek 0
+  [ 35] pushsymb 1473 ........................... <#attackObject>
+  [ 38] eq
+  [ 39] jmpifz [ 47] ............................ (case) #attackObject:
+  [ 42] pushsymb 356 ............................ <#attack>
+  [ 45] setparam 1 .............................. sym = #attack
+  [ 47] pop 1 ................................... end case
+  [ 49] getprop 77 .............................. <ancestor>
+  [ 51] getparam 1 .............................. <sym>
+  [ 53] pusharglist 2 ........................... <ancestor, sym>
+  [ 55] objcall 803 ............................. <ancestor.getAnimSym(sym)>
+  [ 58] pusharglistnoret 1 ...................... <ancestor.getAnimSym(sym)>
+  [ 60] extcall 17 .............................. return ancestor.getAnimSym(sym)
+  [ 62] ret
+end
+
+on goMode me, newMode
+  [  0] getparam 0 .............................. <me>
+  [  2] getobjprop 83 ........................... <me.pmode>
+  [  4] peek 0 .................................. case me.pmode of
+  [  6] pushsymb 713 ............................ <#attach>
+  [  9] eq
+  [ 10] jmpifz [ 21] ............................ (case) #attach:
+  [ 13] getparam 0 .............................. <me>
+  [ 15] pushzero ................................ <0>
+  [ 16] pusharglistnoret 2 ...................... <me, 0>
+  [ 18] objcall 765 ............................. me.setKeepVect(0)
+  [ 21] pop 1
+  [ 23] getparam 1 .............................. <newMode>
+  [ 25] peek 0 .................................. case newMode of
+  [ 27] pushsymb 713 ............................ <#attach>
+  [ 30] eq
+  [ 31] jmpifz [ 64] ............................ (case) #attach:
+  [ 34] getprop 1469 ............................ <pAttachCounter>
+  [ 37] pusharglistnoret 1 ...................... <pAttachCounter>
+  [ 39] extcall 133 ............................. CounterReset(pAttachCounter)
+  [ 41] getparam 0 .............................. <me>
+  [ 43] getprop 1470 ............................ <pAttachObj>
+  [ 46] pusharglist 1 ........................... <pAttachObj>
+  [ 48] objcall 74 .............................. <pAttachObj.getLoc()>
+  [ 50] pusharglistnoret 2 ...................... <me, pAttachObj.getLoc()>
+  [ 52] objcall 766 ............................. me.setLoc(pAttachObj.getLoc())
+  [ 55] getparam 0 .............................. <me>
+  [ 57] pushint8 1 .............................. <1>
+  [ 59] pusharglistnoret 2 ...................... <me, 1>
+  [ 61] objcall 765 ............................. me.setKeepVect(1)
+  [ 64] pop 1
+  [ 66] getprop 77 .............................. <ancestor>
+  [ 68] getparam 1 .............................. <newMode>
+  [ 70] pusharglistnoret 2 ...................... <ancestor, newMode>
+  [ 72] objcall 76 .............................. ancestor.goMode(newMode)
+  [ 74] ret
+end
+
+on targetGone me
+  [  0] getprop 1470 ............................ <pAttachObj>
+  [  3] getparam 0 .............................. <me>
+  [  5] pusharglistnoret 2 ...................... <pAttachObj, me>
+  [  7] objcall 1271 ............................ pAttachObj.unregisterParasite(me)
+  [ 10] getparam 0 .............................. <me>
+  [ 12] pushsymb 362 ............................ <#look>
+  [ 15] pusharglistnoret 2 ...................... <me, #look>
+  [ 17] objcall 76 .............................. me.goMode(#look)
+  [ 19] ret
+end
+
+on update me
+  [  0] getparam 0 .............................. <me>
+  [  2] getobjprop 83 ........................... <me.pmode>
+  [  4] peek 0 .................................. case me.pmode of
+  [  6] pushsymb 713 ............................ <#attach>
+  [  9] eq
+  [ 10] jmpifz [ 39] ............................ (case) #attach:
+  [ 13] getparam 0 .............................. <me>
+  [ 15] pusharglist 1 ........................... <me>
+  [ 17] objcall 1467 ............................ <me.updateAttach()>
+  [ 20] setlocal 0 .............................. fin = me.updateAttach()
+  [ 22] getlocal 0 .............................. <fin>
+  [ 24] jmpifz [ 36] ............................ if fin then
+  [ 27] getparam 0 .............................. <me>
+  [ 29] pushsymb 1473 ........................... <#attackObject>
+  [ 32] pusharglistnoret 2 ...................... <me, #attackObject>
+  [ 34] objcall 76 .............................. me.goMode(#attackObject)
+  [ 36] jmp [ 85]
+  [ 39] peek 0
+  [ 41] pushsymb 1473 ........................... <#attackObject>
+  [ 44] eq
+  [ 45] jmpifz [ 85] ............................ (case) #attackObject:
+  [ 48] getparam 0 .............................. <me>
+  [ 50] pusharglistnoret 1 ...................... <me>
+  [ 52] objcall 1467 ............................ me.updateAttach()
+  [ 55] getparam 0 .............................. <me>
+  [ 57] pusharglist 1 ........................... <me>
+  [ 59] objcall 353 ............................. <me.updateAttack()>
+  [ 62] setlocal 0 .............................. fin = me.updateAttack()
+  [ 64] getlocal 0 .............................. <fin>
+  [ 66] jmpifz [ 85] ............................ if fin then
+  [ 69] getparam 0 .............................. <me>
+  [ 71] pusharglistnoret 1 ...................... <me>
+  [ 73] objcall 1466 ............................ me.attachObjAttacked()
+  [ 76] getparam 0 .............................. <me>
+  [ 78] pushsymb 773 ............................ <#stand>
+  [ 81] pusharglistnoret 2 ...................... <me, #stand>
+  [ 83] objcall 76 .............................. me.goMode(#stand)
+  [ 85] pop 1 ................................... end case
+  [ 87] getprop 77 .............................. <ancestor>
+  [ 89] pusharglistnoret 1 ...................... <ancestor>
+  [ 91] objcall 332 ............................. ancestor.update()
+  [ 94] ret
+end
+
+on updateAttach me
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. fin = 0
+  [  3] getprop 1469 ............................ <pAttachCounter>
+  [  6] getobjprop 130 .......................... <pAttachCounter.fin>
+  [  8] jmpifz [ 15] ............................ if pAttachCounter.fin then
+  [ 11] pushint8 1 .............................. <1>
+  [ 13] setlocal 0 .............................. fin = 1
+  [ 15] getprop 1469 ............................ <pAttachCounter>
+  [ 18] pusharglistnoret 1 ...................... <pAttachCounter>
+  [ 20] extcall 132 ............................. counter(pAttachCounter)
+  [ 22] getprop 1470 ............................ <pAttachObj>
+  [ 25] pusharglist 1 ........................... <pAttachObj>
+  [ 27] objcall 74 .............................. <pAttachObj.getLoc()>
+  [ 29] setlocal 1 .............................. objLoc = pAttachObj.getLoc()
+  [ 31] getparam 0 .............................. <me>
+  [ 33] getlocal 1 .............................. <objLoc>
+  [ 35] pusharglistnoret 2 ...................... <me, objLoc>
+  [ 37] objcall 763 ............................. me.moveLoc(objLoc)
+  [ 40] getlocal 0 .............................. <fin>
+  [ 42] pusharglistnoret 1 ...................... <fin>
+  [ 44] extcall 17 .............................. return fin
+  [ 46] ret
+end

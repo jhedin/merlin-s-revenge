@@ -1,0 +1,100 @@
+on CallPayloadFunction payloadFunctions, nObj, collisionVect, attackingObj, owner
+  [  0] getparam 0 .............................. <payloadFunctions>
+  [  2] pushsymb 16 ............................. <#list>
+  [  4] pusharglist 2 ........................... <payloadFunctions, #list>
+  [  6] extcall 15 .............................. <ilk(payloadFunctions, #list)>
+  [  8] jmpifz [114] ............................ if ilk(payloadFunctions, #list) then / else
+  [ 11] getparam 0 .............................. <payloadFunctions>
+  [ 13] peek 0
+  [ 15] pusharglist 1
+  [ 17] extcall 17
+  [ 19] pushint8 1
+  [ 21] peek 0
+  [ 23] peek 2
+  [ 25] lteq
+  [ 26] jmpifz [109] ............................ repeat with payLoadFunction in payloadFunctions
+  [ 29] peek 2
+  [ 31] peek 1
+  [ 33] pusharglist 2
+  [ 35] extcall 18
+  [ 37] setlocal 0
+  [ 39] getlocal 0 .............................. <payLoadFunction>
+  [ 41] peek 0 .................................. case payLoadFunction of
+  [ 43] pushsymb 19 ............................. <#armyTeleportOut>
+  [ 45] nteq
+  [ 46] jmpifz [ 73] ............................ (case) #armyTeleportOut, ...
+  [ 49] peek 0
+  [ 51] pushsymb 20 ............................. <#takeHeal>
+  [ 53] nteq
+  [ 54] jmpifz [ 73] ............................ (case) ..., #takeHeal, ...
+  [ 57] peek 0
+  [ 59] pushsymb 21 ............................. <#takeHit>
+  [ 61] nteq
+  [ 62] jmpifz [ 73] ............................ (case) ..., #takeHit, ...
+  [ 65] peek 0
+  [ 67] pushsymb 22 ............................. <#takeFreeze>
+  [ 69] eq
+  [ 70] jmpifz [ 90] ............................ (case) ..., #takeFreeze:
+  [ 73] getlocal 0 .............................. <payLoadFunction>
+  [ 75] getparam 1 .............................. <nObj>
+  [ 77] getparam 2 .............................. <collisionVect>
+  [ 79] getparam 3 .............................. <attackingObj>
+  [ 81] getparam 4 .............................. <owner>
+  [ 83] pusharglistnoret 5 ...................... <payLoadFunction, nObj, collisionVect, attackingObj, owner>
+  [ 85] extcall 23 .............................. call(payLoadFunction, nObj, collisionVect, attackingObj, owner)
+  [ 87] jmp [102]
+  [ 90] peek 0
+  [ 92] pushsymb 24 ............................. <#none>
+  [ 94] eq
+  [ 95] jmpifz [102] ............................ (case) #none:
+  [ 98] pusharglistnoret 0 ...................... <>
+  [100] extcall 25 .............................. nothing()
+  [102] pop 1 ................................... end case
+  [104] pushint8 1
+  [106] add
+  [107] endrepeat [ 21]
+  [109] pop 3
+  [111] jmp [197]
+  [114] getparam 0 .............................. <payloadFunctions>
+  [116] peek 0 .................................. case payloadFunctions of
+  [118] pushsymb 19 ............................. <#armyTeleportOut>
+  [120] nteq
+  [121] jmpifz [148] ............................ (case) #armyTeleportOut, ...
+  [124] peek 0
+  [126] pushsymb 20 ............................. <#takeHeal>
+  [128] nteq
+  [129] jmpifz [148] ............................ (case) ..., #takeHeal, ...
+  [132] peek 0
+  [134] pushsymb 21 ............................. <#takeHit>
+  [136] nteq
+  [137] jmpifz [148] ............................ (case) ..., #takeHit, ...
+  [140] peek 0
+  [142] pushsymb 22 ............................. <#takeFreeze>
+  [144] eq
+  [145] jmpifz [165] ............................ (case) ..., #takeFreeze:
+  [148] getparam 0 .............................. <payloadFunctions>
+  [150] getparam 1 .............................. <nObj>
+  [152] getparam 2 .............................. <collisionVect>
+  [154] getparam 3 .............................. <attackingObj>
+  [156] getparam 4 .............................. <owner>
+  [158] pusharglistnoret 5 ...................... <payloadFunctions, nObj, collisionVect, attackingObj, owner>
+  [160] extcall 23 .............................. call(payloadFunctions, nObj, collisionVect, attackingObj, owner)
+  [162] jmp [195]
+  [165] peek 0
+  [167] pushsymb 24 ............................. <#none>
+  [169] nteq
+  [170] jmpifz [191] ............................ (case) #none, ...
+  [173] peek 0
+  [175] pushsymb 26 ............................. <#void>
+  [177] nteq
+  [178] jmpifz [191] ............................ (case) ..., #void, ...
+  [181] peek 0
+  [183] pusharglist 0 ........................... <>
+  [185] extcall 26 .............................. <VOID>
+  [187] eq
+  [188] jmpifz [195] ............................ (case) ..., VOID:
+  [191] pusharglistnoret 0 ...................... <>
+  [193] extcall 25 .............................. nothing()
+  [195] pop 1 ................................... end case
+  [197] ret
+end

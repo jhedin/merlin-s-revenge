@@ -1,0 +1,159 @@
+property ancestor, pRotator, pRotationSpeed
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on init me, params
+  [  0] pushsymb 49 ............................. <#none>
+  [  2] setprop 1186 ............................ pRotator = #none
+  [  5] getparam 1 .............................. <params>
+  [  7] getobjprop 1053 ......................... <params.rotationSpeed>
+  [ 10] setprop 1187 ............................ pRotationSpeed = params.rotationSpeed
+  [ 13] getprop 33 .............................. <ancestor>
+  [ 15] getparam 1 .............................. <params>
+  [ 17] pusharglistnoret 2 ...................... <ancestor, params>
+  [ 19] objcall 1 ............................... ancestor.init(params)
+  [ 21] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getlocal 0 .............................. <i>
+  [ 12] pushsymb 1053 ........................... <#rotationSpeed>
+  [ 15] pushint8 20 ............................. <20>
+  [ 17] pusharglistnoret 3 ...................... <i, #rotationSpeed, 20>
+  [ 19] objcall 48 .............................. i[#rotationSpeed] = 20
+  [ 21] getprop 33 .............................. <ancestor>
+  [ 23] pusharglistnoret 1 ...................... <ancestor>
+  [ 25] objcall 2 ............................... ancestor.addModParams()
+  [ 27] ret
+end
+
+on finish me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 1182 ............................ me.finishRotator()
+  [  7] getprop 33 .............................. <ancestor>
+  [  9] pusharglistnoret 1 ...................... <ancestor>
+  [ 11] objcall 3 ............................... ancestor.finish()
+  [ 13] ret
+end
+
+on acquireRotator me
+  [  0] getprop 1186 ............................ <pRotator>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] eq ...................................... <pRotator = #none>
+  [  6] jmpifz [ 23] ............................ if pRotator = #none then
+  [  9] getglobal 40 ............................ <g>
+  [ 11] getchainedprop 41 ....................... <g.objectMaster>
+  [ 13] pushsymb 1188 ........................... <#objTransRotate>
+  [ 16] pusharglist 2 ........................... <g.objectMaster, #objTransRotate>
+  [ 18] objcall 43 .............................. <g.objectMaster.requestObject(#objTransRotate)>
+  [ 20] setprop 1186 ............................ pRotator = g.objectMaster.requestObject(#objTransRotate)
+  [ 23] ret
+end
+
+on finishRotator me
+  [  0] getprop 1186 ............................ <pRotator>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] nteq .................................... <pRotator <> #none>
+  [  6] jmpifz [ 21] ............................ if pRotator <> #none then
+  [  9] getprop 1186 ............................ <pRotator>
+  [ 12] pusharglistnoret 1 ...................... <pRotator>
+  [ 14] objcall 3 ............................... pRotator.finish()
+  [ 16] pushsymb 49 ............................. <#none>
+  [ 18] setprop 1186 ............................ pRotator = #none
+  [ 21] ret
+end
+
+on cancelRotator me
+  [  0] getprop 1186 ............................ <pRotator>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] nteq .................................... <pRotator <> #none>
+  [  6] jmpifz [ 22] ............................ if pRotator <> #none then
+  [  9] getprop 1186 ............................ <pRotator>
+  [ 12] pusharglistnoret 1 ...................... <pRotator>
+  [ 14] objcall 467 ............................. pRotator.cancel()
+  [ 17] pushsymb 49 ............................. <#none>
+  [ 19] setprop 1186 ............................ pRotator = #none
+  [ 22] ret
+end
+
+on paws me
+  [  0] getprop 1186 ............................ <pRotator>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] nteq .................................... <pRotator <> #none>
+  [  6] jmpifz [ 17] ............................ if pRotator <> #none then
+  [  9] getprop 1186 ............................ <pRotator>
+  [ 12] pusharglistnoret 1 ...................... <pRotator>
+  [ 14] objcall 452 ............................. pRotator.paws()
+  [ 17] getprop 33 .............................. <ancestor>
+  [ 19] pusharglistnoret 1 ...................... <ancestor>
+  [ 21] objcall 452 ............................. ancestor.paws()
+  [ 24] ret
+end
+
+on startRotator me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 1181 ............................ me.acquireRotator()
+  [  7] getprop 1186 ............................ <pRotator>
+  [ 10] pushsymb 1 .............................. <#init>
+  [ 12] pusharglist 2 ........................... <pRotator, #init>
+  [ 14] objcall 230 ............................. <pRotator.getParams(#init)>
+  [ 16] setlocal 0 .............................. params = pRotator.getParams(#init)
+  [ 18] getlocal 0 .............................. <params>
+  [ 20] getparam 0 .............................. <me>
+  [ 22] getchainedprop 57 ....................... <me.id>
+  [ 24] getobjprop 58 ........................... <me.id.bigMe>
+  [ 26] setobjprop 474 .......................... params.callingPrg = me.id.bigMe
+  [ 29] getlocal 0 .............................. <params>
+  [ 31] getprop 1187 ............................ <pRotationSpeed>
+  [ 34] setobjprop 215 .......................... params.speed = pRotationSpeed
+  [ 36] getlocal 0 .............................. <params>
+  [ 38] getparam 0 .............................. <me>
+  [ 40] pusharglist 1 ........................... <me>
+  [ 42] objcall 97 .............................. <me.getSprite()>
+  [ 44] setobjprop 267 .......................... params.spr = me.getSprite()
+  [ 47] getprop 1186 ............................ <pRotator>
+  [ 50] getlocal 0 .............................. <params>
+  [ 52] pusharglistnoret 2 ...................... <pRotator, params>
+  [ 54] objcall 1 ............................... pRotator.init(params)
+  [ 56] getprop 1186 ............................ <pRotator>
+  [ 59] pusharglistnoret 1 ...................... <pRotator>
+  [ 61] objcall 692 ............................. pRotator.calcStart()
+  [ 64] ret
+end
+
+on transformFin me
+  [  0] ret
+end
+
+on unpaws me
+  [  0] getprop 1186 ............................ <pRotator>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] nteq .................................... <pRotator <> #none>
+  [  6] jmpifz [ 17] ............................ if pRotator <> #none then
+  [  9] getprop 1186 ............................ <pRotator>
+  [ 12] pusharglistnoret 1 ...................... <pRotator>
+  [ 14] objcall 459 ............................. pRotator.unpaws()
+  [ 17] getprop 33 .............................. <ancestor>
+  [ 19] pusharglistnoret 1 ...................... <ancestor>
+  [ 21] objcall 452 ............................. ancestor.paws()
+  [ 24] ret
+end

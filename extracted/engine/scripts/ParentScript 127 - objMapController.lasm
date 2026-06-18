@@ -1,0 +1,108 @@
+property ancestor, pTileSets
+global g, gMapLayer
+
+on new me
+  [  0] pushcons 0 .............................. <"objController">
+  [  2] pusharglist 1 ........................... <"objController">
+  [  4] extcall 34 .............................. <script("objController")>
+  [  6] pusharglist 1 ........................... <script("objController")>
+  [  8] extcall 0 ............................... <new(script("objController"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objController"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] ret
+end
+
+on deactivateObjects me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 2379 ............................ me.finishObjects()
+  [  7] ret
+end
+
+on newObject me, defMember, location
+  [  0] getparam 1 .............................. <defMember>
+  [  2] getobjprop 44 ........................... <defMember.name>
+  [  4] setlocal 0 .............................. thename = defMember.name
+  [  6] getparam 0 .............................. <me>
+  [  8] getparam 1 .............................. <defMember>
+  [ 10] getparam 2 .............................. <location>
+  [ 12] getlocal 0 .............................. <thename>
+  [ 14] pusharglist 4 ........................... <me, defMember, location, thename>
+  [ 16] objcall 3143 ............................ <me.makeNewObject(defMember, location, thename)>
+  [ 19] setlocal 1 .............................. newmap = me.makeNewObject(defMember, location, thename)
+  [ 21] getlocal 1 .............................. <newmap>
+  [ 23] pusharglistnoret 1 ...................... <newmap>
+  [ 25] objcall 2994 ............................ newmap.goActivateMode()
+  [ 28] getlocal 1 .............................. <newmap>
+  [ 30] pusharglistnoret 1 ...................... <newmap>
+  [ 32] objcall 3002 ............................ newmap.onscreen()
+  [ 35] getlocal 1 .............................. <newmap>
+  [ 37] pusharglistnoret 1 ...................... <newmap>
+  [ 39] extcall 35 .............................. return newmap
+  [ 41] ret
+end
+
+on makeNewObject me, defMember, location, thename
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 2385 ........................... <#pObjects>
+  [  5] pusharglist 2 ........................... <me, #pObjects>
+  [  7] objcall 257 ............................. <me.pObjects.count>
+  [ 10] setlocal 0 .............................. numMaps = me.pObjects.count
+  [ 12] getglobal 40 ............................ <g>
+  [ 14] getchainedprop 41 ....................... <g.objectMaster>
+  [ 16] pushsymb 3145 ........................... <#objMap>
+  [ 19] pusharglist 2 ........................... <g.objectMaster, #objMap>
+  [ 21] objcall 43 .............................. <g.objectMaster.requestObject(#objMap)>
+  [ 23] setlocal 1 .............................. nMap = g.objectMaster.requestObject(#objMap)
+  [ 25] getlocal 1 .............................. <nMap>
+  [ 27] pushsymb 1 .............................. <#init>
+  [ 29] pusharglist 2 ........................... <nMap, #init>
+  [ 31] objcall 230 ............................. <nMap.getParams(#init)>
+  [ 33] setlocal 2 .............................. params = nMap.getParams(#init)
+  [ 35] getlocal 2 .............................. <params>
+  [ 37] getparam 3 .............................. <thename>
+  [ 39] setobjprop 44 ........................... params.name = thename
+  [ 41] getlocal 2 .............................. <params>
+  [ 43] getparam 1 .............................. <defMember>
+  [ 45] getobjprop 670 .......................... <defMember.text>
+  [ 48] setobjprop 3015 ......................... params.definitionTxt = defMember.text
+  [ 51] getlocal 2 .............................. <params>
+  [ 53] getparam 0 .............................. <me>
+  [ 55] pushsymb 2385 ........................... <#pObjects>
+  [ 58] pusharglist 2 ........................... <me, #pObjects>
+  [ 60] objcall 257 ............................. <me.pObjects.count>
+  [ 63] getglobal 3016 .......................... <gMapLayer>
+  [ 66] add ..................................... <me.pObjects.count + gMapLayer>
+  [ 67] setobjprop 1352 ......................... params.layer = me.pObjects.count + gMapLayer
+  [ 70] getlocal 2 .............................. <params>
+  [ 72] getparam 2 .............................. <location>
+  [ 74] setobjprop 1662 ......................... params.location = location
+  [ 77] getprop 33 .............................. <ancestor>
+  [ 79] getlocal 2 .............................. <params>
+  [ 81] pusharglist 2 ........................... <ancestor, params>
+  [ 83] objcall 2381 ............................ <ancestor.newObject(params)>
+  [ 86] setlocal 2 .............................. params = ancestor.newObject(params)
+  [ 88] getlocal 1 .............................. <nMap>
+  [ 90] getlocal 2 .............................. <params>
+  [ 92] pusharglistnoret 2 ...................... <nMap, params>
+  [ 94] objcall 1 ............................... nMap.init(params)
+  [ 96] getparam 0 .............................. <me>
+  [ 98] getchainedprop 2385 ..................... <me.pObjects>
+  [101] getlocal 1 .............................. <nMap>
+  [103] pusharglistnoret 2 ...................... <me.pObjects, nMap>
+  [105] objcall 256 ............................. me.pObjects.append(nMap)
+  [108] getlocal 1 .............................. <nMap>
+  [110] pusharglistnoret 1 ...................... <nMap>
+  [112] extcall 35 .............................. return nMap
+  [114] ret
+end

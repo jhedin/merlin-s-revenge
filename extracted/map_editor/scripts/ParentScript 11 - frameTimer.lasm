@@ -1,0 +1,221 @@
+property pFrameRate, pFrameLength, pLastTime, pOutput, pOutputOn, pTimeSample, pTimeSampleLength, pMaxTime, pMaxTimeCount
+global g
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 12 .............................. return me
+  [  6] ret
+end
+
+on init me
+  [  0] pushint8 30 ............................. <30>
+  [  2] setprop 472 ............................. pFrameRate = 30
+  [  5] pushint16 1000 .......................... <1000>
+  [  8] getprop 472 ............................. <pFrameRate>
+  [ 11] div ..................................... <1000 / pFrameRate>
+  [ 12] setprop 473 ............................. pFrameLength = 1000 / pFrameRate
+  [ 15] pushint8 5 .............................. <5>
+  [ 17] setprop 474 ............................. pTimeSampleLength = 5
+  [ 20] pusharglist 0 ........................... <>
+  [ 22] extcall 476 ............................. <CounterNew()>
+  [ 25] setprop 475 ............................. pMaxTimeCount = CounterNew()
+  [ 28] getprop 475 ............................. <pMaxTimeCount>
+  [ 31] pushsymb 477 ............................ <#tim>
+  [ 34] pushint8 2 .............................. <2>
+  [ 36] pushint16 600 ........................... <600>
+  [ 39] pusharglistnoret 4 ...................... <pMaxTimeCount, #tim, 2, 600>
+  [ 41] objcall 166 ............................. pMaxTimeCount.tim[2] = 600
+  [ 43] pushzero ................................ <0>
+  [ 44] setprop 478 ............................. pOutputOn = 0
+  [ 47] ret
+end
+
+on start me
+  [  0] getprop 478 ............................. <pOutputOn>
+  [  3] jmpifz [ 20] ............................ if pOutputOn then
+  [  6] getglobal 21 ............................ <g>
+  [  8] getchainedprop 213 ...................... <g.objectMaster>
+  [ 10] pushsymb 480 ............................ <#objOutput>
+  [ 13] pusharglist 2 ........................... <g.objectMaster, #objOutput>
+  [ 15] objcall 214 ............................. <g.objectMaster.requestObject(#objOutput)>
+  [ 17] setprop 479 ............................. pOutput = g.objectMaster.requestObject(#objOutput)
+  [ 20] getmovieprop 482 ........................ <the milliSeconds>
+  [ 23] setprop 481 ............................. pLastTime = the milliSeconds
+  [ 26] pushzero ................................ <0>
+  [ 27] setprop 483 ............................. pMaxTime = 0
+  [ 30] pusharglist 0 ........................... <[]>
+  [ 32] pushlist ................................ <[]>
+  [ 33] setprop 484 ............................. pTimeSample = []
+  [ 36] getglobal 21 ............................ <g>
+  [ 38] getchainedprop 284 ...................... <g.updater>
+  [ 41] getparam 0 .............................. <me>
+  [ 43] pushsymb 285 ............................ <#hi>
+  [ 46] pusharglistnoret 3 ...................... <g.updater, me, #hi>
+  [ 48] objcall 286 ............................. g.updater.addPrg(me, #hi)
+  [ 51] ret
+end
+
+on update me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 469 ............................. <me.getFrameTime()>
+  [  7] setlocal 0 .............................. frameTime = me.getFrameTime()
+  [  9] getparam 0 .............................. <me>
+  [ 11] getlocal 0 .............................. <frameTime>
+  [ 13] pusharglistnoret 2 ...................... <me, frameTime>
+  [ 15] objcall 467 ............................. me.addFrameTime(frameTime)
+  [ 18] getparam 0 .............................. <me>
+  [ 20] pusharglist 1 ........................... <me>
+  [ 22] objcall 468 ............................. <me.getAverageFrameTime()>
+  [ 25] setlocal 1 .............................. currTime = me.getAverageFrameTime()
+  [ 27] getparam 0 .............................. <me>
+  [ 29] getlocal 1 .............................. <currTime>
+  [ 31] pusharglist 2 ........................... <me, currTime>
+  [ 33] objcall 470 ............................. <me.updateMaxTime(currTime)>
+  [ 36] setlocal 2 .............................. maxTime = me.updateMaxTime(currTime)
+  [ 38] pushcons 0 .............................. <"frameTime: ">
+  [ 40] getlocal 1 .............................. <currTime>
+  [ 42] joinstr ................................. <"frameTime: " & currTime>
+  [ 43] pushcons 1 .............................. <"   maxTime: ">
+  [ 45] joinstr ................................. <"frameTime: " & currTime & "   maxTime: ">
+  [ 46] getlocal 2 .............................. <maxTime>
+  [ 48] joinstr ................................. <"frameTime: " & currTime & "   maxTime: " & maxTime>
+  [ 49] setlocal 3 .............................. msg = "frameTime: " & currTime & "   maxTime: " & maxTime
+  [ 51] getlocal 0 .............................. <frameTime>
+  [ 53] getprop 473 ............................. <pFrameLength>
+  [ 56] lt ...................................... <frameTime < pFrameLength>
+  [ 57] jmpifz [ 69] ............................ if frameTime < pFrameLength then
+  [ 60] getparam 0 .............................. <me>
+  [ 62] getlocal 0 .............................. <frameTime>
+  [ 64] pusharglistnoret 2 ...................... <me, frameTime>
+  [ 66] objcall 471 ............................. me.waitFrame(frameTime)
+  [ 69] getprop 478 ............................. <pOutputOn>
+  [ 72] jmpifz [ 85] ............................ if pOutputOn then
+  [ 75] getprop 479 ............................. <pOutput>
+  [ 78] getlocal 3 .............................. <msg>
+  [ 80] pusharglistnoret 2 ...................... <pOutput, msg>
+  [ 82] objcall 485 ............................. pOutput.msg(msg)
+  [ 85] ret
+end
+
+on addFrameTime me, frameTime
+  [  0] getprop 484 ............................. <pTimeSample>
+  [  3] getparam 1 .............................. <frameTime>
+  [  5] pusharglistnoret 2 ...................... <pTimeSample, frameTime>
+  [  7] objcall 38 .............................. pTimeSample.append(frameTime)
+  [  9] getprop 484 ............................. <pTimeSample>
+  [ 12] getobjprop 33 ........................... <pTimeSample.count>
+  [ 14] setlocal 0 .............................. numSamples = pTimeSample.count
+  [ 16] getlocal 0 .............................. <numSamples>
+  [ 18] getprop 474 ............................. <pTimeSampleLength>
+  [ 21] gt ...................................... <numSamples > pTimeSampleLength>
+  [ 22] jmpifz [ 35] ............................ if numSamples > pTimeSampleLength then
+  [ 25] getprop 484 ............................. <pTimeSample>
+  [ 28] pushint8 1 .............................. <1>
+  [ 30] pusharglistnoret 2 ...................... <pTimeSample, 1>
+  [ 32] objcall 489 ............................. pTimeSample.deleteAt(1)
+  [ 35] ret
+end
+
+on getAverageFrameTime me
+  [  0] getprop 484 ............................. <pTimeSample>
+  [  3] getobjprop 33 ........................... <pTimeSample.count>
+  [  5] setlocal 0 .............................. numSamples = pTimeSample.count
+  [  7] pushzero ................................ <0>
+  [  8] setlocal 1 .............................. total = 0
+  [ 10] getprop 484 ............................. <pTimeSample>
+  [ 13] peek 0
+  [ 15] pusharglist 1
+  [ 17] extcall 33
+  [ 19] pushint8 1
+  [ 21] peek 0
+  [ 23] peek 2
+  [ 25] lteq
+  [ 26] jmpifz [ 51] ............................ repeat with sample in pTimeSample
+  [ 29] peek 2
+  [ 31] peek 1
+  [ 33] pusharglist 2
+  [ 35] extcall 34
+  [ 37] setlocal 2
+  [ 39] getlocal 1 .............................. <total>
+  [ 41] getlocal 2 .............................. <sample>
+  [ 43] add ..................................... <total + sample>
+  [ 44] setlocal 1 .............................. total = total + sample
+  [ 46] pushint8 1
+  [ 48] add
+  [ 49] endrepeat [ 21]
+  [ 51] pop 3
+  [ 53] getlocal 1 .............................. <total>
+  [ 55] getlocal 0 .............................. <numSamples>
+  [ 57] div ..................................... <total / numSamples>
+  [ 58] setlocal 3 .............................. average = total / numSamples
+  [ 60] getlocal 3 .............................. <average>
+  [ 62] pusharglistnoret 1 ...................... <average>
+  [ 64] extcall 12 .............................. return average
+  [ 66] ret
+end
+
+on getFrameTime me
+  [  0] getmovieprop 482 ........................ <the milliSeconds>
+  [  3] setlocal 0 .............................. currTime = the milliSeconds
+  [  5] getlocal 0 .............................. <currTime>
+  [  7] getprop 481 ............................. <pLastTime>
+  [ 10] sub ..................................... <currTime - pLastTime>
+  [ 11] setlocal 1 .............................. frameTime = currTime - pLastTime
+  [ 13] getlocal 0 .............................. <currTime>
+  [ 15] setprop 481 ............................. pLastTime = currTime
+  [ 18] getlocal 1 .............................. <frameTime>
+  [ 20] pusharglistnoret 1 ...................... <frameTime>
+  [ 22] extcall 12 .............................. return frameTime
+  [ 24] ret
+end
+
+on updateMaxTime me, currTime
+  [  0] getprop 475 ............................. <pMaxTimeCount>
+  [  3] pusharglistnoret 1 ...................... <pMaxTimeCount>
+  [  5] extcall 494 ............................. counter(pMaxTimeCount)
+  [  8] getprop 475 ............................. <pMaxTimeCount>
+  [ 11] getobjprop 495 .......................... <pMaxTimeCount.fin>
+  [ 14] jmpifz [ 22] ............................ if pMaxTimeCount.fin then
+  [ 17] getparam 1 .............................. <currTime>
+  [ 19] setprop 483 ............................. pMaxTime = currTime
+  [ 22] getparam 1 .............................. <currTime>
+  [ 24] getprop 483 ............................. <pMaxTime>
+  [ 27] gt ...................................... <currTime > pMaxTime>
+  [ 28] jmpifz [ 36] ............................ if currTime > pMaxTime then
+  [ 31] getparam 1 .............................. <currTime>
+  [ 33] setprop 483 ............................. pMaxTime = currTime
+  [ 36] getprop 483 ............................. <pMaxTime>
+  [ 39] pusharglistnoret 1 ...................... <pMaxTime>
+  [ 41] extcall 12 .............................. return pMaxTime
+  [ 43] ret
+end
+
+on waitFrame me, frameTime
+  [  0] getprop 473 ............................. <pFrameLength>
+  [  3] getparam 1 .............................. <frameTime>
+  [  5] sub ..................................... <pFrameLength - frameTime>
+  [  6] setlocal 0 .............................. extra = pFrameLength - frameTime
+  [  8] getmovieprop 482 ........................ <the milliSeconds>
+  [ 11] getlocal 0 .............................. <extra>
+  [ 13] add ..................................... <the milliSeconds + extra>
+  [ 14] setlocal 1 .............................. nFrameSecs = the milliSeconds + extra
+  [ 16] getmovieprop 482 ........................ <the milliSeconds>
+  [ 19] getlocal 1 .............................. <nFrameSecs>
+  [ 21] lt ...................................... <the milliSeconds < nFrameSecs>
+  [ 22] jmpifz [ 27] ............................ repeat while the milliSeconds < nFrameSecs
+  [ 25] endrepeat [ 16]
+  [ 27] getmovieprop 482 ........................ <the milliSeconds>
+  [ 30] setprop 481 ............................. pLastTime = the milliSeconds
+  [ 33] ret
+end
+
+on stop me
+  [  0] getglobal 21 ............................ <g>
+  [  2] getchainedprop 284 ...................... <g.updater>
+  [  5] getparam 0 .............................. <me>
+  [  7] pusharglistnoret 2 ...................... <g.updater, me>
+  [  9] objcall 498 ............................. g.updater.removePrg(me)
+  [ 12] ret
+end

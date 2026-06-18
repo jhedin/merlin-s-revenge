@@ -1,0 +1,1035 @@
+property ancestor, pAutoTurn, pBasicTimePerLine, pCaller, pLightsDownFunction, pLightsUpFunction, pPlayers, pTheScript, pTimeBetweenLines, pTimePerLetter, pWaitingForPlayers, pWingsLoc
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"objParams">
+  [  2] pusharglist 1 ........................... <"objParams">
+  [  4] extcall 34 .............................. <script("objParams")>
+  [  6] pusharglist 1 ........................... <script("objParams")>
+  [  8] extcall 0 ............................... <new(script("objParams"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objParams"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 3833 ........................... <#autoTurn>
+  [ 27] pushint8 1 .............................. <1>
+  [ 29] pusharglistnoret 3 ...................... <i, #autoTurn, 1>
+  [ 31] objcall 48 .............................. i[#autoTurn] = 1
+  [ 33] getlocal 0 .............................. <i>
+  [ 35] pushsymb 3834 ........................... <#basicTimePerLine>
+  [ 38] pushint8 50 ............................. <50>
+  [ 40] pusharglistnoret 3 ...................... <i, #basicTimePerLine, 50>
+  [ 42] objcall 48 .............................. i[#basicTimePerLine] = 50
+  [ 44] getlocal 0 .............................. <i>
+  [ 46] pushsymb 1579 ........................... <#caller>
+  [ 49] pushsymb 49 ............................. <#none>
+  [ 51] pusharglistnoret 3 ...................... <i, #caller, #none>
+  [ 53] objcall 48 .............................. i[#caller] = #none
+  [ 55] getlocal 0 .............................. <i>
+  [ 57] pushsymb 3835 ........................... <#theScript>
+  [ 60] pushsymb 49 ............................. <#none>
+  [ 62] pusharglistnoret 3 ...................... <i, #theScript, #none>
+  [ 64] objcall 48 .............................. i[#theScript] = #none
+  [ 66] getlocal 0 .............................. <i>
+  [ 68] pushsymb 3836 ........................... <#timePerLetter>
+  [ 71] pushcons 1 .............................. <1.39999999999999991>
+  [ 73] pusharglistnoret 3 ...................... <i, #timePerLetter, 1.39999999999999991>
+  [ 75] objcall 48 .............................. i[#timePerLetter] = 1.39999999999999991
+  [ 77] getlocal 0 .............................. <i>
+  [ 79] pushsymb 3837 ........................... <#timeBetweenLines>
+  [ 82] pushint8 12 ............................. <12>
+  [ 84] pusharglistnoret 3 ...................... <i, #timeBetweenLines, 12>
+  [ 86] objcall 48 .............................. i[#timeBetweenLines] = 12
+  [ 88] getparam 0 .............................. <me>
+  [ 90] pusharglistnoret 1 ...................... <me>
+  [ 92] extcall 35 .............................. return me
+  [ 94] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 3833 ......................... <params.autoTurn>
+  [ 13] setprop 3838 ............................ pAutoTurn = params.autoTurn
+  [ 16] getparam 1 .............................. <params>
+  [ 18] getobjprop 3834 ......................... <params.basicTimePerLine>
+  [ 21] setprop 3839 ............................ pBasicTimePerLine = params.basicTimePerLine
+  [ 24] getparam 1 .............................. <params>
+  [ 26] getobjprop 1579 ......................... <params.caller>
+  [ 29] setprop 2182 ............................ pCaller = params.caller
+  [ 32] pushsymb 676 ............................ <#startSlowFadeOut>
+  [ 35] setprop 3840 ............................ pLightsDownFunction = #startSlowFadeOut
+  [ 38] pushsymb 675 ............................ <#startSlowFadeIn>
+  [ 41] setprop 3841 ............................ pLightsUpFunction = #startSlowFadeIn
+  [ 44] getparam 1 .............................. <params>
+  [ 46] getobjprop 3835 ......................... <params.theScript>
+  [ 49] setprop 3769 ............................ pTheScript = params.theScript
+  [ 52] getparam 1 .............................. <params>
+  [ 54] getobjprop 3837 ......................... <params.timeBetweenLines>
+  [ 57] setprop 3842 ............................ pTimeBetweenLines = params.timeBetweenLines
+  [ 60] getparam 1 .............................. <params>
+  [ 62] getobjprop 3836 ......................... <params.timePerLetter>
+  [ 65] setprop 3843 ............................ pTimePerLetter = params.timePerLetter
+  [ 68] pushzero ................................ <0>
+  [ 69] setprop 3844 ............................ pWaitingForPlayers = 0
+  [ 72] pushint8 100 ............................ <100>
+  [ 74] inv ..................................... <-100>
+  [ 75] pushint8 100 ............................ <100>
+  [ 77] inv ..................................... <-100>
+  [ 78] pusharglist 2 ........................... <-100, -100>
+  [ 80] extcall 197 ............................. <point(-100, -100)>
+  [ 82] setprop 3845 ............................ pWingsLoc = point(-100, -100)
+  [ 85] pushsymb 49 ............................. <#none>
+  [ 87] setprop 3846 ............................ pPlayers = #none
+  [ 90] ret
+end
+
+on acquirePlayers me
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 41 ....................... <g.objectMaster>
+  [  4] getprop 3769 ............................ <pTheScript>
+  [  7] pusharglist 1 ........................... <pTheScript>
+  [  9] objcall 2521 ............................ <pTheScript.getPlayers()>
+  [ 12] pusharglist 2 ........................... <g.objectMaster, pTheScript.getPlayers()>
+  [ 14] objcall 2521 ............................ <g.objectMaster.getPlayers(pTheScript.getPlayers())>
+  [ 17] setprop 3846 ............................ pPlayers = g.objectMaster.getPlayers(pTheScript.getPlayers())
+  [ 20] getparam 0 .............................. <me>
+  [ 22] pusharglistnoret 1 ...................... <me>
+  [ 24] objcall 3808 ............................ me.createMissingPlayers()
+  [ 27] ret
+end
+
+on actorToWings me, actorID
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <actorID>
+  [  4] pusharglist 2 ........................... <me, actorID>
+  [  6] objcall 3813 ............................ <me.getPlayerByActorID(actorID)>
+  [  9] setlocal 0 .............................. player = me.getPlayerByActorID(actorID)
+  [ 11] getparam 0 .............................. <me>
+  [ 13] getlocal 0 .............................. <player>
+  [ 15] pusharglistnoret 2 ...................... <me, player>
+  [ 17] objcall 3824 ............................ me.putPlayerIntoWings(player)
+  [ 20] ret
+end
+
+on calcDisplayTimeForLine me, theLine
+  [  0] getparam 1 .............................. <theLine>
+  [  2] getobjprop 1568 ......................... <theLine.theCommand>
+  [  5] pushsymb 1468 ........................... <#speakLine>
+  [  8] nteq .................................... <theLine.theCommand <> #speakLine>
+  [  9] jmpifz [ 17] ............................ if theLine.theCommand <> #speakLine then
+  [ 12] pushzero ................................ <0>
+  [ 13] pusharglistnoret 1 ...................... <0>
+  [ 15] extcall 35 .............................. return 0
+  [ 17] getprop 3839 ............................ <pBasicTimePerLine>
+  [ 20] setlocal 0 .............................. displayTime = pBasicTimePerLine
+  [ 22] getparam 1 .............................. <theLine>
+  [ 24] getchainedprop 1554 ..................... <theLine.args>
+  [ 27] pushsymb 1536 ........................... <#chars>
+  [ 30] pusharglist 2 ........................... <theLine.args, #chars>
+  [ 32] objcall 257 ............................. <theLine.args.chars.count>
+  [ 35] getprop 3843 ............................ <pTimePerLetter>
+  [ 38] mul ..................................... <theLine.args.chars.count * pTimePerLetter>
+  [ 39] setlocal 1 .............................. letterTime = theLine.args.chars.count * pTimePerLetter
+  [ 41] getlocal 0 .............................. <displayTime>
+  [ 43] getlocal 1 .............................. <letterTime>
+  [ 45] add ..................................... <displayTime + letterTime>
+  [ 46] setlocal 0 .............................. displayTime = displayTime + letterTime
+  [ 48] getlocal 0 .............................. <displayTime>
+  [ 50] pusharglistnoret 1 ...................... <displayTime>
+  [ 52] extcall 35 .............................. return displayTime
+  [ 54] ret
+end
+
+on createMissingPlayers me
+  [  0] getprop 3846 ............................ <pPlayers>
+  [  3] peek 0
+  [  5] pusharglist 1
+  [  7] extcall 257
+  [ 10] pushint8 1
+  [ 12] peek 0
+  [ 14] peek 2
+  [ 16] lteq
+  [ 17] jmpifz [117] ............................ repeat with nPlayer in pPlayers
+  [ 20] peek 2
+  [ 22] peek 1
+  [ 24] pusharglist 2
+  [ 26] extcall 109
+  [ 28] setlocal 0
+  [ 30] getlocal 0 .............................. <nPlayer>
+  [ 32] getobjprop 1088 ......................... <nPlayer.obj>
+  [ 35] pushsymb 49 ............................. <#none>
+  [ 37] eq ...................................... <nPlayer.obj = #none>
+  [ 38] jmpifz [112] ............................ if nPlayer.obj = #none then
+  [ 41] getglobal 40 ............................ <g>
+  [ 43] getchainedprop 228 ...................... <g.actorMaster>
+  [ 45] pushsymb 229 ............................ <#newActor>
+  [ 47] pusharglist 2 ........................... <g.actorMaster, #newActor>
+  [ 49] objcall 230 ............................. <g.actorMaster.getParams(#newActor)>
+  [ 51] setlocal 1 .............................. params = g.actorMaster.getParams(#newActor)
+  [ 53] getlocal 1 .............................. <params>
+  [ 55] pushint8 1 .............................. <1>
+  [ 57] setobjprop 3614 ......................... params.forceCreate = 1
+  [ 60] getlocal 1 .............................. <params>
+  [ 62] getlocal 0 .............................. <nPlayer>
+  [ 64] getobjprop 1580 ......................... <nPlayer.objCharacter>
+  [ 67] setobjprop 232 .......................... params.typ = nPlayer.objCharacter
+  [ 69] getlocal 1 .............................. <params>
+  [ 71] getprop 3845 ............................ <pWingsLoc>
+  [ 74] setobjprop 233 .......................... params.startLoc = pWingsLoc
+  [ 76] getlocal 1 .............................. <params>
+  [ 78] pushzero ................................ <0>
+  [ 79] setobjprop 234 .......................... params.useOffset = 0
+  [ 81] getlocal 0 .............................. <nPlayer>
+  [ 83] getglobal 40 ............................ <g>
+  [ 85] getchainedprop 228 ...................... <g.actorMaster>
+  [ 87] getlocal 1 .............................. <params>
+  [ 89] pusharglist 2 ........................... <g.actorMaster, params>
+  [ 91] objcall 229 ............................. <g.actorMaster.newActor(params)>
+  [ 93] setobjprop 1088 ......................... nPlayer.obj = g.actorMaster.newActor(params)
+  [ 96] getlocal 0 .............................. <nPlayer>
+  [ 98] pushint8 1 .............................. <1>
+  [100] setobjprop 3849 ......................... nPlayer.createdForScript = 1
+  [103] getlocal 0 .............................. <nPlayer>
+  [105] getchainedprop 1088 ..................... <nPlayer.obj>
+  [108] pusharglistnoret 1 ...................... <nPlayer.obj>
+  [110] objcall 7 ............................... nPlayer.obj.frameAdvance()
+  [112] pushint8 1
+  [114] add
+  [115] endrepeat [ 12]
+  [117] pop 3
+  [119] ret
+end
+
+on finishAllPlayers me
+  [  0] getprop 3846 ............................ <pPlayers>
+  [  3] peek 0
+  [  5] pusharglist 1
+  [  7] extcall 257
+  [ 10] pushint8 1
+  [ 12] peek 0
+  [ 14] peek 2
+  [ 16] lteq
+  [ 17] jmpifz [ 62] ............................ repeat with player in pPlayers
+  [ 20] peek 2
+  [ 22] peek 1
+  [ 24] pusharglist 2
+  [ 26] extcall 109
+  [ 28] setlocal 0
+  [ 30] getlocal 0 .............................. <player>
+  [ 32] getobjprop 1088 ......................... <player.obj>
+  [ 35] pushsymb 49 ............................. <#none>
+  [ 37] nteq .................................... <player.obj <> #none>
+  [ 38] jmpifz [ 57] ............................ if player.obj <> #none then
+  [ 41] getlocal 0 .............................. <player>
+  [ 43] getchainedprop 1088 ..................... <player.obj>
+  [ 46] pusharglistnoret 1 ...................... <player.obj>
+  [ 48] objcall 3 ............................... player.obj.finish()
+  [ 50] getlocal 0 .............................. <player>
+  [ 52] pushsymb 49 ............................. <#none>
+  [ 54] setobjprop 1088 ......................... player.obj = #none
+  [ 57] pushint8 1
+  [ 59] add
+  [ 60] endrepeat [ 12]
+  [ 62] pop 3
+  [ 64] ret
+end
+
+on finishPlayersInWings me
+  [  0] getprop 3846 ............................ <pPlayers>
+  [  3] peek 0
+  [  5] pusharglist 1
+  [  7] extcall 257
+  [ 10] pushint8 1
+  [ 12] peek 0
+  [ 14] peek 2
+  [ 16] lteq
+  [ 17] jmpifz [ 67] ............................ repeat with player in pPlayers
+  [ 20] peek 2
+  [ 22] peek 1
+  [ 24] pusharglist 2
+  [ 26] extcall 109
+  [ 28] setlocal 0
+  [ 30] getlocal 0 .............................. <player>
+  [ 32] getchainedprop 1088 ..................... <player.obj>
+  [ 35] pusharglist 1 ........................... <player.obj>
+  [ 37] objcall 111 ............................. <player.obj.getLoc()>
+  [ 39] getprop 3845 ............................ <pWingsLoc>
+  [ 42] eq ...................................... <player.obj.getLoc() = pWingsLoc>
+  [ 43] jmpifz [ 62] ............................ if player.obj.getLoc() = pWingsLoc then
+  [ 46] getlocal 0 .............................. <player>
+  [ 48] getchainedprop 1088 ..................... <player.obj>
+  [ 51] pusharglistnoret 1 ...................... <player.obj>
+  [ 53] objcall 3 ............................... player.obj.finish()
+  [ 55] getlocal 0 .............................. <player>
+  [ 57] pushsymb 49 ............................. <#none>
+  [ 59] setobjprop 1088 ......................... player.obj = #none
+  [ 62] pushint8 1
+  [ 64] add
+  [ 65] endrepeat [ 12]
+  [ 67] pop 3
+  [ 69] ret
+end
+
+on lineFinished me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 3821 ............................ me.performNextLine()
+  [  7] ret
+end
+
+on getLeftOrRightmostPlayerLocX me, typ
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 1032 ..................... <g.cutSceneMaster>
+  [  5] pusharglist 1 ........................... <g.cutSceneMaster>
+  [  7] objcall 3850 ............................ <g.cutSceneMaster.getCenterStage()>
+  [ 10] setlocal 0 .............................. extremePlayerLocX = g.cutSceneMaster.getCenterStage()
+  [ 12] getprop 3846 ............................ <pPlayers>
+  [ 15] peek 0
+  [ 17] pusharglist 1
+  [ 19] extcall 257
+  [ 22] pushint8 1
+  [ 24] peek 0
+  [ 26] peek 2
+  [ 28] lteq
+  [ 29] jmpifz [125] ............................ repeat with player in pPlayers
+  [ 32] peek 2
+  [ 34] peek 1
+  [ 36] pusharglist 2
+  [ 38] extcall 109
+  [ 40] setlocal 1
+  [ 42] getparam 0 .............................. <me>
+  [ 44] getlocal 1 .............................. <player>
+  [ 46] pusharglist 2 ........................... <me, player>
+  [ 48] objcall 3822 ............................ <me.playerIsInWings(player)>
+  [ 51] jmpifz [ 57] ............................ if me.playerIsInWings(player) then
+  [ 54] jmp [120] ............................... next repeat
+  [ 57] getlocal 1 .............................. <player>
+  [ 59] getchainedprop 1088 ..................... <player.obj>
+  [ 62] pusharglist 1 ........................... <player.obj>
+  [ 64] objcall 111 ............................. <player.obj.getLoc()>
+  [ 66] getobjprop 539 .......................... <player.obj.getLoc().locH>
+  [ 69] setlocal 2 .............................. playerLocX = player.obj.getLoc().locH
+  [ 71] getparam 1 .............................. <typ>
+  [ 73] peek 0 .................................. case typ of
+  [ 75] pushsymb 264 ............................ <#left>
+  [ 78] eq
+  [ 79] jmpifz [ 97] ............................ (case) #left:
+  [ 82] getlocal 2 .............................. <playerLocX>
+  [ 84] getlocal 0 .............................. <extremePlayerLocX>
+  [ 86] lt ...................................... <playerLocX < extremePlayerLocX>
+  [ 87] jmpifz [ 94] ............................ if playerLocX < extremePlayerLocX then
+  [ 90] getlocal 2 .............................. <playerLocX>
+  [ 92] setlocal 0 .............................. extremePlayerLocX = playerLocX
+  [ 94] jmp [118]
+  [ 97] peek 0
+  [ 99] pushsymb 266 ............................ <#right>
+  [102] eq
+  [103] jmpifz [118] ............................ (case) #right:
+  [106] getlocal 2 .............................. <playerLocX>
+  [108] getlocal 0 .............................. <extremePlayerLocX>
+  [110] gt ...................................... <playerLocX > extremePlayerLocX>
+  [111] jmpifz [118] ............................ if playerLocX > extremePlayerLocX then
+  [114] getlocal 2 .............................. <playerLocX>
+  [116] setlocal 0 .............................. extremePlayerLocX = playerLocX
+  [118] pop 1 ................................... end case
+  [120] pushint8 1
+  [122] add
+  [123] endrepeat [ 24]
+  [125] pop 3
+  [127] getlocal 0 .............................. <extremePlayerLocX>
+  [129] pusharglistnoret 1 ...................... <extremePlayerLocX>
+  [131] extcall 35 .............................. return extremePlayerLocX
+  [133] ret
+end
+
+on getStageLeftOnLoc me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 264 ............................ <#left>
+  [  5] pusharglist 2 ........................... <me, #left>
+  [  7] objcall 3812 ............................ <me.getStageEntranceOnLoc(#left)>
+  [ 10] pusharglistnoret 1 ...................... <me.getStageEntranceOnLoc(#left)>
+  [ 12] extcall 35 .............................. return me.getStageEntranceOnLoc(#left)
+  [ 14] ret
+end
+
+on getStageRightOnLoc me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 266 ............................ <#right>
+  [  5] pusharglist 2 ........................... <me, #right>
+  [  7] objcall 3812 ............................ <me.getStageEntranceOnLoc(#right)>
+  [ 10] pusharglistnoret 1 ...................... <me.getStageEntranceOnLoc(#right)>
+  [ 12] extcall 35 .............................. return me.getStageEntranceOnLoc(#right)
+  [ 14] ret
+end
+
+on getStageEntranceOnLoc me, typ
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <typ>
+  [  4] pusharglist 2 ........................... <me, typ>
+  [  6] objcall 3811 ............................ <me.getLeftOrRightmostPlayerLocX(typ)>
+  [  9] setlocal 0 .............................. extremePlayerLocX = me.getLeftOrRightmostPlayerLocX(typ)
+  [ 11] getparam 1 .............................. <typ>
+  [ 13] peek 0 .................................. case typ of
+  [ 15] pushsymb 264 ............................ <#left>
+  [ 18] eq
+  [ 19] jmpifz [ 37] ............................ (case) #left:
+  [ 22] getglobal 40 ............................ <g>
+  [ 24] getchainedprop 1032 ..................... <g.cutSceneMaster>
+  [ 27] pusharglist 1 ........................... <g.cutSceneMaster>
+  [ 29] objcall 1524 ............................ <g.cutSceneMaster.getStageLeft()>
+  [ 32] setlocal 1 .............................. stageEdge = g.cutSceneMaster.getStageLeft()
+  [ 34] jmp [ 58]
+  [ 37] peek 0
+  [ 39] pushsymb 266 ............................ <#right>
+  [ 42] eq
+  [ 43] jmpifz [ 58] ............................ (case) #right:
+  [ 46] getglobal 40 ............................ <g>
+  [ 48] getchainedprop 1032 ..................... <g.cutSceneMaster>
+  [ 51] pusharglist 1 ........................... <g.cutSceneMaster>
+  [ 53] objcall 1528 ............................ <g.cutSceneMaster.getStageRight()>
+  [ 56] setlocal 1 .............................. stageEdge = g.cutSceneMaster.getStageRight()
+  [ 58] pop 1 ................................... end case
+  [ 60] getlocal 1 .............................. <stageEdge>
+  [ 62] getlocal 0 .............................. <extremePlayerLocX>
+  [ 64] pusharglist 2 ........................... <stageEdge, extremePlayerLocX>
+  [ 66] extcall 3853 ............................ <VarHalfWay(stageEdge, extremePlayerLocX)>
+  [ 69] setlocal 2 .............................. entranceLoc = VarHalfWay(stageEdge, extremePlayerLocX)
+  [ 71] getlocal 2 .............................. <entranceLoc>
+  [ 73] pusharglistnoret 1 ...................... <entranceLoc>
+  [ 75] extcall 35 .............................. return entranceLoc
+  [ 77] ret
+end
+
+on getPlayer me, thePlayer
+  [  0] getprop 3846 ............................ <pPlayers>
+  [  3] pushsymb 1580 ........................... <#objCharacter>
+  [  6] getparam 1 .............................. <thePlayer>
+  [  8] pusharglist 3 ........................... <pPlayers, #objCharacter, thePlayer>
+  [ 10] extcall 2607 ............................ <ListGetPosByProp(pPlayers, #objCharacter, thePlayer)>
+  [ 13] setlocal 0 .............................. pos = ListGetPosByProp(pPlayers, #objCharacter, thePlayer)
+  [ 15] getprop 3846 ............................ <pPlayers>
+  [ 18] getlocal 0 .............................. <pos>
+  [ 20] pusharglist 2 ........................... <pPlayers, pos>
+  [ 22] objcall 109 ............................. <pPlayers[pos]>
+  [ 24] getobjprop 1088 ......................... <pPlayers[pos].obj>
+  [ 27] pusharglistnoret 1 ...................... <pPlayers[pos].obj>
+  [ 29] extcall 35 .............................. return pPlayers[pos].obj
+  [ 31] ret
+end
+
+on getPlayerByActorID me, theActorID
+  [  0] getprop 3846 ............................ <pPlayers>
+  [  3] getparam 1 .............................. <theActorID>
+  [  5] pusharglist 2 ........................... <pPlayers, theActorID>
+  [  7] objcall 109 ............................. <pPlayers[theActorID]>
+  [  9] setlocal 0 .............................. player = pPlayers[theActorID]
+  [ 11] getlocal 0 .............................. <player>
+  [ 13] pusharglistnoret 1 ...................... <player>
+  [ 15] extcall 35 .............................. return player
+  [ 17] ret
+end
+
+on getWingsLoc me
+  [  0] getprop 3845 ............................ <pWingsLoc>
+  [  3] pusharglistnoret 1 ...................... <pWingsLoc>
+  [  5] extcall 35 .............................. return pWingsLoc
+  [  7] ret
+end
+
+on introduceMeToPlayers me
+  [  0] pushint8 1 .............................. <1>
+  [  2] setlocal 0 .............................. playerID = 1
+  [  4] getprop 3846 ............................ <pPlayers>
+  [  7] peek 0
+  [  9] pusharglist 1
+  [ 11] extcall 257
+  [ 14] pushint8 1
+  [ 16] peek 0
+  [ 18] peek 2
+  [ 20] lteq
+  [ 21] jmpifz [108] ............................ repeat with player in pPlayers
+  [ 24] peek 2
+  [ 26] peek 1
+  [ 28] pusharglist 2
+  [ 30] extcall 109
+  [ 32] setlocal 1
+  [ 34] getlocal 1 .............................. <player>
+  [ 36] getobjprop 1088 ......................... <player.obj>
+  [ 39] setlocal 2 .............................. nObj = player.obj
+  [ 41] getlocal 2 .............................. <nObj>
+  [ 43] getparam 0 .............................. <me>
+  [ 45] getchainedprop 57 ....................... <me.id>
+  [ 47] getobjprop 58 ........................... <me.id.bigMe>
+  [ 49] pusharglistnoret 2 ...................... <nObj, me.id.bigMe>
+  [ 51] objcall 1465 ............................ nObj.setScriptPerformer(me.id.bigMe)
+  [ 54] getlocal 2 .............................. <nObj>
+  [ 56] getlocal 0 .............................. <playerID>
+  [ 58] pusharglistnoret 2 ...................... <nObj, playerID>
+  [ 60] objcall 1466 ............................ nObj.setScriptPerformerActorID(playerID)
+  [ 63] getprop 2182 ............................ <pCaller>
+  [ 66] getglobal 40 ............................ <g>
+  [ 68] getobjprop 1032 ......................... <g.cutSceneMaster>
+  [ 71] eq ...................................... <pCaller = g.cutSceneMaster>
+  [ 72] jmpifz [ 96] ............................ if pCaller = g.cutSceneMaster then
+  [ 75] getglobal 40 ............................ <g>
+  [ 77] getchainedprop 1032 ..................... <g.cutSceneMaster>
+  [ 80] pusharglist 1 ........................... <g.cutSceneMaster>
+  [ 82] objcall 3858 ............................ <g.cutSceneMaster.getSpeechDisplayMode()>
+  [ 85] setlocal 3 .............................. speechDisplayMode = g.cutSceneMaster.getSpeechDisplayMode()
+  [ 87] getlocal 2 .............................. <nObj>
+  [ 89] getlocal 3 .............................. <speechDisplayMode>
+  [ 91] pusharglistnoret 2 ...................... <nObj, speechDisplayMode>
+  [ 93] objcall 1467 ............................ nObj.setSpeechDisplayMode(speechDisplayMode)
+  [ 96] getlocal 0 .............................. <playerID>
+  [ 98] pushint8 1 .............................. <1>
+  [100] add ..................................... <playerID + 1>
+  [101] setlocal 0 .............................. playerID = playerID + 1
+  [103] pushint8 1
+  [105] add
+  [106] endrepeat [ 16]
+  [108] pop 3
+  [110] ret
+end
+
+on lightsChange me, Dir
+  [  0] pushzero ................................ <0>
+  [  1] setprop 3844 ............................ pWaitingForPlayers = 0
+  [  4] getprop 3846 ............................ <pPlayers>
+  [  7] peek 0
+  [  9] pusharglist 1
+  [ 11] extcall 257
+  [ 14] pushint8 1
+  [ 16] peek 0
+  [ 18] peek 2
+  [ 20] lteq
+  [ 21] jmpifz [111] ............................ repeat with player in pPlayers
+  [ 24] peek 2
+  [ 26] peek 1
+  [ 28] pusharglist 2
+  [ 30] extcall 109
+  [ 32] setlocal 0
+  [ 34] getparam 1 .............................. <Dir>
+  [ 36] peek 0 .................................. case Dir of
+  [ 38] pushsymb 3860 ........................... <#up>
+  [ 41] eq
+  [ 42] jmpifz [ 69] ............................ (case) #up:
+  [ 45] getprop 3841 ............................ <pLightsUpFunction>
+  [ 48] setlocal 1 .............................. function = pLightsUpFunction
+  [ 50] getlocal 0 .............................. <player>
+  [ 52] getobjprop 1580 ......................... <player.objCharacter>
+  [ 55] pushsymb 3861 ........................... <#ulin>
+  [ 58] eq ...................................... <player.objCharacter = #ulin>
+  [ 59] jmpifz [ 66] ............................ if player.objCharacter = #ulin then
+  [ 62] pusharglistnoret 0 ...................... <>
+  [ 64] extcall 185 ............................. nothing()
+  [ 66] jmp [ 83]
+  [ 69] peek 0
+  [ 71] pushsymb 3862 ........................... <#down>
+  [ 74] eq
+  [ 75] jmpifz [ 83] ............................ (case) #down:
+  [ 78] getprop 3840 ............................ <pLightsDownFunction>
+  [ 81] setlocal 1 .............................. function = pLightsDownFunction
+  [ 83] pop 1 ................................... end case
+  [ 85] getlocal 1 .............................. <function>
+  [ 87] getlocal 0 .............................. <player>
+  [ 89] getobjprop 1088 ......................... <player.obj>
+  [ 92] pusharglistnoret 2 ...................... <function, player.obj>
+  [ 94] extcall 479 ............................. call(function, player.obj)
+  [ 97] getprop 3844 ............................ <pWaitingForPlayers>
+  [100] pushint8 1 .............................. <1>
+  [102] add ..................................... <pWaitingForPlayers + 1>
+  [103] setprop 3844 ............................ pWaitingForPlayers = pWaitingForPlayers + 1
+  [106] pushint8 1
+  [108] add
+  [109] endrepeat [ 16]
+  [111] pop 3
+  [113] ret
+end
+
+on lightsDown me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 3862 ........................... <#down>
+  [  5] pusharglistnoret 2 ...................... <me, #down>
+  [  7] objcall 3816 ............................ me.lightsChange(#down)
+  [ 10] ret
+end
+
+on lightsUp me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 3860 ........................... <#up>
+  [  5] pusharglistnoret 2 ...................... <me, #up>
+  [  7] objcall 3816 ............................ me.lightsChange(#up)
+  [ 10] ret
+end
+
+on makeLinePackage me, theLine
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 1168 ..................... <g.structMaster>
+  [  5] pushsymb 3863 ........................... <#linePackage>
+  [  8] pusharglist 2 ........................... <g.structMaster, #linePackage>
+  [ 10] objcall 1170 ............................ <g.structMaster.getStruct(#linePackage)>
+  [ 13] setlocal 0 .............................. linePackage = g.structMaster.getStruct(#linePackage)
+  [ 15] getlocal 0 .............................. <linePackage>
+  [ 17] getparam 1 .............................. <theLine>
+  [ 19] getobjprop 1554 ......................... <theLine.args>
+  [ 22] setobjprop 1554 ......................... linePackage.args = theLine.args
+  [ 25] getlocal 0 .............................. <linePackage>
+  [ 27] getparam 0 .............................. <me>
+  [ 29] setobjprop 1579 ......................... linePackage.caller = me
+  [ 32] getlocal 0 .............................. <linePackage>
+  [ 34] getparam 1 .............................. <theLine>
+  [ 36] getobjprop 1568 ......................... <theLine.theCommand>
+  [ 39] setobjprop 1568 ......................... linePackage.theCommand = theLine.theCommand
+  [ 42] getlocal 0 .............................. <linePackage>
+  [ 44] getprop 3842 ............................ <pTimeBetweenLines>
+  [ 47] setobjprop 1556 ......................... linePackage.delayTime = pTimeBetweenLines
+  [ 50] getlocal 0 .............................. <linePackage>
+  [ 52] getparam 0 .............................. <me>
+  [ 54] getparam 1 .............................. <theLine>
+  [ 56] pusharglist 2 ........................... <me, theLine>
+  [ 58] objcall 3807 ............................ <me.calcDisplayTimeForLine(theLine)>
+  [ 61] setobjprop 1553 ......................... linePackage.displayTime = me.calcDisplayTimeForLine(theLine)
+  [ 64] getlocal 0 .............................. <linePackage>
+  [ 66] getparam 0 .............................. <me>
+  [ 68] getparam 1 .............................. <theLine>
+  [ 70] getobjprop 1580 ......................... <theLine.objCharacter>
+  [ 73] pusharglist 2 ........................... <me, theLine.objCharacter>
+  [ 75] objcall 3831 ............................ <me.translateObjCharacterToObj(theLine.objCharacter)>
+  [ 78] setobjprop 1088 ......................... linePackage.obj = me.translateObjCharacterToObj(theLine.objCharacter)
+  [ 81] getlocal 0 .............................. <linePackage>
+  [ 83] getparam 1 .............................. <theLine>
+  [ 85] getobjprop 1580 ......................... <theLine.objCharacter>
+  [ 88] setobjprop 1580 ......................... linePackage.objCharacter = theLine.objCharacter
+  [ 91] getlocal 0 .............................. <linePackage>
+  [ 93] pusharglistnoret 1 ...................... <linePackage>
+  [ 95] extcall 35 .............................. return linePackage
+  [ 97] ret
+end
+
+on makePlayersInvisible me
+  [  0] getprop 3846 ............................ <pPlayers>
+  [  3] peek 0
+  [  5] pusharglist 1
+  [  7] extcall 257
+  [ 10] pushint8 1
+  [ 12] peek 0
+  [ 14] peek 2
+  [ 16] lteq
+  [ 17] jmpifz [ 45] ............................ repeat with player in pPlayers
+  [ 20] peek 2
+  [ 22] peek 1
+  [ 24] pusharglist 2
+  [ 26] extcall 109
+  [ 28] setlocal 0
+  [ 30] getlocal 0 .............................. <player>
+  [ 32] getchainedprop 1088 ..................... <player.obj>
+  [ 35] pusharglistnoret 1 ...................... <player.obj>
+  [ 37] objcall 672 ............................. player.obj.invisible()
+  [ 40] pushint8 1
+  [ 42] add
+  [ 43] endrepeat [ 12]
+  [ 45] pop 3
+  [ 47] ret
+end
+
+on performNextLine me
+  [  0] getprop 3769 ............................ <pTheScript>
+  [  3] pusharglist 1 ........................... <pTheScript>
+  [  5] objcall 3757 ............................ <pTheScript.getNextLine()>
+  [  8] setlocal 0 .............................. nextLine = pTheScript.getNextLine()
+  [ 10] getlocal 0 .............................. <nextLine>
+  [ 12] pushsymb 2072 ........................... <#finished>
+  [ 15] eq ...................................... <nextLine = #finished>
+  [ 16] jmpifz [ 30] ............................ if nextLine = #finished then
+  [ 19] getparam 0 .............................. <me>
+  [ 21] pusharglistnoret 1 ...................... <me>
+  [ 23] objcall 3829 ............................ me.scriptFinished()
+  [ 26] pusharglistnoret 0 ...................... <>
+  [ 28] extcall 35 .............................. return 
+  [ 30] getparam 0 .............................. <me>
+  [ 32] getlocal 0 .............................. <nextLine>
+  [ 34] pusharglist 2 ........................... <me, nextLine>
+  [ 36] objcall 3819 ............................ <me.makeLinePackage(nextLine)>
+  [ 39] setlocal 1 .............................. linePackage = me.makeLinePackage(nextLine)
+  [ 41] getlocal 1 .............................. <linePackage>
+  [ 43] getchainedprop 1088 ..................... <linePackage.obj>
+  [ 46] getlocal 1 .............................. <linePackage>
+  [ 48] pusharglistnoret 2 ...................... <linePackage.obj, linePackage>
+  [ 50] objcall 1462 ............................ linePackage.obj.performLine(linePackage)
+  [ 53] getlocal 1 .............................. <linePackage>
+  [ 55] getobjprop 1568 ......................... <linePackage.theCommand>
+  [ 58] pushsymb 1468 ........................... <#speakLine>
+  [ 61] eq ...................................... <linePackage.theCommand = #speakLine>
+  [ 62] jmpifz [ 83] ............................ if linePackage.theCommand = #speakLine then
+  [ 65] getprop 3838 ............................ <pAutoTurn>
+  [ 68] jmpifz [ 83] ............................ if pAutoTurn then
+  [ 71] getparam 0 .............................. <me>
+  [ 73] getlocal 1 .............................. <linePackage>
+  [ 75] getobjprop 1580 ......................... <linePackage.objCharacter>
+  [ 78] pusharglistnoret 2 ...................... <me, linePackage.objCharacter>
+  [ 80] objcall 3832 ............................ me.turnPlayersToFace(linePackage.objCharacter)
+  [ 83] ret
+end
+
+on playerFaderFin me
+  [  0] getprop 3844 ............................ <pWaitingForPlayers>
+  [  3] pushint8 1 .............................. <1>
+  [  5] sub ..................................... <pWaitingForPlayers - 1>
+  [  6] setprop 3844 ............................ pWaitingForPlayers = pWaitingForPlayers - 1
+  [  9] getprop 3844 ............................ <pWaitingForPlayers>
+  [ 12] pushzero ................................ <0>
+  [ 13] eq ...................................... <pWaitingForPlayers = 0>
+  [ 14] jmpifz [ 24] ............................ if pWaitingForPlayers = 0 then
+  [ 17] getparam 0 .............................. <me>
+  [ 19] pusharglistnoret 1 ...................... <me>
+  [ 21] objcall 1460 ............................ me.lineFinished()
+  [ 24] ret
+end
+
+on playerIsInWings me, player
+  [  0] getparam 1 .............................. <player>
+  [  2] getchainedprop 1088 ..................... <player.obj>
+  [  5] pusharglist 1 ........................... <player.obj>
+  [  7] objcall 111 ............................. <player.obj.getLoc()>
+  [  9] getparam 0 .............................. <me>
+  [ 11] pusharglist 1 ........................... <me>
+  [ 13] objcall 3814 ............................ <me.getWingsLoc()>
+  [ 16] eq ...................................... <player.obj.getLoc() = me.getWingsLoc()>
+  [ 17] jmpifz [ 26] ............................ if player.obj.getLoc() = me.getWingsLoc() then
+  [ 20] pushint8 1 .............................. <1>
+  [ 22] pusharglistnoret 1 ...................... <1>
+  [ 24] extcall 35 .............................. return 1
+  [ 26] pushzero ................................ <0>
+  [ 27] pusharglistnoret 1 ...................... <0>
+  [ 29] extcall 35 .............................. return 0
+  [ 31] ret
+end
+
+on playMusic me, args
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 1268 ..................... <g.soundmaster>
+  [  5] getparam 1 .............................. <args>
+  [  7] getobjprop 3795 ......................... <args.memberToPlay>
+  [ 10] getparam 1 .............................. <args>
+  [ 12] getobjprop 3796 ......................... <args.volumeLevel>
+  [ 15] pusharglistnoret 3 ...................... <g.soundmaster, args.memberToPlay, args.volumeLevel>
+  [ 17] objcall 3451 ............................ g.soundmaster.playMusic(args.memberToPlay, args.volumeLevel)
+  [ 20] getparam 0 .............................. <me>
+  [ 22] pusharglistnoret 1 ...................... <me>
+  [ 24] objcall 1460 ............................ me.lineFinished()
+  [ 27] ret
+end
+
+on PlaySound me, args
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 1268 ..................... <g.soundmaster>
+  [  5] getparam 1 .............................. <args>
+  [  7] getobjprop 3795 ......................... <args.memberToPlay>
+  [ 10] getparam 1 .............................. <args>
+  [ 12] getobjprop 3796 ......................... <args.volumeLevel>
+  [ 15] pusharglistnoret 3 ...................... <g.soundmaster, args.memberToPlay, args.volumeLevel>
+  [ 17] objcall 551 ............................. g.soundmaster.PlaySound(args.memberToPlay, args.volumeLevel)
+  [ 20] getparam 0 .............................. <me>
+  [ 22] pusharglistnoret 1 ...................... <me>
+  [ 24] objcall 1460 ............................ me.lineFinished()
+  [ 27] ret
+end
+
+on putCreatedPlayersIntoWings me
+  [  0] getprop 3846 ............................ <pPlayers>
+  [  3] peek 0
+  [  5] pusharglist 1
+  [  7] extcall 257
+  [ 10] pushint8 1
+  [ 12] peek 0
+  [ 14] peek 2
+  [ 16] lteq
+  [ 17] jmpifz [ 55] ............................ repeat with player in pPlayers
+  [ 20] peek 2
+  [ 22] peek 1
+  [ 24] pusharglist 2
+  [ 26] extcall 109
+  [ 28] setlocal 0
+  [ 30] getlocal 0 .............................. <player>
+  [ 32] getobjprop 3849 ......................... <player.createdForScript>
+  [ 35] pushint8 1 .............................. <1>
+  [ 37] eq ...................................... <player.createdForScript = 1>
+  [ 38] jmpifz [ 50] ............................ if player.createdForScript = 1 then
+  [ 41] getparam 0 .............................. <me>
+  [ 43] getlocal 0 .............................. <player>
+  [ 45] pusharglistnoret 2 ...................... <me, player>
+  [ 47] objcall 3824 ............................ me.putPlayerIntoWings(player)
+  [ 50] pushint8 1
+  [ 52] add
+  [ 53] endrepeat [ 12]
+  [ 55] pop 3
+  [ 57] ret
+end
+
+on putPlayerIntoWings me, player
+  [  0] getparam 1 .............................. <player>
+  [  2] getchainedprop 1088 ..................... <player.obj>
+  [  5] getprop 3845 ............................ <pWingsLoc>
+  [  8] pusharglistnoret 2 ...................... <player.obj, pWingsLoc>
+  [ 10] objcall 1444 ............................ player.obj.at(pWingsLoc)
+  [ 13] ret
+end
+
+on putPlayersIntoCharacter me
+  [  0] getprop 3846 ............................ <pPlayers>
+  [  3] peek 0
+  [  5] pusharglist 1
+  [  7] extcall 257
+  [ 10] pushint8 1
+  [ 12] peek 0
+  [ 14] peek 2
+  [ 16] lteq
+  [ 17] jmpifz [ 45] ............................ repeat with player in pPlayers
+  [ 20] peek 2
+  [ 22] peek 1
+  [ 24] pusharglist 2
+  [ 26] extcall 109
+  [ 28] setlocal 0
+  [ 30] getlocal 0 .............................. <player>
+  [ 32] getchainedprop 1088 ..................... <player.obj>
+  [ 35] pusharglistnoret 1 ...................... <player.obj>
+  [ 37] objcall 1455 ............................ player.obj.goThespianMode()
+  [ 40] pushint8 1
+  [ 42] add
+  [ 43] endrepeat [ 12]
+  [ 45] pop 3
+  [ 47] ret
+end
+
+on putPlayersOutOfCharacter me
+  [  0] getprop 3846 ............................ <pPlayers>
+  [  3] peek 0
+  [  5] pusharglist 1
+  [  7] extcall 257
+  [ 10] pushint8 1
+  [ 12] peek 0
+  [ 14] peek 2
+  [ 16] lteq
+  [ 17] jmpifz [ 45] ............................ repeat with player in pPlayers
+  [ 20] peek 2
+  [ 22] peek 1
+  [ 24] pusharglist 2
+  [ 26] extcall 109
+  [ 28] setlocal 0
+  [ 30] getlocal 0 .............................. <player>
+  [ 32] getchainedprop 1088 ..................... <player.obj>
+  [ 35] pusharglistnoret 1 ...................... <player.obj>
+  [ 37] objcall 1459 ............................ player.obj.leaveThespianMode()
+  [ 40] pushint8 1
+  [ 42] add
+  [ 43] endrepeat [ 12]
+  [ 45] pop 3
+  [ 47] ret
+end
+
+on putPlayersIntoWalkMode me, Dir
+  [  0] getparam 1 .............................. <Dir>
+  [  2] peek 0 .................................. case Dir of
+  [  4] pushsymb 264 ............................ <#left>
+  [  7] eq
+  [  8] jmpifz [ 19] ............................ (case) #left:
+  [ 11] pushsymb 1470 ........................... <#startWalkScrollLeft>
+  [ 14] setlocal 0 .............................. comm = #startWalkScrollLeft
+  [ 16] jmp [ 50]
+  [ 19] peek 0
+  [ 21] pushsymb 266 ............................ <#right>
+  [ 24] eq
+  [ 25] jmpifz [ 36] ............................ (case) #right:
+  [ 28] pushsymb 1471 ........................... <#startWalkScrollRight>
+  [ 31] setlocal 0 .............................. comm = #startWalkScrollRight
+  [ 33] jmp [ 50]
+  [ 36] peek 0
+  [ 38] pushsymb 2383 ........................... <#stop>
+  [ 41] eq
+  [ 42] jmpifz [ 50] ............................ (case) #stop:
+  [ 45] pushsymb 1472 ........................... <#stopWalkScroll>
+  [ 48] setlocal 0 .............................. comm = #stopWalkScroll
+  [ 50] pop 1 ................................... end case
+  [ 52] getprop 3846 ............................ <pPlayers>
+  [ 55] peek 0
+  [ 57] pusharglist 1
+  [ 59] extcall 257
+  [ 62] pushint8 1
+  [ 64] peek 0
+  [ 66] peek 2
+  [ 68] lteq
+  [ 69] jmpifz [113] ............................ repeat with player in pPlayers
+  [ 72] peek 2
+  [ 74] peek 1
+  [ 76] pusharglist 2
+  [ 78] extcall 109
+  [ 80] setlocal 1
+  [ 82] getparam 0 .............................. <me>
+  [ 84] getlocal 1 .............................. <player>
+  [ 86] pusharglist 2 ........................... <me, player>
+  [ 88] objcall 3822 ............................ <me.playerIsInWings(player)>
+  [ 91] pushzero ................................ <0>
+  [ 92] eq ...................................... <me.playerIsInWings(player) = 0>
+  [ 93] jmpifz [108] ............................ if me.playerIsInWings(player) = 0 then
+  [ 96] getlocal 0 .............................. <comm>
+  [ 98] getlocal 1 .............................. <player>
+  [100] getobjprop 1088 ......................... <player.obj>
+  [103] pusharglistnoret 2 ...................... <comm, player.obj>
+  [105] extcall 479 ............................. call(comm, player.obj)
+  [108] pushint8 1
+  [110] add
+  [111] endrepeat [ 64]
+  [113] pop 3
+  [115] ret
+end
+
+on putPlayersIntoWings me
+  [  0] getprop 3846 ............................ <pPlayers>
+  [  3] peek 0
+  [  5] pusharglist 1
+  [  7] extcall 257
+  [ 10] pushint8 1
+  [ 12] peek 0
+  [ 14] peek 2
+  [ 16] lteq
+  [ 17] jmpifz [ 44] ............................ repeat with player in pPlayers
+  [ 20] peek 2
+  [ 22] peek 1
+  [ 24] pusharglist 2
+  [ 26] extcall 109
+  [ 28] setlocal 0
+  [ 30] getparam 0 .............................. <me>
+  [ 32] getlocal 0 .............................. <player>
+  [ 34] pusharglistnoret 2 ...................... <me, player>
+  [ 36] objcall 3824 ............................ me.putPlayerIntoWings(player)
+  [ 39] pushint8 1
+  [ 41] add
+  [ 42] endrepeat [ 12]
+  [ 44] pop 3
+  [ 46] ret
+end
+
+on scriptCancelled me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 3829 ............................ me.scriptFinished()
+  [  7] ret
+end
+
+on scriptFinished me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 3823 ............................ me.putCreatedPlayersIntoWings()
+  [  7] getparam 0 .............................. <me>
+  [  9] pusharglistnoret 1 ...................... <me>
+  [ 11] objcall 3826 ............................ me.putPlayersOutOfCharacter()
+  [ 14] getparam 0 .............................. <me>
+  [ 16] pusharglistnoret 1 ...................... <me>
+  [ 18] objcall 3810 ............................ me.finishPlayersInWings()
+  [ 21] getprop 2182 ............................ <pCaller>
+  [ 24] pushsymb 49 ............................. <#none>
+  [ 26] nteq .................................... <pCaller <> #none>
+  [ 27] jmpifz [ 38] ............................ if pCaller <> #none then
+  [ 30] getprop 2182 ............................ <pCaller>
+  [ 33] pusharglistnoret 1 ...................... <pCaller>
+  [ 35] objcall 3829 ............................ pCaller.scriptFinished()
+  [ 38] getparam 0 .............................. <me>
+  [ 40] pusharglistnoret 1 ...................... <me>
+  [ 42] objcall 3 ............................... me.finish()
+  [ 44] ret
+end
+
+on startPerformance me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 3806 ............................ me.acquirePlayers()
+  [  7] getparam 0 .............................. <me>
+  [  9] pusharglistnoret 1 ...................... <me>
+  [ 11] objcall 3815 ............................ me.introduceMeToPlayers()
+  [ 14] getparam 0 .............................. <me>
+  [ 16] pusharglistnoret 1 ...................... <me>
+  [ 18] objcall 3825 ............................ me.putPlayersIntoCharacter()
+  [ 21] getprop 3769 ............................ <pTheScript>
+  [ 24] pusharglistnoret 1 ...................... <pTheScript>
+  [ 26] objcall 2029 ............................ pTheScript.reset()
+  [ 29] getparam 0 .............................. <me>
+  [ 31] pusharglistnoret 1 ...................... <me>
+  [ 33] objcall 3821 ............................ me.performNextLine()
+  [ 36] ret
+end
+
+on translateObjCharacterToObj me, objCharacter
+  [  0] getprop 3846 ............................ <pPlayers>
+  [  3] peek 0
+  [  5] pusharglist 1
+  [  7] extcall 257
+  [ 10] pushint8 1
+  [ 12] peek 0
+  [ 14] peek 2
+  [ 16] lteq
+  [ 17] jmpifz [ 55] ............................ repeat with player in pPlayers
+  [ 20] peek 2
+  [ 22] peek 1
+  [ 24] pusharglist 2
+  [ 26] extcall 109
+  [ 28] setlocal 0
+  [ 30] getlocal 0 .............................. <player>
+  [ 32] getobjprop 1580 ......................... <player.objCharacter>
+  [ 35] getparam 1 .............................. <objCharacter>
+  [ 37] eq ...................................... <player.objCharacter = objCharacter>
+  [ 38] jmpifz [ 50] ............................ if player.objCharacter = objCharacter then
+  [ 41] getlocal 0 .............................. <player>
+  [ 43] getobjprop 1088 ......................... <player.obj>
+  [ 46] pusharglistnoret 1 ...................... <player.obj>
+  [ 48] extcall 35 .............................. return player.obj
+  [ 50] pushint8 1
+  [ 52] add
+  [ 53] endrepeat [ 12]
+  [ 55] pop 3
+  [ 57] getglobal 40 ............................ <g>
+  [ 59] getobjprop 1032 ......................... <g.cutSceneMaster>
+  [ 62] pusharglistnoret 1 ...................... <g.cutSceneMaster>
+  [ 64] extcall 35 .............................. return g.cutSceneMaster
+  [ 66] ret
+end
+
+on turnPlayersToFace me, objCharacter
+  [  0] getprop 3846 ............................ <pPlayers>
+  [  3] peek 0
+  [  5] pusharglist 1
+  [  7] extcall 257
+  [ 10] pushint8 1
+  [ 12] peek 0
+  [ 14] peek 2
+  [ 16] lteq
+  [ 17] jmpifz [ 62] ............................ repeat with player in pPlayers
+  [ 20] peek 2
+  [ 22] peek 1
+  [ 24] pusharglist 2
+  [ 26] extcall 109
+  [ 28] setlocal 0
+  [ 30] getlocal 0 .............................. <player>
+  [ 32] getobjprop 1580 ......................... <player.objCharacter>
+  [ 35] setlocal 1 .............................. nChar = player.objCharacter
+  [ 37] getlocal 1 .............................. <nChar>
+  [ 39] getparam 1 .............................. <objCharacter>
+  [ 41] nteq .................................... <nChar <> objCharacter>
+  [ 42] jmpifz [ 57] ............................ if nChar <> objCharacter then
+  [ 45] getlocal 0 .............................. <player>
+  [ 47] getchainedprop 1088 ..................... <player.obj>
+  [ 50] getparam 1 .............................. <objCharacter>
+  [ 52] pusharglistnoret 2 ...................... <player.obj, objCharacter>
+  [ 54] objcall 1469 ............................ player.obj.turnToFace(objCharacter)
+  [ 57] pushint8 1
+  [ 59] add
+  [ 60] endrepeat [ 12]
+  [ 62] pop 3
+  [ 64] ret
+end

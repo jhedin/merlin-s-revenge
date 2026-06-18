@@ -1,0 +1,295 @@
+property ancestor, pPathFindingCounter, pPathFindingDistance, pPathFindingLoc, pPathFindingMode, pStallCounter, pTargetLoc
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getlocal 0 .............................. <i>
+  [ 12] pushsymb 946 ............................ <#pathFindingTime>
+  [ 15] pushint8 60 ............................. <60>
+  [ 17] pusharglistnoret 3 ...................... <i, #pathFindingTime, 60>
+  [ 19] objcall 48 .............................. i[#pathFindingTime] = 60
+  [ 21] getlocal 0 .............................. <i>
+  [ 23] pushsymb 947 ............................ <#pathFindingStallTime>
+  [ 26] pushint8 5 .............................. <5>
+  [ 28] pusharglistnoret 3 ...................... <i, #pathFindingStallTime, 5>
+  [ 30] objcall 48 .............................. i[#pathFindingStallTime] = 5
+  [ 32] getprop 33 .............................. <ancestor>
+  [ 34] pusharglistnoret 1 ...................... <ancestor>
+  [ 36] objcall 2 ............................... ancestor.addModParams()
+  [ 38] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pusharglist 0 ........................... <>
+  [ 10] extcall 529 ............................. <CounterNew()>
+  [ 13] setprop 948 ............................. pPathFindingCounter = CounterNew()
+  [ 16] getprop 948 ............................. <pPathFindingCounter>
+  [ 19] pushsymb 530 ............................ <#tim>
+  [ 22] pushint8 2 .............................. <2>
+  [ 24] getparam 1 .............................. <params>
+  [ 26] getobjprop 946 .......................... <params.pathFindingTime>
+  [ 29] pusharglistnoret 4 ...................... <pPathFindingCounter, #tim, 2, params.pathFindingTime>
+  [ 31] objcall 531 ............................. pPathFindingCounter.tim[2] = params.pathFindingTime
+  [ 34] pushint8 100 ............................ <100>
+  [ 36] setprop 949 ............................. pPathFindingDistance = 100
+  [ 39] pushsymb 49 ............................. <#none>
+  [ 41] setprop 950 ............................. pPathFindingLoc = #none
+  [ 44] pushsymb 952 ............................ <#beeline>
+  [ 47] setprop 951 ............................. pPathFindingMode = #beeline
+  [ 50] pusharglist 0 ........................... <>
+  [ 52] extcall 529 ............................. <CounterNew()>
+  [ 55] setprop 953 ............................. pStallCounter = CounterNew()
+  [ 58] getprop 953 ............................. <pStallCounter>
+  [ 61] pushsymb 530 ............................ <#tim>
+  [ 64] pushint8 2 .............................. <2>
+  [ 66] getparam 1 .............................. <params>
+  [ 68] getobjprop 947 .......................... <params.pathFindingStallTime>
+  [ 71] pusharglistnoret 4 ...................... <pStallCounter, #tim, 2, params.pathFindingStallTime>
+  [ 73] objcall 531 ............................. pStallCounter.tim[2] = params.pathFindingStallTime
+  [ 76] pushsymb 49 ............................. <#none>
+  [ 78] setprop 954 ............................. pTargetLoc = #none
+  [ 81] ret
+end
+
+on addSaveData me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 4 ............................... ancestor.addSaveData(sd)
+  [  8] getparam 1 .............................. <sd>
+  [ 10] pushsymb 948 ............................ <#pPathFindingCounter>
+  [ 13] getprop 948 ............................. <pPathFindingCounter>
+  [ 16] pusharglistnoret 3 ...................... <sd, #pPathFindingCounter, pPathFindingCounter>
+  [ 18] objcall 48 .............................. sd[#pPathFindingCounter] = pPathFindingCounter
+  [ 20] getparam 1 .............................. <sd>
+  [ 22] pushsymb 950 ............................ <#pPathFindingLoc>
+  [ 25] getprop 950 ............................. <pPathFindingLoc>
+  [ 28] pusharglistnoret 3 ...................... <sd, #pPathFindingLoc, pPathFindingLoc>
+  [ 30] objcall 48 .............................. sd[#pPathFindingLoc] = pPathFindingLoc
+  [ 32] getparam 1 .............................. <sd>
+  [ 34] pushsymb 951 ............................ <#pPathFindingMode>
+  [ 37] getprop 951 ............................. <pPathFindingMode>
+  [ 40] pusharglistnoret 3 ...................... <sd, #pPathFindingMode, pPathFindingMode>
+  [ 42] objcall 48 .............................. sd[#pPathFindingMode] = pPathFindingMode
+  [ 44] getparam 1 .............................. <sd>
+  [ 46] pushsymb 953 ............................ <#pStallCounter>
+  [ 49] getprop 953 ............................. <pStallCounter>
+  [ 52] pusharglistnoret 3 ...................... <sd, #pStallCounter, pStallCounter>
+  [ 54] objcall 48 .............................. sd[#pStallCounter] = pStallCounter
+  [ 56] getparam 1 .............................. <sd>
+  [ 58] pushsymb 954 ............................ <#pTargetLoc>
+  [ 61] getprop 954 ............................. <pTargetLoc>
+  [ 64] pusharglistnoret 3 ...................... <sd, #pTargetLoc, pTargetLoc>
+  [ 66] objcall 48 .............................. sd[#pTargetLoc] = pTargetLoc
+  [ 68] ret
+end
+
+on findPathToLoc me, targetloc
+  [  0] getparam 1 .............................. <targetloc>
+  [  2] setprop 954 ............................. pTargetLoc = targetloc
+  [  5] getprop 951 ............................. <pPathFindingMode>
+  [  8] peek 0 .................................. case pPathFindingMode of
+  [ 10] pushsymb 952 ............................ <#beeline>
+  [ 13] eq
+  [ 14] jmpifz [ 44] ............................ (case) #beeline:
+  [ 17] getparam 0 .............................. <me>
+  [ 19] pusharglist 1 ........................... <me>
+  [ 21] objcall 943 ............................. <me.updateBeeline()>
+  [ 24] setlocal 0 .............................. stalled = me.updateBeeline()
+  [ 26] getlocal 0 .............................. <stalled>
+  [ 28] jmpifz [ 41] ............................ if stalled then
+  [ 31] getparam 0 .............................. <me>
+  [ 33] pushsymb 955 ............................ <#scenic>
+  [ 36] pusharglistnoret 2 ...................... <me, #scenic>
+  [ 38] objcall 942 ............................. me.goPathFindingMode(#scenic)
+  [ 41] jmp [ 77]
+  [ 44] peek 0
+  [ 46] pushsymb 955 ............................ <#scenic>
+  [ 49] eq
+  [ 50] jmpifz [ 77] ............................ (case) #scenic:
+  [ 53] getparam 0 .............................. <me>
+  [ 55] pusharglist 1 ........................... <me>
+  [ 57] objcall 944 ............................. <me.updateScenic()>
+  [ 60] setlocal 1 .............................. fin = me.updateScenic()
+  [ 62] getlocal 1 .............................. <fin>
+  [ 64] jmpifz [ 77] ............................ if fin then
+  [ 67] getparam 0 .............................. <me>
+  [ 69] pushsymb 952 ............................ <#beeline>
+  [ 72] pusharglistnoret 2 ...................... <me, #beeline>
+  [ 74] objcall 942 ............................. me.goPathFindingMode(#beeline)
+  [ 77] pop 1 ................................... end case
+  [ 79] ret
+end
+
+on goPathFindingMode me, newMode
+  [  0] getparam 1 .............................. <newMode>
+  [  2] peek 0 .................................. case newMode of
+  [  4] pushsymb 955 ............................ <#scenic>
+  [  7] eq
+  [  8] jmpifz [ 32] ............................ (case) #scenic:
+  [ 11] getparam 0 .............................. <me>
+  [ 13] getchainedprop 51 ....................... <me.big>
+  [ 15] getchainedprop 147 ...................... <me.big.pCharacterPrg>
+  [ 17] pusharglist 1 ........................... <me.big.pCharacterPrg>
+  [ 19] objcall 111 ............................. <me.big.pCharacterPrg.getLoc()>
+  [ 21] getprop 949 ............................. <pPathFindingDistance>
+  [ 24] pusharglist 2 ........................... <me.big.pCharacterPrg.getLoc(), pPathFindingDistance>
+  [ 26] extcall 957 ............................. <PointRoughly(me.big.pCharacterPrg.getLoc(), pPathFindingDistance)>
+  [ 29] setprop 950 ............................. pPathFindingLoc = PointRoughly(me.big.pCharacterPrg.getLoc(), pPathFindingDistance)
+  [ 32] pop 1
+  [ 34] getparam 1 .............................. <newMode>
+  [ 36] setprop 951 ............................. pPathFindingMode = newMode
+  [ 39] ret
+end
+
+on internalEvent me, theEvent
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <theEvent>
+  [  4] pusharglistnoret 2 ...................... <ancestor, theEvent>
+  [  6] objcall 22 .............................. ancestor.internalEvent(theEvent)
+  [  8] getparam 1 .............................. <theEvent>
+  [ 10] peek 0 .................................. case theEvent of
+  [ 12] pushsymb 958 ............................ <#arrivedAtAttackLoc>
+  [ 15] eq
+  [ 16] jmpifz [ 42] ............................ (case) #arrivedAtAttackLoc:
+  [ 19] getprop 953 ............................. <pStallCounter>
+  [ 22] pusharglistnoret 1 ...................... <pStallCounter>
+  [ 24] extcall 706 ............................. CounterReset(pStallCounter)
+  [ 27] getparam 0 .............................. <me>
+  [ 29] getchainedprop 51 ....................... <me.big>
+  [ 31] getchainedprop 147 ...................... <me.big.pCharacterPrg>
+  [ 33] pushsymb 49 ............................. <#none>
+  [ 35] pusharglistnoret 2 ...................... <me.big.pCharacterPrg, #none>
+  [ 37] objcall 67 .............................. me.big.pCharacterPrg.moveToLoc(#none)
+  [ 39] jmp [ 63]
+  [ 42] peek 0
+  [ 44] pushsymb 959 ............................ <#targetLeft>
+  [ 47] eq
+  [ 48] jmpifz [ 63] ............................ (case) #targetLeft:
+  [ 51] getparam 0 .............................. <me>
+  [ 53] getchainedprop 51 ....................... <me.big>
+  [ 55] getchainedprop 147 ...................... <me.big.pCharacterPrg>
+  [ 57] pushsymb 49 ............................. <#none>
+  [ 59] pusharglistnoret 2 ...................... <me.big.pCharacterPrg, #none>
+  [ 61] objcall 67 .............................. me.big.pCharacterPrg.moveToLoc(#none)
+  [ 63] pop 1 ................................... end case
+  [ 65] ret
+end
+
+on restoreFromSave me, sd
+  [  0] getparam 1 .............................. <sd>
+  [  2] getobjprop 948 .......................... <sd.pPathFindingCounter>
+  [  5] setprop 948 ............................. pPathFindingCounter = sd.pPathFindingCounter
+  [  8] getparam 1 .............................. <sd>
+  [ 10] getobjprop 950 .......................... <sd.pPathFindingLoc>
+  [ 13] setprop 950 ............................. pPathFindingLoc = sd.pPathFindingLoc
+  [ 16] getparam 1 .............................. <sd>
+  [ 18] getobjprop 951 .......................... <sd.pPathFindingMode>
+  [ 21] setprop 951 ............................. pPathFindingMode = sd.pPathFindingMode
+  [ 24] getparam 1 .............................. <sd>
+  [ 26] getobjprop 953 .......................... <sd.pStallCounter>
+  [ 29] setprop 953 ............................. pStallCounter = sd.pStallCounter
+  [ 32] getparam 1 .............................. <sd>
+  [ 34] getobjprop 954 .......................... <sd.pTargetLoc>
+  [ 37] setprop 954 ............................. pTargetLoc = sd.pTargetLoc
+  [ 40] ret
+end
+
+on updateBeeline me
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. stalled = 0
+  [  3] getparam 0 .............................. <me>
+  [  5] getchainedprop 51 ....................... <me.big>
+  [  7] getchainedprop 147 ...................... <me.big.pCharacterPrg>
+  [  9] getprop 954 ............................. <pTargetLoc>
+  [ 12] pusharglistnoret 2 ...................... <me.big.pCharacterPrg, pTargetLoc>
+  [ 14] objcall 67 .............................. me.big.pCharacterPrg.moveToLoc(pTargetLoc)
+  [ 16] getparam 0 .............................. <me>
+  [ 18] pusharglist 1 ........................... <me>
+  [ 20] objcall 945 ............................. <me.updateStallCount()>
+  [ 23] setlocal 0 .............................. stalled = me.updateStallCount()
+  [ 25] getlocal 0 .............................. <stalled>
+  [ 27] pusharglistnoret 1 ...................... <stalled>
+  [ 29] extcall 35 .............................. return stalled
+  [ 31] ret
+end
+
+on updateScenic me
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. fin = 0
+  [  3] getparam 0 .............................. <me>
+  [  5] getchainedprop 51 ....................... <me.big>
+  [  7] getchainedprop 147 ...................... <me.big.pCharacterPrg>
+  [  9] getprop 950 ............................. <pPathFindingLoc>
+  [ 12] pusharglistnoret 2 ...................... <me.big.pCharacterPrg, pPathFindingLoc>
+  [ 14] objcall 67 .............................. me.big.pCharacterPrg.moveToLoc(pPathFindingLoc)
+  [ 16] getparam 0 .............................. <me>
+  [ 18] pusharglist 1 ........................... <me>
+  [ 20] objcall 945 ............................. <me.updateStallCount()>
+  [ 23] setlocal 1 .............................. stalled = me.updateStallCount()
+  [ 25] getlocal 1 .............................. <stalled>
+  [ 27] jmpifz [ 34] ............................ if stalled then
+  [ 30] pushint8 1 .............................. <1>
+  [ 32] setlocal 0 .............................. fin = 1
+  [ 34] getlocal 0 .............................. <fin>
+  [ 36] pusharglistnoret 1 ...................... <fin>
+  [ 38] extcall 35 .............................. return fin
+  [ 40] ret
+end
+
+on updateStallCount me
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. stalled = 0
+  [  3] getparam 0 .............................. <me>
+  [  5] getchainedprop 51 ....................... <me.big>
+  [  7] getchainedprop 147 ...................... <me.big.pCharacterPrg>
+  [  9] getchainedprop 906 ...................... <me.big.pCharacterPrg.pMoveXY>
+  [ 12] pusharglist 1 ........................... <me.big.pCharacterPrg.pMoveXY>
+  [ 14] objcall 960 ............................. <me.big.pCharacterPrg.pMoveXY.getMoveVect()>
+  [ 17] pushzero ................................ <0>
+  [ 18] pushzero ................................ <0>
+  [ 19] pusharglist 2 ........................... <0, 0>
+  [ 21] extcall 197 ............................. <point(0, 0)>
+  [ 23] eq ...................................... <me.big.pCharacterPrg.pMoveXY.getMoveVect() = point(0, 0)>
+  [ 24] jmpifz [ 59] ............................ if me.big.pCharacterPrg.pMoveXY.getMoveVect() = point(0, 0) then / else
+  [ 27] getprop 953 ............................. <pStallCounter>
+  [ 30] pusharglistnoret 1 ...................... <pStallCounter>
+  [ 32] extcall 553 ............................. counter(pStallCounter)
+  [ 35] getprop 953 ............................. <pStallCounter>
+  [ 38] getobjprop 552 .......................... <pStallCounter.fin>
+  [ 41] jmpifz [ 56] ............................ if pStallCounter.fin then
+  [ 44] getprop 953 ............................. <pStallCounter>
+  [ 47] pusharglistnoret 1 ...................... <pStallCounter>
+  [ 49] extcall 706 ............................. CounterReset(pStallCounter)
+  [ 52] pushint8 1 .............................. <1>
+  [ 54] setlocal 0 .............................. stalled = 1
+  [ 56] jmp [ 67]
+  [ 59] getprop 953 ............................. <pStallCounter>
+  [ 62] pusharglistnoret 1 ...................... <pStallCounter>
+  [ 64] extcall 706 ............................. CounterReset(pStallCounter)
+  [ 67] getlocal 0 .............................. <stalled>
+  [ 69] pusharglistnoret 1 ...................... <stalled>
+  [ 71] extcall 35 .............................. return stalled
+  [ 73] ret
+end

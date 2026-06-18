@@ -1,0 +1,21 @@
+property ancestor
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 35 .............................. return me
+  [  6] ret
+end
+
+on addModParams me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 2 ............................... ancestor.addModParams()
+  [  6] ret
+end
+
+on setAncestor me, newVal
+  [  0] getparam 1 .............................. <newVal>
+  [  2] setprop 33 .............................. ancestor = newVal
+  [  4] ret
+end

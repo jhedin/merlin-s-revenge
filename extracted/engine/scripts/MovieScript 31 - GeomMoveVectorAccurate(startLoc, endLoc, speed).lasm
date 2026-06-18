@@ -1,0 +1,38 @@
+on GeomMoveVectorAccurate startLoc, endLoc, speed
+  [  0] getparam 0 .............................. <startLoc>
+  [  2] getparam 1 .............................. <endLoc>
+  [  4] eq ...................................... <startLoc = endLoc>
+  [  5] jmpifz [ 19] ............................ if startLoc = endLoc then / else
+  [  8] pushzero ................................ <0>
+  [  9] pushzero ................................ <0>
+  [ 10] pusharglist 2 ........................... <0, 0>
+  [ 12] extcall 97 .............................. <point(0, 0)>
+  [ 14] setlocal 0 .............................. moveVector = point(0, 0)
+  [ 16] jmp [ 60]
+  [ 19] getparam 2 .............................. <speed>
+  [ 21] setparam 2 .............................. speed = speed
+  [ 23] getparam 1 .............................. <endLoc>
+  [ 25] getparam 0 .............................. <startLoc>
+  [ 27] sub ..................................... <endLoc - startLoc>
+  [ 28] setlocal 1 .............................. movexy = endLoc - startLoc
+  [ 30] getparam 0 .............................. <startLoc>
+  [ 32] getparam 1 .............................. <endLoc>
+  [ 34] pusharglist 2 ........................... <startLoc, endLoc>
+  [ 36] extcall 150 ............................. <GeomDist(startLoc, endLoc)>
+  [ 38] setlocal 2 .............................. dist = GeomDist(startLoc, endLoc)
+  [ 40] getlocal 2 .............................. <dist>
+  [ 42] getparam 2 .............................. <speed>
+  [ 44] div ..................................... <dist / speed>
+  [ 45] setlocal 3 .............................. numOfFrames = dist / speed
+  [ 47] getlocal 1 .............................. <movexy>
+  [ 49] getlocal 3 .............................. <numOfFrames>
+  [ 51] getlocal 3 .............................. <numOfFrames>
+  [ 53] pusharglist 2 ........................... <numOfFrames, numOfFrames>
+  [ 55] extcall 97 .............................. <point(numOfFrames, numOfFrames)>
+  [ 57] div ..................................... <movexy / point(numOfFrames, numOfFrames)>
+  [ 58] setlocal 0 .............................. moveVector = movexy / point(numOfFrames, numOfFrames)
+  [ 60] getlocal 0 .............................. <moveVector>
+  [ 62] pusharglistnoret 1 ...................... <moveVector>
+  [ 64] extcall 3 ............................... return moveVector
+  [ 66] ret
+end

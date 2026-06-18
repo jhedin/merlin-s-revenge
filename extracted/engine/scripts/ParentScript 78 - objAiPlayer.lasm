@@ -1,0 +1,664 @@
+property ancestor, pUnstickSpell
+global g, gGameView, gGameName
+
+on new me
+  [  0] pushcons 0 .............................. <"objAiAttack">
+  [  2] pusharglist 1 ........................... <"objAiAttack">
+  [  4] extcall 34 .............................. <script("objAiAttack")>
+  [  6] pusharglist 1 ........................... <script("objAiAttack")>
+  [  8] extcall 0 ............................... <new(script("objAiAttack"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objAiAttack"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pushzero ................................ <0>
+  [  9] setprop 1978 ............................ pUnstickSpell = 0
+  [ 12] ret
+end
+
+on finish me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 3 ............................... ancestor.finish()
+  [  6] ret
+end
+
+on initCharacterInfo me, characterPrg, spr, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <characterPrg>
+  [  4] getparam 2 .............................. <spr>
+  [  6] getparam 3 .............................. <params>
+  [  8] pusharglistnoret 4 ...................... <ancestor, characterPrg, spr, params>
+  [ 10] objcall 1719 ............................ ancestor.initCharacterInfo(characterPrg, spr, params)
+  [ 13] getparam 0 .............................. <me>
+  [ 15] pushsymb 1979 ........................... <#playerControl>
+  [ 18] pusharglistnoret 2 ...................... <me, #playerControl>
+  [ 20] objcall 278 ............................. me.goMode(#playerControl)
+  [ 23] ret
+end
+
+on attackFin me, reason
+  [  0] getparam 1 .............................. <reason>
+  [  2] peek 0 .................................. case reason of
+  [  4] pushsymb 1779 ........................... <#completed>
+  [  7] eq
+  [  8] jmpifz [ 32] ............................ (case) #completed:
+  [ 11] getparam 0 .............................. <me>
+  [ 13] pushsymb 1979 ........................... <#playerControl>
+  [ 16] pusharglistnoret 2 ...................... <me, #playerControl>
+  [ 18] objcall 278 ............................. me.goMode(#playerControl)
+  [ 21] getparam 0 .............................. <me>
+  [ 23] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [ 25] pushsymb 63 ............................. <#walk>
+  [ 27] pusharglistnoret 2 ...................... <me.pCharacterPrg, #walk>
+  [ 29] objcall 278 ............................. me.pCharacterPrg.goMode(#walk)
+  [ 32] pop 1
+  [ 34] getprop 33 .............................. <ancestor>
+  [ 36] getparam 1 .............................. <reason>
+  [ 38] pusharglistnoret 2 ...................... <ancestor, reason>
+  [ 40] objcall 1731 ............................ ancestor.attackFin(reason)
+  [ 43] ret
+end
+
+on characterModeChanged me, newCharMode
+  [  0] getparam 1 .............................. <newCharMode>
+  [  2] peek 0 .................................. case newCharMode of
+  [  4] pushsymb 1373 ........................... <#dazed>
+  [  7] nteq
+  [  8] jmpifz [ 20] ............................ (case) #dazed, ...
+  [ 11] peek 0
+  [ 13] pushsymb 501 ............................ <#die>
+  [ 16] eq
+  [ 17] jmpifz [ 30] ............................ (case) ..., #die:
+  [ 20] getparam 0 .............................. <me>
+  [ 22] pushsymb 1373 ........................... <#dazed>
+  [ 25] pusharglistnoret 2 ...................... <me, #dazed>
+  [ 27] objcall 278 ............................. me.goMode(#dazed)
+  [ 30] pop 1
+  [ 32] ret
+end
+
+on getTarget me
+  [  0] pushsymb 1980 ........................... <#notApplicableToPlayer>
+  [  3] pusharglistnoret 1 ...................... <#notApplicableToPlayer>
+  [  5] extcall 35 .............................. return #notApplicableToPlayer
+  [  7] ret
+end
+
+on getTargetLoc me
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 1399 ..................... <g.mouseMaster>
+  [  5] pusharglist 1 ........................... <g.mouseMaster>
+  [  7] objcall 1400 ............................ <g.mouseMaster.getMouseLoc()>
+  [ 10] pusharglistnoret 1 ...................... <g.mouseMaster.getMouseLoc()>
+  [ 12] extcall 35 .............................. return g.mouseMaster.getMouseLoc()
+  [ 14] ret
+end
+
+on goMode me, newMode
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 52 .............................. <me.getMode()>
+  [  6] pushsymb 1729 ........................... <#freeze>
+  [  9] eq ...................................... <me.getMode() = #freeze>
+  [ 10] jmpifz [ 18] ............................ if me.getMode() = #freeze then
+  [ 13] pushint8 1 .............................. <1>
+  [ 15] setprop 1978 ............................ pUnstickSpell = 1
+  [ 18] getprop 33 .............................. <ancestor>
+  [ 20] getparam 1 .............................. <newMode>
+  [ 22] pusharglistnoret 2 ...................... <ancestor, newMode>
+  [ 24] objcall 278 ............................. ancestor.goMode(newMode)
+  [ 27] ret
+end
+
+on internalEvent me, theEvent
+  [  0] getparam 1 .............................. <theEvent>
+  [  2] peek 0 .................................. case theEvent of
+  [  4] pushsymb 482 ............................ <#buildingFinished>
+  [  7] eq
+  [  8] jmpifz [ 24] ............................ (case) #buildingFinished:
+  [ 11] getparam 0 .............................. <me>
+  [ 13] pushsymb 1979 ........................... <#playerControl>
+  [ 16] pusharglistnoret 2 ...................... <me, #playerControl>
+  [ 18] objcall 278 ............................. me.goMode(#playerControl)
+  [ 21] jmp [116]
+  [ 24] peek 0
+  [ 26] pushsymb 1761 ........................... <#spellCharged>
+  [ 29] eq
+  [ 30] jmpifz [ 74] ............................ (case) #spellCharged:
+  [ 33] getparam 0 .............................. <me>
+  [ 35] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [ 37] pusharglist 1 ........................... <me.pCharacterPrg>
+  [ 39] objcall 4520 ............................ <me.pCharacterPrg.getGmgOn()>
+  [ 42] jmpifz [ 71] ............................ if me.pCharacterPrg.getGmgOn() then
+  [ 45] getparam 0 .............................. <me>
+  [ 47] pusharglist 1 ........................... <me>
+  [ 49] objcall 141 ............................. <me.getAttack()>
+  [ 51] getobjprop 4549 ......................... <me.getAttack().gmgAutoFire>
+  [ 54] jmpifz [ 71] ............................ if me.getAttack().gmgAutoFire then
+  [ 57] getparam 0 .............................. <me>
+  [ 59] pusharglistnoret 1 ...................... <me>
+  [ 61] objcall 1975 ............................ me.playerAttackRelease()
+  [ 64] getparam 0 .............................. <me>
+  [ 66] pusharglistnoret 1 ...................... <me>
+  [ 68] objcall 1974 ............................ me.playerAttackCharge()
+  [ 71] jmp [116]
+  [ 74] peek 0
+  [ 76] pushsymb 4529 ........................... <#gmgTurnedOn>
+  [ 79] eq
+  [ 80] jmpifz [ 93] ............................ (case) #gmgTurnedOn:
+  [ 83] getparam 0 .............................. <me>
+  [ 85] pusharglistnoret 1 ...................... <me>
+  [ 87] objcall 1975 ............................ me.playerAttackRelease()
+  [ 90] jmp [116]
+  [ 93] peek 0
+  [ 95] pushsymb 4537 ........................... <#gmgTurnedOff>
+  [ 98] eq
+  [ 99] jmpifz [116] ............................ (case) #gmgTurnedOff:
+  [102] getparam 0 .............................. <me>
+  [104] pusharglistnoret 1 ...................... <me>
+  [106] objcall 1975 ............................ me.playerAttackRelease()
+  [109] getparam 0 .............................. <me>
+  [111] pusharglistnoret 1 ...................... <me>
+  [113] objcall 1974 ............................ me.playerAttackCharge()
+  [116] pop 1 ................................... end case
+  [118] ret
+end
+
+on interpretCheatKeys me
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 1561 ..................... <g.keyMaster>
+  [  5] pushsymb 1992 ........................... <#invincibility>
+  [  8] pusharglist 2 ........................... <g.keyMaster, #invincibility>
+  [ 10] objcall 1984 ............................ <g.keyMaster.getKeyResult(#invincibility)>
+  [ 13] jmpifz [ 29] ............................ if g.keyMaster.getKeyResult(#invincibility) then
+  [ 16] getglobal 40 ............................ <g>
+  [ 18] getchainedprop 754 ...................... <g.gamemaster>
+  [ 21] pushsymb 1992 ........................... <#invincibility>
+  [ 24] pusharglistnoret 2 ...................... <g.gamemaster, #invincibility>
+  [ 26] objcall 1993 ............................ g.gamemaster.cheat(#invincibility)
+  [ 29] getglobal 40 ............................ <g>
+  [ 31] getchainedprop 1561 ..................... <g.keyMaster>
+  [ 34] pushsymb 1994 ........................... <#killall>
+  [ 37] pusharglist 2 ........................... <g.keyMaster, #killall>
+  [ 39] objcall 1984 ............................ <g.keyMaster.getKeyResult(#killall)>
+  [ 42] jmpifz [ 58] ............................ if g.keyMaster.getKeyResult(#killall) then
+  [ 45] getglobal 40 ............................ <g>
+  [ 47] getchainedprop 754 ...................... <g.gamemaster>
+  [ 50] pushsymb 1994 ........................... <#killall>
+  [ 53] pusharglistnoret 2 ...................... <g.gamemaster, #killall>
+  [ 55] objcall 1993 ............................ g.gamemaster.cheat(#killall)
+  [ 58] getglobal 40 ............................ <g>
+  [ 60] getchainedprop 1561 ..................... <g.keyMaster>
+  [ 63] pushsymb 1995 ........................... <#medikit>
+  [ 66] pusharglist 2 ........................... <g.keyMaster, #medikit>
+  [ 68] objcall 1984 ............................ <g.keyMaster.getKeyResult(#medikit)>
+  [ 71] jmpifz [ 87] ............................ if g.keyMaster.getKeyResult(#medikit) then
+  [ 74] getglobal 40 ............................ <g>
+  [ 76] getchainedprop 754 ...................... <g.gamemaster>
+  [ 79] pushsymb 1995 ........................... <#medikit>
+  [ 82] pusharglistnoret 2 ...................... <g.gamemaster, #medikit>
+  [ 84] objcall 1993 ............................ g.gamemaster.cheat(#medikit)
+  [ 87] getglobal 40 ............................ <g>
+  [ 89] getchainedprop 1561 ..................... <g.keyMaster>
+  [ 92] pushsymb 1996 ........................... <#testHit>
+  [ 95] pusharglist 2 ........................... <g.keyMaster, #testHit>
+  [ 97] objcall 1984 ............................ <g.keyMaster.getKeyResult(#testHit)>
+  [100] jmpifz [112] ............................ if g.keyMaster.getKeyResult(#testHit) then
+  [103] getparam 0 .............................. <me>
+  [105] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [107] pusharglistnoret 1 ...................... <me.pCharacterPrg>
+  [109] objcall 446 ............................. me.pCharacterPrg.flickWhite()
+  [112] ret
+end
+
+on interpretGameKeys me
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 1561 ..................... <g.keyMaster>
+  [  5] pushsymb 1999 ........................... <#escape>
+  [  8] pusharglist 2 ........................... <g.keyMaster, #escape>
+  [ 10] objcall 1984 ............................ <g.keyMaster.getKeyResult(#escape)>
+  [ 13] jmpifz [ 26] ............................ if g.keyMaster.getKeyResult(#escape) then
+  [ 16] getglobal 40 ............................ <g>
+  [ 18] getchainedprop 754 ...................... <g.gamemaster>
+  [ 21] pusharglistnoret 1 ...................... <g.gamemaster>
+  [ 23] objcall 2000 ............................ g.gamemaster.escapePressed()
+  [ 26] getglobal 40 ............................ <g>
+  [ 28] getchainedprop 1561 ..................... <g.keyMaster>
+  [ 31] pushsymb 1413 ........................... <#wizard>
+  [ 34] pusharglist 2 ........................... <g.keyMaster, #wizard>
+  [ 36] objcall 1984 ............................ <g.keyMaster.getKeyResult(#wizard)>
+  [ 39] jmpifz [ 51] ............................ if g.keyMaster.getKeyResult(#wizard) then
+  [ 42] getparam 0 .............................. <me>
+  [ 44] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [ 46] pusharglistnoret 1 ...................... <me.pCharacterPrg>
+  [ 48] objcall 1404 ............................ me.pCharacterPrg.summonWizard()
+  [ 51] getglobal 40 ............................ <g>
+  [ 53] getchainedprop 1561 ..................... <g.keyMaster>
+  [ 56] pushsymb 4495 ........................... <#gmg>
+  [ 59] pusharglist 2 ........................... <g.keyMaster, #gmg>
+  [ 61] objcall 1984 ............................ <g.keyMaster.getKeyResult(#gmg)>
+  [ 64] jmpifz [ 76] ............................ if g.keyMaster.getKeyResult(#gmg) then
+  [ 67] getparam 0 .............................. <me>
+  [ 69] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [ 71] pusharglistnoret 1 ...................... <me.pCharacterPrg>
+  [ 73] objcall 4523 ............................ me.pCharacterPrg.setGmg()
+  [ 76] getglobal 40 ............................ <g>
+  [ 78] getchainedprop 1561 ..................... <g.keyMaster>
+  [ 81] pushsymb 4612 ........................... <#army>
+  [ 84] pusharglist 2 ........................... <g.keyMaster, #army>
+  [ 86] objcall 1984 ............................ <g.keyMaster.getKeyResult(#army)>
+  [ 89] jmpifz [101] ............................ if g.keyMaster.getKeyResult(#army) then
+  [ 92] getparam 0 .............................. <me>
+  [ 94] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [ 96] pusharglistnoret 1 ...................... <me.pCharacterPrg>
+  [ 98] objcall 4592 ............................ me.pCharacterPrg.summonArmy()
+  [101] getglobal 40 ............................ <g>
+  [103] getchainedprop 1561 ..................... <g.keyMaster>
+  [106] pushsymb 2001 ........................... <#spell1>
+  [109] pusharglist 2 ........................... <g.keyMaster, #spell1>
+  [111] objcall 1984 ............................ <g.keyMaster.getKeyResult(#spell1)>
+  [114] jmpifz [128] ............................ if g.keyMaster.getKeyResult(#spell1) then
+  [117] getparam 0 .............................. <me>
+  [119] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [121] pushint8 1 .............................. <1>
+  [123] pusharglistnoret 2 ...................... <me.pCharacterPrg, 1>
+  [125] objcall 1599 ............................ me.pCharacterPrg.selectSpell(1)
+  [128] getglobal 40 ............................ <g>
+  [130] getchainedprop 1561 ..................... <g.keyMaster>
+  [133] pushsymb 2002 ........................... <#spell2>
+  [136] pusharglist 2 ........................... <g.keyMaster, #spell2>
+  [138] objcall 1984 ............................ <g.keyMaster.getKeyResult(#spell2)>
+  [141] jmpifz [155] ............................ if g.keyMaster.getKeyResult(#spell2) then
+  [144] getparam 0 .............................. <me>
+  [146] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [148] pushint8 2 .............................. <2>
+  [150] pusharglistnoret 2 ...................... <me.pCharacterPrg, 2>
+  [152] objcall 1599 ............................ me.pCharacterPrg.selectSpell(2)
+  [155] getglobal 40 ............................ <g>
+  [157] getchainedprop 1561 ..................... <g.keyMaster>
+  [160] pushsymb 2003 ........................... <#spell3>
+  [163] pusharglist 2 ........................... <g.keyMaster, #spell3>
+  [165] objcall 1984 ............................ <g.keyMaster.getKeyResult(#spell3)>
+  [168] jmpifz [182] ............................ if g.keyMaster.getKeyResult(#spell3) then
+  [171] getparam 0 .............................. <me>
+  [173] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [175] pushint8 3 .............................. <3>
+  [177] pusharglistnoret 2 ...................... <me.pCharacterPrg, 3>
+  [179] objcall 1599 ............................ me.pCharacterPrg.selectSpell(3)
+  [182] getglobal 40 ............................ <g>
+  [184] getchainedprop 1561 ..................... <g.keyMaster>
+  [187] pushsymb 2004 ........................... <#spell4>
+  [190] pusharglist 2 ........................... <g.keyMaster, #spell4>
+  [192] objcall 1984 ............................ <g.keyMaster.getKeyResult(#spell4)>
+  [195] jmpifz [209] ............................ if g.keyMaster.getKeyResult(#spell4) then
+  [198] getparam 0 .............................. <me>
+  [200] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [202] pushint8 4 .............................. <4>
+  [204] pusharglistnoret 2 ...................... <me.pCharacterPrg, 4>
+  [206] objcall 1599 ............................ me.pCharacterPrg.selectSpell(4)
+  [209] getglobal 40 ............................ <g>
+  [211] getchainedprop 1561 ..................... <g.keyMaster>
+  [214] pushsymb 2005 ........................... <#spell5>
+  [217] pusharglist 2 ........................... <g.keyMaster, #spell5>
+  [219] objcall 1984 ............................ <g.keyMaster.getKeyResult(#spell5)>
+  [222] jmpifz [236] ............................ if g.keyMaster.getKeyResult(#spell5) then
+  [225] getparam 0 .............................. <me>
+  [227] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [229] pushint8 5 .............................. <5>
+  [231] pusharglistnoret 2 ...................... <me.pCharacterPrg, 5>
+  [233] objcall 1599 ............................ me.pCharacterPrg.selectSpell(5)
+  [236] getglobal 40 ............................ <g>
+  [238] getchainedprop 1561 ..................... <g.keyMaster>
+  [241] pushsymb 4550 ........................... <#spell6>
+  [244] pusharglist 2 ........................... <g.keyMaster, #spell6>
+  [246] objcall 1984 ............................ <g.keyMaster.getKeyResult(#spell6)>
+  [249] jmpifz [263] ............................ if g.keyMaster.getKeyResult(#spell6) then
+  [252] getparam 0 .............................. <me>
+  [254] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [256] pushint8 6 .............................. <6>
+  [258] pusharglistnoret 2 ...................... <me.pCharacterPrg, 6>
+  [260] objcall 1599 ............................ me.pCharacterPrg.selectSpell(6)
+  [263] getglobal 40 ............................ <g>
+  [265] getchainedprop 1561 ..................... <g.keyMaster>
+  [268] pushsymb 4551 ........................... <#spell7>
+  [271] pusharglist 2 ........................... <g.keyMaster, #spell7>
+  [273] objcall 1984 ............................ <g.keyMaster.getKeyResult(#spell7)>
+  [276] jmpifz [290] ............................ if g.keyMaster.getKeyResult(#spell7) then
+  [279] getparam 0 .............................. <me>
+  [281] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [283] pushint8 7 .............................. <7>
+  [285] pusharglistnoret 2 ...................... <me.pCharacterPrg, 7>
+  [287] objcall 1599 ............................ me.pCharacterPrg.selectSpell(7)
+  [290] getglobal 40 ............................ <g>
+  [292] getchainedprop 1561 ..................... <g.keyMaster>
+  [295] pushsymb 4552 ........................... <#spell8>
+  [298] pusharglist 2 ........................... <g.keyMaster, #spell8>
+  [300] objcall 1984 ............................ <g.keyMaster.getKeyResult(#spell8)>
+  [303] jmpifz [317] ............................ if g.keyMaster.getKeyResult(#spell8) then
+  [306] getparam 0 .............................. <me>
+  [308] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [310] pushint8 8 .............................. <8>
+  [312] pusharglistnoret 2 ...................... <me.pCharacterPrg, 8>
+  [314] objcall 1599 ............................ me.pCharacterPrg.selectSpell(8)
+  [317] getglobal 40 ............................ <g>
+  [319] getchainedprop 1561 ..................... <g.keyMaster>
+  [322] pushsymb 4553 ........................... <#spell9>
+  [325] pusharglist 2 ........................... <g.keyMaster, #spell9>
+  [327] objcall 1984 ............................ <g.keyMaster.getKeyResult(#spell9)>
+  [330] jmpifz [344] ............................ if g.keyMaster.getKeyResult(#spell9) then
+  [333] getparam 0 .............................. <me>
+  [335] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [337] pushint8 9 .............................. <9>
+  [339] pusharglistnoret 2 ...................... <me.pCharacterPrg, 9>
+  [341] objcall 1599 ............................ me.pCharacterPrg.selectSpell(9)
+  [344] getglobal 40 ............................ <g>
+  [346] getchainedprop 1561 ..................... <g.keyMaster>
+  [349] pushsymb 1990 ........................... <#weaponSelector>
+  [352] pusharglist 2 ........................... <g.keyMaster, #weaponSelector>
+  [354] objcall 1984 ............................ <g.keyMaster.getKeyResult(#weaponSelector)>
+  [357] jmpifz [369] ............................ if g.keyMaster.getKeyResult(#weaponSelector) then
+  [360] getparam 0 .............................. <me>
+  [362] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [364] pusharglistnoret 1 ...................... <me.pCharacterPrg>
+  [366] objcall 1629 ............................ me.pCharacterPrg.displayWeaponSelector()
+  [369] getglobal 40 ............................ <g>
+  [371] getchainedprop 1561 ..................... <g.keyMaster>
+  [374] pushsymb 1991 ........................... <#wizardSelector>
+  [377] pusharglist 2 ........................... <g.keyMaster, #wizardSelector>
+  [379] objcall 1984 ............................ <g.keyMaster.getKeyResult(#wizardSelector)>
+  [382] jmpifz [394] ............................ if g.keyMaster.getKeyResult(#wizardSelector) then
+  [385] getparam 0 .............................. <me>
+  [387] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [389] pusharglistnoret 1 ...................... <me.pCharacterPrg>
+  [391] objcall 1403 ............................ me.pCharacterPrg.selectNextWizard()
+  [394] ret
+end
+
+on interpretMouse me
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 1399 ..................... <g.mouseMaster>
+  [  5] pusharglist 1 ........................... <g.mouseMaster>
+  [  7] objcall 2006 ............................ <g.mouseMaster.getMouseState()>
+  [ 10] setlocal 0 .............................. mouseState = g.mouseMaster.getMouseState()
+  [ 12] getglobal 1981 .......................... <gGameName>
+  [ 15] peek 0 .................................. case gGameName of
+  [ 17] pushsymb 1989 ........................... <#merlin_3>
+  [ 20] eq
+  [ 21] jmpifz [125] ............................ (case) #merlin_3:
+  [ 24] getparam 0 .............................. <me>
+  [ 26] getobjprop 312 .......................... <me.pmode>
+  [ 29] pushsymb 1729 ........................... <#freeze>
+  [ 32] eq ...................................... <me.pmode = #freeze>
+  [ 33] jmpifz [ 70] ............................ if me.pmode = #freeze then / else
+  [ 36] getlocal 0 .............................. <mouseState>
+  [ 38] peek 0 .................................. case mouseState of
+  [ 40] pushsymb 2007 ........................... <#pressed>
+  [ 43] nteq
+  [ 44] jmpifz [ 56] ............................ (case) #pressed, ...
+  [ 47] peek 0
+  [ 49] pushsymb 2008 ........................... <#released>
+  [ 52] eq
+  [ 53] jmpifz [ 65] ............................ (case) ..., #released:
+  [ 56] getparam 0 .............................. <me>
+  [ 58] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [ 60] pusharglistnoret 1 ...................... <me.pCharacterPrg>
+  [ 62] objcall 1443 ............................ me.pCharacterPrg.AIisTryingToMove()
+  [ 65] pop 1
+  [ 67] jmp [125]
+  [ 70] getlocal 0 .............................. <mouseState>
+  [ 72] peek 0 .................................. case mouseState of
+  [ 74] pushsymb 2009 ........................... <#notPressed>
+  [ 77] eq
+  [ 78] jmpifz [ 88] ............................ (case) #notPressed:
+  [ 81] pusharglistnoret 0 ...................... <>
+  [ 83] extcall 185 ............................. nothing()
+  [ 85] jmp [123]
+  [ 88] peek 0
+  [ 90] pushsymb 2007 ........................... <#pressed>
+  [ 93] eq
+  [ 94] jmpifz [107] ............................ (case) #pressed:
+  [ 97] getparam 0 .............................. <me>
+  [ 99] pusharglistnoret 1 ...................... <me>
+  [101] objcall 1974 ............................ me.playerAttackCharge()
+  [104] jmp [123]
+  [107] peek 0
+  [109] pushsymb 2008 ........................... <#released>
+  [112] eq
+  [113] jmpifz [123] ............................ (case) #released:
+  [116] getparam 0 .............................. <me>
+  [118] pusharglistnoret 1 ...................... <me>
+  [120] objcall 1975 ............................ me.playerAttackRelease()
+  [123] pop 1 ................................... end case
+  [125] pop 1
+  [127] ret
+end
+
+on interpretMoveKeys me
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 1561 ..................... <g.keyMaster>
+  [  5] pusharglist 1 ........................... <g.keyMaster>
+  [  7] objcall 2011 ............................ <g.keyMaster.getMoveVector()>
+  [ 10] setlocal 0 .............................. moveVector = g.keyMaster.getMoveVector()
+  [ 12] getparam 0 .............................. <me>
+  [ 14] getobjprop 312 .......................... <me.pmode>
+  [ 17] pushsymb 1729 ........................... <#freeze>
+  [ 20] eq ...................................... <me.pmode = #freeze>
+  [ 21] jmpifz [ 53] ............................ if me.pmode = #freeze then
+  [ 24] getlocal 0 .............................. <moveVector>
+  [ 26] pushzero ................................ <0>
+  [ 27] pushzero ................................ <0>
+  [ 28] pusharglist 2 ........................... <0, 0>
+  [ 30] extcall 197 ............................. <point(0, 0)>
+  [ 32] nteq .................................... <moveVector <> point(0, 0)>
+  [ 33] jmpifz [ 45] ............................ if moveVector <> point(0, 0) then
+  [ 36] getparam 0 .............................. <me>
+  [ 38] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [ 40] pusharglistnoret 1 ...................... <me.pCharacterPrg>
+  [ 42] objcall 1443 ............................ me.pCharacterPrg.AIisTryingToMove()
+  [ 45] pushzero ................................ <0>
+  [ 46] pushzero ................................ <0>
+  [ 47] pusharglist 2 ........................... <0, 0>
+  [ 49] extcall 197 ............................. <point(0, 0)>
+  [ 51] setlocal 0 .............................. moveVector = point(0, 0)
+  [ 53] getparam 0 .............................. <me>
+  [ 55] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [ 57] getlocal 0 .............................. <moveVector>
+  [ 59] pushint8 1 .............................. <1>
+  [ 61] pusharglist 2 ........................... <moveVector, 1>
+  [ 63] objcall 109 ............................. <moveVector[1]>
+  [ 65] pusharglistnoret 2 ...................... <me.pCharacterPrg, moveVector[1]>
+  [ 67] objcall 879 ............................. me.pCharacterPrg.moveHoriz(moveVector[1])
+  [ 70] getparam 0 .............................. <me>
+  [ 72] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [ 74] getlocal 0 .............................. <moveVector>
+  [ 76] pushint8 2 .............................. <2>
+  [ 78] pusharglist 2 ........................... <moveVector, 2>
+  [ 80] objcall 109 ............................. <moveVector[2]>
+  [ 82] pusharglistnoret 2 ...................... <me.pCharacterPrg, moveVector[2]>
+  [ 84] objcall 883 ............................. me.pCharacterPrg.moveVert(moveVector[2])
+  [ 87] getparam 0 .............................. <me>
+  [ 89] getlocal 0 .............................. <moveVector>
+  [ 91] pusharglistnoret 2 ...................... <me, moveVector>
+  [ 93] objcall 923 ............................. me.recordMoveVector(moveVector)
+  [ 96] ret
+end
+
+on playerAttackCharge me
+  [  0] getparam 0 .............................. <me>
+  [  2] getobjprop 312 .......................... <me.pmode>
+  [  5] pushsymb 1729 ........................... <#freeze>
+  [  8] eq ...................................... <me.pmode = #freeze>
+  [  9] jmpifz [ 25] ............................ if me.pmode = #freeze then
+  [ 12] getparam 0 .............................. <me>
+  [ 14] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [ 16] pusharglistnoret 1 ...................... <me.pCharacterPrg>
+  [ 18] objcall 1443 ............................ me.pCharacterPrg.AIisTryingToMove()
+  [ 21] pusharglistnoret 0 ...................... <>
+  [ 23] extcall 35 .............................. return 
+  [ 25] getparam 0 .............................. <me>
+  [ 27] pusharglistnoret 1 ...................... <me>
+  [ 29] objcall 145 ............................. me.attack()
+  [ 31] ret
+end
+
+on playerAttackRelease me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 141 ............................. <me.getAttack()>
+  [  6] getobjprop 178 .......................... <me.getAttack().type>
+  [  8] setlocal 0 .............................. attackType = me.getAttack().type
+  [ 10] getlocal 0 .............................. <attackType>
+  [ 12] peek 0 .................................. case attackType of
+  [ 14] pushsymb 179 ............................ <#melee>
+  [ 16] nteq
+  [ 17] jmpifz [ 29] ............................ (case) #melee, ...
+  [ 20] peek 0
+  [ 22] pushsymb 1616 ........................... <#ranged>
+  [ 25] eq
+  [ 26] jmpifz [ 36] ............................ (case) ..., #ranged:
+  [ 29] pusharglistnoret 0 ...................... <>
+  [ 31] extcall 185 ............................. nothing()
+  [ 33] jmp [ 61]
+  [ 36] peek 0
+  [ 38] pushsymb 181 ............................ <#magic>
+  [ 40] eq
+  [ 41] jmpifz [ 61] ............................ (case) #magic:
+  [ 44] getparam 0 .............................. <me>
+  [ 46] pusharglist 1 ........................... <me>
+  [ 48] objcall 223 ............................. <me.getTargetLoc()>
+  [ 50] setlocal 1 .............................. targetloc = me.getTargetLoc()
+  [ 52] getparam 0 .............................. <me>
+  [ 54] getlocal 1 .............................. <targetloc>
+  [ 56] pusharglistnoret 2 ...................... <me, targetloc>
+  [ 58] objcall 1745 ............................ me.releaseMagic(targetloc)
+  [ 61] pop 1 ................................... end case
+  [ 63] ret
+end
+
+on restoreFromSave me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 26 .............................. ancestor.restoreFromSave(sd)
+  [  8] pushint8 1 .............................. <1>
+  [ 10] setprop 1978 ............................ pUnstickSpell = 1
+  [ 13] ret
+end
+
+on restorePlayerControl me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1979 ........................... <#playerControl>
+  [  5] pusharglistnoret 2 ...................... <me, #playerControl>
+  [  7] objcall 278 ............................. me.goMode(#playerControl)
+  [ 10] ret
+end
+
+on start me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 1590 ............................ ancestor.start()
+  [  7] getparam 0 .............................. <me>
+  [  9] pushsymb 493 ............................ <#beBuilt>
+  [ 12] pusharglistnoret 2 ...................... <me, #beBuilt>
+  [ 14] objcall 278 ............................. me.goMode(#beBuilt)
+  [ 17] ret
+end
+
+on unpaws me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 459 ............................. ancestor.unpaws()
+  [  7] getparam 0 .............................. <me>
+  [  9] pusharglistnoret 1 ...................... <me>
+  [ 11] objcall 1977 ............................ me.unstickCurrentSpell()
+  [ 14] ret
+end
+
+on unstickCurrentSpell me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [  4] pusharglist 1 ........................... <me.pCharacterPrg>
+  [  6] objcall 52 .............................. <me.pCharacterPrg.getMode()>
+  [  8] setlocal 0 .............................. playerMode = me.pCharacterPrg.getMode()
+  [ 10] getlocal 0 .............................. <playerMode>
+  [ 12] pushsymb 78 ............................. <#charge>
+  [ 14] eq ...................................... <playerMode = #charge>
+  [ 15] jmpifz [ 63] ............................ if playerMode = #charge then
+  [ 18] getglobal 40 ............................ <g>
+  [ 20] getchainedprop 1399 ..................... <g.mouseMaster>
+  [ 23] pusharglistnoret 1 ...................... <g.mouseMaster>
+  [ 25] objcall 2012 ............................ g.mouseMaster.checkMouse()
+  [ 28] getglobal 40 ............................ <g>
+  [ 30] getchainedprop 1399 ..................... <g.mouseMaster>
+  [ 33] pusharglist 1 ........................... <g.mouseMaster>
+  [ 35] objcall 2006 ............................ <g.mouseMaster.getMouseState()>
+  [ 38] setlocal 1 .............................. mouseState = g.mouseMaster.getMouseState()
+  [ 40] getlocal 1 .............................. <mouseState>
+  [ 42] pushsymb 2008 ........................... <#released>
+  [ 45] eq ...................................... <mouseState = #released>
+  [ 46] getlocal 1 .............................. <mouseState>
+  [ 48] pushsymb 2009 ........................... <#notPressed>
+  [ 51] eq ...................................... <mouseState = #notPressed>
+  [ 52] or ...................................... <(mouseState = #released) or (mouseState = #notPressed)>
+  [ 53] jmpifz [ 63] ............................ if (mouseState = #released) or (mouseState = #notPressed) then
+  [ 56] getparam 0 .............................. <me>
+  [ 58] pusharglistnoret 1 ...................... <me>
+  [ 60] objcall 1975 ............................ me.playerAttackRelease()
+  [ 63] ret
+end
+
+on update me
+  [  0] getprop 1978 ............................ <pUnstickSpell>
+  [  3] pushint8 1 .............................. <1>
+  [  5] eq ...................................... <pUnstickSpell = 1>
+  [  6] jmpifz [ 20] ............................ if pUnstickSpell = 1 then
+  [  9] getparam 0 .............................. <me>
+  [ 11] pusharglistnoret 1 ...................... <me>
+  [ 13] objcall 1977 ............................ me.unstickCurrentSpell()
+  [ 16] pushzero ................................ <0>
+  [ 17] setprop 1978 ............................ pUnstickSpell = 0
+  [ 20] getparam 0 .............................. <me>
+  [ 22] getobjprop 312 .......................... <me.pmode>
+  [ 25] peek 0 .................................. case me.pmode of
+  [ 27] pushsymb 145 ............................ <#attack>
+  [ 29] nteq
+  [ 30] jmpifz [ 59] ............................ (case) #attack, ...
+  [ 33] peek 0
+  [ 35] pushsymb 1979 ........................... <#playerControl>
+  [ 38] nteq
+  [ 39] jmpifz [ 59] ............................ (case) ..., #playerControl, ...
+  [ 42] peek 0
+  [ 44] pushsymb 1729 ........................... <#freeze>
+  [ 47] nteq
+  [ 48] jmpifz [ 59] ............................ (case) ..., #freeze, ...
+  [ 51] peek 0
+  [ 53] pushsymb 80 ............................. <#release>
+  [ 55] eq
+  [ 56] jmpifz [ 87] ............................ (case) ..., #release:
+  [ 59] getparam 0 .............................. <me>
+  [ 61] pusharglistnoret 1 ...................... <me>
+  [ 63] objcall 1973 ............................ me.interpretMoveKeys()
+  [ 66] getparam 0 .............................. <me>
+  [ 68] pusharglistnoret 1 ...................... <me>
+  [ 70] objcall 1970 ............................ me.interpretCheatKeys()
+  [ 73] getparam 0 .............................. <me>
+  [ 75] pusharglistnoret 1 ...................... <me>
+  [ 77] objcall 1971 ............................ me.interpretGameKeys()
+  [ 80] getparam 0 .............................. <me>
+  [ 82] pusharglistnoret 1 ...................... <me>
+  [ 84] objcall 1972 ............................ me.interpretMouse()
+  [ 87] pop 1
+  [ 89] getprop 33 .............................. <ancestor>
+  [ 91] pusharglistnoret 1 ...................... <ancestor>
+  [ 93] objcall 31 .............................. ancestor.update()
+  [ 95] ret
+end

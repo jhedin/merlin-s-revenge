@@ -1,0 +1,178 @@
+property ancestor, pInvinceActive, pInvinceLockOn, pTempInvinceCounter, pTempInvinceTime
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getprop 33 .............................. <ancestor>
+  [ 12] pusharglistnoret 1 ...................... <ancestor>
+  [ 14] objcall 2 ............................... ancestor.addModParams()
+  [ 16] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pushzero ................................ <0>
+  [  9] setprop 763 ............................. pInvinceActive = 0
+  [ 12] pushzero ................................ <0>
+  [ 13] setprop 764 ............................. pInvinceLockOn = 0
+  [ 16] pushint16 200 ........................... <200>
+  [ 19] setprop 765 ............................. pTempInvinceTime = 200
+  [ 22] pusharglist 0 ........................... <>
+  [ 24] extcall 529 ............................. <CounterNew()>
+  [ 27] setprop 766 ............................. pTempInvinceCounter = CounterNew()
+  [ 30] getprop 766 ............................. <pTempInvinceCounter>
+  [ 33] pushsymb 530 ............................ <#tim>
+  [ 36] pushint8 2 .............................. <2>
+  [ 38] getprop 765 ............................. <pTempInvinceTime>
+  [ 41] pusharglistnoret 4 ...................... <pTempInvinceCounter, #tim, 2, pTempInvinceTime>
+  [ 43] objcall 531 ............................. pTempInvinceCounter.tim[2] = pTempInvinceTime
+  [ 46] ret
+end
+
+on addSaveData me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 4 ............................... ancestor.addSaveData(sd)
+  [  8] getparam 1 .............................. <sd>
+  [ 10] pushsymb 763 ............................ <#pInvinceActive>
+  [ 13] getprop 763 ............................. <pInvinceActive>
+  [ 16] pusharglistnoret 3 ...................... <sd, #pInvinceActive, pInvinceActive>
+  [ 18] objcall 48 .............................. sd[#pInvinceActive] = pInvinceActive
+  [ 20] getparam 1 .............................. <sd>
+  [ 22] pushsymb 764 ............................ <#pInvinceLockOn>
+  [ 25] getprop 764 ............................. <pInvinceLockOn>
+  [ 28] pusharglistnoret 3 ...................... <sd, #pInvinceLockOn, pInvinceLockOn>
+  [ 30] objcall 48 .............................. sd[#pInvinceLockOn] = pInvinceLockOn
+  [ 32] getparam 1 .............................. <sd>
+  [ 34] pushsymb 766 ............................ <#pTempInvinceCounter>
+  [ 37] getprop 766 ............................. <pTempInvinceCounter>
+  [ 40] pusharglistnoret 3 ...................... <sd, #pTempInvinceCounter, pTempInvinceCounter>
+  [ 42] objcall 48 .............................. sd[#pTempInvinceCounter] = pTempInvinceCounter
+  [ 44] ret
+end
+
+on getInvinceActive me
+  [  0] getprop 763 ............................. <pInvinceActive>
+  [  3] pusharglistnoret 1 ...................... <pInvinceActive>
+  [  5] extcall 35 .............................. return pInvinceActive
+  [  7] ret
+end
+
+on invinceOn me
+  [  0] pushint8 1 .............................. <1>
+  [  2] setprop 763 ............................. pInvinceActive = 1
+  [  5] getparam 0 .............................. <me>
+  [  7] getchainedprop 57 ....................... <me.id>
+  [  9] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 11] pusharglistnoret 1 ...................... <me.id.bigMe>
+  [ 13] objcall 453 ............................. me.id.bigMe.pulseWhite()
+  [ 16] ret
+end
+
+on invinceOff me
+  [  0] pushzero ................................ <0>
+  [  1] setprop 763 ............................. pInvinceActive = 0
+  [  4] getparam 0 .............................. <me>
+  [  6] getchainedprop 57 ....................... <me.id>
+  [  8] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 10] pusharglistnoret 1 ...................... <me.id.bigMe>
+  [ 12] objcall 454 ............................. me.id.bigMe.pulseWhiteStop()
+  [ 15] ret
+end
+
+on invinceToggle me
+  [  0] getprop 763 ............................. <pInvinceActive>
+  [  3] jmpifz [ 20] ............................ if pInvinceActive then / else
+  [  6] getparam 0 .............................. <me>
+  [  8] pusharglistnoret 1 ...................... <me>
+  [ 10] objcall 759 ............................. me.invinceOff()
+  [ 13] pushzero ................................ <0>
+  [ 14] setprop 764 ............................. pInvinceLockOn = 0
+  [ 17] jmp [ 32]
+  [ 20] getparam 0 .............................. <me>
+  [ 22] pusharglistnoret 1 ...................... <me>
+  [ 24] objcall 758 ............................. me.invinceOn()
+  [ 27] pushint8 1 .............................. <1>
+  [ 29] setprop 764 ............................. pInvinceLockOn = 1
+  [ 32] ret
+end
+
+on restoreFromSave me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 26 .............................. ancestor.restoreFromSave(sd)
+  [  8] getparam 1 .............................. <sd>
+  [ 10] getobjprop 763 .......................... <sd.pInvinceActive>
+  [ 13] setprop 763 ............................. pInvinceActive = sd.pInvinceActive
+  [ 16] getparam 1 .............................. <sd>
+  [ 18] getobjprop 764 .......................... <sd.pInvinceLockOn>
+  [ 21] setprop 764 ............................. pInvinceLockOn = sd.pInvinceLockOn
+  [ 24] getparam 1 .............................. <sd>
+  [ 26] getobjprop 766 .......................... <sd.pTempInvinceCounter>
+  [ 29] setprop 766 ............................. pTempInvinceCounter = sd.pTempInvinceCounter
+  [ 32] ret
+end
+
+on startTempInvince me
+  [  0] getprop 766 ............................. <pTempInvinceCounter>
+  [  3] pusharglistnoret 1 ...................... <pTempInvinceCounter>
+  [  5] extcall 706 ............................. CounterReset(pTempInvinceCounter)
+  [  8] getprop 764 ............................. <pInvinceLockOn>
+  [ 11] pushzero ................................ <0>
+  [ 12] eq ...................................... <pInvinceLockOn = 0>
+  [ 13] jmpifz [ 23] ............................ if pInvinceLockOn = 0 then
+  [ 16] getparam 0 .............................. <me>
+  [ 18] pusharglistnoret 1 ...................... <me>
+  [ 20] objcall 758 ............................. me.invinceOn()
+  [ 23] ret
+end
+
+on update me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 31 .............................. ancestor.update()
+  [  6] getprop 763 ............................. <pInvinceActive>
+  [  9] jmpifz [ 19] ............................ if pInvinceActive then
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] objcall 762 ............................. me.updateTempInvince()
+  [ 19] ret
+end
+
+on updateTempInvince me
+  [  0] getprop 764 ............................. <pInvinceLockOn>
+  [  3] pushzero ................................ <0>
+  [  4] eq ...................................... <pInvinceLockOn = 0>
+  [  5] jmpifz [ 32] ............................ if pInvinceLockOn = 0 then
+  [  8] getprop 766 ............................. <pTempInvinceCounter>
+  [ 11] pusharglistnoret 1 ...................... <pTempInvinceCounter>
+  [ 13] extcall 767 ............................. CounterOnce(pTempInvinceCounter)
+  [ 16] getprop 766 ............................. <pTempInvinceCounter>
+  [ 19] getobjprop 552 .......................... <pTempInvinceCounter.fin>
+  [ 22] jmpifz [ 32] ............................ if pTempInvinceCounter.fin then
+  [ 25] getparam 0 .............................. <me>
+  [ 27] pusharglistnoret 1 ...................... <me>
+  [ 29] objcall 759 ............................. me.invinceOff()
+  [ 32] ret
+end
