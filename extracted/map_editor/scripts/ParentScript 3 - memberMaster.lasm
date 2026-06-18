@@ -1,0 +1,64 @@
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 12 .............................. return me
+  [  6] ret
+end
+
+on init me
+  [  0] pushcons 0 .............................. <"temp">
+  [  2] pushint8 2 .............................. <2>
+  [  4] get 8 ................................... <the number of castMembers of castLib "temp">
+  [  6] setlocal 0 .............................. numImages = the number of castMembers of castLib "temp"
+  [  8] pushint8 1 .............................. <1>
+  [ 10] setlocal 1
+  [ 12] getlocal 1
+  [ 14] getlocal 0 .............................. <numImages>
+  [ 16] lteq
+  [ 17] jmpifz [ 41] ............................ repeat with i = 1 to numImages
+  [ 20] getlocal 1 .............................. <i>
+  [ 22] pushcons 0 .............................. <"temp">
+  [ 24] pusharglist 2 ........................... <i, "temp">
+  [ 26] extcall 28 .............................. <member(i, "temp")>
+  [ 28] pusharglistnoret 1 ...................... <member(i, "temp")>
+  [ 30] objcall 191 ............................. member(i, "temp").erase()
+  [ 32] pushint8 1
+  [ 34] getlocal 1
+  [ 36] add
+  [ 37] setlocal 1
+  [ 39] endrepeat [ 12]
+  [ 41] ret
+end
+
+on requestMember me, theType, thename
+  [  0] getparam 1 .............................. <theType>
+  [  2] pushcons 0 .............................. <"temp">
+  [  4] pusharglist 1 ........................... <"temp">
+  [  6] extcall 193 ............................. <castLib("temp")>
+  [  8] pusharglist 2 ........................... <theType, castLib("temp")>
+  [ 10] extcall 0 ............................... <new(theType, castLib("temp"))>
+  [ 12] setlocal 0 .............................. imageMem = new(theType, castLib("temp"))
+  [ 14] getparam 2 .............................. <thename>
+  [ 16] pusharglist 0 ........................... <>
+  [ 18] extcall 194 ............................. <VOID>
+  [ 20] nteq .................................... <thename <> VOID>
+  [ 21] jmpifz [ 30] ............................ if thename <> VOID then
+  [ 24] getlocal 0 .............................. <imageMem>
+  [ 26] getparam 2 .............................. <thename>
+  [ 28] setobjprop 35 ........................... imageMem.name = thename
+  [ 30] getlocal 0 .............................. <imageMem>
+  [ 32] pusharglistnoret 1 ...................... <imageMem>
+  [ 34] extcall 12 .............................. return imageMem
+  [ 36] ret
+end
+
+on freeMember me, theMember
+  [  0] getparam 1 .............................. <theMember>
+  [  2] pusharglistnoret 1 ...................... <theMember>
+  [  4] objcall 191 ............................. theMember.erase()
+  [  6] ret
+end
+
+on stop me
+  [  0] ret
+end

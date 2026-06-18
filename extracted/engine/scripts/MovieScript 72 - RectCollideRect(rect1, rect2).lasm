@@ -1,0 +1,33 @@
+on RectCollideRect rect1, rect2
+  [  0] getparam 0 .............................. <rect1>
+  [  2] getobjprop 192 .......................... <rect1.left>
+  [  4] getparam 1 .............................. <rect2>
+  [  6] getobjprop 316 .......................... <rect2.right>
+  [  9] lteq .................................... <rect1.left <= rect2.right>
+  [ 10] getparam 0 .............................. <rect1>
+  [ 12] getobjprop 316 .......................... <rect1.right>
+  [ 15] getparam 1 .............................. <rect2>
+  [ 17] getobjprop 192 .......................... <rect2.left>
+  [ 19] gteq .................................... <rect1.right >= rect2.left>
+  [ 20] and ..................................... <(rect1.left <= rect2.right) and (rect1.right >= rect2.left)>
+  [ 21] jmpifz [ 54] ............................ if (rect1.left <= rect2.right) and (rect1.right >= rect2.left) then
+  [ 24] getparam 0 .............................. <rect1>
+  [ 26] getobjprop 193 .......................... <rect1.top>
+  [ 28] getparam 1 .............................. <rect2>
+  [ 30] getobjprop 317 .......................... <rect2.bottom>
+  [ 33] lteq .................................... <rect1.top <= rect2.bottom>
+  [ 34] getparam 0 .............................. <rect1>
+  [ 36] getobjprop 317 .......................... <rect1.bottom>
+  [ 39] getparam 1 .............................. <rect2>
+  [ 41] getobjprop 193 .......................... <rect2.top>
+  [ 43] gteq .................................... <rect1.bottom >= rect2.top>
+  [ 44] and ..................................... <(rect1.top <= rect2.bottom) and (rect1.bottom >= rect2.top)>
+  [ 45] jmpifz [ 54] ............................ if (rect1.top <= rect2.bottom) and (rect1.bottom >= rect2.top) then
+  [ 48] pushint8 1 .............................. <1>
+  [ 50] pusharglistnoret 1 ...................... <1>
+  [ 52] extcall 3 ............................... return 1
+  [ 54] pushzero ................................ <0>
+  [ 55] pusharglistnoret 1 ...................... <0>
+  [ 57] extcall 3 ............................... return 0
+  [ 59] ret
+end

@@ -1,0 +1,52 @@
+property ancestor, pSpr
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushcons 0 .............................. <"objTransformer">
+  [  4] pusharglist 1 ........................... <"objTransformer">
+  [  6] extcall 34 .............................. <script("objTransformer")>
+  [  8] pusharglist 1 ........................... <script("objTransformer")>
+  [ 10] extcall 0 ............................... <new(script("objTransformer"))>
+  [ 12] setobjprop 33 ........................... me.ancestor = new(script("objTransformer"))
+  [ 14] getparam 0 .............................. <me>
+  [ 16] pushsymb 1 .............................. <#init>
+  [ 18] pusharglist 2 ........................... <me, #init>
+  [ 20] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 22] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 24] getlocal 0 .............................. <i>
+  [ 26] pushsymb 1374 ........................... <#transHeightFin>
+  [ 29] setobjprop 1389 ......................... i.callingPrgMessage = #transHeightFin
+  [ 32] getlocal 0 .............................. <i>
+  [ 34] pushsymb 267 ............................ <#spr>
+  [ 37] pushsymb 49 ............................. <#none>
+  [ 39] pusharglistnoret 3 ...................... <i, #spr, #none>
+  [ 41] objcall 48 .............................. i[#spr] = #none
+  [ 43] getparam 0 .............................. <me>
+  [ 45] pusharglistnoret 1 ...................... <me>
+  [ 47] extcall 35 .............................. return me
+  [ 49] ret
+end
+
+on init me, params
+  [  0] getparam 1 .............................. <params>
+  [  2] getobjprop 267 .......................... <params.spr>
+  [  5] setprop 173 ............................. pSpr = params.spr
+  [  7] getparam 1 .............................. <params>
+  [  9] getprop 173 ............................. <pSpr>
+  [ 11] getobjprop 423 .......................... <pSpr.height>
+  [ 14] setobjprop 1391 ......................... params.initialValue = pSpr.height
+  [ 17] getparam 0 .............................. <me>
+  [ 19] getchainedprop 33 ....................... <me.ancestor>
+  [ 21] getparam 1 .............................. <params>
+  [ 23] pusharglistnoret 2 ...................... <me.ancestor, params>
+  [ 25] objcall 1 ............................... me.ancestor.init(params)
+  [ 27] ret
+end
+
+on updateAttribute me
+  [  0] getprop 173 ............................. <pSpr>
+  [  2] getparam 0 .............................. <me>
+  [  4] getobjprop 4055 ......................... <me.pCurr>
+  [  7] setobjprop 423 .......................... pSpr.height = me.pCurr
+  [ 10] ret
+end

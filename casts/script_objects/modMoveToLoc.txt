@@ -1,0 +1,699 @@
+[#name: "modMoveToLoc", #scriptType: #parent, #type: #script]
+
+global g
+
+global gGameView
+
+
+
+property ancestor
+
+property pFlipWithMovement         -- whether to cause the character to face the way he is moving
+
+property pMoveHoriz
+
+property pMoveVert
+
+property pMoveToLocArrivalDistance -- the distance at which we will consider we have arrived at the target loc
+
+property pMoveToLocTarget          -- the target loc for moveToLoc mode
+
+property pMoveTowardsLocFunction   -- which function to use to move
+
+property pVerticalLeeway           -- to avoid unneccessary jumping and falling
+
+property pWalkAcceleration         -- used in gGameView = #sideOn
+
+property pWalkSpeed                -- used in gGameView = #topDown
+
+property pWalkSpeedInc             -- amount to increase walkSpeed by from potion
+
+property pWalkSpeedIncLevel        -- amount to increase walkSpeed by from levelling
+
+--property pFreezeCounter            --counter for slowing down as frozen
+--
+--property pFrozen                   --whether character is frozen
+--
+--property pFreezeTime               --how long to remain frozen
+--
+--property pGlowTeal                 --whether I'm glowing or not
+on new me
+  
+  ancestor = new (script("modModule"))
+  
+  return me
+  
+end
+
+
+
+on addModParams me
+  
+  i = me.modifyParams(#init)
+  
+  
+  
+  i[#verticalLeeway] = 8
+  
+  i[#walkAcceleration] = 0.5
+  
+  i[#walkSpeed] = 0
+  
+  i[#walkSpeedInc] = 0.075
+  
+  i[#walkSpeedIncLevel] = 0.075
+  
+  
+  ancestor.addModParams()
+  
+end
+
+
+
+on init me, params
+  
+  ancestor.init(params)
+  
+  
+  
+  pFlipWithMovement = true
+  
+  
+  
+  pMoveToLocArrivalDistance = 5
+  
+  pMoveToLocTarget = #none
+  
+  pMoveHoriz = false
+  
+  pMoveVert = false
+  
+  
+  
+  pVerticalLeeway = params.verticalLeeway
+  
+  pWalkAcceleration = params.walkAcceleration
+  
+  pWalkSpeed = params.walkSpeed
+  
+  pWalkSpeedInc = params.walkSpeedInc
+  
+  pWalkSpeedIncLevel = params.walkSpeedIncLevel
+  
+  
+  --  pFreezeCounter = CounterNew()
+  --  pFreezeCounter.inc = 1
+  --  pFreezeCounter.tim = [0, 1000]
+  --  pFrozen = false
+  
+--  case gGameView of
+--      
+--    #sideOn:
+--      
+--      pMoveTowardsLocFunction = #moveTowardsLocAccelerated
+--      
+--      
+--      
+--    #topDown:
+--      
+      pMoveTowardsLocFunction = #moveTowardsLocSpeed
+      
+      
+      
+      -- if we are a ghost
+      
+      if params[#ghost] = true then
+        
+        pMoveTowardsLocFunction = #moveTowardsLocAccelerated
+        
+      end if
+      
+      
+      
+--  end case
+  
+  
+  
+  -- several modules rely on this message
+  
+  me.big.keepMePosted(me.big.pMoveXY, #moveXYFin, #always)
+  
+end
+
+
+
+on addSaveData me, sd
+  
+  ancestor.addSaveData(sd)
+  
+  
+  
+  me.addToSaveData(sd)
+  
+  
+  
+  sd[#pMoveToLocTarget] = pMoveToLocTarget
+  
+end
+
+
+
+on addToArmyDetails me, ad
+  
+  ad = me.big.getArmyDetails()
+  
+  
+  
+  me.addToSaveData(ad)
+  
+end
+
+
+
+on addToSaveData me, sd
+  
+  sd[#pWalkAcceleration] = pWalkAcceleration
+  
+  sd[#pWalkSpeed] = pWalkSpeed
+  
+end
+
+on cancelMoveToLoc me
+  
+  pMoveToLocTarget = #none
+  
+end
+
+--on defrost me
+--  ancestor.defrost()
+--  pFrozen = false
+--  
+--  pWalkSpeed = 2*pWalkSpeed
+--  if pGlowTeal = true then
+--    me.big.stopGlowTeal()
+--    pGlowTeal = false
+--  end if
+--  
+--end
+
+on faceObject me, theObj
+  
+  -- modThespian has a more advanced version of this
+  
+  locToFace = theObj.getLoc()
+  
+  dirToFace = PointDirPoint(me.ID.bigMe.getLoc(), locToFace)
+  
+  me.ID.bigMe.setSpriteFlipFromDir(dirToFace[1])
+  
+end
+
+
+on getMoving me
+  
+  moving = false
+  
+  if pMoveHoriz or pMoveVert then
+    
+    moving = true
+    
+  end if
+  
+  return moving
+  
+end
+
+
+
+on getMoveHoriz me
+  
+  return pMoveHoriz
+  
+end
+
+on getWalkSpeed me
+  return pWalkSpeed
+end
+
+
+on getMoveVert me
+  
+  return pMoveVert
+  
+end
+
+
+
+on incWalkSpeed me, amount
+  
+  pWalkSpeed = pWalkSpeed + amount
+  
+end
+
+
+
+on incWalkSpeedLevel me
+  
+  me.incWalkSpeed(pWalkSpeedIncLevel)
+  
+end
+
+
+
+on incWalkSpeedPotion me
+  
+  me.incWalkSpeed(pWalkSpeedInc)
+  
+end
+
+
+
+on internalEvent me, theEvent
+  
+  ancestor.internalEvent(theEvent)
+  
+  
+  case theEvent of
+      
+    #addToArmyDetails:
+      
+      me.addToArmyDetails()
+      
+      --    #colourTransformFin:
+      --      if pGlowTeal then 
+      --        me.big.glowTeal()
+      --      end if
+      
+    #levelUp:
+      
+      me.incWalkSpeedLevel()
+      
+      
+      
+    #restoreFromArmyDetails:
+      
+      me.restoreFromArmyDetails()
+      
+      
+      
+  end case
+  
+end
+
+
+
+on moveAwayFromLoc me, targetLoc
+  
+  destinationLoc = GeomMirrorPoint(targetLoc, me.big.getLoc())
+  
+  
+  
+  me.moveToLoc(destinationLoc)
+  
+end
+
+
+
+on moveHoriz me, dir
+  
+  me.pMoveXY.vectAdd(point(pWalkAcceleration * dir, 0))
+  
+  me.moveHorizReaction(dir) 
+  
+end
+
+
+
+on moveHorizReaction me, dir
+  
+  if dir < 0 then
+    
+    me.pSpr.fliph = true
+    
+    pMoveHoriz = true
+    
+    
+    
+  else if dir > 0 then
+    
+    me.pSpr.fliph = false
+    
+    pMoveHoriz = true
+    
+    
+    
+  else if dir = 0 then
+    
+    pMoveHoriz = false
+    
+  end if
+  
+end
+
+
+
+on moveToLoc me, theTarget
+  
+  pMoveToLocTarget = theTarget
+  
+end
+
+
+
+on moveTowardsLoc me, theTarget
+  
+  call (pMoveTowardsLocFunction, me.big, theTarget)
+  
+end
+
+
+
+on moveTowardsLocAccelerated me, targetLoc
+  
+  -- 8 directions only
+  
+  moveVector = PointDirPoint(me.getLoc(), targetLoc)
+  
+  
+  
+  -- give vertical leeway to avoid unneccessary jumping and falling
+  
+  if VarDiff(targetLoc[2], me.getLoc()[2]) < pVerticalLeeway then
+    
+    moveVector[2] = 0
+    
+  end if
+  
+  
+  
+  -- adjust move vector to allow jumping onto platforms
+  
+  if moveVector[2] = 0 then
+    
+    --moveVector = me.jumpOntoPlatform(moveVector, theRect)
+    
+  end if
+  
+  
+  
+  -- move chararacter
+  
+  if me.pMode = #landed then
+    
+    moveVector[2] = 0
+    
+  end if
+  
+  
+  
+  me.moveHoriz(moveVector[1])
+  
+  
+  
+--  if gGameView = #sideOn then
+--    
+--    
+--    
+--    case moveVector[2] of
+--        
+--      -1:
+--        
+--        me.ID.bigMe.doJump()
+--        
+--        
+--        
+--      0,1:
+--        
+--        me.ID.bigMe.noJump()
+--        
+--    end case
+--    
+--    
+--    
+--  else
+    
+    me.moveVert(moveVector[2])
+    
+--  end if
+  
+  
+  
+  -- used to calculate whether character is dropping through a platform
+  
+  me.pAI.recordMoveVector(moveVector)
+  
+end
+
+
+
+on moveTowardsLocSpeed me, targetLoc
+  
+  -- make sure we are capable of movement
+  
+  -- otherwise we'd get a divide by zero error later.
+  
+  if pWalkSpeed = 0 then
+    
+    return
+    
+  end if
+  
+  
+  
+  myLoc = me.getLoc()
+  
+  moveVector = PointFrameMove(myLoc, targetLoc, pWalkSpeed)
+  
+  me.pMoveXY.setVect(moveVector)
+  
+  
+  
+  moveDir = PointDir(PointInteger(moveVector)) 
+  
+  me.moveHorizReaction(moveDir[1])
+  
+  me.moveVertReaction(moveDir[2])
+  
+end
+
+
+
+on moveVert me, dir
+  
+  me.pMoveXY.vectAdd(point(0, pWalkAcceleration * dir))
+  
+  me.moveVertReaction(dir)
+  
+end
+
+
+
+on moveVertReaction me, dir
+  
+  if dir <> 0 then
+    
+    pMoveVert = true
+    
+  else if dir = 0 then
+    
+    pMoveVert = false
+    
+  end if
+  
+end
+
+
+
+on resetMoveReaction me
+  
+  me.moveVertReaction(0)
+  
+  me.moveHorizReaction(0)
+  
+end
+
+
+
+on restoreFromArmyDetails me, ad
+  
+  ad = me.big.getArmyDetails()
+  
+  
+  
+  me.restoreFromSaveData(ad)
+  
+end
+
+
+
+on restoreFromSave me, sd
+  
+  ancestor.restoreFromSave(sd)
+  
+  
+  
+  pMoveToLocTarget = sd.pMoveToLocTarget
+  
+end
+
+
+
+on restoreFromSaveData me, sd
+  
+  
+  
+  pWalkAcceleration = sd.pWalkAcceleration
+  
+  pWalkSpeed = sd.pWalkSpeed
+  
+end
+
+
+
+on setWalkAcceleration me, newVal
+  
+  pWalkAcceleration = newVal  
+  
+end
+
+on setWalkSpeed me, newVal
+  pWalkSpeed = newVal
+end
+
+
+on stopMoving me
+  
+  --me.big.moveToLoc(me.big.getLoc())
+  
+  me.moveToLoc(#none)
+  
+  me.big.setVect(point(0,0))
+  
+  me.stoppedMoving()
+  
+end
+
+
+
+on stopRunAnim me
+  
+  me.resetMoveReaction()
+  
+end
+
+
+
+on stoppedMoving me
+  
+  me.resetMoveReaction()
+  
+end
+
+--on takeFreeze me, collisionVect, attackingObj, owner
+--  if pFrozen = false then
+--    ancestor.takeFreeze()
+--    pFrozen = true
+--    CounterReset(pFreezeCounter)
+--    CounterSetCount(pFreezeCounter,999)
+--    pWalkSpeed = 0.5*pWalkSpeed
+--    if attackingObj.getAttack().glowTeal then
+--      me.big.glowTeal()
+--      pGlowTeal = true
+--    end if
+--  end if
+--  
+--  collSpeedX = VarPositive(collisionVect[1])
+--  collSpeedY = VarPositive(collisionVect[2])
+--  multiplier = attackingObj.getAttack().freezeMultiplier
+--  freezeTime = (collSpeedX + collSpeedY) * multiplier*4
+--  CounterSetCount(pFreezeCounter, pFreezeCounter.theCount - freezeTime)
+--end
+
+on update me
+  ancestor.update()
+  
+  
+  
+  me.resetMoveReaction()
+  
+--  if pFrozen then 
+--      me.updateFreeze()
+--    end if
+  
+  if pMoveToLocTarget <> #none then 
+    
+    fin = me.updateMoveToLoc(pMoveToLocTarget)
+    
+    if fin then
+      
+      me.stoppedMoving()
+      
+      me.internalEvent(#moveToLocFinished)
+      
+      me.moveToLoc(#none)
+      
+    end if
+    
+  end if
+  
+end
+
+--on updateFreeze me
+--  Counter(pFreezeCounter)
+--  if pFreezeCounter.fin then
+--    me.defrost()
+--  end if
+--end
+
+on updateMoveToLoc me, targetLoc
+  
+  fin = false
+  
+  
+  
+  me.moveTowardsLoc(targetLoc)
+  
+  --  *** old check to see if we'd arrived ***
+  
+  distToTarget = GeomDistSqr(me.big.getLoc(), targetLoc)
+  
+  if distToTarget <= (pMoveToLocArrivalDistance*pMoveToLocArrivalDistance) then
+    
+    
+    
+    
+    
+    -- ** new check to see if we arrived ***
+    
+    -- causes problems with monkGhost
+    
+    --  if PointArrivedAtTarget(me.big.getLoc(), pMoveToLocTarget, me.big.getVect()) then
+    
+    
+    
+    fin = true
+    
+  end if
+  
+  
+  
+  return fin
+  
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

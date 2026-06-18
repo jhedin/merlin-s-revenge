@@ -1,0 +1,361 @@
+[#name: "soundMaster", #scriptType: #parent, #type: #script]
+on new me
+  return me
+end
+
+global g
+
+property pDefaultVolume             -- the volume to play sound effects at when none is specified
+property pNextChan, pMixMaster
+property pSoundList, pSoundsAdded
+property pActive, pEnable
+property pSprite, pMyLoc
+property pAutoSound
+property pCast, pMemOn, pMemOff
+
+property pLastMusic                -- the name of the last music to be played.
+property pMusicChannel             -- the channel number through which to play music
+property pSFXCast
+property pSpriteOn
+
+on init me
+  pDefaultVolume = 150
+  
+  pAutoSound = 1
+  
+  pLastMusic = #none
+  pMusicChannel = 1
+  
+  pNextChan = 2
+  
+  pSFXCast = "sfx"
+  pSpriteOn = false
+  
+  numsounds = the number of members of castlib pSFXCast
+  
+  --setup members
+  if pSpriteOn then
+    pCast = cast("soundImages")
+    pMemOn = member("soundOn", pCast)
+    pMemOff = member("soundOff", pCast)
+  end if
+  
+  -- preload sounds
+  repeat with so = 1 to numsounds
+    mem = member(so, pSFXCast)
+    if mem.type = #swa then
+      mem.preloadtime = integer(mem.duration)
+      mem.preloadbuffer()
+    end if
+  end repeat
+  
+  -- make a list of how many sound channels for each effect
+  pSoundList = [:]
+  repeat with so = 1 to numsounds
+    mem = member(so, pSFXCast)
+    if mem.type = #swa then
+      -- find out effectname
+      memname = mem.name
+      typname = memname
+      delete typname.char[1]
+      
+      -- see if we have a list for that type
+      typsym = typname.symbol
+      if not ilk(pSoundList[typsym],#list) then 
+        countname = typname & "count"
+        countsym = countname.symbol
+        pSoundList[typsym] = []
+        pSoundList[countsym] = 1
+      end if
+      
+      -- add the member to the list
+      pSoundList[typsym].append(memname)
+    end if
+  end repeat
+  
+  -- count the lists
+  soundlenth = pSoundList.count
+  repeat with so = 1 to soundlenth
+    propname = getpropat(pSoundList,so)
+    propval = pSoundList[propname]
+    if ilk (propval,#list) then
+      proplenth = propval.count
+      lenthsym = propname & "lenth"
+      lenthsym = lenthsym.symbol
+      pSoundList[lenthsym] = proplenth      
+    end if
+  end repeat
+  
+  pMixMaster = []
+  repeat with chan = 1 to 8
+    pMixMaster[chan] = "empty"
+  end repeat
+  
+  pActive = 1
+  pEnable = 1
+  
+end init
+
+on addSaveData me, sd
+  sd[#pActive] = pActive
+end
+
+on isMenuItemShadowed me, theComm
+  shadowed = false
+  
+  case theComm of
+    #soundOn:
+      if pActive or pEnable = false then
+        shadowed = true
+      end if
+      
+    #soundOff:
+      if pActive = false then
+        shadowed = true
+      end if
+      
+  end case
+  
+  return shadowed
+end
+
+on calcVolumeDefault me, vol
+  if vol = void then vol = pDefaultVolume
+  if vol = #none then vol = pDefaultVolume
+  
+  return vol
+end
+
+on checkRestartMusic me, memberName
+  -- if requested music is currently playing, don't restart it
+  
+  restartMusic = true
+  if memberName = pLastMusic then
+    if soundBusy(pMusicChannel) then
+      restartMusic = false
+    end if
+  end if
+  
+  return restartMusic
+end
+
+on playMusic me, memberName, vol
+  -- volume = 0-255, or #none or void
+  
+  if memberName = "stopMusic" then
+    me.stopMusic()
+    return
+  end if
+  
+  -- if music is already playing don't restart it
+  restartMusic = me.checkRestartMusic(memberName)
+  if restartMusic = false then
+    return
+  end if
+  
+  
+  soundMember = me.retrieveSoundMember(memberName)
+  
+  if soundMember = #none then
+    return
+  end if
+  
+  
+  if pActive then
+    vol = me.calcVolumeDefault(vol)
+  end if
+  
+  puppetsound pMusicChannel, soundMember
+  sound(pMusicChannel).volume = vol
+  
+  pLastMusic = memberName
+  
+end
+
+
+on playSound me, mem, vol
+  -- volume = 0 - 255
+  if mem = member(-1, 1) then
+    exit
+  end if
+  
+  mem = member(mem, pSFXCast)
+  
+  if pActive then
+    vol = me.calcVolumeDefault(vol)
+    
+    if soundbusy(pNextChan) then
+      nextchan = SoundEmptyChan()
+    else
+      nextchan = pNextChan
+    end if
+    
+    -- if there is no sound channel available
+    -- override oldest sound
+    --    if nextchan = 0 then
+    --      nextchan = pNextChan
+    --    end if
+    
+    if nextchan > 0 then
+      puppetsound nextChan,mem
+      sound(nextChan).volume = vol
+    end if
+    
+    VarChangeInRange (pNextChan,1,8,1)
+  end if
+  
+  Return nextChan
+end playSound
+
+on adjustVol me, theChan, theVol
+  sound(theChan).volume = theVol
+end adjustVol
+
+on retrieveSoundMember me, mem
+  soundMember = member(mem, pSFXCast)
+  if soundMember = void then
+    put "soundMaster.retrieveSoundMember() member not found: " & mem
+    soundMember = #none
+  end if
+  
+  return soundMember
+end
+
+on restoreFromSave me, sd
+  pActive = sd.pActive
+end
+
+on stop me
+  me.stopAllSound()
+end
+
+on stopAllSound me
+  repeat with chan = 1 to 8
+    me.stopSound(chan)
+  end repeat
+end stopAllSound
+
+on stopMusic me
+  me.stopSound(pMusicChannel)
+end
+
+on stopSound me, theChan
+  sound(theChan).stop()
+end stopSound
+
+on newframe me
+  pSoundsAdded = 0
+end newframe
+
+on checkadded me
+  pSoundsAdded = pSoundsAdded + 1
+  if pSoundsAdded > 4 then
+    ok = 0
+  else
+    ok = 1
+  end if
+  
+  return ok
+end checkadded
+
+on toggle me, which
+  if pEnable then
+    if not ilk(which,#integer) then
+      pActive = not(pActive)
+      pAutoSound = 0
+    else
+      pActive = which
+    end if
+  end if
+end toggle
+
+on onscreen me
+  pMyLoc = point(604,368)
+  updateLoc me
+end onscreen
+
+on offscreen me
+  pMyLoc = point(-100,-100)
+  updateLoc me
+end offscreen
+
+on updateLoc me
+  psprite.spriteparams.a.loc = pMyLoc
+end updateLoc
+
+on updatesprite me
+  updatemember me
+  updateloc me
+end updatesprite
+
+on disable me
+  pEnable = 0
+  pActive = 0
+end disable
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,258 @@
+[#name: "objButton", #scriptType: #parent, #type: #script]
+global g
+global gButtonBaseColour
+global gButtonHiColour
+global gButtonPulse
+global gButtonShadowedColour
+
+property ancestor
+property pBaseColor
+property pCaller
+property pCommSym
+property pParamsCopy
+property pHiColor
+property pMouseIn
+property pMouseDown
+property pName
+property pPulse
+property pShadowed
+property pShadowedColor
+property pSpr
+property pMemberType
+property pTransColor
+property pTransColorFin
+
+on new me
+  me.ancestor = new(script "objAutoUpdate")
+  
+  i = me.modifyParams(#init)
+  i[#baseColor] = gButtonBaseColour
+  i[#callingPrg] = #none
+  i[#commSym] = #none
+  i[#hiColor] = gButtonHiColour
+  i[#pulse] = gButtonPulse
+  i[#shadowedColor] = gButtonShadowedColour
+  i[#shadowed] = false
+  i[#spr] = #none
+  
+  me.addModule("modFader")
+  
+  return me
+end
+
+on init me, params
+  -- sprite will be freed by calling program (usually screenMaster)
+  pParamsCopy = params
+  
+  pCaller = params.callingPrg
+  pCommSym = params.commSym
+  pBaseColor = params.baseColor
+  pHiColor   = params.hiColor
+  pSpr = params.spr
+  pMemberType = pSpr.member.type
+  pMouseIn = false
+  pMouseDown = false
+  pName = pSpr.member.name
+  pPulse = params.pulse
+  pShadowed = params.shadowed
+  pShadowedColor = params.shadowedColor
+  
+  if pCommSym = #none then
+    nam = StringRemoveLocZ(pName)
+    
+    pCommSym = symbol(nam)
+  end if
+  
+  pTransColorFin = true
+  
+  if pShadowed = true then
+    me.setColour(pShadowedColor)
+  else
+    me.setColour(pBaseColor)
+  end if
+  
+  ancestor.init(params)
+end
+
+on activate me
+  if pShadowed = false then
+    ancestor.init(pParamsCopy)
+    me.calcStart()
+  end if
+end
+
+on checkClick me
+  click = false
+  if pMouseDown and the mouseup then
+    click = true
+  end if
+  
+  pMouseDown = the mousedown
+  
+  return click
+end
+
+on finish me
+  if pTransColorFin = false then
+    pTransColor.cancel()
+  end if
+  
+  me.ancestor.finish()
+end
+
+on getSprite me
+  return pSpr
+end
+
+on informCallingPrg me
+  nothing
+end 
+
+on mouseEnter me
+  me.transColor(#hi)
+end
+
+on mouseLeave me
+  me.transColor(#base)
+end
+
+on setColour me, theColor
+  if pMemberType = #text then
+    pSpr.member.color = theColor.duplicate()
+  else
+    -- assume bitmap
+    pSpr.color = theColor.duplicate()
+  end if
+end
+
+on startFadeIn me
+  pSpr.blend = 0
+  me.startQuickFadeIn()
+end
+
+on transColor me, dir
+  if pTransColorFin = false then
+    pTransColor.cancel()
+  end if
+  
+  pTransColor = g.objectMaster.requestObject(#objTransColor)
+  params = pTransColor.getParams(#init)
+  params.callingPrg = me
+  params.spr = pSpr
+  params.transformTarget = pMemberType
+  params.pingPong = pPulse
+  case dir of
+    #hi:
+      params.targetColor = pHiColor.duplicate()
+      if pPulse then
+        params.speed = 15
+      else
+        params.speed = 35
+      end if
+      
+    #base:
+      params.targetColor = pBaseColor.duplicate()
+      params.pingPong = false
+      if pPulse then
+        params.speed = 15
+      else
+        params.speed = 5
+      end if
+      
+  end case
+  
+  pTransColor.init(params)
+  
+  pTransColorFin = false
+end
+
+on transColorFin me
+  pTransColorFin = true
+end
+
+on update me
+  if inside(the mouseLoc, pSpr.rect) then
+    --cancel the transformer through g.objectMaster
+    if pMouseIn = false then
+      me.mouseEnter()
+      pMouseIn = true
+    end if
+    
+    if me.checkClick() then
+      pCaller.buttClicked(pCommSym)
+    end if
+    
+  else
+    
+    if pMouseIn = true then
+      me.mouseLeave()
+      pMouseIn = false
+    end if
+    
+  end if
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,67 @@
+on StringExtractList theString, theDelimiter
+  [  0] pusharglist 0 ........................... <[]>
+  [  2] pushlist ................................ <[]>
+  [  3] setlocal 0 .............................. thelist = []
+  [  5] pushint8 1 .............................. <1>
+  [  7] setlocal 1 .............................. firstChar = 1
+  [  9] pushint8 1 .............................. <1>
+  [ 11] setlocal 2
+  [ 13] getlocal 2
+  [ 15] getparam 0 .............................. <theString>
+  [ 17] pushsymb 406 ............................ <#chars>
+  [ 20] pusharglist 2 ........................... <theString, #chars>
+  [ 22] objcall 17 .............................. <theString.chars.count>
+  [ 24] lteq
+  [ 25] jmpifz [122] ............................ repeat with i = 1 to theString.chars.count
+  [ 28] getparam 0 .............................. <theString>
+  [ 30] pushsymb 284 ............................ <#char>
+  [ 33] getlocal 2 .............................. <i>
+  [ 35] pusharglist 3 ........................... <theString, #char, i>
+  [ 37] objcall 123 ............................. <theString.char[i]>
+  [ 39] setlocal 3 .............................. nChar = theString.char[i]
+  [ 41] getlocal 3 .............................. <nChar>
+  [ 43] getparam 1 .............................. <theDelimiter>
+  [ 45] eq ...................................... <nChar = theDelimiter>
+  [ 46] getlocal 2 .............................. <i>
+  [ 48] getparam 0 .............................. <theString>
+  [ 50] pushsymb 406 ............................ <#chars>
+  [ 53] pusharglist 2 ........................... <theString, #chars>
+  [ 55] objcall 17 .............................. <theString.chars.count>
+  [ 57] eq ...................................... <i = theString.chars.count>
+  [ 58] or ...................................... <(nChar = theDelimiter) or (i = theString.chars.count)>
+  [ 59] jmpifz [113] ............................ if (nChar = theDelimiter) or (i = theString.chars.count) then
+  [ 62] getlocal 2 .............................. <i>
+  [ 64] pushint8 1 .............................. <1>
+  [ 66] sub ..................................... <i - 1>
+  [ 67] setlocal 4 .............................. lastChar = i - 1
+  [ 69] getlocal 4 .............................. <lastChar>
+  [ 71] getlocal 1 .............................. <firstChar>
+  [ 73] lt ...................................... <lastChar < firstChar>
+  [ 74] jmpifz [ 83] ............................ if lastChar < firstChar then
+  [ 77] jmp [113] ............................... next repeat
+  [ 80] jmp [113] ............................... next repeat
+  [ 83] getparam 0 .............................. <theString>
+  [ 85] pushsymb 284 ............................ <#char>
+  [ 88] getlocal 1 .............................. <firstChar>
+  [ 90] getlocal 4 .............................. <lastChar>
+  [ 92] pusharglist 4 ........................... <theString, #char, firstChar, lastChar>
+  [ 94] objcall 123 ............................. <theString.char[firstChar..lastChar]>
+  [ 96] setlocal 5 .............................. nData = theString.char[firstChar..lastChar]
+  [ 98] getlocal 0 .............................. <thelist>
+  [100] getlocal 5 .............................. <nData>
+  [102] pusharglistnoret 2 ...................... <thelist, nData>
+  [104] objcall 83 .............................. thelist.append(nData)
+  [106] getlocal 2 .............................. <i>
+  [108] pushint8 1 .............................. <1>
+  [110] add ..................................... <i + 1>
+  [111] setlocal 1 .............................. firstChar = i + 1
+  [113] pushint8 1
+  [115] getlocal 2
+  [117] add
+  [118] setlocal 2
+  [120] endrepeat [ 13]
+  [122] getlocal 0 .............................. <thelist>
+  [124] pusharglistnoret 1 ...................... <thelist>
+  [126] extcall 3 ............................... return thelist
+  [128] ret
+end

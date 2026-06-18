@@ -1,0 +1,158 @@
+[#name: "objController", #scriptType: #parent, #type: #script]
+-- controls a collection of objects
+-- can be inherited from to allow for specific requirements of objects
+
+global g
+
+property ancestor
+property pExclusive
+property pObjects
+
+on new me
+  ancestor = new(script "objParams")
+  
+  i = me.modifyParams(#init)
+  i[#exclusive] = true
+  
+  return me
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  -- when exclusive is true all objects in the collection will be deactivated when a new one is made
+  pExclusive = params.exclusive
+  pObjects = []
+end
+
+on finish me
+  me.finishObjects()
+  
+  ancestor.finish()
+end
+
+on clearAll me
+  me.finishObjects()
+end
+
+on deactivateObjects me
+  repeat with nObj in pObjects
+    nObj.deactivate()
+  end repeat
+end
+
+on finishObjects me
+  g.objectMaster.finishObjects(pObjects)
+  pObjects = []
+end
+
+on getObject me, pos
+  if pos < 1 then
+    pos = 1
+  end if
+  
+  if pObjects.count = 0 then
+    return #none
+  end if
+  
+  return pObjects[pos]
+  
+end
+
+on newObject me, params
+  params.myController = me.ID.bigMe
+  
+  
+  if pExclusive then
+    me.ID.bigMe.deactivateObjects()
+  end if
+  
+  return params
+end
+
+on objectFinished me, theObject
+  objPos = pObjects.getPos(theObject)
+  if objPos > 0 then
+    pObjects.deleteAt(objPos)
+    
+    if pExclusive then
+      if objPos - 1 > 0 then
+        pObjects[objPos -1].activate()
+      end if
+    end if
+    
+  end if
+end
+
+on start me
+end
+
+on stop me
+  me.finish()
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

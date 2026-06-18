@@ -1,0 +1,265 @@
+property ancestor, pCharacter, pCollectSound, pFlasher, pmode, pTimeAlive, pTimeAliveCounter
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"objAiGameObject">
+  [  2] pusharglist 1 ........................... <"objAiGameObject">
+  [  4] extcall 34 .............................. <script("objAiGameObject")>
+  [  6] pusharglist 1 ........................... <script("objAiGameObject")>
+  [  8] extcall 0 ............................... <new(script("objAiGameObject"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objAiGameObject"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 3511 ........................... <#timeAlive>
+  [ 27] pushzero ................................ <0>
+  [ 28] pusharglistnoret 3 ...................... <i, #timeAlive, 0>
+  [ 30] objcall 48 .............................. i[#timeAlive] = 0
+  [ 32] getlocal 0 .............................. <i>
+  [ 34] pushsymb 3512 ........................... <#collectSound>
+  [ 37] pushsymb 49 ............................. <#none>
+  [ 39] pusharglistnoret 3 ...................... <i, #collectSound, #none>
+  [ 41] objcall 48 .............................. i[#collectSound] = #none
+  [ 43] getparam 0 .............................. <me>
+  [ 45] pusharglistnoret 1 ...................... <me>
+  [ 47] extcall 35 .............................. return me
+  [ 49] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 45 ........................... <params.character>
+  [ 12] setprop 2762 ............................ pCharacter = params.character
+  [ 15] getparam 1 .............................. <params>
+  [ 17] getobjprop 3512 ......................... <params.collectSound>
+  [ 20] setprop 3513 ............................ pCollectSound = params.collectSound
+  [ 23] pushsymb 49 ............................. <#none>
+  [ 25] setprop 712 ............................. pFlasher = #none
+  [ 28] getparam 1 .............................. <params>
+  [ 30] getobjprop 3511 ......................... <params.timeAlive>
+  [ 33] setprop 3514 ............................ pTimeAlive = params.timeAlive
+  [ 36] getprop 3514 ............................ <pTimeAlive>
+  [ 39] pushzero ................................ <0>
+  [ 40] gt ...................................... <pTimeAlive > 0>
+  [ 41] jmpifz [ 81] ............................ if pTimeAlive > 0 then / else
+  [ 44] pusharglist 0 ........................... <>
+  [ 46] extcall 529 ............................. <CounterNew()>
+  [ 49] setprop 3515 ............................ pTimeAliveCounter = CounterNew()
+  [ 52] getprop 3515 ............................ <pTimeAliveCounter>
+  [ 55] pushsymb 530 ............................ <#tim>
+  [ 58] pushint8 2 .............................. <2>
+  [ 60] getprop 3514 ............................ <pTimeAlive>
+  [ 63] pusharglistnoret 4 ...................... <pTimeAliveCounter, #tim, 2, pTimeAlive>
+  [ 65] objcall 531 ............................. pTimeAliveCounter.tim[2] = pTimeAlive
+  [ 68] getparam 0 .............................. <me>
+  [ 70] pushsymb 3516 ........................... <#timed>
+  [ 73] pusharglistnoret 2 ...................... <me, #timed>
+  [ 75] objcall 278 ............................. me.goMode(#timed)
+  [ 78] jmp [ 91]
+  [ 81] getparam 0 .............................. <me>
+  [ 83] pushsymb 2014 ........................... <#norm>
+  [ 86] pusharglistnoret 2 ...................... <me, #norm>
+  [ 88] objcall 278 ............................. me.goMode(#norm)
+  [ 91] ret
+end
+
+on finish me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 709 ............................. me.finishFlasher()
+  [  7] getprop 33 .............................. <ancestor>
+  [  9] pusharglistnoret 1 ...................... <ancestor>
+  [ 11] objcall 3 ............................... ancestor.finish()
+  [ 13] ret
+end
+
+on finishFlasher me
+  [  0] getprop 712 ............................. <pFlasher>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] nteq .................................... <pFlasher <> #none>
+  [  6] jmpifz [ 22] ............................ if pFlasher <> #none then
+  [  9] getprop 712 ............................. <pFlasher>
+  [ 12] pusharglistnoret 1 ...................... <pFlasher>
+  [ 14] objcall 467 ............................. pFlasher.cancel()
+  [ 17] pushsymb 49 ............................. <#none>
+  [ 19] setprop 712 ............................. pFlasher = #none
+  [ 22] ret
+end
+
+on collected me
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 228 ...................... <g.actorMaster>
+  [  4] pusharglist 1 ........................... <g.actorMaster>
+  [  6] objcall 861 ............................. <g.actorMaster.getPlayer()>
+  [  9] setlocal 0 .............................. player = g.actorMaster.getPlayer()
+  [ 11] getparam 0 .............................. <me>
+  [ 13] getprop 3513 ............................ <pCollectSound>
+  [ 16] pusharglistnoret 2 ...................... <me, pCollectSound>
+  [ 18] objcall 551 ............................. me.PlaySound(pCollectSound)
+  [ 21] getprop 2762 ............................ <pCharacter>
+  [ 24] peek 0 .................................. case pCharacter of
+  [ 26] pushsymb 3517 ........................... <#hairConditioner>
+  [ 29] eq
+  [ 30] jmpifz [ 43] ............................ (case) #hairConditioner:
+  [ 33] getlocal 0 .............................. <player>
+  [ 35] pusharglistnoret 1 ...................... <player>
+  [ 37] objcall 1985 ............................ player.hairConditionerCollected()
+  [ 40] jmp [147]
+  [ 43] peek 0
+  [ 45] pushsymb 3518 ........................... <#hairDrop>
+  [ 48] eq
+  [ 49] jmpifz [ 62] ............................ (case) #hairDrop:
+  [ 52] getlocal 0 .............................. <player>
+  [ 54] pusharglistnoret 1 ...................... <player>
+  [ 56] objcall 3519 ............................ player.hairDropCollected()
+  [ 59] jmp [147]
+  [ 62] peek 0
+  [ 64] pushsymb 657 ............................ <#hairGem>
+  [ 67] eq
+  [ 68] jmpifz [ 90] ............................ (case) #hairGem:
+  [ 71] getlocal 0 .............................. <player>
+  [ 73] pusharglistnoret 1 ...................... <player>
+  [ 75] objcall 649 ............................. player.lifePowerUpCollected()
+  [ 78] getlocal 0 .............................. <player>
+  [ 80] pushint8 2 .............................. <2>
+  [ 82] pusharglistnoret 2 ...................... <player, 2>
+  [ 84] objcall 508 ............................. player.increaseEnergy(2)
+  [ 87] jmp [147]
+  [ 90] peek 0
+  [ 92] pushsymb 2906 ........................... <#hairPowerUp>
+  [ 95] eq
+  [ 96] jmpifz [109] ............................ (case) #hairPowerUp:
+  [ 99] getlocal 0 .............................. <player>
+  [101] pusharglistnoret 1 ...................... <player>
+  [103] objcall 2926 ............................ player.hairPotionCollected()
+  [106] jmp [147]
+  [109] peek 0
+  [111] pushsymb 3520 ........................... <#hairPotion>
+  [114] eq
+  [115] jmpifz [128] ............................ (case) #hairPotion:
+  [118] getlocal 0 .............................. <player>
+  [120] pusharglistnoret 1 ...................... <player>
+  [122] objcall 2926 ............................ player.hairPotionCollected()
+  [125] jmp [147]
+  [128] peek 0
+  [130] pushsymb 3521 ........................... <#superHairConditioner>
+  [133] eq
+  [134] jmpifz [147] ............................ (case) #superHairConditioner:
+  [137] getglobal 40 ............................ <g>
+  [139] getchainedprop 754 ...................... <g.gamemaster>
+  [142] pusharglistnoret 1 ...................... <g.gamemaster>
+  [144] objcall 3522 ............................ g.gamemaster.gameComplete()
+  [147] pop 1 ................................... end case
+  [149] getparam 0 .............................. <me>
+  [151] pusharglistnoret 1 ...................... <me>
+  [153] objcall 709 ............................. me.finishFlasher()
+  [156] getparam 0 .............................. <me>
+  [158] pushint8 1 .............................. <1>
+  [160] pusharglistnoret 2 ...................... <me, 1>
+  [162] objcall 707 ............................. me.setDead(1)
+  [165] ret
+end
+
+on flasherFinished me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushint8 1 .............................. <1>
+  [  4] pusharglistnoret 2 ...................... <me, 1>
+  [  6] objcall 707 ............................. me.setDead(1)
+  [  9] pushsymb 49 ............................. <#none>
+  [ 11] setprop 712 ............................. pFlasher = #none
+  [ 14] ret
+end
+
+on getAnimMember me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 95 .............................. <me.getMember()>
+  [  6] pusharglistnoret 1 ...................... <me.getMember()>
+  [  8] extcall 35 .............................. return me.getMember()
+  [ 10] ret
+end
+
+on goMode me, newMode
+  [  0] getparam 1 .............................. <newMode>
+  [  2] peek 0 .................................. case newMode of
+  [  4] pushsymb 70 ............................. <#dead>
+  [  6] eq
+  [  7] jmpifz [ 67] ............................ (case) #dead:
+  [ 10] getglobal 40 ............................ <g>
+  [ 12] getchainedprop 41 ....................... <g.objectMaster>
+  [ 14] pushsymb 715 ............................ <#objFlasher>
+  [ 17] pusharglist 2 ........................... <g.objectMaster, #objFlasher>
+  [ 19] objcall 43 .............................. <g.objectMaster.requestObject(#objFlasher)>
+  [ 21] setprop 712 ............................. pFlasher = g.objectMaster.requestObject(#objFlasher)
+  [ 24] getprop 712 ............................. <pFlasher>
+  [ 27] pushsymb 1 .............................. <#init>
+  [ 29] pusharglist 2 ........................... <pFlasher, #init>
+  [ 31] objcall 230 ............................. <pFlasher.getParams(#init)>
+  [ 33] setlocal 0 .............................. params = pFlasher.getParams(#init)
+  [ 35] getlocal 0 .............................. <params>
+  [ 37] getparam 0 .............................. <me>
+  [ 39] setobjprop 474 .......................... params.callingPrg = me
+  [ 42] getlocal 0 .............................. <params>
+  [ 44] getparam 0 .............................. <me>
+  [ 46] getobjprop 173 .......................... <me.pSpr>
+  [ 48] setobjprop 267 .......................... params.spr = me.pSpr
+  [ 51] getlocal 0 .............................. <params>
+  [ 53] pushint8 30 ............................. <30>
+  [ 55] setobjprop 716 .......................... params.time = 30
+  [ 58] getprop 712 ............................. <pFlasher>
+  [ 61] getlocal 0 .............................. <params>
+  [ 63] pusharglistnoret 2 ...................... <pFlasher, params>
+  [ 65] objcall 1 ............................... pFlasher.init(params)
+  [ 67] pop 1
+  [ 69] getprop 33 .............................. <ancestor>
+  [ 71] getparam 1 .............................. <newMode>
+  [ 73] pusharglistnoret 2 ...................... <ancestor, newMode>
+  [ 75] objcall 278 ............................. ancestor.goMode(newMode)
+  [ 78] getparam 1 .............................. <newMode>
+  [ 80] setprop 312 ............................. pmode = newMode
+  [ 83] ret
+end
+
+on update me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 31 .............................. ancestor.update()
+  [  6] getparam 0 .............................. <me>
+  [  8] getobjprop 312 .......................... <me.pmode>
+  [ 11] peek 0 .................................. case me.pmode of
+  [ 13] pushsymb 3516 ........................... <#timed>
+  [ 16] eq
+  [ 17] jmpifz [ 43] ............................ (case) #timed:
+  [ 20] getparam 0 .............................. <me>
+  [ 22] pusharglist 1 ........................... <me>
+  [ 24] objcall 3510 ............................ <me.updateTimed()>
+  [ 27] setlocal 0 .............................. fin = me.updateTimed()
+  [ 29] getlocal 0 .............................. <fin>
+  [ 31] jmpifz [ 43] ............................ if fin then
+  [ 34] getparam 0 .............................. <me>
+  [ 36] pushsymb 70 ............................. <#dead>
+  [ 38] pusharglistnoret 2 ...................... <me, #dead>
+  [ 40] objcall 278 ............................. me.goMode(#dead)
+  [ 43] pop 1
+  [ 45] ret
+end
+
+on updateTimed me
+  [  0] getprop 3515 ............................ <pTimeAliveCounter>
+  [  3] getobjprop 552 .......................... <pTimeAliveCounter.fin>
+  [  6] jmpifz [ 15] ............................ if pTimeAliveCounter.fin then
+  [  9] pushint8 1 .............................. <1>
+  [ 11] pusharglistnoret 1 ...................... <1>
+  [ 13] extcall 35 .............................. return 1
+  [ 15] getprop 3515 ............................ <pTimeAliveCounter>
+  [ 18] pusharglistnoret 1 ...................... <pTimeAliveCounter>
+  [ 20] extcall 553 ............................. counter(pTimeAliveCounter)
+  [ 23] ret
+end

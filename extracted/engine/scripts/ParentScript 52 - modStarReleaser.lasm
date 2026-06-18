@@ -1,0 +1,84 @@
+property ancestor, pNumOfStarsToBeReleased, pReleaseCooldownCounter
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getprop 33 .............................. <ancestor>
+  [ 12] pusharglistnoret 1 ...................... <ancestor>
+  [ 14] objcall 2 ............................... ancestor.addModParams()
+  [ 16] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pushzero ................................ <0>
+  [  9] setprop 1354 ............................ pNumOfStarsToBeReleased = 0
+  [ 12] pusharglist 0 ........................... <>
+  [ 14] extcall 529 ............................. <CounterNew()>
+  [ 17] setprop 1355 ............................ pReleaseCooldownCounter = CounterNew()
+  [ 20] getprop 1355 ............................ <pReleaseCooldownCounter>
+  [ 23] pushsymb 530 ............................ <#tim>
+  [ 26] pushint8 2 .............................. <2>
+  [ 28] pushint8 10 ............................. <10>
+  [ 30] pusharglistnoret 4 ...................... <pReleaseCooldownCounter, #tim, 2, 10>
+  [ 32] objcall 531 ............................. pReleaseCooldownCounter.tim[2] = 10
+  [ 35] ret
+end
+
+on releaseStar me
+  [  0] getprop 1354 ............................ <pNumOfStarsToBeReleased>
+  [  3] pushint8 1 .............................. <1>
+  [  5] add ..................................... <pNumOfStarsToBeReleased + 1>
+  [  6] setprop 1354 ............................ pNumOfStarsToBeReleased = pNumOfStarsToBeReleased + 1
+  [  9] ret
+end
+
+on update me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 31 .............................. ancestor.update()
+  [  6] getprop 1354 ............................ <pNumOfStarsToBeReleased>
+  [  9] pushzero ................................ <0>
+  [ 10] gt ...................................... <pNumOfStarsToBeReleased > 0>
+  [ 11] jmpifz [ 54] ............................ if pNumOfStarsToBeReleased > 0 then
+  [ 14] getprop 1355 ............................ <pReleaseCooldownCounter>
+  [ 17] getobjprop 552 .......................... <pReleaseCooldownCounter.fin>
+  [ 20] jmpifz [ 54] ............................ if pReleaseCooldownCounter.fin then
+  [ 23] getglobal 40 ............................ <g>
+  [ 25] getchainedprop 1356 ..................... <g.starMaster>
+  [ 28] getparam 0 .............................. <me>
+  [ 30] getobjprop 51 ........................... <me.big>
+  [ 32] pusharglistnoret 2 ...................... <g.starMaster, me.big>
+  [ 34] objcall 1357 ............................ g.starMaster.experienceStar(me.big)
+  [ 37] getprop 1354 ............................ <pNumOfStarsToBeReleased>
+  [ 40] pushint8 1 .............................. <1>
+  [ 42] sub ..................................... <pNumOfStarsToBeReleased - 1>
+  [ 43] setprop 1354 ............................ pNumOfStarsToBeReleased = pNumOfStarsToBeReleased - 1
+  [ 46] getprop 1355 ............................ <pReleaseCooldownCounter>
+  [ 49] pusharglistnoret 1 ...................... <pReleaseCooldownCounter>
+  [ 51] extcall 706 ............................. CounterReset(pReleaseCooldownCounter)
+  [ 54] getprop 1355 ............................ <pReleaseCooldownCounter>
+  [ 57] pusharglistnoret 1 ...................... <pReleaseCooldownCounter>
+  [ 59] extcall 767 ............................. CounterOnce(pReleaseCooldownCounter)
+  [ 62] ret
+end

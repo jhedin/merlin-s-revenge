@@ -1,0 +1,184 @@
+property ancestor, pAdditionalHeight, pAdditionalHeightRatio, pAdditionalWidth, pAdditionalWidthRatio
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getprop 33 .............................. <ancestor>
+  [ 12] pusharglistnoret 1 ...................... <ancestor>
+  [ 14] objcall 2 ............................... ancestor.addModParams()
+  [ 16] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pushzero ................................ <0>
+  [  9] setprop 1192 ............................ pAdditionalHeight = 0
+  [ 12] pushint8 1 .............................. <1>
+  [ 14] setprop 1193 ............................ pAdditionalHeightRatio = 1
+  [ 17] pushzero ................................ <0>
+  [ 18] setprop 1194 ............................ pAdditionalWidth = 0
+  [ 21] pushint8 1 .............................. <1>
+  [ 23] setprop 1195 ............................ pAdditionalWidthRatio = 1
+  [ 26] ret
+end
+
+on applyExtraDimensions me
+  [  0] getprop 1192 ............................ <pAdditionalHeight>
+  [  3] pushzero ................................ <0>
+  [  4] eq ...................................... <pAdditionalHeight = 0>
+  [  5] getprop 1194 ............................ <pAdditionalWidth>
+  [  8] pushzero ................................ <0>
+  [  9] eq ...................................... <pAdditionalWidth = 0>
+  [ 10] and ..................................... <(pAdditionalHeight = 0) and (pAdditionalWidth = 0)>
+  [ 11] jmpifz [ 18] ............................ if (pAdditionalHeight = 0) and (pAdditionalWidth = 0) then
+  [ 14] pusharglistnoret 0 ...................... <>
+  [ 16] extcall 35 .............................. return 
+  [ 18] getparam 0 .............................. <me>
+  [ 20] getchainedprop 51 ....................... <me.big>
+  [ 22] pusharglist 1 ........................... <me.big>
+  [ 24] objcall 15 .............................. <me.big.getAnimKeepSize()>
+  [ 26] jmpifz [ 33] ............................ if me.big.getAnimKeepSize() then
+  [ 29] pusharglistnoret 0 ...................... <>
+  [ 31] extcall 35 .............................. return 
+  [ 33] getparam 0 .............................. <me>
+  [ 35] pusharglist 1 ........................... <me>
+  [ 37] objcall 1190 ............................ <me.getScaleHeight()>
+  [ 40] setlocal 0 .............................. newHeight = me.getScaleHeight()
+  [ 42] getparam 0 .............................. <me>
+  [ 44] pusharglist 1 ........................... <me>
+  [ 46] objcall 1191 ............................ <me.getScaleWidth()>
+  [ 49] setlocal 1 .............................. newWidth = me.getScaleWidth()
+  [ 51] getparam 0 .............................. <me>
+  [ 53] getchainedprop 51 ....................... <me.big>
+  [ 55] getlocal 0 .............................. <newHeight>
+  [ 57] pusharglistnoret 2 ...................... <me.big, newHeight>
+  [ 59] objcall 1011 ............................ me.big.setSpriteHeight(newHeight)
+  [ 62] getparam 0 .............................. <me>
+  [ 64] getchainedprop 51 ....................... <me.big>
+  [ 66] getlocal 1 .............................. <newWidth>
+  [ 68] pusharglistnoret 2 ...................... <me.big, newWidth>
+  [ 70] objcall 1012 ............................ me.big.setSpriteWidth(newWidth)
+  [ 73] ret
+end
+
+on getScaleHeight me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 51 ....................... <me.big>
+  [  4] pusharglist 1 ........................... <me.big>
+  [  6] objcall 17 .............................. <me.big.getAnimMember()>
+  [  8] setlocal 0 .............................. myMember = me.big.getAnimMember()
+  [ 10] getlocal 0 .............................. <myMember>
+  [ 12] getobjprop 423 .......................... <myMember.height>
+  [ 15] setlocal 1 .............................. myHeight = myMember.height
+  [ 17] getlocal 1 .............................. <myHeight>
+  [ 19] getprop 1193 ............................ <pAdditionalHeightRatio>
+  [ 22] mul ..................................... <myHeight * pAdditionalHeightRatio>
+  [ 23] setlocal 2 .............................. newHeight = myHeight * pAdditionalHeightRatio
+  [ 25] getlocal 2 .............................. <newHeight>
+  [ 27] pusharglistnoret 1 ...................... <newHeight>
+  [ 29] extcall 35 .............................. return newHeight
+  [ 31] ret
+end
+
+on getScaleWidth me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 51 ....................... <me.big>
+  [  4] pusharglist 1 ........................... <me.big>
+  [  6] objcall 17 .............................. <me.big.getAnimMember()>
+  [  8] setlocal 0 .............................. myMember = me.big.getAnimMember()
+  [ 10] getlocal 0 .............................. <myMember>
+  [ 12] getobjprop 424 .......................... <myMember.width>
+  [ 15] setlocal 1 .............................. mywidth = myMember.width
+  [ 17] getlocal 1 .............................. <mywidth>
+  [ 19] getprop 1195 ............................ <pAdditionalWidthRatio>
+  [ 22] mul ..................................... <mywidth * pAdditionalWidthRatio>
+  [ 23] setlocal 2 .............................. newWidth = mywidth * pAdditionalWidthRatio
+  [ 25] getlocal 2 .............................. <newWidth>
+  [ 27] pusharglistnoret 1 ...................... <newWidth>
+  [ 29] extcall 35 .............................. return newWidth
+  [ 31] ret
+end
+
+on internalEvent me, theEvent
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <theEvent>
+  [  4] pusharglistnoret 2 ...................... <ancestor, theEvent>
+  [  6] objcall 22 .............................. ancestor.internalEvent(theEvent)
+  [  8] getparam 1 .............................. <theEvent>
+  [ 10] peek 0 .................................. case theEvent of
+  [ 12] pushsymb 9 .............................. <#animUpdated>
+  [ 14] eq
+  [ 15] jmpifz [ 25] ............................ (case) #animUpdated:
+  [ 18] getparam 0 .............................. <me>
+  [ 20] pusharglistnoret 1 ...................... <me>
+  [ 22] objcall 1189 ............................ me.applyExtraDimensions()
+  [ 25] pop 1
+  [ 27] ret
+end
+
+on setAdditionalHeight me, newVal
+  [  0] getparam 1 .............................. <newVal>
+  [  2] setprop 1192 ............................ pAdditionalHeight = newVal
+  [  5] getparam 0 .............................. <me>
+  [  7] getchainedprop 51 ....................... <me.big>
+  [  9] pushsymb 69 ............................. <#stand>
+  [ 11] pusharglist 2 ........................... <me.big, #stand>
+  [ 13] objcall 18 .............................. <me.big.getAnimMemberFromStrip(#stand)>
+  [ 15] setlocal 0 .............................. standMember = me.big.getAnimMemberFromStrip(#stand)
+  [ 17] getlocal 0 .............................. <standMember>
+  [ 19] getobjprop 423 .......................... <standMember.height>
+  [ 22] getparam 1 .............................. <newVal>
+  [ 24] add ..................................... <standMember.height + newVal>
+  [ 25] pushfloat32 1.0 ......................... <1.0>
+  [ 30] mul ..................................... <(standMember.height + newVal) * 1.0>
+  [ 31] getlocal 0 .............................. <standMember>
+  [ 33] getobjprop 423 .......................... <standMember.height>
+  [ 36] div ..................................... <(standMember.height + newVal) * 1.0 / standMember.height>
+  [ 37] setlocal 1 .............................. heightRatio = (standMember.height + newVal) * 1.0 / standMember.height
+  [ 39] getlocal 1 .............................. <heightRatio>
+  [ 41] setprop 1193 ............................ pAdditionalHeightRatio = heightRatio
+  [ 44] ret
+end
+
+on setAdditionalWidth me, newVal
+  [  0] getparam 1 .............................. <newVal>
+  [  2] setprop 1194 ............................ pAdditionalWidth = newVal
+  [  5] getparam 0 .............................. <me>
+  [  7] getchainedprop 51 ....................... <me.big>
+  [  9] pushsymb 69 ............................. <#stand>
+  [ 11] pusharglist 2 ........................... <me.big, #stand>
+  [ 13] objcall 18 .............................. <me.big.getAnimMemberFromStrip(#stand)>
+  [ 15] setlocal 0 .............................. standMember = me.big.getAnimMemberFromStrip(#stand)
+  [ 17] getlocal 0 .............................. <standMember>
+  [ 19] getobjprop 424 .......................... <standMember.width>
+  [ 22] getparam 1 .............................. <newVal>
+  [ 24] add ..................................... <standMember.width + newVal>
+  [ 25] pushfloat32 1.0 ......................... <1.0>
+  [ 30] mul ..................................... <(standMember.width + newVal) * 1.0>
+  [ 31] getlocal 0 .............................. <standMember>
+  [ 33] getobjprop 424 .......................... <standMember.width>
+  [ 36] div ..................................... <(standMember.width + newVal) * 1.0 / standMember.width>
+  [ 37] setlocal 1 .............................. widthRatio = (standMember.width + newVal) * 1.0 / standMember.width
+  [ 39] getlocal 1 .............................. <widthRatio>
+  [ 41] setprop 1195 ............................ pAdditionalWidthRatio = widthRatio
+  [ 44] ret
+end

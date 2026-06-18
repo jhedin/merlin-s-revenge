@@ -1,0 +1,586 @@
+property pAlign, pDisplayRect, pPotionsCollected, pTextVSpace, pTitle, pTitleColour, pTitleFont, pTitleText, pTitleVSpace
+global g, gGlobalDisplayLayer
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 3 ............................... return me
+  [  6] ret
+end
+
+on init me
+  [  0] pushsymb 171 ............................ <#right>
+  [  2] setprop 1174 ............................ pAlign = #right
+  [  5] pushzero ................................ <0>
+  [  6] pushzero ................................ <0>
+  [  7] pushint8 1 .............................. <1>
+  [  9] pushint8 1 .............................. <1>
+  [ 11] pusharglist 4 ........................... <0, 0, 1, 1>
+  [ 13] extcall 200 ............................. <rect(0, 0, 1, 1)>
+  [ 15] setprop 1175 ............................ pDisplayRect = rect(0, 0, 1, 1)
+  [ 18] pusharglist 0 ........................... <[]>
+  [ 20] pushlist ................................ <[]>
+  [ 21] setprop 1176 ............................ pPotionsCollected = []
+  [ 24] pushint8 3 .............................. <3>
+  [ 26] setprop 1177 ............................ pTextVSpace = 3
+  [ 29] pushsymb 103 ............................ <#none>
+  [ 31] setprop 1178 ............................ pTitle = #none
+  [ 34] pushzero ................................ <0>
+  [ 35] pushzero ................................ <0>
+  [ 36] pushzero ................................ <0>
+  [ 37] pusharglist 3 ........................... <0, 0, 0>
+  [ 39] extcall 106 ............................. <rgb(0, 0, 0)>
+  [ 41] setprop 1179 ............................ pTitleColour = rgb(0, 0, 0)
+  [ 44] pushsymb 1181 ........................... <#smallgrey>
+  [ 47] setprop 1180 ............................ pTitleFont = #smallgrey
+  [ 50] pushcons 0 .............................. <"POTIONS DRUNK">
+  [ 52] setprop 1182 ............................ pTitleText = "POTIONS DRUNK"
+  [ 55] pushint8 5 .............................. <5>
+  [ 57] setprop 1183 ............................ pTitleVSpace = 5
+  [ 60] ret
+end
+
+on finish me
+  [  0] getprop 1178 ............................ <pTitle>
+  [  3] pushsymb 103 ............................ <#none>
+  [  5] nteq .................................... <pTitle <> #none>
+  [  6] getprop 1178 ............................ <pTitle>
+  [  9] pushsymb 1184 ........................... <#object>
+  [ 12] pusharglist 2 ........................... <pTitle, #object>
+  [ 14] extcall 350 ............................. <ilk(pTitle, #object)>
+  [ 17] and ..................................... <(pTitle <> #none) and ilk(pTitle, #object)>
+  [ 18] jmpifz [ 33] ............................ if (pTitle <> #none) and ilk(pTitle, #object) then
+  [ 21] getprop 1178 ............................ <pTitle>
+  [ 24] pusharglistnoret 1 ...................... <pTitle>
+  [ 26] objcall 239 ............................. pTitle.finish()
+  [ 28] pushsymb 103 ............................ <#none>
+  [ 30] setprop 1178 ............................ pTitle = #none
+  [ 33] getparam 0 .............................. <me>
+  [ 35] pusharglistnoret 1 ...................... <me>
+  [ 37] objcall 1166 ............................ me.clearPotionsCollected()
+  [ 40] ret
+end
+
+on addSaveData me, sd
+  [  0] pusharglist 0 ........................... <[]>
+  [  2] pushlist ................................ <[]>
+  [  3] setlocal 0 .............................. potionsCollected = []
+  [  5] getprop 1176 ............................ <pPotionsCollected>
+  [  8] peek 0
+  [ 10] pusharglist 1
+  [ 12] extcall 348
+  [ 15] pushint8 1
+  [ 17] peek 0
+  [ 19] peek 2
+  [ 21] lteq
+  [ 22] jmpifz [105] ............................ repeat with potionRecord in pPotionsCollected
+  [ 25] peek 2
+  [ 27] peek 1
+  [ 29] pusharglist 2
+  [ 31] extcall 301
+  [ 34] setlocal 1
+  [ 36] pusharglist 0 ........................... <[:]>
+  [ 38] pushproplist ............................ <[:]>
+  [ 39] setlocal 2 .............................. potionData = [:]
+  [ 41] getlocal 2 .............................. <potionData>
+  [ 43] pushsymb 253 ............................ <#character>
+  [ 45] getlocal 1 .............................. <potionRecord>
+  [ 47] getobjprop 253 .......................... <potionRecord.character>
+  [ 49] pusharglistnoret 3 ...................... <potionData, #character, potionRecord.character>
+  [ 51] objcall 54 .............................. potionData[#character] = potionRecord.character
+  [ 53] getlocal 2 .............................. <potionData>
+  [ 55] pushsymb 254 ............................ <#colour>
+  [ 57] getlocal 1 .............................. <potionRecord>
+  [ 59] getobjprop 254 .......................... <potionRecord.colour>
+  [ 61] pusharglistnoret 3 ...................... <potionData, #colour, potionRecord.colour>
+  [ 63] objcall 54 .............................. potionData[#colour] = potionRecord.colour
+  [ 65] getlocal 2 .............................. <potionData>
+  [ 67] pushsymb 193 ............................ <#member>
+  [ 69] getlocal 1 .............................. <potionRecord>
+  [ 71] getobjprop 193 .......................... <potionRecord.member>
+  [ 73] pusharglistnoret 3 ...................... <potionData, #member, potionRecord.member>
+  [ 75] objcall 54 .............................. potionData[#member] = potionRecord.member
+  [ 77] getlocal 2 .............................. <potionData>
+  [ 79] pushsymb 257 ............................ <#numCollected>
+  [ 82] getlocal 1 .............................. <potionRecord>
+  [ 84] getobjprop 257 .......................... <potionRecord.numCollected>
+  [ 87] pusharglistnoret 3 ...................... <potionData, #numCollected, potionRecord.numCollected>
+  [ 89] objcall 54 .............................. potionData[#numCollected] = potionRecord.numCollected
+  [ 91] getlocal 0 .............................. <potionsCollected>
+  [ 93] getlocal 2 .............................. <potionData>
+  [ 95] pusharglistnoret 2 ...................... <potionsCollected, potionData>
+  [ 97] objcall 506 ............................. potionsCollected.append(potionData)
+  [100] pushint8 1
+  [102] add
+  [103] endrepeat [ 17]
+  [105] pop 3
+  [107] getparam 1 .............................. <sd>
+  [109] pushsymb 1176 ........................... <#pPotionsCollected>
+  [112] getlocal 0 .............................. <potionsCollected>
+  [114] pusharglistnoret 3 ...................... <sd, #pPotionsCollected, potionsCollected>
+  [116] objcall 54 .............................. sd[#pPotionsCollected] = potionsCollected
+  [118] ret
+end
+
+on calcDisplayRect me, theloc, theMark
+  [  0] getparam 1 .............................. <theloc>
+  [  2] getobjprop 354 .......................... <theloc.locH>
+  [  5] setlocal 0 .............................. x1 = theloc.locH
+  [  7] getparam 1 .............................. <theloc>
+  [  9] getobjprop 355 .......................... <theloc.locV>
+  [ 12] setlocal 1 .............................. y1 = theloc.locV
+  [ 14] getlocal 0 .............................. <x1>
+  [ 16] getparam 2 .............................. <theMark>
+  [ 18] getobjprop 325 .......................... <theMark.width>
+  [ 21] add ..................................... <x1 + theMark.width>
+  [ 22] setlocal 2 .............................. x2 = x1 + theMark.width
+  [ 24] getlocal 1 .............................. <y1>
+  [ 26] getparam 2 .............................. <theMark>
+  [ 28] getobjprop 326 .......................... <theMark.height>
+  [ 31] add ..................................... <y1 + theMark.height>
+  [ 32] setlocal 3 .............................. y2 = y1 + theMark.height
+  [ 34] getlocal 0 .............................. <x1>
+  [ 36] getlocal 1 .............................. <y1>
+  [ 38] getlocal 2 .............................. <x2>
+  [ 40] getlocal 3 .............................. <y2>
+  [ 42] pusharglist 4 ........................... <x1, y1, x2, y2>
+  [ 44] extcall 200 ............................. <rect(x1, y1, x2, y2)>
+  [ 46] setlocal 4 .............................. therect = rect(x1, y1, x2, y2)
+  [ 48] getlocal 4 .............................. <therect>
+  [ 50] pusharglistnoret 1 ...................... <therect>
+  [ 52] extcall 3 ............................... return therect
+  [ 54] ret
+end
+
+on clearPotionsCollected me
+  [  0] getprop 1176 ............................ <pPotionsCollected>
+  [  3] pusharglist 1 ........................... <pPotionsCollected>
+  [  5] extcall 327 ............................. <voidp(pPotionsCollected)>
+  [  8] not ..................................... <not voidp(pPotionsCollected)>
+  [  9] jmpifz [ 67] ............................ if not voidp(pPotionsCollected) then
+  [ 12] getprop 1176 ............................ <pPotionsCollected>
+  [ 15] peek 0
+  [ 17] pusharglist 1
+  [ 19] extcall 348
+  [ 22] pushint8 1
+  [ 24] peek 0
+  [ 26] peek 2
+  [ 28] lteq
+  [ 29] jmpifz [ 65] ............................ repeat with record in pPotionsCollected
+  [ 32] peek 2
+  [ 34] peek 1
+  [ 36] pusharglist 2
+  [ 38] extcall 301
+  [ 41] setlocal 0
+  [ 43] getlocal 0 .............................. <record>
+  [ 45] getchainedprop 255 ...................... <record.counter>
+  [ 47] pusharglistnoret 1 ...................... <record.counter>
+  [ 49] objcall 239 ............................. record.counter.finish()
+  [ 51] getlocal 0 .............................. <record>
+  [ 53] getchainedprop 256 ...................... <record.icon>
+  [ 56] pusharglistnoret 1 ...................... <record.icon>
+  [ 58] objcall 239 ............................. record.icon.finish()
+  [ 60] pushint8 1
+  [ 62] add
+  [ 63] endrepeat [ 24]
+  [ 65] pop 3
+  [ 67] pusharglist 0 ........................... <[]>
+  [ 69] pushlist ................................ <[]>
+  [ 70] setprop 1176 ............................ pPotionsCollected = []
+  [ 73] ret
+end
+
+on display me
+  [  0] getprop 1176 ............................ <pPotionsCollected>
+  [  3] getobjprop 348 .......................... <pPotionsCollected.count>
+  [  6] pushzero ................................ <0>
+  [  7] eq ...................................... <pPotionsCollected.count = 0>
+  [  8] jmpifz [ 15] ............................ if pPotionsCollected.count = 0 then
+  [ 11] pusharglistnoret 0 ...................... <>
+  [ 13] extcall 3 ............................... return 
+  [ 15] getprop 1174 ............................ <pAlign>
+  [ 18] peek 0 .................................. case pAlign of
+  [ 20] pushsymb 171 ............................ <#right>
+  [ 22] eq
+  [ 23] jmpifz [ 36] ............................ (case) #right:
+  [ 26] getparam 0 .............................. <me>
+  [ 28] pusharglistnoret 1 ...................... <me>
+  [ 30] objcall 1168 ............................ me.displayAlignRight()
+  [ 33] jmp [ 51]
+  [ 36] peek 0
+  [ 38] pushsymb 170 ............................ <#left>
+  [ 40] eq
+  [ 41] jmpifz [ 51] ............................ (case) #left:
+  [ 44] getparam 0 .............................. <me>
+  [ 46] pusharglistnoret 1 ...................... <me>
+  [ 48] objcall 1194 ............................ me.displayAlignLeft()
+  [ 51] pop 1 ................................... end case
+  [ 53] ret
+end
+
+on displayAlignRight me
+  [  0] getprop 1175 ............................ <pDisplayRect>
+  [  3] getobjprop 171 .......................... <pDisplayRect.right>
+  [  5] setlocal 0 .............................. xPos = pDisplayRect.right
+  [  7] getprop 1175 ............................ <pDisplayRect>
+  [ 10] getobjprop 168 .......................... <pDisplayRect.top>
+  [ 12] setlocal 1 .............................. yPos = pDisplayRect.top
+  [ 14] getprop 1176 ............................ <pPotionsCollected>
+  [ 17] getobjprop 348 .......................... <pPotionsCollected.count>
+  [ 20] setlocal 2
+  [ 22] getlocal 2
+  [ 24] pushint8 1 .............................. <1>
+  [ 26] gteq
+  [ 27] jmpifz [173] ............................ repeat with i = pPotionsCollected.count down to 1
+  [ 30] getprop 1176 ............................ <pPotionsCollected>
+  [ 33] getlocal 2 .............................. <i>
+  [ 35] pusharglist 2 ........................... <pPotionsCollected, i>
+  [ 37] objcall 301 ............................. <pPotionsCollected[i]>
+  [ 40] setlocal 3 .............................. potionRecord = pPotionsCollected[i]
+  [ 42] getlocal 3 .............................. <potionRecord>
+  [ 44] getobjprop 255 .......................... <potionRecord.counter>
+  [ 46] setlocal 4 .............................. counter = potionRecord.counter
+  [ 48] getlocal 4 .............................. <counter>
+  [ 50] pusharglist 1 ........................... <counter>
+  [ 52] objcall 1195 ............................ <counter.getDisplayWidth()>
+  [ 55] setlocal 5 .............................. counterWidth = counter.getDisplayWidth()
+  [ 57] getlocal 0 .............................. <xPos>
+  [ 59] getlocal 5 .............................. <counterWidth>
+  [ 61] sub ..................................... <xPos - counterWidth>
+  [ 62] setlocal 0 .............................. xPos = xPos - counterWidth
+  [ 64] getprop 1175 ............................ <pDisplayRect>
+  [ 67] getobjprop 168 .......................... <pDisplayRect.top>
+  [ 69] getprop 1177 ............................ <pTextVSpace>
+  [ 72] add ..................................... <pDisplayRect.top + pTextVSpace>
+  [ 73] setlocal 1 .............................. yPos = pDisplayRect.top + pTextVSpace
+  [ 75] getlocal 0 .............................. <xPos>
+  [ 77] getlocal 1 .............................. <yPos>
+  [ 79] pusharglist 2 ........................... <xPos, yPos>
+  [ 81] extcall 122 ............................. <point(xPos, yPos)>
+  [ 83] setlocal 6 .............................. counterPos = point(xPos, yPos)
+  [ 85] getlocal 4 .............................. <counter>
+  [ 87] getlocal 6 .............................. <counterPos>
+  [ 89] pusharglistnoret 2 ...................... <counter, counterPos>
+  [ 91] objcall 1196 ............................ counter.setDisplayLoc(counterPos)
+  [ 94] getlocal 4 .............................. <counter>
+  [ 96] getlocal 3 .............................. <potionRecord>
+  [ 98] getobjprop 257 .......................... <potionRecord.numCollected>
+  [101] pusharglistnoret 2 ...................... <counter, potionRecord.numCollected>
+  [103] objcall 1197 ............................ counter.displayValue(potionRecord.numCollected)
+  [106] getlocal 3 .............................. <potionRecord>
+  [108] getobjprop 193 .......................... <potionRecord.member>
+  [110] setlocal 7 .............................. member = potionRecord.member
+  [112] getlocal 3 .............................. <potionRecord>
+  [114] getobjprop 256 .......................... <potionRecord.icon>
+  [117] setlocal 8 .............................. icon = potionRecord.icon
+  [119] getlocal 7 .............................. <member>
+  [121] getobjprop 325 .......................... <member.width>
+  [124] setlocal 9 .............................. memberWidth = member.width
+  [126] getlocal 0 .............................. <xPos>
+  [128] getlocal 9 .............................. <memberWidth>
+  [130] sub ..................................... <xPos - memberWidth>
+  [131] setlocal 0 .............................. xPos = xPos - memberWidth
+  [133] getprop 1175 ............................ <pDisplayRect>
+  [136] getobjprop 168 .......................... <pDisplayRect.top>
+  [138] setlocal 1 .............................. yPos = pDisplayRect.top
+  [140] getlocal 0 .............................. <xPos>
+  [142] getlocal 1 .............................. <yPos>
+  [144] pusharglist 2 ........................... <xPos, yPos>
+  [146] extcall 122 ............................. <point(xPos, yPos)>
+  [148] setlocal 10 ............................. iconPos = point(xPos, yPos)
+  [150] getlocal 8 .............................. <icon>
+  [152] getlocal 7 .............................. <member>
+  [154] getobjprop 1198 ......................... <member.image>
+  [157] getlocal 10 ............................. <iconPos>
+  [159] pusharglistnoret 3 ...................... <icon, member.image, iconPos>
+  [161] objcall 1199 ............................ icon.displayImageAtLoc(member.image, iconPos)
+  [164] pushint8 -1
+  [166] getlocal 2
+  [168] add
+  [169] setlocal 2
+  [171] endrepeat [ 22]
+  [173] getprop 1178 ............................ <pTitle>
+  [176] pusharglist 1 ........................... <pTitle>
+  [178] objcall 1200 ............................ <pTitle.getImageWidth()>
+  [181] setlocal 11 ............................. titleWidth = pTitle.getImageWidth()
+  [183] getlocal 0 .............................. <xPos>
+  [185] getlocal 11 ............................. <titleWidth>
+  [187] sub ..................................... <xPos - titleWidth>
+  [188] setlocal 0 .............................. xPos = xPos - titleWidth
+  [190] getprop 1175 ............................ <pDisplayRect>
+  [193] getobjprop 168 .......................... <pDisplayRect.top>
+  [195] getprop 1183 ............................ <pTitleVSpace>
+  [198] add ..................................... <pDisplayRect.top + pTitleVSpace>
+  [199] setlocal 1 .............................. yPos = pDisplayRect.top + pTitleVSpace
+  [201] getlocal 0 .............................. <xPos>
+  [203] getlocal 1 .............................. <yPos>
+  [205] pusharglist 2 ........................... <xPos, yPos>
+  [207] extcall 122 ............................. <point(xPos, yPos)>
+  [209] setlocal 12 ............................. titleLoc = point(xPos, yPos)
+  [211] getprop 1178 ............................ <pTitle>
+  [214] getlocal 12 ............................. <titleLoc>
+  [216] pusharglistnoret 2 ...................... <pTitle, titleLoc>
+  [218] objcall 1201 ............................ pTitle.displayAtLoc(titleLoc)
+  [221] ret
+end
+
+on getPotionRecord me, thePotion
+  [  0] getparam 1 .............................. <thePotion>
+  [  2] pusharglist 1 ........................... <thePotion>
+  [  4] objcall 1210 ............................ <thePotion.getCharacter()>
+  [  7] setlocal 0 .............................. potionCharacter = thePotion.getCharacter()
+  [  9] getprop 1176 ............................ <pPotionsCollected>
+  [ 12] pushsymb 253 ............................ <#character>
+  [ 14] getlocal 0 .............................. <potionCharacter>
+  [ 16] pusharglist 3 ........................... <pPotionsCollected, #character, potionCharacter>
+  [ 18] extcall 1001 ............................ <ListGetPosByProp(pPotionsCollected, #character, potionCharacter)>
+  [ 21] setlocal 1 .............................. pos = ListGetPosByProp(pPotionsCollected, #character, potionCharacter)
+  [ 23] getlocal 1 .............................. <pos>
+  [ 25] pushzero ................................ <0>
+  [ 26] eq ...................................... <pos = 0>
+  [ 27] jmpifz [137] ............................ if pos = 0 then / else
+  [ 30] getglobal 191 ........................... <g>
+  [ 32] getchainedprop 192 ...................... <g.structMaster>
+  [ 34] pushsymb 77 ............................. <#potionRecord>
+  [ 36] pusharglist 2 ........................... <g.structMaster, #potionRecord>
+  [ 38] objcall 51 .............................. <g.structMaster.getStruct(#potionRecord)>
+  [ 40] setlocal 2 .............................. newRecord = g.structMaster.getStruct(#potionRecord)
+  [ 42] getlocal 2 .............................. <newRecord>
+  [ 44] getparam 1 .............................. <thePotion>
+  [ 46] pusharglist 1 ........................... <thePotion>
+  [ 48] objcall 1210 ............................ <thePotion.getCharacter()>
+  [ 51] setobjprop 253 .......................... newRecord.character = thePotion.getCharacter()
+  [ 53] getlocal 2 .............................. <newRecord>
+  [ 55] getparam 1 .............................. <thePotion>
+  [ 57] pusharglist 1 ........................... <thePotion>
+  [ 59] objcall 1211 ............................ <thePotion.getCounterColour()>
+  [ 62] setobjprop 254 .......................... newRecord.colour = thePotion.getCounterColour()
+  [ 64] getlocal 2 .............................. <newRecord>
+  [ 66] getparam 1 .............................. <thePotion>
+  [ 68] pusharglist 1 ........................... <thePotion>
+  [ 70] objcall 1212 ............................ <thePotion.getCounterMember()>
+  [ 73] setobjprop 193 .......................... newRecord.member = thePotion.getCounterMember()
+  [ 75] getlocal 2 .............................. <newRecord>
+  [ 77] pushzero ................................ <0>
+  [ 78] setobjprop 257 .......................... newRecord.numCollected = 0
+  [ 81] getlocal 2 .............................. <newRecord>
+  [ 83] getparam 0 .............................. <me>
+  [ 85] getlocal 2 .............................. <newRecord>
+  [ 87] getobjprop 254 .......................... <newRecord.colour>
+  [ 89] pusharglist 2 ........................... <me, newRecord.colour>
+  [ 91] objcall 1171 ............................ <me.requestCounter(newRecord.colour)>
+  [ 94] setobjprop 255 .......................... newRecord.counter = me.requestCounter(newRecord.colour)
+  [ 96] getlocal 2 .............................. <newRecord>
+  [ 98] getparam 0 .............................. <me>
+  [100] pusharglist 1 ........................... <me>
+  [102] objcall 1172 ............................ <me.requestIcon()>
+  [105] setobjprop 256 .......................... newRecord.icon = me.requestIcon()
+  [108] getprop 1176 ............................ <pPotionsCollected>
+  [111] getlocal 2 .............................. <newRecord>
+  [113] pusharglistnoret 2 ...................... <pPotionsCollected, newRecord>
+  [115] objcall 506 ............................. pPotionsCollected.append(newRecord)
+  [118] getprop 1176 ............................ <pPotionsCollected>
+  [121] getprop 1176 ............................ <pPotionsCollected>
+  [124] getobjprop 348 .......................... <pPotionsCollected.count>
+  [127] pusharglist 2 ........................... <pPotionsCollected, pPotionsCollected.count>
+  [129] objcall 301 ............................. <pPotionsCollected[pPotionsCollected.count]>
+  [132] setlocal 3 .............................. potionRecord = pPotionsCollected[pPotionsCollected.count]
+  [134] jmp [149]
+  [137] getprop 1176 ............................ <pPotionsCollected>
+  [140] getlocal 1 .............................. <pos>
+  [142] pusharglist 2 ........................... <pPotionsCollected, pos>
+  [144] objcall 301 ............................. <pPotionsCollected[pos]>
+  [147] setlocal 3 .............................. potionRecord = pPotionsCollected[pos]
+  [149] getlocal 3 .............................. <potionRecord>
+  [151] pusharglistnoret 1 ...................... <potionRecord>
+  [153] extcall 3 ............................... return potionRecord
+  [155] ret
+end
+
+on potionCollected me, thePotion
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <thePotion>
+  [  4] pusharglist 2 ........................... <me, thePotion>
+  [  6] objcall 1169 ............................ <me.getPotionRecord(thePotion)>
+  [  9] setlocal 0 .............................. potionRecord = me.getPotionRecord(thePotion)
+  [ 11] getlocal 0 .............................. <potionRecord>
+  [ 13] getlocal 0 .............................. <potionRecord>
+  [ 15] getobjprop 257 .......................... <potionRecord.numCollected>
+  [ 18] pushint8 1 .............................. <1>
+  [ 20] add ..................................... <potionRecord.numCollected + 1>
+  [ 21] setobjprop 257 .......................... potionRecord.numCollected = potionRecord.numCollected + 1
+  [ 24] getparam 0 .............................. <me>
+  [ 26] pusharglistnoret 1 ...................... <me>
+  [ 28] objcall 1167 ............................ me.display()
+  [ 31] ret
+end
+
+on requestCounter me, colour
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 336 ...................... <g.objectMaster>
+  [  5] pushsymb 1216 ........................... <#objDisplayCounter>
+  [  8] pusharglist 2 ........................... <g.objectMaster, #objDisplayCounter>
+  [ 10] objcall 338 ............................. <g.objectMaster.requestObject(#objDisplayCounter)>
+  [ 13] setlocal 0 .............................. counter = g.objectMaster.requestObject(#objDisplayCounter)
+  [ 15] getlocal 0 .............................. <counter>
+  [ 17] pushsymb 1 .............................. <#init>
+  [ 19] pusharglist 2 ........................... <counter, #init>
+  [ 21] objcall 339 ............................. <counter.getParams(#init)>
+  [ 24] setlocal 1 .............................. params = counter.getParams(#init)
+  [ 26] getlocal 1 .............................. <params>
+  [ 28] getparam 1 .............................. <colour>
+  [ 30] setobjprop 254 .......................... params.colour = colour
+  [ 32] getlocal 0 .............................. <counter>
+  [ 34] getlocal 1 .............................. <params>
+  [ 36] pusharglistnoret 2 ...................... <counter, params>
+  [ 38] objcall 1 ............................... counter.init(params)
+  [ 40] getlocal 0 .............................. <counter>
+  [ 42] pusharglistnoret 1 ...................... <counter>
+  [ 44] extcall 3 ............................... return counter
+  [ 46] ret
+end
+
+on requestIcon me
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 336 ...................... <g.objectMaster>
+  [  5] pushsymb 1217 ........................... <#objSpriteMember>
+  [  8] pusharglist 2 ........................... <g.objectMaster, #objSpriteMember>
+  [ 10] objcall 338 ............................. <g.objectMaster.requestObject(#objSpriteMember)>
+  [ 13] setlocal 0 .............................. icon = g.objectMaster.requestObject(#objSpriteMember)
+  [ 15] getlocal 0 .............................. <icon>
+  [ 17] pushsymb 1 .............................. <#init>
+  [ 19] pusharglist 2 ........................... <icon, #init>
+  [ 21] objcall 339 ............................. <icon.getParams(#init)>
+  [ 24] setlocal 1 .............................. params = icon.getParams(#init)
+  [ 26] getlocal 1 .............................. <params>
+  [ 28] getglobal 1218 .......................... <gGlobalDisplayLayer>
+  [ 31] setobjprop 1106 ......................... params.layer = gGlobalDisplayLayer
+  [ 34] getlocal 0 .............................. <icon>
+  [ 36] getlocal 1 .............................. <params>
+  [ 38] pusharglistnoret 2 ...................... <icon, params>
+  [ 40] objcall 1 ............................... icon.init(params)
+  [ 42] getlocal 0 .............................. <icon>
+  [ 44] pusharglistnoret 1 ...................... <icon>
+  [ 46] extcall 3 ............................... return icon
+  [ 48] ret
+end
+
+on restoreFromSave me, sd
+  [  0] getparam 1 .............................. <sd>
+  [  2] getobjprop 1176 ......................... <sd.pPotionsCollected>
+  [  5] setlocal 0 .............................. potionsCollected = sd.pPotionsCollected
+  [  7] getparam 0 .............................. <me>
+  [  9] pusharglistnoret 1 ...................... <me>
+  [ 11] objcall 1166 ............................ me.clearPotionsCollected()
+  [ 14] pusharglist 0 ........................... <[]>
+  [ 16] pushlist ................................ <[]>
+  [ 17] setprop 1176 ............................ pPotionsCollected = []
+  [ 20] getlocal 0 .............................. <potionsCollected>
+  [ 22] peek 0
+  [ 24] pusharglist 1
+  [ 26] extcall 348
+  [ 29] pushint8 1
+  [ 31] peek 0
+  [ 33] peek 2
+  [ 35] lteq
+  [ 36] jmpifz [138] ............................ repeat with potionData in potionsCollected
+  [ 39] peek 2
+  [ 41] peek 1
+  [ 43] pusharglist 2
+  [ 45] extcall 301
+  [ 48] setlocal 1
+  [ 50] getglobal 191 ........................... <g>
+  [ 52] getchainedprop 192 ...................... <g.structMaster>
+  [ 54] pushsymb 77 ............................. <#potionRecord>
+  [ 56] pusharglist 2 ........................... <g.structMaster, #potionRecord>
+  [ 58] objcall 51 .............................. <g.structMaster.getStruct(#potionRecord)>
+  [ 60] setlocal 2 .............................. potionRecord = g.structMaster.getStruct(#potionRecord)
+  [ 62] getlocal 2 .............................. <potionRecord>
+  [ 64] getlocal 1 .............................. <potionData>
+  [ 66] getobjprop 253 .......................... <potionData.character>
+  [ 68] setobjprop 253 .......................... potionRecord.character = potionData.character
+  [ 70] getlocal 2 .............................. <potionRecord>
+  [ 72] getlocal 1 .............................. <potionData>
+  [ 74] getobjprop 254 .......................... <potionData.colour>
+  [ 76] setobjprop 254 .......................... potionRecord.colour = potionData.colour
+  [ 78] getlocal 2 .............................. <potionRecord>
+  [ 80] getlocal 1 .............................. <potionData>
+  [ 82] getobjprop 193 .......................... <potionData.member>
+  [ 84] setobjprop 193 .......................... potionRecord.member = potionData.member
+  [ 86] getlocal 2 .............................. <potionRecord>
+  [ 88] getlocal 1 .............................. <potionData>
+  [ 90] getobjprop 257 .......................... <potionData.numCollected>
+  [ 93] setobjprop 257 .......................... potionRecord.numCollected = potionData.numCollected
+  [ 96] getlocal 2 .............................. <potionRecord>
+  [ 98] getparam 0 .............................. <me>
+  [100] getlocal 1 .............................. <potionData>
+  [102] getobjprop 254 .......................... <potionData.colour>
+  [104] pusharglist 2 ........................... <me, potionData.colour>
+  [106] objcall 1171 ............................ <me.requestCounter(potionData.colour)>
+  [109] setobjprop 255 .......................... potionRecord.counter = me.requestCounter(potionData.colour)
+  [111] getlocal 2 .............................. <potionRecord>
+  [113] getparam 0 .............................. <me>
+  [115] pusharglist 1 ........................... <me>
+  [117] objcall 1172 ............................ <me.requestIcon()>
+  [120] setobjprop 256 .......................... potionRecord.icon = me.requestIcon()
+  [123] getprop 1176 ............................ <pPotionsCollected>
+  [126] getlocal 2 .............................. <potionRecord>
+  [128] pusharglistnoret 2 ...................... <pPotionsCollected, potionRecord>
+  [130] objcall 506 ............................. pPotionsCollected.append(potionRecord)
+  [133] pushint8 1
+  [135] add
+  [136] endrepeat [ 31]
+  [138] pop 3
+  [140] getparam 0 .............................. <me>
+  [142] pusharglistnoret 1 ...................... <me>
+  [144] objcall 1167 ............................ me.display()
+  [147] ret
+end
+
+on start me, theloc, theMark
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <theloc>
+  [  4] getparam 2 .............................. <theMark>
+  [  6] pusharglist 3 ........................... <me, theloc, theMark>
+  [  8] objcall 1165 ............................ <me.calcDisplayRect(theloc, theMark)>
+  [ 11] setprop 1175 ............................ pDisplayRect = me.calcDisplayRect(theloc, theMark)
+  [ 14] getparam 0 .............................. <me>
+  [ 16] pusharglistnoret 1 ...................... <me>
+  [ 18] objcall 1173 ............................ me.startTitle()
+  [ 21] ret
+end
+
+on startTitle me
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 336 ...................... <g.objectMaster>
+  [  5] pushsymb 1219 ........................... <#objTextImage>
+  [  8] pusharglist 2 ........................... <g.objectMaster, #objTextImage>
+  [ 10] objcall 338 ............................. <g.objectMaster.requestObject(#objTextImage)>
+  [ 13] setprop 1178 ............................ pTitle = g.objectMaster.requestObject(#objTextImage)
+  [ 16] getprop 1178 ............................ <pTitle>
+  [ 19] pushsymb 1 .............................. <#init>
+  [ 21] pusharglist 2 ........................... <pTitle, #init>
+  [ 23] objcall 339 ............................. <pTitle.getParams(#init)>
+  [ 26] setlocal 0 .............................. params = pTitle.getParams(#init)
+  [ 28] getlocal 0 .............................. <params>
+  [ 30] getprop 1179 ............................ <pTitleColour>
+  [ 33] setobjprop 254 .......................... params.colour = pTitleColour
+  [ 35] getlocal 0 .............................. <params>
+  [ 37] getprop 1180 ............................ <pTitleFont>
+  [ 40] setobjprop 379 .......................... params.font = pTitleFont
+  [ 43] getlocal 0 .............................. <params>
+  [ 45] getprop 1182 ............................ <pTitleText>
+  [ 48] setobjprop 392 .......................... params.text = pTitleText
+  [ 51] getprop 1178 ............................ <pTitle>
+  [ 54] getlocal 0 .............................. <params>
+  [ 56] pusharglistnoret 2 ...................... <pTitle, params>
+  [ 58] objcall 1 ............................... pTitle.init(params)
+  [ 60] ret
+end
+
+on stop me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 239 ............................. me.finish()
+  [  6] ret
+end

@@ -1,0 +1,17 @@
+on VarDuplicateIfList theVar
+  [  0] getparam 0 .............................. <theVar>
+  [  2] pushsymb 16 ............................. <#list>
+  [  4] pusharglist 2 ........................... <theVar, #list>
+  [  6] extcall 15 .............................. <ilk(theVar, #list)>
+  [  8] jmpifz [ 24] ............................ if ilk(theVar, #list) then / else
+  [ 11] getparam 0 .............................. <theVar>
+  [ 13] pusharglist 1 ........................... <theVar>
+  [ 15] objcall 72 .............................. <theVar.duplicate()>
+  [ 17] pusharglistnoret 1 ...................... <theVar.duplicate()>
+  [ 19] extcall 3 ............................... return theVar.duplicate()
+  [ 21] jmp [ 30]
+  [ 24] getparam 0 .............................. <theVar>
+  [ 26] pusharglistnoret 1 ...................... <theVar>
+  [ 28] extcall 3 ............................... return theVar
+  [ 30] ret
+end

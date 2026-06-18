@@ -1,0 +1,359 @@
+property pCollections, pCollectionKey, pNamesToSkip
+global g
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 3 ............................... return me
+  [  6] ret
+end
+
+on init me
+  [  0] pusharglist 0 ........................... <[:]>
+  [  2] pushproplist ............................ <[:]>
+  [  3] setprop 426 ............................. pCollections = [:]
+  [  6] pusharglist 0 ........................... <[:]>
+  [  8] pushproplist ............................ <[:]>
+  [  9] setprop 427 ............................. pCollectionKey = [:]
+  [ 12] getprop 427 ............................. <pCollectionKey>
+  [ 15] setlocal 0 .............................. c = pCollectionKey
+  [ 17] getlocal 0 .............................. <c>
+  [ 19] pushsymb 428 ............................ <#objActorData>
+  [ 22] pushcons 0 .............................. <"act">
+  [ 24] pusharglistnoret 3 ...................... <c, #objActorData, "act">
+  [ 26] objcall 54 .............................. c[#objActorData] = "act"
+  [ 28] getlocal 0 .............................. <c>
+  [ 30] pushsymb 429 ............................ <#objKeyBinding>
+  [ 33] pushcons 1 .............................. <"bnd">
+  [ 35] pusharglistnoret 3 ...................... <c, #objKeyBinding, "bnd">
+  [ 37] objcall 54 .............................. c[#objKeyBinding] = "bnd"
+  [ 39] getlocal 0 .............................. <c>
+  [ 41] pushsymb 430 ............................ <#objKeyDescriptions>
+  [ 44] pushcons 2 .............................. <"kyd">
+  [ 46] pusharglistnoret 3 ...................... <c, #objKeyDescriptions, "kyd">
+  [ 48] objcall 54 .............................. c[#objKeyDescriptions] = "kyd"
+  [ 50] getlocal 0 .............................. <c>
+  [ 52] pushsymb 431 ............................ <#objFont>
+  [ 55] pushcons 3 .............................. <"fnt">
+  [ 57] pusharglistnoret 3 ...................... <c, #objFont, "fnt">
+  [ 59] objcall 54 .............................. c[#objFont] = "fnt"
+  [ 61] getlocal 0 .............................. <c>
+  [ 63] pushsymb 432 ............................ <#objScript>
+  [ 66] pushcons 4 .............................. <"scr">
+  [ 68] pusharglistnoret 3 ...................... <c, #objScript, "scr">
+  [ 70] objcall 54 .............................. c[#objScript] = "scr"
+  [ 72] getlocal 0 .............................. <c>
+  [ 74] pushsymb 433 ............................ <#objTeamData>
+  [ 77] pushcons 5 .............................. <"tem">
+  [ 79] pusharglistnoret 3 ...................... <c, #objTeamData, "tem">
+  [ 81] objcall 54 .............................. c[#objTeamData] = "tem"
+  [ 83] getlocal 0 .............................. <c>
+  [ 85] pushsymb 434 ............................ <#objText>
+  [ 88] pushcons 6 .............................. <"txt">
+  [ 90] pusharglistnoret 3 ...................... <c, #objText, "txt">
+  [ 92] objcall 54 .............................. c[#objText] = "txt"
+  [ 94] getlocal 0 .............................. <c>
+  [ 96] pushsymb 435 ............................ <#objTileSet>
+  [ 99] pushcons 7 .............................. <"tls">
+  [101] pusharglistnoret 3 ...................... <c, #objTileSet, "tls">
+  [103] objcall 54 .............................. c[#objTileSet] = "tls"
+  [105] getlocal 0 .............................. <c>
+  [107] pushsymb 436 ............................ <#objTileSetKey>
+  [110] pushcons 8 .............................. <"tlk">
+  [112] pusharglistnoret 3 ...................... <c, #objTileSetKey, "tlk">
+  [114] objcall 54 .............................. c[#objTileSetKey] = "tlk"
+  [116] pushcons 9 .............................. <"key">
+  [118] pushcons 10 ............................. <"properties">
+  [120] pusharglist 2 ........................... <["key", "properties"]>
+  [122] pushlist ................................ <["key", "properties"]>
+  [123] setprop 437 ............................. pNamesToSkip = ["key", "properties"]
+  [126] getparam 0 .............................. <me>
+  [128] pusharglistnoret 1 ...................... <me>
+  [130] objcall 418 ............................. me.initCollections()
+  [133] pusharglistnoret 0 ...................... <>
+  [135] extcall 438 ............................. nothing()
+  [138] ret
+end
+
+on initCollections me
+  [  0] pushcons 11 ............................. <"data">
+  [  2] pushint8 2 .............................. <2>
+  [  4] get 8 ................................... <the number of castMembers of castLib "data">
+  [  6] setlocal 0 .............................. numGFX = the number of castMembers of castLib "data"
+  [  8] pushint8 1 .............................. <1>
+  [ 10] setlocal 1
+  [ 12] getlocal 1
+  [ 14] getlocal 0 .............................. <numGFX>
+  [ 16] lteq
+  [ 17] jmpifz [218] ............................ repeat with i = 1 to numGFX
+  [ 20] getlocal 1 .............................. <i>
+  [ 22] pushcons 11 ............................. <"data">
+  [ 24] pusharglist 2 ........................... <i, "data">
+  [ 26] extcall 193 ............................. <member(i, "data")>
+  [ 28] setlocal 2 .............................. nMem = member(i, "data")
+  [ 30] getlocal 2 .............................. <nMem>
+  [ 32] getobjprop 138 .......................... <nMem.name>
+  [ 34] setlocal 3 .............................. nName = nMem.name
+  [ 36] getlocal 3 .............................. <nName>
+  [ 38] pushsymb 439 ............................ <#char>
+  [ 41] pushint8 1 .............................. <1>
+  [ 43] pushint8 3 .............................. <3>
+  [ 45] pusharglist 4 ........................... <nName, #char, 1, 3>
+  [ 47] objcall 352 ............................. <nName.char[1..3]>
+  [ 50] setlocal 4 .............................. nPrefix = nName.char[1..3]
+  [ 52] getlocal 3 .............................. <nName>
+  [ 54] pushsymb 439 ............................ <#char>
+  [ 57] pushint8 5 .............................. <5>
+  [ 59] pushint8 99 ............................. <99>
+  [ 61] pusharglist 4 ........................... <nName, #char, 5, 99>
+  [ 63] objcall 352 ............................. <nName.char[5..99]>
+  [ 66] pusharglist 1 ........................... <nName.char[5..99]>
+  [ 68] extcall 440 ............................. <StringToSymbol(nName.char[5..99])>
+  [ 71] setlocal 5 .............................. nNewName = StringToSymbol(nName.char[5..99])
+  [ 73] getparam 0 .............................. <me>
+  [ 75] getlocal 4 .............................. <nPrefix>
+  [ 77] pusharglist 2 ........................... <me, nPrefix>
+  [ 79] objcall 419 ............................. <me.checkInCollection(nPrefix)>
+  [ 82] jmpifz [209] ............................ if me.checkInCollection(nPrefix) then
+  [ 85] getparam 0 .............................. <me>
+  [ 87] getlocal 3 .............................. <nName>
+  [ 89] pusharglist 2 ........................... <me, nName>
+  [ 91] objcall 420 ............................. <me.checkInNamesToSkip(nName)>
+  [ 94] jmpifz [105] ............................ if me.checkInNamesToSkip(nName) then
+  [ 97] pusharglistnoret 0 ...................... <>
+  [ 99] extcall 441 ............................. continue()
+  [102] jmp [209] ............................... next repeat
+  [105] getparam 0 .............................. <me>
+  [107] getlocal 4 .............................. <nPrefix>
+  [109] pusharglist 2 ........................... <me, nPrefix>
+  [111] objcall 425 ............................. <me.getObjSym(nPrefix)>
+  [114] setlocal 6 .............................. nObjSym = me.getObjSym(nPrefix)
+  [116] getglobal 191 ........................... <g>
+  [118] getchainedprop 336 ...................... <g.objectMaster>
+  [121] getlocal 6 .............................. <nObjSym>
+  [123] pusharglist 2 ........................... <g.objectMaster, nObjSym>
+  [125] objcall 338 ............................. <g.objectMaster.requestObject(nObjSym)>
+  [128] setlocal 7 .............................. nObj = g.objectMaster.requestObject(nObjSym)
+  [130] getlocal 7 .............................. <nObj>
+  [132] pushsymb 1 .............................. <#init>
+  [134] pusharglist 2 ........................... <nObj, #init>
+  [136] objcall 339 ............................. <nObj.getParams(#init)>
+  [139] setlocal 8 .............................. params = nObj.getParams(#init)
+  [141] getlocal 8 .............................. <params>
+  [143] getlocal 2 .............................. <nMem>
+  [145] setobjprop 193 .......................... params.member = nMem
+  [147] getlocal 7 .............................. <nObj>
+  [149] getlocal 8 .............................. <params>
+  [151] pusharglistnoret 2 ...................... <nObj, params>
+  [153] objcall 1 ............................... nObj.init(params)
+  [155] getprop 426 ............................. <pCollections>
+  [158] getlocal 6 .............................. <nObjSym>
+  [160] pusharglist 2 ........................... <pCollections, nObjSym>
+  [162] objcall 301 ............................. <pCollections[nObjSym]>
+  [165] pusharglist 0 ........................... <>
+  [167] extcall 388 ............................. <VOID>
+  [170] eq ...................................... <pCollections[nObjSym] = VOID>
+  [171] jmpifz [186] ............................ if pCollections[nObjSym] = VOID then
+  [174] getprop 426 ............................. <pCollections>
+  [177] getlocal 6 .............................. <nObjSym>
+  [179] pusharglist 0 ........................... <[:]>
+  [181] pushproplist ............................ <[:]>
+  [182] pusharglistnoret 3 ...................... <pCollections, nObjSym, [:]>
+  [184] objcall 54 .............................. pCollections[nObjSym] = [:]
+  [186] getprop 426 ............................. <pCollections>
+  [189] getlocal 6 .............................. <nObjSym>
+  [191] pusharglist 2 ........................... <pCollections, nObjSym>
+  [193] objcall 301 ............................. <pCollections[nObjSym]>
+  [196] getlocal 5 .............................. <nNewName>
+  [198] pusharglist 1 ........................... <nNewName>
+  [200] extcall 442 ............................. <symbol(nNewName)>
+  [203] getlocal 7 .............................. <nObj>
+  [205] pusharglistnoret 3 ...................... <pCollections[nObjSym], symbol(nNewName), nObj>
+  [207] objcall 54 .............................. pCollections[nObjSym][symbol(nNewName)] = nObj
+  [209] pushint8 1
+  [211] getlocal 1
+  [213] add
+  [214] setlocal 1
+  [216] endrepeat [ 12]
+  [218] ret
+end
+
+on finish me
+  [  0] getprop 426 ............................. <pCollections>
+  [  3] pusharglist 1 ........................... <pCollections>
+  [  5] extcall 350 ............................. <ilk(pCollections)>
+  [  8] pushsymb 388 ............................ <#void>
+  [ 11] nteq .................................... <ilk(pCollections) <> #void>
+  [ 12] jmpifz [ 65] ............................ if ilk(pCollections) <> #void then
+  [ 15] getprop 426 ............................. <pCollections>
+  [ 18] peek 0
+  [ 20] pusharglist 1
+  [ 22] extcall 348
+  [ 25] pushint8 1
+  [ 27] peek 0
+  [ 29] peek 2
+  [ 31] lteq
+  [ 32] jmpifz [ 63] ............................ repeat with nCollection in pCollections
+  [ 35] peek 2
+  [ 37] peek 1
+  [ 39] pusharglist 2
+  [ 41] extcall 301
+  [ 44] setlocal 0
+  [ 46] getglobal 191 ........................... <g>
+  [ 48] getchainedprop 336 ...................... <g.objectMaster>
+  [ 51] getlocal 0 .............................. <nCollection>
+  [ 53] pusharglistnoret 2 ...................... <g.objectMaster, nCollection>
+  [ 55] objcall 450 ............................. g.objectMaster.finishObjects(nCollection)
+  [ 58] pushint8 1
+  [ 60] add
+  [ 61] endrepeat [ 27]
+  [ 63] pop 3
+  [ 65] ret
+end
+
+on checkInCollection me, nPrefix
+  [  0] getprop 427 ............................. <pCollectionKey>
+  [  3] getparam 1 .............................. <nPrefix>
+  [  5] pusharglist 2 ........................... <pCollectionKey, nPrefix>
+  [  7] objcall 452 ............................. <pCollectionKey.getPos(nPrefix)>
+  [ 10] pushzero ................................ <0>
+  [ 11] gt ...................................... <pCollectionKey.getPos(nPrefix) > 0>
+  [ 12] jmpifz [ 21] ............................ if pCollectionKey.getPos(nPrefix) > 0 then
+  [ 15] pushint8 1 .............................. <1>
+  [ 17] pusharglistnoret 1 ...................... <1>
+  [ 19] extcall 3 ............................... return 1
+  [ 21] pushzero ................................ <0>
+  [ 22] pusharglistnoret 1 ...................... <0>
+  [ 24] extcall 3 ............................... return 0
+  [ 26] ret
+end
+
+on checkInNamesToSkip me, nName
+  [  0] getprop 437 ............................. <pNamesToSkip>
+  [  3] peek 0
+  [  5] pusharglist 1
+  [  7] extcall 348
+  [ 10] pushint8 1
+  [ 12] peek 0
+  [ 14] peek 2
+  [ 16] lteq
+  [ 17] jmpifz [ 50] ............................ repeat with nNameToSkip in pNamesToSkip
+  [ 20] peek 2
+  [ 22] peek 1
+  [ 24] pusharglist 2
+  [ 26] extcall 301
+  [ 29] setlocal 0
+  [ 31] getparam 1 .............................. <nName>
+  [ 33] getlocal 0 .............................. <nNameToSkip>
+  [ 35] containsstr ............................. <nName contains nNameToSkip>
+  [ 36] jmpifz [ 45] ............................ if nName contains nNameToSkip then
+  [ 39] pushint8 1 .............................. <1>
+  [ 41] pusharglistnoret 1 ...................... <1>
+  [ 43] extcall 3 ............................... return 1
+  [ 45] pushint8 1
+  [ 47] add
+  [ 48] endrepeat [ 12]
+  [ 50] pop 3
+  [ 52] pushzero ................................ <0>
+  [ 53] pusharglistnoret 1 ...................... <0>
+  [ 55] extcall 3 ............................... return 0
+  [ 57] ret
+end
+
+on listCollections me
+  [  0] getprop 426 ............................. <pCollections>
+  [  3] pusharglistnoret 1 ...................... <pCollections>
+  [  5] extcall 454 ............................. ListPrint(pCollections)
+  [  8] ret
+end
+
+on getCollection me, objType
+  [  0] getprop 426 ............................. <pCollections>
+  [  3] getparam 1 .............................. <objType>
+  [  5] pusharglist 2 ........................... <pCollections, objType>
+  [  7] objcall 301 ............................. <pCollections[objType]>
+  [ 10] pusharglist 0 ........................... <>
+  [ 12] extcall 388 ............................. <VOID>
+  [ 15] eq ...................................... <pCollections[objType] = VOID>
+  [ 16] jmpifz [ 28] ............................ if pCollections[objType] = VOID then / else
+  [ 19] pushsymb 103 ............................ <#none>
+  [ 21] pusharglistnoret 1 ...................... <#none>
+  [ 23] extcall 3 ............................... return #none
+  [ 25] jmp [ 47]
+  [ 28] getprop 426 ............................. <pCollections>
+  [ 31] getparam 1 .............................. <objType>
+  [ 33] pusharglist 2 ........................... <pCollections, objType>
+  [ 35] objcall 301 ............................. <pCollections[objType]>
+  [ 38] pusharglist 1 ........................... <pCollections[objType]>
+  [ 40] objcall 302 ............................. <pCollections[objType].duplicate()>
+  [ 43] pusharglistnoret 1 ...................... <pCollections[objType].duplicate()>
+  [ 45] extcall 3 ............................... return pCollections[objType].duplicate()
+  [ 47] ret
+end
+
+on getObj me, objType, objSymbol
+  [  0] getprop 426 ............................. <pCollections>
+  [  3] getparam 1 .............................. <objType>
+  [  5] pusharglist 2 ........................... <pCollections, objType>
+  [  7] objcall 301 ............................. <pCollections[objType]>
+  [ 10] getparam 2 .............................. <objSymbol>
+  [ 12] pusharglist 2 ........................... <pCollections[objType], objSymbol>
+  [ 14] objcall 301 ............................. <pCollections[objType][objSymbol]>
+  [ 17] setlocal 0 .............................. obj = pCollections[objType][objSymbol]
+  [ 19] getlocal 0 .............................. <obj>
+  [ 21] pusharglist 1 ........................... <obj>
+  [ 23] extcall 327 ............................. <voidp(obj)>
+  [ 26] jmpifz [ 56] ............................ if voidp(obj) then
+  [ 29] pushcons 12 ............................. <"An item that the game expected to be there is missing">
+  [ 31] pushcons 13 ............................. <RETURN>
+  [ 33] joinstr ................................. <"An item that the game expected to be there is missing" & RETURN>
+  [ 34] pushcons 14 ............................. <"type: ">
+  [ 36] joinstr ................................. <"An item that the game expected to be there is missing" & RETURN & "type: ">
+  [ 37] getparam 1 .............................. <objType>
+  [ 39] joinstr ................................. <"An item that the game expected to be there is missing" & RETURN & "type: " & objType>
+  [ 40] pushcons 15 ............................. <"   object: ">
+  [ 42] joinstr ................................. <"An item that the game expected to be there is missing" & RETURN & "type: " & objType & "   object: ">
+  [ 43] getparam 2 .............................. <objSymbol>
+  [ 45] joinstr ................................. <"An item that the game expected to be there is missing" & RETURN & "type: " & objType & "   object: " & objSymbol>
+  [ 46] pusharglistnoret 1 ...................... <"An item that the game expected to be there is missing" & RETURN & "type: " & objType & "   object: " & objSymbol>
+  [ 48] extcall 456 ............................. alert("An item that the game expected to be there is missing" & RETURN & "type: " & objType & "   object: " & objSymbol)
+  [ 51] pusharglistnoret 0 ...................... <>
+  [ 53] extcall 457 ............................. halt()
+  [ 56] getlocal 0 .............................. <obj>
+  [ 58] pusharglistnoret 1 ...................... <obj>
+  [ 60] extcall 3 ............................... return obj
+  [ 62] ret
+end
+
+on getObject me, objType, objSymbol
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <objType>
+  [  4] getparam 2 .............................. <objSymbol>
+  [  6] pusharglist 3 ........................... <me, objType, objSymbol>
+  [  8] objcall 423 ............................. <me.getObj(objType, objSymbol)>
+  [ 11] pusharglistnoret 1 ...................... <me.getObj(objType, objSymbol)>
+  [ 13] extcall 3 ............................... return me.getObj(objType, objSymbol)
+  [ 15] ret
+end
+
+on getObjSym me, nPrefix
+  [  0] getprop 427 ............................. <pCollectionKey>
+  [  3] getparam 1 .............................. <nPrefix>
+  [  5] pusharglist 2 ........................... <pCollectionKey, nPrefix>
+  [  7] objcall 452 ............................. <pCollectionKey.getPos(nPrefix)>
+  [ 10] setlocal 0 .............................. pos = pCollectionKey.getPos(nPrefix)
+  [ 12] getprop 427 ............................. <pCollectionKey>
+  [ 15] getlocal 0 .............................. <pos>
+  [ 17] pusharglist 2 ........................... <pCollectionKey, pos>
+  [ 19] objcall 415 ............................. <pCollectionKey.getPropAt(pos)>
+  [ 22] pusharglistnoret 1 ...................... <pCollectionKey.getPropAt(pos)>
+  [ 24] extcall 3 ............................... return pCollectionKey.getPropAt(pos)
+  [ 26] ret
+end
+
+on stop me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 239 ............................. me.finish()
+  [  6] ret
+end

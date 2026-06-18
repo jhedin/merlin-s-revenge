@@ -1,0 +1,324 @@
+[#name: "actorMaster", #scriptType: #parent, #type: #script]
+global g, q
+global gGameObjectLayer
+global gPlayerLayer
+global gMineLayer
+
+-- game specific
+global gEnemyEnergyMasterOn
+
+property pObjectOffsets
+property pParams
+property pPlayer
+
+on new me
+  return me
+end
+
+on init me
+  pPlayer = #none
+  
+  pParams = [:]
+  pParams[#newActor] = [:]
+  
+  n = pParams.newActor
+  n[#initVect] = #none
+  n[#forceCreate] = false -- omit any checks which may result in object not being made
+  n[#preBuilt] = true     -- whether or not the unit must be constructed before use
+  n[#typ] = #none
+  n[#startActor] = true
+  n[#startLoc] = #none
+  n[#useOffset] = true
+  
+  pObjectOffsets = [:]
+  
+  me.initObjectOffsets()
+end
+
+on initObjectOffsets()
+  -- find the object offset member
+  memObjectOffsets = member("objectOffsets", "data")
+  
+  if memObjectOffsets = member(-1,1) then
+    put "actorMaster.initObjectOffsets(): objectOffsets member not found - not to worry, offsets are prolly defined in the actor data"
+    return
+  end if
+  
+  -- extract the data
+  theText = memObjectOffsets.text
+  theText = StringEliminateChars(theText, return)
+  theVal = value(theText)
+  if theVal <> void then
+    pObjectOffsets = theVal
+  else
+    put "actorMaster.initObjectOffsets(): error in objectOffsets"
+  end if
+end
+
+on finish me
+  me.finishActors()
+end
+
+on finishActors me
+  g.objectMaster.finishAllWithFlag(#objGameObject)
+  pPlayer = #none
+end
+
+on newActor me, params
+  if params.typ = #kongFuChicken then
+    nothing
+  end if
+  
+  freeSprite = g.spriteMaster.checkFreeSprite()
+  obj = #none
+  
+  if freeSprite then
+    -- player = g.objectMaster.getFirstOfType(#objPlayerCharacter)
+    obj = me.startActor(params.typ, params.startLoc, params.useOffset, params.initVect, params.preBuilt, params.forceCreate, params.startActor)
+    
+  end if
+  
+  return obj
+end
+
+on adjustStartLoc me, theLoc, typ
+  oOffset = pObjectOffsets[typ]
+  if oOffset <> void then
+    theLoc = theLoc + oOffset
+  end if
+  return theLoc
+end
+
+on checkCollisionsWithSolidArea me, theLoc
+  collisionsOk = true
+  
+  currentMap = g.gameMaster.getCurrentMap()
+  if currentMap <> #none then
+    
+    tileType = currentMap.getActiveTileTypeAtLoc(theLoc)
+    case tileType of
+      #solid, #outsidePlayArea:
+        collisionsOk = false
+    end case
+    
+  end if
+  
+  return collisionsOk
+end
+
+on getActorData me, actorSymbol
+  return me.retrieveActorData(actorSymbol)
+end
+
+on getMiniMapStatusForSymbol me, theSymbol
+  data = me.retrieveActorData(theSymbol)
+  return data.miniMapStatus
+end
+
+on pauseGameObjects me
+  gameObjects = g.objectMaster.getActiveObjectsWithFlag(#objGameObject)
+  
+  repeat with gameObject in gameObjects
+    gameObject.paws()
+  end repeat
+end
+
+on retrieveActorData me, datatyp
+  dataObj = g.collectionsMaster.getObj(#objActorData, datatyp)
+  
+  data = dataObj.getData()
+  
+  if data[#inherit] <> void then
+    inheritData = me.retrieveActorData(data.inherit)
+    data = ListsMerge(inheritData.duplicate(), data)
+  end if
+  
+  -- set attack
+  if data[#attack] <> #none and data[#attack] <> void then
+    attack = g.structMaster.getStruct(#attack)
+    data.attack = ListModifyProperties(attack, data.attack)
+  end if
+  
+  return data
+end
+
+on start me
+  if gEnemyEnergyMasterOn = true then
+    g.enemyEnergyMaster.start()
+  end if
+  
+  --take out this line for testing purposes
+  return
+  
+  player = me.startActor(#player, point(100,250))
+  pPlayer = player
+  
+  --  me.startActor(#bigFireball, point(100,50))
+  
+  startActors = []
+  startActors.append([#objType: #bat,           #quantity: 0])
+  startActors.append([#objType: #bigWitch,      #quantity: 0])
+  startActors.append([#objType: #goblin,        #quantity: 0])
+  startActors.append([#objType: #goblinSoldier, #quantity: 0])
+  startActors.append([#objType: #hairSpider,    #quantity: 0])
+  startActors.append([#objType: #spider,        #quantity: 0])
+  startActors.append([#objType: #littleWitch,   #quantity: 0])
+  startActors.append([#objType: #fryingPan,     #quantity: 0])
+  startActors.append([#objType: #hairDrop,      #quantity: 0])
+  startActors.append([#objType: #paddle,        #quantity: 0])
+  startActors.append([#objType: #pugelstick,    #quantity: 0])
+  startActors.append([#objType: #spade,         #quantity: 0])
+  startActors.append([#objType: #sword,         #quantity: 0])
+  startActors.append([#objType: #scissors,      #quantity: 0])
+  
+  repeat with startActor in startActors
+    repeat with i = 1 to startActor.quantity
+      me.startActor(startActor.objType, point(random(450), 300))
+    end repeat
+  end repeat 
+end
+
+on startActor me, typ, startLoc, useOffsets, initVect, preBuilt, forceCreate, startActor
+  
+  actorData = me.retrieveActorData(typ)
+  
+  if actorData[#objType] = void then
+    alert("actorMaster.newActor: please define typ " &q& typ &q)
+    nothing
+  end if
+  
+  obj = g.objectMaster.requestObject(actorData[#objType])
+  if actorData[#AiType] <> void then
+    AI = g.objectMaster.requestObject(actorData[#AiType])
+    params = AI.getParams(#init)
+    AI.init(params)
+    
+    if actorData[#AiType] = #objAiEnemyTargetSeek then
+      AI.setTargetType(actorData[#AiTarget])
+      AI.setAction(actorData[#AiTargetAction])
+    end if
+  end if
+  
+  params = me.setParams(obj, actorData, AI)
+  
+  if useOffsets then
+    --    startLoc = me.adjustStartLoc(startLoc, typ)
+    startLoc = startLoc + params.startOffset
+  end if
+  
+  params.initLoc = startLoc.duplicate()
+  
+  if initVect <> #none then
+    params.initVect = initVect.duplicate()
+  end if
+  
+  if params[#preBuilt] <> void then
+    params.preBuilt = preBuilt
+  end if
+  
+  if params.actorType = #typ then
+    params.actorType = typ
+  end if
+  
+  me.setParamsMaster(params)
+  
+  obj.init(params)
+  
+  if params.createOnSolid or forceCreate then
+    collisionsOk = true
+  else
+    -- check obj isn't created over solid background
+    
+    collisionsOk = true
+    
+    if obj.getCollisionDetection() = true then
+      -- check collisions with hard edges
+      collisionsOk = g.collisionMaster.checkCollisionsNewObject(obj)
+    end if
+    
+    -- check summoning into solid area, away from hard edges
+    if collisionsOk = true then
+      -- only if object is solid
+      if obj.getCollisionDetection() = true then
+        collisionsOk = me.checkCollisionsWithSolidArea(startLoc)
+      end if
+    end if
+    
+  end if
+  
+  if collisionsOk then
+    if startActor = true then
+      obj.start()
+    end if
+    
+  else
+    obj.finish()
+    obj = #none
+  end if
+  
+  if typ = #player then
+    pPlayer = obj
+  end if
+  
+  
+  return obj
+end
+
+on setParams me, obj, data, AI
+  
+  params = obj.getParams(#init)
+  
+  if AI <> void then
+    params.AI = AI
+  end if
+  
+  params = me.setParamsFromData(params, data)
+  
+  return params
+end 
+
+on setParamsFromData me, params, data
+  -- set params
+  params = ListModifyProperties(params, data)
+  
+  return params
+end
+
+on setParamsMaster me, params
+  case params.masterPrg of
+    #actorMaster:
+      params.masterPrg = me
+  end case
+end
+
+on getParams me, functionSym
+  return pParams[functionSym].duplicate()
+end
+
+on getPlayer me
+  return pPlayer
+end
+
+on stop me
+  me.finish()
+end
+
+on unpauseGameObjects me
+  gameObjects = g.objectMaster.getActiveObjectsWithFlag(#objGameObject)
+  
+  repeat with gameObject in gameObjects
+    gameObject.unpaws()
+  end repeat
+end
+
+
+
+
+
+
+
+
+
+
+
+

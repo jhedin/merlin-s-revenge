@@ -1,0 +1,167 @@
+[#name: "modExploder", #scriptType: #parent, #type: #script]
+-- causes the object it is attached to to explode under various
+-- circumstances.
+
+global g
+
+property ancestor
+property pExplodeCharge    -- the charge to use when exploding (and object is not a spell)
+property pExplodeEvents    -- a list of events that cause the object to explode
+property pExplodeSound     -- the sound the explosion should make
+property pExplodeVolume    -- the volume to play the sound at
+
+on new me
+  ancestor = new (script("modModule"))
+  return me
+end
+
+on addModParams me
+  i = me.modifyParams(#init)
+  
+  i[#explodeEvents] = []
+  i[#explodeSound]= #none
+  i[#explodeVolume] = 50
+  
+  ancestor.addModParams()
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  pExplodeCharge = #none
+  pExplodeEvents = params.explodeEvents
+  pExplodeSound = params.explodeSound
+  pExplodeVolume = params.explodeVolume
+end
+
+on initExplodeCharge me
+  pExplodeCharge = me.getAttack().explodeCharge
+end
+
+on explode me
+  me.big.playSound(pExplodeSound, pExplodeVolume)
+  
+  g.teamMaster.impactAttack(me.big)
+  
+  me.big.goMode(#explode)
+end
+
+on getCurrentCharge me
+  return pExplodeCharge
+end
+
+on goMode me, newMode
+  if newMode = #explode then
+    me.setAnimKeepSize(false)
+    me.big.resetAnim(#explode)
+  end if
+  
+  ancestor.goMode(newMode)
+end
+
+on internalEvent me, theEvent
+  ancestor.internalEvent(theEvent)
+  
+  if pExplodeEvents.getPos(theEvent) then
+    me.explode()
+  else
+    
+    case theEvent of
+      #bulletCollidedWithTarget:
+        me.big.die()
+        
+      #bulletLanded:
+        me.big.goMode(#land)
+        
+    end case
+    
+  end if
+  
+  case theEvent of
+    #attackSet:
+      me.initExplodeCharge()
+  end case
+end
+
+on update me
+  ancestor.update()
+  
+  case me.big.getMode() of
+    #explode:
+      fin = me.updateExplode()
+      if fin then me.big.internalEvent(#explodeFin)
+      
+  end case
+  
+end
+
+on updateExplode me
+  fin = me.big.getAnimLooped(#explode)
+  return fin
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

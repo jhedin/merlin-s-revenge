@@ -1,0 +1,377 @@
+[#name: "objCharacter", #scriptType: #parent, #type: #script]
+global g, gGameSpeed, gStageSize
+global gGameView
+
+property ancestor
+property pChargeLoc            -- the loc from which to charge spells
+property pChargeLocStore       -- copy of charge loc
+property pGmgChargeLoc         -- chargeLoc when holding the gmg
+property pChargeOffsetSide     -- #side or #top depending on where the character summons it's spells
+property pChargeOffsetStore    -- saves the original offset when the gmg is on
+property pDieSound
+property pDieVolume            -- the volume at which to play the die sound
+property pJumpPower
+property pJumpSound
+property pLeaveWhenFinished    -- whether or not to teleport out when there are no more targets. (Only true for Berlin at time of writing)
+property pMasterPrg
+property pName
+
+on new me
+  ancestor = new (script"objAiGameObject")
+  
+  
+  i = me.modifyParams(#init)
+  
+  -- flag to allow reservationsMaster to identify characters
+  i.flags.append(#objCharacter)
+  
+  i[#attack] = g.structMaster.getStruct(#attack)
+  i[#chargeLoc] = point(0,-8)
+  i[#gmgChargeLoc] = point(8,0)
+  i[#chargeOffsetSide] = #top
+  i[#dieSound] = #none
+  i[#dieVolume] = 100
+  i[#energy] = 100
+  i[#energyRecoverDelay] = 30
+  i[#jumpPower] = -7
+  i[#jumpSound] = #none
+  i[#leaveWhenFinished] = false
+  
+  me.addModule("modAnimSet")
+  me.addModule("modArmyUnit")
+  me.addModule("modBuilder")
+  me.addModule("modCharacterAttackProperties")
+  me.addModule("modConstruction")
+  me.addModule("modExperience")
+  me.addModule("modFader")
+  me.addModule("modEnergy")
+  me.addModule("modFreeze")  
+  me.addModule("modGhost")
+  me.addModule("modListNode")
+  me.addModule("modMoveToLoc")
+  me.addModule("modPositioning")
+  me.addModule("modReel")
+  me.addModule("modReincarnate")
+  me.addModule("modScale")
+  me.addModule("modStarReleaser")
+  me.addModule("modStretchDeath")
+  me.addModule("modStretcher")
+  me.addModule("modTeleport")
+  me.addModule("modWeaponManager")
+  me.addModule("modWeaponTechnique")
+  
+  return me
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  --  pAnimSet = g.objectMaster.requestObject(#objAnimSet)
+  --  pAnimSet.init(params.name, params.character)
+  
+  pChargeLoc = params.chargeLoc
+  pChargeLocStore = pChargeLoc
+  pGmgChargeLoc = params.gmgChargeLoc
+  pChargeOffsetSide = params.chargeOffsetSide
+  pChargeOffsetStore = pChargeOffsetSide
+  pDieSound = params.dieSound
+  pDieVolume = params.dieVolume
+  pMasterPrg = params.masterPrg
+  pName = params.name
+  
+  pJumpPower = params.jumpPower
+  pJumpSound = params.jumpSound
+  
+  
+  pLeaveWhenFinished = params.leaveWhenFinished
+  -----
+  
+  -- I commented these out because I didn't know what they were doing here
+  --  me.goMode(#walk)
+  --  me.ID.bigMe.updateAnim(#none)
+end
+
+on finish me
+  --  pAnimSet.finish()
+  
+  ancestor.finish()
+end
+
+
+
+on attackCancelled me
+  -- happens when a character AI switches weapon or on death
+  case me.pMode of
+    #dead:
+      nothing
+      
+    otherwise:
+      me.big.ensureMode(#walk)
+  end case
+end
+
+on calcChargeLoc me
+  dir = me.big.getFlipAsDir()
+  
+  chargeLocOffset = pChargeLoc.duplicate()
+  
+  chargeLocOffset.locH = chargeLocOffset.locH * dir
+  
+  chargeLoc = me.big.getLoc() + chargeLocOffset
+  
+  return chargeLoc
+end
+
+on chargeWeapon me
+  me.ID.bigMe.goMode(#charge)
+end
+
+
+on collisionPlatform me
+  ancestor.collisionPlatform()
+  
+  case me.pMode of
+    #reelFly:
+      me.ID.bigMe.goMode(#reelLanded)
+      
+    #jump, #fall:
+      me.ID.bigMe.goMode(#landed)
+      
+  end case
+end
+
+on collisionNoPlatform me
+  --  if gGameView = #sideOn then
+  --    if me.pMode = #walk and me.getVect()[2] > 1 then
+  --      me.goMode(#fall)
+  --    end if
+  --  end if
+end
+
+on die me
+  ancestor.die()
+  --  me.goMode(#dead)
+end
+
+on doJump me
+  if me.pMode = #walk then
+    me.goMode(#jump)
+  end if
+end
+
+on energyChanged me
+  -- override to update energy bar
+end
+
+on ensureMode me, theMode
+  if me.pMode <> theMode then
+    me.goMode(theMode)
+  end if
+end
+
+on getChargeLoc me
+  return pChargeLoc
+end
+
+on getChargeOffsetSide me
+  return pChargeOffsetSide
+end
+
+on getLeaveWhenFinished me
+  return pLeaveWhenFinished
+end
+
+on getName me
+  return pName
+end
+
+on goMode me, newMode
+  
+  
+  case me.pMode of
+    #reelFly:
+      me.pSpr.rotation = 0
+      
+  end case
+  
+  case newMode of
+    #charge, #naturalMelee, #naturalRanged, #weaponMelee, #weaponRanged, #magicMelee:
+      me.resetAnim(newMode)
+      
+    #die:
+      me.playSound(pDieSound, pDieVolume)
+      
+    #fall:
+      vectY = me.pMoveXY.getVectY()
+      if vectY < -2 then
+        me.pMoveXY.setVectY(-2)
+      end if
+      
+    #jump:
+      me.pMoveXY.setVectY(pJumpPower)
+      me.playSound(pJumpSound)
+      
+    #release:
+      me.resetAnim(#release)
+      me.resetAnim(#releaseWalk)
+      
+  end case
+  
+  ancestor.goMode(newMode)
+  
+  me.pAI.characterModeChanged(newMode)
+end
+
+on internalEvent me, theEvent
+  ancestor.internalEvent(theEvent)
+  
+  case theEvent of
+    #buildingFinished:
+      if me.pMode = #stand then
+        me.goMode(#walk)
+      end if
+      
+    #stretchDeathStarted:
+      me.playSound(pDieSound, pDieVolume)
+    #gmgTurnedOn:
+      me.gmgOn()
+    #gmgTurnedOff:
+      me.gmgOff()
+  end case
+  
+end
+
+on gmgOn me
+  pChargeOffsetSide = #side
+  pChargeLoc = pGmgChargeLoc
+end
+
+on gmgOff me
+  pChargeOffsetSide = pChargeOffsetStore
+  pChargeLoc = pChargeLocStore
+end
+
+on leaveGame me
+  me.goMode(#finish)
+end
+
+on outOfEnergy me
+  ancestor.outOfEnergy()
+end
+
+on noJump me
+  if me.pMode = #attack then
+    vectY = me.pMoveXY.getVectY()
+    if vectY < -2 then
+      me.pMoveXY.setVectY(-2)
+    end if
+    
+  end if
+  
+  if me.pMode = #jump then
+    me.goMode(#fall)
+  end if
+  
+  if me.pMode = #landed then
+    me.goMode(#walk)
+  end if
+end
+
+on releaseWeapon me
+  me.ID.bigMe.goMode(#release)
+end
+
+on setReleaseActive me, newVal
+  pReleaseActive = newVal
+end
+
+on start me
+  ancestor.start()
+  
+  me.startBuilding()
+end
+
+--on takeHit me, collisionVector
+--  me.flickWhite()
+--  ancestor.takeHit(collisionVector)
+--end
+
+on update me
+  
+  case me.pMode of
+    #attack:
+      fin = me.updateAttack()
+      if fin then 
+        me.goMode(#stand)
+      end if
+      me.recoverEnergy()
+      
+    #dead:
+      nothing
+      
+    #die:
+      if me.getStretchDeath() = false then
+        me.goMode(#dead)
+      end if
+      
+    #release:
+      fin = me.updateRelease()
+      if fin then me.goMode(#walk)
+      me.recoverEnergy()
+      
+      --    #moveToLoc:
+      --      fin = me.updateMoveToLoc()
+      --      if fin then me.goMode(#walk)
+      --      me.recoverEnergy()
+      
+    otherwise:
+      me.recoverEnergy()
+  end case
+  
+  
+  --me.ID.bigMe.updateAnim()
+  
+  ancestor.update()
+end
+
+on updateAttack me
+  fin = false
+  
+  if me.getAnimLooped() then
+    fin = true
+  end if
+  
+  return fin
+end
+
+on updateRelease me
+  fin = false
+  
+  if me.getAnimLooped() then
+    fin = true
+  end if
+  
+  return fin
+end
+
+--- 
+on informCallingPrg me
+  nothing
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,304 @@
+property ancestor, pAI
+
+on new me
+  [  0] pushcons 0 .............................. <"objGameObject">
+  [  2] pusharglist 1 ........................... <"objGameObject">
+  [  4] extcall 34 .............................. <script("objGameObject")>
+  [  6] pusharglist 1 ........................... <script("objGameObject")>
+  [  8] extcall 0 ............................... <new(script("objGameObject"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objGameObject"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 1969 ........................... <#AI>
+  [ 27] pushsymb 49 ............................. <#none>
+  [ 29] pusharglistnoret 3 ...................... <i, #AI, #none>
+  [ 31] objcall 48 .............................. i[#AI] = #none
+  [ 33] getparam 0 .............................. <me>
+  [ 35] pusharglistnoret 1 ...................... <me>
+  [ 37] extcall 35 .............................. return me
+  [ 39] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 1969 ......................... <params.AI>
+  [ 13] setprop 922 ............................. pAI = params.AI
+  [ 16] getprop 922 ............................. <pAI>
+  [ 19] getparam 0 .............................. <me>
+  [ 21] getchainedprop 57 ....................... <me.id>
+  [ 23] getobjprop 58 ........................... <me.id.bigMe>
+  [ 25] getparam 0 .............................. <me>
+  [ 27] getobjprop 173 .......................... <me.pSpr>
+  [ 29] getparam 1 .............................. <params>
+  [ 31] pusharglistnoret 4 ...................... <pAI, me.id.bigMe, me.pSpr, params>
+  [ 33] objcall 1719 ............................ pAI.initCharacterInfo(me.id.bigMe, me.pSpr, params)
+  [ 36] ret
+end
+
+on finish me
+  [  0] getprop 922 ............................. <pAI>
+  [  3] pusharglistnoret 1 ...................... <pAI>
+  [  5] objcall 3 ............................... pAI.finish()
+  [  7] getprop 33 .............................. <ancestor>
+  [  9] pusharglistnoret 1 ...................... <ancestor>
+  [ 11] objcall 3 ............................... ancestor.finish()
+  [ 13] ret
+end
+
+on addSaveData me, sd
+  [  0] pusharglist 0 ........................... <[:]>
+  [  2] pushproplist ............................ <[:]>
+  [  3] setlocal 0 .............................. saveData = [:]
+  [  5] getprop 922 ............................. <pAI>
+  [  8] getlocal 0 .............................. <saveData>
+  [ 10] pusharglistnoret 2 ...................... <pAI, saveData>
+  [ 12] objcall 4 ............................... pAI.addSaveData(saveData)
+  [ 14] getparam 1 .............................. <sd>
+  [ 16] pushsymb 922 ............................ <#pAI>
+  [ 19] getlocal 0 .............................. <saveData>
+  [ 21] pusharglistnoret 3 ...................... <sd, #pAI, saveData>
+  [ 23] objcall 48 .............................. sd[#pAI] = saveData
+  [ 25] getprop 33 .............................. <ancestor>
+  [ 27] getparam 1 .............................. <sd>
+  [ 29] pusharglistnoret 2 ...................... <ancestor, sd>
+  [ 31] objcall 4 ............................... ancestor.addSaveData(sd)
+  [ 33] ret
+end
+
+on calcAttackDist me, tilesize
+  [  0] getprop 922 ............................. <pAI>
+  [  3] getparam 1 .............................. <tilesize>
+  [  5] pusharglist 2 ........................... <pAI, tilesize>
+  [  7] objcall 4661 ............................ <pAI.calcAttackDist(tilesize)>
+  [ 10] pusharglistnoret 1 ...................... <pAI.calcAttackDist(tilesize)>
+  [ 12] extcall 35 .............................. return pAI.calcAttackDist(tilesize)
+  [ 14] ret
+end
+
+on calcAttackHit me, targetObj
+  [  0] getprop 922 ............................. <pAI>
+  [  3] getparam 1 .............................. <targetObj>
+  [  5] pusharglist 2 ........................... <pAI, targetObj>
+  [  7] objcall 129 ............................. <pAI.calcAttackHit(targetObj)>
+  [  9] pusharglistnoret 1 ...................... <pAI.calcAttackHit(targetObj)>
+  [ 11] extcall 35 .............................. return pAI.calcAttackHit(targetObj)
+  [ 13] ret
+end
+
+on calcCollisionVect me, targetloc
+  [  0] getprop 922 ............................. <pAI>
+  [  3] getparam 1 .............................. <targetloc>
+  [  5] pusharglist 2 ........................... <pAI, targetloc>
+  [  7] objcall 137 ............................. <pAI.calcCollisionVect(targetloc)>
+  [  9] pusharglistnoret 1 ...................... <pAI.calcCollisionVect(targetloc)>
+  [ 11] extcall 35 .............................. return pAI.calcCollisionVect(targetloc)
+  [ 13] ret
+end
+
+on cancelAttack me
+  [  0] getprop 922 ............................. <pAI>
+  [  3] pusharglistnoret 1 ...................... <pAI>
+  [  5] objcall 1621 ............................ pAI.cancelAttack()
+  [  8] ret
+end
+
+on getAI me
+  [  0] getprop 922 ............................. <pAI>
+  [  3] pusharglistnoret 1 ...................... <pAI>
+  [  5] extcall 35 .............................. return pAI
+  [  7] ret
+end
+
+on getAIPlatformDrop me
+  [  0] getprop 922 ............................. <pAI>
+  [  3] pusharglist 1 ........................... <pAI>
+  [  5] objcall 1724 ............................ <pAI.getPlatformDrop()>
+  [  8] pusharglistnoret 1 ...................... <pAI.getPlatformDrop()>
+  [ 10] extcall 35 .............................. return pAI.getPlatformDrop()
+  [ 12] ret
+end
+
+on getAttack me
+  [  0] getprop 922 ............................. <pAI>
+  [  3] pusharglist 1 ........................... <pAI>
+  [  5] objcall 141 ............................. <pAI.getAttack()>
+  [  7] pusharglistnoret 1 ...................... <pAI.getAttack()>
+  [  9] extcall 35 .............................. return pAI.getAttack()
+  [ 11] ret
+end
+
+on getAttackDamageMultiplier me
+  [  0] getprop 922 ............................. <pAI>
+  [  3] pusharglist 1 ........................... <pAI>
+  [  5] objcall 1962 ............................ <pAI.getAttackDamageMultiplier()>
+  [  8] pusharglistnoret 1 ...................... <pAI.getAttackDamageMultiplier()>
+  [ 10] extcall 35 .............................. return pAI.getAttackDamageMultiplier()
+  [ 12] ret
+end
+
+on getAttackHits me
+  [  0] getprop 922 ............................. <pAI>
+  [  3] pusharglist 1 ........................... <pAI>
+  [  5] objcall 1963 ............................ <pAI.getAttackHits()>
+  [  8] pusharglistnoret 1 ...................... <pAI.getAttackHits()>
+  [ 10] extcall 35 .............................. return pAI.getAttackHits()
+  [ 12] ret
+end
+
+on getAttackLoc me
+  [  0] getprop 922 ............................. <pAI>
+  [  3] pusharglist 1 ........................... <pAI>
+  [  5] objcall 211 ............................. <pAI.getAttackLoc()>
+  [  7] pusharglistnoret 1 ...................... <pAI.getAttackLoc()>
+  [  9] extcall 35 .............................. return pAI.getAttackLoc()
+  [ 11] ret
+end
+
+on getAttackPayloadFunction me
+  [  0] getprop 922 ............................. <pAI>
+  [  3] pusharglist 1 ........................... <pAI>
+  [  5] objcall 1964 ............................ <pAI.getAttackPayloadFunction()>
+  [  8] pusharglistnoret 1 ...................... <pAI.getAttackPayloadFunction()>
+  [ 10] extcall 35 .............................. return pAI.getAttackPayloadFunction()
+  [ 12] ret
+end
+
+on getAttackTargetAllegiance me
+  [  0] getprop 922 ............................. <pAI>
+  [  3] pusharglist 1 ........................... <pAI>
+  [  5] objcall 1965 ............................ <pAI.getAttackTargetAllegiance()>
+  [  8] pusharglistnoret 1 ...................... <pAI.getAttackTargetAllegiance()>
+  [ 10] extcall 35 .............................. return pAI.getAttackTargetAllegiance()
+  [ 12] ret
+end
+
+on getAttackTargetCriteria me
+  [  0] getprop 922 ............................. <pAI>
+  [  3] pusharglist 1 ........................... <pAI>
+  [  5] objcall 1966 ............................ <pAI.getAttackTargetCriteria()>
+  [  8] pusharglistnoret 1 ...................... <pAI.getAttackTargetCriteria()>
+  [ 10] extcall 35 .............................. return pAI.getAttackTargetCriteria()
+  [ 12] ret
+end
+
+on getAttackTargetRoles me
+  [  0] getprop 922 ............................. <pAI>
+  [  3] pusharglist 1 ........................... <pAI>
+  [  5] objcall 1967 ............................ <pAI.getAttackTargetRoles()>
+  [  8] pusharglistnoret 1 ...................... <pAI.getAttackTargetRoles()>
+  [ 10] extcall 35 .............................. return pAI.getAttackTargetRoles()
+  [ 12] ret
+end
+
+on getChargingSpell me
+  [  0] getprop 922 ............................. <pAI>
+  [  3] pusharglist 1 ........................... <pAI>
+  [  5] objcall 1741 ............................ <pAI.getChargingSpell()>
+  [  8] pusharglistnoret 1 ...................... <pAI.getChargingSpell()>
+  [ 10] extcall 35 .............................. return pAI.getChargingSpell()
+  [ 12] ret
+end
+
+on getTargetLoc me
+  [  0] getprop 922 ............................. <pAI>
+  [  3] pusharglist 1 ........................... <pAI>
+  [  5] objcall 223 ............................. <pAI.getTargetLoc()>
+  [  7] pusharglistnoret 1 ...................... <pAI.getTargetLoc()>
+  [  9] extcall 35 .............................. return pAI.getTargetLoc()
+  [ 11] ret
+end
+
+on internalEvent me, theEvent
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <theEvent>
+  [  4] pusharglistnoret 2 ...................... <ancestor, theEvent>
+  [  6] objcall 22 .............................. ancestor.internalEvent(theEvent)
+  [  8] getparam 1 .............................. <theEvent>
+  [ 10] peek 0 .................................. case theEvent of
+  [ 12] pushsymb 1099 ........................... <#relationshipsRestored>
+  [ 15] eq
+  [ 16] jmpifz [ 26] ............................ (case) #relationshipsRestored:
+  [ 19] pusharglistnoret 0 ...................... <>
+  [ 21] extcall 185 ............................. nothing()
+  [ 23] jmp [ 35] ............................... (case) otherwise:
+  [ 26] getprop 922 ............................. <pAI>
+  [ 29] getparam 1 .............................. <theEvent>
+  [ 31] pusharglistnoret 2 ...................... <pAI, theEvent>
+  [ 33] objcall 22 .............................. pAI.internalEvent(theEvent)
+  [ 35] pop 1 ................................... end case
+  [ 37] ret
+end
+
+on restoreFromSave me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 26 .............................. ancestor.restoreFromSave(sd)
+  [  8] getprop 922 ............................. <pAI>
+  [ 11] getparam 1 .............................. <sd>
+  [ 13] getobjprop 922 .......................... <sd.pAI>
+  [ 16] pusharglistnoret 2 ...................... <pAI, sd.pAI>
+  [ 18] objcall 26 .............................. pAI.restoreFromSave(sd.pAI)
+  [ 20] ret
+end
+
+on restoreRelationships me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 1077 ............................ ancestor.restoreRelationships()
+  [  7] getprop 922 ............................. <pAI>
+  [ 10] pusharglistnoret 1 ...................... <pAI>
+  [ 12] objcall 1077 ............................ pAI.restoreRelationships()
+  [ 15] ret
+end
+
+on setAttack me, theAttack
+  [  0] getprop 922 ............................. <pAI>
+  [  3] getparam 1 .............................. <theAttack>
+  [  5] pusharglistnoret 2 ...................... <pAI, theAttack>
+  [  7] objcall 144 ............................. pAI.setAttack(theAttack)
+  [  9] ret
+end
+
+on setChargingSpell me, theSpell
+  [  0] getprop 922 ............................. <pAI>
+  [  3] getparam 1 .............................. <theSpell>
+  [  5] pusharglistnoret 2 ...................... <pAI, theSpell>
+  [  7] objcall 1747 ............................ pAI.setChargingSpell(theSpell)
+  [ 10] ret
+end
+
+on start me
+  [  0] getprop 922 ............................. <pAI>
+  [  3] pusharglistnoret 1 ...................... <pAI>
+  [  5] objcall 1590 ............................ pAI.start()
+  [  8] getprop 33 .............................. <ancestor>
+  [ 10] pusharglistnoret 1 ...................... <ancestor>
+  [ 12] objcall 1590 ............................ ancestor.start()
+  [ 15] ret
+end
+
+on unpaws me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 459 ............................. ancestor.unpaws()
+  [  7] getprop 922 ............................. <pAI>
+  [ 10] pusharglistnoret 1 ...................... <pAI>
+  [ 12] objcall 459 ............................. pAI.unpaws()
+  [ 15] ret
+end
+
+on updateAI me
+  [  0] getprop 922 ............................. <pAI>
+  [  3] pusharglistnoret 1 ...................... <pAI>
+  [  5] objcall 31 .............................. pAI.update()
+  [  7] ret
+end

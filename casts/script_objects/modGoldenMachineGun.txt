@@ -1,0 +1,65 @@
+[#name: "modGoldenMachineGun", #scriptType: #parent, #type: #script]
+property ancestor
+
+global g
+
+property pGmgOn        --whether the gmg is on
+property pGmgCollected --whether the gmg has been found
+
+
+on new me
+  ancestor = new (script("modModule"))
+  return me
+end
+
+on addModParams me
+  i = me.modifyParams(#init)
+  
+  ancestor.addModParams()
+end
+
+on init me, params
+  ancestor.init(params)
+  pGmgCollected = false
+  pGmgOn = false
+end
+
+on gmgCollected me
+  pGmgCollected = true
+  me.setGmg()
+end 
+
+on getGmgOn me
+  return pGmgOn
+end
+
+on setGmg me
+  if pGmgCollected then
+    if pGmgOn = false then
+      pGmgOn = true
+    else
+      pGmgOn = false
+    end if  
+    if pGmgOn = true then 
+      me.big.gmgOn()
+      me.big.internalEvent(#gmgTurnedOn)
+    else     
+      me.big.gmgOff()
+      me.big.internalEvent(#gmgTurnedOff)
+    end if
+    g.gmgMaster.updateDisplay(pGmgOn)
+  end if
+end
+
+
+
+
+
+
+
+
+
+
+
+
+

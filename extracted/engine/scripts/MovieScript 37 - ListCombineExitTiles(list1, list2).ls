@@ -1,0 +1,25 @@
+on ListCombineExitTiles list1, list2
+  if list1 = list2 then
+    return list1
+  end if
+  if (list1 = []) or (list2 = []) then
+    return []
+  end if
+  combinedList = []
+  count1 = list1.count
+  count2 = list2.count
+  if count1 <> count2 then
+    nothing()
+  end if
+  repeat with i = 1 to count1
+    nItem1 = list1[i]
+    nItem2 = list2[i]
+    if (nItem1 = #solid) or (nItem2 = #solid) then
+      nItem = #solid
+    else
+      nItem = #none
+    end if
+    combinedList.append(nItem)
+  end repeat
+  return combinedList
+end

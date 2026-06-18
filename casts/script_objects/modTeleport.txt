@@ -1,0 +1,269 @@
+[#name: "modTeleport", #scriptType: #parent, #type: #script]
+-- produces teleport effect
+
+-- requires modFader
+-- requires modPositioning
+
+property ancestor
+property pTeleportCaller            -- the mod or obj that called the command
+property pTeleportCeiling           -- the "roof" of the teleport
+property pTeleportFadeStep          -- the amount to fade in by each frame
+property pTeleportFloorLoc          -- the "floor" of the teleport
+property pTeleportFrames            -- number of frames the teleport should take
+property pTeleportHeight            -- how far above the stage we start from
+property pTeleportHeightStep        -- how much to inc/dec height by each frame
+property pTeleportMode              -- what mode this module is in
+property pTeleportXLoc              -- where on the stage to land
+
+on new me
+  ancestor = new (script("modModule"))
+  return me
+end
+
+on addModParams me
+  i = me.modifyParams(#init)
+  
+  ancestor.addModParams()
+end
+
+on init me, params  
+  ancestor.init(params)
+  
+  pTeleportCaller = #none
+  pTeleportCeiling = #none
+  pTeleportFloorLoc = #none
+  pTeleportFrames = 15
+  pTeleportHeight = 1000
+  pTeleportMode = #none
+  pTeleportXLoc = #none
+  
+  pTeleportHeightStep = pTeleportHeight / pTeleportFrames
+  pTeleportFadeStep = 100 / pTeleportFrames
+end
+
+on addSaveData me,sd
+  ancestor.addSaveData(sd)
+  
+  me.addToSaveData(sd)
+end
+
+on addToArmyDetails me
+  ad = me.big.getArmyDetails()
+  
+  --me.addToSaveData(ad)
+end
+
+on addToSaveData me,sd
+  sd[#pTeleportCaller] = pTeleportCaller
+  sd[#pTeleportCeiling] = pTeleportCeiling
+  sd[#pTeleportFadeStep] = pTeleportFadeStep
+  sd[#pTeleportFloorLoc] = pTeleportFloorLoc
+  sd[#pTeleportFrames] = pTeleportFrames
+  sd[#pTeleportHeight] = pTeleportHeight
+  sd[#pTeleportHeightStep] = pTeleportHeightStep
+  sd[#pTeleportMode] = pTeleportMode
+  sd[#pTeleportXLoc] = pTeleportXLoc
+end
+
+on getTeleportMode me
+  return pTeleportMode
+end
+
+on goTeleportMode me, newMode
+  pTeleportMode = newMode
+end
+
+on internalEvent me, theEvent
+  ancestor.internalEvent(theEvent)
+  
+  case theEvent of
+    #addToArmyDetails:
+      me.addToArmyDetails()
+      
+    #restoreFromArmyDetails:
+      me.restoreFromArmyDetails()
+      
+  end case
+end
+
+on restoreFromArmyDetails me
+  ad = me.big.getArmyDetails()
+  
+  --me.restoreFromSaveData(ad)
+end
+
+on restoreFromSave me, sd
+  ancestor.restoreFromSave(sd)
+  
+  me.restoreFromSaveData(sd)
+end
+
+on restoreFromSaveData me, sd
+  pTeleportCaller = sd.pTeleportCaller
+  pTeleportCeiling = sd.pTeleportCeiling
+  pTeleportFadeStep = sd.pTeleportFadeStep
+  pTeleportFloorLoc = sd.pTeleportFloorLoc
+  pTeleportFrames = sd.pTeleportFrames
+  pTeleportHeight = sd.pTeleportHeight
+  pTeleportHeightStep = sd.pTeleportHeightStep
+  pTeleportMode = sd.pTeleportMode
+  pTeleportXLoc = sd.pTeleportXLoc
+end
+
+on teleportFinished me
+  me.ID.bigMe.setAnimKeepSize(false)
+  me.goTeleportMode(#none)
+end
+
+on teleportInAt me, theLoc
+  pTeleportXLoc = theLoc.locH
+  pTeleportFloorLoc = theLoc.locV
+  
+  pTeleportCeiling = pTeleportFloorLoc - pTeleportHeight
+  
+  me.ID.bigMe.setAnimKeepSize(true) -- this is to allow stretching
+  
+  me.ID.bigMe.setSpriteHeight(pTeleportHeight)
+  
+  me.goTeleportMode(#teleportInStretch)
+  
+  -- set up fade in
+  me.invisible()
+  me.startTransBlend(pTeleportFadeStep, #in)
+end
+
+on teleportOut me, callerSym, teleportFloorLoc
+  bigMe = me.ID.bigMe
+  
+  pTeleportCaller = callerSym
+  pTeleportXLoc = bigMe.getLoc().locH
+  pTeleportFloorLoc = teleportFloorLoc
+  pTeleportCeiling = pTeleportFloorLoc - pTeleportHeight
+  
+  bigMe.setAnimKeepSize(true)
+  me.goTeleportMode(#teleportOutStretch)
+  me.startTransBlend(pTeleportFadeStep, #out)
+end
+
+on update me
+  ancestor.update()
+  
+  case pTeleportMode of
+    #teleportInStretch:
+      fin = me.updateTeleportInStretch()
+      if fin then 
+        me.teleportFinished()
+        me.ID.bigMe.teleportInFinished()
+        me.big.internalEvent(#teleportInFinished)
+      end if
+      
+    #teleportOutStretch:
+      fin = me.updateTeleportOutStretch()
+      if fin then
+        me.teleportFinished()
+        me.ID.bigMe.teleportOutFinished(pTeleportCaller)
+        me.big.internalEvent(#teleportOutFinished)
+      end if
+      
+  end case
+  
+end
+
+on updateTeleportInStretch me
+  fin = false
+  
+  me.ID.bigMe.incSpriteHeight(-pTeleportHeightStep)
+  
+  if me.ID.bigMe.getSpriteHeight() < me.ID.bigMe.getMemberHeight() then
+    me.ID.bigMe.setSpriteHeight(me.ID.bigMe.getMemberHeight())
+    fin = true
+  end if
+  
+  yLoc = me.ID.bigMe.positionEdge(#bottom, pTeleportFloorLoc)
+  
+  me.ID.bigMe.setLoc(point(pTeleportXLoc, yLoc))
+  
+  return fin
+end
+
+on updateTeleportOutStretch me
+  fin = false
+  
+  bigMe = me.ID.bigMe
+  
+  bigMe.incSpriteHeight(pTeleportHeightStep)
+  
+  if bigMe.getSpriteHeight() > pTeleportHeight then
+    fin = true
+  end if
+  
+  yLoc = me.ID.bigMe.positionEdge(#bottom, pTeleportFloorLoc)
+  
+  bigMe.setLoc(point(pTeleportXLoc, yLoc))
+  
+  return fin
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

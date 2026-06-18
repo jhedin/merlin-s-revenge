@@ -1,0 +1,373 @@
+property ancestor, pRecoil, pRecoilCounter, pReelFinishSpeed, pReelProof, pSitCounter
+global gGameView
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 559 .......................... <params.recoil>
+  [ 13] setprop 1047 ............................ pRecoil = params.recoil
+  [ 16] pusharglist 0 ........................... <>
+  [ 18] extcall 529 ............................. <CounterNew()>
+  [ 21] setprop 1048 ............................ pRecoilCounter = CounterNew()
+  [ 24] getprop 1048 ............................ <pRecoilCounter>
+  [ 27] pushsymb 530 ............................ <#tim>
+  [ 30] pushint8 2 .............................. <2>
+  [ 32] getparam 1 .............................. <params>
+  [ 34] getobjprop 1049 ......................... <params.recoilDuration>
+  [ 37] pusharglistnoret 4 ...................... <pRecoilCounter, #tim, 2, params.recoilDuration>
+  [ 39] objcall 531 ............................. pRecoilCounter.tim[2] = params.recoilDuration
+  [ 42] getparam 1 .............................. <params>
+  [ 44] getobjprop 1051 ......................... <params.reelProof>
+  [ 47] setprop 1050 ............................ pReelProof = params.reelProof
+  [ 50] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getlocal 0 .............................. <i>
+  [ 12] pushsymb 559 ............................ <#recoil>
+  [ 15] pushzero ................................ <0>
+  [ 16] pusharglistnoret 3 ...................... <i, #recoil, 0>
+  [ 18] objcall 48 .............................. i[#recoil] = 0
+  [ 20] getlocal 0 .............................. <i>
+  [ 22] pushsymb 1049 ........................... <#recoilDuration>
+  [ 25] pushzero ................................ <0>
+  [ 26] pusharglistnoret 3 ...................... <i, #recoilDuration, 0>
+  [ 28] objcall 48 .............................. i[#recoilDuration] = 0
+  [ 30] getlocal 0 .............................. <i>
+  [ 32] pushsymb 1052 ........................... <#reelFinishSpeed>
+  [ 35] pushcons 1 .............................. <0.29999999999999999>
+  [ 37] pusharglistnoret 3 ...................... <i, #reelFinishSpeed, 0.29999999999999999>
+  [ 39] objcall 48 .............................. i[#reelFinishSpeed] = 0.29999999999999999
+  [ 41] getlocal 0 .............................. <i>
+  [ 43] pushsymb 1051 ........................... <#reelProof>
+  [ 46] pushzero ................................ <0>
+  [ 47] pusharglistnoret 3 ...................... <i, #reelProof, 0>
+  [ 49] objcall 48 .............................. i[#reelProof] = 0
+  [ 51] getlocal 0 .............................. <i>
+  [ 53] pushsymb 1053 ........................... <#rotationSpeed>
+  [ 56] pushint8 10 ............................. <10>
+  [ 58] pusharglistnoret 3 ...................... <i, #rotationSpeed, 10>
+  [ 60] objcall 48 .............................. i[#rotationSpeed] = 10
+  [ 62] getlocal 0 .............................. <i>
+  [ 64] pushsymb 1054 ........................... <#sitTime>
+  [ 67] pushint8 30 ............................. <30>
+  [ 69] pusharglistnoret 3 ...................... <i, #sitTime, 30>
+  [ 71] objcall 48 .............................. i[#sitTime] = 30
+  [ 73] getprop 33 .............................. <ancestor>
+  [ 75] pusharglistnoret 1 ...................... <ancestor>
+  [ 77] objcall 2 ............................... ancestor.addModParams()
+  [ 79] ret
+end
+
+on goDamageMode me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 51 ....................... <me.big>
+  [  4] pusharglist 1 ........................... <me.big>
+  [  6] objcall 499 ............................. <me.big.checkDead()>
+  [  9] jmpifz [ 23] ............................ if me.big.checkDead() then
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] objcall 1041 ............................ me.goReelMode()
+  [ 19] pusharglistnoret 0 ...................... <>
+  [ 21] extcall 35 .............................. return 
+  [ 23] getprop 1047 ............................ <pRecoil>
+  [ 26] jmpifz [ 44] ............................ if pRecoil then / else
+  [ 29] getparam 0 .............................. <me>
+  [ 31] getchainedprop 51 ....................... <me.big>
+  [ 33] pushsymb 559 ............................ <#recoil>
+  [ 36] pusharglistnoret 2 ...................... <me.big, #recoil>
+  [ 38] objcall 278 ............................. me.big.goMode(#recoil)
+  [ 41] jmp [ 51]
+  [ 44] getparam 0 .............................. <me>
+  [ 46] pusharglistnoret 1 ...................... <me>
+  [ 48] objcall 1041 ............................ me.goReelMode()
+  [ 51] ret
+end
+
+on goReelMode me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 51 ....................... <me.big>
+  [  4] pushsymb 1056 ........................... <#reel>
+  [  7] pusharglistnoret 2 ...................... <me.big, #reel>
+  [  9] objcall 278 ............................. me.big.goMode(#reel)
+  [ 12] ret
+end
+
+on goMode me, newMode
+  [  0] getparam 1 .............................. <newMode>
+  [  2] peek 0 .................................. case newMode of
+  [  4] pushsymb 559 ............................ <#recoil>
+  [  7] eq
+  [  8] jmpifz [ 29] ............................ (case) #recoil:
+  [ 11] getparam 0 .............................. <me>
+  [ 13] pusharglistnoret 1 ...................... <me>
+  [ 15] objcall 1057 ............................ me.frictionStrong()
+  [ 18] getprop 1048 ............................ <pRecoilCounter>
+  [ 21] pusharglistnoret 1 ...................... <pRecoilCounter>
+  [ 23] extcall 706 ............................. CounterReset(pRecoilCounter)
+  [ 26] jmp [ 96]
+  [ 29] peek 0
+  [ 31] pushsymb 1056 ........................... <#reel>
+  [ 34] eq
+  [ 35] jmpifz [ 59] ............................ (case) #reel:
+  [ 38] getparam 0 .............................. <me>
+  [ 40] getchainedprop 51 ....................... <me.big>
+  [ 42] pusharglistnoret 1 ...................... <me.big>
+  [ 44] objcall 1058 ............................ me.big.frictionReel()
+  [ 47] getparam 0 .............................. <me>
+  [ 49] getchainedprop 51 ....................... <me.big>
+  [ 51] pusharglistnoret 1 ...................... <me.big>
+  [ 53] objcall 1019 ............................ me.big.resetStallCounter()
+  [ 56] jmp [ 96]
+  [ 59] peek 0
+  [ 61] pushsymb 1055 ........................... <#reelFly>
+  [ 64] eq
+  [ 65] jmpifz [ 80] ............................ (case) #reelFly:
+  [ 68] getparam 0 .............................. <me>
+  [ 70] getchainedprop 51 ....................... <me.big>
+  [ 72] pusharglistnoret 1 ...................... <me.big>
+  [ 74] objcall 1059 ............................ me.big.frictionXOff()
+  [ 77] jmp [ 96]
+  [ 80] peek 0
+  [ 82] pushsymb 71 ............................. <#reelSit>
+  [ 84] eq
+  [ 85] jmpifz [ 96] ............................ (case) #reelSit:
+  [ 88] getprop 1060 ............................ <pSitCounter>
+  [ 91] pusharglistnoret 1 ...................... <pSitCounter>
+  [ 93] extcall 706 ............................. CounterReset(pSitCounter)
+  [ 96] pop 1 ................................... end case
+  [ 98] getprop 33 .............................. <ancestor>
+  [100] getparam 1 .............................. <newMode>
+  [102] pusharglistnoret 2 ...................... <ancestor, newMode>
+  [104] objcall 278 ............................. ancestor.goMode(newMode)
+  [107] ret
+end
+
+on internalEvent me, theEvent
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <theEvent>
+  [  4] pusharglistnoret 2 ...................... <ancestor, theEvent>
+  [  6] objcall 22 .............................. ancestor.internalEvent(theEvent)
+  [  8] getparam 1 .............................. <theEvent>
+  [ 10] peek 0 .................................. case theEvent of
+  [ 12] pushsymb 1061 ........................... <#reelFinished>
+  [ 15] eq
+  [ 16] jmpifz [ 42] ............................ (case) #reelFinished:
+  [ 19] getparam 0 .............................. <me>
+  [ 21] pusharglist 1 ........................... <me>
+  [ 23] objcall 499 ............................. <me.checkDead()>
+  [ 26] pushzero ................................ <0>
+  [ 27] eq ...................................... <me.checkDead() = 0>
+  [ 28] jmpifz [ 42] ............................ if me.checkDead() = 0 then
+  [ 31] getparam 0 .............................. <me>
+  [ 33] getchainedprop 51 ....................... <me.big>
+  [ 35] pushsymb 63 ............................. <#walk>
+  [ 37] pusharglistnoret 2 ...................... <me.big, #walk>
+  [ 39] objcall 278 ............................. me.big.goMode(#walk)
+  [ 42] pop 1
+  [ 44] ret
+end
+
+on takeHit me, collisionVect, attackingObj, owner
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <collisionVect>
+  [  4] getparam 2 .............................. <attackingObj>
+  [  6] getparam 3 .............................. <owner>
+  [  8] pusharglistnoret 4 ...................... <ancestor, collisionVect, attackingObj, owner>
+  [ 10] objcall 516 ............................. ancestor.takeHit(collisionVect, attackingObj, owner)
+  [ 13] getprop 1050 ............................ <pReelProof>
+  [ 16] pushzero ................................ <0>
+  [ 17] eq ...................................... <pReelProof = 0>
+  [ 18] jmpifz [ 28] ............................ if pReelProof = 0 then
+  [ 21] getparam 0 .............................. <me>
+  [ 23] pusharglistnoret 1 ...................... <me>
+  [ 25] objcall 1040 ............................ me.goDamageMode()
+  [ 28] ret
+end
+
+on update me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 57 ....................... <me.id>
+  [  4] getchainedprop 58 ....................... <me.id.bigMe>
+  [  6] pusharglist 1 ........................... <me.id.bigMe>
+  [  8] objcall 52 .............................. <me.id.bigMe.getMode()>
+  [ 10] peek 0 .................................. case me.id.bigMe.getMode() of
+  [ 12] pushsymb 1056 ........................... <#reel>
+  [ 15] eq
+  [ 16] jmpifz [ 47] ............................ (case) #reel:
+  [ 19] getparam 0 .............................. <me>
+  [ 21] pusharglist 1 ........................... <me>
+  [ 23] objcall 1043 ............................ <me.updateReel()>
+  [ 26] setlocal 0 .............................. fin = me.updateReel()
+  [ 28] getlocal 0 .............................. <fin>
+  [ 30] jmpifz [ 44] ............................ if fin then
+  [ 33] getparam 0 .............................. <me>
+  [ 35] getchainedprop 51 ....................... <me.big>
+  [ 37] pushsymb 1061 ........................... <#reelFinished>
+  [ 40] pusharglistnoret 2 ...................... <me.big, #reelFinished>
+  [ 42] objcall 22 .............................. me.big.internalEvent(#reelFinished)
+  [ 44] jmp [188]
+  [ 47] peek 0
+  [ 49] pushsymb 559 ............................ <#recoil>
+  [ 52] eq
+  [ 53] jmpifz [ 82] ............................ (case) #recoil:
+  [ 56] getparam 0 .............................. <me>
+  [ 58] pusharglist 1 ........................... <me>
+  [ 60] objcall 1042 ............................ <me.updateRecoil()>
+  [ 63] setlocal 0 .............................. fin = me.updateRecoil()
+  [ 65] getlocal 0 .............................. <fin>
+  [ 67] jmpifz [ 79] ............................ if fin then
+  [ 70] getparam 0 .............................. <me>
+  [ 72] pushsymb 69 ............................. <#stand>
+  [ 74] pusharglistnoret 2 ...................... <me, #stand>
+  [ 76] objcall 278 ............................. me.goMode(#stand)
+  [ 79] jmp [188]
+  [ 82] peek 0
+  [ 84] pushsymb 1055 ........................... <#reelFly>
+  [ 87] eq
+  [ 88] jmpifz [101] ............................ (case) #reelFly:
+  [ 91] getparam 0 .............................. <me>
+  [ 93] pusharglistnoret 1 ...................... <me>
+  [ 95] objcall 1044 ............................ me.updateReelFly()
+  [ 98] jmp [188]
+  [101] peek 0
+  [103] pushsymb 74 ............................. <#reelLanded>
+  [105] eq
+  [106] jmpifz [157] ............................ (case) #reelLanded:
+  [109] getparam 0 .............................. <me>
+  [111] pusharglist 1 ........................... <me>
+  [113] objcall 1045 ............................ <me.updateReelLanded()>
+  [116] setlocal 0 .............................. fin = me.updateReelLanded()
+  [118] getlocal 0 .............................. <fin>
+  [120] jmpifz [154] ............................ if fin then
+  [123] getparam 0 .............................. <me>
+  [125] pusharglist 1 ........................... <me>
+  [127] objcall 499 ............................. <me.checkDead()>
+  [130] jmpifz [145] ............................ if me.checkDead() then / else
+  [133] getparam 0 .............................. <me>
+  [135] pushsymb 70 ............................. <#dead>
+  [137] pusharglistnoret 2 ...................... <me, #dead>
+  [139] objcall 278 ............................. me.goMode(#dead)
+  [142] jmp [154]
+  [145] getparam 0 .............................. <me>
+  [147] pushsymb 71 ............................. <#reelSit>
+  [149] pusharglistnoret 2 ...................... <me, #reelSit>
+  [151] objcall 278 ............................. me.goMode(#reelSit)
+  [154] jmp [188]
+  [157] peek 0
+  [159] pushsymb 71 ............................. <#reelSit>
+  [161] eq
+  [162] jmpifz [188] ............................ (case) #reelSit:
+  [165] getparam 0 .............................. <me>
+  [167] pusharglist 1 ........................... <me>
+  [169] objcall 1046 ............................ <me.updateReelSit()>
+  [172] setlocal 0 .............................. fin = me.updateReelSit()
+  [174] getlocal 0 .............................. <fin>
+  [176] jmpifz [188] ............................ if fin then
+  [179] getparam 0 .............................. <me>
+  [181] pushsymb 68 ............................. <#look>
+  [183] pusharglistnoret 2 ...................... <me, #look>
+  [185] objcall 278 ............................. me.goMode(#look)
+  [188] pop 1 ................................... end case
+  [190] getprop 33 .............................. <ancestor>
+  [192] pusharglistnoret 1 ...................... <ancestor>
+  [194] objcall 31 .............................. ancestor.update()
+  [196] ret
+end
+
+on updateRecoil me
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. fin = 0
+  [  3] getprop 1048 ............................ <pRecoilCounter>
+  [  6] getobjprop 552 .......................... <pRecoilCounter.fin>
+  [  9] jmpifz [ 16] ............................ if pRecoilCounter.fin then
+  [ 12] pushint8 1 .............................. <1>
+  [ 14] setlocal 0 .............................. fin = 1
+  [ 16] getprop 1048 ............................ <pRecoilCounter>
+  [ 19] pusharglistnoret 1 ...................... <pRecoilCounter>
+  [ 21] extcall 553 ............................. counter(pRecoilCounter)
+  [ 24] getlocal 0 .............................. <fin>
+  [ 26] pusharglistnoret 1 ...................... <fin>
+  [ 28] extcall 35 .............................. return fin
+  [ 30] ret
+end
+
+on updateReel me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 51 ....................... <me.big>
+  [  4] pusharglist 1 ........................... <me.big>
+  [  6] objcall 1062 ............................ <me.big.getStalled()>
+  [  9] setlocal 0 .............................. fin = me.big.getStalled()
+  [ 11] getparam 0 .............................. <me>
+  [ 13] getchainedprop 51 ....................... <me.big>
+  [ 15] pushsymb 1043 ........................... <#updateReel>
+  [ 18] pusharglistnoret 2 ...................... <me.big, #updateReel>
+  [ 20] objcall 22 .............................. me.big.internalEvent(#updateReel)
+  [ 22] getlocal 0 .............................. <fin>
+  [ 24] pusharglistnoret 1 ...................... <fin>
+  [ 26] extcall 35 .............................. return fin
+  [ 28] ret
+end
+
+on updateReelFly me
+  [  0] ret
+end
+
+on updateReelLanded me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 1063 ............................ <me.getVectX()>
+  [  7] setlocal 0 .............................. vectX = me.getVectX()
+  [  9] getlocal 0 .............................. <vectX>
+  [ 11] pusharglist 1 ........................... <vectX>
+  [ 13] extcall 554 ............................. <VarPositive(vectX)>
+  [ 16] setlocal 1 .............................. speedX = VarPositive(vectX)
+  [ 18] getlocal 1 .............................. <speedX>
+  [ 20] getprop 1064 ............................ <pReelFinishSpeed>
+  [ 23] lt ...................................... <speedX < pReelFinishSpeed>
+  [ 24] jmpifz [ 33] ............................ if speedX < pReelFinishSpeed then
+  [ 27] pushint8 1 .............................. <1>
+  [ 29] pusharglistnoret 1 ...................... <1>
+  [ 31] extcall 35 .............................. return 1
+  [ 33] pushzero ................................ <0>
+  [ 34] pusharglistnoret 1 ...................... <0>
+  [ 36] extcall 35 .............................. return 0
+  [ 38] ret
+end
+
+on updateReelSit me, callingPrg
+  [  0] getprop 1060 ............................ <pSitCounter>
+  [  3] getobjprop 552 .......................... <pSitCounter.fin>
+  [  6] jmpifz [ 15] ............................ if pSitCounter.fin then
+  [  9] pushint8 1 .............................. <1>
+  [ 11] pusharglistnoret 1 ...................... <1>
+  [ 13] extcall 35 .............................. return 1
+  [ 15] getprop 1060 ............................ <pSitCounter>
+  [ 18] pusharglistnoret 1 ...................... <pSitCounter>
+  [ 20] extcall 553 ............................. counter(pSitCounter)
+  [ 23] pushzero ................................ <0>
+  [ 24] pusharglistnoret 1 ...................... <0>
+  [ 26] extcall 35 .............................. return 0
+  [ 28] ret
+end

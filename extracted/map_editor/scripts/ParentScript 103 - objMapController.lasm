@@ -1,0 +1,91 @@
+property ancestor, pTileSets
+global g, gMapLayer
+
+on new me
+  [  0] pushcons 0 .............................. <"objController">
+  [  2] pusharglist 1 ........................... <"objController">
+  [  4] extcall 27 .............................. <script("objController")>
+  [  6] pusharglist 1 ........................... <script("objController")>
+  [  8] extcall 0 ............................... <new(script("objController"))>
+  [ 10] setprop 77 .............................. ancestor = new(script("objController"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 17 .............................. return me
+  [ 18] ret
+end
+
+on init me, params
+  [  0] getprop 77 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] ret
+end
+
+on makeNewObject me, defMember, location, thename, theMaster, theCast
+  [  0] getparam 5 .............................. <theCast>
+  [  2] pusharglist 1 ........................... <theCast>
+  [  4] extcall 941 ............................. <voidp(theCast)>
+  [  7] jmpifz [ 14] ............................ if voidp(theCast) then
+  [ 10] pushcons 1 .............................. <"gfx">
+  [ 12] setparam 5 .............................. theCast = "gfx"
+  [ 14] getparam 4 .............................. <theMaster>
+  [ 16] pusharglist 1 ........................... <theMaster>
+  [ 18] extcall 941 ............................. <voidp(theMaster)>
+  [ 21] jmpifz [ 28] ............................ if voidp(theMaster) then
+  [ 24] pushsymb 22 ............................. <#none>
+  [ 26] setparam 4 .............................. theMaster = #none
+  [ 28] getparam 0 .............................. <me>
+  [ 30] pushsymb 470 ............................ <#pObjects>
+  [ 33] pusharglist 2 ........................... <me, #pObjects>
+  [ 35] objcall 28 .............................. <me.pObjects.count>
+  [ 37] setlocal 0 .............................. numMaps = me.pObjects.count
+  [ 39] getglobal 101 ........................... <g>
+  [ 41] getchainedprop 102 ...................... <g.objectMaster>
+  [ 43] pushsymb 942 ............................ <#objMap>
+  [ 46] pusharglist 2 ........................... <g.objectMaster, #objMap>
+  [ 48] objcall 3 ............................... <g.objectMaster.requestObject(#objMap)>
+  [ 50] setlocal 1 .............................. nMap = g.objectMaster.requestObject(#objMap)
+  [ 52] getlocal 1 .............................. <nMap>
+  [ 54] pushsymb 1 .............................. <#init>
+  [ 56] pusharglist 2 ........................... <nMap, #init>
+  [ 58] objcall 136 ............................. <nMap.getParams(#init)>
+  [ 60] setlocal 2 .............................. params = nMap.getParams(#init)
+  [ 62] getlocal 2 .............................. <params>
+  [ 64] getparam 3 .............................. <thename>
+  [ 66] setobjprop 94 ........................... params.name = thename
+  [ 68] getlocal 2 .............................. <params>
+  [ 70] getparam 1 .............................. <defMember>
+  [ 72] getobjprop 219 .......................... <defMember.text>
+  [ 74] setobjprop 520 .......................... params.definitionTxt = defMember.text
+  [ 77] getlocal 2 .............................. <params>
+  [ 79] getparam 0 .............................. <me>
+  [ 81] pushsymb 470 ............................ <#pObjects>
+  [ 84] pusharglist 2 ........................... <me, #pObjects>
+  [ 86] objcall 28 .............................. <me.pObjects.count>
+  [ 88] getglobal 943 ........................... <gMapLayer>
+  [ 91] add ..................................... <me.pObjects.count + gMapLayer>
+  [ 92] setobjprop 451 .......................... params.layer = me.pObjects.count + gMapLayer
+  [ 95] getlocal 2 .............................. <params>
+  [ 97] getparam 2 .............................. <location>
+  [ 99] setobjprop 525 .......................... params.location = location
+  [102] getlocal 2 .............................. <params>
+  [104] getparam 4 .............................. <theMaster>
+  [106] setobjprop 65 ........................... params.master = theMaster
+  [108] getlocal 2 .............................. <params>
+  [110] getparam 5 .............................. <theCast>
+  [112] setobjprop 1582 ......................... params.theCast = theCast
+  [115] getlocal 1 .............................. <nMap>
+  [117] getlocal 2 .............................. <params>
+  [119] pusharglistnoret 2 ...................... <nMap, params>
+  [121] objcall 1 ............................... nMap.init(params)
+  [123] getparam 0 .............................. <me>
+  [125] getchainedprop 470 ...................... <me.pObjects>
+  [128] getlocal 1 .............................. <nMap>
+  [130] pusharglistnoret 2 ...................... <me.pObjects, nMap>
+  [132] objcall 111 ............................. me.pObjects.append(nMap)
+  [134] getlocal 1 .............................. <nMap>
+  [136] pusharglistnoret 1 ...................... <nMap>
+  [138] extcall 17 .............................. return nMap
+  [140] ret
+end

@@ -1,0 +1,45 @@
+global g
+
+on CastApplyRegpoints thePoints, memname, castname
+  [  0] getglobal 43 ............................ <g>
+  [  2] getchainedprop 45 ....................... <g.objectMaster>
+  [  4] pushsymb 46 ............................. <#objlist>
+  [  6] pusharglist 2 ........................... <g.objectMaster, #objlist>
+  [  8] objcall 47 .............................. <g.objectMaster.requestObject(#objlist)>
+  [ 10] setlocal 0 .............................. thelist = g.objectMaster.requestObject(#objlist)
+  [ 12] getlocal 0 .............................. <thelist>
+  [ 14] getparam 0 .............................. <thePoints>
+  [ 16] pusharglistnoret 2 ...................... <thelist, thePoints>
+  [ 18] objcall 48 .............................. thelist.init(thePoints)
+  [ 20] getparam 2 .............................. <castname>
+  [ 22] pushint8 2 .............................. <2>
+  [ 24] get 8 ................................... <the number of castMembers of castLib castname>
+  [ 26] setlocal 1 .............................. nummem = the number of castMembers of castLib castname
+  [ 28] pushint8 1 .............................. <1>
+  [ 30] setlocal 2
+  [ 32] getlocal 2
+  [ 34] getlocal 1 .............................. <nummem>
+  [ 36] lteq
+  [ 37] jmpifz [ 79] ............................ repeat with mem = 1 to nummem
+  [ 40] getlocal 2 .............................. <mem>
+  [ 42] getparam 2 .............................. <castname>
+  [ 44] pusharglist 2 ........................... <mem, castname>
+  [ 46] extcall 34 .............................. <member(mem, castname)>
+  [ 48] setlocal 3 .............................. nextMem = member(mem, castname)
+  [ 50] getlocal 3 .............................. <nextMem>
+  [ 52] getobjprop 35 ........................... <nextMem.name>
+  [ 54] getparam 1 .............................. <memname>
+  [ 56] containsstr ............................. <nextMem.name contains memname>
+  [ 57] jmpifz [ 70] ............................ if nextMem.name contains memname then
+  [ 60] getlocal 3 .............................. <nextMem>
+  [ 62] getlocal 0 .............................. <thelist>
+  [ 64] pusharglist 1 ........................... <thelist>
+  [ 66] objcall 49 .............................. <thelist.nextValue()>
+  [ 68] setobjprop 36 ........................... nextMem.regPoint = thelist.nextValue()
+  [ 70] pushint8 1
+  [ 72] getlocal 2
+  [ 74] add
+  [ 75] setlocal 2
+  [ 77] endrepeat [ 32]
+  [ 79] ret
+end

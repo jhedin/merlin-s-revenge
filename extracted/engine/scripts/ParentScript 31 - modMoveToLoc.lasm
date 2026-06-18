@@ -1,0 +1,655 @@
+property ancestor, pFlipWithMovement, pMoveHoriz, pMoveVert, pMoveToLocArrivalDistance, pMoveToLocTarget, pMoveTowardsLocFunction, pVerticalLeeway, pWalkAcceleration, pWalkSpeed, pWalkSpeedInc, pWalkSpeedIncLevel
+global g, gGameView
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getlocal 0 .............................. <i>
+  [ 12] pushsymb 891 ............................ <#verticalLeeway>
+  [ 15] pushint8 8 .............................. <8>
+  [ 17] pusharglistnoret 3 ...................... <i, #verticalLeeway, 8>
+  [ 19] objcall 48 .............................. i[#verticalLeeway] = 8
+  [ 21] getlocal 0 .............................. <i>
+  [ 23] pushsymb 892 ............................ <#walkAcceleration>
+  [ 26] pushfloat32 0.5 ......................... <0.5>
+  [ 31] pusharglistnoret 3 ...................... <i, #walkAcceleration, 0.5>
+  [ 33] objcall 48 .............................. i[#walkAcceleration] = 0.5
+  [ 35] getlocal 0 .............................. <i>
+  [ 37] pushsymb 727 ............................ <#walkSpeed>
+  [ 40] pushzero ................................ <0>
+  [ 41] pusharglistnoret 3 ...................... <i, #walkSpeed, 0>
+  [ 43] objcall 48 .............................. i[#walkSpeed] = 0
+  [ 45] getlocal 0 .............................. <i>
+  [ 47] pushsymb 893 ............................ <#walkSpeedInc>
+  [ 50] pushcons 1 .............................. <0.075>
+  [ 52] pusharglistnoret 3 ...................... <i, #walkSpeedInc, 0.075>
+  [ 54] objcall 48 .............................. i[#walkSpeedInc] = 0.075
+  [ 56] getlocal 0 .............................. <i>
+  [ 58] pushsymb 894 ............................ <#walkSpeedIncLevel>
+  [ 61] pushcons 1 .............................. <0.075>
+  [ 63] pusharglistnoret 3 ...................... <i, #walkSpeedIncLevel, 0.075>
+  [ 65] objcall 48 .............................. i[#walkSpeedIncLevel] = 0.075
+  [ 67] getprop 33 .............................. <ancestor>
+  [ 69] pusharglistnoret 1 ...................... <ancestor>
+  [ 71] objcall 2 ............................... ancestor.addModParams()
+  [ 73] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pushint8 1 .............................. <1>
+  [ 10] setprop 895 ............................. pFlipWithMovement = 1
+  [ 13] pushint8 5 .............................. <5>
+  [ 15] setprop 896 ............................. pMoveToLocArrivalDistance = 5
+  [ 18] pushsymb 49 ............................. <#none>
+  [ 20] setprop 897 ............................. pMoveToLocTarget = #none
+  [ 23] pushzero ................................ <0>
+  [ 24] setprop 898 ............................. pMoveHoriz = 0
+  [ 27] pushzero ................................ <0>
+  [ 28] setprop 899 ............................. pMoveVert = 0
+  [ 31] getparam 1 .............................. <params>
+  [ 33] getobjprop 891 .......................... <params.verticalLeeway>
+  [ 36] setprop 900 ............................. pVerticalLeeway = params.verticalLeeway
+  [ 39] getparam 1 .............................. <params>
+  [ 41] getobjprop 892 .......................... <params.walkAcceleration>
+  [ 44] setprop 901 ............................. pWalkAcceleration = params.walkAcceleration
+  [ 47] getparam 1 .............................. <params>
+  [ 49] getobjprop 727 .......................... <params.walkSpeed>
+  [ 52] setprop 902 ............................. pWalkSpeed = params.walkSpeed
+  [ 55] getparam 1 .............................. <params>
+  [ 57] getobjprop 893 .......................... <params.walkSpeedInc>
+  [ 60] setprop 903 ............................. pWalkSpeedInc = params.walkSpeedInc
+  [ 63] getparam 1 .............................. <params>
+  [ 65] getobjprop 894 .......................... <params.walkSpeedIncLevel>
+  [ 68] setprop 904 ............................. pWalkSpeedIncLevel = params.walkSpeedIncLevel
+  [ 71] pushsymb 882 ............................ <#moveTowardsLocSpeed>
+  [ 74] setprop 905 ............................. pMoveTowardsLocFunction = #moveTowardsLocSpeed
+  [ 77] getparam 1 .............................. <params>
+  [ 79] pushsymb 108 ............................ <#ghost>
+  [ 81] pusharglist 2 ........................... <params, #ghost>
+  [ 83] objcall 109 ............................. <params[#ghost]>
+  [ 85] pushint8 1 .............................. <1>
+  [ 87] eq ...................................... <params[#ghost] = 1>
+  [ 88] jmpifz [ 97] ............................ if params[#ghost] = 1 then
+  [ 91] pushsymb 881 ............................ <#moveTowardsLocAccelerated>
+  [ 94] setprop 905 ............................. pMoveTowardsLocFunction = #moveTowardsLocAccelerated
+  [ 97] getparam 0 .............................. <me>
+  [ 99] getchainedprop 51 ....................... <me.big>
+  [101] getparam 0 .............................. <me>
+  [103] getchainedprop 51 ....................... <me.big>
+  [105] getobjprop 906 .......................... <me.big.pMoveXY>
+  [108] pushsymb 907 ............................ <#moveXYFin>
+  [111] pushsymb 908 ............................ <#always>
+  [114] pusharglistnoret 4 ...................... <me.big, me.big.pMoveXY, #moveXYFin, #always>
+  [116] objcall 629 ............................. me.big.keepMePosted(me.big.pMoveXY, #moveXYFin, #always)
+  [119] ret
+end
+
+on addSaveData me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 4 ............................... ancestor.addSaveData(sd)
+  [  8] getparam 0 .............................. <me>
+  [ 10] getparam 1 .............................. <sd>
+  [ 12] pusharglistnoret 2 ...................... <me, sd>
+  [ 14] objcall 6 ............................... me.addToSaveData(sd)
+  [ 16] getparam 1 .............................. <sd>
+  [ 18] pushsymb 897 ............................ <#pMoveToLocTarget>
+  [ 21] getprop 897 ............................. <pMoveToLocTarget>
+  [ 24] pusharglistnoret 3 ...................... <sd, #pMoveToLocTarget, pMoveToLocTarget>
+  [ 26] objcall 48 .............................. sd[#pMoveToLocTarget] = pMoveToLocTarget
+  [ 28] ret
+end
+
+on addToArmyDetails me, ad
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 51 ....................... <me.big>
+  [  4] pusharglist 1 ........................... <me.big>
+  [  6] objcall 54 .............................. <me.big.getArmyDetails()>
+  [  8] setparam 1 .............................. ad = me.big.getArmyDetails()
+  [ 10] getparam 0 .............................. <me>
+  [ 12] getparam 1 .............................. <ad>
+  [ 14] pusharglistnoret 2 ...................... <me, ad>
+  [ 16] objcall 6 ............................... me.addToSaveData(ad)
+  [ 18] ret
+end
+
+on addToSaveData me, sd
+  [  0] getparam 1 .............................. <sd>
+  [  2] pushsymb 901 ............................ <#pWalkAcceleration>
+  [  5] getprop 901 ............................. <pWalkAcceleration>
+  [  8] pusharglistnoret 3 ...................... <sd, #pWalkAcceleration, pWalkAcceleration>
+  [ 10] objcall 48 .............................. sd[#pWalkAcceleration] = pWalkAcceleration
+  [ 12] getparam 1 .............................. <sd>
+  [ 14] pushsymb 902 ............................ <#pWalkSpeed>
+  [ 17] getprop 902 ............................. <pWalkSpeed>
+  [ 20] pusharglistnoret 3 ...................... <sd, #pWalkSpeed, pWalkSpeed>
+  [ 22] objcall 48 .............................. sd[#pWalkSpeed] = pWalkSpeed
+  [ 24] ret
+end
+
+on cancelMoveToLoc me
+  [  0] pushsymb 49 ............................. <#none>
+  [  2] setprop 897 ............................. pMoveToLocTarget = #none
+  [  5] ret
+end
+
+on faceObject me, theObj
+  [  0] getparam 1 .............................. <theObj>
+  [  2] pusharglist 1 ........................... <theObj>
+  [  4] objcall 111 ............................. <theObj.getLoc()>
+  [  6] setlocal 0 .............................. locToFace = theObj.getLoc()
+  [  8] getparam 0 .............................. <me>
+  [ 10] getchainedprop 57 ....................... <me.id>
+  [ 12] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 14] pusharglist 1 ........................... <me.id.bigMe>
+  [ 16] objcall 111 ............................. <me.id.bigMe.getLoc()>
+  [ 18] getlocal 0 .............................. <locToFace>
+  [ 20] pusharglist 2 ........................... <me.id.bigMe.getLoc(), locToFace>
+  [ 22] extcall 909 ............................. <PointDirPoint(me.id.bigMe.getLoc(), locToFace)>
+  [ 25] setlocal 1 .............................. dirToFace = PointDirPoint(me.id.bigMe.getLoc(), locToFace)
+  [ 27] getparam 0 .............................. <me>
+  [ 29] getchainedprop 57 ....................... <me.id>
+  [ 31] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 33] getlocal 1 .............................. <dirToFace>
+  [ 35] pushint8 1 .............................. <1>
+  [ 37] pusharglist 2 ........................... <dirToFace, 1>
+  [ 39] objcall 109 ............................. <dirToFace[1]>
+  [ 41] pusharglistnoret 2 ...................... <me.id.bigMe, dirToFace[1]>
+  [ 43] objcall 910 ............................. me.id.bigMe.setSpriteFlipFromDir(dirToFace[1])
+  [ 46] ret
+end
+
+on getMoving me
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. moving = 0
+  [  3] getprop 898 ............................. <pMoveHoriz>
+  [  6] getprop 899 ............................. <pMoveVert>
+  [  9] or ...................................... <pMoveHoriz or pMoveVert>
+  [ 10] jmpifz [ 17] ............................ if pMoveHoriz or pMoveVert then
+  [ 13] pushint8 1 .............................. <1>
+  [ 15] setlocal 0 .............................. moving = 1
+  [ 17] getlocal 0 .............................. <moving>
+  [ 19] pusharglistnoret 1 ...................... <moving>
+  [ 21] extcall 35 .............................. return moving
+  [ 23] ret
+end
+
+on getMoveHoriz me
+  [  0] getprop 898 ............................. <pMoveHoriz>
+  [  3] pusharglistnoret 1 ...................... <pMoveHoriz>
+  [  5] extcall 35 .............................. return pMoveHoriz
+  [  7] ret
+end
+
+on getWalkSpeed me
+  [  0] getprop 902 ............................. <pWalkSpeed>
+  [  3] pusharglistnoret 1 ...................... <pWalkSpeed>
+  [  5] extcall 35 .............................. return pWalkSpeed
+  [  7] ret
+end
+
+on getMoveVert me
+  [  0] getprop 899 ............................. <pMoveVert>
+  [  3] pusharglistnoret 1 ...................... <pMoveVert>
+  [  5] extcall 35 .............................. return pMoveVert
+  [  7] ret
+end
+
+on incWalkSpeed me, amount
+  [  0] getprop 902 ............................. <pWalkSpeed>
+  [  3] getparam 1 .............................. <amount>
+  [  5] add ..................................... <pWalkSpeed + amount>
+  [  6] setprop 902 ............................. pWalkSpeed = pWalkSpeed + amount
+  [  9] ret
+end
+
+on incWalkSpeedLevel me
+  [  0] getparam 0 .............................. <me>
+  [  2] getprop 904 ............................. <pWalkSpeedIncLevel>
+  [  5] pusharglistnoret 2 ...................... <me, pWalkSpeedIncLevel>
+  [  7] objcall 875 ............................. me.incWalkSpeed(pWalkSpeedIncLevel)
+  [ 10] ret
+end
+
+on incWalkSpeedPotion me
+  [  0] getparam 0 .............................. <me>
+  [  2] getprop 903 ............................. <pWalkSpeedInc>
+  [  5] pusharglistnoret 2 ...................... <me, pWalkSpeedInc>
+  [  7] objcall 875 ............................. me.incWalkSpeed(pWalkSpeedInc)
+  [ 10] ret
+end
+
+on internalEvent me, theEvent
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <theEvent>
+  [  4] pusharglistnoret 2 ...................... <ancestor, theEvent>
+  [  6] objcall 22 .............................. ancestor.internalEvent(theEvent)
+  [  8] getparam 1 .............................. <theEvent>
+  [ 10] peek 0 .................................. case theEvent of
+  [ 12] pushsymb 5 .............................. <#addToArmyDetails>
+  [ 14] eq
+  [ 15] jmpifz [ 27] ............................ (case) #addToArmyDetails:
+  [ 18] getparam 0 .............................. <me>
+  [ 20] pusharglistnoret 1 ...................... <me>
+  [ 22] objcall 5 ............................... me.addToArmyDetails()
+  [ 24] jmp [ 60]
+  [ 27] peek 0
+  [ 29] pushsymb 310 ............................ <#levelUp>
+  [ 32] eq
+  [ 33] jmpifz [ 46] ............................ (case) #levelUp:
+  [ 36] getparam 0 .............................. <me>
+  [ 38] pusharglistnoret 1 ...................... <me>
+  [ 40] objcall 876 ............................. me.incWalkSpeedLevel()
+  [ 43] jmp [ 60]
+  [ 46] peek 0
+  [ 48] pushsymb 25 ............................. <#restoreFromArmyDetails>
+  [ 50] eq
+  [ 51] jmpifz [ 60] ............................ (case) #restoreFromArmyDetails:
+  [ 54] getparam 0 .............................. <me>
+  [ 56] pusharglistnoret 1 ...................... <me>
+  [ 58] objcall 25 .............................. me.restoreFromArmyDetails()
+  [ 60] pop 1 ................................... end case
+  [ 62] ret
+end
+
+on moveAwayFromLoc me, targetloc
+  [  0] getparam 1 .............................. <targetloc>
+  [  2] getparam 0 .............................. <me>
+  [  4] getchainedprop 51 ....................... <me.big>
+  [  6] pusharglist 1 ........................... <me.big>
+  [  8] objcall 111 ............................. <me.big.getLoc()>
+  [ 10] pusharglist 2 ........................... <targetloc, me.big.getLoc()>
+  [ 12] extcall 914 ............................. <GeomMirrorPoint(targetloc, me.big.getLoc())>
+  [ 15] setlocal 0 .............................. destinationLoc = GeomMirrorPoint(targetloc, me.big.getLoc())
+  [ 17] getparam 0 .............................. <me>
+  [ 19] getlocal 0 .............................. <destinationLoc>
+  [ 21] pusharglistnoret 2 ...................... <me, destinationLoc>
+  [ 23] objcall 67 .............................. me.moveToLoc(destinationLoc)
+  [ 25] ret
+end
+
+on moveHoriz me, Dir
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 906 ...................... <me.pMoveXY>
+  [  5] getprop 901 ............................. <pWalkAcceleration>
+  [  8] getparam 1 .............................. <Dir>
+  [ 10] mul ..................................... <pWalkAcceleration * Dir>
+  [ 11] pushzero ................................ <0>
+  [ 12] pusharglist 2 ........................... <pWalkAcceleration * Dir, 0>
+  [ 14] extcall 197 ............................. <point(pWalkAcceleration * Dir, 0)>
+  [ 16] pusharglistnoret 2 ...................... <me.pMoveXY, point(pWalkAcceleration * Dir, 0)>
+  [ 18] objcall 916 ............................. me.pMoveXY.vectAdd(point(pWalkAcceleration * Dir, 0))
+  [ 21] getparam 0 .............................. <me>
+  [ 23] getparam 1 .............................. <Dir>
+  [ 25] pusharglistnoret 2 ...................... <me, Dir>
+  [ 27] objcall 880 ............................. me.moveHorizReaction(Dir)
+  [ 30] ret
+end
+
+on moveHorizReaction me, Dir
+  [  0] getparam 1 .............................. <Dir>
+  [  2] pushzero ................................ <0>
+  [  3] lt ...................................... <Dir < 0>
+  [  4] jmpifz [ 24] ............................ if Dir < 0 then / else
+  [  7] getparam 0 .............................. <me>
+  [  9] getchainedprop 173 ...................... <me.pSpr>
+  [ 11] pushint8 1 .............................. <1>
+  [ 13] setobjprop 917 .......................... me.pSpr.flipH = 1
+  [ 16] pushint8 1 .............................. <1>
+  [ 18] setprop 898 ............................. pMoveHoriz = 1
+  [ 21] jmp [ 58]
+  [ 24] getparam 1 .............................. <Dir>
+  [ 26] pushzero ................................ <0>
+  [ 27] gt ...................................... <Dir > 0>
+  [ 28] jmpifz [ 47] ............................ if Dir > 0 then / else
+  [ 31] getparam 0 .............................. <me>
+  [ 33] getchainedprop 173 ...................... <me.pSpr>
+  [ 35] pushzero ................................ <0>
+  [ 36] setobjprop 917 .......................... me.pSpr.flipH = 0
+  [ 39] pushint8 1 .............................. <1>
+  [ 41] setprop 898 ............................. pMoveHoriz = 1
+  [ 44] jmp [ 58]
+  [ 47] getparam 1 .............................. <Dir>
+  [ 49] pushzero ................................ <0>
+  [ 50] eq ...................................... <Dir = 0>
+  [ 51] jmpifz [ 58] ............................ if Dir = 0 then
+  [ 54] pushzero ................................ <0>
+  [ 55] setprop 898 ............................. pMoveHoriz = 0
+  [ 58] ret
+end
+
+on moveToLoc me, theTarget
+  [  0] getparam 1 .............................. <theTarget>
+  [  2] setprop 897 ............................. pMoveToLocTarget = theTarget
+  [  5] ret
+end
+
+on moveTowardsLoc me, theTarget
+  [  0] getprop 905 ............................. <pMoveTowardsLocFunction>
+  [  3] getparam 0 .............................. <me>
+  [  5] getobjprop 51 ........................... <me.big>
+  [  7] getparam 1 .............................. <theTarget>
+  [  9] pusharglistnoret 3 ...................... <pMoveTowardsLocFunction, me.big, theTarget>
+  [ 11] extcall 479 ............................. call(pMoveTowardsLocFunction, me.big, theTarget)
+  [ 14] ret
+end
+
+on moveTowardsLocAccelerated me, targetloc
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 111 ............................. <me.getLoc()>
+  [  6] getparam 1 .............................. <targetloc>
+  [  8] pusharglist 2 ........................... <me.getLoc(), targetloc>
+  [ 10] extcall 909 ............................. <PointDirPoint(me.getLoc(), targetloc)>
+  [ 13] setlocal 0 .............................. moveVector = PointDirPoint(me.getLoc(), targetloc)
+  [ 15] getparam 1 .............................. <targetloc>
+  [ 17] pushint8 2 .............................. <2>
+  [ 19] pusharglist 2 ........................... <targetloc, 2>
+  [ 21] objcall 109 ............................. <targetloc[2]>
+  [ 23] getparam 0 .............................. <me>
+  [ 25] pusharglist 1 ........................... <me>
+  [ 27] objcall 111 ............................. <me.getLoc()>
+  [ 29] pushint8 2 .............................. <2>
+  [ 31] pusharglist 2 ........................... <me.getLoc(), 2>
+  [ 33] objcall 109 ............................. <me.getLoc()[2]>
+  [ 35] pusharglist 2 ........................... <targetloc[2], me.getLoc()[2]>
+  [ 37] extcall 919 ............................. <VarDiff(targetloc[2], me.getLoc()[2])>
+  [ 40] getprop 900 ............................. <pVerticalLeeway>
+  [ 43] lt ...................................... <VarDiff(targetloc[2], me.getLoc()[2]) < pVerticalLeeway>
+  [ 44] jmpifz [ 56] ............................ if VarDiff(targetloc[2], me.getLoc()[2]) < pVerticalLeeway then
+  [ 47] getlocal 0 .............................. <moveVector>
+  [ 49] pushint8 2 .............................. <2>
+  [ 51] pushzero ................................ <0>
+  [ 52] pusharglistnoret 3 ...................... <moveVector, 2, 0>
+  [ 54] objcall 48 .............................. moveVector[2] = 0
+  [ 56] getlocal 0 .............................. <moveVector>
+  [ 58] pushint8 2 .............................. <2>
+  [ 60] pusharglist 2 ........................... <moveVector, 2>
+  [ 62] objcall 109 ............................. <moveVector[2]>
+  [ 64] pushzero ................................ <0>
+  [ 65] eq ...................................... <moveVector[2] = 0>
+  [ 66] jmpifz [ 69] ............................ if moveVector[2] = 0 then
+  [ 69] getparam 0 .............................. <me>
+  [ 71] getobjprop 312 .......................... <me.pmode>
+  [ 74] pushsymb 66 ............................. <#landed>
+  [ 76] eq ...................................... <me.pmode = #landed>
+  [ 77] jmpifz [ 89] ............................ if me.pmode = #landed then
+  [ 80] getlocal 0 .............................. <moveVector>
+  [ 82] pushint8 2 .............................. <2>
+  [ 84] pushzero ................................ <0>
+  [ 85] pusharglistnoret 3 ...................... <moveVector, 2, 0>
+  [ 87] objcall 48 .............................. moveVector[2] = 0
+  [ 89] getparam 0 .............................. <me>
+  [ 91] getlocal 0 .............................. <moveVector>
+  [ 93] pushint8 1 .............................. <1>
+  [ 95] pusharglist 2 ........................... <moveVector, 1>
+  [ 97] objcall 109 ............................. <moveVector[1]>
+  [ 99] pusharglistnoret 2 ...................... <me, moveVector[1]>
+  [101] objcall 879 ............................. me.moveHoriz(moveVector[1])
+  [104] getparam 0 .............................. <me>
+  [106] getlocal 0 .............................. <moveVector>
+  [108] pushint8 2 .............................. <2>
+  [110] pusharglist 2 ........................... <moveVector, 2>
+  [112] objcall 109 ............................. <moveVector[2]>
+  [114] pusharglistnoret 2 ...................... <me, moveVector[2]>
+  [116] objcall 883 ............................. me.moveVert(moveVector[2])
+  [119] getparam 0 .............................. <me>
+  [121] getchainedprop 922 ...................... <me.pAI>
+  [124] getlocal 0 .............................. <moveVector>
+  [126] pusharglistnoret 2 ...................... <me.pAI, moveVector>
+  [128] objcall 923 ............................. me.pAI.recordMoveVector(moveVector)
+  [131] ret
+end
+
+on moveTowardsLocSpeed me, targetloc
+  [  0] getprop 902 ............................. <pWalkSpeed>
+  [  3] pushzero ................................ <0>
+  [  4] eq ...................................... <pWalkSpeed = 0>
+  [  5] jmpifz [ 12] ............................ if pWalkSpeed = 0 then
+  [  8] pusharglistnoret 0 ...................... <>
+  [ 10] extcall 35 .............................. return 
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglist 1 ........................... <me>
+  [ 16] objcall 111 ............................. <me.getLoc()>
+  [ 18] setlocal 0 .............................. myloc = me.getLoc()
+  [ 20] getlocal 0 .............................. <myloc>
+  [ 22] getparam 1 .............................. <targetloc>
+  [ 24] getprop 902 ............................. <pWalkSpeed>
+  [ 27] pusharglist 3 ........................... <myloc, targetloc, pWalkSpeed>
+  [ 29] extcall 925 ............................. <PointFrameMove(myloc, targetloc, pWalkSpeed)>
+  [ 32] setlocal 1 .............................. moveVector = PointFrameMove(myloc, targetloc, pWalkSpeed)
+  [ 34] getparam 0 .............................. <me>
+  [ 36] getchainedprop 906 ...................... <me.pMoveXY>
+  [ 39] getlocal 1 .............................. <moveVector>
+  [ 41] pusharglistnoret 2 ...................... <me.pMoveXY, moveVector>
+  [ 43] objcall 926 ............................. me.pMoveXY.setVect(moveVector)
+  [ 46] getlocal 1 .............................. <moveVector>
+  [ 48] pusharglist 1 ........................... <moveVector>
+  [ 50] extcall 928 ............................. <PointInteger(moveVector)>
+  [ 53] pusharglist 1 ........................... <PointInteger(moveVector)>
+  [ 55] extcall 927 ............................. <PointDir(PointInteger(moveVector))>
+  [ 58] setlocal 2 .............................. moveDir = PointDir(PointInteger(moveVector))
+  [ 60] getparam 0 .............................. <me>
+  [ 62] getlocal 2 .............................. <moveDir>
+  [ 64] pushint8 1 .............................. <1>
+  [ 66] pusharglist 2 ........................... <moveDir, 1>
+  [ 68] objcall 109 ............................. <moveDir[1]>
+  [ 70] pusharglistnoret 2 ...................... <me, moveDir[1]>
+  [ 72] objcall 880 ............................. me.moveHorizReaction(moveDir[1])
+  [ 75] getparam 0 .............................. <me>
+  [ 77] getlocal 2 .............................. <moveDir>
+  [ 79] pushint8 2 .............................. <2>
+  [ 81] pusharglist 2 ........................... <moveDir, 2>
+  [ 83] objcall 109 ............................. <moveDir[2]>
+  [ 85] pusharglistnoret 2 ...................... <me, moveDir[2]>
+  [ 87] objcall 884 ............................. me.moveVertReaction(moveDir[2])
+  [ 90] ret
+end
+
+on moveVert me, Dir
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 906 ...................... <me.pMoveXY>
+  [  5] pushzero ................................ <0>
+  [  6] getprop 901 ............................. <pWalkAcceleration>
+  [  9] getparam 1 .............................. <Dir>
+  [ 11] mul ..................................... <pWalkAcceleration * Dir>
+  [ 12] pusharglist 2 ........................... <0, pWalkAcceleration * Dir>
+  [ 14] extcall 197 ............................. <point(0, pWalkAcceleration * Dir)>
+  [ 16] pusharglistnoret 2 ...................... <me.pMoveXY, point(0, pWalkAcceleration * Dir)>
+  [ 18] objcall 916 ............................. me.pMoveXY.vectAdd(point(0, pWalkAcceleration * Dir))
+  [ 21] getparam 0 .............................. <me>
+  [ 23] getparam 1 .............................. <Dir>
+  [ 25] pusharglistnoret 2 ...................... <me, Dir>
+  [ 27] objcall 884 ............................. me.moveVertReaction(Dir)
+  [ 30] ret
+end
+
+on moveVertReaction me, Dir
+  [  0] getparam 1 .............................. <Dir>
+  [  2] pushzero ................................ <0>
+  [  3] nteq .................................... <Dir <> 0>
+  [  4] jmpifz [ 15] ............................ if Dir <> 0 then / else
+  [  7] pushint8 1 .............................. <1>
+  [  9] setprop 899 ............................. pMoveVert = 1
+  [ 12] jmp [ 26]
+  [ 15] getparam 1 .............................. <Dir>
+  [ 17] pushzero ................................ <0>
+  [ 18] eq ...................................... <Dir = 0>
+  [ 19] jmpifz [ 26] ............................ if Dir = 0 then
+  [ 22] pushzero ................................ <0>
+  [ 23] setprop 899 ............................. pMoveVert = 0
+  [ 26] ret
+end
+
+on resetMoveReaction me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushzero ................................ <0>
+  [  3] pusharglistnoret 2 ...................... <me, 0>
+  [  5] objcall 884 ............................. me.moveVertReaction(0)
+  [  8] getparam 0 .............................. <me>
+  [ 10] pushzero ................................ <0>
+  [ 11] pusharglistnoret 2 ...................... <me, 0>
+  [ 13] objcall 880 ............................. me.moveHorizReaction(0)
+  [ 16] ret
+end
+
+on restoreFromArmyDetails me, ad
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 51 ....................... <me.big>
+  [  4] pusharglist 1 ........................... <me.big>
+  [  6] objcall 54 .............................. <me.big.getArmyDetails()>
+  [  8] setparam 1 .............................. ad = me.big.getArmyDetails()
+  [ 10] getparam 0 .............................. <me>
+  [ 12] getparam 1 .............................. <ad>
+  [ 14] pusharglistnoret 2 ...................... <me, ad>
+  [ 16] objcall 27 .............................. me.restoreFromSaveData(ad)
+  [ 18] ret
+end
+
+on restoreFromSave me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 26 .............................. ancestor.restoreFromSave(sd)
+  [  8] getparam 1 .............................. <sd>
+  [ 10] getobjprop 897 .......................... <sd.pMoveToLocTarget>
+  [ 13] setprop 897 ............................. pMoveToLocTarget = sd.pMoveToLocTarget
+  [ 16] ret
+end
+
+on restoreFromSaveData me, sd
+  [  0] getparam 1 .............................. <sd>
+  [  2] getobjprop 901 .......................... <sd.pWalkAcceleration>
+  [  5] setprop 901 ............................. pWalkAcceleration = sd.pWalkAcceleration
+  [  8] getparam 1 .............................. <sd>
+  [ 10] getobjprop 902 .......................... <sd.pWalkSpeed>
+  [ 13] setprop 902 ............................. pWalkSpeed = sd.pWalkSpeed
+  [ 16] ret
+end
+
+on setWalkAcceleration me, newVal
+  [  0] getparam 1 .............................. <newVal>
+  [  2] setprop 901 ............................. pWalkAcceleration = newVal
+  [  5] ret
+end
+
+on setWalkSpeed me, newVal
+  [  0] getparam 1 .............................. <newVal>
+  [  2] setprop 902 ............................. pWalkSpeed = newVal
+  [  5] ret
+end
+
+on stopMoving me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 49 ............................. <#none>
+  [  4] pusharglistnoret 2 ...................... <me, #none>
+  [  6] objcall 67 .............................. me.moveToLoc(#none)
+  [  8] getparam 0 .............................. <me>
+  [ 10] getchainedprop 51 ....................... <me.big>
+  [ 12] pushzero ................................ <0>
+  [ 13] pushzero ................................ <0>
+  [ 14] pusharglist 2 ........................... <0, 0>
+  [ 16] extcall 197 ............................. <point(0, 0)>
+  [ 18] pusharglistnoret 2 ...................... <me.big, point(0, 0)>
+  [ 20] objcall 926 ............................. me.big.setVect(point(0, 0))
+  [ 23] getparam 0 .............................. <me>
+  [ 25] pusharglistnoret 1 ...................... <me>
+  [ 27] objcall 889 ............................. me.stoppedMoving()
+  [ 30] ret
+end
+
+on stopRunAnim me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 885 ............................. me.resetMoveReaction()
+  [  7] ret
+end
+
+on stoppedMoving me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 885 ............................. me.resetMoveReaction()
+  [  7] ret
+end
+
+on update me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 31 .............................. ancestor.update()
+  [  6] getparam 0 .............................. <me>
+  [  8] pusharglistnoret 1 ...................... <me>
+  [ 10] objcall 885 ............................. me.resetMoveReaction()
+  [ 13] getprop 897 ............................. <pMoveToLocTarget>
+  [ 16] pushsymb 49 ............................. <#none>
+  [ 18] nteq .................................... <pMoveToLocTarget <> #none>
+  [ 19] jmpifz [ 63] ............................ if pMoveToLocTarget <> #none then
+  [ 22] getparam 0 .............................. <me>
+  [ 24] getprop 897 ............................. <pMoveToLocTarget>
+  [ 27] pusharglist 2 ........................... <me, pMoveToLocTarget>
+  [ 29] objcall 890 ............................. <me.updateMoveToLoc(pMoveToLocTarget)>
+  [ 32] setlocal 0 .............................. fin = me.updateMoveToLoc(pMoveToLocTarget)
+  [ 34] getlocal 0 .............................. <fin>
+  [ 36] jmpifz [ 63] ............................ if fin then
+  [ 39] getparam 0 .............................. <me>
+  [ 41] pusharglistnoret 1 ...................... <me>
+  [ 43] objcall 889 ............................. me.stoppedMoving()
+  [ 46] getparam 0 .............................. <me>
+  [ 48] pushsymb 930 ............................ <#moveToLocFinished>
+  [ 51] pusharglistnoret 2 ...................... <me, #moveToLocFinished>
+  [ 53] objcall 22 .............................. me.internalEvent(#moveToLocFinished)
+  [ 55] getparam 0 .............................. <me>
+  [ 57] pushsymb 49 ............................. <#none>
+  [ 59] pusharglistnoret 2 ...................... <me, #none>
+  [ 61] objcall 67 .............................. me.moveToLoc(#none)
+  [ 63] ret
+end
+
+on updateMoveToLoc me, targetloc
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. fin = 0
+  [  3] getparam 0 .............................. <me>
+  [  5] getparam 1 .............................. <targetloc>
+  [  7] pusharglistnoret 2 ...................... <me, targetloc>
+  [  9] objcall 297 ............................. me.moveTowardsLoc(targetloc)
+  [ 12] getparam 0 .............................. <me>
+  [ 14] getchainedprop 51 ....................... <me.big>
+  [ 16] pusharglist 1 ........................... <me.big>
+  [ 18] objcall 111 ............................. <me.big.getLoc()>
+  [ 20] getparam 1 .............................. <targetloc>
+  [ 22] pusharglist 2 ........................... <me.big.getLoc(), targetloc>
+  [ 24] extcall 190 ............................. <GeomDistSqr(me.big.getLoc(), targetloc)>
+  [ 26] setlocal 1 .............................. disttotarget = GeomDistSqr(me.big.getLoc(), targetloc)
+  [ 28] getlocal 1 .............................. <disttotarget>
+  [ 30] getprop 896 ............................. <pMoveToLocArrivalDistance>
+  [ 33] getprop 896 ............................. <pMoveToLocArrivalDistance>
+  [ 36] mul ..................................... <pMoveToLocArrivalDistance * pMoveToLocArrivalDistance>
+  [ 37] lteq .................................... <disttotarget <= (pMoveToLocArrivalDistance * pMoveToLocArrivalDistance)>
+  [ 38] jmpifz [ 45] ............................ if disttotarget <= (pMoveToLocArrivalDistance * pMoveToLocArrivalDistance) then
+  [ 41] pushint8 1 .............................. <1>
+  [ 43] setlocal 0 .............................. fin = 1
+  [ 45] getlocal 0 .............................. <fin>
+  [ 47] pusharglistnoret 1 ...................... <fin>
+  [ 49] extcall 35 .............................. return fin
+  [ 51] ret
+end

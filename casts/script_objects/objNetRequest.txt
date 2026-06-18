@@ -1,0 +1,116 @@
+[#name: "objNetRequest", #scriptType: #parent, #type: #script]
+-- this object will make a get request to the supplied url
+-- and then return the results to the calling object when they come in
+
+global g
+
+property ancestor
+property pCallingPrg    -- the prg that called the object
+property pNetError      -- the error that was generated
+property pNetID         -- the ID of the page to be requested
+property pRequestURL    -- the URL to be requested
+
+
+on new me
+  ancestor = new(script "objAutoUpdate")
+  
+  i = me.modifyParams(#init)
+  
+  i[#callingPrg] = #none
+  i[#NetID] = #none
+  i[#requestURL] = ""
+  
+  return me
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  pCallingPrg = params.callingPrg
+  pRequestURL = params.requestURL
+  pNetError = #none
+  
+  me.start()
+end
+
+on requestURL me
+  pNetID = getNetText(pRequestURL)
+  g.updater.addPrg(me.big, #hi)
+end
+
+on start me
+  if pRequestURL <> "" then
+    me.requestURL()
+  end if
+end
+
+on update me
+  if netDone(pNetID) then
+    pNetError = netError(pNetID)
+    theResult = netTextResult(pNetID)
+    pCallingPrg.netRequestFinished(me.big, theResult)
+    g.updater.removePrg(me)
+  end if
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

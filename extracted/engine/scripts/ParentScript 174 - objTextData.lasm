@@ -1,0 +1,60 @@
+property ancestor, pData, pTextData
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"objParams">
+  [  2] pusharglist 1 ........................... <"objParams">
+  [  4] extcall 34 .............................. <script("objParams")>
+  [  6] pusharglist 1 ........................... <script("objParams")>
+  [  8] extcall 0 ............................... <new(script("objParams"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objParams"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 99 ............................. <#member>
+  [ 26] pushsymb 49 ............................. <#none>
+  [ 28] pusharglistnoret 3 ...................... <i, #member, #none>
+  [ 30] objcall 48 .............................. i[#member] = #none
+  [ 32] getparam 0 .............................. <me>
+  [ 34] pusharglistnoret 1 ...................... <me>
+  [ 36] extcall 35 .............................. return me
+  [ 38] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getparam 1 .............................. <params>
+  [ 10] getchainedprop 99 ....................... <params.member>
+  [ 12] getobjprop 670 .......................... <params.member.text>
+  [ 15] setprop 3921 ............................ pTextData = params.member.text
+  [ 18] getprop 3921 ............................ <pTextData>
+  [ 21] pushcons 1 .............................. <RETURN>
+  [ 23] pusharglist 2 ........................... <pTextData, RETURN>
+  [ 25] extcall 3294 ............................ <StringEliminateChars(pTextData, RETURN)>
+  [ 28] setprop 3921 ............................ pTextData = StringEliminateChars(pTextData, RETURN)
+  [ 31] getprop 3921 ............................ <pTextData>
+  [ 34] pusharglist 1 ........................... <pTextData>
+  [ 36] extcall 1562 ............................ <value(pTextData)>
+  [ 39] setprop 3922 ............................ pData = value(pTextData)
+  [ 42] ret
+end
+
+on getData me
+  [  0] getprop 3922 ............................ <pData>
+  [  3] pusharglistnoret 1 ...................... <pData>
+  [  5] extcall 35 .............................. return pData
+  [  7] ret
+end
+
+on getTextData me
+  [  0] getprop 3921 ............................ <pTextData>
+  [  3] pusharglistnoret 1 ...................... <pTextData>
+  [  5] extcall 35 .............................. return pTextData
+  [  7] ret
+end

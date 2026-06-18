@@ -1,0 +1,155 @@
+[#name: "objAnimSet", #scriptType: #parent, #type: #script]
+global g
+
+property ancestor
+property pStrips
+
+on new me
+  me.ancestor = new (script"objBasic")
+  
+  return me
+end
+
+on init me, name, charType
+  stripDefs = g.animStripMaster.getStripDefs(name)
+  
+  me.initAnimStrips(stripDefs)
+end
+
+on initAnimStrips me, stripDefs
+  pStrips = [:]
+  repeat with i = 1 to stripDefs.count
+    stripDef = stripDefs[i]
+    stripName = stripDefs.getPropAt(i)
+    nStrip = g.objectMaster.requestObject(#objAnimStrip)
+    nStrip.init(stripDef, stripName)
+    pStrips[stripName] = nStrip
+  end repeat
+end
+
+on finish me
+  repeat with strip in pStrips
+    strip.finish()
+  end repeat
+  
+  pStrips = [:]
+  
+  ancestor.finish()
+end
+
+on addSaveData me, sd
+  ancestor.addSaveData(sd)
+  
+  stripsData = []
+  repeat with strip in pStrips
+    saveData = [:]
+    strip.addSaveData(saveData)
+    stripsData.append(saveData)
+  end repeat
+  
+  sd[#pStrips] = stripsData
+end
+
+on symExistsOrDefault me, sym
+  if pStrips[sym] = void then
+    sym = #stand
+  end if
+  
+  return sym
+end
+
+on extendDelay me, sym, delayAmount
+  sym = me.symExistsOrDefault(sym)
+  
+  pStrips[sym].extendDelay(delayAmount)
+end
+
+
+on getCurrentMember me, sym
+  sym = me.symExistsOrDefault(sym)
+  
+  return pStrips[sym].getCurrentMember()
+end
+
+on getFin me, sym
+  sym = me.symExistsOrDefault(sym)
+  
+  return pStrips[sym].getFin()
+end
+
+on getFrame me, sym
+  sym = me.symExistsOrDefault(sym)
+  
+  return pStrips[sym].getFrame()
+end
+
+on getFrameFresh me, sym
+  sym = me.symExistsOrDefault(sym)
+  
+  return pStrips[sym].getFrameFresh()
+end
+
+on getImage me, sym
+  sym = me.symExistsOrDefault(sym)
+  
+  return pStrips[sym].getImage()
+end
+
+on getLooped me, sym
+  sym = me.symExistsOrDefault(sym)
+  
+  return pStrips[sym].getLooped()
+end
+
+on getMember me, sym  
+  sym = me.symExistsOrDefault(sym)
+  
+  return pStrips[sym].getMember()
+end
+
+on getMemberAt me, sym, frameNo
+  sym = me.symExistsOrDefault(sym)
+  
+  return pStrips[sym].getMemberAt(frameNo)
+end
+
+on getNoOfFrames me, sym
+  sym = me.symExistsOrDefault(sym)
+  
+  return pStrips[sym].getNoOfFrames()
+end
+
+on gotoAnimFrame me, sym, frameNum
+  sym = me.symExistsOrDefault(sym)
+  
+  pStrips[sym].gotoAnimFrame(frameNum)
+end
+
+on resetAnim me, sym
+  sym = me.symExistsOrDefault(sym)
+  
+  pStrips[sym].reset()
+end
+
+on restoreFromSave me, sd
+  ancestor.restoreFromSave(sd)
+  
+  stripsData = sd.pStrips
+  stripNum = 1
+  repeat with stripData in stripsData
+    pStrips[stripNum].restoreFromSave(stripData)
+    
+    stripNum = stripNum + 1
+  end repeat
+end
+
+
+
+
+
+
+
+
+
+
+

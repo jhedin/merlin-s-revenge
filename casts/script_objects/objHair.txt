@@ -1,0 +1,404 @@
+[#name: "objHair", #scriptType: #parent, #type: #script]
+global g, gPlayerLayer
+
+property ancestor
+property pDownChain
+property pHairLength
+property pHairAdjustmentRect
+property pGrowHair
+property pGrowHairNum
+property pGrowHairTarget
+property pMode
+property pParasite
+property pPosInChain
+property pStartLocOffset
+property pUpChain
+
+on new me
+  me.ancestor = new(script "objGameObject")
+  
+  i = me.modifyParams(#init)
+  
+  i.character = #hair
+  i.flags.append(#objHair)
+  
+  i[#hairAdjustmentRect] = rect(3,0,-10,0)
+  i[#hairLength] = 14
+  i[#startLocOffSet] = point(10,0)
+  
+  return me
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  pDownChain = #none
+  pGrowHair = false
+  pGrowHairNum = 0
+  pGrowHairTarget = 2
+  pHairAdjustmentRect = params.hairAdjustmentRect
+  pHairLength = params.hairLength
+  pUpChain = #none
+  pParasite = #none
+  pStartLocOffset = params.startLocOffset
+  
+  SpriteSetMember(me.pSpr, member("raphair"))
+  
+  me.goMode(#norm)
+  
+end
+
+on finish me
+  me.sayGoodbye()
+  
+  ancestor.finish()
+end
+
+on calcStartLoc me
+  upLoc = pUpChain.getHairLoc()
+  startLoc = upLoc + pStartLocOffset
+  
+  return startLoc
+end 
+
+on checkCollisions me, newLoc, oldLoc
+  -- only check collisions if hair is detatched from head
+  -- this is to save processor time
+  if pMode = #cutoff then
+    newLoc = ancestor.checkCollisions(newLoc, oldLoc)
+  end if
+  
+  
+  newLoc = me.constrainHair(newLoc)
+  
+  return newLoc
+end
+
+on checkHairCollisions me, theRect, minCollisionSpeed
+  -- typically used to see if enemies are hit by hair
+  
+  myLoc = me.getHairLoc()
+  if inside(myLoc, theRect) then
+    hairSpeed = PointPositive(me.getVect())
+    if hairSpeed[1] > minCollisionSpeed or hairSpeed[2] > minCollisionSpeed then
+      return me.getVect()
+    end if
+  end if
+  
+  if pDownChain = #none then
+    return false
+  else
+    return pDownChain.checkHairCollisions(theRect, minCollisionSpeed)
+  end if
+end
+
+on checkHairCollisionsObj me, theLoc
+  -- typically used to see if hair is cut by sword
+  myRect = me.getRect()
+  if inside(theLoc, myRect) then
+    return me
+  else
+    if pDownChain = #none then
+      return #none
+    else
+      return pDownChain.checkHairCollisionsObj(theLoc)
+    end if
+  end if
+end
+
+on collisionCeiling me
+end
+
+on collisionNoPlatform me
+end
+
+on collisionPlatform me
+  if pMode = #cutOff then
+    params = g.actorMaster.getParams(#newActor)
+    params.typ = #hairPowerUp
+    params.startLoc = me.getLoc()
+    params.useOffset = false
+    g.actorMaster.newActor(params)
+    
+    me.goMode(#dead)
+  end if
+end
+
+on collisionWallLeft me
+end
+
+on collisionWallRight me
+end
+
+on constrainHair me, newLoc
+  if pMode = #norm then
+    hairLoc = pUpChain.getHairLoc()
+    newLocInt = PointInteger(newLoc.duplicate())
+    hairAngle = GeomAngle((newLocInt - hairLoc))
+    
+    --    if GeomDist(hairLoc, newLoc) < (pHairLength - 8) then
+    --      newLoc = GeomPointOnCircle(hairLoc, (pHairLength - 8), (360 - hairAngle))
+    --    end if
+    
+    if GeomDistSqr(hairLoc, newLoc) > pHairLength*pHairLength then --to be faster, the hair length could be squared on init()
+      newLoc = GeomPointOnCircle(hairLoc, pHairLength, (360 - hairAngle))
+    end if
+    
+    me.pSpr.rotation = VarChangeInRange(hairAngle,1,360,180)
+  end if
+  
+  return newLoc
+end
+
+on cutOff me
+  me.goMode(#cutOff)
+  
+  me.sayGoodbye()
+  
+  if pDownChain = #none then
+    nothing
+  else
+    pDownChain.cutOff()
+  end if
+  
+end
+
+on downChainGone me
+  pDownChain = #none
+end
+
+on finishConditionMet me
+  return false
+end
+
+on getHairAtPos me, thePos, upPos
+  myPos = upPos + 1
+  if myPos = thePos then
+    return me
+  else
+    return pDownChain.getHairAtPos(thePos, myPos)
+  end if
+end
+
+on getHairLength me, len
+  len = len + 1
+  if pDownChain = #none then
+    return len
+  else
+    return pDownChain.getHairLength(len)
+  end if
+end 
+
+on getHairLoc me
+  hairLoc = me.getNewLoc()
+  hairLoc = PointInteger(hairLoc)
+  
+  return hairLoc
+end 
+
+on getRect me
+  myRect = ancestor.getRect()
+  myRect = myRect + pHairAdjustmentRect
+  
+  return myRect
+end
+
+on goMode me, newMode
+  pMode = newMode  
+end 
+
+on growHair me
+  if pDownChain = #none then
+    params = g.actorMaster.getParams(#newActor)
+    params.typ = #hair
+    params.startLoc = me.getHairLoc()
+    pDownChain = g.actorMaster.newActor(params)
+    pDownChain.setUpChain(me)
+    pDownChain.setPosInChain(pPosInChain + 1)
+  else
+    pDownChain.growHair()
+  end if
+end
+
+on growHairSequence me
+  me.flashWhite()
+  pGrowHair = 1
+  pGrowHairNum = pGrowHairNum + 1
+end
+
+on growHairSequencePass me
+  repeat with i = 1 to pGrowHairNum
+    if pDownChain = #none then
+      me.growHair()
+    else
+      pDownChain.growHairSequence()
+    end if
+  end repeat
+  pGrowHairNum = 0
+end
+
+on informCallingPrg me
+  nothing
+end
+
+on leaveRoom me, moveAmount
+  myVect = me.getVect()
+  me.pMoveXY.setLoc(me.getLoc() + moveAmount)
+  me.setVect(myVect)
+  
+  if pDownChain = #none then
+  else
+    pDownChain.leaveRoom(moveAmount)
+  end if
+end
+
+on moveXYFin me
+  -- only called when hairObject is finished
+end
+
+on registerParasite me, obj
+  if pParasite = #none then
+    pParasite = obj
+    return #success
+  else
+    return #noSpace
+  end if
+end
+
+on sayGoodbye me
+  if pParasite <> #none then
+    pParasite.targetGone()
+    pParasite = #none
+  end if
+  
+  if pUpChain <> #none then
+    pUpChain.downChainGone()
+    pUpChain = #none
+  end if
+  
+  -- allows the room to freeze the object when the player leaves
+  me.removeFlag(#objHair)
+end
+
+on setPosInChain me, pos
+  pPosInChain = pos
+  me.pSpr.locZ = gPlayerLayer + pos
+end
+
+on setUpChain me, obj
+  --called immediately after init()
+  pUpChain = obj
+  startLoc = me.calcStartLoc()
+  me.setLoc(startLoc)
+  
+  g.starMaster.starBurstX(startLoc)
+end
+
+on trimHair me
+  if pDownChain = #none then
+    me.finish()
+  else
+    pDownChain.trimHair()
+  end if
+end
+
+on unregisterParasite me, obj
+  if pParasite = obj then
+    pParasite = #none
+  end if
+end
+
+on update me
+  
+  case pMode of
+    #norm:
+      if pGrowHair = pGrowHairTarget then
+        me.growHairSequencePass()
+        pGrowHair = false
+      else
+        if pGrowHair > 0 then
+          pGrowHair = pGrowHair + 1
+        end if
+      end if
+      
+    #cutOff:
+      --      if me.checkForCollisionWithPlayer() then
+      --        player = g.actorMaster.getPlayer()
+      --        player.hairDropCollected()
+      --        me.finish()
+      --      end if
+      
+    #dead:
+      me.finish()
+      
+  end case
+  
+end
+
+on updateAI me  
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

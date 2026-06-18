@@ -1,0 +1,304 @@
+property ancestor, pEventsElsewhere, pEventsHere
+global g, gErrorTrace
+
+on new me
+  [  0] pushcons 0 .............................. <"objBasic">
+  [  2] pusharglist 1 ........................... <"objBasic">
+  [  4] extcall 34 .............................. <script("objBasic")>
+  [  6] pusharglist 1 ........................... <script("objBasic")>
+  [  8] extcall 0 ............................... <new(script("objBasic"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objBasic"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on init me
+  [  0] pusharglist 0 ........................... <[:]>
+  [  2] pushproplist ............................ <[:]>
+  [  3] setprop 2605 ............................ pEventsElsewhere = [:]
+  [  6] pusharglist 0 ........................... <[:]>
+  [  8] pushproplist ............................ <[:]>
+  [  9] setprop 2606 ............................ pEventsHere = [:]
+  [ 12] ret
+end
+
+on finish me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 3 ............................... ancestor.finish()
+  [  6] getparam 0 .............................. <me>
+  [  8] pusharglistnoret 1 ...................... <me>
+  [ 10] objcall 2603 ............................ me.cancelRequestsIMade()
+  [ 13] pusharglist 0 ........................... <[:]>
+  [ 15] pushproplist ............................ <[:]>
+  [ 16] setprop 2605 ............................ pEventsElsewhere = [:]
+  [ 19] pusharglist 0 ........................... <[:]>
+  [ 21] pushproplist ............................ <[:]>
+  [ 22] setprop 2606 ............................ pEventsHere = [:]
+  [ 25] ret
+end
+
+on appendEventNotify me, thelist, theObj, theEvent, frequency
+  [  0] getparam 1 .............................. <thelist>
+  [  2] getparam 3 .............................. <theEvent>
+  [  4] pusharglist 2 ........................... <thelist, theEvent>
+  [  6] objcall 109 ............................. <thelist[theEvent]>
+  [  8] pusharglist 0 ........................... <>
+  [ 10] extcall 166 ............................. <VOID>
+  [ 12] eq ...................................... <thelist[theEvent] = VOID>
+  [ 13] jmpifz [ 27] ............................ if thelist[theEvent] = VOID then
+  [ 16] getparam 1 .............................. <thelist>
+  [ 18] getparam 3 .............................. <theEvent>
+  [ 20] pusharglist 0 ........................... <[]>
+  [ 22] pushlist ................................ <[]>
+  [ 23] pusharglistnoret 3 ...................... <thelist, theEvent, []>
+  [ 25] objcall 48 .............................. thelist[theEvent] = []
+  [ 27] getparam 1 .............................. <thelist>
+  [ 29] getparam 3 .............................. <theEvent>
+  [ 31] pusharglist 2 ........................... <thelist, theEvent>
+  [ 33] objcall 109 ............................. <thelist[theEvent]>
+  [ 35] pushsymb 1088 ........................... <#obj>
+  [ 38] getparam 2 .............................. <theObj>
+  [ 40] pusharglist 3 ........................... <thelist[theEvent], #obj, theObj>
+  [ 42] extcall 2607 ............................ <ListGetPosByProp(thelist[theEvent], #obj, theObj)>
+  [ 45] setlocal 0 .............................. pos = ListGetPosByProp(thelist[theEvent], #obj, theObj)
+  [ 47] getlocal 0 .............................. <pos>
+  [ 49] pushzero ................................ <0>
+  [ 50] gt ...................................... <pos > 0>
+  [ 51] jmpifz [ 58] ............................ if pos > 0 then
+  [ 54] pusharglistnoret 0 ...................... <>
+  [ 56] extcall 35 .............................. return 
+  [ 58] getglobal 40 ............................ <g>
+  [ 60] getchainedprop 1168 ..................... <g.structMaster>
+  [ 63] pushsymb 123 ............................ <#eventNotify>
+  [ 65] pusharglist 2 ........................... <g.structMaster, #eventNotify>
+  [ 67] objcall 1170 ............................ <g.structMaster.getStruct(#eventNotify)>
+  [ 70] setlocal 1 .............................. eventNotify = g.structMaster.getStruct(#eventNotify)
+  [ 72] getlocal 1 .............................. <eventNotify>
+  [ 74] getparam 2 .............................. <theObj>
+  [ 76] setobjprop 1088 ......................... eventNotify.obj = theObj
+  [ 79] getlocal 1 .............................. <eventNotify>
+  [ 81] getparam 4 .............................. <frequency>
+  [ 83] setobjprop 2608 ......................... eventNotify.frequency = frequency
+  [ 86] getparam 1 .............................. <thelist>
+  [ 88] getparam 3 .............................. <theEvent>
+  [ 90] pusharglist 2 ........................... <thelist, theEvent>
+  [ 92] objcall 109 ............................. <thelist[theEvent]>
+  [ 94] getlocal 1 .............................. <eventNotify>
+  [ 96] pusharglistnoret 2 ...................... <thelist[theEvent], eventNotify>
+  [ 98] objcall 256 ............................. thelist[theEvent].append(eventNotify)
+  [101] ret
+end
+
+on cancelEventNotification me, theObj, theEvent
+  [  0] getprop 2606 ............................ <pEventsHere>
+  [  3] getparam 2 .............................. <theEvent>
+  [  5] pusharglist 2 ........................... <pEventsHere, theEvent>
+  [  7] objcall 109 ............................. <pEventsHere[theEvent]>
+  [  9] setlocal 0 .............................. eventList = pEventsHere[theEvent]
+  [ 11] getlocal 0 .............................. <eventList>
+  [ 13] pusharglist 0 ........................... <>
+  [ 15] extcall 166 ............................. <VOID>
+  [ 17] eq ...................................... <eventList = VOID>
+  [ 18] jmpifz [ 25] ............................ if eventList = VOID then
+  [ 21] pusharglistnoret 0 ...................... <>
+  [ 23] extcall 35 .............................. return 
+  [ 25] getlocal 0 .............................. <eventList>
+  [ 27] pushsymb 1088 ........................... <#obj>
+  [ 30] getparam 1 .............................. <theObj>
+  [ 32] pusharglist 3 ........................... <eventList, #obj, theObj>
+  [ 34] extcall 2607 ............................ <ListGetPosByProp(eventList, #obj, theObj)>
+  [ 37] setlocal 1 .............................. pos = ListGetPosByProp(eventList, #obj, theObj)
+  [ 39] getlocal 1 .............................. <pos>
+  [ 41] pushzero ................................ <0>
+  [ 42] gt ...................................... <pos > 0>
+  [ 43] jmpifz [ 55] ............................ if pos > 0 then
+  [ 46] getlocal 0 .............................. <eventList>
+  [ 48] getlocal 1 .............................. <pos>
+  [ 50] pusharglistnoret 2 ...................... <eventList, pos>
+  [ 52] objcall 1087 ............................ eventList.deleteAt(pos)
+  [ 55] ret
+end
+
+on cancelRequestsIMade me
+  [  0] getprop 2605 ............................ <pEventsElsewhere>
+  [  3] pusharglist 1 ........................... <pEventsElsewhere>
+  [  5] extcall 206 ............................. <ilk(pEventsElsewhere)>
+  [  7] pushsymb 166 ............................ <#void>
+  [  9] nteq .................................... <ilk(pEventsElsewhere) <> #void>
+  [ 10] jmpifz [113] ............................ if ilk(pEventsElsewhere) <> #void then
+  [ 13] pushint8 1 .............................. <1>
+  [ 15] setlocal 0
+  [ 17] getlocal 0
+  [ 19] getprop 2605 ............................ <pEventsElsewhere>
+  [ 22] getobjprop 257 .......................... <pEventsElsewhere.count>
+  [ 25] lteq
+  [ 26] jmpifz [113] ............................ repeat with i = 1 to pEventsElsewhere.count
+  [ 29] getprop 2605 ............................ <pEventsElsewhere>
+  [ 32] getlocal 0 .............................. <i>
+  [ 34] pusharglist 2 ........................... <pEventsElsewhere, i>
+  [ 36] objcall 1092 ............................ <pEventsElsewhere.getPropAt(i)>
+  [ 39] setlocal 1 .............................. theEvent = pEventsElsewhere.getPropAt(i)
+  [ 41] getprop 2605 ............................ <pEventsElsewhere>
+  [ 44] getlocal 0 .............................. <i>
+  [ 46] pusharglist 2 ........................... <pEventsElsewhere, i>
+  [ 48] objcall 109 ............................. <pEventsElsewhere[i]>
+  [ 50] setlocal 2 .............................. eventList = pEventsElsewhere[i]
+  [ 52] getlocal 2 .............................. <eventList>
+  [ 54] peek 0
+  [ 56] pusharglist 1
+  [ 58] extcall 257
+  [ 61] pushint8 1
+  [ 63] peek 0
+  [ 65] peek 2
+  [ 67] lteq
+  [ 68] jmpifz [102] ............................ repeat with eventNotify in eventList
+  [ 71] peek 2
+  [ 73] peek 1
+  [ 75] pusharglist 2
+  [ 77] extcall 109
+  [ 79] setlocal 3
+  [ 81] getlocal 3 .............................. <eventNotify>
+  [ 83] getchainedprop 1088 ..................... <eventNotify.obj>
+  [ 86] getparam 0 .............................. <me>
+  [ 88] getobjprop 51 ........................... <me.big>
+  [ 90] getlocal 1 .............................. <theEvent>
+  [ 92] pusharglistnoret 3 ...................... <eventNotify.obj, me.big, theEvent>
+  [ 94] objcall 2602 ............................ eventNotify.obj.cancelEventNotification(me.big, theEvent)
+  [ 97] pushint8 1
+  [ 99] add
+  [100] endrepeat [ 63]
+  [102] pop 3
+  [104] pushint8 1
+  [106] getlocal 0
+  [108] add
+  [109] setlocal 0
+  [111] endrepeat [ 17]
+  [113] ret
+end
+
+on eventNotification me, theEvent, theObj
+  [  0] getprop 2605 ............................ <pEventsElsewhere>
+  [  3] getparam 1 .............................. <theEvent>
+  [  5] pusharglist 2 ........................... <pEventsElsewhere, theEvent>
+  [  7] objcall 109 ............................. <pEventsElsewhere[theEvent]>
+  [  9] setlocal 0 .............................. eventList = pEventsElsewhere[theEvent]
+  [ 11] getlocal 0 .............................. <eventList>
+  [ 13] getobjprop 257 .......................... <eventList.count>
+  [ 16] setlocal 1
+  [ 18] getlocal 1
+  [ 20] pushint8 1 .............................. <1>
+  [ 22] gteq
+  [ 23] jmpifz [ 77] ............................ repeat with i = eventList.count down to 1
+  [ 26] getlocal 0 .............................. <eventList>
+  [ 28] getlocal 1 .............................. <i>
+  [ 30] pusharglist 2 ........................... <eventList, i>
+  [ 32] objcall 109 ............................. <eventList[i]>
+  [ 34] setlocal 2 .............................. eventNotify = eventList[i]
+  [ 36] getlocal 2 .............................. <eventNotify>
+  [ 38] getobjprop 1088 ......................... <eventNotify.obj>
+  [ 41] getparam 2 .............................. <theObj>
+  [ 43] eq ...................................... <eventNotify.obj = theObj>
+  [ 44] jmpifz [ 68] ............................ if eventNotify.obj = theObj then
+  [ 47] getlocal 2 .............................. <eventNotify>
+  [ 49] getobjprop 2608 ......................... <eventNotify.frequency>
+  [ 52] pushsymb 628 ............................ <#once>
+  [ 55] eq ...................................... <eventNotify.frequency = #once>
+  [ 56] jmpifz [ 68] ............................ if eventNotify.frequency = #once then
+  [ 59] getlocal 0 .............................. <eventList>
+  [ 61] getlocal 1 .............................. <i>
+  [ 63] pusharglistnoret 2 ...................... <eventList, i>
+  [ 65] objcall 1087 ............................ eventList.deleteAt(i)
+  [ 68] pushint8 -1
+  [ 70] getlocal 1
+  [ 72] add
+  [ 73] setlocal 1
+  [ 75] endrepeat [ 18]
+  [ 77] ret
+end
+
+on eventNotify me, theEvent
+  [  0] getprop 2606 ............................ <pEventsHere>
+  [  3] getparam 1 .............................. <theEvent>
+  [  5] pusharglist 2 ........................... <pEventsHere, theEvent>
+  [  7] objcall 109 ............................. <pEventsHere[theEvent]>
+  [  9] setlocal 0 .............................. eventList = pEventsHere[theEvent]
+  [ 11] getlocal 0 .............................. <eventList>
+  [ 13] pusharglist 0 ........................... <>
+  [ 15] extcall 166 ............................. <VOID>
+  [ 17] eq ...................................... <eventList = VOID>
+  [ 18] jmpifz [ 25] ............................ if eventList = VOID then
+  [ 21] pusharglistnoret 0 ...................... <>
+  [ 23] extcall 35 .............................. return 
+  [ 25] getlocal 0 .............................. <eventList>
+  [ 27] getobjprop 257 .......................... <eventList.count>
+  [ 30] setlocal 1 .............................. numInList = eventList.count
+  [ 32] getlocal 1 .............................. <numInList>
+  [ 34] setlocal 2
+  [ 36] getlocal 2
+  [ 38] pushint8 1 .............................. <1>
+  [ 40] gteq
+  [ 41] jmpifz [100] ............................ repeat with i = numInList down to 1
+  [ 44] getlocal 0 .............................. <eventList>
+  [ 46] getlocal 2 .............................. <i>
+  [ 48] pusharglist 2 ........................... <eventList, i>
+  [ 50] objcall 109 ............................. <eventList[i]>
+  [ 52] setlocal 3 .............................. eventNotify = eventList[i]
+  [ 54] getlocal 3 .............................. <eventNotify>
+  [ 56] getchainedprop 1088 ..................... <eventNotify.obj>
+  [ 59] getparam 1 .............................. <theEvent>
+  [ 61] getparam 0 .............................. <me>
+  [ 63] getobjprop 51 ........................... <me.big>
+  [ 65] pusharglistnoret 3 ...................... <eventNotify.obj, theEvent, me.big>
+  [ 67] objcall 568 ............................. eventNotify.obj.eventNotification(theEvent, me.big)
+  [ 70] getlocal 3 .............................. <eventNotify>
+  [ 72] getobjprop 2608 ......................... <eventNotify.frequency>
+  [ 75] pushsymb 628 ............................ <#once>
+  [ 78] eq ...................................... <eventNotify.frequency = #once>
+  [ 79] jmpifz [ 91] ............................ if eventNotify.frequency = #once then
+  [ 82] getlocal 0 .............................. <eventList>
+  [ 84] getlocal 2 .............................. <i>
+  [ 86] pusharglistnoret 2 ...................... <eventList, i>
+  [ 88] objcall 1087 ............................ eventList.deleteAt(i)
+  [ 91] pushint8 -1
+  [ 93] getlocal 2
+  [ 95] add
+  [ 96] setlocal 2
+  [ 98] endrepeat [ 36]
+  [100] ret
+end
+
+on internalEvent me, theEvent
+  [  0] ret
+end
+
+on keepMePosted me, theObj, theEvent, frequency
+  [  0] getparam 0 .............................. <me>
+  [  2] getprop 2605 ............................ <pEventsElsewhere>
+  [  5] getparam 1 .............................. <theObj>
+  [  7] getparam 2 .............................. <theEvent>
+  [  9] getparam 3 .............................. <frequency>
+  [ 11] pusharglistnoret 5 ...................... <me, pEventsElsewhere, theObj, theEvent, frequency>
+  [ 13] objcall 2601 ............................ me.appendEventNotify(pEventsElsewhere, theObj, theEvent, frequency)
+  [ 16] getparam 1 .............................. <theObj>
+  [ 18] getparam 0 .............................. <me>
+  [ 20] getobjprop 51 ........................... <me.big>
+  [ 22] getparam 2 .............................. <theEvent>
+  [ 24] getparam 3 .............................. <frequency>
+  [ 26] pusharglistnoret 4 ...................... <theObj, me.big, theEvent, frequency>
+  [ 28] objcall 2604 ............................ theObj.requestNotification(me.big, theEvent, frequency)
+  [ 31] ret
+end
+
+on requestNotification me, theObj, theEvent, frequency
+  [  0] getparam 0 .............................. <me>
+  [  2] getprop 2606 ............................ <pEventsHere>
+  [  5] getparam 1 .............................. <theObj>
+  [  7] getparam 2 .............................. <theEvent>
+  [  9] getparam 3 .............................. <frequency>
+  [ 11] pusharglistnoret 5 ...................... <me, pEventsHere, theObj, theEvent, frequency>
+  [ 13] objcall 2601 ............................ me.appendEventNotify(pEventsHere, theObj, theEvent, frequency)
+  [ 16] ret
+end

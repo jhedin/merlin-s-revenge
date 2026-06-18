@@ -1,0 +1,35 @@
+on CastGetListNames theCast
+  [  0] pusharglist 0 ........................... <[]>
+  [  2] pushlist ................................ <[]>
+  [  3] setlocal 0 .............................. thelist = []
+  [  5] getparam 0 .............................. <theCast>
+  [  7] pushint8 2 .............................. <2>
+  [  9] get 8 ................................... <the number of castMembers of castLib theCast>
+  [ 11] setlocal 1 .............................. nummem = the number of castMembers of castLib theCast
+  [ 13] pushint8 1 .............................. <1>
+  [ 15] setlocal 2
+  [ 17] getlocal 2
+  [ 19] getlocal 1 .............................. <nummem>
+  [ 21] lteq
+  [ 22] jmpifz [ 56] ............................ repeat with mem = 1 to nummem
+  [ 25] getlocal 2 .............................. <mem>
+  [ 27] getparam 0 .............................. <theCast>
+  [ 29] pusharglist 2 ........................... <mem, theCast>
+  [ 31] extcall 34 .............................. <member(mem, theCast)>
+  [ 33] setlocal 3 .............................. nextMem = member(mem, theCast)
+  [ 35] getlocal 0 .............................. <thelist>
+  [ 37] getlocal 2 .............................. <mem>
+  [ 39] getlocal 3 .............................. <nextMem>
+  [ 41] getobjprop 35 ........................... <nextMem.name>
+  [ 43] pusharglistnoret 3 ...................... <thelist, mem, nextMem.name>
+  [ 45] objcall 81 .............................. thelist[mem] = nextMem.name
+  [ 47] pushint8 1
+  [ 49] getlocal 2
+  [ 51] add
+  [ 52] setlocal 2
+  [ 54] endrepeat [ 17]
+  [ 56] getlocal 0 .............................. <thelist>
+  [ 58] pusharglistnoret 1 ...................... <thelist>
+  [ 60] extcall 3 ............................... return thelist
+  [ 62] ret
+end

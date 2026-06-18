@@ -1,0 +1,125 @@
+[#name: "saveMaster", #scriptType: #parent, #type: #script]
+-- this object is in charge of saving, loading and restoring games.
+-- supports one savegame per local computer
+
+global g
+global gGameSaveFile
+
+property pSaveVersion      -- the version of the save file, makes sure the game doesn't attempt to load an old version
+
+on new me
+  return me
+end
+
+on init me
+  pSaveVersion = 12
+end
+
+on finish me
+end
+
+on isLoadAvailable me
+  available = false
+  
+  sd = _player.getPref(gGameSaveFile)
+  if sd <> void then
+    sd = value(sd)
+    --available = true
+    if sd <> void then
+      if sd.ver = pSaveVersion then
+        return true  
+      end if
+    end if
+  end if
+  
+  return available
+end
+
+on loadGame me
+  sd = getPref(gGameSaveFile)
+  sd = value(sd)
+  
+  -- if there is no save game then exit
+  if sd = void then
+    return
+  end if
+  
+  currentMap = g.gameMaster.getCurrentMap()
+  currentMap.restoreFromSave(sd.currentMap)
+  g.potionMaster.restoreFromSave(sd.g_potionMaster)
+  g.soundMaster.restoreFromSave(sd.g_soundMaster)
+  g.armyMaster.restoreFromSave(sd.g_armyMaster)
+  
+  g.characterEnergyRollOverMaster.restoreFromSave()
+end
+
+on isMenuItemShadowed me, theComm
+  
+  case theComm of 
+    #loadGame:
+      if me.isLoadAvailable() then
+        shadowed = false
+      else
+        shadowed = true
+      end if
+      
+  end case
+  
+  return shadowed
+end
+
+on saveGame me
+  currentMap = g.gameMaster.getCurrentMap()
+  sd = [:]
+  
+  sd[#ver] = pSaveVersion
+  
+  -- currentMap
+  saveData = [:]
+  currentMap.addSaveData(saveData)
+  sd[#currentMap] = saveData
+  
+  -- potionMaster
+  saveData = [:]
+  g.potionMaster.addSaveData(saveData)
+  sd[#g_potionMaster] = saveData
+  
+  -- soundMaster
+  saveData = [:]
+  g.soundMaster.addSaveData(saveData)
+  sd[#g_soundMaster] = saveData
+  
+  -- armyMaster
+  saveData = [:]
+  g.armyMaster.addSaveData(saveData)
+  sd[#g_armyMaster] = saveData
+  
+  setPref(gGameSaveFile, string(sd))
+  if me.isLoadAvailable() <> true then
+    put("setPref failed")
+  end if
+end
+
+on start me
+end
+
+on stop me
+  me.finish()
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

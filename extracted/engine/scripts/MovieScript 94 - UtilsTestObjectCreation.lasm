@@ -1,0 +1,167 @@
+global g
+
+on UtilsTestObjectCreation me
+  [  0] pushint8 100 ............................ <100>
+  [  2] setlocal 0 .............................. qty = 100
+  [  4] getglobal 43 ............................ <g>
+  [  6] getobjprop 464 .......................... <g.profileMaster>
+  [  9] setlocal 1 .............................. pm = g.profileMaster
+  [ 11] getlocal 1 .............................. <pm>
+  [ 13] pushcons 0 .............................. <"Test Object Creation qty=">
+  [ 15] getlocal 0 .............................. <qty>
+  [ 17] joinstr ................................. <"Test Object Creation qty=" & qty>
+  [ 18] pusharglistnoret 2 ...................... <pm, "Test Object Creation qty=" & qty>
+  [ 20] objcall 474 ............................. pm.t("Test Object Creation qty=" & qty)
+  [ 23] pusharglist 0 ........................... <[]>
+  [ 25] pushlist ................................ <[]>
+  [ 26] setlocal 2 .............................. objs = []
+  [ 28] getlocal 1 .............................. <pm>
+  [ 30] pushsymb 475 ............................ <#create>
+  [ 33] pusharglistnoret 2 ...................... <pm, #create>
+  [ 35] objcall 476 ............................. pm.s(#create)
+  [ 38] pushint8 1 .............................. <1>
+  [ 40] setlocal 3
+  [ 42] getlocal 3
+  [ 44] getlocal 0 .............................. <qty>
+  [ 46] lteq
+  [ 47] jmpifz [116] ............................ repeat with i = 1 to qty
+  [ 50] getglobal 43 ............................ <g>
+  [ 52] getchainedprop 477 ...................... <g.actorMaster>
+  [ 55] pushsymb 478 ............................ <#newActor>
+  [ 58] pusharglist 2 ........................... <g.actorMaster, #newActor>
+  [ 60] objcall 479 ............................. <g.actorMaster.getParams(#newActor)>
+  [ 63] setlocal 4 .............................. params = g.actorMaster.getParams(#newActor)
+  [ 65] getlocal 4 .............................. <params>
+  [ 67] pushsymb 480 ............................ <#Spell>
+  [ 70] setobjprop 300 .......................... params.typ = #Spell
+  [ 73] getlocal 4 .............................. <params>
+  [ 75] pushint8 100 ............................ <100>
+  [ 77] pushint8 100 ............................ <100>
+  [ 79] pusharglist 2 ........................... <100, 100>
+  [ 81] extcall 97 .............................. <point(100, 100)>
+  [ 83] setobjprop 175 .......................... params.startLoc = point(100, 100)
+  [ 85] getglobal 43 ............................ <g>
+  [ 87] getchainedprop 477 ...................... <g.actorMaster>
+  [ 90] getlocal 4 .............................. <params>
+  [ 92] pusharglist 2 ........................... <g.actorMaster, params>
+  [ 94] objcall 478 ............................. <g.actorMaster.newActor(params)>
+  [ 97] setlocal 5 .............................. nObj = g.actorMaster.newActor(params)
+  [ 99] getlocal 2 .............................. <objs>
+  [101] getlocal 5 .............................. <nObj>
+  [103] pusharglistnoret 2 ...................... <objs, nObj>
+  [105] objcall 83 .............................. objs.append(nObj)
+  [107] pushint8 1
+  [109] getlocal 3
+  [111] add
+  [112] setlocal 3
+  [114] endrepeat [ 42]
+  [116] getlocal 1 .............................. <pm>
+  [118] pusharglistnoret 1 ...................... <pm>
+  [120] objcall 481 ............................. pm.f()
+  [123] getlocal 1 .............................. <pm>
+  [125] pushsymb 482 ............................ <#finish>
+  [128] pusharglistnoret 2 ...................... <pm, #finish>
+  [130] objcall 476 ............................. pm.s(#finish)
+  [133] getlocal 2 .............................. <objs>
+  [135] peek 0
+  [137] pusharglist 1
+  [139] extcall 17
+  [141] pushint8 1
+  [143] peek 0
+  [145] peek 2
+  [147] lteq
+  [148] jmpifz [173] ............................ repeat with nObj in objs
+  [151] peek 2
+  [153] peek 1
+  [155] pusharglist 2
+  [157] extcall 18
+  [159] setlocal 5
+  [161] getlocal 5 .............................. <nObj>
+  [163] pusharglistnoret 1 ...................... <nObj>
+  [165] objcall 482 ............................. nObj.finish()
+  [168] pushint8 1
+  [170] add
+  [171] endrepeat [143]
+  [173] pop 3
+  [175] getlocal 1 .............................. <pm>
+  [177] pusharglistnoret 1 ...................... <pm>
+  [179] objcall 481 ............................. pm.f()
+  [182] pusharglist 0 ........................... <[]>
+  [184] pushlist ................................ <[]>
+  [185] setlocal 2 .............................. objs = []
+  [187] getlocal 1 .............................. <pm>
+  [189] pushsymb 483 ............................ <#recreate>
+  [192] pusharglistnoret 2 ...................... <pm, #recreate>
+  [194] objcall 476 ............................. pm.s(#recreate)
+  [197] pushint8 1 .............................. <1>
+  [199] setlocal 3
+  [201] getlocal 3
+  [203] getlocal 0 .............................. <qty>
+  [205] lteq
+  [206] jmpifz [275] ............................ repeat with i = 1 to qty
+  [209] getglobal 43 ............................ <g>
+  [211] getchainedprop 477 ...................... <g.actorMaster>
+  [214] pushsymb 478 ............................ <#newActor>
+  [217] pusharglist 2 ........................... <g.actorMaster, #newActor>
+  [219] objcall 479 ............................. <g.actorMaster.getParams(#newActor)>
+  [222] setlocal 4 .............................. params = g.actorMaster.getParams(#newActor)
+  [224] getlocal 4 .............................. <params>
+  [226] pushsymb 480 ............................ <#Spell>
+  [229] setobjprop 300 .......................... params.typ = #Spell
+  [232] getlocal 4 .............................. <params>
+  [234] pushint8 100 ............................ <100>
+  [236] pushint8 100 ............................ <100>
+  [238] pusharglist 2 ........................... <100, 100>
+  [240] extcall 97 .............................. <point(100, 100)>
+  [242] setobjprop 175 .......................... params.startLoc = point(100, 100)
+  [244] getglobal 43 ............................ <g>
+  [246] getchainedprop 477 ...................... <g.actorMaster>
+  [249] getlocal 4 .............................. <params>
+  [251] pusharglist 2 ........................... <g.actorMaster, params>
+  [253] objcall 478 ............................. <g.actorMaster.newActor(params)>
+  [256] setlocal 5 .............................. nObj = g.actorMaster.newActor(params)
+  [258] getlocal 2 .............................. <objs>
+  [260] getlocal 5 .............................. <nObj>
+  [262] pusharglistnoret 2 ...................... <objs, nObj>
+  [264] objcall 83 .............................. objs.append(nObj)
+  [266] pushint8 1
+  [268] getlocal 3
+  [270] add
+  [271] setlocal 3
+  [273] endrepeat [201]
+  [275] getlocal 1 .............................. <pm>
+  [277] pusharglistnoret 1 ...................... <pm>
+  [279] objcall 481 ............................. pm.f()
+  [282] getlocal 1 .............................. <pm>
+  [284] pushsymb 484 ............................ <#finishSecond>
+  [287] pusharglistnoret 2 ...................... <pm, #finishSecond>
+  [289] objcall 476 ............................. pm.s(#finishSecond)
+  [292] getlocal 2 .............................. <objs>
+  [294] peek 0
+  [296] pusharglist 1
+  [298] extcall 17
+  [300] pushint8 1
+  [302] peek 0
+  [304] peek 2
+  [306] lteq
+  [307] jmpifz [332] ............................ repeat with nObj in objs
+  [310] peek 2
+  [312] peek 1
+  [314] pusharglist 2
+  [316] extcall 18
+  [318] setlocal 5
+  [320] getlocal 5 .............................. <nObj>
+  [322] pusharglistnoret 1 ...................... <nObj>
+  [324] objcall 482 ............................. nObj.finish()
+  [327] pushint8 1
+  [329] add
+  [330] endrepeat [302]
+  [332] pop 3
+  [334] getlocal 1 .............................. <pm>
+  [336] pusharglistnoret 1 ...................... <pm>
+  [338] objcall 481 ............................. pm.f()
+  [341] getlocal 1 .............................. <pm>
+  [343] pusharglistnoret 1 ...................... <pm>
+  [345] objcall 396 ............................. pm.w()
+  [348] ret
+end

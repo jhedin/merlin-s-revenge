@@ -1,0 +1,164 @@
+property ancestor, pFlapFrame, pJumpType
+
+on new me
+  [  0] pushcons 0 .............................. <"objEnemyCharacter">
+  [  2] pusharglist 1 ........................... <"objEnemyCharacter">
+  [  4] extcall 27 .............................. <script("objEnemyCharacter")>
+  [  6] pusharglist 1 ........................... <script("objEnemyCharacter")>
+  [  8] extcall 0 ............................... <new(script("objEnemyCharacter"))>
+  [ 10] setprop 77 .............................. ancestor = new(script("objEnemyCharacter"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 140 ............................ <#pParams>
+  [ 16] pushsymb 1 .............................. <#init>
+  [ 18] pusharglist 3 ........................... <me, #pParams, #init>
+  [ 20] objcall 209 ............................. <me.pParams[#init]>
+  [ 22] setlocal 0 .............................. i = me.pParams[#init]
+  [ 24] getlocal 0 .............................. <i>
+  [ 26] pushsymb 1475 ........................... <#flapFrame>
+  [ 29] pushint8 3 .............................. <3>
+  [ 31] pusharglistnoret 3 ...................... <i, #flapFrame, 3>
+  [ 33] objcall 37 .............................. i[#flapFrame] = 3
+  [ 35] getlocal 0 .............................. <i>
+  [ 37] pushsymb 1476 ........................... <#jumpType>
+  [ 40] pushsymb 1381 ........................... <#jump>
+  [ 43] pusharglistnoret 3 ...................... <i, #jumpType, #jump>
+  [ 45] objcall 37 .............................. i[#jumpType] = #jump
+  [ 47] getparam 0 .............................. <me>
+  [ 49] pusharglistnoret 1 ...................... <me>
+  [ 51] extcall 17 .............................. return me
+  [ 53] ret
+end
+
+on init me, params
+  [  0] getprop 77 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 1475 ......................... <params.flapFrame>
+  [ 13] setprop 1477 ............................ pFlapFrame = params.flapFrame
+  [ 16] getparam 1 .............................. <params>
+  [ 18] getobjprop 1476 ......................... <params.jumpType>
+  [ 21] setprop 1478 ............................ pJumpType = params.jumpType
+  [ 24] ret
+end
+
+on doJump me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 67 ....................... <me.id>
+  [  4] getchainedprop 66 ....................... <me.id.bigMe>
+  [  6] pushsymb 22 ............................. <#none>
+  [  8] pusharglist 2 ........................... <me.id.bigMe, #none>
+  [ 10] objcall 803 ............................. <me.id.bigMe.getAnimSym(#none)>
+  [ 13] setlocal 0 .............................. animSym = me.id.bigMe.getAnimSym(#none)
+  [ 15] getlocal 0 .............................. <animSym>
+  [ 17] peek 0 .................................. case animSym of
+  [ 19] pushsymb 263 ............................ <#fly>
+  [ 22] eq
+  [ 23] jmpifz [ 56] ............................ (case) #fly:
+  [ 26] getparam 0 .............................. <me>
+  [ 28] pusharglist 1 ........................... <me>
+  [ 30] objcall 400 ............................. <me.getAnimFrame()>
+  [ 33] getprop 1477 ............................ <pFlapFrame>
+  [ 36] eq ...................................... <me.getAnimFrame() = pFlapFrame>
+  [ 37] jmpifz [ 53] ............................ if me.getAnimFrame() = pFlapFrame then
+  [ 40] getparam 0 .............................. <me>
+  [ 42] getchainedprop 67 ....................... <me.id>
+  [ 44] getchainedprop 66 ....................... <me.id.bigMe>
+  [ 46] getprop 1478 ............................ <pJumpType>
+  [ 49] pusharglistnoret 2 ...................... <me.id.bigMe, pJumpType>
+  [ 51] objcall 76 .............................. me.id.bigMe.goMode(pJumpType)
+  [ 53] jmp [ 78]
+  [ 56] peek 0
+  [ 58] pushsymb 1479 ........................... <#glide>
+  [ 61] eq
+  [ 62] jmpifz [ 78] ............................ (case) #glide:
+  [ 65] getparam 0 .............................. <me>
+  [ 67] getchainedprop 67 ....................... <me.id>
+  [ 69] getchainedprop 66 ....................... <me.id.bigMe>
+  [ 71] pushsymb 1381 ........................... <#jump>
+  [ 74] pusharglistnoret 2 ...................... <me.id.bigMe, #jump>
+  [ 76] objcall 76 .............................. me.id.bigMe.goMode(#jump)
+  [ 78] pop 1 ................................... end case
+  [ 80] ret
+end
+
+on getAnimSym me, sym
+  [  0] getparam 1 .............................. <sym>
+  [  2] pushsymb 22 ............................. <#none>
+  [  4] eq ...................................... <sym = #none>
+  [  5] jmpifz [ 14] ............................ if sym = #none then
+  [  8] getparam 0 .............................. <me>
+  [ 10] getobjprop 83 ........................... <me.pmode>
+  [ 12] setparam 1 .............................. sym = me.pmode
+  [ 14] getparam 1 .............................. <sym>
+  [ 16] peek 0 .................................. case sym of
+  [ 18] pushsymb 1381 ........................... <#jump>
+  [ 21] nteq
+  [ 22] jmpifz [ 52] ............................ (case) #jump, ...
+  [ 25] peek 0
+  [ 27] pushsymb 395 ............................ <#landed>
+  [ 30] nteq
+  [ 31] jmpifz [ 52] ............................ (case) ..., #landed, ...
+  [ 34] peek 0
+  [ 36] pushsymb 378 ............................ <#walk>
+  [ 39] nteq
+  [ 40] jmpifz [ 52] ............................ (case) ..., #walk, ...
+  [ 43] peek 0
+  [ 45] pushsymb 1481 ........................... <#lift>
+  [ 48] eq
+  [ 49] jmpifz [ 60] ............................ (case) ..., #lift:
+  [ 52] pushsymb 263 ............................ <#fly>
+  [ 55] setparam 1 .............................. sym = #fly
+  [ 57] jmp [ 74]
+  [ 60] peek 0
+  [ 62] pushsymb 1316 ........................... <#fall>
+  [ 65] eq
+  [ 66] jmpifz [ 74] ............................ (case) #fall:
+  [ 69] pushsymb 1479 ........................... <#glide>
+  [ 72] setparam 1 .............................. sym = #glide
+  [ 74] pop 1 ................................... end case
+  [ 76] getprop 77 .............................. <ancestor>
+  [ 78] getparam 1 .............................. <sym>
+  [ 80] pusharglist 2 ........................... <ancestor, sym>
+  [ 82] objcall 803 ............................. <ancestor.getAnimSym(sym)>
+  [ 85] pusharglistnoret 1 ...................... <ancestor.getAnimSym(sym)>
+  [ 87] extcall 17 .............................. return ancestor.getAnimSym(sym)
+  [ 89] ret
+end
+
+on goMode me, newMode
+  [  0] getparam 1 .............................. <newMode>
+  [  2] peek 0 .................................. case newMode of
+  [  4] pushsymb 364 ............................ <#reel_fly>
+  [  7] eq
+  [  8] jmpifz [ 21] ............................ (case) #reel_fly:
+  [ 11] getparam 0 .............................. <me>
+  [ 13] pusharglistnoret 1 ...................... <me>
+  [ 15] objcall 756 ............................. me.frictionYOff()
+  [ 18] jmp [ 64]
+  [ 21] peek 0
+  [ 23] pushsymb 365 ............................ <#reel_landed>
+  [ 26] eq
+  [ 27] jmpifz [ 40] ............................ (case) #reel_landed:
+  [ 30] getparam 0 .............................. <me>
+  [ 32] pusharglistnoret 1 ...................... <me>
+  [ 34] objcall 757 ............................. me.frictionYOn()
+  [ 37] jmp [ 64]
+  [ 40] peek 0
+  [ 42] pushsymb 1481 ........................... <#lift>
+  [ 45] eq
+  [ 46] jmpifz [ 64] ............................ (case) #lift:
+  [ 49] getparam 0 .............................. <me>
+  [ 51] getchainedprop 786 ...................... <me.pMoveXY>
+  [ 54] getparam 0 .............................. <me>
+  [ 56] getobjprop 1379 ......................... <me.pJumpPower>
+  [ 59] pusharglistnoret 2 ...................... <me.pMoveXY, me.pJumpPower>
+  [ 61] objcall 875 ............................. me.pMoveXY.addVectY(me.pJumpPower)
+  [ 64] pop 1 ................................... end case
+  [ 66] getprop 77 .............................. <ancestor>
+  [ 68] getparam 1 .............................. <newMode>
+  [ 70] pusharglistnoret 2 ...................... <ancestor, newMode>
+  [ 72] objcall 76 .............................. ancestor.goMode(newMode)
+  [ 74] ret
+end

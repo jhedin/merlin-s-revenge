@@ -1,0 +1,116 @@
+property ancestor, pRoom, pType
+
+on new me
+  [  0] pushcons 0 .............................. <"objTileMap">
+  [  2] pusharglist 1 ........................... <"objTileMap">
+  [  4] extcall 27 .............................. <script("objTileMap")>
+  [  6] pusharglist 1 ........................... <script("objTileMap")>
+  [  8] extcall 0 ............................... <new(script("objTileMap"))>
+  [ 10] setprop 77 .............................. ancestor = new(script("objTileMap"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 221 ............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 954 ............................ <#room>
+  [ 27] pushsymb 22 ............................. <#none>
+  [ 29] pusharglistnoret 3 ...................... <i, #room, #none>
+  [ 31] objcall 37 .............................. i[#room] = #none
+  [ 33] getlocal 0 .............................. <i>
+  [ 35] pushsymb 997 ............................ <#roomTileSets>
+  [ 38] pushsymb 22 ............................. <#none>
+  [ 40] pusharglistnoret 3 ...................... <i, #roomTileSets, #none>
+  [ 42] objcall 37 .............................. i[#roomTileSets] = #none
+  [ 44] getlocal 0 .............................. <i>
+  [ 46] pushsymb 379 ............................ <#type>
+  [ 49] pushsymb 22 ............................. <#none>
+  [ 51] pusharglistnoret 3 ...................... <i, #type, #none>
+  [ 53] objcall 37 .............................. i[#type] = #none
+  [ 55] getparam 0 .............................. <me>
+  [ 57] pusharglistnoret 1 ...................... <me>
+  [ 59] extcall 17 .............................. return me
+  [ 61] ret
+end
+
+on init me, params
+  [  0] getparam 1 .............................. <params>
+  [  2] getobjprop 954 .......................... <params.room>
+  [  5] setprop 1395 ............................ pRoom = params.room
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 379 .......................... <params.type>
+  [ 13] setprop 1314 ............................ pType = params.type
+  [ 16] getparam 1 .............................. <params>
+  [ 18] getparam 1 .............................. <params>
+  [ 20] pushsymb 997 ............................ <#roomTileSets>
+  [ 23] getprop 1314 ............................ <pType>
+  [ 26] pusharglist 3 ........................... <params, #roomTileSets, pType>
+  [ 28] objcall 209 ............................. <params.roomTileSets[pType]>
+  [ 30] setobjprop 532 .......................... params.tileSet = params.roomTileSets[pType]
+  [ 33] getprop 77 .............................. <ancestor>
+  [ 35] getparam 1 .............................. <params>
+  [ 37] pusharglistnoret 2 ...................... <ancestor, params>
+  [ 39] objcall 1 ............................... ancestor.init(params)
+  [ 41] getprop 1314 ............................ <pType>
+  [ 44] pushsymb 993 ............................ <#backgroundPassive>
+  [ 47] eq ...................................... <pType = #backgroundPassive>
+  [ 48] jmpifz [ 70] ............................ if pType = #backgroundPassive then
+  [ 51] getparam 0 .............................. <me>
+  [ 53] pushsymb 1031 ........................... <#useFastQuads>
+  [ 56] pushint8 1 .............................. <1>
+  [ 58] pushsymb 307 ............................ <#ink>
+  [ 61] pushzero ................................ <0>
+  [ 62] pusharglist 4 ........................... <[#useFastQuads: 1, #ink: 0]>
+  [ 64] pushproplist ............................ <[#useFastQuads: 1, #ink: 0]>
+  [ 65] pusharglistnoret 2 ...................... <me, [#useFastQuads: 1, #ink: 0]>
+  [ 67] objcall 1144 ............................ me.setCopyPixelsParams([#useFastQuads: 1, #ink: 0])
+  [ 70] ret
+end
+
+on calcZones me
+  [  0] ret
+end
+
+on getType me
+  [  0] getprop 1314 ............................ <pType>
+  [  3] pusharglistnoret 1 ...................... <pType>
+  [  5] extcall 17 .............................. return pType
+  [  7] ret
+end
+
+on getZones me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 1393 ............................ <me.calcZones()>
+  [  7] setlocal 0 .............................. zones = me.calcZones()
+  [  9] getlocal 0 .............................. <zones>
+  [ 11] pusharglistnoret 1 ...................... <zones>
+  [ 13] extcall 17 .............................. return zones
+  [ 15] ret
+end
+
+on saveLayer me
+  [  0] pusharglist 0 ........................... <[:]>
+  [  2] pushproplist ............................ <[:]>
+  [  3] setlocal 0 .............................. myProps = [:]
+  [  5] getlocal 0 .............................. <myProps>
+  [  7] pushsymb 94 ............................. <#name>
+  [  9] getprop 1314 ............................ <pType>
+  [ 12] pusharglistnoret 3 ...................... <myProps, #name, pType>
+  [ 14] objcall 37 .............................. myProps[#name] = pType
+  [ 16] getlocal 0 .............................. <myProps>
+  [ 18] pushsymb 254 ............................ <#map>
+  [ 20] getparam 0 .............................. <me>
+  [ 22] pusharglist 1 ........................... <me>
+  [ 24] objcall 1065 ............................ <me.getMap()>
+  [ 27] pusharglistnoret 3 ...................... <myProps, #map, me.getMap()>
+  [ 29] objcall 37 .............................. myProps[#map] = me.getMap()
+  [ 31] getlocal 0 .............................. <myProps>
+  [ 33] pusharglistnoret 1 ...................... <myProps>
+  [ 35] extcall 17 .............................. return myProps
+  [ 37] ret
+end
+
+on startObjects me
+  [  0] ret
+end

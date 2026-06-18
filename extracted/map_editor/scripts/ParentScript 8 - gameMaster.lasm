@@ -1,0 +1,75 @@
+property pActorList
+global g
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 12 .............................. return me
+  [  6] ret
+end
+
+on init me
+  [  0] ret
+end
+
+on gameOver me
+  [  0] getglobal 21 ............................ <g>
+  [  2] getchainedprop 297 ...................... <g.actorMaster>
+  [  5] pusharglistnoret 1 ...................... <g.actorMaster>
+  [  7] objcall 298 ............................. g.actorMaster.finishActors()
+  [ 10] getglobal 21 ............................ <g>
+  [ 12] getchainedprop 299 ...................... <g.EnemyEnergyMaster>
+  [ 15] pusharglistnoret 1 ...................... <g.EnemyEnergyMaster>
+  [ 17] objcall 2 ............................... g.EnemyEnergyMaster.finish()
+  [ 19] getglobal 21 ............................ <g>
+  [ 21] getchainedprop 290 ...................... <g.screenMaster>
+  [ 24] pushsymb 234 ............................ <#goScreen>
+  [ 26] pusharglist 2 ........................... <g.screenMaster, #goScreen>
+  [ 28] objcall 215 ............................. <g.screenMaster.getParams(#goScreen)>
+  [ 30] setlocal 0 .............................. params = g.screenMaster.getParams(#goScreen)
+  [ 32] getlocal 0 .............................. <params>
+  [ 34] getparam 0 .............................. <me>
+  [ 36] setobjprop 248 .......................... params.caller = me
+  [ 38] getlocal 0 .............................. <params>
+  [ 40] pushsymb 291 ............................ <#titleScreen>
+  [ 43] setobjprop 245 .......................... params.screenSym = #titleScreen
+  [ 45] getlocal 0 .............................. <params>
+  [ 47] pushsymb 292 ............................ <#fade>
+  [ 50] setobjprop 246 .......................... params.transition = #fade
+  [ 52] getglobal 21 ............................ <g>
+  [ 54] getchainedprop 290 ...................... <g.screenMaster>
+  [ 57] getlocal 0 .............................. <params>
+  [ 59] pusharglistnoret 2 ...................... <g.screenMaster, params>
+  [ 61] objcall 234 ............................. g.screenMaster.goScreen(params)
+  [ 63] ret
+end
+
+on goScreenFinished me
+  [  0] ret
+end
+
+on start me
+  [  0] getglobal 21 ............................ <g>
+  [  2] getchainedprop 297 ...................... <g.actorMaster>
+  [  5] pusharglistnoret 1 ...................... <g.actorMaster>
+  [  7] objcall 3 ............................... g.actorMaster.start()
+  [  9] getglobal 21 ............................ <g>
+  [ 11] getchainedprop 284 ...................... <g.updater>
+  [ 14] getparam 0 .............................. <me>
+  [ 16] pushsymb 300 ............................ <#med>
+  [ 19] pusharglistnoret 3 ...................... <g.updater, me, #med>
+  [ 21] objcall 286 ............................. g.updater.addPrg(me, #med)
+  [ 24] ret
+end
+
+on update me
+  [  0] getglobal 21 ............................ <g>
+  [  2] getchainedprop 301 ...................... <g.keyMaster>
+  [  5] pusharglistnoret 1 ...................... <g.keyMaster>
+  [  7] objcall 302 ............................. g.keyMaster.checkKeys()
+  [ 10] ret
+end
+
+on stop me
+  [  0] ret
+end

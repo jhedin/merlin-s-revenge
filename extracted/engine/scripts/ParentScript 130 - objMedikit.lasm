@@ -1,0 +1,28 @@
+property ancestor
+
+on new me
+  [  0] pushcons 0 .............................. <"objPowerUpWriting">
+  [  2] pusharglist 1 ........................... <"objPowerUpWriting">
+  [  4] extcall 34 .............................. <script("objPowerUpWriting")>
+  [  6] pusharglist 1 ........................... <script("objPowerUpWriting")>
+  [  8] extcall 0 ............................... <new(script("objPowerUpWriting"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objPowerUpWriting"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on collected me, collector
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <collector>
+  [  4] pusharglistnoret 2 ...................... <ancestor, collector>
+  [  6] objcall 1790 ............................ ancestor.collected(collector)
+  [  9] getparam 1 .............................. <collector>
+  [ 11] getparam 0 .............................. <me>
+  [ 13] pusharglist 1 ........................... <me>
+  [ 15] objcall 1722 ............................ <me.getCharacter()>
+  [ 18] pusharglistnoret 2 ...................... <collector, me.getCharacter()>
+  [ 20] objcall 774 ............................. collector.medikitCollected(me.getCharacter())
+  [ 23] ret
+end

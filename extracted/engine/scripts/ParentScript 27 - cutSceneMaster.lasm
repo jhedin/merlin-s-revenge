@@ -1,0 +1,739 @@
+property ancestor, pBackgroundMember, pBackground, pBackgroundRandomFlashDefaultSpeed, pBackgroundRandomFlashSpeed, pEnvironment, pmode, pScene, pScriptToPerform, pScriptPerformer, pSetSceneColour, pSpeechGap, pStageFloor, pStageFloorHeight, pStageRect, pTitleMember, pTitle, pWaitTimer
+global g, gCutSceneSpeechLayer, gErrorTrace
+
+on new me
+  [  0] pushcons 0 .............................. <"objEventNotify">
+  [  2] pusharglist 1 ........................... <"objEventNotify">
+  [  4] extcall 1256 ............................ <script("objEventNotify")>
+  [  7] pusharglist 1 ........................... <script("objEventNotify")>
+  [  9] extcall 0 ............................... <new(script("objEventNotify"))>
+  [ 11] setprop 1255 ............................ ancestor = new(script("objEventNotify"))
+  [ 14] getparam 0 .............................. <me>
+  [ 16] pusharglistnoret 1 ...................... <me>
+  [ 18] extcall 3 ............................... return me
+  [ 20] ret
+end
+
+on init me
+  [  0] getprop 1255 ............................ <ancestor>
+  [  3] pusharglistnoret 1 ...................... <ancestor>
+  [  5] objcall 1 ............................... ancestor.init()
+  [  7] getparam 0 .............................. <me>
+  [  9] pushsymb 1257 ........................... <#id>
+  [ 12] pushsymb 1258 ........................... <#master>
+  [ 15] getparam 0 .............................. <me>
+  [ 17] pusharglistnoret 4 ...................... <me, #id, #master, me>
+  [ 19] objcall 341 ............................. me.id[#master] = me
+  [ 22] getparam 0 .............................. <me>
+  [ 24] getparam 0 .............................. <me>
+  [ 26] setobjprop 1259 ......................... me.big = me
+  [ 29] pushsymb 103 ............................ <#none>
+  [ 31] setprop 1260 ............................ pBackground = #none
+  [ 34] pushcons 1 .............................. <"cutSceneStage">
+  [ 36] pushcons 2 .............................. <"gfx">
+  [ 38] pusharglist 2 ........................... <"cutSceneStage", "gfx">
+  [ 40] extcall 193 ............................. <member("cutSceneStage", "gfx")>
+  [ 42] setprop 1261 ............................ pBackgroundMember = member("cutSceneStage", "gfx")
+  [ 45] pushint8 10 ............................. <10>
+  [ 47] setprop 1262 ............................ pBackgroundRandomFlashDefaultSpeed = 10
+  [ 50] getprop 1262 ............................ <pBackgroundRandomFlashDefaultSpeed>
+  [ 53] setprop 1263 ............................ pBackgroundRandomFlashSpeed = pBackgroundRandomFlashDefaultSpeed
+  [ 56] pushsymb 1265 ........................... <#cutscene>
+  [ 59] setprop 1264 ............................ pEnvironment = #cutscene
+  [ 62] pushsymb 103 ............................ <#none>
+  [ 64] setprop 1266 ............................ pmode = #none
+  [ 67] pushsymb 103 ............................ <#none>
+  [ 69] setprop 1267 ............................ pScriptToPerform = #none
+  [ 72] pushsymb 103 ............................ <#none>
+  [ 74] setprop 615 ............................. pScriptPerformer = #none
+  [ 77] pushzero ................................ <0>
+  [ 78] pushzero ................................ <0>
+  [ 79] pushzero ................................ <0>
+  [ 80] pusharglist 3 ........................... <0, 0, 0>
+  [ 82] extcall 106 ............................. <rgb(0, 0, 0)>
+  [ 84] setprop 1268 ............................ pSetSceneColour = rgb(0, 0, 0)
+  [ 87] pushint8 4 .............................. <4>
+  [ 89] setprop 1269 ............................ pSpeechGap = 4
+  [ 92] pushsymb 103 ............................ <#none>
+  [ 94] setprop 1270 ............................ pStageFloor = #none
+  [ 97] pushint8 16 ............................. <16>
+  [ 99] setprop 1271 ............................ pStageFloorHeight = 16
+  [102] pushsymb 103 ............................ <#none>
+  [104] setprop 1272 ............................ pStageRect = #none
+  [107] pushsymb 103 ............................ <#none>
+  [109] setprop 1178 ............................ pTitle = #none
+  [112] pushcons 3 .............................. <"cutSceneTitle">
+  [114] pushcons 2 .............................. <"gfx">
+  [116] pusharglist 2 ........................... <"cutSceneTitle", "gfx">
+  [118] extcall 193 ............................. <member("cutSceneTitle", "gfx")>
+  [120] setprop 1273 ............................ pTitleMember = member("cutSceneTitle", "gfx")
+  [123] pushsymb 103 ............................ <#none>
+  [125] setprop 1274 ............................ pWaitTimer = #none
+  [128] ret
+end
+
+on objFree me
+  [  0] ret
+end
+
+on finish me
+  [  0] getprop 1255 ............................ <ancestor>
+  [  3] pusharglistnoret 1 ...................... <ancestor>
+  [  5] objcall 239 ............................. ancestor.finish()
+  [  7] getprop 1178 ............................ <pTitle>
+  [ 10] pusharglist 1 ........................... <pTitle>
+  [ 12] extcall 350 ............................. <ilk(pTitle)>
+  [ 15] pushsymb 388 ............................ <#void>
+  [ 18] nteq .................................... <ilk(pTitle) <> #void>
+  [ 19] getprop 1178 ............................ <pTitle>
+  [ 22] pushsymb 103 ............................ <#none>
+  [ 24] nteq .................................... <pTitle <> #none>
+  [ 25] and ..................................... <(ilk(pTitle) <> #void) and (pTitle <> #none)>
+  [ 26] jmpifz [ 41] ............................ if (ilk(pTitle) <> #void) and (pTitle <> #none) then
+  [ 29] getprop 1178 ............................ <pTitle>
+  [ 32] pusharglistnoret 1 ...................... <pTitle>
+  [ 34] objcall 239 ............................. pTitle.finish()
+  [ 36] pushsymb 103 ............................ <#none>
+  [ 38] setprop 1178 ............................ pTitle = #none
+  [ 41] getparam 0 .............................. <me>
+  [ 43] pusharglistnoret 1 ...................... <me>
+  [ 45] objcall 1231 ............................ me.clearStage()
+  [ 48] getprop 1260 ............................ <pBackground>
+  [ 51] pusharglist 1 ........................... <pBackground>
+  [ 53] extcall 350 ............................. <ilk(pBackground)>
+  [ 56] pushsymb 388 ............................ <#void>
+  [ 59] nteq .................................... <ilk(pBackground) <> #void>
+  [ 60] getprop 1260 ............................ <pBackground>
+  [ 63] pushsymb 103 ............................ <#none>
+  [ 65] nteq .................................... <pBackground <> #none>
+  [ 66] and ..................................... <(ilk(pBackground) <> #void) and (pBackground <> #none)>
+  [ 67] jmpifz [ 82] ............................ if (ilk(pBackground) <> #void) and (pBackground <> #none) then
+  [ 70] getprop 1260 ............................ <pBackground>
+  [ 73] pusharglistnoret 1 ...................... <pBackground>
+  [ 75] objcall 239 ............................. pBackground.finish()
+  [ 77] pushsymb 103 ............................ <#none>
+  [ 79] setprop 1260 ............................ pBackground = #none
+  [ 82] pushsymb 103 ............................ <#none>
+  [ 84] setprop 1267 ............................ pScriptToPerform = #none
+  [ 87] getprop 615 ............................. <pScriptPerformer>
+  [ 90] pusharglist 1 ........................... <pScriptPerformer>
+  [ 92] extcall 350 ............................. <ilk(pScriptPerformer)>
+  [ 95] pushsymb 388 ............................ <#void>
+  [ 98] nteq .................................... <ilk(pScriptPerformer) <> #void>
+  [ 99] getprop 615 ............................. <pScriptPerformer>
+  [102] pushsymb 103 ............................ <#none>
+  [104] nteq .................................... <pScriptPerformer <> #none>
+  [105] and ..................................... <(ilk(pScriptPerformer) <> #void) and (pScriptPerformer <> #none)>
+  [106] jmpifz [121] ............................ if (ilk(pScriptPerformer) <> #void) and (pScriptPerformer <> #none) then
+  [109] getprop 615 ............................. <pScriptPerformer>
+  [112] pusharglistnoret 1 ...................... <pScriptPerformer>
+  [114] objcall 239 ............................. pScriptPerformer.finish()
+  [116] pushsymb 103 ............................ <#none>
+  [118] setprop 615 ............................. pScriptPerformer = #none
+  [121] getparam 0 .............................. <me>
+  [123] pusharglistnoret 1 ...................... <me>
+  [125] objcall 1229 ............................ me.cancelWaitTimer()
+  [128] ret
+end
+
+on acquireBackground me
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 496 ...................... <g.spriteMaster>
+  [  5] getprop 1261 ............................ <pBackgroundMember>
+  [  8] pusharglist 2 ........................... <g.spriteMaster, pBackgroundMember>
+  [ 10] objcall 313 ............................. <g.spriteMaster.getSpriteWithMember(pBackgroundMember)>
+  [ 13] setlocal 0 .............................. backgroundSprite = g.spriteMaster.getSpriteWithMember(pBackgroundMember)
+  [ 15] getlocal 0 .............................. <backgroundSprite>
+  [ 17] pushsymb 103 ............................ <#none>
+  [ 19] nteq .................................... <backgroundSprite <> #none>
+  [ 20] jmpifz [ 82] ............................ if backgroundSprite <> #none then / else
+  [ 23] getglobal 191 ........................... <g>
+  [ 25] getchainedprop 336 ...................... <g.objectMaster>
+  [ 28] pushsymb 1275 ........................... <#objCutSceneBackground>
+  [ 31] pusharglist 2 ........................... <g.objectMaster, #objCutSceneBackground>
+  [ 33] objcall 338 ............................. <g.objectMaster.requestObject(#objCutSceneBackground)>
+  [ 36] setprop 1260 ............................ pBackground = g.objectMaster.requestObject(#objCutSceneBackground)
+  [ 39] getprop 1260 ............................ <pBackground>
+  [ 42] pushsymb 1 .............................. <#init>
+  [ 44] pusharglist 2 ........................... <pBackground, #init>
+  [ 46] objcall 339 ............................. <pBackground.getParams(#init)>
+  [ 49] setlocal 1 .............................. params = pBackground.getParams(#init)
+  [ 51] getlocal 1 .............................. <params>
+  [ 53] getlocal 0 .............................. <backgroundSprite>
+  [ 55] setobjprop 344 .......................... params.spr = backgroundSprite
+  [ 58] getprop 1260 ............................ <pBackground>
+  [ 61] getlocal 1 .............................. <params>
+  [ 63] pusharglistnoret 2 ...................... <pBackground, params>
+  [ 65] objcall 1 ............................... pBackground.init(params)
+  [ 67] getlocal 0 .............................. <backgroundSprite>
+  [ 69] getchainedprop 200 ...................... <backgroundSprite.rect>
+  [ 71] pusharglist 1 ........................... <backgroundSprite.rect>
+  [ 73] objcall 302 ............................. <backgroundSprite.rect.duplicate()>
+  [ 76] setprop 1272 ............................ pStageRect = backgroundSprite.rect.duplicate()
+  [ 79] jmp [104]
+  [ 82] getglobal 191 ........................... <g>
+  [ 84] getchainedprop 735 ...................... <g.gamemaster>
+  [ 87] pusharglist 1 ........................... <g.gamemaster>
+  [ 89] objcall 597 ............................. <g.gamemaster.getCurrentMap()>
+  [ 92] setlocal 2 .............................. currentMap = g.gamemaster.getCurrentMap()
+  [ 94] getlocal 2 .............................. <currentMap>
+  [ 96] pusharglist 1 ........................... <currentMap>
+  [ 98] objcall 738 ............................. <currentMap.getSpriteRect()>
+  [101] setprop 1272 ............................ pStageRect = currentMap.getSpriteRect()
+  [104] getprop 1272 ............................ <pStageRect>
+  [107] getobjprop 169 .......................... <pStageRect.bottom>
+  [109] getprop 1271 ............................ <pStageFloorHeight>
+  [112] sub ..................................... <pStageRect.bottom - pStageFloorHeight>
+  [113] setprop 1270 ............................ pStageFloor = pStageRect.bottom - pStageFloorHeight
+  [116] ret
+end
+
+on acquireSprites me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 1221 ............................ me.acquireBackground()
+  [  7] getparam 0 .............................. <me>
+  [  9] pusharglistnoret 1 ...................... <me>
+  [ 11] objcall 1223 ............................ me.acquireTitle()
+  [ 14] ret
+end
+
+on acquireTitle me
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 496 ...................... <g.spriteMaster>
+  [  5] getprop 1273 ............................ <pTitleMember>
+  [  8] pusharglist 2 ........................... <g.spriteMaster, pTitleMember>
+  [ 10] objcall 313 ............................. <g.spriteMaster.getSpriteWithMember(pTitleMember)>
+  [ 13] setlocal 0 .............................. titleSprite = g.spriteMaster.getSpriteWithMember(pTitleMember)
+  [ 15] getlocal 0 .............................. <titleSprite>
+  [ 17] pushsymb 103 ............................ <#none>
+  [ 19] nteq .................................... <titleSprite <> #none>
+  [ 20] jmpifz [ 75] ............................ if titleSprite <> #none then
+  [ 23] getglobal 191 ........................... <g>
+  [ 25] getchainedprop 336 ...................... <g.objectMaster>
+  [ 28] pushsymb 1277 ........................... <#objCutSceneTitle>
+  [ 31] pusharglist 2 ........................... <g.objectMaster, #objCutSceneTitle>
+  [ 33] objcall 338 ............................. <g.objectMaster.requestObject(#objCutSceneTitle)>
+  [ 36] setprop 1178 ............................ pTitle = g.objectMaster.requestObject(#objCutSceneTitle)
+  [ 39] getprop 1178 ............................ <pTitle>
+  [ 42] pushsymb 1 .............................. <#init>
+  [ 44] pusharglist 2 ........................... <pTitle, #init>
+  [ 46] objcall 339 ............................. <pTitle.getParams(#init)>
+  [ 49] setlocal 1 .............................. params = pTitle.getParams(#init)
+  [ 51] getlocal 1 .............................. <params>
+  [ 53] getglobal 1278 .......................... <gCutSceneSpeechLayer>
+  [ 56] setobjprop 1106 ......................... params.layer = gCutSceneSpeechLayer
+  [ 59] getlocal 1 .............................. <params>
+  [ 61] getlocal 0 .............................. <titleSprite>
+  [ 63] setobjprop 344 .......................... params.spr = titleSprite
+  [ 66] getprop 1178 ............................ <pTitle>
+  [ 69] getlocal 1 .............................. <params>
+  [ 71] pusharglistnoret 2 ...................... <pTitle, params>
+  [ 73] objcall 1 ............................... pTitle.init(params)
+  [ 75] ret
+end
+
+on backgroundColour me, theColour
+  [  0] getprop 1260 ............................ <pBackground>
+  [  3] getparam 1 .............................. <theColour>
+  [  5] pusharglistnoret 2 ...................... <pBackground, theColour>
+  [  7] objcall 1280 ............................ pBackground.setSpriteColour(theColour)
+  [ 10] getparam 0 .............................. <me>
+  [ 12] pushsymb 103 ............................ <#none>
+  [ 14] pusharglistnoret 2 ...................... <me, #none>
+  [ 16] objcall 1242 ............................ me.goMode(#none)
+  [ 19] getprop 615 ............................. <pScriptPerformer>
+  [ 22] pusharglistnoret 1 ...................... <pScriptPerformer>
+  [ 24] objcall 1281 ............................ pScriptPerformer.lineFinished()
+  [ 27] ret
+end
+
+on backgroundColourRandomFlash me, theSpeed
+  [  0] getparam 1 .............................. <theSpeed>
+  [  2] pusharglist 0 ........................... <>
+  [  4] extcall 388 ............................. <VOID>
+  [  7] eq ...................................... <theSpeed = VOID>
+  [  8] jmpifz [ 20] ............................ if theSpeed = VOID then / else
+  [ 11] getprop 1262 ............................ <pBackgroundRandomFlashDefaultSpeed>
+  [ 14] setprop 1263 ............................ pBackgroundRandomFlashSpeed = pBackgroundRandomFlashDefaultSpeed
+  [ 17] jmp [ 25]
+  [ 20] getparam 1 .............................. <theSpeed>
+  [ 22] setprop 1263 ............................ pBackgroundRandomFlashSpeed = theSpeed
+  [ 25] getparam 0 .............................. <me>
+  [ 27] pushsymb 1225 ........................... <#backgroundColourRandomFlash>
+  [ 30] pusharglistnoret 2 ...................... <me, #backgroundColourRandomFlash>
+  [ 32] objcall 1242 ............................ me.goMode(#backgroundColourRandomFlash)
+  [ 35] getparam 0 .............................. <me>
+  [ 37] getprop 1260 ............................ <pBackground>
+  [ 40] pushsymb 1283 ........................... <#colourTransformFin>
+  [ 43] pushsymb 1284 ........................... <#always>
+  [ 46] pusharglistnoret 4 ...................... <me, pBackground, #colourTransformFin, #always>
+  [ 48] objcall 1285 ............................ me.keepMePosted(pBackground, #colourTransformFin, #always)
+  [ 51] getparam 0 .............................. <me>
+  [ 53] pusharglistnoret 1 ...................... <me>
+  [ 55] objcall 1227 ............................ me.backgroundColourToRandom()
+  [ 58] getprop 615 ............................. <pScriptPerformer>
+  [ 61] pusharglistnoret 1 ...................... <pScriptPerformer>
+  [ 63] objcall 1281 ............................ pScriptPerformer.lineFinished()
+  [ 66] ret
+end
+
+on backgroundColourTo me, theColour
+  [  0] getprop 1260 ............................ <pBackground>
+  [  3] pushsymb 1287 ........................... <#colourTransform>
+  [  6] pusharglist 2 ........................... <pBackground, #colourTransform>
+  [  8] objcall 339 ............................. <pBackground.getParams(#colourTransform)>
+  [ 11] setlocal 0 .............................. params = pBackground.getParams(#colourTransform)
+  [ 13] getlocal 0 .............................. <params>
+  [ 15] getparam 1 .............................. <theColour>
+  [ 17] setobjprop 1288 ......................... params.targetColor = theColour
+  [ 20] getlocal 0 .............................. <params>
+  [ 22] pushint8 2 .............................. <2>
+  [ 24] setobjprop 296 .......................... params.speed = 2
+  [ 27] getprop 1260 ............................ <pBackground>
+  [ 30] getlocal 0 .............................. <params>
+  [ 32] pusharglistnoret 2 ...................... <pBackground, params>
+  [ 34] objcall 1287 ............................ pBackground.colourTransform(params)
+  [ 37] getparam 0 .............................. <me>
+  [ 39] pushsymb 103 ............................ <#none>
+  [ 41] pusharglistnoret 2 ...................... <me, #none>
+  [ 43] objcall 1242 ............................ me.goMode(#none)
+  [ 46] getprop 615 ............................. <pScriptPerformer>
+  [ 49] pusharglistnoret 1 ...................... <pScriptPerformer>
+  [ 51] objcall 1281 ............................ pScriptPerformer.lineFinished()
+  [ 54] ret
+end
+
+on backgroundColourToRandom me
+  [  0] getprop 1260 ............................ <pBackground>
+  [  3] pushsymb 1287 ........................... <#colourTransform>
+  [  6] pusharglist 2 ........................... <pBackground, #colourTransform>
+  [  8] objcall 339 ............................. <pBackground.getParams(#colourTransform)>
+  [ 11] setlocal 0 .............................. params = pBackground.getParams(#colourTransform)
+  [ 13] getlocal 0 .............................. <params>
+  [ 15] pusharglist 0 ........................... <>
+  [ 17] extcall 1289 ............................ <ColourRandom()>
+  [ 20] setobjprop 1288 ......................... params.targetColor = ColourRandom()
+  [ 23] getlocal 0 .............................. <params>
+  [ 25] getprop 1263 ............................ <pBackgroundRandomFlashSpeed>
+  [ 28] setobjprop 296 .......................... params.speed = pBackgroundRandomFlashSpeed
+  [ 31] getprop 1260 ............................ <pBackground>
+  [ 34] getlocal 0 .............................. <params>
+  [ 36] pusharglistnoret 2 ...................... <pBackground, params>
+  [ 38] objcall 1287 ............................ pBackground.colourTransform(params)
+  [ 41] ret
+end
+
+on beginPerformance me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 1222 ............................ me.acquireSprites()
+  [  7] getparam 0 .............................. <me>
+  [  9] pusharglistnoret 1 ...................... <me>
+  [ 11] objcall 1230 ............................ me.calcEnvironment()
+  [ 14] getglobal 191 ........................... <g>
+  [ 16] getchainedprop 336 ...................... <g.objectMaster>
+  [ 19] pushsymb 659 ............................ <#objScriptPerformer>
+  [ 22] pusharglist 2 ........................... <g.objectMaster, #objScriptPerformer>
+  [ 24] objcall 338 ............................. <g.objectMaster.requestObject(#objScriptPerformer)>
+  [ 27] setprop 615 ............................. pScriptPerformer = g.objectMaster.requestObject(#objScriptPerformer)
+  [ 30] getprop 615 ............................. <pScriptPerformer>
+  [ 33] pushsymb 1 .............................. <#init>
+  [ 35] pusharglist 2 ........................... <pScriptPerformer, #init>
+  [ 37] objcall 339 ............................. <pScriptPerformer.getParams(#init)>
+  [ 40] setlocal 0 .............................. params = pScriptPerformer.getParams(#init)
+  [ 42] getlocal 0 .............................. <params>
+  [ 44] getparam 0 .............................. <me>
+  [ 46] setobjprop 205 .......................... params.caller = me
+  [ 48] getlocal 0 .............................. <params>
+  [ 50] getprop 1267 ............................ <pScriptToPerform>
+  [ 53] setobjprop 660 .......................... params.theScript = pScriptToPerform
+  [ 56] getprop 615 ............................. <pScriptPerformer>
+  [ 59] getlocal 0 .............................. <params>
+  [ 61] pusharglistnoret 2 ...................... <pScriptPerformer, params>
+  [ 63] objcall 1 ............................... pScriptPerformer.init(params)
+  [ 65] getprop 615 ............................. <pScriptPerformer>
+  [ 68] pusharglistnoret 1 ...................... <pScriptPerformer>
+  [ 70] objcall 661 ............................. pScriptPerformer.startPerformance()
+  [ 73] ret
+end
+
+on cancelWaitTimer me
+  [  0] getprop 1274 ............................ <pWaitTimer>
+  [  3] pusharglist 1 ........................... <pWaitTimer>
+  [  5] extcall 350 ............................. <ilk(pWaitTimer)>
+  [  8] pushsymb 388 ............................ <#void>
+  [ 11] nteq .................................... <ilk(pWaitTimer) <> #void>
+  [ 12] getprop 1274 ............................ <pWaitTimer>
+  [ 15] pushsymb 103 ............................ <#none>
+  [ 17] nteq .................................... <pWaitTimer <> #none>
+  [ 18] and ..................................... <(ilk(pWaitTimer) <> #void) and (pWaitTimer <> #none)>
+  [ 19] jmpifz [ 34] ............................ if (ilk(pWaitTimer) <> #void) and (pWaitTimer <> #none) then
+  [ 22] getprop 1274 ............................ <pWaitTimer>
+  [ 25] pusharglistnoret 1 ...................... <pWaitTimer>
+  [ 27] objcall 239 ............................. pWaitTimer.finish()
+  [ 29] pushsymb 103 ............................ <#none>
+  [ 31] setprop 1274 ............................ pWaitTimer = #none
+  [ 34] ret
+end
+
+on calcEnvironment me
+  [  0] getprop 1260 ............................ <pBackground>
+  [  3] pushsymb 103 ............................ <#none>
+  [  5] eq ...................................... <pBackground = #none>
+  [  6] jmpifz [ 18] ............................ if pBackground = #none then / else
+  [  9] pushsymb 1290 ........................... <#ingame>
+  [ 12] setprop 1264 ............................ pEnvironment = #ingame
+  [ 15] jmp [ 24]
+  [ 18] pushsymb 1265 ........................... <#cutscene>
+  [ 21] setprop 1264 ............................ pEnvironment = #cutscene
+  [ 24] ret
+end
+
+on clearStage me
+  [  0] getprop 615 ............................. <pScriptPerformer>
+  [  3] pusharglist 1 ........................... <pScriptPerformer>
+  [  5] extcall 350 ............................. <ilk(pScriptPerformer)>
+  [  8] pushsymb 388 ............................ <#void>
+  [ 11] nteq .................................... <ilk(pScriptPerformer) <> #void>
+  [ 12] getprop 615 ............................. <pScriptPerformer>
+  [ 15] pushsymb 103 ............................ <#none>
+  [ 17] nteq .................................... <pScriptPerformer <> #none>
+  [ 18] and ..................................... <(ilk(pScriptPerformer) <> #void) and (pScriptPerformer <> #none)>
+  [ 19] jmpifz [ 40] ............................ if (ilk(pScriptPerformer) <> #void) and (pScriptPerformer <> #none) then
+  [ 22] getprop 1264 ............................ <pEnvironment>
+  [ 25] pushsymb 1265 ........................... <#cutscene>
+  [ 28] eq ...................................... <pEnvironment = #cutscene>
+  [ 29] jmpifz [ 40] ............................ if pEnvironment = #cutscene then
+  [ 32] getprop 615 ............................. <pScriptPerformer>
+  [ 35] pusharglistnoret 1 ...................... <pScriptPerformer>
+  [ 37] objcall 1291 ............................ pScriptPerformer.finishAllPlayers()
+  [ 40] ret
+end
+
+on eventNotification me, theEvent, theObj
+  [  0] getprop 1255 ............................ <ancestor>
+  [  3] getparam 1 .............................. <theEvent>
+  [  5] getparam 2 .............................. <theObj>
+  [  7] pusharglistnoret 3 ...................... <ancestor, theEvent, theObj>
+  [  9] objcall 1232 ............................ ancestor.eventNotification(theEvent, theObj)
+  [ 12] getparam 1 .............................. <theEvent>
+  [ 14] peek 0 .................................. case theEvent of
+  [ 16] pushsymb 1283 ........................... <#colourTransformFin>
+  [ 19] eq
+  [ 20] jmpifz [ 47] ............................ (case) #colourTransformFin:
+  [ 23] getprop 1266 ............................ <pmode>
+  [ 26] pushsymb 1225 ........................... <#backgroundColourRandomFlash>
+  [ 29] eq ...................................... <pmode = #backgroundColourRandomFlash>
+  [ 30] getparam 2 .............................. <theObj>
+  [ 32] getprop 1260 ............................ <pBackground>
+  [ 35] eq ...................................... <theObj = pBackground>
+  [ 36] and ..................................... <(pmode = #backgroundColourRandomFlash) and (theObj = pBackground)>
+  [ 37] jmpifz [ 47] ............................ if (pmode = #backgroundColourRandomFlash) and (theObj = pBackground) then
+  [ 40] getparam 0 .............................. <me>
+  [ 42] pusharglistnoret 1 ...................... <me>
+  [ 44] objcall 1227 ............................ me.backgroundColourToRandom()
+  [ 47] pop 1
+  [ 49] ret
+end
+
+on fadeDown me
+  [  0] getprop 615 ............................. <pScriptPerformer>
+  [  3] pusharglistnoret 1 ...................... <pScriptPerformer>
+  [  5] objcall 1281 ............................ pScriptPerformer.lineFinished()
+  [  8] ret
+end
+
+on fadeUp me
+  [  0] pushcons 4 .............................. <"g.cutSceneMaster.fadeUp()">
+  [  2] pusharglistnoret 1 ...................... <"g.cutSceneMaster.fadeUp()">
+  [  4] extcall 414 ............................. put "g.cutSceneMaster.fadeUp()"
+  [  7] getprop 615 ............................. <pScriptPerformer>
+  [ 10] pusharglistnoret 1 ...................... <pScriptPerformer>
+  [ 12] objcall 1281 ............................ pScriptPerformer.lineFinished()
+  [ 15] ret
+end
+
+on getCenterStage me
+  [  0] getprop 1272 ............................ <pStageRect>
+  [  3] getobjprop 170 .......................... <pStageRect.left>
+  [  5] getprop 1272 ............................ <pStageRect>
+  [  8] getobjprop 171 .......................... <pStageRect.right>
+  [ 10] pusharglist 2 ........................... <pStageRect.left, pStageRect.right>
+  [ 12] extcall 1292 ............................ <VarHalfWay(pStageRect.left, pStageRect.right)>
+  [ 15] setlocal 0 .............................. locx = VarHalfWay(pStageRect.left, pStageRect.right)
+  [ 17] getlocal 0 .............................. <locx>
+  [ 19] pusharglistnoret 1 ...................... <locx>
+  [ 21] extcall 3 ............................... return locx
+  [ 23] ret
+end
+
+on getEnvironment me
+  [  0] getprop 1264 ............................ <pEnvironment>
+  [  3] pusharglistnoret 1 ...................... <pEnvironment>
+  [  5] extcall 3 ............................... return pEnvironment
+  [  7] ret
+end
+
+on getSpeechDisplayMode me
+  [  0] getprop 1264 ............................ <pEnvironment>
+  [  3] pusharglistnoret 1 ...................... <pEnvironment>
+  [  5] extcall 3 ............................... return pEnvironment
+  [  7] ret
+end
+
+on getSpeechFloor me
+  [  0] getprop 1272 ............................ <pStageRect>
+  [  3] getobjprop 168 .......................... <pStageRect.top>
+  [  5] getprop 1269 ............................ <pSpeechGap>
+  [  8] sub ..................................... <pStageRect.top - pSpeechGap>
+  [  9] pusharglistnoret 1 ...................... <pStageRect.top - pSpeechGap>
+  [ 11] extcall 3 ............................... return pStageRect.top - pSpeechGap
+  [ 13] ret
+end
+
+on getStageFloor me
+  [  0] getprop 1270 ............................ <pStageFloor>
+  [  3] pusharglistnoret 1 ...................... <pStageFloor>
+  [  5] extcall 3 ............................... return pStageFloor
+  [  7] ret
+end
+
+on getStageLeft me
+  [  0] getprop 1272 ............................ <pStageRect>
+  [  3] getobjprop 170 .......................... <pStageRect.left>
+  [  5] pusharglistnoret 1 ...................... <pStageRect.left>
+  [  7] extcall 3 ............................... return pStageRect.left
+  [  9] ret
+end
+
+on getStageRight me
+  [  0] getprop 1272 ............................ <pStageRect>
+  [  3] getobjprop 171 .......................... <pStageRect.right>
+  [  5] pusharglistnoret 1 ...................... <pStageRect.right>
+  [  7] extcall 3 ............................... return pStageRect.right
+  [  9] ret
+end
+
+on goMode me, newMode
+  [  0] getparam 1 .............................. <newMode>
+  [  2] setprop 1266 ............................ pmode = newMode
+  [  5] ret
+end
+
+on isScriptBeingPerformed me
+  [  0] getprop 615 ............................. <pScriptPerformer>
+  [  3] pushsymb 103 ............................ <#none>
+  [  5] nteq .................................... <pScriptPerformer <> #none>
+  [  6] jmpifz [ 15] ............................ if pScriptPerformer <> #none then
+  [  9] pushint8 1 .............................. <1>
+  [ 11] pusharglistnoret 1 ...................... <1>
+  [ 13] extcall 3 ............................... return 1
+  [ 15] pushzero ................................ <0>
+  [ 16] pusharglistnoret 1 ...................... <0>
+  [ 18] extcall 3 ............................... return 0
+  [ 20] ret
+end
+
+on lightsUp me
+  [  0] getprop 615 ............................. <pScriptPerformer>
+  [  3] pusharglistnoret 1 ...................... <pScriptPerformer>
+  [  5] objcall 1243 ............................ pScriptPerformer.lightsUp()
+  [  8] ret
+end
+
+on lightsDown me
+  [  0] getprop 615 ............................. <pScriptPerformer>
+  [  3] pusharglistnoret 1 ...................... <pScriptPerformer>
+  [  5] objcall 1244 ............................ pScriptPerformer.lightsDown()
+  [  8] ret
+end
+
+on performLine me, linePackage
+  [  0] getparam 1 .............................. <linePackage>
+  [  2] getobjprop 209 .......................... <linePackage.theCommand>
+  [  4] getparam 0 .............................. <me>
+  [  6] getparam 1 .............................. <linePackage>
+  [  8] getobjprop 204 .......................... <linePackage.args>
+  [ 10] pusharglistnoret 3 ...................... <linePackage.theCommand, me, linePackage.args>
+  [ 12] extcall 495 ............................. call(linePackage.theCommand, me, linePackage.args)
+  [ 15] ret
+end
+
+on playCutScene me, theScene
+  [  0] getparam 1 .............................. <theScene>
+  [  2] setprop 1295 ............................ pScene = theScene
+  [  5] getglobal 191 ........................... <g>
+  [  7] getchainedprop 658 ...................... <g.collectionsMaster>
+  [ 10] pushsymb 432 ............................ <#objScript>
+  [ 13] getparam 1 .............................. <theScene>
+  [ 15] pusharglist 3 ........................... <g.collectionsMaster, #objScript, theScene>
+  [ 17] objcall 424 ............................. <g.collectionsMaster.getObject(#objScript, theScene)>
+  [ 20] setprop 1267 ............................ pScriptToPerform = g.collectionsMaster.getObject(#objScript, theScene)
+  [ 23] getparam 0 .............................. <me>
+  [ 25] pusharglistnoret 1 ...................... <me>
+  [ 27] objcall 1228 ............................ me.beginPerformance()
+  [ 30] ret
+end
+
+on playMusic me, args
+  [  0] getprop 615 ............................. <pScriptPerformer>
+  [  3] getparam 1 .............................. <args>
+  [  5] pusharglistnoret 2 ...................... <pScriptPerformer, args>
+  [  7] objcall 713 ............................. pScriptPerformer.playMusic(args)
+  [ 10] ret
+end
+
+on PlaySound me, args
+  [  0] getprop 615 ............................. <pScriptPerformer>
+  [  3] getparam 1 .............................. <args>
+  [  5] pusharglistnoret 2 ...................... <pScriptPerformer, args>
+  [  7] objcall 635 ............................. pScriptPerformer.PlaySound(args)
+  [ 10] ret
+end
+
+on scriptCancelled me
+  [  0] getprop 615 ............................. <pScriptPerformer>
+  [  3] pushsymb 103 ............................ <#none>
+  [  5] nteq .................................... <pScriptPerformer <> #none>
+  [  6] jmpifz [ 20] ............................ if pScriptPerformer <> #none then / else
+  [  9] getprop 615 ............................. <pScriptPerformer>
+  [ 12] pusharglistnoret 1 ...................... <pScriptPerformer>
+  [ 14] objcall 1246 ............................ pScriptPerformer.scriptCancelled()
+  [ 17] jmp [ 27]
+  [ 20] pushcons 5 .............................. <"cutSceneMaster.scriptCancelled() pScriptPerformer = #none">
+  [ 22] pusharglistnoret 1 ...................... <"cutSceneMaster.scriptCancelled() pScriptPerformer = #none">
+  [ 24] extcall 414 ............................. put "cutSceneMaster.scriptCancelled() pScriptPerformer = #none"
+  [ 27] ret
+end
+
+on scriptFinished me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 239 ............................. me.finish()
+  [  6] getglobal 191 ........................... <g>
+  [  8] getchainedprop 632 ...................... <g.movieMaster>
+  [ 11] getprop 1295 ............................ <pScene>
+  [ 14] pusharglistnoret 2 ...................... <g.movieMaster, pScene>
+  [ 16] objcall 520 ............................. g.movieMaster.cutSceneFinished(pScene)
+  [ 19] ret
+end
+
+on setStage me
+  [  0] getprop 615 ............................. <pScriptPerformer>
+  [  3] pusharglistnoret 1 ...................... <pScriptPerformer>
+  [  5] objcall 1296 ............................ pScriptPerformer.putPlayersIntoWings()
+  [  8] getprop 615 ............................. <pScriptPerformer>
+  [ 11] pusharglistnoret 1 ...................... <pScriptPerformer>
+  [ 13] objcall 1297 ............................ pScriptPerformer.makePlayersInvisible()
+  [ 16] getparam 0 .............................. <me>
+  [ 18] getprop 1268 ............................ <pSetSceneColour>
+  [ 21] pusharglistnoret 2 ...................... <me, pSetSceneColour>
+  [ 23] objcall 1224 ............................ me.backgroundColour(pSetSceneColour)
+  [ 26] ret
+end
+
+on showTitle me, theTitle
+  [  0] getprop 1178 ............................ <pTitle>
+  [  3] getparam 1 .............................. <theTitle>
+  [  5] pusharglistnoret 2 ...................... <pTitle, theTitle>
+  [  7] objcall 1248 ............................ pTitle.showTitle(theTitle)
+  [ 10] getprop 615 ............................. <pScriptPerformer>
+  [ 13] pusharglistnoret 1 ...................... <pScriptPerformer>
+  [ 15] objcall 1281 ............................ pScriptPerformer.lineFinished()
+  [ 18] ret
+end
+
+on startWaitTimer me, noOfFrames
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 1229 ............................ me.cancelWaitTimer()
+  [  7] getglobal 191 ........................... <g>
+  [  9] getchainedprop 336 ...................... <g.objectMaster>
+  [ 12] pushsymb 1299 ........................... <#objTimer>
+  [ 15] pusharglist 2 ........................... <g.objectMaster, #objTimer>
+  [ 17] objcall 338 ............................. <g.objectMaster.requestObject(#objTimer)>
+  [ 20] setprop 1274 ............................ pWaitTimer = g.objectMaster.requestObject(#objTimer)
+  [ 23] getprop 1274 ............................ <pWaitTimer>
+  [ 26] pusharglist 1 ........................... <pWaitTimer>
+  [ 28] objcall 339 ............................. <pWaitTimer.getParams()>
+  [ 31] setlocal 0 .............................. params = pWaitTimer.getParams()
+  [ 33] getlocal 0 .............................. <params>
+  [ 35] getparam 0 .............................. <me>
+  [ 37] setobjprop 236 .......................... params.callingPrg = me
+  [ 39] getlocal 0 .............................. <params>
+  [ 41] pushsymb 1254 ........................... <#waitTimerFinished>
+  [ 44] setobjprop 1300 ......................... params.callingPrgMessage = #waitTimerFinished
+  [ 47] getlocal 0 .............................. <params>
+  [ 49] getparam 1 .............................. <noOfFrames>
+  [ 51] setobjprop 1301 ......................... params.framesTime = noOfFrames
+  [ 54] getprop 1274 ............................ <pWaitTimer>
+  [ 57] getlocal 0 .............................. <params>
+  [ 59] pusharglistnoret 2 ...................... <pWaitTimer, params>
+  [ 61] objcall 1 ............................... pWaitTimer.init(params)
+  [ 63] ret
+end
+
+on start me
+  [  0] getprop 1255 ............................ <ancestor>
+  [  3] pusharglistnoret 1 ...................... <ancestor>
+  [  5] objcall 398 ............................. ancestor.start()
+  [  8] ret
+end
+
+on stop me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 239 ............................. me.finish()
+  [  6] ret
+end
+
+on walkScrollLeft me
+  [  0] getprop 615 ............................. <pScriptPerformer>
+  [  3] pushsymb 170 ............................ <#left>
+  [  5] pusharglistnoret 2 ...................... <pScriptPerformer, #left>
+  [  7] objcall 1303 ............................ pScriptPerformer.putPlayersIntoWalkMode(#left)
+  [ 10] getprop 615 ............................. <pScriptPerformer>
+  [ 13] pusharglistnoret 1 ...................... <pScriptPerformer>
+  [ 15] objcall 1281 ............................ pScriptPerformer.lineFinished()
+  [ 18] ret
+end
+
+on walkScrollRight me
+  [  0] getprop 615 ............................. <pScriptPerformer>
+  [  3] pushsymb 171 ............................ <#right>
+  [  5] pusharglistnoret 2 ...................... <pScriptPerformer, #right>
+  [  7] objcall 1303 ............................ pScriptPerformer.putPlayersIntoWalkMode(#right)
+  [ 10] getprop 615 ............................. <pScriptPerformer>
+  [ 13] pusharglistnoret 1 ...................... <pScriptPerformer>
+  [ 15] objcall 1281 ............................ pScriptPerformer.lineFinished()
+  [ 18] ret
+end
+
+on walkScrollStop me
+  [  0] getprop 615 ............................. <pScriptPerformer>
+  [  3] pushsymb 2 .............................. <#stop>
+  [  5] pusharglistnoret 2 ...................... <pScriptPerformer, #stop>
+  [  7] objcall 1303 ............................ pScriptPerformer.putPlayersIntoWalkMode(#stop)
+  [ 10] getprop 615 ............................. <pScriptPerformer>
+  [ 13] pusharglistnoret 1 ...................... <pScriptPerformer>
+  [ 15] objcall 1281 ............................ pScriptPerformer.lineFinished()
+  [ 18] ret
+end
+
+on wait me, noOfFrames
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <noOfFrames>
+  [  4] pusharglistnoret 2 ...................... <me, noOfFrames>
+  [  6] objcall 1249 ............................ me.startWaitTimer(noOfFrames)
+  [  9] ret
+end
+
+on waitTimerFinished me
+  [  0] pushsymb 103 ............................ <#none>
+  [  2] setprop 1274 ............................ pWaitTimer = #none
+  [  5] getprop 615 ............................. <pScriptPerformer>
+  [  8] pusharglistnoret 1 ...................... <pScriptPerformer>
+  [ 10] objcall 1281 ............................ pScriptPerformer.lineFinished()
+  [ 13] ret
+end

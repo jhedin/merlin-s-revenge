@@ -1,0 +1,109 @@
+property ancestor, pSpr, pMem
+global g, gMenuTextLayer
+
+on new me
+  [  0] pushcons 0 .............................. <"objButton">
+  [  2] pusharglist 1 ........................... <"objButton">
+  [  4] extcall 34 .............................. <script("objButton")>
+  [  6] pusharglist 1 ........................... <script("objButton")>
+  [  8] extcall 0 ............................... <new(script("objButton"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objButton"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 1352 ........................... <#layer>
+  [ 27] getglobal 2946 .......................... <gMenuTextLayer>
+  [ 30] pusharglistnoret 3 ...................... <i, #layer, gMenuTextLayer>
+  [ 32] objcall 48 .............................. i[#layer] = gMenuTextLayer
+  [ 34] getlocal 0 .............................. <i>
+  [ 36] pushsymb 1662 ........................... <#location>
+  [ 39] pushint8 10 ............................. <10>
+  [ 41] pushint8 10 ............................. <10>
+  [ 43] pusharglist 2 ........................... <10, 10>
+  [ 45] extcall 197 ............................. <point(10, 10)>
+  [ 47] pusharglistnoret 3 ...................... <i, #location, point(10, 10)>
+  [ 49] objcall 48 .............................. i[#location] = point(10, 10)
+  [ 51] getlocal 0 .............................. <i>
+  [ 53] pushsymb 44 ............................. <#name>
+  [ 55] pushcons 1 .............................. <"imageButton">
+  [ 57] pusharglistnoret 3 ...................... <i, #name, "imageButton">
+  [ 59] objcall 48 .............................. i[#name] = "imageButton"
+  [ 61] getlocal 0 .............................. <i>
+  [ 63] pushsymb 2947 ........................... <#myImage>
+  [ 66] pushsymb 49 ............................. <#none>
+  [ 68] pusharglistnoret 3 ...................... <i, #myImage, #none>
+  [ 70] objcall 48 .............................. i[#myImage] = #none
+  [ 72] getlocal 0 .............................. <i>
+  [ 74] pushint8 1 .............................. <1>
+  [ 76] setobjprop 2176 ......................... i.pulse = 1
+  [ 79] getparam 0 .............................. <me>
+  [ 81] pusharglistnoret 1 ...................... <me>
+  [ 83] extcall 35 .............................. return me
+  [ 85] ret
+end
+
+on init me, params
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 254 ...................... <g.spriteMaster>
+  [  4] pusharglist 1 ........................... <g.spriteMaster>
+  [  6] objcall 255 ............................. <g.spriteMaster.requestSprite()>
+  [  8] setprop 173 ............................. pSpr = g.spriteMaster.requestSprite()
+  [ 10] getglobal 40 ............................ <g>
+  [ 12] getchainedprop 858 ...................... <g.memberMaster>
+  [ 15] pushsymb 477 ............................ <#bitmap>
+  [ 18] getparam 1 .............................. <params>
+  [ 20] getobjprop 44 ........................... <params.name>
+  [ 22] pusharglist 3 ........................... <g.memberMaster, #bitmap, params.name>
+  [ 24] objcall 870 ............................. <g.memberMaster.requestMember(#bitmap, params.name)>
+  [ 27] setprop 2948 ............................ pMem = g.memberMaster.requestMember(#bitmap, params.name)
+  [ 30] getprop 2948 ............................ <pMem>
+  [ 33] getparam 1 .............................. <params>
+  [ 35] getobjprop 2947 ......................... <params.myImage>
+  [ 38] setobjprop 800 .......................... pMem.image = params.myImage
+  [ 41] getprop 2948 ............................ <pMem>
+  [ 44] pushzero ................................ <0>
+  [ 45] pushzero ................................ <0>
+  [ 46] pusharglist 2 ........................... <0, 0>
+  [ 48] extcall 197 ............................. <point(0, 0)>
+  [ 50] setobjprop 422 .......................... pMem.regPoint = point(0, 0)
+  [ 53] getprop 173 ............................. <pSpr>
+  [ 55] getprop 2948 ............................ <pMem>
+  [ 58] pusharglistnoret 2 ...................... <pSpr, pMem>
+  [ 60] extcall 96 .............................. SpriteSetMember(pSpr, pMem)
+  [ 62] getprop 173 ............................. <pSpr>
+  [ 64] getparam 1 .............................. <params>
+  [ 66] getobjprop 1662 ......................... <params.location>
+  [ 69] setobjprop 832 .......................... pSpr.loc = params.location
+  [ 72] getprop 173 ............................. <pSpr>
+  [ 74] getparam 1 .............................. <params>
+  [ 76] getobjprop 1352 ......................... <params.layer>
+  [ 79] setobjprop 259 .......................... pSpr.locZ = params.layer
+  [ 82] getparam 1 .............................. <params>
+  [ 84] getprop 173 ............................. <pSpr>
+  [ 86] setobjprop 267 .......................... params.spr = pSpr
+  [ 89] getprop 33 .............................. <ancestor>
+  [ 91] getparam 1 .............................. <params>
+  [ 93] pusharglistnoret 2 ...................... <ancestor, params>
+  [ 95] objcall 1 ............................... ancestor.init(params)
+  [ 97] ret
+end
+
+on finish me
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 254 ...................... <g.spriteMaster>
+  [  4] getprop 173 ............................. <pSpr>
+  [  6] pusharglistnoret 2 ...................... <g.spriteMaster, pSpr>
+  [  8] objcall 270 ............................. g.spriteMaster.freeSprite(pSpr)
+  [ 11] getglobal 40 ............................ <g>
+  [ 13] getchainedprop 858 ...................... <g.memberMaster>
+  [ 16] getprop 2948 ............................ <pMem>
+  [ 19] pusharglistnoret 2 ...................... <g.memberMaster, pMem>
+  [ 21] objcall 859 ............................. g.memberMaster.freeMember(pMem)
+  [ 24] getprop 33 .............................. <ancestor>
+  [ 26] pusharglistnoret 1 ...................... <ancestor>
+  [ 28] objcall 3 ............................... ancestor.finish()
+  [ 30] ret
+end

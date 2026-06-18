@@ -1,0 +1,129 @@
+[#name: "mapEditMaster", #scriptType: #parent, #type: #script]
+global g, r
+
+property pCurrentMap
+property pFirstMenu
+property pLocation
+property pMapController
+property pMenuController
+
+on new me
+  return me
+end
+
+on init me
+  pCurrentMap = #none
+  pFirstMenu = "start"
+  pLocation = #none
+  pMapController = g.controllerMaster.getController(#map)
+  pMenuController = g.controllerMaster.getController(#menu)
+end
+
+on finish me
+  me.finishCurrentMap()
+end
+
+on start me, location
+  pLocation = location
+  pMenuController.newObject(member("dd_menu_" & pFirstMenu, "gfx"), pLocation)
+end
+
+on finishCurrentMap me
+  if ilk(pCurrentMap) <> #void and pCurrentMap <> #none then
+    pCurrentMap.finish() 
+  end if
+end 
+
+on loadClicked me, theMenu
+  listOfMaps = me.getListOfMaps()
+  location = theMenu.getNextLocation()
+  pMenuController.newDialogue("Load a Map", listOfMaps, location)
+end
+
+on loadMap me, theMap
+  pMenuController.clearAll()
+  theMapName = "dd_map_" & string(theMap)
+  me.finishCurrentMap()
+  definition = member(theMapName, "gfx")
+  pCurrentMap = pMapController.makeNewObject(definition, pLocation, theMapName)
+  pCurrentMap.goEditMode()
+  pCurrentMap.onScreen()
+end
+
+on getListOfMaps me
+  nameList = []
+  memList = CastGetMembersContaining("dd_map_", "gfx")
+  repeat with mem in memList
+    nName = mem.name.char[8 .. 99]
+    nameList.append(nName)
+  end repeat
+  return nameList
+end
+
+on stop me
+  me.finish()
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

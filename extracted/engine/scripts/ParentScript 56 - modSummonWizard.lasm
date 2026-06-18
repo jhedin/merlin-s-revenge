@@ -1,0 +1,348 @@
+property ancestor, pWizardOn, pWizardToSummon, pWizard, pWizards
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getprop 33 .............................. <ancestor>
+  [ 12] pusharglistnoret 1 ...................... <ancestor>
+  [ 14] objcall 2 ............................... ancestor.addModParams()
+  [ 16] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pushzero ................................ <0>
+  [  9] setprop 1406 ............................ pWizardOn = 0
+  [ 12] pushint8 1 .............................. <1>
+  [ 14] setprop 1407 ............................ pWizardToSummon = 1
+  [ 17] pushsymb 49 ............................. <#none>
+  [ 19] setprop 1408 ............................ pWizard = #none
+  [ 22] pusharglist 0 ........................... <[:]>
+  [ 24] pushproplist ............................ <[:]>
+  [ 25] setprop 1409 ............................ pWizards = [:]
+  [ 28] ret
+end
+
+on addSaveData me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 4 ............................... ancestor.addSaveData(sd)
+  [  8] getglobal 40 ............................ <g>
+  [ 10] getchainedprop 1410 ..................... <g.wizardMaster>
+  [ 13] pusharglist 1 ........................... <g.wizardMaster>
+  [ 15] objcall 1411 ............................ <g.wizardMaster.getWizards()>
+  [ 18] setprop 1409 ............................ pWizards = g.wizardMaster.getWizards()
+  [ 21] getparam 1 .............................. <sd>
+  [ 23] pushsymb 1406 ........................... <#pWizardOn>
+  [ 26] getprop 1406 ............................ <pWizardOn>
+  [ 29] pusharglistnoret 3 ...................... <sd, #pWizardOn, pWizardOn>
+  [ 31] objcall 48 .............................. sd[#pWizardOn] = pWizardOn
+  [ 33] getparam 1 .............................. <sd>
+  [ 35] pushsymb 1407 ........................... <#pWizardToSummon>
+  [ 38] getprop 1407 ............................ <pWizardToSummon>
+  [ 41] pusharglistnoret 3 ...................... <sd, #pWizardToSummon, pWizardToSummon>
+  [ 43] objcall 48 .............................. sd[#pWizardToSummon] = pWizardToSummon
+  [ 45] getparam 1 .............................. <sd>
+  [ 47] pushsymb 1408 ........................... <#pWizard>
+  [ 50] getprop 1408 ............................ <pWizard>
+  [ 53] pusharglistnoret 3 ...................... <sd, #pWizard, pWizard>
+  [ 55] objcall 48 .............................. sd[#pWizard] = pWizard
+  [ 57] getparam 1 .............................. <sd>
+  [ 59] pushsymb 1409 ........................... <#pWizards>
+  [ 62] getprop 1409 ............................ <pWizards>
+  [ 65] pusharglistnoret 3 ...................... <sd, #pWizards, pWizards>
+  [ 67] objcall 48 .............................. sd[#pWizards] = pWizards
+  [ 69] ret
+end
+
+on eventNotification me, theEvent, theObj
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <theEvent>
+  [  4] getparam 2 .............................. <theObj>
+  [  6] pusharglistnoret 3 ...................... <ancestor, theEvent, theObj>
+  [  8] objcall 568 ............................. ancestor.eventNotification(theEvent, theObj)
+  [ 11] getparam 1 .............................. <theEvent>
+  [ 13] peek 0 .................................. case theEvent of
+  [ 15] pushsymb 122 ............................ <#leaveGame>
+  [ 17] eq
+  [ 18] jmpifz [ 71] ............................ (case) #leaveGame:
+  [ 21] getparam 0 .............................. <me>
+  [ 23] getchainedprop 51 ....................... <me.big>
+  [ 25] getprop 1408 ............................ <pWizard>
+  [ 28] pusharglist 2 ........................... <me.big, pWizard>
+  [ 30] objcall 606 ............................. <me.big.getRelation(pWizard)>
+  [ 33] setlocal 0 .............................. wizard = me.big.getRelation(pWizard)
+  [ 35] getlocal 0 .............................. <wizard>
+  [ 37] getparam 2 .............................. <theObj>
+  [ 39] eq ...................................... <wizard = theObj>
+  [ 40] jmpifz [ 71] ............................ if wizard = theObj then
+  [ 43] pushzero ................................ <0>
+  [ 44] setprop 1406 ............................ pWizardOn = 0
+  [ 47] getglobal 40 ............................ <g>
+  [ 49] getchainedprop 1410 ..................... <g.wizardMaster>
+  [ 52] pusharglistnoret 1 ...................... <g.wizardMaster>
+  [ 54] objcall 1412 ............................ g.wizardMaster.wizardOff()
+  [ 57] getparam 0 .............................. <me>
+  [ 59] getchainedprop 51 ....................... <me.big>
+  [ 61] getprop 1408 ............................ <pWizard>
+  [ 64] pushsymb 49 ............................. <#none>
+  [ 66] pusharglistnoret 3 ...................... <me.big, pWizard, #none>
+  [ 68] objcall 612 ............................. me.big.setRelation(pWizard, #none)
+  [ 71] pop 1
+  [ 73] ret
+end
+
+on internalEvent me, theEvent
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <theEvent>
+  [  4] pusharglistnoret 2 ...................... <ancestor, theEvent>
+  [  6] objcall 22 .............................. ancestor.internalEvent(theEvent)
+  [  8] getparam 1 .............................. <theEvent>
+  [ 10] peek 0 .................................. case theEvent of
+  [ 12] pushsymb 1396 ........................... <#noTargetFound>
+  [ 15] eq
+  [ 16] jmpifz [ 25] ............................ (case) #noTargetFound:
+  [ 19] getparam 0 .............................. <me>
+  [ 21] pusharglistnoret 1 ...................... <me>
+  [ 23] objcall 101 ............................. me.armyTeleportOut()
+  [ 25] pop 1
+  [ 27] ret
+end
+
+on restoreFromSave me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 26 .............................. ancestor.restoreFromSave(sd)
+  [  8] getparam 1 .............................. <sd>
+  [ 10] getobjprop 1406 ......................... <sd.pWizardOn>
+  [ 13] setprop 1406 ............................ pWizardOn = sd.pWizardOn
+  [ 16] getparam 1 .............................. <sd>
+  [ 18] getobjprop 1407 ......................... <sd.pWizardToSummon>
+  [ 21] setprop 1407 ............................ pWizardToSummon = sd.pWizardToSummon
+  [ 24] getparam 1 .............................. <sd>
+  [ 26] getobjprop 1408 ......................... <sd.pWizard>
+  [ 29] setprop 1408 ............................ pWizard = sd.pWizard
+  [ 32] getparam 1 .............................. <sd>
+  [ 34] getobjprop 1409 ......................... <sd.pWizards>
+  [ 37] setprop 1409 ............................ pWizards = sd.pWizards
+  [ 40] getglobal 40 ............................ <g>
+  [ 42] getchainedprop 1410 ..................... <g.wizardMaster>
+  [ 45] getprop 1409 ............................ <pWizards>
+  [ 48] pusharglistnoret 2 ...................... <g.wizardMaster, pWizards>
+  [ 50] objcall 1414 ............................ g.wizardMaster.setWizards(pWizards)
+  [ 53] getprop 1409 ............................ <pWizards>
+  [ 56] getobjprop 257 .......................... <pWizards.count>
+  [ 59] pushzero ................................ <0>
+  [ 60] nteq .................................... <pWizards.count <> 0>
+  [ 61] jmpifz [ 84] ............................ if pWizards.count <> 0 then
+  [ 64] getglobal 40 ............................ <g>
+  [ 66] getchainedprop 1410 ..................... <g.wizardMaster>
+  [ 69] getprop 1409 ............................ <pWizards>
+  [ 72] getprop 1407 ............................ <pWizardToSummon>
+  [ 75] pusharglist 2 ........................... <pWizards, pWizardToSummon>
+  [ 77] objcall 109 ............................. <pWizards[pWizardToSummon]>
+  [ 79] pusharglistnoret 2 ...................... <g.wizardMaster, pWizards[pWizardToSummon]>
+  [ 81] objcall 1415 ............................ g.wizardMaster.setWizard(pWizards[pWizardToSummon])
+  [ 84] ret
+end
+
+on selectNextWizard me
+  [  0] getprop 1409 ............................ <pWizards>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] nteq .................................... <pWizards <> #none>
+  [  6] getprop 1409 ............................ <pWizards>
+  [  9] pushsymb 166 ............................ <#void>
+  [ 11] nteq .................................... <pWizards <> #void>
+  [ 12] and ..................................... <(pWizards <> #none) and (pWizards <> #void)>
+  [ 13] getprop 1409 ............................ <pWizards>
+  [ 16] pusharglist 1 ........................... <pWizards>
+  [ 18] objcall 257 ............................. <pWizards.count()>
+  [ 21] pushzero ................................ <0>
+  [ 22] nteq .................................... <pWizards.count() <> 0>
+  [ 23] and ..................................... <(pWizards <> #none) and (pWizards <> #void) and (pWizards.count() <> 0)>
+  [ 24] jmpifz [ 79] ............................ if (pWizards <> #none) and (pWizards <> #void) and (pWizards.count() <> 0) then
+  [ 27] getprop 1407 ............................ <pWizardToSummon>
+  [ 30] getprop 1409 ............................ <pWizards>
+  [ 33] pusharglist 1 ........................... <pWizards>
+  [ 35] objcall 257 ............................. <pWizards.count()>
+  [ 38] gteq .................................... <pWizardToSummon >= pWizards.count()>
+  [ 39] jmpifz [ 50] ............................ if pWizardToSummon >= pWizards.count() then / else
+  [ 42] pushint8 1 .............................. <1>
+  [ 44] setprop 1407 ............................ pWizardToSummon = 1
+  [ 47] jmp [ 59]
+  [ 50] getprop 1407 ............................ <pWizardToSummon>
+  [ 53] pushint8 1 .............................. <1>
+  [ 55] add ..................................... <pWizardToSummon + 1>
+  [ 56] setprop 1407 ............................ pWizardToSummon = pWizardToSummon + 1
+  [ 59] getglobal 40 ............................ <g>
+  [ 61] getchainedprop 1410 ..................... <g.wizardMaster>
+  [ 64] getprop 1409 ............................ <pWizards>
+  [ 67] getprop 1407 ............................ <pWizardToSummon>
+  [ 70] pusharglist 2 ........................... <pWizards, pWizardToSummon>
+  [ 72] objcall 109 ............................. <pWizards[pWizardToSummon]>
+  [ 74] pusharglistnoret 2 ...................... <g.wizardMaster, pWizards[pWizardToSummon]>
+  [ 76] objcall 1415 ............................ g.wizardMaster.setWizard(pWizards[pWizardToSummon])
+  [ 79] ret
+end
+
+on summonWizard me
+  [  0] getprop 1406 ............................ <pWizardOn>
+  [  3] jmpifz [ 48] ............................ if pWizardOn then
+  [  6] getparam 0 .............................. <me>
+  [  8] getchainedprop 51 ....................... <me.big>
+  [ 10] getprop 1408 ............................ <pWizard>
+  [ 13] pusharglist 2 ........................... <me.big, pWizard>
+  [ 15] objcall 606 ............................. <me.big.getRelation(pWizard)>
+  [ 18] setlocal 0 .............................. wizard = me.big.getRelation(pWizard)
+  [ 20] getlocal 0 .............................. <wizard>
+  [ 22] pushsymb 49 ............................. <#none>
+  [ 24] nteq .................................... <wizard <> #none>
+  [ 25] jmpifz [ 44] ............................ if wizard <> #none then
+  [ 28] getlocal 0 .............................. <wizard>
+  [ 30] pusharglistnoret 1 ...................... <wizard>
+  [ 32] objcall 101 ............................. wizard.armyTeleportOut()
+  [ 34] getglobal 40 ............................ <g>
+  [ 36] getchainedprop 1410 ..................... <g.wizardMaster>
+  [ 39] pusharglistnoret 1 ...................... <g.wizardMaster>
+  [ 41] objcall 1412 ............................ g.wizardMaster.wizardOff()
+  [ 44] pusharglistnoret 0 ...................... <>
+  [ 46] extcall 35 .............................. return 
+  [ 48] pushzero ................................ <0>
+  [ 49] setlocal 1 .............................. fin = 0
+  [ 51] getprop 1407 ............................ <pWizardToSummon>
+  [ 54] setlocal 2 .............................. stopCheck = pWizardToSummon
+  [ 56] pushsymb 49 ............................. <#none>
+  [ 58] setlocal 0 .............................. wizard = #none
+  [ 60] getglobal 40 ............................ <g>
+  [ 62] getchainedprop 1410 ..................... <g.wizardMaster>
+  [ 65] pusharglist 1 ........................... <g.wizardMaster>
+  [ 67] objcall 1411 ............................ <g.wizardMaster.getWizards()>
+  [ 70] setprop 1409 ............................ pWizards = g.wizardMaster.getWizards()
+  [ 73] getprop 1409 ............................ <pWizards>
+  [ 76] pusharglist 1 ........................... <pWizards>
+  [ 78] objcall 257 ............................. <pWizards.count()>
+  [ 81] pushzero ................................ <0>
+  [ 82] eq ...................................... <pWizards.count() = 0>
+  [ 83] jmpifz [ 90] ............................ if pWizards.count() = 0 then
+  [ 86] pusharglistnoret 0 ...................... <>
+  [ 88] extcall 35 .............................. return 
+  [ 90] getlocal 1 .............................. <fin>
+  [ 92] not ..................................... <not fin>
+  [ 93] jmpifz [238] ............................ repeat while not fin
+  [ 96] getprop 1409 ............................ <pWizards>
+  [ 99] getprop 1407 ............................ <pWizardToSummon>
+  [102] pusharglist 2 ........................... <pWizards, pWizardToSummon>
+  [104] objcall 109 ............................. <pWizards[pWizardToSummon]>
+  [106] getobjprop 1416 ......................... <pWizards[pWizardToSummon].wizardSym>
+  [109] setprop 1408 ............................ pWizard = pWizards[pWizardToSummon].wizardSym
+  [112] getprop 1408 ............................ <pWizard>
+  [115] pusharglist 1 ........................... <pWizard>
+  [117] extcall 667 ............................. <string(pWizard)>
+  [120] pushcons 1 .............................. <"InGame">
+  [122] joinstr ................................. <string(pWizard) & "InGame">
+  [123] setlocal 3 .............................. wizardName = string(pWizard) & "InGame"
+  [125] getlocal 3 .............................. <wizardName>
+  [127] pusharglist 1 ........................... <wizardName>
+  [129] extcall 1417 ............................ <symbol(wizardName)>
+  [132] setlocal 4 .............................. wizardSym = symbol(wizardName)
+  [134] getglobal 40 ............................ <g>
+  [136] getchainedprop 120 ...................... <g.armyMaster>
+  [138] getparam 0 .............................. <me>
+  [140] getchainedprop 51 ....................... <me.big>
+  [142] pusharglist 1 ........................... <me.big>
+  [144] objcall 238 ............................. <me.big.getTeam()>
+  [146] getlocal 4 .............................. <wizardSym>
+  [148] pusharglist 3 ........................... <g.armyMaster, me.big.getTeam(), wizardSym>
+  [150] objcall 1398 ............................ <g.armyMaster.lookupArmyDetails(me.big.getTeam(), wizardSym)>
+  [153] setlocal 5 .............................. wizardDetails = g.armyMaster.lookupArmyDetails(me.big.getTeam(), wizardSym)
+  [155] getlocal 5 .............................. <wizardDetails>
+  [157] pushsymb 49 ............................. <#none>
+  [159] nteq .................................... <wizardDetails <> #none>
+  [160] jmpifz [216] ............................ if wizardDetails <> #none then
+  [163] pushint8 1 .............................. <1>
+  [165] setprop 1406 ............................ pWizardOn = 1
+  [168] getglobal 40 ............................ <g>
+  [170] getchainedprop 1410 ..................... <g.wizardMaster>
+  [173] pusharglistnoret 1 ...................... <g.wizardMaster>
+  [175] objcall 1418 ............................ g.wizardMaster.wizardOn()
+  [178] getglobal 40 ............................ <g>
+  [180] getchainedprop 120 ...................... <g.armyMaster>
+  [182] getparam 0 .............................. <me>
+  [184] getchainedprop 51 ....................... <me.big>
+  [186] pusharglist 1 ........................... <me.big>
+  [188] objcall 238 ............................. <me.big.getTeam()>
+  [190] getlocal 4 .............................. <wizardSym>
+  [192] getglobal 40 ............................ <g>
+  [194] getchainedprop 1399 ..................... <g.mouseMaster>
+  [197] pusharglist 1 ........................... <g.mouseMaster>
+  [199] objcall 1400 ............................ <g.mouseMaster.getMouseLoc()>
+  [202] pusharglist 4 ........................... <g.armyMaster, me.big.getTeam(), wizardSym, g.mouseMaster.getMouseLoc()>
+  [204] objcall 1401 ............................ <g.armyMaster.createUnit(me.big.getTeam(), wizardSym, g.mouseMaster.getMouseLoc())>
+  [207] setlocal 0 .............................. wizard = g.armyMaster.createUnit(me.big.getTeam(), wizardSym, g.mouseMaster.getMouseLoc())
+  [209] pushint8 1 .............................. <1>
+  [211] setlocal 1 .............................. fin = 1
+  [213] jmp [236] ............................... next repeat
+  [216] getparam 0 .............................. <me>
+  [218] pusharglistnoret 1 ...................... <me>
+  [220] objcall 1403 ............................ me.selectNextWizard()
+  [223] getlocal 2 .............................. <stopCheck>
+  [225] getprop 1407 ............................ <pWizardToSummon>
+  [228] eq ...................................... <stopCheck = pWizardToSummon>
+  [229] jmpifz [236] ............................ if stopCheck = pWizardToSummon then
+  [232] pushint8 1 .............................. <1>
+  [234] setlocal 1 .............................. fin = 1
+  [236] endrepeat [ 90]
+  [238] getlocal 0 .............................. <wizard>
+  [240] pushsymb 49 ............................. <#none>
+  [242] nteq .................................... <wizard <> #none>
+  [243] jmpifz [279] ............................ if wizard <> #none then / else
+  [246] getparam 0 .............................. <me>
+  [248] getchainedprop 51 ....................... <me.big>
+  [250] getprop 1408 ............................ <pWizard>
+  [253] getlocal 0 .............................. <wizard>
+  [255] pusharglistnoret 3 ...................... <me.big, pWizard, wizard>
+  [257] objcall 612 ............................. me.big.setRelation(pWizard, wizard)
+  [260] getparam 0 .............................. <me>
+  [262] getchainedprop 51 ....................... <me.big>
+  [264] getlocal 0 .............................. <wizard>
+  [266] pushsymb 122 ............................ <#leaveGame>
+  [268] pushsymb 628 ............................ <#once>
+  [271] pusharglistnoret 4 ...................... <me.big, wizard, #leaveGame, #once>
+  [273] objcall 629 ............................. me.big.keepMePosted(wizard, #leaveGame, #once)
+  [276] jmp [293]
+  [279] pushzero ................................ <0>
+  [280] setprop 1406 ............................ pWizardOn = 0
+  [283] getglobal 40 ............................ <g>
+  [285] getchainedprop 1410 ..................... <g.wizardMaster>
+  [288] pusharglistnoret 1 ...................... <g.wizardMaster>
+  [290] objcall 1412 ............................ g.wizardMaster.wizardOff()
+  [293] ret
+end
+
+on updateWizards me, wizards
+  [  0] getparam 1 .............................. <wizards>
+  [  2] setprop 1409 ............................ pWizards = wizards
+  [  5] ret
+end

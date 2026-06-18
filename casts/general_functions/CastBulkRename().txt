@@ -1,0 +1,78 @@
+[#name: "CastBulkRename(theCast, startMemNum, endMemNum, prefix, startNum, suffix, minLength)", #scriptType: #movie, #type: #script]
+on CastBulkRename theCast, startMemNum, endMemNum, prefix, suffix, startNum, minLength
+  -- optional variables
+  if voidP(startNum) then startNum = 1
+  if voidP(suffix) then suffix = ""
+  if voidP(minLength) then minLength = 2
+  
+  currentNum = startNum  
+  repeat with memNum = startMemNum to endMemNum
+    stringNum = string(currentNum)
+    stringNum = StringAddChars(stringNum, minLength, true, "0")
+    newName = prefix & stringNum & suffix
+    member(memNum, theCast).name = newName
+    currentNum = currentNum + 1
+  end repeat
+end 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

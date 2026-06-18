@@ -1,0 +1,32 @@
+property pMagicLimit
+global gMagicLimit
+
+on new me
+  return me
+end
+
+on init me
+  me.setMagicLimitToDefault()
+end
+
+on finish me
+end
+
+on getMagicLimit me
+  return pMagicLimit
+end
+
+on setMagicLimit me, newLimit
+  pMagicLimit = newLimit
+end
+
+on setMagicLimitToDefault me
+  me.setMagicLimit(gMagicLimit)
+end
+
+on start me
+end
+
+on stop me
+  me.finish()
+end

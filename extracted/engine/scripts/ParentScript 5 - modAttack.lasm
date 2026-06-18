@@ -1,0 +1,1174 @@
+property ancestor, pAttack, pRangedVectOffset, pChargeMax, pChargeSpeed, pChargeStart, pChargeSpeedMax
+global g, gGameView
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getlocal 0 .............................. <i>
+  [ 12] pushsymb 145 ............................ <#attack>
+  [ 14] pushsymb 49 ............................. <#none>
+  [ 16] pusharglistnoret 3 ...................... <i, #attack, #none>
+  [ 18] objcall 48 .............................. i[#attack] = #none
+  [ 20] getprop 33 .............................. <ancestor>
+  [ 22] pusharglistnoret 1 ...................... <ancestor>
+  [ 24] objcall 2 ............................... ancestor.addModParams()
+  [ 26] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pushzero ................................ <0>
+  [  9] setprop 146 ............................. pRangedVectOffset = 0
+  [ 11] getparam 0 .............................. <me>
+  [ 13] getparam 1 .............................. <params>
+  [ 15] getobjprop 145 .......................... <params.attack>
+  [ 17] pusharglistnoret 2 ...................... <me, params.attack>
+  [ 19] objcall 144 ............................. me.setAttack(params.attack)
+  [ 21] ret
+end
+
+on calcAttackChargeMax me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [  4] pusharglist 1 ........................... <me.pCharacterPrg>
+  [  6] objcall 148 ............................. <me.pCharacterPrg.getManaCapacity()>
+  [  8] getprop 149 ............................. <pAttack>
+  [ 10] getobjprop 150 .......................... <pAttack.chargeMaxModifier>
+  [ 12] mul ..................................... <me.pCharacterPrg.getManaCapacity() * pAttack.chargeMaxModifier>
+  [ 13] setlocal 0 .............................. characterMax = me.pCharacterPrg.getManaCapacity() * pAttack.chargeMaxModifier
+  [ 15] getlocal 0 .............................. <characterMax>
+  [ 17] getprop 149 ............................. <pAttack>
+  [ 19] getobjprop 151 .......................... <pAttack.chargeMaxBasic>
+  [ 21] add ..................................... <characterMax + pAttack.chargeMaxBasic>
+  [ 22] setlocal 0 .............................. characterMax = characterMax + pAttack.chargeMaxBasic
+  [ 24] getprop 4541 ............................ <pChargeMax>
+  [ 27] getlocal 0 .............................. <characterMax>
+  [ 29] pusharglist 2 ........................... <pChargeMax, characterMax>
+  [ 31] extcall 152 ............................. <min(pChargeMax, characterMax)>
+  [ 33] setlocal 1 .............................. chargeMax = min(pChargeMax, characterMax)
+  [ 35] getprop 149 ............................. <pAttack>
+  [ 37] getobjprop 154 .......................... <pAttack.limitMagic>
+  [ 39] jmpifz [ 62] ............................ if pAttack.limitMagic then
+  [ 42] getglobal 40 ............................ <g>
+  [ 44] getchainedprop 155 ...................... <g.magicLimitMaster>
+  [ 46] pusharglist 1 ........................... <g.magicLimitMaster>
+  [ 48] objcall 156 ............................. <g.magicLimitMaster.getMagicLimit()>
+  [ 50] setlocal 2 .............................. magicLimit = g.magicLimitMaster.getMagicLimit()
+  [ 52] getlocal 1 .............................. <chargeMax>
+  [ 54] getlocal 2 .............................. <magicLimit>
+  [ 56] mul ..................................... <chargeMax * magicLimit>
+  [ 57] pushint8 100 ............................ <100>
+  [ 59] div ..................................... <chargeMax * magicLimit / 100>
+  [ 60] setlocal 1 .............................. chargeMax = chargeMax * magicLimit / 100
+  [ 62] getprop 149 ............................. <pAttack>
+  [ 64] pushsymb 157 ............................ <#randomSummon>
+  [ 66] pusharglist 2 ........................... <pAttack, #randomSummon>
+  [ 68] objcall 109 ............................. <pAttack[#randomSummon]>
+  [ 70] jmpifz [152] ............................ if pAttack[#randomSummon] then
+  [ 73] getprop 149 ............................. <pAttack>
+  [ 75] pushsymb 159 ............................ <#multistage>
+  [ 77] pusharglist 2 ........................... <pAttack, #multistage>
+  [ 79] objcall 109 ............................. <pAttack[#multistage]>
+  [ 81] pushint8 2 .............................. <2>
+  [ 83] pusharglist 2 ........................... <pAttack[#multistage], 2>
+  [ 85] objcall 109 ............................. <pAttack[#multistage][2]>
+  [ 87] getlocal 1 .............................. <chargeMax>
+  [ 89] sub ..................................... <pAttack[#multistage][2] - chargeMax>
+  [ 90] pushzero ................................ <0>
+  [ 91] lt ...................................... <(pAttack[#multistage][2] - chargeMax) < 0>
+  [ 92] jmpifz [152] ............................ if (pAttack[#multistage][2] - chargeMax) < 0 then
+  [ 95] getlocal 1 .............................. <chargeMax>
+  [ 97] pushint8 20 ............................. <20>
+  [ 99] pusharglist 1 ........................... <20>
+  [101] extcall 158 ............................. <random(20)>
+  [103] mul ..................................... <chargeMax * random(20)>
+  [104] pushint8 17 ............................. <17>
+  [106] div ..................................... <chargeMax * random(20) / 17>
+  [107] getprop 149 ............................. <pAttack>
+  [109] pushsymb 159 ............................ <#multistage>
+  [111] pusharglist 2 ........................... <pAttack, #multistage>
+  [113] objcall 109 ............................. <pAttack[#multistage]>
+  [115] pushint8 1 .............................. <1>
+  [117] pusharglist 2 ........................... <pAttack[#multistage], 1>
+  [119] objcall 109 ............................. <pAttack[#multistage][1]>
+  [121] pusharglist 1 ........................... <pAttack[#multistage][1]>
+  [123] extcall 158 ............................. <random(pAttack[#multistage][1])>
+  [125] add ..................................... <(chargeMax * random(20) / 17) + random(pAttack[#multistage][1])>
+  [126] setlocal 3 .............................. tempMax = (chargeMax * random(20) / 17) + random(pAttack[#multistage][1])
+  [128] getlocal 1 .............................. <chargeMax>
+  [130] getlocal 3 .............................. <tempMax>
+  [132] pusharglist 2 ........................... <chargeMax, tempMax>
+  [134] extcall 152 ............................. <min(chargeMax, tempMax)>
+  [136] setlocal 1 .............................. chargeMax = min(chargeMax, tempMax)
+  [138] getlocal 1 .............................. <chargeMax>
+  [140] pushint8 2 .............................. <2>
+  [142] pusharglist 1 ........................... <2>
+  [144] extcall 158 ............................. <random(2)>
+  [146] add ..................................... <chargeMax + random(2)>
+  [147] pushint8 1 .............................. <1>
+  [149] sub ..................................... <chargeMax + random(2) - 1>
+  [150] setlocal 1 .............................. chargeMax = chargeMax + random(2) - 1
+  [152] getlocal 1 .............................. <chargeMax>
+  [154] pusharglistnoret 1 ...................... <chargeMax>
+  [156] extcall 35 .............................. return chargeMax
+  [158] ret
+end
+
+on calcAttackChargeStart me
+  [  0] getprop 4543 ............................ <pChargeStart>
+  [  3] getparam 0 .............................. <me>
+  [  5] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [  7] pusharglist 1 ........................... <me.pCharacterPrg>
+  [  9] objcall 164 ............................. <me.pCharacterPrg.getManaBurst()>
+  [ 11] add ..................................... <pChargeStart + me.pCharacterPrg.getManaBurst()>
+  [ 12] setlocal 0 .............................. chargeStart = pChargeStart + me.pCharacterPrg.getManaBurst()
+  [ 14] getlocal 0 .............................. <chargeStart>
+  [ 16] getparam 0 .............................. <me>
+  [ 18] pusharglist 1 ........................... <me>
+  [ 20] objcall 125 ............................. <me.calcAttackChargeMax()>
+  [ 22] pusharglist 2 ........................... <chargeStart, me.calcAttackChargeMax()>
+  [ 24] extcall 152 ............................. <min(chargeStart, me.calcAttackChargeMax())>
+  [ 26] setlocal 0 .............................. chargeStart = min(chargeStart, me.calcAttackChargeMax())
+  [ 28] getprop 149 ............................. <pAttack>
+  [ 30] pushsymb 165 ............................ <#chargeStartMax>
+  [ 32] pusharglist 2 ........................... <pAttack, #chargeStartMax>
+  [ 34] objcall 109 ............................. <pAttack[#chargeStartMax]>
+  [ 36] pusharglist 0 ........................... <>
+  [ 38] extcall 166 ............................. <VOID>
+  [ 40] eq ...................................... <pAttack[#chargeStartMax] = VOID>
+  [ 41] jmpifz [ 60] ............................ if pAttack[#chargeStartMax] = VOID then
+  [ 44] getprop 149 ............................. <pAttack>
+  [ 46] pushsymb 165 ............................ <#chargeStartMax>
+  [ 48] pushsymb 49 ............................. <#none>
+  [ 50] pusharglistnoret 3 ...................... <pAttack, #chargeStartMax, #none>
+  [ 52] objcall 48 .............................. pAttack[#chargeStartMax] = #none
+  [ 54] pushcons 1 .............................. <"modAttack.calcAttackChargeStart() chargeStartMax added">
+  [ 56] pusharglistnoret 1 ...................... <"modAttack.calcAttackChargeStart() chargeStartMax added">
+  [ 58] extcall 167 ............................. put "modAttack.calcAttackChargeStart() chargeStartMax added"
+  [ 60] getprop 4543 ............................ <pChargeStart>
+  [ 63] pushsymb 49 ............................. <#none>
+  [ 65] nteq .................................... <pChargeStart <> #none>
+  [ 66] jmpifz [ 82] ............................ if pChargeStart <> #none then
+  [ 69] getprop 4543 ............................ <pChargeStart>
+  [ 72] getprop 149 ............................. <pAttack>
+  [ 74] getobjprop 165 .......................... <pAttack.chargeStartMax>
+  [ 76] pusharglist 2 ........................... <pChargeStart, pAttack.chargeStartMax>
+  [ 78] extcall 152 ............................. <min(pChargeStart, pAttack.chargeStartMax)>
+  [ 80] setlocal 0 .............................. chargeStart = min(pChargeStart, pAttack.chargeStartMax)
+  [ 82] getlocal 0 .............................. <chargeStart>
+  [ 84] pusharglistnoret 1 ...................... <chargeStart>
+  [ 86] extcall 35 .............................. return chargeStart
+  [ 88] ret
+end
+
+on calcAttackChargeSpeed me
+  [  0] getprop 4539 ............................ <pChargeSpeed>
+  [  3] getparam 0 .............................. <me>
+  [  5] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [  7] pusharglist 1 ........................... <me.pCharacterPrg>
+  [  9] objcall 169 ............................. <me.pCharacterPrg.getManaFlow()>
+  [ 11] mul ..................................... <pChargeSpeed * me.pCharacterPrg.getManaFlow()>
+  [ 12] setlocal 0 .............................. chargeSpeed = pChargeSpeed * me.pCharacterPrg.getManaFlow()
+  [ 14] getprop 4559 ............................ <pChargeSpeedMax>
+  [ 17] pushsymb 171 ............................ <#unlimited>
+  [ 19] nteq .................................... <pChargeSpeedMax <> #unlimited>
+  [ 20] jmpifz [ 37] ............................ if pChargeSpeedMax <> #unlimited then
+  [ 23] getprop 4559 ............................ <pChargeSpeedMax>
+  [ 26] getlocal 0 .............................. <chargeSpeed>
+  [ 28] lt ...................................... <pChargeSpeedMax < chargeSpeed>
+  [ 29] jmpifz [ 37] ............................ if pChargeSpeedMax < chargeSpeed then
+  [ 32] getprop 4559 ............................ <pChargeSpeedMax>
+  [ 35] setlocal 0 .............................. chargeSpeed = pChargeSpeedMax
+  [ 37] getlocal 0 .............................. <chargeSpeed>
+  [ 39] pusharglistnoret 1 ...................... <chargeSpeed>
+  [ 41] extcall 35 .............................. return chargeSpeed
+  [ 43] ret
+end
+
+on calcAttackLoc me
+  [  0] getparam 0 .............................. <me>
+  [  2] getobjprop 173 .......................... <me.pSpr>
+  [  4] pusharglist 1 ........................... <me.pSpr>
+  [  6] extcall 172 ............................. <SpriteGetFlipHAsDir(me.pSpr)>
+  [  8] setlocal 0 .............................. Dir = SpriteGetFlipHAsDir(me.pSpr)
+  [ 10] getprop 149 ............................. <pAttack>
+  [ 12] getchainedprop 174 ...................... <pAttack.collisionLoc>
+  [ 14] pusharglist 1 ........................... <pAttack.collisionLoc>
+  [ 16] objcall 175 ............................. <pAttack.collisionLoc.duplicate()>
+  [ 18] setlocal 1 .............................. attackLoc = pAttack.collisionLoc.duplicate()
+  [ 20] getlocal 1 .............................. <attackLoc>
+  [ 22] pushint8 1 .............................. <1>
+  [ 24] getlocal 1 .............................. <attackLoc>
+  [ 26] pushint8 1 .............................. <1>
+  [ 28] pusharglist 2 ........................... <attackLoc, 1>
+  [ 30] objcall 109 ............................. <attackLoc[1]>
+  [ 32] getlocal 0 .............................. <Dir>
+  [ 34] mul ..................................... <attackLoc[1] * Dir>
+  [ 35] pusharglistnoret 3 ...................... <attackLoc, 1, attackLoc[1] * Dir>
+  [ 37] objcall 48 .............................. attackLoc[1] = attackLoc[1] * Dir
+  [ 39] getparam 0 .............................. <me>
+  [ 41] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [ 43] pusharglist 1 ........................... <me.pCharacterPrg>
+  [ 45] objcall 111 ............................. <me.pCharacterPrg.getLoc()>
+  [ 47] getlocal 1 .............................. <attackLoc>
+  [ 49] add ..................................... <me.pCharacterPrg.getLoc() + attackLoc>
+  [ 50] setlocal 1 .............................. attackLoc = me.pCharacterPrg.getLoc() + attackLoc
+  [ 52] getlocal 1 .............................. <attackLoc>
+  [ 54] pusharglistnoret 1 ...................... <attackLoc>
+  [ 56] extcall 35 .............................. return attackLoc
+  [ 58] ret
+end
+
+on calcAttackDist me, tilesize
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. dist = 0
+  [  3] getparam 0 .............................. <me>
+  [  5] pusharglist 1 ........................... <me>
+  [  7] objcall 141 ............................. <me.getAttack()>
+  [  9] getobjprop 178 .......................... <me.getAttack().type>
+  [ 11] peek 0 .................................. case me.getAttack().type of
+  [ 13] pushsymb 179 ............................ <#melee>
+  [ 15] eq
+  [ 16] jmpifz [ 26] ............................ (case) #melee:
+  [ 19] pusharglistnoret 0 ...................... <>
+  [ 21] extcall 185 ............................. nothing()
+  [ 23] jmp [117]
+  [ 26] peek 0
+  [ 28] pushsymb 180 ............................ <#explode>
+  [ 30] nteq
+  [ 31] jmpifz [ 42] ............................ (case) #explode, ...
+  [ 34] peek 0
+  [ 36] pushsymb 181 ............................ <#magic>
+  [ 38] eq
+  [ 39] jmpifz [ 71] ............................ (case) ..., #magic:
+  [ 42] getparam 0 .............................. <me>
+  [ 44] getchainedprop 51 ....................... <me.big>
+  [ 46] pusharglist 1 ........................... <me.big>
+  [ 48] objcall 189 ............................. <me.big.getCurrentCharge()>
+  [ 50] pushint8 2 .............................. <2>
+  [ 52] getparam 1 .............................. <tilesize>
+  [ 54] pushint8 1 .............................. <1>
+  [ 56] pusharglist 2 ........................... <tilesize, 1>
+  [ 58] objcall 109 ............................. <tilesize[1]>
+  [ 60] mul ..................................... <2 * tilesize[1]>
+  [ 61] div ..................................... <me.big.getCurrentCharge() / (2 * tilesize[1])>
+  [ 62] pusharglist 1 ........................... <me.big.getCurrentCharge() / (2 * tilesize[1])>
+  [ 64] extcall 210 ............................. <integer(me.big.getCurrentCharge() / (2 * tilesize[1]))>
+  [ 66] setlocal 0 .............................. dist = integer(me.big.getCurrentCharge() / (2 * tilesize[1]))
+  [ 68] jmp [117]
+  [ 71] peek 0
+  [ 73] pushsymb 182 ............................ <#bullet>
+  [ 75] eq
+  [ 76] jmpifz [113] ............................ (case) #bullet:
+  [ 79] getparam 0 .............................. <me>
+  [ 81] pusharglist 1 ........................... <me>
+  [ 83] objcall 183 ............................. <me.hasSplashDamage()>
+  [ 85] jmpifz [110] ............................ if me.hasSplashDamage() then
+  [ 88] getparam 0 .............................. <me>
+  [ 90] pusharglist 1 ........................... <me>
+  [ 92] objcall 4663 ............................ <me.calcAttackDistSplash()>
+  [ 95] getparam 1 .............................. <tilesize>
+  [ 97] pushint8 1 .............................. <1>
+  [ 99] pusharglist 2 ........................... <tilesize, 1>
+  [101] objcall 109 ............................. <tilesize[1]>
+  [103] div ..................................... <me.calcAttackDistSplash() / tilesize[1]>
+  [104] pusharglist 1 ........................... <me.calcAttackDistSplash() / tilesize[1]>
+  [106] extcall 210 ............................. <integer(me.calcAttackDistSplash() / tilesize[1])>
+  [108] setlocal 0 .............................. dist = integer(me.calcAttackDistSplash() / tilesize[1])
+  [110] jmp [117] ............................... (case) otherwise:
+  [113] pusharglistnoret 0 ...................... <>
+  [115] extcall 185 ............................. nothing()
+  [117] pop 1 ................................... end case
+  [119] getlocal 0 .............................. <dist>
+  [121] pusharglistnoret 1 ...................... <dist>
+  [123] extcall 35 .............................. return dist
+  [125] ret
+end
+
+on calcAttackHit me, targetObj
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. hit = 0
+  [  3] getparam 0 .............................. <me>
+  [  5] pusharglist 1 ........................... <me>
+  [  7] objcall 141 ............................. <me.getAttack()>
+  [  9] getobjprop 178 .......................... <me.getAttack().type>
+  [ 11] peek 0 .................................. case me.getAttack().type of
+  [ 13] pushsymb 179 ............................ <#melee>
+  [ 15] eq
+  [ 16] jmpifz [ 32] ............................ (case) #melee:
+  [ 19] getparam 0 .............................. <me>
+  [ 21] getparam 1 .............................. <targetObj>
+  [ 23] pusharglist 2 ........................... <me, targetObj>
+  [ 25] objcall 131 ............................. <me.calcAttackHitMelee(targetObj)>
+  [ 27] setlocal 0 .............................. hit = me.calcAttackHitMelee(targetObj)
+  [ 29] jmp [ 86]
+  [ 32] peek 0
+  [ 34] pushsymb 180 ............................ <#explode>
+  [ 36] nteq
+  [ 37] jmpifz [ 48] ............................ (case) #explode, ...
+  [ 40] peek 0
+  [ 42] pushsymb 181 ............................ <#magic>
+  [ 44] eq
+  [ 45] jmpifz [ 61] ............................ (case) ..., #magic:
+  [ 48] getparam 0 .............................. <me>
+  [ 50] getparam 1 .............................. <targetObj>
+  [ 52] pusharglist 2 ........................... <me, targetObj>
+  [ 54] objcall 130 ............................. <me.calcAttackHitMagic(targetObj)>
+  [ 56] setlocal 0 .............................. hit = me.calcAttackHitMagic(targetObj)
+  [ 58] jmp [ 86]
+  [ 61] peek 0
+  [ 63] pushsymb 182 ............................ <#bullet>
+  [ 65] eq
+  [ 66] jmpifz [ 82] ............................ (case) #bullet:
+  [ 69] getparam 0 .............................. <me>
+  [ 71] getparam 1 .............................. <targetObj>
+  [ 73] pusharglist 2 ........................... <me, targetObj>
+  [ 75] objcall 184 ............................. <me.calcAttackHitSplash(targetObj)>
+  [ 77] setlocal 0 .............................. hit = me.calcAttackHitSplash(targetObj)
+  [ 79] jmp [ 86] ............................... (case) otherwise:
+  [ 82] pusharglistnoret 0 ...................... <>
+  [ 84] extcall 185 ............................. nothing()
+  [ 86] pop 1 ................................... end case
+  [ 88] getlocal 0 .............................. <hit>
+  [ 90] pusharglistnoret 1 ...................... <hit>
+  [ 92] extcall 35 .............................. return hit
+  [ 94] ret
+end
+
+on calcAttackHitMagic me, targetObj
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. hit = 0
+  [  3] getparam 1 .............................. <targetObj>
+  [  5] pusharglist 1 ........................... <targetObj>
+  [  7] objcall 188 ............................. <targetObj.getRadius()>
+  [  9] setlocal 1 .............................. targetRadius = targetObj.getRadius()
+  [ 11] getparam 0 .............................. <me>
+  [ 13] getchainedprop 51 ....................... <me.big>
+  [ 15] pusharglist 1 ........................... <me.big>
+  [ 17] objcall 189 ............................. <me.big.getCurrentCharge()>
+  [ 19] pushint8 2 .............................. <2>
+  [ 21] div ..................................... <me.big.getCurrentCharge() / 2>
+  [ 22] setlocal 2 .............................. myRadius = me.big.getCurrentCharge() / 2
+  [ 24] getparam 0 .............................. <me>
+  [ 26] pusharglist 1 ........................... <me>
+  [ 28] objcall 111 ............................. <me.getLoc()>
+  [ 30] getparam 1 .............................. <targetObj>
+  [ 32] pusharglist 1 ........................... <targetObj>
+  [ 34] objcall 111 ............................. <targetObj.getLoc()>
+  [ 36] pusharglist 2 ........................... <me.getLoc(), targetObj.getLoc()>
+  [ 38] extcall 190 ............................. <GeomDistSqr(me.getLoc(), targetObj.getLoc())>
+  [ 40] setlocal 3 .............................. dist = GeomDistSqr(me.getLoc(), targetObj.getLoc())
+  [ 42] getlocal 2 .............................. <myRadius>
+  [ 44] getlocal 1 .............................. <targetRadius>
+  [ 46] add ..................................... <myRadius + targetRadius>
+  [ 47] setlocal 4 .............................. hitRange = myRadius + targetRadius
+  [ 49] getlocal 3 .............................. <dist>
+  [ 51] getlocal 4 .............................. <hitRange>
+  [ 53] getlocal 4 .............................. <hitRange>
+  [ 55] mul ..................................... <hitRange * hitRange>
+  [ 56] lt ...................................... <dist < (hitRange * hitRange)>
+  [ 57] jmpifz [ 64] ............................ if dist < (hitRange * hitRange) then
+  [ 60] pushint8 1 .............................. <1>
+  [ 62] setlocal 0 .............................. hit = 1
+  [ 64] getlocal 0 .............................. <hit>
+  [ 66] pusharglistnoret 1 ...................... <hit>
+  [ 68] extcall 35 .............................. return hit
+  [ 70] ret
+end
+
+on calcAttackHitMelee me, targetObj
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. hit = 0
+  [  3] getparam 1 .............................. <targetObj>
+  [  5] pusharglist 1 ........................... <targetObj>
+  [  7] objcall 113 ............................. <targetObj.getRect()>
+  [  9] setlocal 1 .............................. targetRect = targetObj.getRect()
+  [ 11] getparam 0 .............................. <me>
+  [ 13] pusharglist 1 ........................... <me>
+  [ 15] objcall 128 ............................. <me.calcAttackLoc()>
+  [ 17] getlocal 1 .............................. <targetRect>
+  [ 19] pusharglist 2 ........................... <me.calcAttackLoc(), targetRect>
+  [ 21] objcall 195 ............................. <me.calcAttackLoc().inside(targetRect)>
+  [ 23] jmpifz [ 30] ............................ if me.calcAttackLoc().inside(targetRect) then
+  [ 26] pushint8 1 .............................. <1>
+  [ 28] setlocal 0 .............................. hit = 1
+  [ 30] getlocal 0 .............................. <hit>
+  [ 32] pusharglistnoret 1 ...................... <hit>
+  [ 34] extcall 35 .............................. return hit
+  [ 36] ret
+end
+
+on calcAttackPower me
+  [  0] pushzero ................................ <0>
+  [  1] pushzero ................................ <0>
+  [  2] pusharglist 2 ........................... <0, 0>
+  [  4] extcall 197 ............................. <point(0, 0)>
+  [  6] setlocal 0 .............................. attackPower = point(0, 0)
+  [  8] getparam 0 .............................. <me>
+  [ 10] pusharglist 1 ........................... <me>
+  [ 12] objcall 136 ............................. <me.calcAttackType()>
+  [ 14] setlocal 1 .............................. attackType = me.calcAttackType()
+  [ 16] getlocal 1 .............................. <attackType>
+  [ 18] peek 0 .................................. case attackType of
+  [ 20] pushsymb 182 ............................ <#bullet>
+  [ 22] eq
+  [ 23] jmpifz [ 37] ............................ (case) #bullet:
+  [ 26] getparam 0 .............................. <me>
+  [ 28] pusharglist 1 ........................... <me>
+  [ 30] objcall 133 ............................. <me.calcAttackPowerBullet()>
+  [ 32] setlocal 0 .............................. attackPower = me.calcAttackPowerBullet()
+  [ 34] jmp [ 88]
+  [ 37] peek 0
+  [ 39] pushsymb 179 ............................ <#melee>
+  [ 41] eq
+  [ 42] jmpifz [ 56] ............................ (case) #melee:
+  [ 45] getparam 0 .............................. <me>
+  [ 47] pusharglist 1 ........................... <me>
+  [ 49] objcall 134 ............................. <me.calcAttackPowerMelee()>
+  [ 51] setlocal 0 .............................. attackPower = me.calcAttackPowerMelee()
+  [ 53] jmp [ 88]
+  [ 56] peek 0
+  [ 58] pushsymb 180 ............................ <#explode>
+  [ 60] nteq
+  [ 61] jmpifz [ 80] ............................ (case) #explode, ...
+  [ 64] peek 0
+  [ 66] pushsymb 181 ............................ <#magic>
+  [ 68] nteq
+  [ 69] jmpifz [ 80] ............................ (case) ..., #magic, ...
+  [ 72] peek 0
+  [ 74] pushsymb 198 ............................ <#Spell>
+  [ 76] eq
+  [ 77] jmpifz [ 88] ............................ (case) ..., #Spell:
+  [ 80] getparam 0 .............................. <me>
+  [ 82] pusharglist 1 ........................... <me>
+  [ 84] objcall 135 ............................. <me.calcAttackPowerSpell()>
+  [ 86] setlocal 0 .............................. attackPower = me.calcAttackPowerSpell()
+  [ 88] pop 1 ................................... end case
+  [ 90] getlocal 0 .............................. <attackPower>
+  [ 92] pusharglistnoret 1 ...................... <attackPower>
+  [ 94] extcall 35 .............................. return attackPower
+  [ 96] ret
+end
+
+on calcAttackPowerBullet me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 201 ............................. <me.getVect()>
+  [  6] getparam 0 .............................. <me>
+  [  8] pusharglist 1 ........................... <me>
+  [ 10] objcall 141 ............................. <me.getAttack()>
+  [ 12] getobjprop 202 .......................... <me.getAttack().power>
+  [ 14] mul ..................................... <me.getVect() * me.getAttack().power>
+  [ 15] setlocal 0 .............................. attackPower = me.getVect() * me.getAttack().power
+  [ 17] getlocal 0 .............................. <attackPower>
+  [ 19] pusharglistnoret 1 ...................... <attackPower>
+  [ 21] extcall 35 .............................. return attackPower
+  [ 23] ret
+end
+
+on calcAttackPowerMelee me
+  [  0] getparam 0 .............................. <me>
+  [  2] getobjprop 173 .......................... <me.pSpr>
+  [  4] pusharglist 1 ........................... <me.pSpr>
+  [  6] extcall 172 ............................. <SpriteGetFlipHAsDir(me.pSpr)>
+  [  8] setlocal 0 .............................. Dir = SpriteGetFlipHAsDir(me.pSpr)
+  [ 10] getprop 149 ............................. <pAttack>
+  [ 12] getchainedprop 202 ...................... <pAttack.power>
+  [ 14] pusharglist 1 ........................... <pAttack.power>
+  [ 16] objcall 175 ............................. <pAttack.power.duplicate()>
+  [ 18] setlocal 1 .............................. attackPower = pAttack.power.duplicate()
+  [ 20] getlocal 1 .............................. <attackPower>
+  [ 22] pushint8 1 .............................. <1>
+  [ 24] getlocal 1 .............................. <attackPower>
+  [ 26] pushint8 1 .............................. <1>
+  [ 28] pusharglist 2 ........................... <attackPower, 1>
+  [ 30] objcall 109 ............................. <attackPower[1]>
+  [ 32] getlocal 0 .............................. <Dir>
+  [ 34] mul ..................................... <attackPower[1] * Dir>
+  [ 35] pusharglistnoret 3 ...................... <attackPower, 1, attackPower[1] * Dir>
+  [ 37] objcall 48 .............................. attackPower[1] = attackPower[1] * Dir
+  [ 39] getlocal 1 .............................. <attackPower>
+  [ 41] pusharglistnoret 1 ...................... <attackPower>
+  [ 43] extcall 35 .............................. return attackPower
+  [ 45] ret
+end
+
+on calcAttackPowerSpell me
+  [  0] getprop 149 ............................. <pAttack>
+  [  2] getobjprop 202 .......................... <pAttack.power>
+  [  4] pusharglistnoret 1 ...................... <pAttack.power>
+  [  6] extcall 35 .............................. return pAttack.power
+  [  8] ret
+end
+
+on calcAttackType me
+  [  0] getprop 149 ............................. <pAttack>
+  [  2] getobjprop 178 .......................... <pAttack.type>
+  [  4] setlocal 0 .............................. aType = pAttack.type
+  [  6] getlocal 0 .............................. <aType>
+  [  8] setlocal 1 .............................. attackType = aType
+  [ 10] getlocal 1 .............................. <attackType>
+  [ 12] pusharglistnoret 1 ...................... <attackType>
+  [ 14] extcall 35 .............................. return attackType
+  [ 16] ret
+end
+
+on calcCollisionVect me, targetObj
+  [  0] pushzero ................................ <0>
+  [  1] pushzero ................................ <0>
+  [  2] pusharglist 2 ........................... <0, 0>
+  [  4] extcall 197 ............................. <point(0, 0)>
+  [  6] setlocal 0 .............................. collisionVect = point(0, 0)
+  [  8] getparam 0 .............................. <me>
+  [ 10] pusharglist 1 ........................... <me>
+  [ 12] objcall 136 ............................. <me.calcAttackType()>
+  [ 14] setlocal 1 .............................. attackType = me.calcAttackType()
+  [ 16] getlocal 1 .............................. <attackType>
+  [ 18] peek 0 .................................. case attackType of
+  [ 20] pushsymb 182 ............................ <#bullet>
+  [ 22] eq
+  [ 23] jmpifz [ 39] ............................ (case) #bullet:
+  [ 26] getparam 0 .............................. <me>
+  [ 28] getparam 1 .............................. <targetObj>
+  [ 30] pusharglist 2 ........................... <me, targetObj>
+  [ 32] objcall 138 ............................. <me.calcCollisionVectBullet(targetObj)>
+  [ 34] setlocal 0 .............................. collisionVect = me.calcCollisionVectBullet(targetObj)
+  [ 36] jmp [ 94]
+  [ 39] peek 0
+  [ 41] pushsymb 179 ............................ <#melee>
+  [ 43] eq
+  [ 44] jmpifz [ 60] ............................ (case) #melee:
+  [ 47] getparam 0 .............................. <me>
+  [ 49] getparam 1 .............................. <targetObj>
+  [ 51] pusharglist 2 ........................... <me, targetObj>
+  [ 53] objcall 139 ............................. <me.calcCollisionVectMelee(targetObj)>
+  [ 55] setlocal 0 .............................. collisionVect = me.calcCollisionVectMelee(targetObj)
+  [ 57] jmp [ 94]
+  [ 60] peek 0
+  [ 62] pushsymb 180 ............................ <#explode>
+  [ 64] nteq
+  [ 65] jmpifz [ 84] ............................ (case) #explode, ...
+  [ 68] peek 0
+  [ 70] pushsymb 181 ............................ <#magic>
+  [ 72] nteq
+  [ 73] jmpifz [ 84] ............................ (case) ..., #magic, ...
+  [ 76] peek 0
+  [ 78] pushsymb 198 ............................ <#Spell>
+  [ 80] eq
+  [ 81] jmpifz [ 94] ............................ (case) ..., #Spell:
+  [ 84] getparam 0 .............................. <me>
+  [ 86] getparam 1 .............................. <targetObj>
+  [ 88] pusharglist 2 ........................... <me, targetObj>
+  [ 90] objcall 140 ............................. <me.calcCollisionVectSpell(targetObj)>
+  [ 92] setlocal 0 .............................. collisionVect = me.calcCollisionVectSpell(targetObj)
+  [ 94] pop 1 ................................... end case
+  [ 96] getlocal 0 .............................. <collisionVect>
+  [ 98] pusharglistnoret 1 ...................... <collisionVect>
+  [100] extcall 35 .............................. return collisionVect
+  [102] ret
+end
+
+on calcCollisionVectBullet me, targetObj
+  [  0] pushzero ................................ <0>
+  [  1] pushzero ................................ <0>
+  [  2] pusharglist 2 ........................... <0, 0>
+  [  4] extcall 197 ............................. <point(0, 0)>
+  [  6] setlocal 0 .............................. collisionVect = point(0, 0)
+  [  8] getparam 0 .............................. <me>
+  [ 10] getchainedprop 51 ....................... <me.big>
+  [ 12] pusharglist 1 ........................... <me.big>
+  [ 14] objcall 183 ............................. <me.big.hasSplashDamage()>
+  [ 16] jmpifz [ 34] ............................ if me.big.hasSplashDamage() then / else
+  [ 19] getparam 0 .............................. <me>
+  [ 21] getchainedprop 51 ....................... <me.big>
+  [ 23] getparam 1 .............................. <targetObj>
+  [ 25] pusharglist 2 ........................... <me.big, targetObj>
+  [ 27] objcall 205 ............................. <me.big.calcCollisionVectSplash(targetObj)>
+  [ 29] setlocal 0 .............................. collisionVect = me.big.calcCollisionVectSplash(targetObj)
+  [ 31] jmp [ 42]
+  [ 34] getparam 0 .............................. <me>
+  [ 36] pusharglist 1 ........................... <me>
+  [ 38] objcall 132 ............................. <me.calcAttackPower()>
+  [ 40] setlocal 0 .............................. collisionVect = me.calcAttackPower()
+  [ 42] getlocal 0 .............................. <collisionVect>
+  [ 44] pusharglistnoret 1 ...................... <collisionVect>
+  [ 46] extcall 35 .............................. return collisionVect
+  [ 48] ret
+end
+
+on calcCollisionVectMelee me, targetObj
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 141 ............................. <me.getAttack()>
+  [  6] setlocal 0 .............................. attack = me.getAttack()
+  [  8] getlocal 0 .............................. <attack>
+  [ 10] getobjprop 202 .......................... <attack.power>
+  [ 12] pusharglist 1 ........................... <attack.power>
+  [ 14] extcall 206 ............................. <ilk(attack.power)>
+  [ 16] peek 0 .................................. case ilk(attack.power) of
+  [ 18] pushsymb 197 ............................ <#point>
+  [ 20] eq
+  [ 21] jmpifz [113] ............................ (case) #point:
+  [ 24] getlocal 0 .............................. <attack>
+  [ 26] getobjprop 178 .......................... <attack.type>
+  [ 28] peek 0 .................................. case attack.type of
+  [ 30] pushsymb 179 ............................ <#melee>
+  [ 32] eq
+  [ 33] jmpifz [108] ............................ (case) #melee:
+  [ 36] getlocal 0 .............................. <attack>
+  [ 38] getobjprop 207 .......................... <attack.animType>
+  [ 40] peek 0 .................................. case attack.animType of
+  [ 42] pushsymb 208 ............................ <#magicMelee>
+  [ 44] eq
+  [ 45] jmpifz [ 89] ............................ (case) #magicMelee:
+  [ 48] getparam 0 .............................. <me>
+  [ 50] pusharglist 1 ........................... <me>
+  [ 52] objcall 132 ............................. <me.calcAttackPower()>
+  [ 54] getparam 0 .............................. <me>
+  [ 56] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [ 58] pusharglist 1 ........................... <me.pCharacterPrg>
+  [ 60] objcall 209 ............................. <me.pCharacterPrg.getStrength()>
+  [ 62] pushfloat32 1.5 ......................... <1.5>
+  [ 67] getparam 0 .............................. <me>
+  [ 69] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [ 71] pusharglist 1 ........................... <me.pCharacterPrg>
+  [ 73] objcall 148 ............................. <me.pCharacterPrg.getManaCapacity()>
+  [ 75] mul ..................................... <1.5 * me.pCharacterPrg.getManaCapacity()>
+  [ 76] add ..................................... <me.pCharacterPrg.getStrength() + (1.5 * me.pCharacterPrg.getManaCapacity())>
+  [ 77] mul ..................................... <me.calcAttackPower() * (me.pCharacterPrg.getStrength() + (1.5 * me.pCharacterPrg.getManaCapacity()))>
+  [ 78] pushfloat32 1.5 ......................... <1.5>
+  [ 83] div ..................................... <me.calcAttackPower() * (me.pCharacterPrg.getStrength() + (1.5 * me.pCharacterPrg.getManaCapacity())) / 1.5>
+  [ 84] setlocal 1 .............................. collisionVect = me.calcAttackPower() * (me.pCharacterPrg.getStrength() + (1.5 * me.pCharacterPrg.getManaCapacity())) / 1.5
+  [ 86] jmp [106] ............................... (case) otherwise:
+  [ 89] getparam 0 .............................. <me>
+  [ 91] pusharglist 1 ........................... <me>
+  [ 93] objcall 132 ............................. <me.calcAttackPower()>
+  [ 95] getparam 0 .............................. <me>
+  [ 97] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [ 99] pusharglist 1 ........................... <me.pCharacterPrg>
+  [101] objcall 209 ............................. <me.pCharacterPrg.getStrength()>
+  [103] mul ..................................... <me.calcAttackPower() * me.pCharacterPrg.getStrength()>
+  [104] setlocal 1 .............................. collisionVect = me.calcAttackPower() * me.pCharacterPrg.getStrength()
+  [106] pop 1 ................................... end case
+  [108] pop 1
+  [110] jmp [158]
+  [113] peek 0
+  [115] pushsymb 210 ............................ <#integer>
+  [117] eq
+  [118] jmpifz [148] ............................ (case) #integer:
+  [121] getparam 0 .............................. <me>
+  [123] pusharglist 1 ........................... <me>
+  [125] objcall 211 ............................. <me.getAttackLoc()>
+  [127] setlocal 2 .............................. attackLoc = me.getAttackLoc()
+  [129] getlocal 2 .............................. <attackLoc>
+  [131] getparam 1 .............................. <targetObj>
+  [133] pusharglist 1 ........................... <targetObj>
+  [135] objcall 111 ............................. <targetObj.getLoc()>
+  [137] getlocal 0 .............................. <attack>
+  [139] getobjprop 202 .......................... <attack.power>
+  [141] pusharglistnoret 3 ...................... <attackLoc, targetObj.getLoc(), attack.power>
+  [143] extcall 212 ............................. CollisionCalcVect(attackLoc, targetObj.getLoc(), attack.power)
+  [145] jmp [158] ............................... (case) otherwise:
+  [148] pushcons 2 .............................. <"error: modAttack.getCollisionVect(): pAttack.power set to wrong type of variable">
+  [150] pusharglistnoret 1 ...................... <"error: modAttack.getCollisionVect(): pAttack.power set to wrong type of variable">
+  [152] extcall 167 ............................. put "error: modAttack.getCollisionVect(): pAttack.power set to wrong type of variable"
+  [154] pusharglistnoret 0 ...................... <>
+  [156] extcall 185 ............................. nothing()
+  [158] pop 1 ................................... end case
+  [160] getlocal 1 .............................. <collisionVect>
+  [162] pusharglistnoret 1 ...................... <collisionVect>
+  [164] extcall 35 .............................. return collisionVect
+  [166] ret
+end
+
+on calcCollisionVectSpell me, targetObj
+  [  0] getparam 1 .............................. <targetObj>
+  [  2] pusharglist 1 ........................... <targetObj>
+  [  4] objcall 111 ............................. <targetObj.getLoc()>
+  [  6] setlocal 0 .............................. targetloc = targetObj.getLoc()
+  [  8] getparam 0 .............................. <me>
+  [ 10] getchainedprop 51 ....................... <me.big>
+  [ 12] pusharglist 1 ........................... <me.big>
+  [ 14] objcall 189 ............................. <me.big.getCurrentCharge()>
+  [ 16] pushint8 2 .............................. <2>
+  [ 18] div ..................................... <me.big.getCurrentCharge() / 2>
+  [ 19] setlocal 1 .............................. myRadius = me.big.getCurrentCharge() / 2
+  [ 21] getparam 1 .............................. <targetObj>
+  [ 23] pusharglist 1 ........................... <targetObj>
+  [ 25] objcall 188 ............................. <targetObj.getRadius()>
+  [ 27] setlocal 2 .............................. targetRadius = targetObj.getRadius()
+  [ 29] getlocal 1 .............................. <myRadius>
+  [ 31] getlocal 2 .............................. <targetRadius>
+  [ 33] add ..................................... <myRadius + targetRadius>
+  [ 34] setlocal 3 .............................. hitRange = myRadius + targetRadius
+  [ 36] getparam 0 .............................. <me>
+  [ 38] pusharglist 1 ........................... <me>
+  [ 40] objcall 111 ............................. <me.getLoc()>
+  [ 42] getlocal 0 .............................. <targetloc>
+  [ 44] pusharglist 2 ........................... <me.getLoc(), targetloc>
+  [ 46] extcall 213 ............................. <SineDist(me.getLoc(), targetloc)>
+  [ 48] setlocal 4 .............................. dist = SineDist(me.getLoc(), targetloc)
+  [ 50] getlocal 3 .............................. <hitRange>
+  [ 52] getlocal 4 .............................. <dist>
+  [ 54] sub ..................................... <hitRange - dist>
+  [ 55] getparam 0 .............................. <me>
+  [ 57] pusharglist 1 ........................... <me>
+  [ 59] objcall 132 ............................. <me.calcAttackPower()>
+  [ 61] mul ..................................... <(hitRange - dist) * me.calcAttackPower()>
+  [ 62] setlocal 5 .............................. speed = (hitRange - dist) * me.calcAttackPower()
+  [ 64] getlocal 0 .............................. <targetloc>
+  [ 66] getparam 0 .............................. <me>
+  [ 68] pusharglist 1 ........................... <me>
+  [ 70] objcall 111 ............................. <me.getLoc()>
+  [ 72] eq ...................................... <targetloc = me.getLoc()>
+  [ 73] jmpifz [ 88] ............................ if targetloc = me.getLoc() then
+  [ 76] getlocal 0 .............................. <targetloc>
+  [ 78] pushzero ................................ <0>
+  [ 79] pushint8 1 .............................. <1>
+  [ 81] pusharglist 2 ........................... <0, 1>
+  [ 83] extcall 197 ............................. <point(0, 1)>
+  [ 85] add ..................................... <targetloc + point(0, 1)>
+  [ 86] setlocal 0 .............................. targetloc = targetloc + point(0, 1)
+  [ 88] getlocal 5 .............................. <speed>
+  [ 90] pushzero ................................ <0>
+  [ 91] gt ...................................... <speed > 0>
+  [ 92] jmpifz [114] ............................ if speed > 0 then / else
+  [ 95] getparam 0 .............................. <me>
+  [ 97] pusharglist 1 ........................... <me>
+  [ 99] objcall 111 ............................. <me.getLoc()>
+  [101] getlocal 0 .............................. <targetloc>
+  [103] getlocal 5 .............................. <speed>
+  [105] pusharglist 3 ........................... <me.getLoc(), targetloc, speed>
+  [107] extcall 214 ............................. <GeomMoveVector(me.getLoc(), targetloc, speed)>
+  [109] setlocal 6 .............................. collisionVect = GeomMoveVector(me.getLoc(), targetloc, speed)
+  [111] jmp [122]
+  [114] pushzero ................................ <0>
+  [115] pushzero ................................ <0>
+  [116] pusharglist 2 ........................... <0, 0>
+  [118] extcall 197 ............................. <point(0, 0)>
+  [120] setlocal 6 .............................. collisionVect = point(0, 0)
+  [122] getlocal 6 .............................. <collisionVect>
+  [124] pusharglistnoret 1 ...................... <collisionVect>
+  [126] extcall 35 .............................. return collisionVect
+  [128] ret
+end
+
+on getAttack me
+  [  0] getprop 149 ............................. <pAttack>
+  [  2] pusharglistnoret 1 ...................... <pAttack>
+  [  4] extcall 35 .............................. return pAttack
+  [  6] ret
+end
+
+on isOnAttackFrame me
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. onAttackFrame = 0
+  [  3] getparam 0 .............................. <me>
+  [  5] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [  7] pusharglist 1 ........................... <me.pCharacterPrg>
+  [  9] objcall 12 .............................. <me.pCharacterPrg.getAnimFrameFresh()>
+  [ 11] pushzero ................................ <0>
+  [ 12] eq ...................................... <me.pCharacterPrg.getAnimFrameFresh() = 0>
+  [ 13] jmpifz [ 22] ............................ if me.pCharacterPrg.getAnimFrameFresh() = 0 then
+  [ 16] getlocal 0 .............................. <onAttackFrame>
+  [ 18] pusharglistnoret 1 ...................... <onAttackFrame>
+  [ 20] extcall 35 .............................. return onAttackFrame
+  [ 22] getprop 149 ............................. <pAttack>
+  [ 24] getobjprop 217 .......................... <pAttack.animframe>
+  [ 26] setlocal 1 .............................. attackFrame = pAttack.animframe
+  [ 28] getparam 0 .............................. <me>
+  [ 30] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [ 32] pusharglist 1 ........................... <me.pCharacterPrg>
+  [ 34] objcall 11 .............................. <me.pCharacterPrg.getAnimFrame()>
+  [ 36] setlocal 2 .............................. currentFrame = me.pCharacterPrg.getAnimFrame()
+  [ 38] getlocal 1 .............................. <attackFrame>
+  [ 40] pusharglist 1 ........................... <attackFrame>
+  [ 42] extcall 206 ............................. <ilk(attackFrame)>
+  [ 44] pushsymb 218 ............................ <#list>
+  [ 46] eq ...................................... <ilk(attackFrame) = #list>
+  [ 47] jmpifz [ 65] ............................ if ilk(attackFrame) = #list then / else
+  [ 50] getlocal 1 .............................. <attackFrame>
+  [ 52] getlocal 2 .............................. <currentFrame>
+  [ 54] pusharglist 2 ........................... <attackFrame, currentFrame>
+  [ 56] objcall 219 ............................. <attackFrame.getPos(currentFrame)>
+  [ 58] pushzero ................................ <0>
+  [ 59] gt ...................................... <attackFrame.getPos(currentFrame) > 0>
+  [ 60] setlocal 0 .............................. onAttackFrame = attackFrame.getPos(currentFrame) > 0
+  [ 62] jmp [ 72]
+  [ 65] getlocal 2 .............................. <currentFrame>
+  [ 67] getlocal 1 .............................. <attackFrame>
+  [ 69] eq ...................................... <currentFrame = attackFrame>
+  [ 70] setlocal 0 .............................. onAttackFrame = currentFrame = attackFrame
+  [ 72] getlocal 0 .............................. <onAttackFrame>
+  [ 74] pusharglistnoret 1 ...................... <onAttackFrame>
+  [ 76] extcall 35 .............................. return onAttackFrame
+  [ 78] ret
+end
+
+on performBeamAttack me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 57 ....................... <me.id>
+  [  4] getchainedprop 58 ....................... <me.id.bigMe>
+  [  6] pusharglist 1 ........................... <me.id.bigMe>
+  [  8] objcall 223 ............................. <me.id.bigMe.getTargetLoc()>
+  [ 10] setlocal 0 .............................. targetloc = me.id.bigMe.getTargetLoc()
+  [ 12] getlocal 0 .............................. <targetloc>
+  [ 14] pushsymb 49 ............................. <#none>
+  [ 16] eq ...................................... <targetloc = #none>
+  [ 17] jmpifz [ 24] ............................ if targetloc = #none then
+  [ 20] pusharglistnoret 0 ...................... <>
+  [ 22] extcall 35 .............................. return 
+  [ 24] pushint8 20 ............................. <20>
+  [ 26] pusharglist 1 ........................... <20>
+  [ 28] extcall 158 ............................. <random(20)>
+  [ 30] pushint8 10 ............................. <10>
+  [ 32] sub ..................................... <random(20) - 10>
+  [ 33] setlocal 1 .............................. modx = random(20) - 10
+  [ 35] pushint8 20 ............................. <20>
+  [ 37] pusharglist 1 ........................... <20>
+  [ 39] extcall 158 ............................. <random(20)>
+  [ 41] pushint8 10 ............................. <10>
+  [ 43] sub ..................................... <random(20) - 10>
+  [ 44] setlocal 2 .............................. mody = random(20) - 10
+  [ 46] getlocal 0 .............................. <targetloc>
+  [ 48] getlocal 0 .............................. <targetloc>
+  [ 50] getobjprop 539 .......................... <targetloc.locH>
+  [ 53] getlocal 1 .............................. <modx>
+  [ 55] add ..................................... <targetloc.locH + modx>
+  [ 56] setobjprop 539 .......................... targetloc.locH = targetloc.locH + modx
+  [ 59] getlocal 0 .............................. <targetloc>
+  [ 61] getlocal 0 .............................. <targetloc>
+  [ 63] getobjprop 540 .......................... <targetloc.locV>
+  [ 66] getlocal 2 .............................. <mody>
+  [ 68] add ..................................... <targetloc.locV + mody>
+  [ 69] setobjprop 540 .......................... targetloc.locV = targetloc.locV + mody
+  [ 72] getlocal 0 .............................. <targetloc>
+  [ 74] getparam 0 .............................. <me>
+  [ 76] pusharglist 1 ........................... <me>
+  [ 78] objcall 128 ............................. <me.calcAttackLoc()>
+  [ 80] sub ..................................... <targetloc - me.calcAttackLoc()>
+  [ 81] setlocal 3 .............................. distxy = targetloc - me.calcAttackLoc()
+  [ 83] getlocal 3 .............................. <distxy>
+  [ 85] pushzero ................................ <0>
+  [ 86] pushzero ................................ <0>
+  [ 87] pusharglist 2 ........................... <0, 0>
+  [ 89] extcall 197 ............................. <point(0, 0)>
+  [ 91] nteq .................................... <distxy <> point(0, 0)>
+  [ 92] jmpifz [113] ............................ if distxy <> point(0, 0) then / else
+  [ 95] getlocal 0 .............................. <targetloc>
+  [ 97] getparam 0 .............................. <me>
+  [ 99] pusharglist 1 ........................... <me>
+  [101] objcall 128 ............................. <me.calcAttackLoc()>
+  [103] pusharglist 2 ........................... <targetloc, me.calcAttackLoc()>
+  [105] extcall 4486 ............................ <GeomDist(targetloc, me.calcAttackLoc())>
+  [108] setlocal 4 .............................. disttotarget = GeomDist(targetloc, me.calcAttackLoc())
+  [110] jmp [116]
+  [113] pushzero ................................ <0>
+  [114] setlocal 4 .............................. disttotarget = 0
+  [116] getlocal 4 .............................. <disttotarget>
+  [118] pusharglist 1 ........................... <disttotarget>
+  [120] extcall 210 ............................. <integer(disttotarget)>
+  [122] setlocal 5 .............................. distToTargetScale = integer(disttotarget)
+  [124] getglobal 40 ............................ <g>
+  [126] getchainedprop 228 ...................... <g.actorMaster>
+  [128] pushsymb 229 ............................ <#newActor>
+  [130] pusharglist 2 ........................... <g.actorMaster, #newActor>
+  [132] objcall 230 ............................. <g.actorMaster.getParams(#newActor)>
+  [134] setlocal 6 .............................. params = g.actorMaster.getParams(#newActor)
+  [136] getlocal 6 .............................. <params>
+  [138] pushzero ................................ <0>
+  [139] pushzero ................................ <0>
+  [140] pusharglist 2 ........................... <0, 0>
+  [142] extcall 197 ............................. <point(0, 0)>
+  [144] setobjprop 231 .......................... params.initVect = point(0, 0)
+  [146] getlocal 6 .............................. <params>
+  [148] getparam 0 .............................. <me>
+  [150] pusharglist 1 ........................... <me>
+  [152] objcall 141 ............................. <me.getAttack()>
+  [154] getobjprop 182 .......................... <me.getAttack().bullet>
+  [156] setobjprop 232 .......................... params.typ = me.getAttack().bullet
+  [158] getlocal 6 .............................. <params>
+  [160] getlocal 0 .............................. <targetloc>
+  [162] setobjprop 233 .......................... params.startLoc = targetloc
+  [164] getlocal 6 .............................. <params>
+  [166] pushzero ................................ <0>
+  [167] setobjprop 234 .......................... params.useOffset = 0
+  [169] getglobal 40 ............................ <g>
+  [171] getchainedprop 228 ...................... <g.actorMaster>
+  [173] getlocal 6 .............................. <params>
+  [175] pusharglist 2 ........................... <g.actorMaster, params>
+  [177] objcall 229 ............................. <g.actorMaster.newActor(params)>
+  [179] setlocal 7 .............................. bulletObj = g.actorMaster.newActor(params)
+  [181] getlocal 7 .............................. <bulletObj>
+  [183] getparam 0 .............................. <me>
+  [185] getchainedprop 51 ....................... <me.big>
+  [187] pusharglist 1 ........................... <me.big>
+  [189] objcall 235 ............................. <me.big.getTarget()>
+  [191] pusharglistnoret 2 ...................... <bulletObj, me.big.getTarget()>
+  [193] objcall 236 ............................. bulletObj.setTarget(me.big.getTarget())
+  [195] getlocal 7 .............................. <bulletObj>
+  [197] getlocal 0 .............................. <targetloc>
+  [199] pusharglistnoret 2 ...................... <bulletObj, targetloc>
+  [201] objcall 237 ............................. bulletObj.setTargetLoc(targetloc)
+  [203] getlocal 7 .............................. <bulletObj>
+  [205] getparam 0 .............................. <me>
+  [207] getchainedprop 51 ....................... <me.big>
+  [209] pusharglist 1 ........................... <me.big>
+  [211] objcall 238 ............................. <me.big.getTeam()>
+  [213] pusharglistnoret 2 ...................... <bulletObj, me.big.getTeam()>
+  [215] objcall 239 ............................. bulletObj.setTeam(me.big.getTeam())
+  [217] getlocal 7 .............................. <bulletObj>
+  [219] getparam 0 .............................. <me>
+  [221] getchainedprop 51 ....................... <me.big>
+  [223] pusharglist 1 ........................... <me.big>
+  [225] objcall 240 ............................. <me.big.getOwner()>
+  [227] pusharglistnoret 2 ...................... <bulletObj, me.big.getOwner()>
+  [229] objcall 241 ............................. bulletObj.setOwner(me.big.getOwner())
+  [231] getlocal 7 .............................. <bulletObj>
+  [233] getlocal 5 .............................. <distToTargetScale>
+  [235] getlocal 3 .............................. <distxy>
+  [237] pusharglistnoret 3 ...................... <bulletObj, distToTargetScale, distxy>
+  [239] objcall 4577 ............................ bulletObj.setBeam(distToTargetScale, distxy)
+  [242] ret
+end
+
+on performRangedAttack me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 57 ....................... <me.id>
+  [  4] getchainedprop 58 ....................... <me.id.bigMe>
+  [  6] pusharglist 1 ........................... <me.id.bigMe>
+  [  8] objcall 223 ............................. <me.id.bigMe.getTargetLoc()>
+  [ 10] setlocal 0 .............................. targetloc = me.id.bigMe.getTargetLoc()
+  [ 12] getlocal 0 .............................. <targetloc>
+  [ 14] pushsymb 49 ............................. <#none>
+  [ 16] eq ...................................... <targetloc = #none>
+  [ 17] jmpifz [ 24] ............................ if targetloc = #none then
+  [ 20] pusharglistnoret 0 ...................... <>
+  [ 22] extcall 35 .............................. return 
+  [ 24] getparam 0 .............................. <me>
+  [ 26] getlocal 0 .............................. <targetloc>
+  [ 28] pusharglist 2 ........................... <me, targetloc>
+  [ 30] objcall 224 ............................. <me.modifyLocWithEyestrain(targetloc)>
+  [ 32] setlocal 0 .............................. targetloc = me.modifyLocWithEyestrain(targetloc)
+  [ 34] getlocal 0 .............................. <targetloc>
+  [ 36] getparam 0 .............................. <me>
+  [ 38] pusharglist 1 ........................... <me>
+  [ 40] objcall 128 ............................. <me.calcAttackLoc()>
+  [ 42] sub ..................................... <targetloc - me.calcAttackLoc()>
+  [ 43] setlocal 1 .............................. distxy = targetloc - me.calcAttackLoc()
+  [ 45] getparam 0 .............................. <me>
+  [ 47] pusharglist 1 ........................... <me>
+  [ 49] objcall 141 ............................. <me.getAttack()>
+  [ 51] getobjprop 225 .......................... <me.getAttack().firingType>
+  [ 53] peek 0 .................................. case me.getAttack().firingType of
+  [ 55] pushsymb 226 ............................ <#proportional>
+  [ 57] eq
+  [ 58] jmpifz [ 71] ............................ (case) #proportional:
+  [ 61] getlocal 1 .............................. <distxy>
+  [ 63] pushint8 10 ............................. <10>
+  [ 65] div ..................................... <distxy / 10>
+  [ 66] setlocal 2 .............................. throwVect = distxy / 10
+  [ 68] jmp [157]
+  [ 71] peek 0
+  [ 73] pushsymb 227 ............................ <#fullstrength>
+  [ 75] eq
+  [ 76] jmpifz [157] ............................ (case) #fullstrength:
+  [ 79] getlocal 1 .............................. <distxy>
+  [ 81] pushzero ................................ <0>
+  [ 82] pushzero ................................ <0>
+  [ 83] pusharglist 2 ........................... <0, 0>
+  [ 85] extcall 197 ............................. <point(0, 0)>
+  [ 87] nteq .................................... <distxy <> point(0, 0)>
+  [ 88] jmpifz [138] ............................ if distxy <> point(0, 0) then / else
+  [ 91] getlocal 0 .............................. <targetloc>
+  [ 93] getparam 0 .............................. <me>
+  [ 95] pusharglist 1 ........................... <me>
+  [ 97] objcall 128 ............................. <me.calcAttackLoc()>
+  [ 99] pusharglist 2 ........................... <targetloc, me.calcAttackLoc()>
+  [101] extcall 213 ............................. <SineDist(targetloc, me.calcAttackLoc())>
+  [103] setlocal 3 .............................. disttotarget = SineDist(targetloc, me.calcAttackLoc())
+  [105] getparam 0 .............................. <me>
+  [107] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [109] pusharglist 1 ........................... <me.pCharacterPrg>
+  [111] objcall 209 ............................. <me.pCharacterPrg.getStrength()>
+  [113] setlocal 4 .............................. speed = me.pCharacterPrg.getStrength()
+  [115] getlocal 3 .............................. <disttotarget>
+  [117] getlocal 4 .............................. <speed>
+  [119] div ..................................... <disttotarget / speed>
+  [120] setlocal 5 .............................. distRatio = disttotarget / speed
+  [122] getlocal 1 .............................. <distxy>
+  [124] getlocal 5 .............................. <distRatio>
+  [126] getlocal 5 .............................. <distRatio>
+  [128] pusharglist 2 ........................... <distRatio, distRatio>
+  [130] extcall 197 ............................. <point(distRatio, distRatio)>
+  [132] div ..................................... <distxy / point(distRatio, distRatio)>
+  [133] setlocal 2 .............................. throwVect = distxy / point(distRatio, distRatio)
+  [135] jmp [157]
+  [138] pushint8 1 .............................. <1>
+  [140] inv ..................................... <-1>
+  [141] pushzero ................................ <0>
+  [142] pusharglist 2 ........................... <-1, 0>
+  [144] extcall 197 ............................. <point(-1, 0)>
+  [146] getparam 0 .............................. <me>
+  [148] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [150] pusharglist 1 ........................... <me.pCharacterPrg>
+  [152] objcall 209 ............................. <me.pCharacterPrg.getStrength()>
+  [154] mul ..................................... <point(-1, 0) * me.pCharacterPrg.getStrength()>
+  [155] setlocal 2 .............................. throwVect = point(-1, 0) * me.pCharacterPrg.getStrength()
+  [157] pop 1 ................................... end case
+  [159] getlocal 2 .............................. <throwVect>
+  [161] pushint8 2 .............................. <2>
+  [163] getlocal 2 .............................. <throwVect>
+  [165] pushint8 2 .............................. <2>
+  [167] pusharglist 2 ........................... <throwVect, 2>
+  [169] objcall 109 ............................. <throwVect[2]>
+  [171] getprop 146 ............................. <pRangedVectOffset>
+  [173] add ..................................... <throwVect[2] + pRangedVectOffset>
+  [174] pusharglistnoret 3 ...................... <throwVect, 2, throwVect[2] + pRangedVectOffset>
+  [176] objcall 48 .............................. throwVect[2] = throwVect[2] + pRangedVectOffset
+  [178] getglobal 40 ............................ <g>
+  [180] getchainedprop 228 ...................... <g.actorMaster>
+  [182] pushsymb 229 ............................ <#newActor>
+  [184] pusharglist 2 ........................... <g.actorMaster, #newActor>
+  [186] objcall 230 ............................. <g.actorMaster.getParams(#newActor)>
+  [188] setlocal 6 .............................. params = g.actorMaster.getParams(#newActor)
+  [190] getlocal 6 .............................. <params>
+  [192] getlocal 2 .............................. <throwVect>
+  [194] setobjprop 231 .......................... params.initVect = throwVect
+  [196] getlocal 6 .............................. <params>
+  [198] getparam 0 .............................. <me>
+  [200] pusharglist 1 ........................... <me>
+  [202] objcall 141 ............................. <me.getAttack()>
+  [204] getobjprop 182 .......................... <me.getAttack().bullet>
+  [206] setobjprop 232 .......................... params.typ = me.getAttack().bullet
+  [208] getlocal 6 .............................. <params>
+  [210] getparam 0 .............................. <me>
+  [212] pusharglist 1 ........................... <me>
+  [214] objcall 128 ............................. <me.calcAttackLoc()>
+  [216] setobjprop 233 .......................... params.startLoc = me.calcAttackLoc()
+  [218] getlocal 6 .............................. <params>
+  [220] pushzero ................................ <0>
+  [221] setobjprop 234 .......................... params.useOffset = 0
+  [223] getglobal 40 ............................ <g>
+  [225] getchainedprop 228 ...................... <g.actorMaster>
+  [227] getlocal 6 .............................. <params>
+  [229] pusharglist 2 ........................... <g.actorMaster, params>
+  [231] objcall 229 ............................. <g.actorMaster.newActor(params)>
+  [233] setlocal 7 .............................. bulletObj = g.actorMaster.newActor(params)
+  [235] getlocal 7 .............................. <bulletObj>
+  [237] getparam 0 .............................. <me>
+  [239] getchainedprop 51 ....................... <me.big>
+  [241] pusharglist 1 ........................... <me.big>
+  [243] objcall 235 ............................. <me.big.getTarget()>
+  [245] pusharglistnoret 2 ...................... <bulletObj, me.big.getTarget()>
+  [247] objcall 236 ............................. bulletObj.setTarget(me.big.getTarget())
+  [249] getlocal 7 .............................. <bulletObj>
+  [251] getlocal 0 .............................. <targetloc>
+  [253] pusharglistnoret 2 ...................... <bulletObj, targetloc>
+  [255] objcall 237 ............................. bulletObj.setTargetLoc(targetloc)
+  [257] getlocal 7 .............................. <bulletObj>
+  [259] getparam 0 .............................. <me>
+  [261] getchainedprop 51 ....................... <me.big>
+  [263] pusharglist 1 ........................... <me.big>
+  [265] objcall 238 ............................. <me.big.getTeam()>
+  [267] pusharglistnoret 2 ...................... <bulletObj, me.big.getTeam()>
+  [269] objcall 239 ............................. bulletObj.setTeam(me.big.getTeam())
+  [271] getlocal 7 .............................. <bulletObj>
+  [273] getparam 0 .............................. <me>
+  [275] getchainedprop 51 ....................... <me.big>
+  [277] pusharglist 1 ........................... <me.big>
+  [279] objcall 240 ............................. <me.big.getOwner()>
+  [281] pusharglistnoret 2 ...................... <bulletObj, me.big.getOwner()>
+  [283] objcall 241 ............................. bulletObj.setOwner(me.big.getOwner())
+  [285] ret
+end
+
+on setAttack me, attack
+  [  0] getparam 1 .............................. <attack>
+  [  2] pushsymb 49 ............................. <#none>
+  [  4] eq ...................................... <attack = #none>
+  [  5] jmpifz [ 26] ............................ if attack = #none then
+  [  8] pushsymb 49 ............................. <#none>
+  [ 10] setprop 149 ............................. pAttack = #none
+  [ 12] pushint8 5 .............................. <5>
+  [ 14] setprop 4541 ............................ pChargeMax = 5
+  [ 17] pushint8 1 .............................. <1>
+  [ 19] setprop 4539 ............................ pChargeSpeed = 1
+  [ 22] pusharglistnoret 0 ...................... <>
+  [ 24] extcall 35 .............................. return 
+  [ 26] getparam 1 .............................. <attack>
+  [ 28] pusharglist 1 ........................... <attack>
+  [ 30] objcall 175 ............................. <attack.duplicate()>
+  [ 32] setprop 149 ............................. pAttack = attack.duplicate()
+  [ 34] getprop 149 ............................. <pAttack>
+  [ 36] getobjprop 247 .......................... <pAttack.idealAttackLoc>
+  [ 38] pushsymb 174 ............................ <#collisionLoc>
+  [ 40] eq ...................................... <pAttack.idealAttackLoc = #collisionLoc>
+  [ 41] jmpifz [ 56] ............................ if pAttack.idealAttackLoc = #collisionLoc then
+  [ 44] getprop 149 ............................. <pAttack>
+  [ 46] getprop 149 ............................. <pAttack>
+  [ 48] getchainedprop 174 ...................... <pAttack.collisionLoc>
+  [ 50] pusharglist 1 ........................... <pAttack.collisionLoc>
+  [ 52] objcall 175 ............................. <pAttack.collisionLoc.duplicate()>
+  [ 54] setobjprop 247 .......................... pAttack.idealAttackLoc = pAttack.collisionLoc.duplicate()
+  [ 56] getprop 149 ............................. <pAttack>
+  [ 58] pusharglistnoret 1 ...................... <pAttack>
+  [ 60] extcall 248 ............................. AttackSetTypeFromAnimType(pAttack)
+  [ 62] getparam 0 .............................. <me>
+  [ 64] getchainedprop 51 ....................... <me.big>
+  [ 66] pushsymb 249 ............................ <#attackSet>
+  [ 68] pusharglistnoret 2 ...................... <me.big, #attackSet>
+  [ 70] objcall 22 .............................. me.big.internalEvent(#attackSet)
+  [ 72] ret
+end
+
+on gmgOn
+  [  0] getprop 149 ............................. <pAttack>
+  [  2] getobjprop 4538 ......................... <pAttack.gmgChargeMax>
+  [  5] setprop 4541 ............................ pChargeMax = pAttack.gmgChargeMax
+  [  8] getprop 149 ............................. <pAttack>
+  [ 10] getobjprop 4542 ......................... <pAttack.gmgChargeSpeed>
+  [ 13] setprop 4539 ............................ pChargeSpeed = pAttack.gmgChargeSpeed
+  [ 16] getprop 149 ............................. <pAttack>
+  [ 18] getobjprop 4544 ......................... <pAttack.gmgChargeStart>
+  [ 21] setprop 4543 ............................ pChargeStart = pAttack.gmgChargeStart
+  [ 24] getprop 149 ............................. <pAttack>
+  [ 26] getobjprop 4542 ......................... <pAttack.gmgChargeSpeed>
+  [ 29] setprop 4559 ............................ pChargeSpeedMax = pAttack.gmgChargeSpeed
+  [ 32] ret
+end
+
+on gmgOff
+  [  0] getprop 149 ............................. <pAttack>
+  [  2] getobjprop 153 .......................... <pAttack.chargeMax>
+  [  4] setprop 4541 ............................ pChargeMax = pAttack.chargeMax
+  [  7] getprop 149 ............................. <pAttack>
+  [  9] getobjprop 168 .......................... <pAttack.chargeSpeed>
+  [ 11] setprop 4539 ............................ pChargeSpeed = pAttack.chargeSpeed
+  [ 14] getprop 149 ............................. <pAttack>
+  [ 16] getobjprop 163 .......................... <pAttack.chargeStart>
+  [ 18] setprop 4543 ............................ pChargeStart = pAttack.chargeStart
+  [ 21] getprop 149 ............................. <pAttack>
+  [ 23] getobjprop 170 .......................... <pAttack.chargeSpeedMax>
+  [ 25] setprop 4559 ............................ pChargeSpeedMax = pAttack.chargeSpeedMax
+  [ 28] ret
+end

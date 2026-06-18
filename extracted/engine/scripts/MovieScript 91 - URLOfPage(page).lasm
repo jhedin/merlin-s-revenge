@@ -1,0 +1,21 @@
+on URLOfPage thePage
+  [  0] pushcons 0 .............................. <EMPTY>
+  [  2] setlocal 0 .............................. theurl = EMPTY
+  [  4] getmovieprop 459 ........................ <the runMode>
+  [  7] pushcons 1 .............................. <"Plugin">
+  [  9] containsstr ............................. <the runMode contains "Plugin">
+  [ 10] jmpifz [ 24] ............................ if the runMode contains "Plugin" then / else
+  [ 13] getmovieprop 460 ........................ <the moviePath>
+  [ 16] getparam 0 .............................. <thePage>
+  [ 18] joinstr ................................. <the moviePath & thePage>
+  [ 19] setlocal 0 .............................. theurl = the moviePath & thePage
+  [ 21] jmp [ 31]
+  [ 24] pushcons 2 .............................. <"http://localhost/themetalbox_08a/_website/dcr/games/">
+  [ 26] getparam 0 .............................. <thePage>
+  [ 28] joinstr ................................. <"http://localhost/themetalbox_08a/_website/dcr/games/" & thePage>
+  [ 29] setlocal 0 .............................. theurl = "http://localhost/themetalbox_08a/_website/dcr/games/" & thePage
+  [ 31] getlocal 0 .............................. <theurl>
+  [ 33] pusharglistnoret 1 ...................... <theurl>
+  [ 35] extcall 3 ............................... return theurl
+  [ 37] ret
+end

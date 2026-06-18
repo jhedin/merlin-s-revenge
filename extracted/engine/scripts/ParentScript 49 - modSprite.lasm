@@ -1,0 +1,101 @@
+property ancestor, pSpr
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getprop 33 .............................. <ancestor>
+  [ 12] pusharglistnoret 1 ...................... <ancestor>
+  [ 14] objcall 2 ............................... ancestor.addModParams()
+  [ 16] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pushsymb 49 ............................. <#none>
+  [ 10] setprop 173 ............................. pSpr = #none
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] objcall 1343 ............................ me.ensureSprite()
+  [ 19] ret
+end
+
+on finish me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 3 ............................... ancestor.finish()
+  [  6] getprop 173 ............................. <pSpr>
+  [  8] pushsymb 49 ............................. <#none>
+  [ 10] nteq .................................... <pSpr <> #none>
+  [ 11] jmpifz [ 29] ............................ if pSpr <> #none then
+  [ 14] getglobal 40 ............................ <g>
+  [ 16] getchainedprop 254 ...................... <g.spriteMaster>
+  [ 18] getprop 173 ............................. <pSpr>
+  [ 20] pusharglistnoret 2 ...................... <g.spriteMaster, pSpr>
+  [ 22] objcall 270 ............................. g.spriteMaster.freeSprite(pSpr)
+  [ 25] pushsymb 49 ............................. <#none>
+  [ 27] setprop 173 ............................. pSpr = #none
+  [ 29] ret
+end
+
+on ensureSprite me
+  [  0] getprop 173 ............................. <pSpr>
+  [  2] pushsymb 49 ............................. <#none>
+  [  4] eq ...................................... <pSpr = #none>
+  [  5] jmpifz [ 22] ............................ if pSpr = #none then
+  [  8] getglobal 40 ............................ <g>
+  [ 10] getchainedprop 254 ...................... <g.spriteMaster>
+  [ 12] getparam 0 .............................. <me>
+  [ 14] getobjprop 51 ........................... <me.big>
+  [ 16] pusharglist 2 ........................... <g.spriteMaster, me.big>
+  [ 18] objcall 255 ............................. <g.spriteMaster.requestSprite(me.big)>
+  [ 20] setprop 173 ............................. pSpr = g.spriteMaster.requestSprite(me.big)
+  [ 22] ret
+end
+
+on getSprite me
+  [  0] getprop 173 ............................. <pSpr>
+  [  2] pusharglistnoret 1 ...................... <pSpr>
+  [  4] extcall 35 .............................. return pSpr
+  [  6] ret
+end
+
+on setRect me, therect
+  [  0] getprop 173 ............................. <pSpr>
+  [  2] getparam 1 .............................. <therect>
+  [  4] setobjprop 263 .......................... pSpr.rect = therect
+  [  7] ret
+end
+
+on setLoc me, theloc
+  [  0] getprop 173 ............................. <pSpr>
+  [  2] getparam 1 .............................. <theloc>
+  [  4] setobjprop 832 .......................... pSpr.loc = theloc
+  [  7] ret
+end
+
+on setLocZ me, theLocZ
+  [  0] getprop 173 ............................. <pSpr>
+  [  2] getparam 1 .............................. <theLocZ>
+  [  4] setobjprop 259 .......................... pSpr.locZ = theLocZ
+  [  7] ret
+end

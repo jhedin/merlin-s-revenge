@@ -1,0 +1,124 @@
+[#name: "modSprite", #scriptType: #parent, #type: #script]
+-- for use by autoupdate objects that are not game objects
+-- really must sort out that mess!!!
+
+global g
+
+property ancestor
+property pSpr              -- the sprite
+
+on new me
+  ancestor = new (script("modModule"))
+  return me
+end
+
+on addModParams me
+  i = me.modifyParams(#init)
+  
+  ancestor.addModParams()
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  pSpr = #none
+  me.ensureSprite()
+end
+
+on finish me
+  ancestor.finish()
+  
+  if pSpr <> #none then
+    g.spriteMaster.freeSprite(pSpr)
+    pSpr = #none
+  end if
+end
+
+on ensureSprite me
+  if pSpr = #none then
+    pSpr = g.spriteMaster.requestSprite(me.big)
+  end if
+end
+
+on getSprite me
+  return pSpr
+end
+
+on setRect me, theRect
+  pSpr.rect = theRect  
+end
+
+on setLoc me, theLoc
+  pSpr.loc = theLoc
+end
+
+on setLocZ me, theLocZ
+  pSpr.locz = theLocZ
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

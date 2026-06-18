@@ -1,0 +1,99 @@
+property ancestor, blend, bgColor, color, flipH, flipV, loc, locH, locV, locZ, height, ink, member, rect, rotation, spriteNum, visible, width, pmodel, pModelName
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"objParams">
+  [  2] pusharglist 1 ........................... <"objParams">
+  [  4] extcall 34 .............................. <script("objParams")>
+  [  6] pusharglist 1 ........................... <script("objParams")>
+  [  8] extcall 0 ............................... <new(script("objParams"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objParams"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 1697 ........................... <#spriteNum>
+  [ 27] pushzero ................................ <0>
+  [ 28] pusharglistnoret 3 ...................... <i, #spriteNum, 0>
+  [ 30] objcall 48 .............................. i[#spriteNum] = 0
+  [ 32] getparam 0 .............................. <me>
+  [ 34] pusharglistnoret 1 ...................... <me>
+  [ 36] extcall 35 .............................. return me
+  [ 38] ret
+end
+
+on init me, params
+  [  0] getparam 1 .............................. <params>
+  [  2] getobjprop 1697 ......................... <params.spriteNum>
+  [  5] setprop 1697 ............................ spriteNum = params.spriteNum
+  [  8] pushcons 1 .............................. <"dot">
+  [ 10] pushcons 2 .............................. <"gfx">
+  [ 12] pusharglist 2 ........................... <"dot", "gfx">
+  [ 14] extcall 99 .............................. <member("dot", "gfx")>
+  [ 16] setprop 99 .............................. member = member("dot", "gfx")
+  [ 18] pushint8 1 .............................. <1>
+  [ 20] inv ..................................... <-1>
+  [ 21] pushint8 1 .............................. <1>
+  [ 23] inv ..................................... <-1>
+  [ 24] pushzero ................................ <0>
+  [ 25] pushzero ................................ <0>
+  [ 26] pusharglist 4 ........................... <-1, -1, 0, 0>
+  [ 28] extcall 263 ............................. <rect(-1, -1, 0, 0)>
+  [ 31] setprop 263 ............................. rect = rect(-1, -1, 0, 0)
+  [ 34] ret
+end
+
+on init3DPresence me
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 254 ...................... <g.spriteMaster>
+  [  4] pusharglist 1 ........................... <g.spriteMaster>
+  [  6] objcall 1698 ............................ <g.spriteMaster.get3DWorld()>
+  [  9] setlocal 0 .............................. w = g.spriteMaster.get3DWorld()
+  [ 11] pushcons 3 .............................. <"sprite_">
+  [ 13] getprop 1697 ............................ <spriteNum>
+  [ 16] joinstr ................................. <"sprite_" & spriteNum>
+  [ 17] setprop 1699 ............................ pModelName = "sprite_" & spriteNum
+  [ 20] getlocal 0 .............................. <w>
+  [ 22] getprop 1699 ............................ <pModelName>
+  [ 25] pushsymb 1700 ........................... <#plane>
+  [ 28] pushsymb 1701 ........................... <#front>
+  [ 31] pusharglist 4 ........................... <w, pModelName, #plane, #front>
+  [ 33] objcall 1702 ............................ <w.newModelResource(pModelName, #plane, #front)>
+  [ 36] setlocal 1 .............................. mr = w.newModelResource(pModelName, #plane, #front)
+  [ 38] getlocal 1 .............................. <mr>
+  [ 40] getprop 99 .............................. <member>
+  [ 42] getobjprop 423 .......................... <member.height>
+  [ 45] setobjprop 1703 ......................... mr.length = member.height
+  [ 48] getlocal 1 .............................. <mr>
+  [ 50] getprop 99 .............................. <member>
+  [ 52] getobjprop 424 .......................... <member.width>
+  [ 55] setobjprop 424 .......................... mr.width = member.width
+  [ 58] getlocal 1 .............................. <mr>
+  [ 60] pushint8 2 .............................. <2>
+  [ 62] setobjprop 1704 ......................... mr.lengthVertices = 2
+  [ 65] getlocal 1 .............................. <mr>
+  [ 67] pushint8 2 .............................. <2>
+  [ 69] setobjprop 1705 ......................... mr.widthVertices = 2
+  [ 72] getlocal 0 .............................. <w>
+  [ 74] getprop 1699 ............................ <pModelName>
+  [ 77] getlocal 1 .............................. <mr>
+  [ 79] pusharglist 3 ........................... <w, pModelName, mr>
+  [ 81] objcall 1706 ............................ <w.newModel(pModelName, mr)>
+  [ 84] setlocal 2 .............................. m = w.newModel(pModelName, mr)
+  [ 86] getlocal 2 .............................. <m>
+  [ 88] pushint16 180 ........................... <180>
+  [ 91] inv ..................................... <-180>
+  [ 92] pushzero ................................ <0>
+  [ 93] pushint16 180 ........................... <180>
+  [ 96] pusharglistnoret 4 ...................... <m, -180, 0, 180>
+  [ 98] objcall 1707 ............................ m.rotate(-180, 0, 180)
+  [101] getlocal 2 .............................. <m>
+  [103] setprop 1708 ............................ pmodel = m
+  [106] ret
+end
+
+on update me
+  [  0] ret
+end

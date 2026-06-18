@@ -1,0 +1,16 @@
+on StringToSymbol theString
+  [  0] getparam 0 .............................. <theString>
+  [  2] pushcons 0 .............................. <" ">
+  [  4] pushcons 1 .............................. <"_">
+  [  6] pusharglist 3 ........................... <theString, " ", "_">
+  [  8] extcall 112 ............................. <StringCharReplace(theString, " ", "_")>
+  [ 10] setparam 0 .............................. theString = StringCharReplace(theString, " ", "_")
+  [ 12] getparam 0 .............................. <theString>
+  [ 14] pusharglist 1 ........................... <theString>
+  [ 16] extcall 35 .............................. <symbol(theString)>
+  [ 18] setlocal 0 .............................. sym = symbol(theString)
+  [ 20] getlocal 0 .............................. <sym>
+  [ 22] pusharglistnoret 1 ...................... <sym>
+  [ 24] extcall 24 .............................. return sym
+  [ 26] ret
+end

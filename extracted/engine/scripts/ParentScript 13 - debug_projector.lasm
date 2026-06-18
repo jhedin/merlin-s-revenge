@@ -1,0 +1,16 @@
+global gErrorTrace
+
+on alertHook me, err, msg, var1, var2
+  [  0] pushint8 1 .............................. <1>
+  [  2] setmovieprop 9 .......................... the debugPlaybackEnabled = 1
+  [  4] pushcons 0 .............................. <"error_log">
+  [  6] getglobal 14 ............................ <gErrorTrace>
+  [  8] pusharglist 1 ........................... <gErrorTrace>
+  [ 10] extcall 126 ............................. <string(gErrorTrace)>
+  [ 12] pusharglistnoret 2 ...................... <"error_log", string(gErrorTrace)>
+  [ 14] extcall 125 ............................. setPref("error_log", string(gErrorTrace))
+  [ 16] pushint8 1 .............................. <1>
+  [ 18] pusharglistnoret 1 ...................... <1>
+  [ 20] extcall 90 .............................. return 1
+  [ 22] ret
+end

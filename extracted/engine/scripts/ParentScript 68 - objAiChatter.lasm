@@ -1,0 +1,104 @@
+property ancestor, pPlayer
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"objAi">
+  [  2] pusharglist 1 ........................... <"objAi">
+  [  4] extcall 34 .............................. <script("objAi")>
+  [  6] pusharglist 1 ........................... <script("objAi")>
+  [  8] extcall 0 ............................... <new(script("objAi"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objAi"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getglobal 40 ............................ <g>
+  [ 10] getchainedprop 228 ...................... <g.actorMaster>
+  [ 12] pusharglist 1 ........................... <g.actorMaster>
+  [ 14] objcall 861 ............................. <g.actorMaster.getPlayer()>
+  [ 17] setprop 1783 ............................ pPlayer = g.actorMaster.getPlayer()
+  [ 20] getparam 0 .............................. <me>
+  [ 22] pushsymb 1784 ........................... <#waitingToTalk>
+  [ 25] pusharglistnoret 2 ...................... <me, #waitingToTalk>
+  [ 27] objcall 278 ............................. me.goMode(#waitingToTalk)
+  [ 30] ret
+end
+
+on checkNavModeActive me
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 228 ...................... <g.actorMaster>
+  [  4] pusharglist 1 ........................... <g.actorMaster>
+  [  6] objcall 861 ............................. <g.actorMaster.getPlayer()>
+  [  9] setlocal 0 .............................. player = g.actorMaster.getPlayer()
+  [ 11] getlocal 0 .............................. <player>
+  [ 13] pusharglist 1 ........................... <player>
+  [ 15] objcall 931 ............................. <player.getNavModeActive()>
+  [ 18] setlocal 1 .............................. navModeActive = player.getNavModeActive()
+  [ 20] getlocal 1 .............................. <navModeActive>
+  [ 22] pusharglistnoret 1 ...................... <navModeActive>
+  [ 24] extcall 35 .............................. return navModeActive
+  [ 26] ret
+end
+
+on checkPossibleToTalk me
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. possible = 0
+  [  3] getparam 0 .............................. <me>
+  [  5] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [  7] pusharglist 1 ........................... <me.pCharacterPrg>
+  [  9] objcall 1786 ............................ <me.pCharacterPrg.getTalkOnlyOnNavMode()>
+  [ 12] setlocal 1 .............................. talkOnlyOnNavMode = me.pCharacterPrg.getTalkOnlyOnNavMode()
+  [ 14] getlocal 1 .............................. <talkOnlyOnNavMode>
+  [ 16] getparam 0 .............................. <me>
+  [ 18] pusharglist 1 ........................... <me>
+  [ 20] objcall 1781 ............................ <me.checkNavModeActive()>
+  [ 23] and ..................................... <talkOnlyOnNavMode and me.checkNavModeActive()>
+  [ 24] jmpifz [ 31] ............................ if talkOnlyOnNavMode and me.checkNavModeActive() then
+  [ 27] pushint8 1 .............................. <1>
+  [ 29] setlocal 0 .............................. possible = 1
+  [ 31] getlocal 1 .............................. <talkOnlyOnNavMode>
+  [ 33] pushzero ................................ <0>
+  [ 34] eq ...................................... <talkOnlyOnNavMode = 0>
+  [ 35] jmpifz [ 42] ............................ if talkOnlyOnNavMode = 0 then
+  [ 38] pushint8 1 .............................. <1>
+  [ 40] setlocal 0 .............................. possible = 1
+  [ 42] getlocal 0 .............................. <possible>
+  [ 44] pusharglistnoret 1 ...................... <possible>
+  [ 46] extcall 35 .............................. return possible
+  [ 48] ret
+end
+
+on update me
+  [  0] getparam 0 .............................. <me>
+  [  2] getobjprop 312 .......................... <me.pmode>
+  [  5] peek 0 .................................. case me.pmode of
+  [  7] pushsymb 1784 ........................... <#waitingToTalk>
+  [ 10] eq
+  [ 11] jmpifz [ 55] ............................ (case) #waitingToTalk:
+  [ 14] getparam 0 .............................. <me>
+  [ 16] pusharglist 1 ........................... <me>
+  [ 18] objcall 1782 ............................ <me.checkPossibleToTalk()>
+  [ 21] jmpifz [ 55] ............................ if me.checkPossibleToTalk() then
+  [ 24] getparam 0 .............................. <me>
+  [ 26] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [ 28] pusharglist 1 ........................... <me.pCharacterPrg>
+  [ 30] objcall 1789 ............................ <me.pCharacterPrg.checkForCollisionWithPlayer()>
+  [ 33] jmpifz [ 55] ............................ if me.pCharacterPrg.checkForCollisionWithPlayer() then
+  [ 36] getparam 0 .............................. <me>
+  [ 38] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [ 40] pusharglistnoret 1 ...................... <me.pCharacterPrg>
+  [ 42] objcall 1790 ............................ me.pCharacterPrg.collected()
+  [ 45] getparam 0 .............................. <me>
+  [ 47] pushsymb 1791 ........................... <#Active>
+  [ 50] pusharglistnoret 2 ...................... <me, #Active>
+  [ 52] objcall 278 ............................. me.goMode(#Active)
+  [ 55] pop 1
+  [ 57] ret
+end

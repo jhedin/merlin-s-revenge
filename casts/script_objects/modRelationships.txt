@@ -1,0 +1,230 @@
+[#name: "modRelationships", #scriptType: #parent, #type: #script]
+-- allows objects to form relationships with and to each other
+-- relationships are saved and restored automatically
+-- relationships are broken on object's demise
+
+-- exclusivity can be #exclusive or #nonexclusive
+-- this determines whether an object should be added to the list 
+-- or replace the object that is there
+
+-- SHORTENINGS (variable names)
+-- "rel" is short for "relationship"
+
+global g
+
+property ancestor
+property pRelationships           -- ways we view other objects
+property pRelationshipDetails     -- when the game is restored from a load, this holds the details until all object are re-created and it is time re-establish the relationships
+
+on new me
+  ancestor = new (script("modModule"))
+  return me
+end
+
+on addModParams me
+  i = me.modifyParams(#init)
+  
+  ancestor.addModParams()
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  pRelationships = [:]
+end
+
+on finish me
+  ancestor.finish()
+  
+  me.breakAllRelationships()
+end
+
+on addToRelationships me, targetOfRelationship, relationship, exclusivity
+  -- make sure the list exists
+  rels = pRelationships
+  
+  if rels[relationship] = void then
+    rels[relationship] = []
+  end if
+  
+  relList = rels[relationship]
+  
+  -- add object to list
+  case exclusivity of
+    #exclusive:
+      relList[1] = targetOfRelationship
+      
+    #nonexclusive:
+      -- only add object to list if it is not already there
+      objPos = relList.getPos(targetOfRelationship)
+      if objPos = 0 then
+        relList.append(targetOfRelationship)
+      end if
+      
+  end case
+end
+
+on addSaveData me, sd
+  ancestor.addSaveData(sd)
+  
+  sd[#pRelationships] = me.getRelationshipsTargetDetails()
+end
+
+on breakAllRelationships me
+  pRelationships = [:]
+end
+
+on breakRelationship me, obj, relationship
+  
+  relList = pRelationships[relationship]
+  
+  objPos = relList.getPos(obj)
+  
+  if objPos > 0 then
+    relList.deleteAt(objPos)
+  end if
+end 
+
+on eventNotification me, theEvent, theObj
+  ancestor.eventNotification(theEvent, theObj)
+  
+  case theEvent of
+    #leaveGame:
+      owner = me.getOwner()
+      if owner = theObj then
+        me.setOwner(#none)
+      end if
+  end case
+end
+
+on formRelationship me, targetOfRelationship, relationship,  exclusivity
+  me.addToRelationships(targetOfRelationship, relationship, exclusivity)
+end
+
+on getCurrentSpell me
+  return me.getRelation(#currentSpell)
+end
+
+on getOwner me
+  return me.getRelation(#owner)
+end
+
+on getRelation me, relationship
+  -- returns the first relation in the list
+  
+  relation = #none
+  
+  if pRelationships[relationship] <> void then
+    if pRelationships[relationship].count > 0 then
+      
+      relation = pRelationships[relationship][1]
+      
+    end if
+  end if
+  
+  return relation
+end
+
+on getTarget me
+  return me.getRelation(#target)
+end
+
+on getRelationshipsTargetDetails me
+  relTargetDetails = [:]
+  
+  repeat with i = 1 to pRelationships.count
+    relProp = pRelationships.getPropAt(i)
+    relList = pRelationships[i]
+    
+    relTargetDetails[relProp] = []
+    
+    repeat with relTarget in relList
+      relTargetDetails[relProp].append(relTarget.getTargetDetails())
+    end repeat
+    
+  end repeat
+  
+  return relTargetDetails
+end
+
+on restoreFromSave me, sd
+  ancestor.restoreFromSave(sd)
+  
+  pRelationshipDetails = sd.pRelationships  
+end
+
+on restoreRelationships me
+  relDetails = pRelationshipDetails
+  
+  repeat with i = 1 to relDetails.count
+    relProp = relDetails.getPropAt(i)
+    relList = relDetails[i]
+    
+    pRelationships[relProp] = []
+    
+    repeat with relTargetDetails in relList
+      targetObj = g.teamMaster.restoreTarget(relTargetDetails)
+      
+      case relProp of
+        #currentSpell:
+          me.setCurrentSpell(targetObj)
+          
+        #owner:
+          me.setOwner(targetObj)
+          
+        #target:
+          me.setTarget(targetObj)
+          
+        otherwise:    
+          pRelationships[relProp].append(targetObj)
+      end case
+      
+    end repeat
+    
+  end repeat
+  
+  me.big.internalEvent(#relationshipsRestored)
+end
+
+on setCurrentSpell me, newSpell
+  me.setRelation(#currentSpell, newSpell)
+  
+  if newSpell <> #none then
+    me.keepMePosted(newSpell, #fullyCharged, #once)
+    me.keepMePosted(newSpell, #chargeLimited, #always)
+  end if
+end
+
+on setOwner me, newOwner
+  if newOwner <> #none then
+    me.big.keepMePosted(newOwner, #leaveGame, #once)
+  end if
+  
+  me.setRelation(#owner, newOwner)
+end
+
+on setRelation me, relationship, newRelation
+  -- relations are always exclusive relationships
+  -- that means there can be only one at a time
+  
+  if newRelation = #none then
+    currentRelation = me.getRelation(relationship)
+    if currentRelation <> #none then
+      me.breakRelationship(currentRelation, relationship)
+    end if
+  else
+    me.formRelationship(newRelation, relationship, #exclusive) 
+  end if
+end
+
+on setTarget me, theTarget
+  me.setRelation(#target, theTarget)
+  me.keepMePosted(theTarget, #outOfEnergy, #once)
+  me.keepMePosted(theTarget, #leaveGame, #once)
+end
+
+
+
+
+
+

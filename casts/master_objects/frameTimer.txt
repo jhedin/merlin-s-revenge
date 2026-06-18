@@ -1,0 +1,132 @@
+[#name: "frameTimer", #scriptType: #parent, #type: #script]
+on new me
+  return me
+end
+
+global g
+
+property pFrameRate
+property pFrameLength
+property pLastTime
+property pOutput
+property pOutputOn
+property pTimeSample
+property pTimeSampleLength
+property pMaxTime
+property pMaxTimeCount
+property pTotalFrameTime
+property pDbg --sleep handler
+
+on init me
+  pFrameRate = 30
+  pFrameLength = 1000 / pFrameRate
+  pTimeSampleLength = 5
+  pMaxTimeCount = CounterNew()
+  pMaxTimeCount.tim[2] = 600
+  --pDbg = new(xtra"dbg")
+  
+  pOutputOn = true
+end
+
+on start me
+  --  if pOutputOn then
+  --    pOutput = g.objectMaster.requestObject(#objOutput)
+  --  end if
+  
+  pLastTime = the milliseconds
+  pMaxTime = 0
+  pTimeSample = []
+  pTotalFrameTime = 0
+  g.updater.addPrg(me, #hi)
+end
+
+on update me
+  frameTime = me.getFrameTime()
+  me.addFrameTime(frameTime)
+  
+  currTime = me.getAverageFrameTime()
+  maxTime = me.updateMaxTime(currTime)
+  
+  msg = "frameTime: " & currTime & "   maxTime: " & maxTime
+  
+  if frameTime < pFrameLength then
+    me.waitFrame(frameTime)
+  end if
+  
+  if pOutputOn then
+    --pOutput.msg(msg)
+    put(msg)
+  end if
+end
+
+on addFrameTime me, frameTime
+  pTimeSample.append(frameTime)
+  pTotalFrameTime = pTotalFrameTime + frameTime
+  numSamples = pTimeSample.count
+  if numSamples > pTimeSampleLength then
+    pTotalFrameTime = pTotalFrameTime - pTimeSample[1]
+    pTimeSample.deleteAt(1)
+  end if
+end
+
+on getAverageFrameTime me
+
+  average = pTotalFrameTime / pTimeSampleLength
+  
+  return average
+end
+
+on getFrameTime me
+  currTime = the milliseconds
+  
+  frameTime = currTime - pLastTime
+  
+  pLastTime = currTime
+  
+  return frameTime
+end
+
+on setFrameRate me, newVal
+  pFrameRate = newVal
+  pFrameLength = 1000/pFrameRate
+end
+
+on updateMaxTime me, currTime
+  Counter(pMaxTimeCount)
+  if pMaxTimeCount.fin then
+    pMaxTime = currTime
+  end if
+  
+  if currTime > pMaxTime then
+    pMaxTime = currTime
+  end if
+  
+  return pMaxTime
+end
+
+on waitFrame me, frameTime --could be made to sleep instead!
+  extra = pFrameLength - frameTime
+  --sleep(extra)
+    nFrameSecs = the milliseconds + extra
+    
+    repeat while the milliseconds < nFrameSecs
+    end repeat
+  
+  pLastTime = the milliseconds
+  
+end
+
+on stop me
+  g.updater.removePrg(me)
+end
+
+
+
+
+
+
+
+
+
+
+

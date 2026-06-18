@@ -1,0 +1,144 @@
+[#name: "wizardMaster", #scriptType: #parent, #type: #script]
+-- this object passes messages between modSummonWizard, modWizardSelector, and objWizardDisplayer
+-- in order to display information about medikits.
+
+global g
+
+property pLoc
+property pWizardDisplayer
+property pWizardsFound --new wizards register here when unsummoned for the first time. Also determines who to draw, and in what order.
+property pSelectedWizard --wizard who is currently selected to be summoned
+property pSummonMod
+
+on new me
+  return me
+end
+
+on init me
+  pLoc = point(0,0)
+  pWizardDisplayer = #none
+  pwizardsFound = [:]
+  pSummonMod = #none
+end
+
+on finish me
+  if ilk(pWizardDisplayer) <> #void and pWizardDisplayer <> #none then
+    pWizardDisplayer.finish()
+    pWizardDisplayer = #none
+  end if
+end
+
+on newWizardFound me, theWizard
+  wizardSym = string(theWizard)
+  totalLength = the number of chars in wizardSym
+  wizardName = chars(wizardSym,1,totalLength - 6)
+  wizardSym = symbol(wizardName)
+  pWizardsFound[wizardSym] = [:]
+  pWizardsFound[wizardSym][#wizardSym] = wizardSym
+  wizardBarPic = wizardName & "_off"
+  pWizardsFound[wizardSym].addProp(#bar, member(wizardBarPic, "gfx"))
+  wizardSelectorPic = wizardName & "_ws"
+  pWizardsFound[wizardSym].addProp(#selector, member(wizardSelectorPic, "gfx"))
+  if pWizardsFound.count = 1 and pSummonMod <> #none then
+    me.setWizard(pWizardsFound[wizardSym])
+    pSummonMod.updateWizards(pWizardsFound)
+    me.wizardOn()
+  end if
+end
+
+on getWizards me
+  return pWizardsFound.duplicate()
+end
+
+on registerMod me, theObj
+  pSummonMod = theObj
+end
+
+on setWizard me, wizard
+  pSelectedWizard = wizard.wizardSym
+  me.updateDisplay(pWizardsFound[pSelectedWizard].bar)
+end
+
+on setWizards me, wizards
+  pWizardsFound = wizards
+end
+
+on start me, theLoc
+  pLoc = theLoc
+  pWizardDisplayer = g.objectMaster.requestObject(#objWizardDisplayer)
+  params = pWizardDisplayer.getParams(#init)
+  params.displayLoc = theLoc
+  pWizardDisplayer.init(params)
+end
+
+on stop me
+  me.finish()
+end
+  
+on wizardOn me
+  pWizardDisplayer.setWizardOn()
+end
+
+on wizardOff me
+  pWizardDisplayer.setWizardOff()
+end
+
+on updateDisplay me, theObj
+  pWizardDisplayer.updateDisplayFromObj(theObj)
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

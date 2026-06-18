@@ -1,0 +1,338 @@
+property ancestor, pAlign, pBarBorder, pBarSpr, pCurrentEnergyPercent, pEnergy, player, pMaxBarWidth, pMaxEnergy, pOrientation, pSurroundRect, pSurroundSpr
+global g
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushcons 0 .............................. <"objParams">
+  [  4] pusharglist 1 ........................... <"objParams">
+  [  6] extcall 34 .............................. <script("objParams")>
+  [  8] pusharglist 1 ........................... <script("objParams")>
+  [ 10] extcall 0 ............................... <new(script("objParams"))>
+  [ 12] setobjprop 33 ........................... me.ancestor = new(script("objParams"))
+  [ 14] getparam 0 .............................. <me>
+  [ 16] pushsymb 1 .............................. <#init>
+  [ 18] pusharglist 2 ........................... <me, #init>
+  [ 20] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 22] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 24] getlocal 0 .............................. <i>
+  [ 26] pushsymb 1766 ........................... <#align>
+  [ 29] pushsymb 264 ............................ <#left>
+  [ 32] pusharglistnoret 3 ...................... <i, #align, #left>
+  [ 34] objcall 48 .............................. i[#align] = #left
+  [ 36] getlocal 0 .............................. <i>
+  [ 38] pushsymb 2582 ........................... <#barBorder>
+  [ 41] pushint8 2 .............................. <2>
+  [ 43] pusharglistnoret 3 ...................... <i, #barBorder, 2>
+  [ 45] objcall 48 .............................. i[#barBorder] = 2
+  [ 47] getlocal 0 .............................. <i>
+  [ 49] pushsymb 2492 ........................... <#colour>
+  [ 52] pushint16 255 ........................... <255>
+  [ 55] pushint16 255 ........................... <255>
+  [ 58] pushint16 255 ........................... <255>
+  [ 61] pusharglist 3 ........................... <255, 255, 255>
+  [ 63] extcall 436 ............................. <rgb(255, 255, 255)>
+  [ 66] pusharglistnoret 3 ...................... <i, #colour, rgb(255, 255, 255)>
+  [ 68] objcall 48 .............................. i[#colour] = rgb(255, 255, 255)
+  [ 70] getlocal 0 .............................. <i>
+  [ 72] pushsymb 2583 ........................... <#currentEnergy>
+  [ 75] pushsymb 49 ............................. <#none>
+  [ 77] pusharglistnoret 3 ...................... <i, #currentEnergy, #none>
+  [ 79] objcall 48 .............................. i[#currentEnergy] = #none
+  [ 81] getlocal 0 .............................. <i>
+  [ 83] pushsymb 1352 ........................... <#layer>
+  [ 86] pushint8 1 .............................. <1>
+  [ 88] pusharglistnoret 3 ...................... <i, #layer, 1>
+  [ 90] objcall 48 .............................. i[#layer] = 1
+  [ 92] getlocal 0 .............................. <i>
+  [ 94] pushsymb 521 ............................ <#maxEnergy>
+  [ 97] pushsymb 49 ............................. <#none>
+  [ 99] pusharglistnoret 3 ...................... <i, #maxEnergy, #none>
+  [101] objcall 48 .............................. i[#maxEnergy] = #none
+  [103] getlocal 0 .............................. <i>
+  [105] pushsymb 2340 ........................... <#orientation>
+  [108] pushsymb 2338 ........................... <#horizontal>
+  [111] pusharglistnoret 3 ...................... <i, #orientation, #horizontal>
+  [113] objcall 48 .............................. i[#orientation] = #horizontal
+  [115] getlocal 0 .............................. <i>
+  [117] pushsymb 2584 ........................... <#surroundRect>
+  [120] pushsymb 49 ............................. <#none>
+  [122] pusharglistnoret 3 ...................... <i, #surroundRect, #none>
+  [124] objcall 48 .............................. i[#surroundRect] = #none
+  [126] getlocal 0 .............................. <i>
+  [128] pushsymb 2585 ........................... <#surroundSpr>
+  [131] pushsymb 49 ............................. <#none>
+  [133] pusharglistnoret 3 ...................... <i, #surroundSpr, #none>
+  [135] objcall 48 .............................. i[#surroundSpr] = #none
+  [137] getparam 0 .............................. <me>
+  [139] pusharglistnoret 1 ...................... <me>
+  [141] extcall 35 .............................. return me
+  [143] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 1766 ......................... <params.align>
+  [ 13] setprop 2586 ............................ pAlign = params.align
+  [ 16] getparam 1 .............................. <params>
+  [ 18] getobjprop 2583 ......................... <params.currentEnergy>
+  [ 21] setprop 527 ............................. pEnergy = params.currentEnergy
+  [ 24] getparam 0 .............................. <me>
+  [ 26] getparam 1 .............................. <params>
+  [ 28] getobjprop 521 .......................... <params.maxEnergy>
+  [ 31] pusharglistnoret 2 ...................... <me, params.maxEnergy>
+  [ 33] objcall 2578 ............................ me.setMaxEnergy(params.maxEnergy)
+  [ 36] getparam 1 .............................. <params>
+  [ 38] getobjprop 1352 ......................... <params.layer>
+  [ 41] setprop 1478 ............................ player = params.layer
+  [ 44] getparam 1 .............................. <params>
+  [ 46] getobjprop 2340 ......................... <params.orientation>
+  [ 49] setprop 2587 ............................ pOrientation = params.orientation
+  [ 52] getparam 1 .............................. <params>
+  [ 54] getobjprop 2584 ......................... <params.surroundRect>
+  [ 57] setprop 2588 ............................ pSurroundRect = params.surroundRect
+  [ 60] getparam 1 .............................. <params>
+  [ 62] getobjprop 2585 ......................... <params.surroundSpr>
+  [ 65] setprop 2589 ............................ pSurroundSpr = params.surroundSpr
+  [ 68] getprop 2588 ............................ <pSurroundRect>
+  [ 71] pushsymb 49 ............................. <#none>
+  [ 73] eq ...................................... <pSurroundRect = #none>
+  [ 74] jmpifz [ 99] ............................ if pSurroundRect = #none then
+  [ 77] getprop 2589 ............................ <pSurroundSpr>
+  [ 80] pushsymb 49 ............................. <#none>
+  [ 82] nteq .................................... <pSurroundSpr <> #none>
+  [ 83] jmpifz [ 99] ............................ if pSurroundSpr <> #none then
+  [ 86] getprop 2589 ............................ <pSurroundSpr>
+  [ 89] getchainedprop 263 ...................... <pSurroundSpr.rect>
+  [ 92] pusharglist 1 ........................... <pSurroundSpr.rect>
+  [ 94] objcall 175 ............................. <pSurroundSpr.rect.duplicate()>
+  [ 96] setprop 2588 ............................ pSurroundRect = pSurroundSpr.rect.duplicate()
+  [ 99] getparam 1 .............................. <params>
+  [101] getobjprop 2582 ......................... <params.barBorder>
+  [104] setprop 2590 ............................ pBarBorder = params.barBorder
+  [107] getparam 0 .............................. <me>
+  [109] pusharglistnoret 1 ...................... <me>
+  [111] objcall 2575 ............................ me.initBarSpr()
+  [114] getparam 0 .............................. <me>
+  [116] getparam 1 .............................. <params>
+  [118] getobjprop 2492 ......................... <params.colour>
+  [121] pusharglistnoret 2 ...................... <me, params.colour>
+  [123] objcall 2168 ............................ me.setColour(params.colour)
+  [126] getparam 0 .............................. <me>
+  [128] getchainedprop 57 ....................... <me.id>
+  [130] getchainedprop 58 ....................... <me.id.bigMe>
+  [132] getprop 527 ............................. <pEnergy>
+  [135] pusharglistnoret 2 ...................... <me.id.bigMe, pEnergy>
+  [137] objcall 2417 ............................ me.id.bigMe.updateEnergy(pEnergy)
+  [140] ret
+end
+
+on initBarSpr me
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 254 ...................... <g.spriteMaster>
+  [  4] pusharglist 1 ........................... <g.spriteMaster>
+  [  6] objcall 255 ............................. <g.spriteMaster.requestSprite()>
+  [  8] setprop 2591 ............................ pBarSpr = g.spriteMaster.requestSprite()
+  [ 11] getprop 2591 ............................ <pBarSpr>
+  [ 14] getprop 1478 ............................ <player>
+  [ 17] setobjprop 259 .......................... pBarSpr.locZ = player
+  [ 20] getprop 2586 ............................ <pAlign>
+  [ 23] pushsymb 266 ............................ <#right>
+  [ 26] eq ...................................... <pAlign = #right>
+  [ 27] jmpifz [ 43] ............................ if pAlign = #right then
+  [ 30] getprop 2591 ............................ <pBarSpr>
+  [ 33] pushcons 1 .............................. <"dot_right">
+  [ 35] pushcons 2 .............................. <"gfx">
+  [ 37] pusharglist 2 ........................... <"dot_right", "gfx">
+  [ 39] extcall 99 .............................. <member("dot_right", "gfx")>
+  [ 41] setobjprop 99 ........................... pBarSpr.member = member("dot_right", "gfx")
+  [ 43] getprop 2587 ............................ <pOrientation>
+  [ 46] pushsymb 2339 ........................... <#vertical>
+  [ 49] eq ...................................... <pOrientation = #vertical>
+  [ 50] jmpifz [ 66] ............................ if pOrientation = #vertical then
+  [ 53] getprop 2591 ............................ <pBarSpr>
+  [ 56] pushcons 3 .............................. <"dot_bottom">
+  [ 58] pushcons 2 .............................. <"gfx">
+  [ 60] pusharglist 2 ........................... <"dot_bottom", "gfx">
+  [ 62] extcall 99 .............................. <member("dot_bottom", "gfx")>
+  [ 64] setobjprop 99 ........................... pBarSpr.member = member("dot_bottom", "gfx")
+  [ 66] getprop 2588 ............................ <pSurroundRect>
+  [ 69] pushsymb 49 ............................. <#none>
+  [ 71] nteq .................................... <pSurroundRect <> #none>
+  [ 72] jmpifz [ 82] ............................ if pSurroundRect <> #none then
+  [ 75] getparam 0 .............................. <me>
+  [ 77] pusharglistnoret 1 ...................... <me>
+  [ 79] objcall 2581 ............................ me.updateBarOnSurround()
+  [ 82] ret
+end
+
+on reset me, currentEnergy, maxEnergy, colour
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 2 .............................. <maxEnergy>
+  [  4] pusharglistnoret 2 ...................... <me, maxEnergy>
+  [  6] objcall 2578 ............................ me.setMaxEnergy(maxEnergy)
+  [  9] getparam 0 .............................. <me>
+  [ 11] getparam 3 .............................. <colour>
+  [ 13] pusharglistnoret 2 ...................... <me, colour>
+  [ 15] objcall 2168 ............................ me.setColour(colour)
+  [ 18] getparam 0 .............................. <me>
+  [ 20] getparam 1 .............................. <currentEnergy>
+  [ 22] pusharglistnoret 2 ...................... <me, currentEnergy>
+  [ 24] objcall 2417 ............................ me.updateEnergy(currentEnergy)
+  [ 27] ret
+end
+
+on resetToZero me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushzero ................................ <0>
+  [  3] pusharglistnoret 2 ...................... <me, 0>
+  [  5] objcall 2417 ............................ me.updateEnergy(0)
+  [  8] ret
+end
+
+on finish me
+  [  0] getprop 2591 ............................ <pBarSpr>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] nteq .................................... <pBarSpr <> #none>
+  [  6] jmpifz [ 26] ............................ if pBarSpr <> #none then
+  [  9] getglobal 40 ............................ <g>
+  [ 11] getchainedprop 254 ...................... <g.spriteMaster>
+  [ 13] getprop 2591 ............................ <pBarSpr>
+  [ 16] pusharglistnoret 2 ...................... <g.spriteMaster, pBarSpr>
+  [ 18] objcall 270 ............................. g.spriteMaster.freeSprite(pBarSpr)
+  [ 21] pushsymb 49 ............................. <#none>
+  [ 23] setprop 2591 ............................ pBarSpr = #none
+  [ 26] pushsymb 49 ............................. <#none>
+  [ 28] setprop 2589 ............................ pSurroundSpr = #none
+  [ 31] getparam 0 .............................. <me>
+  [ 33] getchainedprop 33 ....................... <me.ancestor>
+  [ 35] pusharglistnoret 1 ...................... <me.ancestor>
+  [ 37] objcall 3 ............................... me.ancestor.finish()
+  [ 39] ret
+end
+
+on getCurrentEnergyPercent me
+  [  0] getprop 2592 ............................ <pCurrentEnergyPercent>
+  [  3] pusharglistnoret 1 ...................... <pCurrentEnergyPercent>
+  [  5] extcall 35 .............................. return pCurrentEnergyPercent
+  [  7] ret
+end
+
+on setColour me, newColour
+  [  0] getprop 2591 ............................ <pBarSpr>
+  [  3] getparam 1 .............................. <newColour>
+  [  5] setobjprop 437 .......................... pBarSpr.color = newColour
+  [  8] ret
+end
+
+on setMaxEnergy me, newMaxEnergy
+  [  0] getparam 1 .............................. <newMaxEnergy>
+  [  2] setprop 534 ............................. pMaxEnergy = newMaxEnergy
+  [  5] ret
+end
+
+on setSurroundRect me, newRect
+  [  0] getparam 1 .............................. <newRect>
+  [  2] setprop 2588 ............................ pSurroundRect = newRect
+  [  5] ret
+end
+
+on setSurroundSpr me, newSprite
+  [  0] getparam 1 .............................. <newSprite>
+  [  2] setprop 2589 ............................ pSurroundSpr = newSprite
+  [  5] getparam 1 .............................. <newSprite>
+  [  7] getobjprop 263 .......................... <newSprite.rect>
+  [ 10] setprop 2588 ............................ pSurroundRect = newSprite.rect
+  [ 13] ret
+end
+
+on updateBarOnSurround me
+  [  0] getprop 2590 ............................ <pBarBorder>
+  [  3] pushint8 1 .............................. <1>
+  [  5] inv ..................................... <-1>
+  [  6] mul ..................................... <pBarBorder * -1>
+  [  7] setlocal 0 .............................. borderChange = pBarBorder * -1
+  [  9] getprop 2588 ............................ <pSurroundRect>
+  [ 12] getlocal 0 .............................. <borderChange>
+  [ 14] getlocal 0 .............................. <borderChange>
+  [ 16] pusharglist 3 ........................... <pSurroundRect, borderChange, borderChange>
+  [ 18] objcall 261 ............................. <pSurroundRect.inflate(borderChange, borderChange)>
+  [ 21] setlocal 1 .............................. barRect = pSurroundRect.inflate(borderChange, borderChange)
+  [ 23] getprop 2591 ............................ <pBarSpr>
+  [ 26] getlocal 1 .............................. <barRect>
+  [ 28] pusharglist 1 ........................... <barRect>
+  [ 30] objcall 175 ............................. <barRect.duplicate()>
+  [ 32] setobjprop 263 .......................... pBarSpr.rect = barRect.duplicate()
+  [ 35] getprop 2589 ............................ <pSurroundSpr>
+  [ 38] pushsymb 49 ............................. <#none>
+  [ 40] nteq .................................... <pSurroundSpr <> #none>
+  [ 41] jmpifz [ 59] ............................ if pSurroundSpr <> #none then
+  [ 44] getprop 2591 ............................ <pBarSpr>
+  [ 47] getprop 2589 ............................ <pSurroundSpr>
+  [ 50] getobjprop 259 .......................... <pSurroundSpr.locZ>
+  [ 53] pushint8 1 .............................. <1>
+  [ 55] add ..................................... <pSurroundSpr.locZ + 1>
+  [ 56] setobjprop 259 .......................... pBarSpr.locZ = pSurroundSpr.locZ + 1
+  [ 59] getprop 2587 ............................ <pOrientation>
+  [ 62] peek 0 .................................. case pOrientation of
+  [ 64] pushsymb 2338 ........................... <#horizontal>
+  [ 67] eq
+  [ 68] jmpifz [ 82] ............................ (case) #horizontal:
+  [ 71] getlocal 1 .............................. <barRect>
+  [ 73] getobjprop 424 .......................... <barRect.width>
+  [ 76] setprop 2595 ............................ pMaxBarWidth = barRect.width
+  [ 79] jmp [ 99]
+  [ 82] peek 0
+  [ 84] pushsymb 2339 ........................... <#vertical>
+  [ 87] eq
+  [ 88] jmpifz [ 99] ............................ (case) #vertical:
+  [ 91] getlocal 1 .............................. <barRect>
+  [ 93] getobjprop 423 .......................... <barRect.height>
+  [ 96] setprop 2595 ............................ pMaxBarWidth = barRect.height
+  [ 99] pop 1 ................................... end case
+  [101] ret
+end
+
+on updateEnergy me, newEnergy
+  [  0] getparam 1 .............................. <newEnergy>
+  [  2] setprop 527 ............................. pEnergy = newEnergy
+  [  5] getprop 527 ............................. <pEnergy>
+  [  8] pushzero ................................ <0>
+  [  9] getprop 534 ............................. <pMaxEnergy>
+  [ 12] pusharglist 2 ........................... <[0, pMaxEnergy]>
+  [ 14] pushlist ................................ <[0, pMaxEnergy]>
+  [ 15] pusharglist 2 ........................... <pEnergy, [0, pMaxEnergy]>
+  [ 17] extcall 495 ............................. <varPercent(pEnergy, [0, pMaxEnergy])>
+  [ 20] setlocal 0 .............................. percentEnergy = varPercent(pEnergy, [0, pMaxEnergy])
+  [ 22] getlocal 0 .............................. <percentEnergy>
+  [ 24] pushzero ................................ <0>
+  [ 25] getprop 2595 ............................ <pMaxBarWidth>
+  [ 28] pusharglist 2 ........................... <[0, pMaxBarWidth]>
+  [ 30] pushlist ................................ <[0, pMaxBarWidth]>
+  [ 31] pusharglist 2 ........................... <percentEnergy, [0, pMaxBarWidth]>
+  [ 33] extcall 546 ............................. <VarValRange(percentEnergy, [0, pMaxBarWidth])>
+  [ 36] setlocal 1 .............................. barWidth = VarValRange(percentEnergy, [0, pMaxBarWidth])
+  [ 38] getprop 2587 ............................ <pOrientation>
+  [ 41] peek 0 .................................. case pOrientation of
+  [ 43] pushsymb 2338 ........................... <#horizontal>
+  [ 46] eq
+  [ 47] jmpifz [ 61] ............................ (case) #horizontal:
+  [ 50] getprop 2591 ............................ <pBarSpr>
+  [ 53] getlocal 1 .............................. <barWidth>
+  [ 55] setobjprop 424 .......................... pBarSpr.width = barWidth
+  [ 58] jmp [ 78]
+  [ 61] peek 0
+  [ 63] pushsymb 2339 ........................... <#vertical>
+  [ 66] eq
+  [ 67] jmpifz [ 78] ............................ (case) #vertical:
+  [ 70] getprop 2591 ............................ <pBarSpr>
+  [ 73] getlocal 1 .............................. <barWidth>
+  [ 75] setobjprop 423 .......................... pBarSpr.height = barWidth
+  [ 78] pop 1 ................................... end case
+  [ 80] getlocal 0 .............................. <percentEnergy>
+  [ 82] setprop 2592 ............................ pCurrentEnergyPercent = percentEnergy
+  [ 85] ret
+end

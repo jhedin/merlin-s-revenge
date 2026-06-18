@@ -1,0 +1,112 @@
+on ListPrint thelist, tabs
+  [  0] getparam 1 .............................. <tabs>
+  [  2] pusharglist 0 ........................... <>
+  [  4] extcall 54 .............................. <VOID>
+  [  6] eq ...................................... <tabs = VOID>
+  [  7] jmpifz [ 14] ............................ if tabs = VOID then
+  [ 10] pushint8 1 .............................. <1>
+  [ 12] setparam 1 .............................. tabs = 1
+  [ 14] pushcons 0 .............................. <EMPTY>
+  [ 16] setlocal 0 .............................. propname = EMPTY
+  [ 18] pushzero ................................ <0>
+  [ 19] setlocal 1 .............................. bProp = 0
+  [ 21] getparam 0 .............................. <thelist>
+  [ 23] pushsymb 70 ............................. <#propList>
+  [ 25] pusharglist 2 ........................... <thelist, #propList>
+  [ 27] extcall 69 .............................. <ilk(thelist, #propList)>
+  [ 29] jmpifz [ 36] ............................ if ilk(thelist, #propList) then
+  [ 32] pushint8 1 .............................. <1>
+  [ 34] setlocal 1 .............................. bProp = 1
+  [ 36] getparam 0 .............................. <thelist>
+  [ 38] getobjprop 64 ........................... <thelist.count>
+  [ 40] setlocal 2 .............................. thelenth = thelist.count
+  [ 42] pushint8 1 .............................. <1>
+  [ 44] setlocal 3
+  [ 46] getlocal 3
+  [ 48] getlocal 2 .............................. <thelenth>
+  [ 50] lteq
+  [ 51] jmpifz [213] ............................ repeat with li = 1 to thelenth
+  [ 54] getparam 0 .............................. <thelist>
+  [ 56] getlocal 3 .............................. <li>
+  [ 58] pusharglist 2 ........................... <thelist, li>
+  [ 60] objcall 59 .............................. <thelist[li]>
+  [ 62] setlocal 4 .............................. nextItem = thelist[li]
+  [ 64] getlocal 1 .............................. <bProp>
+  [ 66] jmpifz [ 79] ............................ if bProp then
+  [ 69] getparam 0 .............................. <thelist>
+  [ 71] getlocal 3 .............................. <li>
+  [ 73] pusharglist 2 ........................... <thelist, li>
+  [ 75] objcall 71 .............................. <thelist.getPropAt(li)>
+  [ 77] setlocal 0 .............................. propname = thelist.getPropAt(li)
+  [ 79] pushcons 0 .............................. <EMPTY>
+  [ 81] setlocal 5 .............................. tabText = EMPTY
+  [ 83] pushint8 1 .............................. <1>
+  [ 85] setlocal 6
+  [ 87] getlocal 6
+  [ 89] getparam 1 .............................. <tabs>
+  [ 91] lteq
+  [ 92] jmpifz [111] ............................ repeat with ta = 1 to tabs
+  [ 95] getlocal 5 .............................. <tabText>
+  [ 97] pushcons 1 .............................. <TAB>
+  [ 99] joinstr ................................. <tabText & TAB>
+  [100] setlocal 5 .............................. tabText = tabText & TAB
+  [102] pushint8 1
+  [104] getlocal 6
+  [106] add
+  [107] setlocal 6
+  [109] endrepeat [ 87]
+  [111] pushsymb 72 ............................. <#nList>
+  [113] setlocal 7 .............................. itemType = #nList
+  [115] getlocal 4 .............................. <nextItem>
+  [117] pushsymb 73 ............................. <#list>
+  [119] pusharglist 2 ........................... <nextItem, #list>
+  [121] extcall 69 .............................. <ilk(nextItem, #list)>
+  [123] jmpifz [143] ............................ if ilk(nextItem, #list) then
+  [126] getlocal 4 .............................. <nextItem>
+  [128] pushsymb 74 ............................. <#point>
+  [130] pusharglist 2 ........................... <nextItem, #point>
+  [132] extcall 69 .............................. <ilk(nextItem, #point)>
+  [134] pushzero ................................ <0>
+  [135] eq ...................................... <ilk(nextItem, #point) = 0>
+  [136] jmpifz [143] ............................ if ilk(nextItem, #point) = 0 then
+  [139] pushsymb 75 ............................. <#alist>
+  [141] setlocal 7 .............................. itemType = #alist
+  [143] getlocal 7 .............................. <itemType>
+  [145] pushsymb 75 ............................. <#alist>
+  [147] eq ...................................... <itemType = #alist>
+  [148] jmpifz [158] ............................ if itemType = #alist then / else
+  [151] pushcons 2 .............................. <"[">
+  [153] setlocal 8 .............................. itemText = "["
+  [155] jmp [166]
+  [158] getlocal 4 .............................. <nextItem>
+  [160] pusharglist 1 ........................... <nextItem>
+  [162] extcall 76 .............................. <string(nextItem)>
+  [164] setlocal 8 .............................. itemText = string(nextItem)
+  [166] getlocal 5 .............................. <tabText>
+  [168] getlocal 0 .............................. <propname>
+  [170] joinstr ................................. <tabText & propname>
+  [171] pushcons 3 .............................. <": ">
+  [173] joinstr ................................. <tabText & propname & ": ">
+  [174] getlocal 8 .............................. <itemText>
+  [176] joinstr ................................. <tabText & propname & ": " & itemText>
+  [177] setlocal 9 .............................. nextLine = tabText & propname & ": " & itemText
+  [179] getlocal 9 .............................. <nextLine>
+  [181] pusharglistnoret 1 ...................... <nextLine>
+  [183] extcall 19 .............................. put nextLine
+  [185] getlocal 7 .............................. <itemType>
+  [187] pushsymb 75 ............................. <#alist>
+  [189] eq ...................................... <itemType = #alist>
+  [190] jmpifz [204] ............................ if itemType = #alist then
+  [193] getlocal 4 .............................. <nextItem>
+  [195] getparam 1 .............................. <tabs>
+  [197] pushint8 1 .............................. <1>
+  [199] add ..................................... <tabs + 1>
+  [200] pusharglistnoret 2 ...................... <nextItem, tabs + 1>
+  [202] localcall 0 ............................. ListPrint(nextItem, tabs + 1)
+  [204] pushint8 1
+  [206] getlocal 3
+  [208] add
+  [209] setlocal 3
+  [211] endrepeat [ 46]
+  [213] ret
+end

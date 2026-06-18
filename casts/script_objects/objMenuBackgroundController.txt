@@ -1,0 +1,96 @@
+[#name: "objMenuBackgroundController", #scriptType: #parent, #type: #script]
+global g
+
+property ancestor
+
+on new me
+  ancestor = new(script"objController")
+  
+  i = me.modifyParams(#init)
+  
+  i.exclusive = false
+  
+  return me
+end
+
+on newObject me, definition, theLoc, caller
+  definitionText = StringEliminateChars(definition.text, return)
+  definition = value(definitionText)
+  
+  newObj = g.objectMaster.requestObject(#objMenuBackground)
+  params = newObj.getParams(#init)
+  params.definition = definition
+  params.location = theLoc
+  params.tileSet = g.collectionsMaster.getObj(#objTileSetKey, #menu)
+  newObj.init(params)
+  
+  newObj.display()
+  
+  me.pObjects.append(newObj)
+  
+  return newObj
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

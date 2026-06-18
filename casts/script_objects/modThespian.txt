@@ -1,0 +1,705 @@
+[#name: "modThespian", #scriptType: #parent, #type: #script]
+-- used by 
+-- objChatter
+-- objPlayerCharacter
+-- objPlayerMerlinCharacter
+
+-- requires modProp
+-- requires modTeleport
+-- requires modStretcher
+
+global g
+global gGameTextLayer, gCutSceneSpeechLayer
+
+property ancestor
+property pFrameCounter
+property pExitingStage             -- whether or not the walkTo was to exit the stage
+property pMyLayer
+property pPreviousAIMode
+property pScriptPerformer          -- the program running the current script
+property pScriptPerformerActorID   -- ID to use when talking to script performer, so it doesn't have to search for us
+property pSkipCounter
+property pSpeechBackgroundColor
+property pSpeechBackgroundBlend
+property pSpeechBackgroundBorder
+property pSpeechBackgroundSprite
+property pSpeechCharWidth
+property pSpeechColor
+property pSpeechDisplayMode        -- whether to display speech in a bubble above the chars head (#ingame) or at the top of the cutscene stage (#cutscene)
+property pSpeechOffset
+property pSpeechStyle
+property pSpeechWidth              -- the width of the speech text member in ingame mode
+property pSpeechWidthCutscene      -- the width of the speech text member in cutscene mode
+property pTextMember
+property pTextSprite
+property pTheLine
+property pThespMode
+property pTurnToFaceLocked         -- some modes which involve walking will want to disable turnToFace
+
+on new me
+  ancestor = new (script("modModule"))
+  return me
+end
+
+on addModParams me
+  i = me.modifyParams(#init)
+  
+  i.flags.append(#player)
+  
+  i[#skipDuration] = 30 -- num of frames before player is allowed to walk away
+  i[#speechBackgroundColor] = rgb(0,0,0)
+  i[#speechBackgroundBlend] = 80
+  i[#speechBackgroundBorder] = rect(-10,-10,10,10)
+  i[#speechCharWidth] = 6
+  i[#speechColor] = rgb(255,255,255)
+  i[#speechDisplayMode] = #ingame
+  i[#speechOffset] = point (-75, -20)
+  i[#speechStyle] = [#bold]
+  i[#speechWidth] = 150
+  i[#speechWidthCutscene] = 300
+  
+  ancestor.addModParams()
+end
+
+on init me, params
+  pExitingStage = false
+  pFrameCounter = CounterNew()  
+  pMyLayer = gGameTextLayer
+  pPreviousAIMode = #none
+  pScriptPerformer = #none
+  pScriptPerformerActorID = #none  
+  pSkipCounter = CounterNew()
+  pSkipCounter.tim[2] = params.skipDuration
+  pSpeechBackgroundColor = params.speechBackgroundColor
+  pSpeechBackgroundBlend = params.speechBackgroundBlend
+  pSpeechBackgroundBorder = params.speechBackgroundBorder
+  pSpeechBackgroundSprite = #none
+  pSpeechCharWidth = params.speechCharWidth
+  pSpeechColor = params.speechColor
+  pSpeechDisplayMode = params.speechDisplayMode
+  pSpeechOffset = params.speechOffset
+  pSpeechStyle = params.speechStyle
+  pSpeechWidth = params.speechWidth
+  pSpeechWidthCutscene = params.speechWidthCutscene
+  pTextMember = #none
+  pTheLine = #none
+  pTurnToFaceLocked = false
+  
+  me.goThespMode(#waitForNextLine)
+  
+  ancestor.init(params)
+end
+
+on finish me
+  me.freeTextMember()
+  ancestor.finish()
+end
+
+on acquireTextMember me
+  me.freeTextMember()
+  
+  pSpeechBackgroundSprite = g.spriteMaster.requestSprite()
+  pSpeechBackgroundSprite.color = pSpeechBackgroundColor
+  pSpeechBackgroundSprite.blend = pSpeechBackgroundBlend
+  pSpeechBackgroundSprite.locz = pMyLayer
+  
+  case pSpeechDisplayMode of
+    #ingame:
+      speechWidth = pSpeechWidth
+      
+    #cutscene:
+      speechWidth = pSpeechWidthCutScene
+      
+  end case
+  
+  
+  params = g.memberMaster.getParams(#requestTextMember)
+  params.name = "thespian_speech"
+  params.font = "Verdana"
+  params.fontSize = 10
+  params.fontStyle = pSpeechStyle
+  params.color = pSpeechColor
+  params.width = speechWidth
+  
+  pTextMember = g.memberMaster.requestTextMember(params)
+  
+  pTextSprite = g.spriteMaster.requestSprite()
+  pTextSprite.locz = pMyLayer
+  
+  SpriteSetMember(pTextSprite, pTextMember)
+end
+
+on AIisTryingToMove me
+  if pSkipCounter.fin then
+    g.cutSceneMaster.scriptCancelled()
+  end if
+end
+
+on at me, theLoc
+  atLoc = me.interpretLoc(theLoc)
+  
+  me.setLoc(atLoc)
+end
+
+on atPlayer me, playerName
+  playerToAppearAt = pScriptPerformer.getPlayer(playerName)
+  locToAppearAt = playerToAppearAt.getLoc()
+  xLoc = locToAppearAt.locH
+  me.at(xLoc)
+end
+
+on calcStageLeftOffLoc me
+  -- assumes regpoint is in middle of object
+  
+  leftStage = g.cutSceneMaster.getStageLeft()
+  offLoc = leftStage - (me.getWidth() /2)
+  
+  return offLoc
+end
+
+on calcStageRightOffLoc me
+  -- assumes regpoint is in middle of object
+  
+  rightStage = g.cutSceneMaster.getStageRight()
+  offLoc = rightStage + (me.getWidth() /2)
+  
+  return offLoc
+end
+
+on calcTeleportFloor me
+  env = g.cutSceneMaster.getEnvironment()
+  if env = #cutScene then
+    teleportFloor = g.cutSceneMaster.getStageFloor()
+  else
+    teleportFloor = me.big.getRect().bottom
+  end if
+  
+  return teleportFloor
+end
+
+on cancelMoveTo me
+  myMode = me.ID.bigMe.getMode()
+  
+  if myMode = #moveToLoc then
+    me.ID.bigMe.goMode(#walk)
+  end if
+end
+
+on displaySpeech me, theSpeech
+  case pSpeechDisplayMode of
+    #ingame:
+      me.displaySpeechInGame(theSpeech)
+      
+    #cutscene:
+      me.displaySpeechCutScene(theSpeech)
+      
+  end case
+end
+
+on displaySpeechCutScene me, theSpeech
+  pTextMember.text = theSpeech
+  
+  speechFloor = g.cutSceneMaster.getSpeechFloor()
+  leftStage = g.cutSceneMaster.getStageLeft()
+  rightStage = g.cutSceneMaster.getStageRight()
+  
+  -- calculate yLoc
+  textBoxHeight = pTextMember.height
+  yLoc = speechFloor - textBoxHeight
+  
+  -- calculate xLoc
+  textHalfWidth = pTextMember.width / 2
+  xLoc = me.ID.bigMe.getLoc().locH - textHalfWidth
+  
+  
+  
+  -- adjust for overlap
+  charWidth = theSpeech.chars.count * pSpeechCharWidth
+  if charWidth > pTextMember.width then
+    charWidth = pTextMember.width
+  end if
+  
+  edgeToCharGap = (pTextMember.width - charWidth) /2
+  
+  charLeft = xLoc + edgeToCharGap
+  charRight = xLoc + pTextMember.width - edgeToCharGap
+  
+  
+  if charLeft < leftStage then
+    xLoc = leftStage - edgeToCharGap
+  end if
+  
+  if charRight > rightStage then
+    xLoc = rightStage - charWidth - edgeToCharGap
+  end if
+  
+  pTextSprite.loc = point(xLoc, yLoc)
+  
+end
+
+on displaySpeechInGame me, theSpeech
+  pTextMember.text = theSpeech
+  speechLoc = me.ID.bigMe.getLoc() + pSpeechOffset 
+  speechLoc.locv = speechLoc.locv - pTextMember.height
+  pTextSprite.loc = speechLoc
+  
+  if theSpeech = "" then
+    pSpeechBackgroundSprite.rect = rect(-1,-1,0,0)
+  else
+    backWidth = theSpeech.chars.count * pSpeechCharWidth
+    
+    if backWidth > pTextMember.width then
+      backWidth = pTextMember.width
+    end if
+    
+    centreX = me.ID.bigMe.getLoc()[1]
+    
+    backRect = rect(centreX - (backWidth / 2), speechLoc[2], centreX + (backWidth/2), speechLoc[2] + pTextMember.height)
+    backRect = backRect + pSpeechBackgroundBorder
+    pSpeechBackgroundSprite.rect = backRect
+    
+  end if
+end
+
+on enterStageLeft me
+  stageOnLoc = me.pScriptPerformer.getStageLeftOnLoc()
+  
+  me.at(me.calcStageLeftOffLoc())
+  me.walkTo(stageOnLoc)
+end
+
+on enterStageRight me
+  stageOnLoc = me.pScriptPerformer.getStageRightOnLoc()
+  
+  me.at(me.calcStageRightOffLoc())
+  me.walkTo(stageOnLoc)
+end
+
+on fadeDown me
+  me.big.startSlowFadeOut()
+end
+
+on faderFin me
+  if pScriptPerformer <> #none then
+    pScriptPerformer.playerFaderFin()
+  end if
+end
+
+on freeTextMember me
+  if pTextMember <> #none then
+    g.memberMaster.freeMember(pTextMember)
+    pTextMember = #none
+    g.spriteMaster.freeSprite(pTextSprite)
+    pTextSprite = #none
+  end if
+  
+  if pSpeechBackgroundSprite <> #none then
+    g.spriteMaster.freeSprite(pSpeechBackgroundSprite)
+    pSpeechBackgroundsprite = #none
+  end if
+end
+
+on goThespianMode me
+  CounterReset(pSkipCounter)
+  me.acquireTextMember()
+  me.pAI.goThespianMode()
+end
+
+on goThespMode me, newMode
+  case newMode of
+    #displayLine:
+      pFrameCounter.tim[2] = pTheLine.displayTime
+      CounterReset(pFrameCounter)
+      pTheLine.args = me.interpretSpeechVariables(pTheLine.args)
+      me.displaySpeech(pTheLine.args)
+      
+    #delayAfterLine:
+      pFrameCounter.tim[2] = pTheLine.delayTime
+      CounterReset(pFrameCounter)
+      me.displaySpeech("")
+  end case
+  
+  pThespMode = newMode  
+end
+
+on gotoWings me
+  pScriptPerformer.actorToWings(pScriptPerformerActorID)
+end
+
+
+on internalEvent me, theEvent
+  ancestor.internalEvent(theEvent)
+  
+  case theEvent of
+    #moveToLocFinished:
+      me.moveToLocFinished()
+      
+  end case
+end
+
+on interpretLoc me, theLoc
+  if ilk(theLoc, #point) then
+    return theLoc
+  else
+    stageFloor = g.cutSceneMaster.getStageFloor()
+    yLoc = me.ID.bigMe.positionEdge(#bottom, stageFloor)
+    
+    return point(theLoc, yLoc)
+  end if
+end
+
+-- this runs when speech is about to be displayed
+-- as key settings could change otherwise.
+on interpretSpeechVariables me, theSpeechText
+  repeat with i = theSpeechText.words.count down to 1
+    nWord = theSpeechText.word[i]
+    
+    -- search for keys
+    if nWord = "#key" then
+      currentKey = g.keyMaster.getKeyFor(value(theSpeechText.word[i+1]))
+      theSpeechText = theSpeechText.word[1 .. i-1] && QUOTE & currentKey & QUOTE && theSpeechText.word[i+2 .. theSpeechText.words.count]
+    end if
+  end repeat
+  
+  return theSpeechText
+end
+
+on leaveThespianMode me
+  me.goThespMode(#waitForNextLine)
+  me.freeTextMember()
+  me.pAI.leaveThespianMode()
+end
+
+on lineFinished me
+  me.goThespMode(#waitForNextLine)
+  pScriptPerformer.lineFinished()
+end
+
+on lockTurnToFace me
+  pTurnToFaceLocked = true
+end
+
+on moveXYFin me
+  if pThespMode = #slideExit then
+    me.gotoWings()
+  end if
+end
+
+on moveToLocFinished me
+  me.unlockTurnToFace()
+  if pExitingStage = true then
+    me.gotoWings()
+  end if
+end
+
+on performLine me, theLine
+  pTheLine = theLine
+  
+  case theLine.theCommand of
+    #at:
+      me.at(pTheLine.args)
+      me.lineFinished()
+      
+    #atPlayer:
+      me.atPlayer(pTheLine.args)
+      me.lineFinished()
+      
+    #dropProp:
+      me.big.dropProp()
+      me.lineFinished()
+      
+    #enterStageLeft:
+      pExitingStage = false
+      me.enterStageLeft()
+      me.lineFinished()
+      
+    #enterStageRight:
+      pExitingStage = false
+      me.enterStageRight()
+      me.lineFinished()
+      
+    #exitStageLeft:
+      pExitingStage = true
+      me.walkTo(me.calcStageLeftOffLoc())
+      me.lineFinished()
+      
+    #exitStageRight:
+      pExitingStage = true
+      me.walkTo(me.calcStageRightOffLoc())
+      me.lineFinished()
+      
+    #fadeDown:
+      me.fadeDown()
+      me.lineFinished()
+      
+    #goMode:
+      me.big.goMode(pTheLine.args)
+      me.lineFinished()
+      
+    #gotoWings:
+      me.gotoWings()
+      me.lineFinished()
+      
+    #goWastedMode:
+      me.ID.bigMe.wastedModeOn()
+      me.reAlignToStageFloor()
+      me.lineFinished()
+      
+    #propAt:
+      me.big.setPropStatus(#prop)
+      me.at(pTheLine.args)
+      me.lineFinished()
+      
+    #produceProp:
+      me.produceProp()
+      me.lineFinished()
+      
+    #putAwayProp:
+      me.big.putAwayProp()
+      me.lineFinished()
+      
+    #speakLine:
+      me.speakLine()
+      
+    #teleportInAt:
+      me.ID.bigMe.teleportInAt(me.interpretLoc(pTheLine.args))
+      me.lineFinished()
+      
+    #teleportOut:
+      me.ID.bigMe.teleportOut(#modThespian, me.calcTeleportFloor())
+      me.lineFinished()
+      
+    #turnToFace:
+      me.turnToFace(pTheLine.args)
+      me.lineFinished()
+      
+    #walkTo:
+      pExitingStage = false
+      me.walkTo(pTheLine.args)
+      me.lineFinished()
+      
+    #walkToPlayer:
+      pExitingStage = false
+      me.walkToPlayer(pTheLine.args)
+      me.lineFinished()
+      
+  end case
+end
+
+on produceProp me
+  bigMe = me.ID.bigMe
+  
+  propCharacter = pTheLine.args
+  propObj = pScriptPerformer.getPlayer(propCharacter)
+  bigMe.carryProp(propObj)
+  propObj.beProducedAsProp(bigMe)
+end
+
+on realignToStageFloor me
+  stageFloor = g.cutSceneMaster.getStageFloor()
+  
+  bigMe = me.ID.bigMe
+  
+  xLoc = bigMe.getLoc().locH
+  yLoc = bigMe.positionEdge(#bottom, stageFloor)
+  
+  bigMe.setLoc(point(xLoc, yLoc))
+end
+
+on setScriptPerformer me, newVal
+  pScriptPerformer = newVal  
+end
+
+on setScriptPerformerActorID me, newVal
+  pScriptPerformerActorID = newVal
+end
+
+on setSpeechDisplayMode me, newVal
+  pSpeechDisplayMode = newVal
+  
+  case pSpeechDisplayMode of
+    #inGame:
+      pMyLayer = gGameTextLayer
+      
+    #cutScene:
+      pMyLayer = gCutSceneSpeechLayer
+  end case
+  
+end
+
+on speakLine me
+  me.goThespMode(#displayLine)
+end
+
+on teleportOutFinished me, caller
+  ancestor.teleportOutFinished(caller)
+  
+  if caller = #modThespian then
+    me.gotoWings()
+  end if
+end
+
+-- this function is called directly by
+-- script performer with pAutoTurn = true
+-- as well as by commands in the script
+
+-- modMoveToLoc has a simpler version of this
+on turnToFace me, objCharacter
+  
+  -- don't turn to face if we are moveToLoc ing.
+  -- or walkScroll ing
+  if pTurnToFaceLocked then
+    return
+  end if
+  
+  -- or if we are a dumb prop  
+  if me.big.getPropStatus() = #prop then
+    return
+  end if
+  
+  playerToFace = pScriptPerformer.getPlayer(objCharacter)
+  locToFace = playerToFace.getLoc()
+  dirToFace = PointDirPoint(me.ID.bigMe.getLoc(), locToFace)
+  me.ID.bigMe.setSpriteFlipFromDir(dirToFace[1])
+  
+end
+
+on startWalkScrollLeft me
+  if me.big.getPropStatus() = #notAProp then
+    me.cancelMoveTo()
+    me.lockTurnToFace()
+    me.setSpriteFlipFromDir(-1)
+    me.moveHorizReaction(-1)
+  else
+    me.big.propExitStageRight()
+  end if
+end
+
+on startWalkScrollRight me
+  if me.big.getPropStatus() = #notAProp then
+    me.cancelMoveTo()
+    me.lockTurnToFace()
+    me.setSpriteFlipFromDir(1)
+    me.moveHorizReaction(1)
+  else
+    me.big.propExitStageLeft()
+  end if
+end
+
+on stopWalkScroll me
+  if me.big.getPropStatus() = #notAProp then
+    me.unlockTurnToFace()
+    me.moveHorizReaction(0)
+  else
+    me.big.stopPropExit()
+  end if
+end
+
+on unlockTurnToFace me
+  pTurnToFaceLocked = false
+end
+
+on update me
+  if pSkipCounter.fin = false then
+    Counter(pSkipCounter)
+  end if
+  
+  case pThespMode of
+    #displayLine:
+      fin = me.updateFrameWait()
+      if fin then me.goThespMode(#delayAfterLine)
+      
+    #delayAfterLine:
+      fin = me.updateFrameWait()
+      if fin then me.lineFinished()
+  end case
+  
+  ancestor.update()
+end
+
+on updateFrameWait me
+  if pFrameCounter.fin then
+    return true
+  end if
+  
+  Counter(pFrameCounter)
+  
+  return false
+end
+
+on walkTo me, theLoc
+  me.lockTurnToFace()
+  theLoc = me.interpretLoc(theLoc)
+  me.ID.bigMe.moveToLoc(theLoc)
+end
+
+on walkToPlayer me, theName
+  playerToWalkTo = pScriptPerformer.getPlayer(theName)
+  locToWalkTo = playerToWalkTo.getLoc()
+  xLoc = locToWalkTo.locH
+  me.walkTo(xLoc)
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

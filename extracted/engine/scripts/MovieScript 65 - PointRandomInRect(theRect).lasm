@@ -1,0 +1,29 @@
+on PointRandomInRect therect
+  [  0] pushzero ................................ <0>
+  [  1] pushzero ................................ <0>
+  [  2] pusharglist 2 ........................... <0, 0>
+  [  4] extcall 97 .............................. <point(0, 0)>
+  [  6] setlocal 0 .............................. theloc = point(0, 0)
+  [  8] getlocal 0 .............................. <theloc>
+  [ 10] getparam 0 .............................. <therect>
+  [ 12] getobjprop 190 .......................... <therect.width>
+  [ 14] pusharglist 1 ........................... <therect.width>
+  [ 16] extcall 350 ............................. <random(therect.width)>
+  [ 19] getparam 0 .............................. <therect>
+  [ 21] getobjprop 192 .......................... <therect.left>
+  [ 23] add ..................................... <random(therect.width) + therect.left>
+  [ 24] setobjprop 158 .......................... theloc.locH = random(therect.width) + therect.left
+  [ 26] getlocal 0 .............................. <theloc>
+  [ 28] getparam 0 .............................. <therect>
+  [ 30] getobjprop 191 .......................... <therect.height>
+  [ 32] pusharglist 1 ........................... <therect.height>
+  [ 34] extcall 350 ............................. <random(therect.height)>
+  [ 37] getparam 0 .............................. <therect>
+  [ 39] getobjprop 193 .......................... <therect.top>
+  [ 41] add ..................................... <random(therect.height) + therect.top>
+  [ 42] setobjprop 159 .......................... theloc.locV = random(therect.height) + therect.top
+  [ 44] getlocal 0 .............................. <theloc>
+  [ 46] pusharglistnoret 1 ...................... <theloc>
+  [ 48] extcall 3 ............................... return theloc
+  [ 50] ret
+end

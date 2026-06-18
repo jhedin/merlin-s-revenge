@@ -1,0 +1,108 @@
+[#name: "ListPrint(theList)", #scriptType: #movie, #type: #script]
+on ListPrint(theList, tabs)
+  
+  if tabs = void then tabs = 1
+  
+  propName = ""
+  bProp = false
+  if ilk(theList, #propList) then
+    bProp = true
+  end if
+  
+  theLenth = theList.count
+  repeat with li = 1 to theLenth
+    nextItem = theList[li]
+    if bProp then
+      propName = theList.getpropat(li)
+    end if
+    tabText = ""
+    repeat with ta = 1 to tabs
+      tabText = tabText & TAB
+    end repeat
+    
+    
+    itemType = #nList
+    if ilk(nextItem, #list) then
+      if ilk(nextItem, #point) = 0 then
+        itemType = #aList
+      end if
+    end if
+    
+    if itemType = #aList then
+      itemText = "["
+    else 
+      itemText = string(nextItem)
+    end if
+    
+    nextLine = tabText & propname & ": " & itemText
+    
+    put nextLine
+    
+    if itemType = #aList then
+      ListPrint(nextItem, tabs+1)
+    end if
+  end repeat
+  
+end ListPrint
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

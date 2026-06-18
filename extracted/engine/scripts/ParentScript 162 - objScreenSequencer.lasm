@@ -1,0 +1,639 @@
+property ancestor, pBackButton, pBackButtonTextParams, pButtonLocation, pButtonMargins, pDelayCount, pDelayType, pLoopTheSequence, pNextButton, pNextButtonTextParams, pReturnScreen, pReturnButton, pReturnButtonText, pReturnButtonTextParams, pScreenList, pTransitionList
+global g, gStageSize
+
+on new me
+  [  0] pushcons 0 .............................. <"objParams">
+  [  2] pusharglist 1 ........................... <"objParams">
+  [  4] extcall 34 .............................. <script("objParams")>
+  [  6] pusharglist 1 ........................... <script("objParams")>
+  [  8] extcall 0 ............................... <new(script("objParams"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objParams"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 3712 ........................... <#backButtonTextParams>
+  [ 27] getglobal 40 ............................ <g>
+  [ 29] getchainedprop 858 ...................... <g.memberMaster>
+  [ 32] pushsymb 1514 ........................... <#requestTextMember>
+  [ 35] pusharglist 2 ........................... <g.memberMaster, #requestTextMember>
+  [ 37] objcall 230 ............................. <g.memberMaster.getParams(#requestTextMember)>
+  [ 39] pusharglistnoret 3 ...................... <i, #backButtonTextParams, g.memberMaster.getParams(#requestTextMember)>
+  [ 41] objcall 48 .............................. i[#backButtonTextParams] = g.memberMaster.getParams(#requestTextMember)
+  [ 43] getlocal 0 .............................. <i>
+  [ 45] pushsymb 3713 ........................... <#buttonMargins>
+  [ 48] pushint8 20 ............................. <20>
+  [ 50] pushint8 40 ............................. <40>
+  [ 52] pusharglist 2 ........................... <20, 40>
+  [ 54] extcall 197 ............................. <point(20, 40)>
+  [ 56] pusharglistnoret 3 ...................... <i, #buttonMargins, point(20, 40)>
+  [ 58] objcall 48 .............................. i[#buttonMargins] = point(20, 40)
+  [ 60] getlocal 0 .............................. <i>
+  [ 62] pushsymb 3714 ........................... <#buttonLocation>
+  [ 65] pushsymb 114 ............................ <#bottom>
+  [ 67] pusharglistnoret 3 ...................... <i, #buttonLocation, #bottom>
+  [ 69] objcall 48 .............................. i[#buttonLocation] = #bottom
+  [ 71] getlocal 0 .............................. <i>
+  [ 73] pushsymb 474 ............................ <#callingPrg>
+  [ 76] pushsymb 49 ............................. <#none>
+  [ 78] pusharglistnoret 3 ...................... <i, #callingPrg, #none>
+  [ 80] objcall 48 .............................. i[#callingPrg] = #none
+  [ 82] getlocal 0 .............................. <i>
+  [ 84] pushsymb 3715 ........................... <#delayCount>
+  [ 87] pushint8 60 ............................. <60>
+  [ 89] pusharglistnoret 3 ...................... <i, #delayCount, 60>
+  [ 91] objcall 48 .............................. i[#delayCount] = 60
+  [ 93] getlocal 0 .............................. <i>
+  [ 95] pushsymb 3716 ........................... <#delayType>
+  [ 98] pushsymb 3717 ........................... <#manual>
+  [101] pusharglistnoret 3 ...................... <i, #delayType, #manual>
+  [103] objcall 48 .............................. i[#delayType] = #manual
+  [105] getlocal 0 .............................. <i>
+  [107] pushsymb 3718 ........................... <#loopTheSequence>
+  [110] pushzero ................................ <0>
+  [111] pusharglistnoret 3 ...................... <i, #loopTheSequence, 0>
+  [113] objcall 48 .............................. i[#loopTheSequence] = 0
+  [115] getlocal 0 .............................. <i>
+  [117] pushsymb 3719 ........................... <#nextButtonTextParams>
+  [120] getglobal 40 ............................ <g>
+  [122] getchainedprop 858 ...................... <g.memberMaster>
+  [125] pushsymb 1514 ........................... <#requestTextMember>
+  [128] pusharglist 2 ........................... <g.memberMaster, #requestTextMember>
+  [130] objcall 230 ............................. <g.memberMaster.getParams(#requestTextMember)>
+  [132] pusharglistnoret 3 ...................... <i, #nextButtonTextParams, g.memberMaster.getParams(#requestTextMember)>
+  [134] objcall 48 .............................. i[#nextButtonTextParams] = g.memberMaster.getParams(#requestTextMember)
+  [136] getlocal 0 .............................. <i>
+  [138] pushsymb 3720 ........................... <#returnButtonText>
+  [141] pushcons 1 .............................. <"Return to Previous Screen">
+  [143] pusharglistnoret 3 ...................... <i, #returnButtonText, "Return to Previous Screen">
+  [145] objcall 48 .............................. i[#returnButtonText] = "Return to Previous Screen"
+  [147] getlocal 0 .............................. <i>
+  [149] pushsymb 3721 ........................... <#returnButtonTextParams>
+  [152] getglobal 40 ............................ <g>
+  [154] getchainedprop 858 ...................... <g.memberMaster>
+  [157] pushsymb 1514 ........................... <#requestTextMember>
+  [160] pusharglist 2 ........................... <g.memberMaster, #requestTextMember>
+  [162] objcall 230 ............................. <g.memberMaster.getParams(#requestTextMember)>
+  [164] pusharglistnoret 3 ...................... <i, #returnButtonTextParams, g.memberMaster.getParams(#requestTextMember)>
+  [166] objcall 48 .............................. i[#returnButtonTextParams] = g.memberMaster.getParams(#requestTextMember)
+  [168] getlocal 0 .............................. <i>
+  [170] pushsymb 3722 ........................... <#returnScreen>
+  [173] pushsymb 49 ............................. <#none>
+  [175] pusharglistnoret 3 ...................... <i, #returnScreen, #none>
+  [177] objcall 48 .............................. i[#returnScreen] = #none
+  [179] getlocal 0 .............................. <i>
+  [181] pushsymb 3723 ........................... <#screenList>
+  [184] pushsymb 49 ............................. <#none>
+  [186] pusharglist 1 ........................... <[#none]>
+  [188] pushlist ................................ <[#none]>
+  [189] pusharglistnoret 3 ...................... <i, #screenList, [#none]>
+  [191] objcall 48 .............................. i[#screenList] = [#none]
+  [193] getlocal 0 .............................. <i>
+  [195] pushsymb 3724 ........................... <#transitionList>
+  [198] pushsymb 3668 ........................... <#fade>
+  [201] pusharglist 1 ........................... <[#fade]>
+  [203] pushlist ................................ <[#fade]>
+  [204] pusharglistnoret 3 ...................... <i, #transitionList, [#fade]>
+  [206] objcall 48 .............................. i[#transitionList] = [#fade]
+  [208] getparam 0 .............................. <me>
+  [210] pusharglistnoret 1 ...................... <me>
+  [212] extcall 35 .............................. return me
+  [214] ret
+end
+
+on init me, params
+  [  0] pushsymb 49 ............................. <#none>
+  [  2] setprop 3725 ............................ pBackButton = #none
+  [  5] getparam 1 .............................. <params>
+  [  7] getobjprop 3712 ......................... <params.backButtonTextParams>
+  [ 10] setprop 3726 ............................ pBackButtonTextParams = params.backButtonTextParams
+  [ 13] getparam 1 .............................. <params>
+  [ 15] getobjprop 3714 ......................... <params.buttonLocation>
+  [ 18] setprop 3727 ............................ pButtonLocation = params.buttonLocation
+  [ 21] getparam 1 .............................. <params>
+  [ 23] getobjprop 3713 ......................... <params.buttonMargins>
+  [ 26] setprop 3728 ............................ pButtonMargins = params.buttonMargins
+  [ 29] pusharglist 0 ........................... <>
+  [ 31] extcall 529 ............................. <CounterNew()>
+  [ 34] setprop 3729 ............................ pDelayCount = CounterNew()
+  [ 37] getprop 3729 ............................ <pDelayCount>
+  [ 40] pushsymb 530 ............................ <#tim>
+  [ 43] pushint8 2 .............................. <2>
+  [ 45] getparam 1 .............................. <params>
+  [ 47] getobjprop 3715 ......................... <params.delayCount>
+  [ 50] pusharglistnoret 4 ...................... <pDelayCount, #tim, 2, params.delayCount>
+  [ 52] objcall 531 ............................. pDelayCount.tim[2] = params.delayCount
+  [ 55] getprop 3729 ............................ <pDelayCount>
+  [ 58] pushint8 1 .............................. <1>
+  [ 60] setobjprop 552 .......................... pDelayCount.fin = 1
+  [ 63] getparam 1 .............................. <params>
+  [ 65] getobjprop 3716 ......................... <params.delayType>
+  [ 68] setprop 3730 ............................ pDelayType = params.delayType
+  [ 71] getparam 1 .............................. <params>
+  [ 73] getobjprop 3718 ......................... <params.loopTheSequence>
+  [ 76] setprop 3731 ............................ pLoopTheSequence = params.loopTheSequence
+  [ 79] pushsymb 49 ............................. <#none>
+  [ 81] setprop 3732 ............................ pNextButton = #none
+  [ 84] getparam 1 .............................. <params>
+  [ 86] getobjprop 3719 ......................... <params.nextButtonTextParams>
+  [ 89] setprop 3733 ............................ pNextButtonTextParams = params.nextButtonTextParams
+  [ 92] pushsymb 49 ............................. <#none>
+  [ 94] setprop 3734 ............................ pReturnButton = #none
+  [ 97] getparam 1 .............................. <params>
+  [ 99] getobjprop 3722 ......................... <params.returnScreen>
+  [102] setprop 3735 ............................ pReturnScreen = params.returnScreen
+  [105] getparam 1 .............................. <params>
+  [107] getobjprop 3720 ......................... <params.returnButtonText>
+  [110] setprop 3736 ............................ pReturnButtonText = params.returnButtonText
+  [113] getparam 1 .............................. <params>
+  [115] getobjprop 3721 ......................... <params.returnButtonTextParams>
+  [118] setprop 3737 ............................ pReturnButtonTextParams = params.returnButtonTextParams
+  [121] getglobal 40 ............................ <g>
+  [123] getchainedprop 41 ....................... <g.objectMaster>
+  [125] pushsymb 2039 ........................... <#objlist>
+  [128] pusharglist 2 ........................... <g.objectMaster, #objlist>
+  [130] objcall 43 .............................. <g.objectMaster.requestObject(#objlist)>
+  [132] setprop 3738 ............................ pScreenList = g.objectMaster.requestObject(#objlist)
+  [135] getprop 3738 ............................ <pScreenList>
+  [138] getparam 1 .............................. <params>
+  [140] getobjprop 3723 ......................... <params.screenList>
+  [143] pusharglistnoret 2 ...................... <pScreenList, params.screenList>
+  [145] objcall 1 ............................... pScreenList.init(params.screenList)
+  [147] getglobal 40 ............................ <g>
+  [149] getchainedprop 41 ....................... <g.objectMaster>
+  [151] pushsymb 2039 ........................... <#objlist>
+  [154] pusharglist 2 ........................... <g.objectMaster, #objlist>
+  [156] objcall 43 .............................. <g.objectMaster.requestObject(#objlist)>
+  [158] setprop 3739 ............................ pTransitionList = g.objectMaster.requestObject(#objlist)
+  [161] getprop 3739 ............................ <pTransitionList>
+  [164] getparam 1 .............................. <params>
+  [166] getobjprop 3724 ......................... <params.transitionList>
+  [169] pusharglistnoret 2 ...................... <pTransitionList, params.transitionList>
+  [171] objcall 1 ............................... pTransitionList.init(params.transitionList)
+  [173] ret
+end
+
+on finish me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 2383 ............................ me.stop()
+  [  7] getprop 3738 ............................ <pScreenList>
+  [ 10] pusharglistnoret 1 ...................... <pScreenList>
+  [ 12] objcall 3 ............................... pScreenList.finish()
+  [ 14] getprop 3739 ............................ <pTransitionList>
+  [ 17] pusharglistnoret 1 ...................... <pTransitionList>
+  [ 19] objcall 3 ............................... pTransitionList.finish()
+  [ 21] getparam 0 .............................. <me>
+  [ 23] pusharglistnoret 1 ...................... <me>
+  [ 25] objcall 3702 ............................ me.finishButtons()
+  [ 28] getprop 33 .............................. <ancestor>
+  [ 30] pusharglistnoret 1 ...................... <ancestor>
+  [ 32] objcall 3 ............................... ancestor.finish()
+  [ 34] ret
+end
+
+on finishButtons me
+  [  0] getprop 3725 ............................ <pBackButton>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] nteq .................................... <pBackButton <> #none>
+  [  6] jmpifz [ 21] ............................ if pBackButton <> #none then
+  [  9] getprop 3725 ............................ <pBackButton>
+  [ 12] pusharglistnoret 1 ...................... <pBackButton>
+  [ 14] objcall 3 ............................... pBackButton.finish()
+  [ 16] pushsymb 49 ............................. <#none>
+  [ 18] setprop 3725 ............................ pBackButton = #none
+  [ 21] getprop 3732 ............................ <pNextButton>
+  [ 24] pushsymb 49 ............................. <#none>
+  [ 26] nteq .................................... <pNextButton <> #none>
+  [ 27] jmpifz [ 42] ............................ if pNextButton <> #none then
+  [ 30] getprop 3732 ............................ <pNextButton>
+  [ 33] pusharglistnoret 1 ...................... <pNextButton>
+  [ 35] objcall 3 ............................... pNextButton.finish()
+  [ 37] pushsymb 49 ............................. <#none>
+  [ 39] setprop 3732 ............................ pNextButton = #none
+  [ 42] getprop 3734 ............................ <pReturnButton>
+  [ 45] pushsymb 49 ............................. <#none>
+  [ 47] nteq .................................... <pReturnButton <> #none>
+  [ 48] jmpifz [ 63] ............................ if pReturnButton <> #none then
+  [ 51] getprop 3734 ............................ <pReturnButton>
+  [ 54] pusharglistnoret 1 ...................... <pReturnButton>
+  [ 56] objcall 3 ............................... pReturnButton.finish()
+  [ 58] pushsymb 49 ............................. <#none>
+  [ 60] setprop 3734 ............................ pReturnButton = #none
+  [ 63] ret
+end
+
+on buttClicked me, theButt
+  [  0] getparam 1 .............................. <theButt>
+  [  2] peek 0 .................................. case theButt of
+  [  4] pushsymb 3740 ........................... <#butt_back>
+  [  7] eq
+  [  8] jmpifz [ 21] ............................ (case) #butt_back:
+  [ 11] getparam 0 .............................. <me>
+  [ 13] pusharglistnoret 1 ...................... <me>
+  [ 15] objcall 3705 ............................ me.goPrevScreen()
+  [ 18] jmp [ 65]
+  [ 21] peek 0
+  [ 23] pushsymb 3741 ........................... <#butt_next>
+  [ 26] eq
+  [ 27] jmpifz [ 40] ............................ (case) #butt_next:
+  [ 30] getparam 0 .............................. <me>
+  [ 32] pusharglistnoret 1 ...................... <me>
+  [ 34] objcall 3704 ............................ me.goNextScreen()
+  [ 37] jmp [ 65]
+  [ 40] peek 0
+  [ 42] pushsymb 3742 ........................... <#butt_return>
+  [ 45] eq
+  [ 46] jmpifz [ 65] ............................ (case) #butt_return:
+  [ 49] getparam 0 .............................. <me>
+  [ 51] getprop 3735 ............................ <pReturnScreen>
+  [ 54] pusharglistnoret 2 ...................... <me, pReturnScreen>
+  [ 56] objcall 3706 ............................ me.goScreen(pReturnScreen)
+  [ 59] getparam 0 .............................. <me>
+  [ 61] pusharglistnoret 1 ...................... <me>
+  [ 63] objcall 3 ............................... me.finish()
+  [ 65] pop 1 ................................... end case
+  [ 67] ret
+end
+
+on calcButtLoc me, which, thewidth
+  [  0] pushzero ................................ <0>
+  [  1] pushzero ................................ <0>
+  [  2] pusharglist 2 ........................... <0, 0>
+  [  4] extcall 197 ............................. <point(0, 0)>
+  [  6] setlocal 0 .............................. buttLoc = point(0, 0)
+  [  8] getprop 3727 ............................ <pButtonLocation>
+  [ 11] peek 0 .................................. case pButtonLocation of
+  [ 13] pushsymb 114 ............................ <#bottom>
+  [ 15] eq
+  [ 16] jmpifz [155] ............................ (case) #bottom:
+  [ 19] getlocal 0 .............................. <buttLoc>
+  [ 21] pushint8 2 .............................. <2>
+  [ 23] getglobal 2226 .......................... <gStageSize>
+  [ 26] pushint8 2 .............................. <2>
+  [ 28] pusharglist 2 ........................... <gStageSize, 2>
+  [ 30] objcall 109 ............................. <gStageSize[2]>
+  [ 32] getprop 3728 ............................ <pButtonMargins>
+  [ 35] pushint8 2 .............................. <2>
+  [ 37] pusharglist 2 ........................... <pButtonMargins, 2>
+  [ 39] objcall 109 ............................. <pButtonMargins[2]>
+  [ 41] sub ..................................... <gStageSize[2] - pButtonMargins[2]>
+  [ 42] pusharglistnoret 3 ...................... <buttLoc, 2, gStageSize[2] - pButtonMargins[2]>
+  [ 44] objcall 48 .............................. buttLoc[2] = gStageSize[2] - pButtonMargins[2]
+  [ 46] getparam 1 .............................. <which>
+  [ 48] peek 0 .................................. case which of
+  [ 50] pushsymb 3744 ........................... <#back>
+  [ 53] eq
+  [ 54] jmpifz [ 77] ............................ (case) #back:
+  [ 57] getlocal 0 .............................. <buttLoc>
+  [ 59] pushint8 1 .............................. <1>
+  [ 61] getprop 3728 ............................ <pButtonMargins>
+  [ 64] pushint8 1 .............................. <1>
+  [ 66] pusharglist 2 ........................... <pButtonMargins, 1>
+  [ 68] objcall 109 ............................. <pButtonMargins[1]>
+  [ 70] pusharglistnoret 3 ...................... <buttLoc, 1, pButtonMargins[1]>
+  [ 72] objcall 48 .............................. buttLoc[1] = pButtonMargins[1]
+  [ 74] jmp [153]
+  [ 77] peek 0
+  [ 79] pushsymb 3745 ........................... <#next>
+  [ 82] eq
+  [ 83] jmpifz [119] ............................ (case) #next:
+  [ 86] getlocal 0 .............................. <buttLoc>
+  [ 88] pushint8 1 .............................. <1>
+  [ 90] getglobal 2226 .......................... <gStageSize>
+  [ 93] pushint8 1 .............................. <1>
+  [ 95] pusharglist 2 ........................... <gStageSize, 1>
+  [ 97] objcall 109 ............................. <gStageSize[1]>
+  [ 99] getparam 2 .............................. <thewidth>
+  [101] sub ..................................... <gStageSize[1] - thewidth>
+  [102] getprop 3728 ............................ <pButtonMargins>
+  [105] pushint8 1 .............................. <1>
+  [107] pusharglist 2 ........................... <pButtonMargins, 1>
+  [109] objcall 109 ............................. <pButtonMargins[1]>
+  [111] sub ..................................... <gStageSize[1] - thewidth - pButtonMargins[1]>
+  [112] pusharglistnoret 3 ...................... <buttLoc, 1, gStageSize[1] - thewidth - pButtonMargins[1]>
+  [114] objcall 48 .............................. buttLoc[1] = gStageSize[1] - thewidth - pButtonMargins[1]
+  [116] jmp [153]
+  [119] peek 0
+  [121] pushsymb 35 ............................. <#return>
+  [123] eq
+  [124] jmpifz [153] ............................ (case) #return:
+  [127] getlocal 0 .............................. <buttLoc>
+  [129] pushint8 1 .............................. <1>
+  [131] getglobal 2226 .......................... <gStageSize>
+  [134] pushint8 1 .............................. <1>
+  [136] pusharglist 2 ........................... <gStageSize, 1>
+  [138] objcall 109 ............................. <gStageSize[1]>
+  [140] pushint8 2 .............................. <2>
+  [142] div ..................................... <gStageSize[1] / 2>
+  [143] getparam 2 .............................. <thewidth>
+  [145] pushint8 2 .............................. <2>
+  [147] div ..................................... <thewidth / 2>
+  [148] sub ..................................... <(gStageSize[1] / 2) - (thewidth / 2)>
+  [149] pusharglistnoret 3 ...................... <buttLoc, 1, (gStageSize[1] / 2) - (thewidth / 2)>
+  [151] objcall 48 .............................. buttLoc[1] = (gStageSize[1] / 2) - (thewidth / 2)
+  [153] pop 1 ................................... end case
+  [155] pop 1
+  [157] getlocal 0 .............................. <buttLoc>
+  [159] pusharglistnoret 1 ...................... <buttLoc>
+  [161] extcall 35 .............................. return buttLoc
+  [163] ret
+end
+
+on goNextScreen me
+  [  0] getprop 3738 ............................ <pScreenList>
+  [  3] pusharglist 1 ........................... <pScreenList>
+  [  5] objcall 87 .............................. <pScreenList.getLooped()>
+  [  7] jmpifz [ 28] ............................ if pScreenList.getLooped() then
+  [ 10] getprop 3731 ............................ <pLoopTheSequence>
+  [ 13] pushzero ................................ <0>
+  [ 14] eq ...................................... <pLoopTheSequence = 0>
+  [ 15] jmpifz [ 28] ............................ if pLoopTheSequence = 0 then
+  [ 18] getparam 0 .............................. <me>
+  [ 20] pusharglistnoret 1 ...................... <me>
+  [ 22] objcall 3 ............................... me.finish()
+  [ 24] pusharglistnoret 0 ...................... <>
+  [ 26] extcall 35 .............................. return 
+  [ 28] getprop 3738 ............................ <pScreenList>
+  [ 31] pusharglist 1 ........................... <pScreenList>
+  [ 33] objcall 2052 ............................ <pScreenList.nextValue()>
+  [ 36] setlocal 0 .............................. nScreen = pScreenList.nextValue()
+  [ 38] getparam 0 .............................. <me>
+  [ 40] getlocal 0 .............................. <nScreen>
+  [ 42] pusharglistnoret 2 ...................... <me, nScreen>
+  [ 44] objcall 3706 ............................ me.goScreen(nScreen)
+  [ 47] ret
+end
+
+on goPrevScreen me
+  [  0] getprop 3738 ............................ <pScreenList>
+  [  3] pusharglist 1 ........................... <pScreenList>
+  [  5] objcall 2963 ............................ <pScreenList.prevValue()>
+  [  8] setlocal 0 .............................. nScreen = pScreenList.prevValue()
+  [ 10] getparam 0 .............................. <me>
+  [ 12] getlocal 0 .............................. <nScreen>
+  [ 14] pusharglistnoret 2 ...................... <me, nScreen>
+  [ 16] objcall 3706 ............................ me.goScreen(nScreen)
+  [ 19] ret
+end
+
+on goScreen me, theScreen
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 3051 ..................... <g.screenMaster>
+  [  5] pushsymb 3706 ........................... <#goScreen>
+  [  8] pusharglist 2 ........................... <g.screenMaster, #goScreen>
+  [ 10] objcall 230 ............................. <g.screenMaster.getParams(#goScreen)>
+  [ 12] setlocal 0 .............................. params = g.screenMaster.getParams(#goScreen)
+  [ 14] getlocal 0 .............................. <params>
+  [ 16] getparam 0 .............................. <me>
+  [ 18] setobjprop 1579 ......................... params.caller = me
+  [ 21] getlocal 0 .............................. <params>
+  [ 23] getprop 3739 ............................ <pTransitionList>
+  [ 26] pusharglist 1 ........................... <pTransitionList>
+  [ 28] objcall 2052 ............................ <pTransitionList.nextValue()>
+  [ 31] setobjprop 3671 ......................... params.transition = pTransitionList.nextValue()
+  [ 34] getlocal 0 .............................. <params>
+  [ 36] getparam 1 .............................. <theScreen>
+  [ 38] setobjprop 3748 ......................... params.screenSym = theScreen
+  [ 41] getglobal 40 ............................ <g>
+  [ 43] getchainedprop 3051 ..................... <g.screenMaster>
+  [ 46] getlocal 0 .............................. <params>
+  [ 48] pusharglistnoret 2 ...................... <g.screenMaster, params>
+  [ 50] objcall 3706 ............................ g.screenMaster.goScreen(params)
+  [ 53] getprop 3730 ............................ <pDelayType>
+  [ 56] pushsymb 3717 ........................... <#manual>
+  [ 59] eq ...................................... <pDelayType = #manual>
+  [ 60] jmpifz [ 70] ............................ if pDelayType = #manual then
+  [ 63] getparam 0 .............................. <me>
+  [ 65] pusharglistnoret 1 ...................... <me>
+  [ 67] objcall 3709 ............................ me.startButtons()
+  [ 70] ret
+end
+
+on goScreenFinished me
+  [  0] getprop 3730 ............................ <pDelayType>
+  [  3] peek 0 .................................. case pDelayType of
+  [  5] pushsymb 3750 ........................... <#automatic>
+  [  8] eq
+  [  9] jmpifz [ 19] ............................ (case) #automatic:
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] objcall 1590 ............................ me.start()
+  [ 19] pop 1
+  [ 21] ret
+end
+
+on start me
+  [  0] getprop 3730 ............................ <pDelayType>
+  [  3] peek 0 .................................. case pDelayType of
+  [  5] pushsymb 3750 ........................... <#automatic>
+  [  8] eq
+  [  9] jmpifz [ 37] ............................ (case) #automatic:
+  [ 12] getglobal 40 ............................ <g>
+  [ 14] getchainedprop 833 ...................... <g.updater>
+  [ 17] getparam 0 .............................. <me>
+  [ 19] pushsymb 3751 ........................... <#med>
+  [ 22] pusharglistnoret 3 ...................... <g.updater, me, #med>
+  [ 24] objcall 835 ............................. g.updater.addPrg(me, #med)
+  [ 27] getparam 0 .............................. <me>
+  [ 29] pusharglistnoret 1 ...................... <me>
+  [ 31] objcall 3711 ............................ me.startReturnButton()
+  [ 34] jmp [ 60]
+  [ 37] peek 0
+  [ 39] pushsymb 3717 ........................... <#manual>
+  [ 42] eq
+  [ 43] jmpifz [ 60] ............................ (case) #manual:
+  [ 46] getparam 0 .............................. <me>
+  [ 48] pusharglistnoret 1 ...................... <me>
+  [ 50] objcall 3709 ............................ me.startButtons()
+  [ 53] getparam 0 .............................. <me>
+  [ 55] pusharglistnoret 1 ...................... <me>
+  [ 57] objcall 3704 ............................ me.goNextScreen()
+  [ 60] pop 1 ................................... end case
+  [ 62] ret
+end
+
+on startBackButton me
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 41 ....................... <g.objectMaster>
+  [  4] pushsymb 3752 ........................... <#objTextButton>
+  [  7] pusharglist 2 ........................... <g.objectMaster, #objTextButton>
+  [  9] objcall 43 .............................. <g.objectMaster.requestObject(#objTextButton)>
+  [ 11] setprop 3725 ............................ pBackButton = g.objectMaster.requestObject(#objTextButton)
+  [ 14] getprop 3725 ............................ <pBackButton>
+  [ 17] pushsymb 1 .............................. <#init>
+  [ 19] pusharglist 2 ........................... <pBackButton, #init>
+  [ 21] objcall 230 ............................. <pBackButton.getParams(#init)>
+  [ 23] setlocal 0 .............................. params = pBackButton.getParams(#init)
+  [ 25] getlocal 0 .............................. <params>
+  [ 27] getparam 0 .............................. <me>
+  [ 29] setobjprop 474 .......................... params.callingPrg = me
+  [ 32] getlocal 0 .............................. <params>
+  [ 34] pushsymb 3740 ........................... <#butt_back>
+  [ 37] setobjprop 2173 ......................... params.commSym = #butt_back
+  [ 40] getlocal 0 .............................. <params>
+  [ 42] getparam 0 .............................. <me>
+  [ 44] pushsymb 3744 ........................... <#back>
+  [ 47] getprop 3726 ............................ <pBackButtonTextParams>
+  [ 50] getobjprop 424 .......................... <pBackButtonTextParams.width>
+  [ 53] pusharglist 3 ........................... <me, #back, pBackButtonTextParams.width>
+  [ 55] objcall 3703 ............................ <me.calcButtLoc(#back, pBackButtonTextParams.width)>
+  [ 58] setobjprop 1662 ......................... params.location = me.calcButtLoc(#back, pBackButtonTextParams.width)
+  [ 61] getlocal 0 .............................. <params>
+  [ 63] pushcons 2 .............................. <"< Back">
+  [ 65] setobjprop 3753 ......................... params.myText = "< Back"
+  [ 68] getlocal 0 .............................. <params>
+  [ 70] getprop 3726 ............................ <pBackButtonTextParams>
+  [ 73] setobjprop 3754 ......................... params.textParams = pBackButtonTextParams
+  [ 76] getprop 3725 ............................ <pBackButton>
+  [ 79] getlocal 0 .............................. <params>
+  [ 81] pusharglistnoret 2 ...................... <pBackButton, params>
+  [ 83] objcall 1 ............................... pBackButton.init(params)
+  [ 85] getprop 3725 ............................ <pBackButton>
+  [ 88] pusharglistnoret 1 ...................... <pBackButton>
+  [ 90] objcall 370 ............................. pBackButton.activate()
+  [ 93] ret
+end
+
+on startButtons me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 3702 ............................ me.finishButtons()
+  [  7] getprop 3738 ............................ <pScreenList>
+  [ 10] pusharglist 1 ........................... <pScreenList>
+  [ 12] objcall 2962 ............................ <pScreenList.atStart()>
+  [ 15] pushzero ................................ <0>
+  [ 16] eq ...................................... <pScreenList.atStart() = 0>
+  [ 17] jmpifz [ 27] ............................ if pScreenList.atStart() = 0 then
+  [ 20] getparam 0 .............................. <me>
+  [ 22] pusharglistnoret 1 ...................... <me>
+  [ 24] objcall 3708 ............................ me.startBackButton()
+  [ 27] getprop 3738 ............................ <pScreenList>
+  [ 30] pusharglist 1 ........................... <pScreenList>
+  [ 32] objcall 2961 ............................ <pScreenList.atEnd()>
+  [ 35] pushzero ................................ <0>
+  [ 36] eq ...................................... <pScreenList.atEnd() = 0>
+  [ 37] jmpifz [ 47] ............................ if pScreenList.atEnd() = 0 then
+  [ 40] getparam 0 .............................. <me>
+  [ 42] pusharglistnoret 1 ...................... <me>
+  [ 44] objcall 3710 ............................ me.startNextButton()
+  [ 47] getparam 0 .............................. <me>
+  [ 49] pusharglistnoret 1 ...................... <me>
+  [ 51] objcall 3711 ............................ me.startReturnButton()
+  [ 54] ret
+end
+
+on startNextButton me
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 41 ....................... <g.objectMaster>
+  [  4] pushsymb 3752 ........................... <#objTextButton>
+  [  7] pusharglist 2 ........................... <g.objectMaster, #objTextButton>
+  [  9] objcall 43 .............................. <g.objectMaster.requestObject(#objTextButton)>
+  [ 11] setprop 3732 ............................ pNextButton = g.objectMaster.requestObject(#objTextButton)
+  [ 14] getprop 3732 ............................ <pNextButton>
+  [ 17] pushsymb 1 .............................. <#init>
+  [ 19] pusharglist 2 ........................... <pNextButton, #init>
+  [ 21] objcall 230 ............................. <pNextButton.getParams(#init)>
+  [ 23] setlocal 0 .............................. params = pNextButton.getParams(#init)
+  [ 25] getlocal 0 .............................. <params>
+  [ 27] getparam 0 .............................. <me>
+  [ 29] setobjprop 474 .......................... params.callingPrg = me
+  [ 32] getlocal 0 .............................. <params>
+  [ 34] pushsymb 3741 ........................... <#butt_next>
+  [ 37] setobjprop 2173 ......................... params.commSym = #butt_next
+  [ 40] getlocal 0 .............................. <params>
+  [ 42] getparam 0 .............................. <me>
+  [ 44] pushsymb 3745 ........................... <#next>
+  [ 47] getprop 3733 ............................ <pNextButtonTextParams>
+  [ 50] getobjprop 424 .......................... <pNextButtonTextParams.width>
+  [ 53] pusharglist 3 ........................... <me, #next, pNextButtonTextParams.width>
+  [ 55] objcall 3703 ............................ <me.calcButtLoc(#next, pNextButtonTextParams.width)>
+  [ 58] setobjprop 1662 ......................... params.location = me.calcButtLoc(#next, pNextButtonTextParams.width)
+  [ 61] getlocal 0 .............................. <params>
+  [ 63] pushcons 3 .............................. <"Next >">
+  [ 65] setobjprop 3753 ......................... params.myText = "Next >"
+  [ 68] getlocal 0 .............................. <params>
+  [ 70] getprop 3733 ............................ <pNextButtonTextParams>
+  [ 73] setobjprop 3754 ......................... params.textParams = pNextButtonTextParams
+  [ 76] getprop 3732 ............................ <pNextButton>
+  [ 79] getlocal 0 .............................. <params>
+  [ 81] pusharglistnoret 2 ...................... <pNextButton, params>
+  [ 83] objcall 1 ............................... pNextButton.init(params)
+  [ 85] getprop 3732 ............................ <pNextButton>
+  [ 88] pusharglistnoret 1 ...................... <pNextButton>
+  [ 90] objcall 370 ............................. pNextButton.activate()
+  [ 93] ret
+end
+
+on startReturnButton me
+  [  0] getprop 3735 ............................ <pReturnScreen>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] nteq .................................... <pReturnScreen <> #none>
+  [  6] jmpifz [102] ............................ if pReturnScreen <> #none then
+  [  9] getglobal 40 ............................ <g>
+  [ 11] getchainedprop 41 ....................... <g.objectMaster>
+  [ 13] pushsymb 3752 ........................... <#objTextButton>
+  [ 16] pusharglist 2 ........................... <g.objectMaster, #objTextButton>
+  [ 18] objcall 43 .............................. <g.objectMaster.requestObject(#objTextButton)>
+  [ 20] setprop 3734 ............................ pReturnButton = g.objectMaster.requestObject(#objTextButton)
+  [ 23] getprop 3734 ............................ <pReturnButton>
+  [ 26] pushsymb 1 .............................. <#init>
+  [ 28] pusharglist 2 ........................... <pReturnButton, #init>
+  [ 30] objcall 230 ............................. <pReturnButton.getParams(#init)>
+  [ 32] setlocal 0 .............................. params = pReturnButton.getParams(#init)
+  [ 34] getlocal 0 .............................. <params>
+  [ 36] getparam 0 .............................. <me>
+  [ 38] setobjprop 474 .......................... params.callingPrg = me
+  [ 41] getlocal 0 .............................. <params>
+  [ 43] pushsymb 3742 ........................... <#butt_return>
+  [ 46] setobjprop 2173 ......................... params.commSym = #butt_return
+  [ 49] getlocal 0 .............................. <params>
+  [ 51] getparam 0 .............................. <me>
+  [ 53] pushsymb 35 ............................. <#return>
+  [ 55] getprop 3737 ............................ <pReturnButtonTextParams>
+  [ 58] getobjprop 424 .......................... <pReturnButtonTextParams.width>
+  [ 61] pusharglist 3 ........................... <me, #return, pReturnButtonTextParams.width>
+  [ 63] objcall 3703 ............................ <me.calcButtLoc(#return, pReturnButtonTextParams.width)>
+  [ 66] setobjprop 1662 ......................... params.location = me.calcButtLoc(#return, pReturnButtonTextParams.width)
+  [ 69] getlocal 0 .............................. <params>
+  [ 71] getprop 3736 ............................ <pReturnButtonText>
+  [ 74] setobjprop 3753 ......................... params.myText = pReturnButtonText
+  [ 77] getlocal 0 .............................. <params>
+  [ 79] getprop 3737 ............................ <pReturnButtonTextParams>
+  [ 82] setobjprop 3754 ......................... params.textParams = pReturnButtonTextParams
+  [ 85] getprop 3734 ............................ <pReturnButton>
+  [ 88] getlocal 0 .............................. <params>
+  [ 90] pusharglistnoret 2 ...................... <pReturnButton, params>
+  [ 92] objcall 1 ............................... pReturnButton.init(params)
+  [ 94] getprop 3734 ............................ <pReturnButton>
+  [ 97] pusharglistnoret 1 ...................... <pReturnButton>
+  [ 99] objcall 370 ............................. pReturnButton.activate()
+  [102] ret
+end
+
+on stop me
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 833 ...................... <g.updater>
+  [  5] getparam 0 .............................. <me>
+  [  7] pusharglistnoret 2 ...................... <g.updater, me>
+  [  9] objcall 857 ............................. g.updater.removePrg(me)
+  [ 12] ret
+end
+
+on update me
+  [  0] getprop 3729 ............................ <pDelayCount>
+  [  3] getobjprop 552 .......................... <pDelayCount.fin>
+  [  6] jmpifz [ 23] ............................ if pDelayCount.fin then
+  [  9] getparam 0 .............................. <me>
+  [ 11] pusharglistnoret 1 ...................... <me>
+  [ 13] objcall 2383 ............................ me.stop()
+  [ 16] getparam 0 .............................. <me>
+  [ 18] pusharglistnoret 1 ...................... <me>
+  [ 20] objcall 3704 ............................ me.goNextScreen()
+  [ 23] getprop 3729 ............................ <pDelayCount>
+  [ 26] pusharglistnoret 1 ...................... <pDelayCount>
+  [ 28] extcall 553 ............................. counter(pDelayCount)
+  [ 31] ret
+end

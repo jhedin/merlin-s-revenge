@@ -1,0 +1,1140 @@
+property p, ancestor
+global g, gFrameNum, gStageSize
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushcons 0 .............................. <"objBasic">
+  [  4] pusharglist 1 ........................... <"objBasic">
+  [  6] extcall 27 .............................. <script("objBasic")>
+  [  8] pusharglist 1 ........................... <script("objBasic")>
+  [ 10] extcall 0 ............................... <new(script("objBasic"))>
+  [ 12] setobjprop 77 ........................... me.ancestor = new(script("objBasic"))
+  [ 14] getparam 0 .............................. <me>
+  [ 16] pusharglistnoret 1 ...................... <me>
+  [ 18] extcall 17 .............................. return me
+  [ 20] ret
+end
+
+on init me, sym, masterPrg
+  [  0] pusharglist 0 ........................... <[:]>
+  [  2] pushproplist ............................ <[:]>
+  [  3] setprop 203 ............................. p = [:]
+  [  5] getprop 203 ............................. <p>
+  [  7] pushsymb 246 ............................ <#struct>
+  [  9] pusharglist 0 ........................... <[:]>
+  [ 11] pushproplist ............................ <[:]>
+  [ 12] pusharglistnoret 3 ...................... <p, #struct, [:]>
+  [ 14] objcall 37 .............................. p[#struct] = [:]
+  [ 16] getprop 203 ............................. <p>
+  [ 18] pushsymb 246 ............................ <#struct>
+  [ 20] pushsymb 247 ............................ <#mark>
+  [ 22] pushsymb 158 ............................ <#member>
+  [ 24] pushsymb 22 ............................. <#none>
+  [ 26] pushsymb 216 ............................ <#loc>
+  [ 28] pushzero ................................ <0>
+  [ 29] pushzero ................................ <0>
+  [ 30] pusharglist 2 ........................... <0, 0>
+  [ 32] extcall 215 ............................. <point(0, 0)>
+  [ 34] pushsymb 248 ............................ <#draw>
+  [ 36] pushint8 1 .............................. <1>
+  [ 38] pusharglist 6 ........................... <[#member: #none, #loc: point(0, 0), #draw: 1]>
+  [ 40] pushproplist ............................ <[#member: #none, #loc: point(0, 0), #draw: 1]>
+  [ 41] pusharglistnoret 4 ...................... <p, #struct, #mark, [#member: #none, #loc: point(0, 0), #draw: 1]>
+  [ 43] objcall 124 ............................. p.struct[#mark] = [#member: #none, #loc: point(0, 0), #draw: 1]
+  [ 45] getprop 203 ............................. <p>
+  [ 47] pushsymb 249 ............................ <#marks>
+  [ 49] pusharglist 0 ........................... <[]>
+  [ 51] pushlist ................................ <[]>
+  [ 52] pusharglistnoret 3 ...................... <p, #marks, []>
+  [ 54] objcall 37 .............................. p[#marks] = []
+  [ 56] getprop 203 ............................. <p>
+  [ 58] pushsymb 250 ............................ <#masterPrg>
+  [ 60] pushsymb 22 ............................. <#none>
+  [ 62] pusharglistnoret 3 ...................... <p, #masterPrg, #none>
+  [ 64] objcall 37 .............................. p[#masterPrg] = #none
+  [ 66] getprop 203 ............................. <p>
+  [ 68] pushsymb 109 ............................ <#sym>
+  [ 70] pushsymb 22 ............................. <#none>
+  [ 72] pusharglistnoret 3 ...................... <p, #sym, #none>
+  [ 74] objcall 37 .............................. p[#sym] = #none
+  [ 76] getparam 0 .............................. <me>
+  [ 78] getparam 2 .............................. <masterPrg>
+  [ 80] pusharglistnoret 2 ...................... <me, masterPrg>
+  [ 82] objcall 225 ............................. me.setMasterPrg(masterPrg)
+  [ 84] getparam 0 .............................. <me>
+  [ 86] getparam 1 .............................. <sym>
+  [ 88] pusharglistnoret 2 ...................... <me, sym>
+  [ 90] objcall 226 ............................. me.setSymbol(sym)
+  [ 92] getprop 203 ............................. <p>
+  [ 94] pushsymb 251 ............................ <#buttons>
+  [ 96] pusharglist 0 ........................... <[]>
+  [ 98] pushlist ................................ <[]>
+  [ 99] pusharglistnoret 3 ...................... <p, #buttons, []>
+  [101] objcall 37 .............................. p[#buttons] = []
+  [103] getprop 203 ............................. <p>
+  [105] pushsymb 252 ............................ <#currentTransition>
+  [107] pushsymb 22 ............................. <#none>
+  [109] pusharglistnoret 3 ...................... <p, #currentTransition, #none>
+  [111] objcall 37 .............................. p[#currentTransition] = #none
+  [113] getprop 203 ............................. <p>
+  [115] pushsymb 253 ............................ <#objectKey>
+  [117] pushsymb 254 ............................ <#map>
+  [119] pushcons 1 .............................. <"dd_map">
+  [121] pushsymb 255 ............................ <#menu>
+  [123] pushcons 2 .............................. <"dd_menu">
+  [125] pusharglist 4 ........................... <[#map: "dd_map", #menu: "dd_menu"]>
+  [127] pushproplist ............................ <[#map: "dd_map", #menu: "dd_menu"]>
+  [128] pusharglistnoret 3 ...................... <p, #objectKey, [#map: "dd_map", #menu: "dd_menu"]>
+  [130] objcall 37 .............................. p[#objectKey] = [#map: "dd_map", #menu: "dd_menu"]
+  [132] getprop 203 ............................. <p>
+  [134] pushsymb 223 ............................ <#onscreen>
+  [136] pushzero ................................ <0>
+  [137] pusharglistnoret 3 ...................... <p, #onscreen, 0>
+  [139] objcall 37 .............................. p[#onscreen] = 0
+  [141] getprop 203 ............................. <p>
+  [143] pushsymb 256 ............................ <#sprites>
+  [146] pusharglist 0 ........................... <[]>
+  [148] pushlist ................................ <[]>
+  [149] pusharglistnoret 3 ...................... <p, #sprites, []>
+  [151] objcall 37 .............................. p[#sprites] = []
+  [153] getprop 203 ............................. <p>
+  [155] pushsymb 257 ............................ <#spritesInTransition>
+  [158] pushzero ................................ <0>
+  [159] pusharglistnoret 3 ...................... <p, #spritesInTransition, 0>
+  [161] objcall 37 .............................. p[#spritesInTransition] = 0
+  [163] ret
+end
+
+on offscreen me, transition, callback
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. bDone = 0
+  [  3] getprop 203 ............................. <p>
+  [  5] getobjprop 223 .......................... <p.onscreen>
+  [  7] pushzero ................................ <0>
+  [  8] eq ...................................... <p.onscreen = 0>
+  [  9] jmpifz [ 19] ............................ if p.onscreen = 0 then / else
+  [ 12] pushint8 1 .............................. <1>
+  [ 14] setlocal 0 .............................. bDone = 1
+  [ 16] jmp [150]
+  [ 19] getparam 1 .............................. <transition>
+  [ 21] peek 0 .................................. case transition of
+  [ 23] pushsymb 258 ............................ <#blast>
+  [ 26] eq
+  [ 27] jmpifz [ 46] ............................ (case) #blast:
+  [ 30] getparam 0 .............................. <me>
+  [ 32] pusharglistnoret 1 ...................... <me>
+  [ 34] objcall 232 ............................. me.blastOff()
+  [ 36] getprop 203 ............................. <p>
+  [ 38] pushsymb 259 ............................ <#off>
+  [ 41] setobjprop 252 .......................... p.currentTransition = #off
+  [ 43] jmp [142]
+  [ 46] peek 0
+  [ 48] pushsymb 260 ............................ <#flick>
+  [ 51] eq
+  [ 52] jmpifz [ 68] ............................ (case) #flick:
+  [ 55] getparam 0 .............................. <me>
+  [ 57] pusharglistnoret 1 ...................... <me>
+  [ 59] objcall 242 ............................. me.spritesOff()
+  [ 61] pushint8 1 .............................. <1>
+  [ 63] setlocal 0 .............................. bDone = 1
+  [ 65] jmp [142]
+  [ 68] peek 0
+  [ 70] pushsymb 261 ............................ <#fade>
+  [ 73] nteq
+  [ 74] jmpifz [ 86] ............................ (case) #fade, ...
+  [ 77] peek 0
+  [ 79] pushsymb 262 ............................ <#slowfade>
+  [ 82] eq
+  [ 83] jmpifz [102] ............................ (case) ..., #slowfade:
+  [ 86] getparam 0 .............................. <me>
+  [ 88] pusharglistnoret 1 ...................... <me>
+  [ 90] objcall 236 ............................. me.fadeOff()
+  [ 92] getprop 203 ............................. <p>
+  [ 94] pushsymb 259 ............................ <#off>
+  [ 97] setobjprop 252 .......................... p.currentTransition = #off
+  [ 99] jmp [142]
+  [102] peek 0
+  [104] pushsymb 263 ............................ <#fly>
+  [107] eq
+  [108] jmpifz [127] ............................ (case) #fly:
+  [111] getparam 0 .............................. <me>
+  [113] pusharglistnoret 1 ...................... <me>
+  [115] objcall 238 ............................. me.flyOff()
+  [117] getprop 203 ............................. <p>
+  [119] pushsymb 259 ............................ <#off>
+  [122] setobjprop 252 .......................... p.currentTransition = #off
+  [124] jmp [142]
+  [127] peek 0
+  [129] pushsymb 264 ............................ <#overlay>
+  [132] eq
+  [133] jmpifz [142] ............................ (case) #overlay:
+  [136] getparam 0 .............................. <me>
+  [138] pusharglistnoret 1 ...................... <me>
+  [140] objcall 233 ............................. me.fadeDown()
+  [142] pop 1 ................................... end case
+  [144] getparam 0 .............................. <me>
+  [146] pusharglistnoret 1 ...................... <me>
+  [148] objcall 239 ............................. me.freeButtons()
+  [150] getparam 2 .............................. <callback>
+  [152] getprop 203 ............................. <p>
+  [154] getobjprop 250 .......................... <p.masterPrg>
+  [156] getlocal 0 .............................. <bDone>
+  [158] pusharglistnoret 3 ...................... <callback, p.masterPrg, bDone>
+  [160] extcall 265 ............................. call(callback, p.masterPrg, bDone)
+  [163] ret
+end
+
+on onscreen me, transition, callback
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. bDone = 0
+  [  3] getprop 203 ............................. <p>
+  [  5] getobjprop 223 .......................... <p.onscreen>
+  [  7] pushint8 1 .............................. <1>
+  [  9] eq ...................................... <p.onscreen = 1>
+  [ 10] jmpifz [ 20] ............................ if p.onscreen = 1 then / else
+  [ 13] pushint8 1 .............................. <1>
+  [ 15] setlocal 0 .............................. bDone = 1
+  [ 17] jmp [113]
+  [ 20] getparam 1 .............................. <transition>
+  [ 22] peek 0 .................................. case transition of
+  [ 24] pushsymb 260 ............................ <#flick>
+  [ 27] eq
+  [ 28] jmpifz [ 44] ............................ (case) #flick:
+  [ 31] getparam 0 .............................. <me>
+  [ 33] pusharglistnoret 1 ...................... <me>
+  [ 35] objcall 237 ............................. me.flickOn()
+  [ 37] pushint8 1 .............................. <1>
+  [ 39] setlocal 0 .............................. bDone = 1
+  [ 41] jmp [104]
+  [ 44] peek 0
+  [ 46] pushsymb 258 ............................ <#blast>
+  [ 49] nteq
+  [ 50] jmpifz [ 80] ............................ (case) #blast, ...
+  [ 53] peek 0
+  [ 55] pushsymb 261 ............................ <#fade>
+  [ 58] nteq
+  [ 59] jmpifz [ 80] ............................ (case) ..., #fade, ...
+  [ 62] peek 0
+  [ 64] pushsymb 263 ............................ <#fly>
+  [ 67] nteq
+  [ 68] jmpifz [ 80] ............................ (case) ..., #fly, ...
+  [ 71] peek 0
+  [ 73] pushsymb 264 ............................ <#overlay>
+  [ 76] eq
+  [ 77] jmpifz [ 89] ............................ (case) ..., #overlay:
+  [ 80] getparam 0 .............................. <me>
+  [ 82] pusharglistnoret 1 ...................... <me>
+  [ 84] objcall 234 ............................. me.fadeOn()
+  [ 86] jmp [104]
+  [ 89] peek 0
+  [ 91] pushsymb 262 ............................ <#slowfade>
+  [ 94] eq
+  [ 95] jmpifz [104] ............................ (case) #slowfade:
+  [ 98] getparam 0 .............................. <me>
+  [100] pusharglistnoret 1 ...................... <me>
+  [102] objcall 235 ............................. me.fadeOnSlow()
+  [104] pop 1 ................................... end case
+  [106] getprop 203 ............................. <p>
+  [108] pushsymb 269 ............................ <#on>
+  [111] setobjprop 252 .......................... p.currentTransition = #on
+  [113] getparam 2 .............................. <callback>
+  [115] getprop 203 ............................. <p>
+  [117] getobjprop 250 .......................... <p.masterPrg>
+  [119] getlocal 0 .............................. <bDone>
+  [121] pusharglistnoret 3 ...................... <callback, p.masterPrg, bDone>
+  [123] extcall 265 ............................. call(callback, p.masterPrg, bDone)
+  [126] ret
+end
+
+on setMarks me, marks
+  [  0] getparam 1 .............................. <marks>
+  [  2] pusharglist 1 ........................... <marks>
+  [  4] extcall 205 ............................. <ilk(marks)>
+  [  6] pushsymb 206 ............................ <#list>
+  [  8] eq ...................................... <ilk(marks) = #list>
+  [  9] jmpifz [ 25] ............................ if ilk(marks) = #list then / else
+  [ 12] getprop 203 ............................. <p>
+  [ 14] getparam 1 .............................. <marks>
+  [ 16] pusharglist 1 ........................... <marks>
+  [ 18] objcall 48 .............................. <marks.duplicate()>
+  [ 20] setobjprop 249 .......................... p.marks = marks.duplicate()
+  [ 22] jmp [ 31]
+  [ 25] pushcons 3 .............................. <"objScreen.setMarks: marks not a list">
+  [ 27] pusharglistnoret 1 ...................... <"objScreen.setMarks: marks not a list">
+  [ 29] extcall 57 .............................. put "objScreen.setMarks: marks not a list"
+  [ 31] ret
+end
+
+on setMasterPrg me, masterPrg
+  [  0] getparam 1 .............................. <masterPrg>
+  [  2] pusharglist 1 ........................... <masterPrg>
+  [  4] extcall 205 ............................. <ilk(masterPrg)>
+  [  6] pushsymb 270 ............................ <#instance>
+  [  9] eq ...................................... <ilk(masterPrg) = #instance>
+  [ 10] jmpifz [ 22] ............................ if ilk(masterPrg) = #instance then / else
+  [ 13] getprop 203 ............................. <p>
+  [ 15] getparam 1 .............................. <masterPrg>
+  [ 17] setobjprop 250 .......................... p.masterPrg = masterPrg
+  [ 19] jmp [ 39]
+  [ 22] getparam 1 .............................. <masterPrg>
+  [ 24] pusharglist 1 ........................... <masterPrg>
+  [ 26] extcall 205 ............................. <ilk(masterPrg)>
+  [ 28] setlocal 0 .............................. il = ilk(masterPrg)
+  [ 30] pushcons 4 .............................. <"objScreen.setMasterPrg: masterPrg not an instance it's a ">
+  [ 32] getlocal 0 .............................. <il>
+  [ 34] joinstr ................................. <"objScreen.setMasterPrg: masterPrg not an instance it's a " & il>
+  [ 35] pusharglistnoret 1 ...................... <"objScreen.setMasterPrg: masterPrg not an instance it's a " & il>
+  [ 37] extcall 57 .............................. put "objScreen.setMasterPrg: masterPrg not an instance it's a " & il
+  [ 39] ret
+end
+
+on setSymbol me, sym
+  [  0] getparam 1 .............................. <sym>
+  [  2] pusharglist 1 ........................... <sym>
+  [  4] extcall 205 ............................. <ilk(sym)>
+  [  6] pushsymb 100 ............................ <#symbol>
+  [  8] eq ...................................... <ilk(sym) = #symbol>
+  [  9] jmpifz [ 21] ............................ if ilk(sym) = #symbol then / else
+  [ 12] getprop 203 ............................. <p>
+  [ 14] getparam 1 .............................. <sym>
+  [ 16] setobjprop 109 .......................... p.sym = sym
+  [ 18] jmp [ 27]
+  [ 21] pushcons 5 .............................. <"objScreen.setSymbol: symbol not a symbol">
+  [ 23] pusharglistnoret 1 ...................... <"objScreen.setSymbol: symbol not a symbol">
+  [ 25] extcall 57 .............................. put "objScreen.setSymbol: symbol not a symbol"
+  [ 27] ret
+end
+
+on transformFin me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 229 ............................. me.spriteTransitionFin()
+  [  6] ret
+end
+
+on moveXYFin me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 229 ............................. me.spriteTransitionFin()
+  [  6] ret
+end
+
+on spriteTransitionFin me
+  [  0] getprop 203 ............................. <p>
+  [  2] getprop 203 ............................. <p>
+  [  4] getobjprop 257 .......................... <p.spritesInTransition>
+  [  7] pushint8 1 .............................. <1>
+  [  9] sub ..................................... <p.spritesInTransition - 1>
+  [ 10] setobjprop 257 .......................... p.spritesInTransition = p.spritesInTransition - 1
+  [ 13] getprop 203 ............................. <p>
+  [ 15] getobjprop 257 .......................... <p.spritesInTransition>
+  [ 18] pushzero ................................ <0>
+  [ 19] eq ...................................... <p.spritesInTransition = 0>
+  [ 20] jmpifz [ 71] ............................ if p.spritesInTransition = 0 then
+  [ 23] getprop 203 ............................. <p>
+  [ 25] getobjprop 252 .......................... <p.currentTransition>
+  [ 27] peek 0 .................................. case p.currentTransition of
+  [ 29] pushsymb 259 ............................ <#off>
+  [ 32] eq
+  [ 33] jmpifz [ 45] ............................ (case) #off:
+  [ 36] getparam 0 .............................. <me>
+  [ 38] pusharglistnoret 1 ...................... <me>
+  [ 40] objcall 242 ............................. me.spritesOff()
+  [ 42] jmp [ 60]
+  [ 45] peek 0
+  [ 47] pushsymb 269 ............................ <#on>
+  [ 50] eq
+  [ 51] jmpifz [ 60] ............................ (case) #on:
+  [ 54] getparam 0 .............................. <me>
+  [ 56] pusharglistnoret 1 ...................... <me>
+  [ 58] objcall 231 ............................. me.activateScreen()
+  [ 60] pop 1 ................................... end case
+  [ 62] getprop 203 ............................. <p>
+  [ 64] getchainedprop 250 ...................... <p.masterPrg>
+  [ 66] pusharglistnoret 1 ...................... <p.masterPrg>
+  [ 68] objcall 272 ............................. p.masterPrg.screenFinished()
+  [ 71] ret
+end
+
+on activateButtons me
+  [  0] pushint8 1 .............................. <1>
+  [  2] setlocal 0
+  [  4] getlocal 0
+  [  6] getprop 203 ............................. <p>
+  [  8] pushsymb 251 ............................ <#buttons>
+  [ 10] pusharglist 2 ........................... <p, #buttons>
+  [ 12] objcall 28 .............................. <p.buttons.count>
+  [ 14] lteq
+  [ 15] jmpifz [ 46] ............................ repeat with i = 1 to p.buttons.count
+  [ 18] getprop 203 ............................. <p>
+  [ 20] pushsymb 251 ............................ <#buttons>
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pusharglist 3 ........................... <p, #buttons, i>
+  [ 26] objcall 209 ............................. <p.buttons[i]>
+  [ 28] setlocal 1 .............................. nButt = p.buttons[i]
+  [ 30] getlocal 1 .............................. <nButt>
+  [ 32] pusharglistnoret 1 ...................... <nButt>
+  [ 34] objcall 273 ............................. nButt.activate()
+  [ 37] pushint8 1
+  [ 39] getlocal 0
+  [ 41] add
+  [ 42] setlocal 0
+  [ 44] endrepeat [  4]
+  [ 46] ret
+end
+
+on activateScreen me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 230 ............................. me.activateButtons()
+  [  6] getparam 0 .............................. <me>
+  [  8] pusharglistnoret 1 ...................... <me>
+  [ 10] objcall 245 ............................. me.startPrgs()
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] objcall 244 ............................. me.startObjects()
+  [ 18] ret
+end
+
+on blastOff me
+  [  0] getglobal 275 ........................... <gStageSize>
+  [  3] pushint8 2 .............................. <2>
+  [  5] div ..................................... <gStageSize / 2>
+  [  6] setlocal 0 .............................. screenCentre = gStageSize / 2
+  [  8] getmovieprop 276 ........................ <the mouseLoc>
+  [ 11] pusharglist 1 ........................... <the mouseLoc>
+  [ 13] objcall 48 .............................. <(the mouseLoc).duplicate()>
+  [ 15] setlocal 1 .............................. blastCentre = (the mouseLoc).duplicate()
+  [ 17] getprop 203 ............................. <p>
+  [ 19] getobjprop 256 .......................... <p.sprites>
+  [ 22] peek 0
+  [ 24] pusharglist 1
+  [ 26] extcall 28
+  [ 28] pushint8 1
+  [ 30] peek 0
+  [ 32] peek 2
+  [ 34] lteq
+  [ 35] jmpifz [167] ............................ repeat with spr in p.sprites
+  [ 38] peek 2
+  [ 40] peek 1
+  [ 42] pusharglist 2
+  [ 44] extcall 38
+  [ 46] setlocal 2
+  [ 48] getlocal 2 .............................. <spr>
+  [ 50] pusharglist 1 ........................... <spr>
+  [ 52] extcall 277 ............................. <SpriteGetLocOfMiddle(spr)>
+  [ 55] getlocal 1 .............................. <blastCentre>
+  [ 57] sub ..................................... <SpriteGetLocOfMiddle(spr) - blastCentre>
+  [ 58] setlocal 3 .............................. slope = SpriteGetLocOfMiddle(spr) - blastCentre
+  [ 60] getlocal 3 .............................. <slope>
+  [ 62] pusharglist 1 ........................... <slope>
+  [ 64] extcall 278 ............................. <PointDir(slope)>
+  [ 67] setlocal 4 .............................. slopeDir = PointDir(slope)
+  [ 69] getlocal 3 .............................. <slope>
+  [ 71] pusharglist 1 ........................... <slope>
+  [ 73] objcall 48 .............................. <slope.duplicate()>
+  [ 75] pusharglist 1 ........................... <slope.duplicate()>
+  [ 77] extcall 279 ............................. <PointPositive(slope.duplicate())>
+  [ 80] setlocal 5 .............................. slopePositive = PointPositive(slope.duplicate())
+  [ 82] getlocal 5 .............................. <slopePositive>
+  [ 84] pusharglistnoret 1 ...................... <slopePositive>
+  [ 86] extcall 280 ............................. PointReverse(slopePositive)
+  [ 89] getlocal 0 .............................. <screenCentre>
+  [ 91] getlocal 5 .............................. <slopePositive>
+  [ 93] sub ..................................... <screenCentre - slopePositive>
+  [ 94] setlocal 6 .............................. blast = screenCentre - slopePositive
+  [ 96] getlocal 6 .............................. <blast>
+  [ 98] getlocal 4 .............................. <slopeDir>
+  [100] mul ..................................... <blast * slopeDir>
+  [101] setlocal 6 .............................. blast = blast * slopeDir
+  [103] getlocal 6 .............................. <blast>
+  [105] pushfloat32 7.0 ......................... <7.0>
+  [110] div ..................................... <blast / 7.0>
+  [111] setlocal 6 .............................. blast = blast / 7.0
+  [113] getglobal 101 ........................... <g>
+  [115] getchainedprop 102 ...................... <g.objectMaster>
+  [117] pushsymb 281 ............................ <#objMoveXY>
+  [120] pusharglist 2 ........................... <g.objectMaster, #objMoveXY>
+  [122] objcall 3 ............................... <g.objectMaster.requestObject(#objMoveXY)>
+  [124] setlocal 7 .............................. nMoveXY = g.objectMaster.requestObject(#objMoveXY)
+  [126] getlocal 7 .............................. <nMoveXY>
+  [128] getparam 0 .............................. <me>
+  [130] getlocal 2 .............................. <spr>
+  [132] pusharglistnoret 3 ...................... <nMoveXY, me, spr>
+  [134] objcall 1 ............................... nMoveXY.init(me, spr)
+  [136] getlocal 7 .............................. <nMoveXY>
+  [138] getlocal 6 .............................. <blast>
+  [140] pusharglistnoret 2 ...................... <nMoveXY, blast>
+  [142] objcall 282 ............................. nMoveXY.setVect(blast)
+  [145] getlocal 7 .............................. <nMoveXY>
+  [147] pushzero ................................ <0>
+  [148] pusharglistnoret 2 ...................... <nMoveXY, 0>
+  [150] objcall 283 ............................. nMoveXY.setGravity(0)
+  [153] getlocal 7 .............................. <nMoveXY>
+  [155] pushint8 5 .............................. <5>
+  [157] pusharglistnoret 2 ...................... <nMoveXY, 5>
+  [159] objcall 284 ............................. nMoveXY.setWeight(5)
+  [162] pushint8 1
+  [164] add
+  [165] endrepeat [ 30]
+  [167] pop 3
+  [169] getprop 203 ............................. <p>
+  [171] getprop 203 ............................. <p>
+  [173] pushsymb 256 ............................ <#sprites>
+  [176] pusharglist 2 ........................... <p, #sprites>
+  [178] objcall 28 .............................. <p.sprites.count>
+  [180] setobjprop 257 .......................... p.spritesInTransition = p.sprites.count
+  [183] ret
+end
+
+on fadeDown me
+  [  0] getprop 203 ............................. <p>
+  [  2] getobjprop 256 .......................... <p.sprites>
+  [  5] peek 0
+  [  7] pusharglist 1
+  [  9] extcall 28
+  [ 11] pushint8 1
+  [ 13] peek 0
+  [ 15] peek 2
+  [ 17] lteq
+  [ 18] jmpifz [104] ............................ repeat with spr in p.sprites
+  [ 21] peek 2
+  [ 23] peek 1
+  [ 25] pusharglist 2
+  [ 27] extcall 38
+  [ 29] setlocal 0
+  [ 31] getglobal 101 ........................... <g>
+  [ 33] getchainedprop 102 ...................... <g.objectMaster>
+  [ 35] pushsymb 291 ............................ <#objTransBlend>
+  [ 38] pusharglist 2 ........................... <g.objectMaster, #objTransBlend>
+  [ 40] objcall 3 ............................... <g.objectMaster.requestObject(#objTransBlend)>
+  [ 42] setlocal 1 .............................. nTransBlend = g.objectMaster.requestObject(#objTransBlend)
+  [ 44] getlocal 1 .............................. <nTransBlend>
+  [ 46] pushsymb 1 .............................. <#init>
+  [ 48] pusharglist 2 ........................... <nTransBlend, #init>
+  [ 50] objcall 136 ............................. <nTransBlend.getParams(#init)>
+  [ 52] setlocal 2 .............................. params = nTransBlend.getParams(#init)
+  [ 54] getlocal 2 .............................. <params>
+  [ 56] getparam 0 .............................. <me>
+  [ 58] setobjprop 292 .......................... params.callingPrg = me
+  [ 61] getlocal 2 .............................. <params>
+  [ 63] getlocal 0 .............................. <spr>
+  [ 65] setobjprop 81 ........................... params.spr = spr
+  [ 67] getlocal 1 .............................. <nTransBlend>
+  [ 69] getlocal 2 .............................. <params>
+  [ 71] pusharglistnoret 2 ...................... <nTransBlend, params>
+  [ 73] objcall 1 ............................... nTransBlend.init(params)
+  [ 75] getlocal 1 .............................. <nTransBlend>
+  [ 77] pushint8 1 .............................. <1>
+  [ 79] pusharglistnoret 2 ...................... <nTransBlend, 1>
+  [ 81] objcall 293 ............................. nTransBlend.setAutoUpdate(1)
+  [ 84] getlocal 1 .............................. <nTransBlend>
+  [ 86] getlocal 0 .............................. <spr>
+  [ 88] getobjprop 294 .......................... <spr.blend>
+  [ 91] pushint8 2 .............................. <2>
+  [ 93] div ..................................... <spr.blend / 2>
+  [ 94] pusharglistnoret 2 ...................... <nTransBlend, spr.blend / 2>
+  [ 96] objcall 295 ............................. nTransBlend.setTarget(spr.blend / 2)
+  [ 99] pushint8 1
+  [101] add
+  [102] endrepeat [ 13]
+  [104] pop 3
+  [106] getprop 203 ............................. <p>
+  [108] getprop 203 ............................. <p>
+  [110] pushsymb 256 ............................ <#sprites>
+  [113] pusharglist 2 ........................... <p, #sprites>
+  [115] objcall 28 .............................. <p.sprites.count>
+  [117] setobjprop 257 .......................... p.spritesInTransition = p.sprites.count
+  [120] ret
+end
+
+on fadeOn me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushzero ................................ <0>
+  [  3] pusharglistnoret 2 ...................... <me, 0>
+  [  5] objcall 243 ............................. me.spritesOn(0)
+  [  7] getprop 203 ............................. <p>
+  [  9] getobjprop 256 .......................... <p.sprites>
+  [ 12] peek 0
+  [ 14] pusharglist 1
+  [ 16] extcall 28
+  [ 18] pushint8 1
+  [ 20] peek 0
+  [ 22] peek 2
+  [ 24] lteq
+  [ 25] jmpifz [105] ............................ repeat with spr in p.sprites
+  [ 28] peek 2
+  [ 30] peek 1
+  [ 32] pusharglist 2
+  [ 34] extcall 38
+  [ 36] setlocal 0
+  [ 38] getglobal 101 ........................... <g>
+  [ 40] getchainedprop 102 ...................... <g.objectMaster>
+  [ 42] pushsymb 291 ............................ <#objTransBlend>
+  [ 45] pusharglist 2 ........................... <g.objectMaster, #objTransBlend>
+  [ 47] objcall 3 ............................... <g.objectMaster.requestObject(#objTransBlend)>
+  [ 49] setlocal 1 .............................. nTransBlend = g.objectMaster.requestObject(#objTransBlend)
+  [ 51] getlocal 1 .............................. <nTransBlend>
+  [ 53] pushsymb 1 .............................. <#init>
+  [ 55] pusharglist 2 ........................... <nTransBlend, #init>
+  [ 57] objcall 136 ............................. <nTransBlend.getParams(#init)>
+  [ 59] setlocal 2 .............................. params = nTransBlend.getParams(#init)
+  [ 61] getlocal 2 .............................. <params>
+  [ 63] getparam 0 .............................. <me>
+  [ 65] setobjprop 292 .......................... params.callingPrg = me
+  [ 68] getlocal 2 .............................. <params>
+  [ 70] getlocal 0 .............................. <spr>
+  [ 72] setobjprop 81 ........................... params.spr = spr
+  [ 74] getlocal 1 .............................. <nTransBlend>
+  [ 76] getlocal 2 .............................. <params>
+  [ 78] pusharglistnoret 2 ...................... <nTransBlend, params>
+  [ 80] objcall 1 ............................... nTransBlend.init(params)
+  [ 82] getlocal 1 .............................. <nTransBlend>
+  [ 84] pushint8 1 .............................. <1>
+  [ 86] pusharglistnoret 2 ...................... <nTransBlend, 1>
+  [ 88] objcall 293 ............................. nTransBlend.setAutoUpdate(1)
+  [ 91] getlocal 1 .............................. <nTransBlend>
+  [ 93] pushint8 100 ............................ <100>
+  [ 95] pusharglistnoret 2 ...................... <nTransBlend, 100>
+  [ 97] objcall 295 ............................. nTransBlend.setTarget(100)
+  [100] pushint8 1
+  [102] add
+  [103] endrepeat [ 20]
+  [105] pop 3
+  [107] getprop 203 ............................. <p>
+  [109] getprop 203 ............................. <p>
+  [111] pushsymb 256 ............................ <#sprites>
+  [114] pusharglist 2 ........................... <p, #sprites>
+  [116] objcall 28 .............................. <p.sprites.count>
+  [118] setobjprop 257 .......................... p.spritesInTransition = p.sprites.count
+  [121] ret
+end
+
+on fadeOnSlow me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushzero ................................ <0>
+  [  3] pusharglistnoret 2 ...................... <me, 0>
+  [  5] objcall 243 ............................. me.spritesOn(0)
+  [  7] getprop 203 ............................. <p>
+  [  9] getobjprop 256 .......................... <p.sprites>
+  [ 12] peek 0
+  [ 14] pusharglist 1
+  [ 16] extcall 28
+  [ 18] pushint8 1
+  [ 20] peek 0
+  [ 22] peek 2
+  [ 24] lteq
+  [ 25] jmpifz [114] ............................ repeat with spr in p.sprites
+  [ 28] peek 2
+  [ 30] peek 1
+  [ 32] pusharglist 2
+  [ 34] extcall 38
+  [ 36] setlocal 0
+  [ 38] getglobal 101 ........................... <g>
+  [ 40] getchainedprop 102 ...................... <g.objectMaster>
+  [ 42] pushsymb 291 ............................ <#objTransBlend>
+  [ 45] pusharglist 2 ........................... <g.objectMaster, #objTransBlend>
+  [ 47] objcall 3 ............................... <g.objectMaster.requestObject(#objTransBlend)>
+  [ 49] setlocal 1 .............................. nTransBlend = g.objectMaster.requestObject(#objTransBlend)
+  [ 51] getlocal 1 .............................. <nTransBlend>
+  [ 53] pushsymb 1 .............................. <#init>
+  [ 55] pusharglist 2 ........................... <nTransBlend, #init>
+  [ 57] objcall 136 ............................. <nTransBlend.getParams(#init)>
+  [ 59] setlocal 2 .............................. params = nTransBlend.getParams(#init)
+  [ 61] getlocal 2 .............................. <params>
+  [ 63] getparam 0 .............................. <me>
+  [ 65] setobjprop 292 .......................... params.callingPrg = me
+  [ 68] getlocal 2 .............................. <params>
+  [ 70] getlocal 0 .............................. <spr>
+  [ 72] setobjprop 81 ........................... params.spr = spr
+  [ 74] getlocal 1 .............................. <nTransBlend>
+  [ 76] getlocal 2 .............................. <params>
+  [ 78] pusharglistnoret 2 ...................... <nTransBlend, params>
+  [ 80] objcall 1 ............................... nTransBlend.init(params)
+  [ 82] getlocal 1 .............................. <nTransBlend>
+  [ 84] pushint8 1 .............................. <1>
+  [ 86] pusharglistnoret 2 ...................... <nTransBlend, 1>
+  [ 88] objcall 293 ............................. nTransBlend.setAutoUpdate(1)
+  [ 91] getlocal 1 .............................. <nTransBlend>
+  [ 93] pushint8 100 ............................ <100>
+  [ 95] pusharglistnoret 2 ...................... <nTransBlend, 100>
+  [ 97] objcall 295 ............................. nTransBlend.setTarget(100)
+  [100] getlocal 1 .............................. <nTransBlend>
+  [102] pushint8 1 .............................. <1>
+  [104] pusharglistnoret 2 ...................... <nTransBlend, 1>
+  [106] objcall 297 ............................. nTransBlend.setSpeed(1)
+  [109] pushint8 1
+  [111] add
+  [112] endrepeat [ 20]
+  [114] pop 3
+  [116] getprop 203 ............................. <p>
+  [118] getprop 203 ............................. <p>
+  [120] pushsymb 256 ............................ <#sprites>
+  [123] pusharglist 2 ........................... <p, #sprites>
+  [125] objcall 28 .............................. <p.sprites.count>
+  [127] setobjprop 257 .......................... p.spritesInTransition = p.sprites.count
+  [130] ret
+end
+
+on fadeOff me
+  [  0] getprop 203 ............................. <p>
+  [  2] getobjprop 256 .......................... <p.sprites>
+  [  5] peek 0
+  [  7] pusharglist 1
+  [  9] extcall 28
+  [ 11] pushint8 1
+  [ 13] peek 0
+  [ 15] peek 2
+  [ 17] lteq
+  [ 18] jmpifz [ 97] ............................ repeat with spr in p.sprites
+  [ 21] peek 2
+  [ 23] peek 1
+  [ 25] pusharglist 2
+  [ 27] extcall 38
+  [ 29] setlocal 0
+  [ 31] getglobal 101 ........................... <g>
+  [ 33] getchainedprop 102 ...................... <g.objectMaster>
+  [ 35] pushsymb 291 ............................ <#objTransBlend>
+  [ 38] pusharglist 2 ........................... <g.objectMaster, #objTransBlend>
+  [ 40] objcall 3 ............................... <g.objectMaster.requestObject(#objTransBlend)>
+  [ 42] setlocal 1 .............................. nTransBlend = g.objectMaster.requestObject(#objTransBlend)
+  [ 44] getlocal 1 .............................. <nTransBlend>
+  [ 46] pushsymb 1 .............................. <#init>
+  [ 48] pusharglist 2 ........................... <nTransBlend, #init>
+  [ 50] objcall 136 ............................. <nTransBlend.getParams(#init)>
+  [ 52] setlocal 2 .............................. params = nTransBlend.getParams(#init)
+  [ 54] getlocal 2 .............................. <params>
+  [ 56] getparam 0 .............................. <me>
+  [ 58] setobjprop 292 .......................... params.callingPrg = me
+  [ 61] getlocal 2 .............................. <params>
+  [ 63] getlocal 0 .............................. <spr>
+  [ 65] setobjprop 81 ........................... params.spr = spr
+  [ 67] getlocal 1 .............................. <nTransBlend>
+  [ 69] getlocal 2 .............................. <params>
+  [ 71] pusharglistnoret 2 ...................... <nTransBlend, params>
+  [ 73] objcall 1 ............................... nTransBlend.init(params)
+  [ 75] getlocal 1 .............................. <nTransBlend>
+  [ 77] pushint8 1 .............................. <1>
+  [ 79] pusharglistnoret 2 ...................... <nTransBlend, 1>
+  [ 81] objcall 293 ............................. nTransBlend.setAutoUpdate(1)
+  [ 84] getlocal 1 .............................. <nTransBlend>
+  [ 86] pushzero ................................ <0>
+  [ 87] pusharglistnoret 2 ...................... <nTransBlend, 0>
+  [ 89] objcall 295 ............................. nTransBlend.setTarget(0)
+  [ 92] pushint8 1
+  [ 94] add
+  [ 95] endrepeat [ 13]
+  [ 97] pop 3
+  [ 99] getprop 203 ............................. <p>
+  [101] getprop 203 ............................. <p>
+  [103] pushsymb 256 ............................ <#sprites>
+  [106] pusharglist 2 ........................... <p, #sprites>
+  [108] objcall 28 .............................. <p.sprites.count>
+  [110] setobjprop 257 .......................... p.spritesInTransition = p.sprites.count
+  [113] ret
+end
+
+on flickOn me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushint8 100 ............................ <100>
+  [  4] pusharglistnoret 2 ...................... <me, 100>
+  [  6] objcall 243 ............................. me.spritesOn(100)
+  [  8] getprop 203 ............................. <p>
+  [ 10] pushzero ................................ <0>
+  [ 11] setobjprop 257 .......................... p.spritesInTransition = 0
+  [ 14] getparam 0 .............................. <me>
+  [ 16] pusharglistnoret 1 ...................... <me>
+  [ 18] objcall 231 ............................. me.activateScreen()
+  [ 20] ret
+end
+
+on flyOff me
+  [  0] getprop 203 ............................. <p>
+  [  2] getobjprop 256 .......................... <p.sprites>
+  [  5] peek 0
+  [  7] pusharglist 1
+  [  9] extcall 28
+  [ 11] pushint8 1
+  [ 13] peek 0
+  [ 15] peek 2
+  [ 17] lteq
+  [ 18] jmpifz [ 98] ............................ repeat with spr in p.sprites
+  [ 21] peek 2
+  [ 23] peek 1
+  [ 25] pusharglist 2
+  [ 27] extcall 38
+  [ 29] setlocal 0
+  [ 31] getglobal 101 ........................... <g>
+  [ 33] getchainedprop 102 ...................... <g.objectMaster>
+  [ 35] pushsymb 281 ............................ <#objMoveXY>
+  [ 38] pusharglist 2 ........................... <g.objectMaster, #objMoveXY>
+  [ 40] objcall 3 ............................... <g.objectMaster.requestObject(#objMoveXY)>
+  [ 42] setlocal 1 .............................. nMoveXY = g.objectMaster.requestObject(#objMoveXY)
+  [ 44] getlocal 1 .............................. <nMoveXY>
+  [ 46] getparam 0 .............................. <me>
+  [ 48] getlocal 0 .............................. <spr>
+  [ 50] pusharglistnoret 3 ...................... <nMoveXY, me, spr>
+  [ 52] objcall 1 ............................... nMoveXY.init(me, spr)
+  [ 54] pushint8 50 ............................. <50>
+  [ 56] inv ..................................... <-50>
+  [ 57] pushint8 50 ............................. <50>
+  [ 59] pusharglist 2 ........................... <-50, 50>
+  [ 61] extcall 298 ............................. <VarRndRange(-50, 50)>
+  [ 64] setlocal 2 .............................. nX = VarRndRange(-50, 50)
+  [ 66] pushint8 50 ............................. <50>
+  [ 68] inv ..................................... <-50>
+  [ 69] pushint8 50 ............................. <50>
+  [ 71] pusharglist 2 ........................... <-50, 50>
+  [ 73] extcall 298 ............................. <VarRndRange(-50, 50)>
+  [ 76] setlocal 3 .............................. nY = VarRndRange(-50, 50)
+  [ 78] getlocal 1 .............................. <nMoveXY>
+  [ 80] getlocal 2 .............................. <nX>
+  [ 82] getlocal 3 .............................. <nY>
+  [ 84] pusharglist 2 ........................... <nX, nY>
+  [ 86] extcall 215 ............................. <point(nX, nY)>
+  [ 88] pusharglistnoret 2 ...................... <nMoveXY, point(nX, nY)>
+  [ 90] objcall 282 ............................. nMoveXY.setVect(point(nX, nY))
+  [ 93] pushint8 1
+  [ 95] add
+  [ 96] endrepeat [ 13]
+  [ 98] pop 3
+  [100] getprop 203 ............................. <p>
+  [102] getprop 203 ............................. <p>
+  [104] pushsymb 256 ............................ <#sprites>
+  [107] pusharglist 2 ........................... <p, #sprites>
+  [109] objcall 28 .............................. <p.sprites.count>
+  [111] setobjprop 257 .......................... p.spritesInTransition = p.sprites.count
+  [114] ret
+end
+
+on freeButtons me
+  [  0] getprop 203 ............................. <p>
+  [  2] getobjprop 251 .......................... <p.buttons>
+  [  4] peek 0
+  [  6] pusharglist 1
+  [  8] extcall 28
+  [ 10] pushint8 1
+  [ 12] peek 0
+  [ 14] peek 2
+  [ 16] lteq
+  [ 17] jmpifz [ 41] ............................ repeat with objButt in p.buttons
+  [ 20] peek 2
+  [ 22] peek 1
+  [ 24] pusharglist 2
+  [ 26] extcall 38
+  [ 28] setlocal 0
+  [ 30] getlocal 0 .............................. <objButt>
+  [ 32] pusharglistnoret 1 ...................... <objButt>
+  [ 34] objcall 39 .............................. objButt.finish()
+  [ 36] pushint8 1
+  [ 38] add
+  [ 39] endrepeat [ 12]
+  [ 41] pop 3
+  [ 43] getprop 203 ............................. <p>
+  [ 45] pusharglist 0 ........................... <[]>
+  [ 47] pushlist ................................ <[]>
+  [ 48] setobjprop 251 .......................... p.buttons = []
+  [ 50] ret
+end
+
+on getPosInObjectKey me, nName
+  [  0] pushint8 1 .............................. <1>
+  [  2] setlocal 0 .............................. pos = 1
+  [  4] getprop 203 ............................. <p>
+  [  6] getobjprop 253 .......................... <p.objectKey>
+  [  8] peek 0
+  [ 10] pusharglist 1
+  [ 12] extcall 28
+  [ 14] pushint8 1
+  [ 16] peek 0
+  [ 18] peek 2
+  [ 20] lteq
+  [ 21] jmpifz [ 60] ............................ repeat with nObjKey in p.objectKey
+  [ 24] peek 2
+  [ 26] peek 1
+  [ 28] pusharglist 2
+  [ 30] extcall 38
+  [ 32] setlocal 1
+  [ 34] getparam 1 .............................. <nName>
+  [ 36] getlocal 1 .............................. <nObjKey>
+  [ 38] containsstr ............................. <nName contains nObjKey>
+  [ 39] jmpifz [ 48] ............................ if nName contains nObjKey then
+  [ 42] getlocal 0 .............................. <pos>
+  [ 44] pusharglistnoret 1 ...................... <pos>
+  [ 46] extcall 17 .............................. return pos
+  [ 48] getlocal 0 .............................. <pos>
+  [ 50] pushint8 1 .............................. <1>
+  [ 52] add ..................................... <pos + 1>
+  [ 53] setlocal 0 .............................. pos = pos + 1
+  [ 55] pushint8 1
+  [ 57] add
+  [ 58] endrepeat [ 16]
+  [ 60] pop 3
+  [ 62] pushzero ................................ <0>
+  [ 63] pusharglistnoret 1 ...................... <0>
+  [ 65] extcall 17 .............................. return 0
+  [ 67] ret
+end
+
+on initButt me, spr
+  [  0] getglobal 101 ........................... <g>
+  [  2] getchainedprop 102 ...................... <g.objectMaster>
+  [  4] pushsymb 304 ............................ <#objButton>
+  [  7] pusharglist 2 ........................... <g.objectMaster, #objButton>
+  [  9] objcall 3 ............................... <g.objectMaster.requestObject(#objButton)>
+  [ 11] setlocal 0 .............................. newButt = g.objectMaster.requestObject(#objButton)
+  [ 13] getlocal 0 .............................. <newButt>
+  [ 15] pushsymb 1 .............................. <#init>
+  [ 17] pusharglist 2 ........................... <newButt, #init>
+  [ 19] objcall 136 ............................. <newButt.getParams(#init)>
+  [ 21] setlocal 1 .............................. params = newButt.getParams(#init)
+  [ 23] getlocal 1 .............................. <params>
+  [ 25] getglobal 101 ........................... <g>
+  [ 27] getobjprop 305 .......................... <g.titlemaster>
+  [ 30] setobjprop 292 .......................... params.callingPrg = g.titlemaster
+  [ 33] getlocal 1 .............................. <params>
+  [ 35] getparam 1 .............................. <spr>
+  [ 37] setobjprop 81 ........................... params.spr = spr
+  [ 39] getlocal 0 .............................. <newButt>
+  [ 41] getlocal 1 .............................. <params>
+  [ 43] pusharglistnoret 2 ...................... <newButt, params>
+  [ 45] objcall 1 ............................... newButt.init(params)
+  [ 47] getprop 203 ............................. <p>
+  [ 49] getchainedprop 251 ...................... <p.buttons>
+  [ 51] getlocal 0 .............................. <newButt>
+  [ 53] pusharglistnoret 2 ...................... <p.buttons, newButt>
+  [ 55] objcall 111 ............................. p.buttons.append(newButt)
+  [ 57] ret
+end
+
+on spritesOff me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 239 ............................. me.freeButtons()
+  [  6] getprop 203 ............................. <p>
+  [  8] getobjprop 256 .......................... <p.sprites>
+  [ 11] peek 0
+  [ 13] pusharglist 1
+  [ 15] extcall 28
+  [ 17] pushint8 1
+  [ 19] peek 0
+  [ 21] peek 2
+  [ 23] lteq
+  [ 24] jmpifz [ 52] ............................ repeat with spr in p.sprites
+  [ 27] peek 2
+  [ 29] peek 1
+  [ 31] pusharglist 2
+  [ 33] extcall 38
+  [ 35] setlocal 0
+  [ 37] getglobal 101 ........................... <g>
+  [ 39] getchainedprop 155 ...................... <g.spriteMaster>
+  [ 41] getlocal 0 .............................. <spr>
+  [ 43] pusharglistnoret 2 ...................... <g.spriteMaster, spr>
+  [ 45] objcall 165 ............................. g.spriteMaster.freeSprite(spr)
+  [ 47] pushint8 1
+  [ 49] add
+  [ 50] endrepeat [ 19]
+  [ 52] pop 3
+  [ 54] getprop 203 ............................. <p>
+  [ 56] pusharglist 0 ........................... <[]>
+  [ 58] pushlist ................................ <[]>
+  [ 59] setobjprop 256 .......................... p.sprites = []
+  [ 62] getprop 203 ............................. <p>
+  [ 64] pushzero ................................ <0>
+  [ 65] setobjprop 223 .......................... p.onscreen = 0
+  [ 67] ret
+end
+
+on spritesOn me, blend
+  [  0] pushint8 1 .............................. <1>
+  [  2] setlocal 0
+  [  4] getlocal 0
+  [  6] getprop 203 ............................. <p>
+  [  8] pushsymb 249 ............................ <#marks>
+  [ 10] pusharglist 2 ........................... <p, #marks>
+  [ 12] objcall 28 .............................. <p.marks.count>
+  [ 14] lteq
+  [ 15] jmpifz [180] ............................ repeat with i = 1 to p.marks.count
+  [ 18] getprop 203 ............................. <p>
+  [ 20] pushsymb 249 ............................ <#marks>
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pusharglist 3 ........................... <p, #marks, i>
+  [ 26] objcall 209 ............................. <p.marks[i]>
+  [ 28] setlocal 1 .............................. nMark = p.marks[i]
+  [ 30] getlocal 1 .............................. <nMark>
+  [ 32] getobjprop 248 .......................... <nMark.draw>
+  [ 34] jmpifz [171] ............................ if nMark.draw then
+  [ 37] getglobal 101 ........................... <g>
+  [ 39] getchainedprop 155 ...................... <g.spriteMaster>
+  [ 41] pusharglist 1 ........................... <g.spriteMaster>
+  [ 43] objcall 156 ............................. <g.spriteMaster.requestSprite()>
+  [ 45] setlocal 2 .............................. spr = g.spriteMaster.requestSprite()
+  [ 47] getprop 203 ............................. <p>
+  [ 49] getchainedprop 256 ...................... <p.sprites>
+  [ 52] getlocal 2 .............................. <spr>
+  [ 54] pusharglistnoret 2 ...................... <p.sprites, spr>
+  [ 56] objcall 111 ............................. p.sprites.append(spr)
+  [ 58] getlocal 2 .............................. <spr>
+  [ 60] getlocal 1 .............................. <nMark>
+  [ 62] getobjprop 158 .......................... <nMark.member>
+  [ 64] setobjprop 158 .......................... spr.member = nMark.member
+  [ 66] getlocal 2 .............................. <spr>
+  [ 68] getlocal 1 .............................. <nMark>
+  [ 70] getchainedprop 216 ...................... <nMark.loc>
+  [ 72] pusharglist 1 ........................... <nMark.loc>
+  [ 74] objcall 48 .............................. <nMark.loc.duplicate()>
+  [ 76] setobjprop 216 .......................... spr.loc = nMark.loc.duplicate()
+  [ 78] getlocal 2 .............................. <spr>
+  [ 80] getparam 1 .............................. <blend>
+  [ 82] setobjprop 294 .......................... spr.blend = blend
+  [ 85] getlocal 2 .............................. <spr>
+  [ 87] getlocal 1 .............................. <nMark>
+  [ 89] getobjprop 307 .......................... <nMark.ink>
+  [ 92] setobjprop 307 .......................... spr.ink = nMark.ink
+  [ 95] getlocal 2 .............................. <spr>
+  [ 97] getlocal 1 .............................. <nMark>
+  [ 99] getobjprop 308 .......................... <nMark.flipH>
+  [102] setobjprop 308 .......................... spr.flipH = nMark.flipH
+  [105] getlocal 2 .............................. <spr>
+  [107] getlocal 1 .............................. <nMark>
+  [109] getobjprop 309 .......................... <nMark.flipV>
+  [112] setobjprop 309 .......................... spr.flipV = nMark.flipV
+  [115] getlocal 2 .............................. <spr>
+  [117] getlocal 1 .............................. <nMark>
+  [119] getobjprop 162 .......................... <nMark.width>
+  [121] setobjprop 162 .......................... spr.width = nMark.width
+  [123] getlocal 2 .............................. <spr>
+  [125] getlocal 1 .............................. <nMark>
+  [127] getobjprop 310 .......................... <nMark.height>
+  [130] setobjprop 310 .......................... spr.height = nMark.height
+  [133] getlocal 2 .............................. <spr>
+  [135] getlocal 1 .............................. <nMark>
+  [137] getobjprop 167 .......................... <nMark.color>
+  [139] setobjprop 167 .......................... spr.color = nMark.color
+  [141] getlocal 2 .............................. <spr>
+  [143] getlocal 1 .............................. <nMark>
+  [145] getobjprop 311 .......................... <nMark.bgColor>
+  [148] setobjprop 311 .......................... spr.bgColor = nMark.bgColor
+  [151] getlocal 1 .............................. <nMark>
+  [153] getchainedprop 158 ...................... <nMark.member>
+  [155] getobjprop 94 ........................... <nMark.member.name>
+  [157] pushcons 6 .............................. <"butt">
+  [159] containsstr ............................. <nMark.member.name contains "butt">
+  [160] jmpifz [171] ............................ if nMark.member.name contains "butt" then
+  [163] getparam 0 .............................. <me>
+  [165] getlocal 2 .............................. <spr>
+  [167] pusharglistnoret 2 ...................... <me, spr>
+  [169] objcall 241 ............................. me.initButt(spr)
+  [171] pushint8 1
+  [173] getlocal 0
+  [175] add
+  [176] setlocal 0
+  [178] endrepeat [  4]
+  [180] getprop 203 ............................. <p>
+  [182] pushint8 1 .............................. <1>
+  [184] setobjprop 223 .......................... p.onscreen = 1
+  [186] ret
+end
+
+on startObjects me
+  [  0] getprop 203 ............................. <p>
+  [  2] getobjprop 249 .......................... <p.marks>
+  [  4] peek 0
+  [  6] pusharglist 1
+  [  8] extcall 28
+  [ 10] pushint8 1
+  [ 12] peek 0
+  [ 14] peek 2
+  [ 16] lteq
+  [ 17] jmpifz [ 96] ............................ repeat with nMark in p.marks
+  [ 20] peek 2
+  [ 22] peek 1
+  [ 24] pusharglist 2
+  [ 26] extcall 38
+  [ 28] setlocal 0
+  [ 30] getlocal 0 .............................. <nMark>
+  [ 32] getchainedprop 158 ...................... <nMark.member>
+  [ 34] getobjprop 94 ........................... <nMark.member.name>
+  [ 36] setlocal 1 .............................. nName = nMark.member.name
+  [ 38] getparam 0 .............................. <me>
+  [ 40] getlocal 1 .............................. <nName>
+  [ 42] pusharglist 2 ........................... <me, nName>
+  [ 44] objcall 240 ............................. <me.getPosInObjectKey(nName)>
+  [ 46] setlocal 2 .............................. pos = me.getPosInObjectKey(nName)
+  [ 48] getlocal 2 .............................. <pos>
+  [ 50] pushzero ................................ <0>
+  [ 51] gt ...................................... <pos > 0>
+  [ 52] jmpifz [ 91] ............................ if pos > 0 then
+  [ 55] getprop 203 ............................. <p>
+  [ 57] getchainedprop 253 ...................... <p.objectKey>
+  [ 59] getlocal 2 .............................. <pos>
+  [ 61] pusharglist 2 ........................... <p.objectKey, pos>
+  [ 63] objcall 29 .............................. <p.objectKey.getPropAt(pos)>
+  [ 65] setlocal 3 .............................. nType = p.objectKey.getPropAt(pos)
+  [ 67] getlocal 0 .............................. <nMark>
+  [ 69] getobjprop 216 .......................... <nMark.loc>
+  [ 71] setlocal 4 .............................. nLocation = nMark.loc
+  [ 73] getglobal 101 ........................... <g>
+  [ 75] getchainedprop 313 ...................... <g.controllerMaster>
+  [ 78] getlocal 3 .............................. <nType>
+  [ 80] getlocal 0 .............................. <nMark>
+  [ 82] getobjprop 158 .......................... <nMark.member>
+  [ 84] getlocal 4 .............................. <nLocation>
+  [ 86] pusharglistnoret 4 ...................... <g.controllerMaster, nType, nMark.member, nLocation>
+  [ 88] objcall 314 ............................. g.controllerMaster.newObject(nType, nMark.member, nLocation)
+  [ 91] pushint8 1
+  [ 93] add
+  [ 94] endrepeat [ 12]
+  [ 96] pop 3
+  [ 98] ret
+end
+
+on startPrgs me
+  [  0] pushint8 1 .............................. <1>
+  [  2] setlocal 0
+  [  4] getlocal 0
+  [  6] getprop 203 ............................. <p>
+  [  8] pushsymb 249 ............................ <#marks>
+  [ 10] pusharglist 2 ........................... <p, #marks>
+  [ 12] objcall 28 .............................. <p.marks.count>
+  [ 14] lteq
+  [ 15] jmpifz [ 93] ............................ repeat with i = 1 to p.marks.count
+  [ 18] getprop 203 ............................. <p>
+  [ 20] pushsymb 249 ............................ <#marks>
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pusharglist 3 ........................... <p, #marks, i>
+  [ 26] objcall 209 ............................. <p.marks[i]>
+  [ 28] setlocal 1 .............................. nMark = p.marks[i]
+  [ 30] getlocal 1 .............................. <nMark>
+  [ 32] getchainedprop 158 ...................... <nMark.member>
+  [ 34] getobjprop 94 ........................... <nMark.member.name>
+  [ 36] setlocal 2 .............................. nName = nMark.member.name
+  [ 38] getlocal 2 .............................. <nName>
+  [ 40] pushcons 7 .............................. <"prg">
+  [ 42] containsstr ............................. <nName contains "prg">
+  [ 43] jmpifz [ 84] ............................ if nName contains "prg" then
+  [ 46] getlocal 2 .............................. <nName>
+  [ 48] pushint8 5 .............................. <5>
+  [ 50] pushint8 99 ............................. <99>
+  [ 52] pusharglist 3 ........................... <nName, 5, 99>
+  [ 54] extcall 317 ............................. <chars(nName, 5, 99)>
+  [ 57] setlocal 3 .............................. prgName = chars(nName, 5, 99)
+  [ 59] getlocal 3 .............................. <prgName>
+  [ 61] pusharglist 1 ........................... <prgName>
+  [ 63] extcall 100 ............................. <symbol(prgName)>
+  [ 65] setlocal 4 .............................. prgSym = symbol(prgName)
+  [ 67] getglobal 101 ........................... <g>
+  [ 69] getlocal 4 .............................. <prgSym>
+  [ 71] pusharglist 2 ........................... <g, prgSym>
+  [ 73] objcall 38 .............................. <g[prgSym]>
+  [ 75] getlocal 1 .............................. <nMark>
+  [ 77] getobjprop 216 .......................... <nMark.loc>
+  [ 79] pusharglistnoret 2 ...................... <g[prgSym], nMark.loc>
+  [ 81] objcall 318 ............................. g[prgSym].start(nMark.loc)
+  [ 84] pushint8 1
+  [ 86] getlocal 0
+  [ 88] add
+  [ 89] setlocal 0
+  [ 91] endrepeat [  4]
+  [ 93] ret
+end

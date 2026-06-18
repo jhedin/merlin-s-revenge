@@ -1,0 +1,533 @@
+property ancestor, pAgility, pDexterity, pEyestrain, pManaBurst, pManaBurstInc, pManaBurstIncLevel, pManaCapacity, pManaCapacityInc, pManaCapacityIncLevel, pManaFlow, pManaFlowInc, pManaFlowIncLevel, pManaRegeneration, pManaRegenerationIncLevel, pStallSpeedIncLevel, pStrength, pStrengthIncLevel
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on init me, params
+  [  0] getparam 1 .............................. <params>
+  [  2] getobjprop 333 .......................... <params.agility>
+  [  5] setprop 332 ............................. pAgility = params.agility
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 335 .......................... <params.dexterity>
+  [ 13] setprop 334 ............................. pDexterity = params.dexterity
+  [ 16] getparam 1 .............................. <params>
+  [ 18] getobjprop 337 .......................... <params.eyestrain>
+  [ 21] setprop 336 ............................. pEyestrain = params.eyestrain
+  [ 24] getparam 1 .............................. <params>
+  [ 26] getobjprop 339 .......................... <params.mana_burst>
+  [ 29] setprop 338 ............................. pManaBurst = params.mana_burst
+  [ 32] getparam 1 .............................. <params>
+  [ 34] getobjprop 341 .......................... <params.mana_capacity>
+  [ 37] setprop 340 ............................. pManaCapacity = params.mana_capacity
+  [ 40] getparam 1 .............................. <params>
+  [ 42] getobjprop 343 .......................... <params.mana_flow>
+  [ 45] setprop 342 ............................. pManaFlow = params.mana_flow
+  [ 48] getparam 1 .............................. <params>
+  [ 50] getobjprop 345 .......................... <params.mana_regeneration>
+  [ 53] setprop 344 ............................. pManaRegeneration = params.mana_regeneration
+  [ 56] getparam 1 .............................. <params>
+  [ 58] getobjprop 347 .......................... <params.strength>
+  [ 61] setprop 346 ............................. pStrength = params.strength
+  [ 64] pushfloat32 0.75 ........................ <0.75>
+  [ 69] setprop 348 ............................. pManaBurstInc = 0.75
+  [ 72] pushfloat32 0.75 ........................ <0.75>
+  [ 77] setprop 349 ............................. pManaCapacityInc = 0.75
+  [ 80] pushfloat32 0.5 ......................... <0.5>
+  [ 85] setprop 350 ............................. pManaFlowInc = 0.5
+  [ 88] getparam 1 .............................. <params>
+  [ 90] getobjprop 352 .......................... <params.mana_burstIncLevel>
+  [ 93] setprop 351 ............................. pManaBurstIncLevel = params.mana_burstIncLevel
+  [ 96] getparam 1 .............................. <params>
+  [ 98] getobjprop 354 .......................... <params.mana_capacityIncLevel>
+  [101] setprop 353 ............................. pManaCapacityIncLevel = params.mana_capacityIncLevel
+  [104] getparam 1 .............................. <params>
+  [106] getobjprop 356 .......................... <params.mana_flowIncLevel>
+  [109] setprop 355 ............................. pManaFlowIncLevel = params.mana_flowIncLevel
+  [112] getparam 1 .............................. <params>
+  [114] getobjprop 358 .......................... <params.mana_regenerationIncLevel>
+  [117] setprop 357 ............................. pManaRegenerationIncLevel = params.mana_regenerationIncLevel
+  [120] getparam 1 .............................. <params>
+  [122] getobjprop 360 .......................... <params.stallSpeedIncLevel>
+  [125] setprop 359 ............................. pStallSpeedIncLevel = params.stallSpeedIncLevel
+  [128] getparam 1 .............................. <params>
+  [130] getobjprop 362 .......................... <params.strengthIncLevel>
+  [133] setprop 361 ............................. pStrengthIncLevel = params.strengthIncLevel
+  [136] getprop 33 .............................. <ancestor>
+  [138] getparam 1 .............................. <params>
+  [140] pusharglistnoret 2 ...................... <ancestor, params>
+  [142] objcall 1 ............................... ancestor.init(params)
+  [144] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getlocal 0 .............................. <i>
+  [ 12] pushsymb 333 ............................ <#agility>
+  [ 15] pushint8 1 .............................. <1>
+  [ 17] pusharglistnoret 3 ...................... <i, #agility, 1>
+  [ 19] objcall 48 .............................. i[#agility] = 1
+  [ 21] getlocal 0 .............................. <i>
+  [ 23] pushsymb 335 ............................ <#dexterity>
+  [ 26] pushint8 1 .............................. <1>
+  [ 28] pusharglistnoret 3 ...................... <i, #dexterity, 1>
+  [ 30] objcall 48 .............................. i[#dexterity] = 1
+  [ 32] getlocal 0 .............................. <i>
+  [ 34] pushsymb 337 ............................ <#eyestrain>
+  [ 37] pushzero ................................ <0>
+  [ 38] pusharglistnoret 3 ...................... <i, #eyestrain, 0>
+  [ 40] objcall 48 .............................. i[#eyestrain] = 0
+  [ 42] getlocal 0 .............................. <i>
+  [ 44] pushsymb 339 ............................ <#mana_burst>
+  [ 47] pushint8 1 .............................. <1>
+  [ 49] pusharglistnoret 3 ...................... <i, #mana_burst, 1>
+  [ 51] objcall 48 .............................. i[#mana_burst] = 1
+  [ 53] getlocal 0 .............................. <i>
+  [ 55] pushsymb 352 ............................ <#mana_burstIncLevel>
+  [ 58] pushcons 1 .............................. <0.10000000000000001>
+  [ 60] pusharglistnoret 3 ...................... <i, #mana_burstIncLevel, 0.10000000000000001>
+  [ 62] objcall 48 .............................. i[#mana_burstIncLevel] = 0.10000000000000001
+  [ 64] getlocal 0 .............................. <i>
+  [ 66] pushsymb 341 ............................ <#mana_capacity>
+  [ 69] pushint8 10 ............................. <10>
+  [ 71] pusharglistnoret 3 ...................... <i, #mana_capacity, 10>
+  [ 73] objcall 48 .............................. i[#mana_capacity] = 10
+  [ 75] getlocal 0 .............................. <i>
+  [ 77] pushsymb 354 ............................ <#mana_capacityIncLevel>
+  [ 80] pushint8 1 .............................. <1>
+  [ 82] pusharglistnoret 3 ...................... <i, #mana_capacityIncLevel, 1>
+  [ 84] objcall 48 .............................. i[#mana_capacityIncLevel] = 1
+  [ 86] getlocal 0 .............................. <i>
+  [ 88] pushsymb 343 ............................ <#mana_flow>
+  [ 91] pushint8 1 .............................. <1>
+  [ 93] pusharglistnoret 3 ...................... <i, #mana_flow, 1>
+  [ 95] objcall 48 .............................. i[#mana_flow] = 1
+  [ 97] getlocal 0 .............................. <i>
+  [ 99] pushsymb 356 ............................ <#mana_flowIncLevel>
+  [102] pushcons 1 .............................. <0.10000000000000001>
+  [104] pusharglistnoret 3 ...................... <i, #mana_flowIncLevel, 0.10000000000000001>
+  [106] objcall 48 .............................. i[#mana_flowIncLevel] = 0.10000000000000001
+  [108] getlocal 0 .............................. <i>
+  [110] pushsymb 345 ............................ <#mana_regeneration>
+  [113] pushint8 1 .............................. <1>
+  [115] pusharglistnoret 3 ...................... <i, #mana_regeneration, 1>
+  [117] objcall 48 .............................. i[#mana_regeneration] = 1
+  [119] getlocal 0 .............................. <i>
+  [121] pushsymb 358 ............................ <#mana_regenerationIncLevel>
+  [124] pushcons 1 .............................. <0.10000000000000001>
+  [126] pusharglistnoret 3 ...................... <i, #mana_regenerationIncLevel, 0.10000000000000001>
+  [128] objcall 48 .............................. i[#mana_regenerationIncLevel] = 0.10000000000000001
+  [130] getlocal 0 .............................. <i>
+  [132] pushsymb 360 ............................ <#stallSpeedIncLevel>
+  [135] pushzero ................................ <0>
+  [136] pusharglistnoret 3 ...................... <i, #stallSpeedIncLevel, 0>
+  [138] objcall 48 .............................. i[#stallSpeedIncLevel] = 0
+  [140] getlocal 0 .............................. <i>
+  [142] pushsymb 347 ............................ <#strength>
+  [145] pushint8 1 .............................. <1>
+  [147] pusharglistnoret 3 ...................... <i, #strength, 1>
+  [149] objcall 48 .............................. i[#strength] = 1
+  [151] getlocal 0 .............................. <i>
+  [153] pushsymb 362 ............................ <#strengthIncLevel>
+  [156] pushcons 1 .............................. <0.10000000000000001>
+  [158] pusharglistnoret 3 ...................... <i, #strengthIncLevel, 0.10000000000000001>
+  [160] objcall 48 .............................. i[#strengthIncLevel] = 0.10000000000000001
+  [162] getprop 33 .............................. <ancestor>
+  [164] pusharglistnoret 1 ...................... <ancestor>
+  [166] objcall 2 ............................... ancestor.addModParams()
+  [168] ret
+end
+
+on addSaveData me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 4 ............................... ancestor.addSaveData(sd)
+  [  8] getparam 0 .............................. <me>
+  [ 10] getparam 1 .............................. <sd>
+  [ 12] pusharglistnoret 2 ...................... <me, sd>
+  [ 14] objcall 6 ............................... me.addToSaveData(sd)
+  [ 16] ret
+end
+
+on addToArmyDetails me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 51 ....................... <me.big>
+  [  4] pusharglist 1 ........................... <me.big>
+  [  6] objcall 54 .............................. <me.big.getArmyDetails()>
+  [  8] setlocal 0 .............................. ad = me.big.getArmyDetails()
+  [ 10] getparam 0 .............................. <me>
+  [ 12] getlocal 0 .............................. <ad>
+  [ 14] pusharglistnoret 2 ...................... <me, ad>
+  [ 16] objcall 6 ............................... me.addToSaveData(ad)
+  [ 18] ret
+end
+
+on addToSaveData me, sd
+  [  0] getparam 1 .............................. <sd>
+  [  2] pushsymb 332 ............................ <#pAgility>
+  [  5] getprop 332 ............................. <pAgility>
+  [  8] pusharglistnoret 3 ...................... <sd, #pAgility, pAgility>
+  [ 10] objcall 48 .............................. sd[#pAgility] = pAgility
+  [ 12] getparam 1 .............................. <sd>
+  [ 14] pushsymb 334 ............................ <#pDexterity>
+  [ 17] getprop 334 ............................. <pDexterity>
+  [ 20] pusharglistnoret 3 ...................... <sd, #pDexterity, pDexterity>
+  [ 22] objcall 48 .............................. sd[#pDexterity] = pDexterity
+  [ 24] getparam 1 .............................. <sd>
+  [ 26] pushsymb 336 ............................ <#pEyestrain>
+  [ 29] getprop 336 ............................. <pEyestrain>
+  [ 32] pusharglistnoret 3 ...................... <sd, #pEyestrain, pEyestrain>
+  [ 34] objcall 48 .............................. sd[#pEyestrain] = pEyestrain
+  [ 36] getparam 1 .............................. <sd>
+  [ 38] pushsymb 338 ............................ <#pManaBurst>
+  [ 41] getprop 338 ............................. <pManaBurst>
+  [ 44] pusharglistnoret 3 ...................... <sd, #pManaBurst, pManaBurst>
+  [ 46] objcall 48 .............................. sd[#pManaBurst] = pManaBurst
+  [ 48] getparam 1 .............................. <sd>
+  [ 50] pushsymb 340 ............................ <#pManaCapacity>
+  [ 53] getprop 340 ............................. <pManaCapacity>
+  [ 56] pusharglistnoret 3 ...................... <sd, #pManaCapacity, pManaCapacity>
+  [ 58] objcall 48 .............................. sd[#pManaCapacity] = pManaCapacity
+  [ 60] getparam 1 .............................. <sd>
+  [ 62] pushsymb 342 ............................ <#pManaFlow>
+  [ 65] getprop 342 ............................. <pManaFlow>
+  [ 68] pusharglistnoret 3 ...................... <sd, #pManaFlow, pManaFlow>
+  [ 70] objcall 48 .............................. sd[#pManaFlow] = pManaFlow
+  [ 72] getparam 1 .............................. <sd>
+  [ 74] pushsymb 344 ............................ <#pManaRegeneration>
+  [ 77] getprop 344 ............................. <pManaRegeneration>
+  [ 80] pusharglistnoret 3 ...................... <sd, #pManaRegeneration, pManaRegeneration>
+  [ 82] objcall 48 .............................. sd[#pManaRegeneration] = pManaRegeneration
+  [ 84] getparam 1 .............................. <sd>
+  [ 86] pushsymb 346 ............................ <#pStrength>
+  [ 89] getprop 346 ............................. <pStrength>
+  [ 92] pusharglistnoret 3 ...................... <sd, #pStrength, pStrength>
+  [ 94] objcall 48 .............................. sd[#pStrength] = pStrength
+  [ 96] ret
+end
+
+on getAgility me
+  [  0] getprop 332 ............................. <pAgility>
+  [  3] pusharglistnoret 1 ...................... <pAgility>
+  [  5] extcall 35 .............................. return pAgility
+  [  7] ret
+end
+
+on getDexterity me
+  [  0] getprop 334 ............................. <pDexterity>
+  [  3] pusharglistnoret 1 ...................... <pDexterity>
+  [  5] extcall 35 .............................. return pDexterity
+  [  7] ret
+end
+
+on getEyestrain me
+  [  0] getprop 336 ............................. <pEyestrain>
+  [  3] pusharglistnoret 1 ...................... <pEyestrain>
+  [  5] extcall 35 .............................. return pEyestrain
+  [  7] ret
+end
+
+on getManaBurst me
+  [  0] getprop 338 ............................. <pManaBurst>
+  [  3] pusharglistnoret 1 ...................... <pManaBurst>
+  [  5] extcall 35 .............................. return pManaBurst
+  [  7] ret
+end
+
+on getManaCapacity me
+  [  0] getprop 340 ............................. <pManaCapacity>
+  [  3] pusharglistnoret 1 ...................... <pManaCapacity>
+  [  5] extcall 35 .............................. return pManaCapacity
+  [  7] ret
+end
+
+on getManaFlow me
+  [  0] getprop 342 ............................. <pManaFlow>
+  [  3] pusharglistnoret 1 ...................... <pManaFlow>
+  [  5] extcall 35 .............................. return pManaFlow
+  [  7] ret
+end
+
+on getManaRegeneration me
+  [  0] getprop 344 ............................. <pManaRegeneration>
+  [  3] pusharglistnoret 1 ...................... <pManaRegeneration>
+  [  5] extcall 35 .............................. return pManaRegeneration
+  [  7] ret
+end
+
+on getStrength me
+  [  0] getprop 346 ............................. <pStrength>
+  [  3] pusharglistnoret 1 ...................... <pStrength>
+  [  5] extcall 35 .............................. return pStrength
+  [  7] ret
+end
+
+on levelUpCharacterAttackProperties me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 331 ............................. me.incStrengthLevel()
+  [  7] getparam 0 .............................. <me>
+  [  9] pusharglistnoret 1 ...................... <me>
+  [ 11] objcall 329 ............................. me.incStallSpeedLevel()
+  [ 14] pushint8 4 .............................. <4>
+  [ 16] pusharglist 1 ........................... <4>
+  [ 18] extcall 158 ............................. <random(4)>
+  [ 20] setlocal 0 .............................. num = random(4)
+  [ 22] getlocal 0 .............................. <num>
+  [ 24] peek 0 .................................. case num of
+  [ 26] pushint8 1 .............................. <1>
+  [ 28] eq
+  [ 29] jmpifz [ 42] ............................ (case) 1:
+  [ 32] getparam 0 .............................. <me>
+  [ 34] pusharglistnoret 1 ...................... <me>
+  [ 36] objcall 319 ............................. me.incManaBurstLevel()
+  [ 39] jmp [ 93]
+  [ 42] peek 0
+  [ 44] pushint8 2 .............................. <2>
+  [ 46] eq
+  [ 47] jmpifz [ 60] ............................ (case) 2:
+  [ 50] getparam 0 .............................. <me>
+  [ 52] pusharglistnoret 1 ...................... <me>
+  [ 54] objcall 322 ............................. me.incManaCapacityLevel()
+  [ 57] jmp [ 93]
+  [ 60] peek 0
+  [ 62] pushint8 3 .............................. <3>
+  [ 64] eq
+  [ 65] jmpifz [ 78] ............................ (case) 3:
+  [ 68] getparam 0 .............................. <me>
+  [ 70] pusharglistnoret 1 ...................... <me>
+  [ 72] objcall 325 ............................. me.incManaFlowLevel()
+  [ 75] jmp [ 93]
+  [ 78] peek 0
+  [ 80] pushint8 4 .............................. <4>
+  [ 82] eq
+  [ 83] jmpifz [ 93] ............................ (case) 4:
+  [ 86] getparam 0 .............................. <me>
+  [ 88] pusharglistnoret 1 ...................... <me>
+  [ 90] objcall 328 ............................. me.incManaRegenerationLevel()
+  [ 93] pop 1 ................................... end case
+  [ 95] ret
+end
+
+on incManaBurst me, amount
+  [  0] getprop 338 ............................. <pManaBurst>
+  [  3] getparam 1 .............................. <amount>
+  [  5] add ..................................... <pManaBurst + amount>
+  [  6] setprop 338 ............................. pManaBurst = pManaBurst + amount
+  [  9] ret
+end
+
+on incManaBurstLevel me
+  [  0] getparam 0 .............................. <me>
+  [  2] getprop 351 ............................. <pManaBurstIncLevel>
+  [  5] pusharglistnoret 2 ...................... <me, pManaBurstIncLevel>
+  [  7] objcall 318 ............................. me.incManaBurst(pManaBurstIncLevel)
+  [ 10] ret
+end
+
+on incManaBurstPotion me
+  [  0] getparam 0 .............................. <me>
+  [  2] getprop 348 ............................. <pManaBurstInc>
+  [  5] pusharglistnoret 2 ...................... <me, pManaBurstInc>
+  [  7] objcall 318 ............................. me.incManaBurst(pManaBurstInc)
+  [ 10] ret
+end
+
+on incManaCapacity me, amount
+  [  0] getprop 340 ............................. <pManaCapacity>
+  [  3] getparam 1 .............................. <amount>
+  [  5] add ..................................... <pManaCapacity + amount>
+  [  6] setprop 340 ............................. pManaCapacity = pManaCapacity + amount
+  [  9] getparam 0 .............................. <me>
+  [ 11] getchainedprop 51 ....................... <me.big>
+  [ 13] pushsymb 365 ............................ <#manaCapacityIncreased>
+  [ 16] pusharglistnoret 2 ...................... <me.big, #manaCapacityIncreased>
+  [ 18] objcall 22 .............................. me.big.internalEvent(#manaCapacityIncreased)
+  [ 20] ret
+end
+
+on incManaCapacityLevel me
+  [  0] getparam 0 .............................. <me>
+  [  2] getprop 353 ............................. <pManaCapacityIncLevel>
+  [  5] pusharglistnoret 2 ...................... <me, pManaCapacityIncLevel>
+  [  7] objcall 321 ............................. me.incManaCapacity(pManaCapacityIncLevel)
+  [ 10] ret
+end
+
+on incManaCapacityPotion me
+  [  0] getparam 0 .............................. <me>
+  [  2] getprop 349 ............................. <pManaCapacityInc>
+  [  5] pusharglistnoret 2 ...................... <me, pManaCapacityInc>
+  [  7] objcall 321 ............................. me.incManaCapacity(pManaCapacityInc)
+  [ 10] ret
+end
+
+on incManaFlow me, amount
+  [  0] getprop 342 ............................. <pManaFlow>
+  [  3] getparam 1 .............................. <amount>
+  [  5] add ..................................... <pManaFlow + amount>
+  [  6] setprop 342 ............................. pManaFlow = pManaFlow + amount
+  [  9] getparam 0 .............................. <me>
+  [ 11] getchainedprop 51 ....................... <me.big>
+  [ 13] pushsymb 366 ............................ <#manaFlowIncreased>
+  [ 16] pusharglistnoret 2 ...................... <me.big, #manaFlowIncreased>
+  [ 18] objcall 22 .............................. me.big.internalEvent(#manaFlowIncreased)
+  [ 20] ret
+end
+
+on incManaFlowLevel me
+  [  0] getparam 0 .............................. <me>
+  [  2] getprop 355 ............................. <pManaFlowIncLevel>
+  [  5] pusharglistnoret 2 ...................... <me, pManaFlowIncLevel>
+  [  7] objcall 324 ............................. me.incManaFlow(pManaFlowIncLevel)
+  [ 10] ret
+end
+
+on incManaFlowPotion me
+  [  0] getparam 0 .............................. <me>
+  [  2] getprop 350 ............................. <pManaFlowInc>
+  [  5] pusharglistnoret 2 ...................... <me, pManaFlowInc>
+  [  7] objcall 324 ............................. me.incManaFlow(pManaFlowInc)
+  [ 10] ret
+end
+
+on incManaRegeneration me, amount
+  [  0] getprop 344 ............................. <pManaRegeneration>
+  [  3] getparam 1 .............................. <amount>
+  [  5] add ..................................... <pManaRegeneration + amount>
+  [  6] setprop 344 ............................. pManaRegeneration = pManaRegeneration + amount
+  [  9] ret
+end
+
+on incManaRegenerationLevel me
+  [  0] getparam 0 .............................. <me>
+  [  2] getprop 357 ............................. <pManaRegenerationIncLevel>
+  [  5] pusharglistnoret 2 ...................... <me, pManaRegenerationIncLevel>
+  [  7] objcall 327 ............................. me.incManaRegeneration(pManaRegenerationIncLevel)
+  [ 10] ret
+end
+
+on incStallSpeedLevel me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 51 ....................... <me.big>
+  [  4] getprop 359 ............................. <pStallSpeedIncLevel>
+  [  7] pusharglistnoret 2 ...................... <me.big, pStallSpeedIncLevel>
+  [  9] objcall 367 ............................. me.big.incStallSpeed(pStallSpeedIncLevel)
+  [ 12] ret
+end
+
+on incStrength me, amount
+  [  0] getprop 346 ............................. <pStrength>
+  [  3] getparam 1 .............................. <amount>
+  [  5] add ..................................... <pStrength + amount>
+  [  6] setprop 346 ............................. pStrength = pStrength + amount
+  [  9] ret
+end
+
+on incStrengthLevel me
+  [  0] getparam 0 .............................. <me>
+  [  2] getprop 361 ............................. <pStrengthIncLevel>
+  [  5] pusharglistnoret 2 ...................... <me, pStrengthIncLevel>
+  [  7] objcall 330 ............................. me.incStrength(pStrengthIncLevel)
+  [ 10] ret
+end
+
+on internalEvent me, theEvent
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <theEvent>
+  [  4] pusharglistnoret 2 ...................... <ancestor, theEvent>
+  [  6] objcall 22 .............................. ancestor.internalEvent(theEvent)
+  [  8] getparam 1 .............................. <theEvent>
+  [ 10] peek 0 .................................. case theEvent of
+  [ 12] pushsymb 5 .............................. <#addToArmyDetails>
+  [ 14] eq
+  [ 15] jmpifz [ 27] ............................ (case) #addToArmyDetails:
+  [ 18] getparam 0 .............................. <me>
+  [ 20] pusharglistnoret 1 ...................... <me>
+  [ 22] objcall 5 ............................... me.addToArmyDetails()
+  [ 24] jmp [ 60]
+  [ 27] peek 0
+  [ 29] pushsymb 310 ............................ <#levelUp>
+  [ 32] eq
+  [ 33] jmpifz [ 46] ............................ (case) #levelUp:
+  [ 36] getparam 0 .............................. <me>
+  [ 38] pusharglistnoret 1 ...................... <me>
+  [ 40] objcall 317 ............................. me.levelUpCharacterAttackProperties()
+  [ 43] jmp [ 60]
+  [ 46] peek 0
+  [ 48] pushsymb 25 ............................. <#restoreFromArmyDetails>
+  [ 50] eq
+  [ 51] jmpifz [ 60] ............................ (case) #restoreFromArmyDetails:
+  [ 54] getparam 0 .............................. <me>
+  [ 56] pusharglistnoret 1 ...................... <me>
+  [ 58] objcall 25 .............................. me.restoreFromArmyDetails()
+  [ 60] pop 1 ................................... end case
+  [ 62] ret
+end
+
+on restoreFromArmyDetails me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 51 ....................... <me.big>
+  [  4] pusharglist 1 ........................... <me.big>
+  [  6] objcall 54 .............................. <me.big.getArmyDetails()>
+  [  8] setlocal 0 .............................. ad = me.big.getArmyDetails()
+  [ 10] getparam 0 .............................. <me>
+  [ 12] getlocal 0 .............................. <ad>
+  [ 14] pusharglistnoret 2 ...................... <me, ad>
+  [ 16] objcall 27 .............................. me.restoreFromSaveData(ad)
+  [ 18] ret
+end
+
+on restoreFromSave me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 26 .............................. ancestor.restoreFromSave(sd)
+  [  8] getparam 0 .............................. <me>
+  [ 10] getparam 1 .............................. <sd>
+  [ 12] pusharglistnoret 2 ...................... <me, sd>
+  [ 14] objcall 27 .............................. me.restoreFromSaveData(sd)
+  [ 16] ret
+end
+
+on restoreFromSaveData me, sd
+  [  0] getparam 1 .............................. <sd>
+  [  2] getobjprop 332 .......................... <sd.pAgility>
+  [  5] setprop 332 ............................. pAgility = sd.pAgility
+  [  8] getparam 1 .............................. <sd>
+  [ 10] getobjprop 334 .......................... <sd.pDexterity>
+  [ 13] setprop 334 ............................. pDexterity = sd.pDexterity
+  [ 16] getparam 1 .............................. <sd>
+  [ 18] getobjprop 336 .......................... <sd.pEyestrain>
+  [ 21] setprop 336 ............................. pEyestrain = sd.pEyestrain
+  [ 24] getparam 1 .............................. <sd>
+  [ 26] getobjprop 338 .......................... <sd.pManaBurst>
+  [ 29] setprop 338 ............................. pManaBurst = sd.pManaBurst
+  [ 32] getparam 1 .............................. <sd>
+  [ 34] getobjprop 340 .......................... <sd.pManaCapacity>
+  [ 37] setprop 340 ............................. pManaCapacity = sd.pManaCapacity
+  [ 40] getparam 1 .............................. <sd>
+  [ 42] getobjprop 342 .......................... <sd.pManaFlow>
+  [ 45] setprop 342 ............................. pManaFlow = sd.pManaFlow
+  [ 48] getparam 1 .............................. <sd>
+  [ 50] getobjprop 344 .......................... <sd.pManaRegeneration>
+  [ 53] setprop 344 ............................. pManaRegeneration = sd.pManaRegeneration
+  [ 56] getparam 1 .............................. <sd>
+  [ 58] getobjprop 346 .......................... <sd.pStrength>
+  [ 61] setprop 346 ............................. pStrength = sd.pStrength
+  [ 64] ret
+end

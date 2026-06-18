@@ -1,0 +1,116 @@
+[#name: "objGmgDisplayer", #scriptType: #parent, #type: #script]
+-- displays information about the gmg in the global display
+
+
+global g
+global gGlobalDisplayLayer
+
+property ancestor
+property pDisplayLoc       -- the top left corner of the medikit display
+property pOffMember        -- the member to use when medikit is inactive
+property pOnMember         -- the member to use when medikit is active
+property pSpacer           -- the number of pixel in between elements
+property pVerticalSpacerForDisplayCounter  -- the number of pixels to lower displayCounter by
+
+
+on new me
+  ancestor = new (script "objSpriteMember")
+  
+  i = me.modifyParams(#init)
+  
+  i.layer = gGlobalDisplayLayer
+  
+  i[#displayLoc] = point(0,0)
+  i[#onMember] = #none
+  i[#offMember] = #none
+  
+  return me
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  pDisplayLoc = params.displayLoc
+  pOffMember = params.offMember
+  pOnMember = params.onMember
+end
+
+
+on finish me
+  ancestor.finish()
+end
+
+on updateActive me, active
+  if active then
+    currentMember = pOnMember
+  else
+    currentMember = pOffMember
+  end if
+  
+  me.displayImageAtLoc(currentMember.image, pDisplayLoc)
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

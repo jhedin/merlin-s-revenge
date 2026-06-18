@@ -1,0 +1,239 @@
+property ancestor, pMyWeapon, pUnarmedAttack
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"objAiCPU">
+  [  2] pusharglist 1 ........................... <"objAiCPU">
+  [  4] extcall 34 .............................. <script("objAiCPU")>
+  [  6] pusharglist 1 ........................... <script("objAiCPU")>
+  [  8] extcall 0 ............................... <new(script("objAiCPU"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objAiCPU"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pushsymb 49 ............................. <#none>
+  [ 10] setprop 1933 ............................ pMyWeapon = #none
+  [ 13] ret
+end
+
+on initCharacterInfo me, characterPrg, spr, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <characterPrg>
+  [  4] getparam 2 .............................. <spr>
+  [  6] getparam 3 .............................. <params>
+  [  8] pusharglistnoret 4 ...................... <ancestor, characterPrg, spr, params>
+  [ 10] objcall 1719 ............................ ancestor.initCharacterInfo(characterPrg, spr, params)
+  [ 13] getparam 0 .............................. <me>
+  [ 15] getchainedprop 149 ...................... <me.pAttack>
+  [ 17] pusharglist 1 ........................... <me.pAttack>
+  [ 19] objcall 175 ............................. <me.pAttack.duplicate()>
+  [ 21] setprop 1934 ............................ pUnarmedAttack = me.pAttack.duplicate()
+  [ 24] ret
+end
+
+on characterModeChanged me, newCharMode
+  [  0] getparam 1 .............................. <newCharMode>
+  [  2] peek 0 .................................. case newCharMode of
+  [  4] pushsymb 1055 ........................... <#reelFly>
+  [  7] eq
+  [  8] jmpifz [ 18] ............................ (case) #reelFly:
+  [ 11] getparam 0 .............................. <me>
+  [ 13] pusharglistnoret 1 ...................... <me>
+  [ 15] objcall 1928 ............................ me.dropWeapon()
+  [ 18] pop 1
+  [ 20] getparam 1 .............................. <newCharMode>
+  [ 22] peek 0 .................................. case newCharMode of
+  [ 24] pushsymb 68 ............................. <#look>
+  [ 26] eq
+  [ 27] jmpifz [ 43] ............................ (case) #look:
+  [ 30] getparam 0 .............................. <me>
+  [ 32] pushsymb 1935 ........................... <#seekWeapon>
+  [ 35] pusharglistnoret 2 ...................... <me, #seekWeapon>
+  [ 37] objcall 278 ............................. me.goMode(#seekWeapon)
+  [ 40] jmp [108]
+  [ 43] peek 0
+  [ 45] pushsymb 63 ............................. <#walk>
+  [ 47] eq
+  [ 48] jmpifz [ 99] ............................ (case) #walk:
+  [ 51] getparam 0 .............................. <me>
+  [ 53] getobjprop 312 .......................... <me.pmode>
+  [ 56] pushsymb 1935 ........................... <#seekWeapon>
+  [ 59] eq ...................................... <me.pmode = #seekWeapon>
+  [ 60] jmpifz [ 76] ............................ if me.pmode = #seekWeapon then / else
+  [ 63] getparam 0 .............................. <me>
+  [ 65] pushsymb 1936 ........................... <#collectWeapon>
+  [ 68] pusharglistnoret 2 ...................... <me, #collectWeapon>
+  [ 70] objcall 278 ............................. me.goMode(#collectWeapon)
+  [ 73] jmp [ 96]
+  [ 76] getparam 0 .............................. <me>
+  [ 78] pushsymb 1935 ........................... <#seekWeapon>
+  [ 81] pusharglistnoret 2 ...................... <me, #seekWeapon>
+  [ 83] objcall 278 ............................. me.goMode(#seekWeapon)
+  [ 86] getparam 0 .............................. <me>
+  [ 88] pushsymb 1936 ........................... <#collectWeapon>
+  [ 91] pusharglistnoret 2 ...................... <me, #collectWeapon>
+  [ 93] objcall 278 ............................. me.goMode(#collectWeapon)
+  [ 96] jmp [108] ............................... (case) otherwise:
+  [ 99] getprop 33 .............................. <ancestor>
+  [101] getparam 1 .............................. <newCharMode>
+  [103] pusharglistnoret 2 ...................... <ancestor, newCharMode>
+  [105] objcall 1720 ............................ ancestor.characterModeChanged(newCharMode)
+  [108] pop 1 ................................... end case
+  [110] ret
+end
+
+on dropWeapon me
+  [  0] getprop 1933 ............................ <pMyWeapon>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] nteq .................................... <pMyWeapon <> #none>
+  [  6] jmpifz [ 35] ............................ if pMyWeapon <> #none then
+  [  9] getprop 1933 ............................ <pMyWeapon>
+  [ 12] pusharglist 1 ........................... <pMyWeapon>
+  [ 14] objcall 1937 ............................ <pMyWeapon.isCarried()>
+  [ 17] jmpifz [ 35] ............................ if pMyWeapon.isCarried() then
+  [ 20] getprop 1933 ............................ <pMyWeapon>
+  [ 23] pusharglistnoret 1 ...................... <pMyWeapon>
+  [ 25] objcall 1938 ............................ pMyWeapon.drop()
+  [ 28] getparam 0 .............................. <me>
+  [ 30] pusharglistnoret 1 ...................... <me>
+  [ 32] objcall 1929 ............................ me.droppedWeapon()
+  [ 35] ret
+end
+
+on droppedWeapon me
+  [  0] getparam 0 .............................. <me>
+  [  2] getprop 1934 ............................ <pUnarmedAttack>
+  [  5] pusharglist 1 ........................... <pUnarmedAttack>
+  [  7] objcall 175 ............................. <pUnarmedAttack.duplicate()>
+  [  9] pusharglistnoret 2 ...................... <me, pUnarmedAttack.duplicate()>
+  [ 11] objcall 144 ............................. me.setAttack(pUnarmedAttack.duplicate())
+  [ 13] ret
+end
+
+on goMode me, newMode
+  [  0] getparam 1 .............................. <newMode>
+  [  2] peek 0 .................................. case newMode of
+  [  4] pushsymb 1935 ........................... <#seekWeapon>
+  [  7] eq
+  [  8] jmpifz [ 50] ............................ (case) #seekWeapon:
+  [ 11] getglobal 40 ............................ <g>
+  [ 13] getchainedprop 1939 ..................... <g.weaponMaster>
+  [ 16] getparam 0 .............................. <me>
+  [ 18] pushsymb 1940 ........................... <#pan>
+  [ 21] pushsymb 1941 ........................... <#pad>
+  [ 24] pushsymb 1942 ........................... <#pug>
+  [ 27] pushsymb 1943 ........................... <#sci>
+  [ 30] pushsymb 1944 ........................... <#spd>
+  [ 33] pushsymb 1945 ........................... <#swd>
+  [ 36] pusharglist 6 ........................... <[#pan, #pad, #pug, #sci, #spd, #swd]>
+  [ 38] pushlist ................................ <[#pan, #pad, #pug, #sci, #spd, #swd]>
+  [ 39] pusharglist 3 ........................... <g.weaponMaster, me, [#pan, #pad, #pug, #sci, #spd, #swd]>
+  [ 41] objcall 1946 ............................ <g.weaponMaster.getWeapon(me, [#pan, #pad, #pug, #sci, #spd, #swd])>
+  [ 44] setprop 1933 ............................ pMyWeapon = g.weaponMaster.getWeapon(me, [#pan, #pad, #pug, #sci, #spd, #swd])
+  [ 47] jmp [ 63]
+  [ 50] peek 0
+  [ 52] pushsymb 1936 ........................... <#collectWeapon>
+  [ 55] eq
+  [ 56] jmpifz [ 63] ............................ (case) #collectWeapon:
+  [ 59] pusharglistnoret 0 ...................... <>
+  [ 61] extcall 185 ............................. nothing()
+  [ 63] pop 1 ................................... end case
+  [ 65] getprop 1933 ............................ <pMyWeapon>
+  [ 68] pushsymb 49 ............................. <#none>
+  [ 70] nteq .................................... <pMyWeapon <> #none>
+  [ 71] jmpifz [ 84] ............................ if pMyWeapon <> #none then
+  [ 74] getprop 1933 ............................ <pMyWeapon>
+  [ 77] getparam 1 .............................. <newMode>
+  [ 79] pusharglistnoret 2 ...................... <pMyWeapon, newMode>
+  [ 81] objcall 1947 ............................ pMyWeapon.AiModeChanged(newMode)
+  [ 84] getprop 33 .............................. <ancestor>
+  [ 86] getparam 1 .............................. <newMode>
+  [ 88] pusharglistnoret 2 ...................... <ancestor, newMode>
+  [ 90] objcall 278 ............................. ancestor.goMode(newMode)
+  [ 93] ret
+end
+
+on lostWeapon me
+  [  0] pushsymb 49 ............................. <#none>
+  [  2] setprop 1933 ............................ pMyWeapon = #none
+  [  5] ret
+end
+
+on pickUpWeapon me
+  [  0] getprop 1933 ............................ <pMyWeapon>
+  [  3] getparam 0 .............................. <me>
+  [  5] pusharglistnoret 2 ...................... <pMyWeapon, me>
+  [  7] objcall 1948 ............................ pMyWeapon.pickedUp(me)
+  [ 10] getprop 1933 ............................ <pMyWeapon>
+  [ 13] pusharglist 1 ........................... <pMyWeapon>
+  [ 15] objcall 141 ............................. <pMyWeapon.getAttack()>
+  [ 17] setlocal 0 .............................. attack = pMyWeapon.getAttack()
+  [ 19] getparam 0 .............................. <me>
+  [ 21] getlocal 0 .............................. <attack>
+  [ 23] pusharglistnoret 2 ...................... <me, attack>
+  [ 25] objcall 144 ............................. me.setAttack(attack)
+  [ 27] ret
+end
+
+on update me
+  [  0] getparam 0 .............................. <me>
+  [  2] getobjprop 312 .......................... <me.pmode>
+  [  5] peek 0 .................................. case me.pmode of
+  [  7] pushsymb 1936 ........................... <#collectWeapon>
+  [ 10] eq
+  [ 11] jmpifz [ 42] ............................ (case) #collectWeapon:
+  [ 14] getparam 0 .............................. <me>
+  [ 16] pusharglist 1 ........................... <me>
+  [ 18] objcall 1932 ............................ <me.updateCollectWeapon()>
+  [ 21] setlocal 0 .............................. fin = me.updateCollectWeapon()
+  [ 23] getlocal 0 .............................. <fin>
+  [ 25] jmpifz [ 42] ............................ if fin then
+  [ 28] getparam 0 .............................. <me>
+  [ 30] getchainedprop 57 ....................... <me.id>
+  [ 32] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 34] pushsymb 1815 ........................... <#moveToAttack>
+  [ 37] pusharglistnoret 2 ...................... <me.id.bigMe, #moveToAttack>
+  [ 39] objcall 278 ............................. me.id.bigMe.goMode(#moveToAttack)
+  [ 42] pop 1
+  [ 44] getprop 33 .............................. <ancestor>
+  [ 46] pusharglistnoret 1 ...................... <ancestor>
+  [ 48] objcall 31 .............................. ancestor.update()
+  [ 50] ret
+end
+
+on updateCollectWeapon me
+  [  0] getprop 1933 ............................ <pMyWeapon>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] eq ...................................... <pMyWeapon = #none>
+  [  6] jmpifz [ 15] ............................ if pMyWeapon = #none then
+  [  9] pushint8 1 .............................. <1>
+  [ 11] pusharglistnoret 1 ...................... <1>
+  [ 13] extcall 35 .............................. return 1
+  [ 15] getprop 1933 ............................ <pMyWeapon>
+  [ 18] pusharglist 1 ........................... <pMyWeapon>
+  [ 20] objcall 113 ............................. <pMyWeapon.getRect()>
+  [ 22] setlocal 0 .............................. therect = pMyWeapon.getRect()
+  [ 24] getparam 0 .............................. <me>
+  [ 26] getlocal 0 .............................. <therect>
+  [ 28] pushint8 1 .............................. <1>
+  [ 30] pusharglist 3 ........................... <me, therect, 1>
+  [ 32] objcall 1805 ............................ <me.updateMoveToRect(therect, 1)>
+  [ 35] setlocal 1 .............................. fin = me.updateMoveToRect(therect, 1)
+  [ 37] getlocal 1 .............................. <fin>
+  [ 39] jmpifz [ 49] ............................ if fin then
+  [ 42] getparam 0 .............................. <me>
+  [ 44] pusharglistnoret 1 ...................... <me>
+  [ 46] objcall 1931 ............................ me.pickUpWeapon()
+  [ 49] getlocal 1 .............................. <fin>
+  [ 51] pusharglistnoret 1 ...................... <fin>
+  [ 53] extcall 35 .............................. return fin
+  [ 55] ret
+end

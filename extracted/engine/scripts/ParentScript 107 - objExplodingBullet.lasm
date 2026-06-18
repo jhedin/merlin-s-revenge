@@ -1,0 +1,201 @@
+property ancestor, pExplodeSound
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"objBullet">
+  [  2] pusharglist 1 ........................... <"objBullet">
+  [  4] extcall 34 .............................. <script("objBullet")>
+  [  6] pusharglist 1 ........................... <script("objBullet")>
+  [  8] extcall 0 ............................... <new(script("objBullet"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objBullet"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 635 ............................ <#explodeSound>
+  [ 27] pushsymb 49 ............................. <#none>
+  [ 29] pusharglistnoret 3 ...................... <i, #explodeSound, #none>
+  [ 31] objcall 48 .............................. i[#explodeSound] = #none
+  [ 33] getparam 0 .............................. <me>
+  [ 35] pusharglistnoret 1 ...................... <me>
+  [ 37] extcall 35 .............................. return me
+  [ 39] ret
+end
+
+on init me, params
+  [  0] getparam 1 .............................. <params>
+  [  2] getobjprop 635 .......................... <params.explodeSound>
+  [  5] setprop 639 ............................. pExplodeSound = params.explodeSound
+  [  8] getprop 33 .............................. <ancestor>
+  [ 10] getparam 1 .............................. <params>
+  [ 12] pusharglistnoret 2 ...................... <ancestor, params>
+  [ 14] objcall 1 ............................... ancestor.init(params)
+  [ 16] ret
+end
+
+on collisionPlatform me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 180 ............................ <#explode>
+  [  4] pusharglistnoret 2 ...................... <me, #explode>
+  [  6] objcall 278 ............................. me.goMode(#explode)
+  [  9] ret
+end
+
+on collisionCeiling me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 180 ............................ <#explode>
+  [  4] pusharglistnoret 2 ...................... <me, #explode>
+  [  6] objcall 278 ............................. me.goMode(#explode)
+  [  9] ret
+end
+
+on collisionWallLeft me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 180 ............................ <#explode>
+  [  4] pusharglistnoret 2 ...................... <me, #explode>
+  [  6] objcall 278 ............................. me.goMode(#explode)
+  [  9] ret
+end
+
+on collisionWallRight me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 180 ............................ <#explode>
+  [  4] pusharglistnoret 2 ...................... <me, #explode>
+  [  6] objcall 278 ............................. me.goMode(#explode)
+  [  9] ret
+end
+
+on goMode me, newMode
+  [  0] getparam 0 .............................. <me>
+  [  2] getobjprop 312 .......................... <me.pmode>
+  [  5] peek 0 .................................. case me.pmode of
+  [  7] pushsymb 180 ............................ <#explode>
+  [  9] eq
+  [ 10] jmpifz [ 27] ............................ (case) #explode:
+  [ 13] getparam 1 .............................. <newMode>
+  [ 15] pushsymb 180 ............................ <#explode>
+  [ 17] eq ...................................... <newMode = #explode>
+  [ 18] jmpifz [ 27] ............................ if newMode = #explode then
+  [ 21] pop 1
+  [ 23] pusharglistnoret 0 ...................... <>
+  [ 25] extcall 35 .............................. return 
+  [ 27] pop 1
+  [ 29] getparam 1 .............................. <newMode>
+  [ 31] peek 0 .................................. case newMode of
+  [ 33] pushsymb 180 ............................ <#explode>
+  [ 35] eq
+  [ 36] jmpifz [ 80] ............................ (case) #explode:
+  [ 39] getparam 0 .............................. <me>
+  [ 41] pushzero ................................ <0>
+  [ 42] pushzero ................................ <0>
+  [ 43] pusharglist 2 ........................... <0, 0>
+  [ 45] extcall 197 ............................. <point(0, 0)>
+  [ 47] pusharglistnoret 2 ...................... <me, point(0, 0)>
+  [ 49] objcall 926 ............................. me.setVect(point(0, 0))
+  [ 52] getparam 0 .............................. <me>
+  [ 54] pushzero ................................ <0>
+  [ 55] pusharglistnoret 2 ...................... <me, 0>
+  [ 57] objcall 2625 ............................ me.setWeight(0)
+  [ 60] getparam 0 .............................. <me>
+  [ 62] getchainedprop 39 ....................... <me.pAnimSet>
+  [ 64] pushsymb 180 ............................ <#explode>
+  [ 66] pusharglistnoret 2 ...................... <me.pAnimSet, #explode>
+  [ 68] objcall 24 .............................. me.pAnimSet.resetAnim(#explode)
+  [ 70] getparam 0 .............................. <me>
+  [ 72] getprop 639 ............................. <pExplodeSound>
+  [ 75] pusharglistnoret 2 ...................... <me, pExplodeSound>
+  [ 77] objcall 551 ............................. me.PlaySound(pExplodeSound)
+  [ 80] pop 1
+  [ 82] getprop 33 .............................. <ancestor>
+  [ 84] getparam 1 .............................. <newMode>
+  [ 86] pusharglistnoret 2 ...................... <ancestor, newMode>
+  [ 88] objcall 278 ............................. ancestor.goMode(newMode)
+  [ 91] ret
+end
+
+on update me
+  [  0] getparam 0 .............................. <me>
+  [  2] getobjprop 312 .......................... <me.pmode>
+  [  5] peek 0 .................................. case me.pmode of
+  [  7] pushsymb 180 ............................ <#explode>
+  [  9] eq
+  [ 10] jmpifz [ 39] ............................ (case) #explode:
+  [ 13] getparam 0 .............................. <me>
+  [ 15] pusharglist 1 ........................... <me>
+  [ 17] objcall 633 ............................. <me.updateExplode()>
+  [ 20] setlocal 0 .............................. fin = me.updateExplode()
+  [ 22] getlocal 0 .............................. <fin>
+  [ 24] jmpifz [ 36] ............................ if fin then
+  [ 27] getparam 0 .............................. <me>
+  [ 29] pushint8 1 .............................. <1>
+  [ 31] pusharglistnoret 2 ...................... <me, 1>
+  [ 33] objcall 707 ............................. me.setDead(1)
+  [ 36] jmp [ 75]
+  [ 39] peek 0
+  [ 41] pushsymb 2147 ........................... <#fly>
+  [ 44] eq
+  [ 45] jmpifz [ 75] ............................ (case) #fly:
+  [ 48] getparam 0 .............................. <me>
+  [ 50] pusharglist 1 ........................... <me>
+  [ 52] objcall 2139 ............................ <me.updateFly()>
+  [ 55] setlocal 1 .............................. stat = me.updateFly()
+  [ 57] getlocal 1 .............................. <stat>
+  [ 59] pushsymb 2162 ........................... <#continu>
+  [ 62] nteq .................................... <stat <> #continu>
+  [ 63] jmpifz [ 75] ............................ if stat <> #continu then
+  [ 66] getparam 0 .............................. <me>
+  [ 68] pushsymb 180 ............................ <#explode>
+  [ 70] pusharglistnoret 2 ...................... <me, #explode>
+  [ 72] objcall 278 ............................. me.goMode(#explode)
+  [ 75] pop 1 ................................... end case
+  [ 77] getprop 33 .............................. <ancestor>
+  [ 79] pusharglistnoret 1 ...................... <ancestor>
+  [ 81] objcall 31 .............................. ancestor.update()
+  [ 83] ret
+end
+
+on updateExplode me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 39 ....................... <me.pAnimSet>
+  [  4] pushsymb 180 ............................ <#explode>
+  [  6] pusharglist 2 ........................... <me.pAnimSet, #explode>
+  [  8] objcall 83 .............................. <me.pAnimSet.getFrame(#explode)>
+  [ 10] setlocal 0 .............................. animframe = me.pAnimSet.getFrame(#explode)
+  [ 12] getlocal 0 .............................. <animframe>
+  [ 14] getparam 0 .............................. <me>
+  [ 16] getchainedprop 149 ...................... <me.pAttack>
+  [ 18] getobjprop 217 .......................... <me.pAttack.animframe>
+  [ 20] eq ...................................... <animframe = me.pAttack.animframe>
+  [ 21] jmpifz [ 55] ............................ if animframe = me.pAttack.animframe then
+  [ 24] getparam 0 .............................. <me>
+  [ 26] pusharglist 1 ........................... <me>
+  [ 28] objcall 1789 ............................ <me.checkForCollisionWithPlayer()>
+  [ 31] jmpifz [ 55] ............................ if me.checkForCollisionWithPlayer() then
+  [ 34] getparam 0 .............................. <me>
+  [ 36] pusharglist 1 ........................... <me>
+  [ 38] objcall 2626 ............................ <me.getAttackPower()>
+  [ 41] setlocal 1 .............................. attackPower = me.getAttackPower()
+  [ 43] getparam 0 .............................. <me>
+  [ 45] getchainedprop 1783 ..................... <me.pPlayer>
+  [ 48] getlocal 1 .............................. <attackPower>
+  [ 50] pusharglistnoret 2 ...................... <me.pPlayer, attackPower>
+  [ 52] objcall 516 ............................. me.pPlayer.takeHit(attackPower)
+  [ 55] getparam 0 .............................. <me>
+  [ 57] getchainedprop 39 ....................... <me.pAnimSet>
+  [ 59] pushsymb 180 ............................ <#explode>
+  [ 61] pusharglist 2 ........................... <me.pAnimSet, #explode>
+  [ 63] objcall 87 .............................. <me.pAnimSet.getLooped(#explode)>
+  [ 65] setlocal 2 .............................. fin = me.pAnimSet.getLooped(#explode)
+  [ 67] getlocal 2 .............................. <fin>
+  [ 69] pushint8 1 .............................. <1>
+  [ 71] eq ...................................... <fin = 1>
+  [ 72] jmpifz [ 79] ............................ if fin = 1 then
+  [ 75] pusharglistnoret 0 ...................... <>
+  [ 77] extcall 185 ............................. nothing()
+  [ 79] getlocal 2 .............................. <fin>
+  [ 81] pusharglistnoret 1 ...................... <fin>
+  [ 83] extcall 35 .............................. return fin
+  [ 85] ret
+end

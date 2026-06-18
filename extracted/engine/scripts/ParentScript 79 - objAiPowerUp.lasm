@@ -1,0 +1,73 @@
+property ancestor, pPlayer
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"objAi">
+  [  2] pusharglist 1 ........................... <"objAi">
+  [  4] extcall 34 .............................. <script("objAi")>
+  [  6] pusharglist 1 ........................... <script("objAi")>
+  [  8] extcall 0 ............................... <new(script("objAi"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objAi"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getglobal 40 ............................ <g>
+  [ 10] getchainedprop 228 ...................... <g.actorMaster>
+  [ 12] pusharglist 1 ........................... <g.actorMaster>
+  [ 14] objcall 861 ............................. <g.actorMaster.getPlayer()>
+  [ 17] setprop 1783 ............................ pPlayer = g.actorMaster.getPlayer()
+  [ 20] getparam 0 .............................. <me>
+  [ 22] pushsymb 2014 ........................... <#norm>
+  [ 25] pusharglistnoret 2 ...................... <me, #norm>
+  [ 27] objcall 278 ............................. me.goMode(#norm)
+  [ 30] ret
+end
+
+on refreshPlayer me
+  [  0] getprop 1783 ............................ <pPlayer>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] eq ...................................... <pPlayer = #none>
+  [  6] jmpifz [ 21] ............................ if pPlayer = #none then
+  [  9] getglobal 40 ............................ <g>
+  [ 11] getchainedprop 228 ...................... <g.actorMaster>
+  [ 13] pusharglist 1 ........................... <g.actorMaster>
+  [ 15] objcall 861 ............................. <g.actorMaster.getPlayer()>
+  [ 18] setprop 1783 ............................ pPlayer = g.actorMaster.getPlayer()
+  [ 21] ret
+end
+
+on update me
+  [  0] getparam 0 .............................. <me>
+  [  2] getobjprop 312 .......................... <me.pmode>
+  [  5] peek 0 .................................. case me.pmode of
+  [  7] pushsymb 2014 ........................... <#norm>
+  [ 10] eq
+  [ 11] jmpifz [ 54] ............................ (case) #norm:
+  [ 14] getparam 0 .............................. <me>
+  [ 16] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [ 18] pusharglist 1 ........................... <me.pCharacterPrg>
+  [ 20] objcall 1789 ............................ <me.pCharacterPrg.checkForCollisionWithPlayer()>
+  [ 23] jmpifz [ 54] ............................ if me.pCharacterPrg.checkForCollisionWithPlayer() then
+  [ 26] getparam 0 .............................. <me>
+  [ 28] pusharglistnoret 1 ...................... <me>
+  [ 30] objcall 1955 ............................ me.refreshPlayer()
+  [ 33] getparam 0 .............................. <me>
+  [ 35] getchainedprop 147 ...................... <me.pCharacterPrg>
+  [ 37] getprop 1783 ............................ <pPlayer>
+  [ 40] pusharglistnoret 2 ...................... <me.pCharacterPrg, pPlayer>
+  [ 42] objcall 1790 ............................ me.pCharacterPrg.collected(pPlayer)
+  [ 45] getparam 0 .............................. <me>
+  [ 47] pushsymb 70 ............................. <#dead>
+  [ 49] pusharglistnoret 2 ...................... <me, #dead>
+  [ 51] objcall 278 ............................. me.goMode(#dead)
+  [ 54] pop 1
+  [ 56] ret
+end

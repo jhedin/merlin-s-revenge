@@ -1,0 +1,61 @@
+on StringReplace theString, strToReplace, replacementString
+  [  0] pushcons 0 .............................. <EMPTY>
+  [  2] setlocal 0 .............................. output = EMPTY
+  [  4] getparam 1 .............................. <strToReplace>
+  [  6] getobjprop 439 .......................... <strToReplace.length>
+  [  9] pushint8 1 .............................. <1>
+  [ 11] sub ..................................... <strToReplace.length - 1>
+  [ 12] setlocal 1 .............................. lenth = strToReplace.length - 1
+  [ 14] getparam 0 .............................. <theString>
+  [ 16] getparam 1 .............................. <strToReplace>
+  [ 18] containsstr ............................. <theString contains strToReplace>
+  [ 19] jmpifz [ 96] ............................ repeat while theString contains strToReplace
+  [ 22] getparam 1 .............................. <strToReplace>
+  [ 24] getparam 0 .............................. <theString>
+  [ 26] pusharglist 2 ........................... <strToReplace, theString>
+  [ 28] extcall 283 ............................. <offset(strToReplace, theString)>
+  [ 31] setlocal 2 .............................. currOffset = offset(strToReplace, theString)
+  [ 33] getlocal 0 .............................. <output>
+  [ 35] getparam 1 .............................. <strToReplace>
+  [ 37] pushsymb 284 ............................ <#char>
+  [ 40] pushint8 1 .............................. <1>
+  [ 42] getlocal 2 .............................. <currOffset>
+  [ 44] pusharglist 4 ........................... <strToReplace, #char, 1, currOffset>
+  [ 46] objcall 123 ............................. <strToReplace.char[1..currOffset]>
+  [ 48] joinstr ................................. <output & strToReplace.char[1..currOffset]>
+  [ 49] setlocal 0 .............................. output = output & strToReplace.char[1..currOffset]
+  [ 51] pushint16 -30000 ........................ <-30000>
+  [ 54] pushzero ................................ <0>
+  [ 55] pushzero ................................ <0>
+  [ 56] pushzero ................................ <0>
+  [ 57] pushzero ................................ <0>
+  [ 58] pushzero ................................ <0>
+  [ 59] pushzero ................................ <0>
+  [ 60] pushzero ................................ <0>
+  [ 61] pushzero ................................ <0>
+  [ 62] deletechunk 5 ........................... delete char -30000 of output
+  [ 64] getlocal 0 .............................. <output>
+  [ 66] getparam 2 .............................. <replacementString>
+  [ 68] joinstr ................................. <output & replacementString>
+  [ 69] setlocal 0 .............................. output = output & replacementString
+  [ 71] pushzero ................................ <0>
+  [ 72] pushchunkvarref 4 ....................... <theString>
+  [ 74] pushsymb 284 ............................ <#char>
+  [ 77] pushint8 1 .............................. <1>
+  [ 79] getlocal 2 .............................. <currOffset>
+  [ 81] getlocal 1 .............................. <lenth>
+  [ 83] add ..................................... <currOffset + lenth>
+  [ 84] pusharglist 4 ........................... <theString, #char, 1, currOffset + lenth>
+  [ 86] objcall 418 ............................. <theString.char[1..currOffset + lenth]>
+  [ 89] pusharglistnoret 1 ...................... <theString.char[1..currOffset + lenth]>
+  [ 91] objcall 419 ............................. delete theString.char[1..currOffset + lenth]
+  [ 94] endrepeat [ 14]
+  [ 96] getlocal 0 .............................. <output>
+  [ 98] getparam 0 .............................. <theString>
+  [100] joinstr ................................. <output & theString>
+  [101] setlocal 0 .............................. output = output & theString
+  [103] getlocal 0 .............................. <output>
+  [105] pusharglistnoret 1 ...................... <output>
+  [107] extcall 3 ............................... return output
+  [109] ret
+end

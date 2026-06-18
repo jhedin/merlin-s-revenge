@@ -1,0 +1,430 @@
+[#name: "gameMaster", #scriptType: #parent, #type: #script]
+global g
+global gFrameNum
+global gGameCompleteEvent
+global gGameCompleteSound
+global gGameName
+global gGameOverScript
+
+property pCopyProtectionStatus     -- records whether the movie's copy protection status in #ok or #invalid
+property pScriptPerformer          -- while a script is being performed, this holds the reference to the script performer. This is mainly in case the script is cancelled before it completes.
+
+on new me
+  return me
+end
+
+on init me
+  pCopyProtectionStatus = #ok  -- copy protection disabled due to problems on the Mac
+  pScriptPerformer = #none
+end
+
+on buttClicked me, theButt
+  case theButt of
+    #butt_resumeGame:
+      me.resumeGame()
+      
+    #butt_mr3Link:
+      gotoNetPage("http://www.themetalbox.com/?page=merlin_3")
+      put "merlin 3 button pressed"
+      
+  end case
+end
+
+on cheat me, theCheat
+  case theCheat of
+    #invincibility:
+      thePlayer = g.actorMaster.getPlayer()
+      thePlayer.invinceToggle()
+      
+    #killAll:
+      me.killAll()
+      
+    #medikit:
+      thePlayer = g.actorMaster.getPlayer()
+      thePlayer.medikitCollected()
+  end case
+end
+
+on displayInstructions me
+  -- assumes the game is already paused
+  g.screenMaster.screenOn(#instructions, me)
+end
+
+on displayChooseKeys me
+  g.screenMaster.screenOn(#chooseKeysScreen, me)
+end
+
+-- has been superseded by me.teamDied()
+on enemyDied me
+  currentRoom = me.getCurrentRoom()
+  currentRoom.attemptOpenExits()
+end
+
+on escapePressed me
+  -- called by objAIPlayer
+  -- brings up the in-game menu
+  
+  me.pauseGame()
+  g.screenMaster.screenOn(#ingameMenu, me)
+end
+
+on finishGame me
+  g.actorMaster.finishActors()
+  g.enemyEnergyMaster.finish()
+  
+  currentMap = me.getCurrentMap()
+  if currentMap <> #none then
+    currentMap.finish()
+  end if
+end
+
+on gameComplete me
+  me.finishGame()
+  
+  g.movieMaster.gameComplete()
+  
+  if gGameName = #rapunzel then
+    me.runRapunzelEndSequence()
+  end if
+  
+  if gGameCompleteSound <> #none then
+    g.soundMaster.playSound(gGameCompleteSound)
+  end if
+  
+end
+
+on gameEvent me, theEvent
+  if gGameCompleteEvent = theEvent then
+    me.gameComplete()
+  end if
+end
+
+on gameOver me
+  -- don't play a script if there isn't one
+  if gGameOverScript = #none then
+    me.quitToTitle()
+    return
+  end if
+  
+  me.finishGame()
+  
+  g.movieMaster.goScreen(#animScreenGameOver, #gameOver)
+end
+
+on getCurrentMap me
+  -- returns the map that is currently in play
+  
+  mapController = g.controllerMaster.getController(#map)
+  theMap = mapController.getObject()
+  
+  return theMap
+end
+
+on getCurrentRoom me
+  -- returns the room that is currently in play
+  
+  theMap = me.getCurrentMap()
+  if theMap <> #none then
+    return theMap.getCurrentRoom()
+  else
+    return #none
+  end if
+end
+
+on goNavMode me
+  g.actorMaster.getPlayer().goNavMode()
+  me.getCurrentMap().goNavMode()
+end
+
+on goScreen me, theScreen
+  params = g.screenMaster.getParams(#goScreen)
+  params.caller = me
+  params.screenSym = theScreen
+  params.transition = #fade
+  g.screenMaster.goScreen(params)
+end
+
+on goScreenFinished me
+end
+
+on isMenuItemShadowed me, theComm
+  -- disable save game during script
+  if theComm = #saveGame then
+    if g.cutSceneMaster.isScriptBeingPerformed() then
+      return true
+    end if
+  end if
+  
+  return false
+end
+
+on killAll me
+  --  room = me.getCurrentRoom()
+  --  room.killAllDwellings()
+  --  room.killAllEnemies()
+  g.teamMaster.killEnemyTeams(#aldevar)
+end
+
+on leaveNavMode me
+  g.characterEnergyRollOverMaster.leaveNavMode()
+  me.getCurrentMap().leaveNavMode()
+end
+
+on menuOptionSelected me, theOption, theMenu
+  -- the menu will go offscreen automatically,
+  -- this clears the background
+  -- if the menu should stay, recall the screen
+  g.screenMaster.screenOff(#ingameMenu)
+  
+  case theOption of
+    #back:
+      g.screenMaster.backAScreen()
+      
+    #instructions:
+      me.displayInstructions()
+      
+    #chooseKeys:
+      me.displayChooseKeys()
+      
+    #loadGame:
+      g.saveMaster.loadGame()
+      
+    #options:
+      
+    #quitToTitle:
+      me.quitToTitle()
+      
+    #resumeGame:
+      me.resumeGame()
+      
+    #saveGame:
+      g.saveMaster.saveGame()
+      me.resumeGame()
+      
+    #showArmy:
+      g.screenMaster.screenOn(#showArmy, g.showArmyMaster) 
+      
+    #soundOff:
+      g.soundMaster.toggle(false)
+      g.screenMaster.screenOn(#ingameMenu, me)
+      
+    #soundOn:
+      g.soundMaster.toggle(true)
+      g.screenMaster.screenOn(#ingameMenu, me)
+      
+      
+  end case
+end
+
+on newMapStarted me
+  -- redefine the playarea
+  g.collisionMaster.initPlayArea()
+end
+
+on pauseGame me
+  g.actorMaster.pauseGameObjects()
+end
+
+on performScript me, scriptSym
+  theScript = g.collectionsMaster.getObj(#objScript, scriptSym)
+  
+  scriptPerformer = g.objectMaster.requestObject(#objScriptPerformer)
+  params = scriptPerformer.getParams(#init)
+  params.caller = me
+  params.theScript = theScript
+  scriptPerformer.init(params)
+  scriptPerformer.startPerformance()
+  
+  pScriptPerformer = scriptPerformer
+end
+
+on quitToTitle me
+  me.finishGame()
+  
+  g.movieMaster.goScreen(#titleScreen)
+end
+
+on resumeGame me
+  me.unpauseGame()
+end 
+
+on runRapunzelEndSequence me
+  screenSeq = g.objectMaster.requestObject(#objScreenSequencer)
+  params = screenSeq.getParams(#init)
+  b = params.backButtonTextParams
+  b.alignment = #left
+  b.font = "Dauphin *"
+  b.fontSize = 16
+  b.width = 50
+  n = params.nextButtonTextParams
+  n.alignment = #right
+  n.font = "Dauphin *"
+  n.fontSize = 16
+  n.width = 50
+  n = params.returnButtonTextParams
+  n.alignment = #center
+  n.font = "Dauphin *"
+  n.fontSize = 16
+  n.width = 150
+  params.callingPrg = me
+  params.delayCount = 600
+  params.returnScreen = #titleScreen
+  params.returnButtonText = "Quit to Title Screen"
+  params.screenList = [#outroScreen_01, #outroScreen_02, #outroScreen_03, #outroScreen_04, #outroScreen_05, #outroScreen_06, #outroScreen_07, #outroScreen_08]
+  screenSeq.init(params)
+  screenSeq.start()
+  
+  pScreenSequencer = screenSeq
+end
+
+
+on scriptFinished me
+  pScripPerformer = #none
+end
+
+on start me
+  if pCopyProtectionStatus = #invalid then
+    g.movieMaster.redirectMovie()
+    return
+  end if
+  
+  g.armyMaster.clearArmy()
+  
+  -- set gFrameNum to 0 for easier debugging
+  gFrameNum = 0
+  
+  -- reinit collisionMaster to adjust game boundary if a map is in play
+  g.collisionMaster.initPlayArea()
+  
+  g.actorMaster.start()
+  
+  g.updater.addPrg(me, #med)
+end
+
+on teamDied me, teamName
+  currentRoom = me.getCurrentRoom()
+  if currentRoom <> #none then
+    exitsOpen = currentRoom.attemptOpenExits()
+    
+    -- if the exits open, check whether the room is the end room
+    if exitsOpen then
+      currentMap = me.getCurrentMap()
+      
+      -- if game was completed by clearing all rooms the map will now be gone
+      if currentMap <> #none then
+        isEndRoom = currentMap.isEndRoom()
+        
+        
+        
+        -- if so, trigger the gameComplete game event.
+        if isEndRoom then
+          me.gameEvent(#mapClear)
+        end if
+        
+        
+        -- debugging check, remove if finished with
+        --g.reservationsMaster.roomClear()
+        
+      end if
+    end if
+  end if
+  
+end
+
+on unpauseGame me
+  g.actorMaster.unpauseGameObjects()
+end
+
+on update me
+  g.keyMaster.checkKeys()
+  g.mouseMaster.checkMouse()
+end
+
+on updateCopyProtectionStatus me, newStatus
+  pCopyProtectionStatus = newStatus
+  
+  if newStatus = #invalid then
+    -- redirect immediatly to licence failed screen
+    me.finishGame()
+    
+    me.goScreen(#licence)
+    
+    
+    
+    
+    -- if a game is in progress, redirect immeadiately
+    -- usually, the redirect happens, when the game starts
+    
+    --    currentMap = me.getCurrentMap()
+    --    if currentMap <> #none then
+    --      g.movieMaster.redirectMovie()
+    --    end if
+  end if
+end
+
+on stop me
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

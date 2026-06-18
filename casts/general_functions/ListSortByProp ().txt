@@ -1,0 +1,111 @@
+[#name: "ListSortByProp (listofproplists, sym {dir})", #scriptType: #movie, #type: #script]
+on ListSortByProp thelist,sym, dir
+  thelenth = thelist.count
+  
+  -- make an index of the values
+  vallist = []
+  repeat with en = 1 to thelenth
+    vallist.append(thelist[en][sym])
+  end repeat
+  sort vallist
+  if dir = -1 then
+    vallist = ListReverseList(vallist)
+  end if
+  
+  -- enter proplists into new list in correct order
+  newlist = []
+  repeat with en = 1 to thelenth
+    nextprop = thelist[en]
+    propval  = nextprop[sym]
+    
+    posinindex = vallist.getpos(propval)
+    -- check to see that the space isn't already taken
+    available = 0
+    repeat while available = 0
+      available = checkavailable (posinindex, newlist)
+      if available then exit repeat
+      posinindex = posinindex +1
+    end repeat
+    
+    newlist[posinindex] = nextprop
+  end repeat
+  
+  return newlist
+end ListSortByProp
+
+on checkavailable (pos, thelist)
+  thelenth = thelist.count
+  av = 0
+  
+  if pos > thelenth then
+    av = 1
+  else  
+    if thelist[pos] = 0 then
+      av = 1
+    end if
+  end if
+  
+  return av
+end checkavailable
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

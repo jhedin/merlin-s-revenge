@@ -1,0 +1,343 @@
+[#name: "objPlayerMerlinCharacter", #scriptType: #parent, #type: #script]
+global g
+global gFrameNum
+
+global gMapBoundaryLayer
+global gNavMode
+
+property ancestor
+property pAliveWeight
+property pBonusEnergy         -- the amount of energy recovered when a bonus is collected
+property pDieWeight
+property pDieVectY
+property pEnergyBar
+property pLeaveDir
+property pLeaveMode
+property pOverlapToLeaveRoom
+
+-- debugging
+property pLastLeaveFrameNum
+
+
+on new me
+  me.ancestor = new(script"objCharacter")
+  
+  i = me.modifyParams(#init)
+  
+  i.allowScreenExit = true
+  i.character = #playerCharacter
+  i.flags.append(#objPlayerCharacter) -- to allow objRoom to identify object as player
+  i.flags.append(#player)             -- this means this object is a potential actor for plot scripts
+  i.energy = 100
+  
+  i[#overlapToLeaveRoom] = 14
+  
+  me.addModule("modInvince")
+  me.addModule("modMedikit")
+  me.addModule("modNavMode")
+  me.addModule("modProp")
+  me.addModule("modStretchDeath")
+  me.addModule("modSummonWizard")
+  me.addModule("modThespian")
+  me.addModule("modWeaponSelector")
+  me.addModule("modGoldenMachineGun")
+  me.addModule("modAutoSummon")
+  return me
+end
+
+on init me, params
+  pOverlapToLeaveRoom = params.overlapToLeaveRoom
+  
+  me.ancestor.init(params)
+  
+  pAliveWeight = params.weight
+  pBonusEnergy = 25
+  pDieVectY = -15
+  pDieWeight = 0.6
+  pLeaveDir = point(0,0) -- for use when leaving a room
+  pLeaveMode = #none     -- records mode the player is in when leaving a room
+  
+  pEnergyBar = g.objectMaster.requestObject(#objMulticolourEnergyBar)
+  surroundSpr = g.spriteMaster.getSpriteWithMember(member("health_bar_surround", "gfx"))
+  surroundSpr.locZ = surroundSpr.locZ + gMapBoundaryLayer
+  surroundRect = surroundSpr.rect.duplicate()
+  params = pEnergyBar.getParams(#init)
+  params.surroundRect = surroundRect
+  params.surroundSpr = surroundSpr
+  params.maxEnergy = me.pEnergy
+  params.currentEnergy = me.pEnergy
+  pEnergyBar.init(params)
+  
+end
+
+on finish me
+  pEnergyBar.finish()
+  ancestor.finish()
+end
+
+on calcLeaveDir me, zoneType
+  leaveDir = point(0,0)
+  
+  case zoneType of
+    #ceiling:
+      leaveDir[2] = -1
+      
+    #platform:
+      leaveDir[2] = 1
+      
+    #wallLeft:
+      leaveDir[1] = -1
+      
+    #wallRight:
+      leaveDir[1] = 1
+      
+  end case
+  
+  return leaveDir
+end
+
+on checkCollisions me, newLoc, oldLoc
+  newLoc = ancestor.checkCollisions(newLoc, oldLoc)
+  
+  return newLoc
+end 
+
+on energyChanged me
+  pEnergyBar.updateEnergy(me.pEnergy)
+end
+
+on getAnimSym me, sym
+  sym = ancestor.getAnimSym(sym)
+  
+  --  case sym of
+  --    #reel:
+  --      sym = #stand
+  --      
+  --  end case
+  
+  return sym
+end
+
+on goMode me, newMode
+  case newMode of
+    #dead:
+      nothing
+      
+    #die:
+      -- stretchDeath module
+      me.startStretchDeath()
+      
+    #reel:
+      -- don't allow #reel to start, it relies on the character not being controlled during reel
+      newMode = me.pMode
+      
+  end case
+  
+  ancestor.goMode(newMode)
+end
+
+on internalEvent me, theEvent
+  ancestor.internalEvent(theEvent)
+  
+  case theEvent of
+    #maxEnergyChanged:
+      pEnergyBar.setMaxEnergy(me.getMaxEnergy())
+      pEnergyBar.updateEnergy(me.getEnergy())
+      
+    #stretchDeathFin:
+      me.stretchDeathFin()
+  end case
+end
+
+on medikitCollected me, medType
+  me.startTempInvince()
+  if(medType = #medikit) then
+    ancestor.medikitCollected()
+    me.increaseEnergy(pBonusEnergy)
+  else
+    me.increaseEnergy(me.getMaxEnergy() - me.getenergy())
+  end if
+end
+
+
+on newScrollCollected me, scrollType, theAttack
+  if scrollType <> #gmg then
+    me.addWeapon(scrollType, theAttack)
+    me.increaseEnergy(pBonusEnergy)
+  else
+    me.gmgCollected()
+  end if
+  me.startTempInvince()
+  
+end 
+
+on outsidePlayArea me, exitDir
+  pLeaveMode = me.getMode()
+  pLeaveDir = exitDir
+  
+  me.goMode(#leaveRoom)
+  ancestor.outsidePlayArea(exitDir)
+  g.teamMaster.setRoomClear(False)
+end
+
+on potionCollected me, character, thePotion
+  case character of
+    #manaBurst:
+      me.incManaBurstPotion()
+      
+    #manaCapacity:
+      me.incManaCapacityPotion()
+      
+    #manaFlow:
+      me.incManaFlowPotion()
+      
+    #walkSpeed:
+      me.incWalkAcceleration(#potion)
+      
+  end case
+  
+  me.startTempInvince()
+  me.increaseEnergy(pBonusEnergy)
+  
+  g.potionMaster.potionCollected(thePotion)
+end
+
+on respawn me
+  -- called by modExtraLives
+  me.setWeight(pAliveWeight)
+  me.goMode(#fall)
+  me.pAI.restorePlayerControl()
+  
+  ancestor.respawn()
+end
+
+on restoreFromSave me, sd
+  ancestor.restoreFromSave(sd)
+end
+
+on stretchDeathFin me
+  if me.modIsInstalled(#modExtraLives) then
+    gameOver = me.attemptRespawn()
+  else
+    gameOver = true
+  end if
+  
+  if gameOver then g.gameMaster.gameOver()
+end
+
+on takeHit me, collideVect, attackingObj, owner
+  if me.pMode = #die then
+    return
+  end if
+  
+  me.ancestor.takeHit(collideVect, attackingObj, owner)
+  
+  -- override results of modReel
+  me.goMode(#walk)
+  
+  if me.checkDead() then
+    me.goMode(#die)
+    
+    -- for extraLives Mod
+    if me.modIsInstalled(#modExtraLives) then
+      me.recordRespawnPoint()
+    end if
+    
+  end if
+end
+
+on update me
+  gameOver = false
+  case me.pMode of
+      
+    #leaveRoom:
+      
+      if gNavMode = true then
+        me.leaveNavMode()
+        g.gameMaster.leaveNavMode()
+      end if 
+      
+      theMap = g.gameMaster.getCurrentMap()
+      theMap.moveRoom(pLeaveDir) -- navMode will be switched back on here if so required
+      
+      myVect = me.getVect()
+      
+      roomSize = theMap.getRoomSizeInPixels()
+      
+      moveAmount = roomSize
+      moveAmount = moveAmount * (pLeaveDir * point(-1,-1))
+      me.pMoveXY.setLoc(me.getLoc() + moveAmount)
+      
+      me.setVect(myVect)
+      
+      me.pMode = pLeaveMode
+      
+      -- let any spells we are holding know
+      me.eventNotify(#enteringNewRoom)
+      
+  end case
+  
+  ancestor.update()
+end
+
+on updateDie me
+  if me.pMoveXY.onScreen() = false then
+    return true
+  end if
+  
+  return false
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

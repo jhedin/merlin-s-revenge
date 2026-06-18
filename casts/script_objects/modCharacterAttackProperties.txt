@@ -1,0 +1,316 @@
+[#name: "modCharacterAttackProperties", #scriptType: #parent, #type: #script]
+-- for use by objCharacter
+-- holds all properties to do with attacking
+
+property ancestor
+property pAgility        -- modifies attack.cooldown on #melee
+property pDexterity      -- modifies attack.cooldown on #ranged
+property pEyestrain      -- multiplier of attack.inaccuracy on #ranged and #magic
+property pManaBurst      -- added to attack.chargeStart
+property pManaBurstInc   -- amount added to manaBurst when a potion is collected
+property pManaBurstIncLevel -- amount added to manaBurst when levelling
+property pManaCapacity   -- sets the maximum a spell can be charged to
+property pManaCapacityInc -- amount added to manaCapacity when a potion is collected
+property pManaCapacityIncLevel -- amount added to manaBurst when levelling
+property pManaFlow       -- multiplier of attack.chargeSpeed
+property pManaFlowInc    -- amount added to manaFlow when a potion is collected
+property pManaFlowIncLevel -- amount added to manaFlow when levelling
+property pManaRegeneration -- modifies attack.cooldown on #magic
+property pManaRegenerationIncLevel -- amount added to manaRegeneration when levelling
+property pStallSpeedIncLevel -- amount to increase stall speed by when levelling (stall speed is a property of objMoveXY which is kept by objGameObject)
+property pStrength       -- multiplies attack.power on #melee and attack.range on #ranged
+property pStrengthIncLevel    -- amount added to strength on levelup (always)
+
+
+on new me
+  ancestor = new (script("modModule"))
+  return me
+end
+
+on init me, params
+  pAgility = params.agility
+  pDexterity = params.dexterity
+  pEyestrain = params.eyestrain
+  pManaBurst = params.mana_burst
+  pManaCapacity = params.mana_capacity
+  pManaFlow = params.mana_flow
+  pManaRegeneration = params.mana_regeneration
+  pStrength = params.strength
+  
+  -- potions
+  pManaBurstInc = .75
+  pManaCapacityInc = .75
+  pManaFlowInc = 0.5
+  
+  -- levelling up
+  pManaBurstIncLevel = params.mana_burstIncLevel
+  pManaCapacityIncLevel = params.mana_capacityIncLevel
+  pManaFlowIncLevel = params.mana_flowIncLevel
+  pManaRegenerationIncLevel = params.mana_regenerationIncLevel
+  pStallSpeedIncLevel = params.stallSpeedIncLevel
+  pStrengthIncLevel = params.strengthIncLevel
+  
+  ancestor.init(params)
+end
+
+on addModParams me
+  i = me.modifyParams(#init)
+  
+  i[#agility] = 1
+  i[#dexterity] = 1
+  i[#eyestrain] = 0
+  i[#mana_burst] = 1
+  i[#mana_burstIncLevel] = 0.1
+  i[#mana_capacity] = 10
+  i[#mana_capacityIncLevel] = 1
+  i[#mana_flow] = 1
+  i[#mana_flowIncLevel] = 0.1
+  i[#mana_regeneration] = 1
+  i[#mana_regenerationIncLevel] = 0.1
+  i[#stallSpeedIncLevel] = 0
+  i[#strength] = 1
+  i[#strengthIncLevel] = 0.1
+  
+  ancestor.addModParams()
+end
+
+on addSaveData me, sd
+  ancestor.addSaveData(sd)
+  
+  me.addToSaveData(sd)  
+end
+
+on addToArmyDetails me
+  ad = me.big.getArmyDetails()
+  
+  me.addToSaveData(ad)
+end
+
+on addToSaveData me, sd
+  sd[#pAgility] = pAgility
+  sd[#pDexterity] = pDexterity
+  sd[#pEyestrain] = pEyestrain
+  sd[#pManaBurst] = pManaBurst
+  sd[#pManaCapacity] = pManaCapacity
+  sd[#pManaFlow] = pManaFlow
+  sd[#pManaRegeneration] = pManaRegeneration
+  sd[#pStrength] = pStrength
+end
+
+on getAgility me
+  return pAgility
+end
+
+on getDexterity me
+  return pDexterity
+end 
+
+on getEyestrain me
+  return pEyestrain
+end
+
+on getManaBurst me
+  return pManaBurst 
+end
+
+on getManaCapacity me
+  return pManaCapacity
+end
+
+on getManaFlow me
+  return pManaFlow
+end
+
+on getManaRegeneration me
+  return pManaRegeneration
+end
+
+on getStrength me
+  return pStrength
+end
+
+on levelUpCharacterAttackProperties me
+  me.incStrengthLevel()
+  me.incStallSpeedLevel()
+  
+  num = random(4)
+  
+  case num of
+    1:
+      me.incManaBurstLevel()
+      
+    2:
+      me.incManaCapacityLevel()
+      
+    3:
+      me.incManaFlowLevel()
+      
+    4:
+      me.incManaRegenerationLevel()
+      
+  end case
+  
+end
+
+on incManaBurst me, amount
+  pManaBurst = pManaBurst + amount
+end
+
+on incManaBurstLevel me
+  me.incManaBurst(pManaBurstIncLevel)
+end
+
+on incManaBurstPotion me
+  me.incManaBurst(pManaBurstInc)
+end
+
+on incManaCapacity me, amount
+  pManaCapacity = pManaCapacity + amount
+  --  AI = me.getAI()
+  --  AI.manaCapacityIncreased()
+  me.big.internalEvent(#manaCapacityIncreased)
+end
+
+on incManaCapacityLevel me
+  me.incManaCapacity(pManaCapacityIncLevel)
+end
+
+on incManaCapacityPotion me
+  me.incManaCapacity(pManaCapacityInc)
+end
+
+on incManaFlow me, amount
+  pManaFlow = pManaFlow + amount
+  --  AI = me.getAI()
+  --  AI.manaFlowIncreased()
+  me.big.internalEvent(#manaFlowIncreased)
+end
+
+on incManaFlowLevel me
+  me.incManaFlow(pManaFlowIncLevel)
+end
+
+on incManaFlowPotion me
+  me.incManaFlow(pManaFlowInc)
+end
+
+on incManaRegeneration me, amount
+  pManaRegeneration = pManaRegeneration + amount
+end
+
+on incManaRegenerationLevel me
+  me.incManaRegeneration(pManaRegenerationIncLevel)
+end
+
+on incStallSpeedLevel me
+  me.big.incStallSpeed(pStallSpeedIncLevel)
+end
+
+on incStrength me, amount
+  pStrength = pStrength + amount
+end
+
+on incStrengthLevel me
+  me.incStrength(pStrengthIncLevel)
+end
+
+on internalEvent me, theEvent
+  ancestor.internalEvent(theEvent)
+  
+  case theEvent of
+    #addToArmyDetails:
+      me.addToArmyDetails()
+      
+    #levelUp:
+      me.levelUpCharacterAttackProperties()
+      
+    #restoreFromArmyDetails:
+      me.restoreFromArmyDetails()
+      
+  end case
+end
+
+on restoreFromArmyDetails me
+  ad = me.big.getArmyDetails()
+  
+  me.restoreFromSaveData(ad)
+end
+
+on restoreFromSave me, sd
+  ancestor.restoreFromSave(sd)
+  
+  me.restoreFromSaveData(sd)
+end
+
+on restoreFromSaveData me, sd
+  pAgility = sd.pAgility
+  pDexterity = sd.pDexterity
+  pEyestrain = sd.pEyestrain
+  pManaBurst = sd.pManaBurst
+  pManaCapacity = sd.pManaCapacity
+  pManaFlow = sd.pManaFlow
+  pManaRegeneration = sd.pManaRegeneration
+  pStrength = sd.pStrength
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

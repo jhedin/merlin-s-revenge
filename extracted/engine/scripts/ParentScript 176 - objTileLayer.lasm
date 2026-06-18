@@ -1,0 +1,839 @@
+property ancestor, pRoom, pSym, pType, pZones
+global g, gExitArrowThickness
+
+on new me
+  [  0] pushcons 0 .............................. <"objTileMap">
+  [  2] pusharglist 1 ........................... <"objTileMap">
+  [  4] extcall 34 .............................. <script("objTileMap")>
+  [  6] pusharglist 1 ........................... <script("objTileMap")>
+  [  8] extcall 0 ............................... <new(script("objTileMap"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objTileMap"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 384 ............................ <#room>
+  [ 27] pushsymb 49 ............................. <#none>
+  [ 29] pusharglistnoret 3 ...................... <i, #room, #none>
+  [ 31] objcall 48 .............................. i[#room] = #none
+  [ 33] getlocal 0 .............................. <i>
+  [ 35] pushsymb 3565 ........................... <#roomTileSets>
+  [ 38] pushsymb 49 ............................. <#none>
+  [ 40] pusharglistnoret 3 ...................... <i, #roomTileSets, #none>
+  [ 42] objcall 48 .............................. i[#roomTileSets] = #none
+  [ 44] getlocal 0 .............................. <i>
+  [ 46] pushsymb 178 ............................ <#type>
+  [ 48] pushsymb 49 ............................. <#none>
+  [ 50] pusharglistnoret 3 ...................... <i, #type, #none>
+  [ 52] objcall 48 .............................. i[#type] = #none
+  [ 54] getparam 0 .............................. <me>
+  [ 56] pushcons 1 .............................. <"modScreenExits">
+  [ 58] pusharglistnoret 2 ...................... <me, "modScreenExits">
+  [ 60] objcall 1717 ............................ me.addModule("modScreenExits")
+  [ 63] getparam 0 .............................. <me>
+  [ 65] pusharglistnoret 1 ...................... <me>
+  [ 67] extcall 35 .............................. return me
+  [ 69] ret
+end
+
+on init me, params
+  [  0] getparam 1 .............................. <params>
+  [  2] getobjprop 384 .......................... <params.room>
+  [  5] setprop 1227 ............................ pRoom = params.room
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 178 .......................... <params.type>
+  [ 12] setprop 3939 ............................ pType = params.type
+  [ 15] pushsymb 49 ............................. <#none>
+  [ 17] setprop 3940 ............................ pZones = #none
+  [ 20] getparam 1 .............................. <params>
+  [ 22] getparam 1 .............................. <params>
+  [ 24] pushsymb 3565 ........................... <#roomTileSets>
+  [ 27] getprop 3939 ............................ <pType>
+  [ 30] pusharglist 3 ........................... <params, #roomTileSets, pType>
+  [ 32] objcall 381 ............................. <params.roomTileSets[pType]>
+  [ 35] setobjprop 2127 ......................... params.tileSet = params.roomTileSets[pType]
+  [ 38] getprop 33 .............................. <ancestor>
+  [ 40] getparam 1 .............................. <params>
+  [ 42] pusharglistnoret 2 ...................... <ancestor, params>
+  [ 44] objcall 1 ............................... ancestor.init(params)
+  [ 46] getprop 3939 ............................ <pType>
+  [ 49] pushsymb 3023 ........................... <#backgroundPassive>
+  [ 52] eq ...................................... <pType = #backgroundPassive>
+  [ 53] jmpifz [ 75] ............................ if pType = #backgroundPassive then
+  [ 56] getparam 0 .............................. <me>
+  [ 58] pushsymb 839 ............................ <#useFastQuads>
+  [ 61] pushint8 1 .............................. <1>
+  [ 63] pushsymb 840 ............................ <#ink>
+  [ 66] pushzero ................................ <0>
+  [ 67] pusharglist 4 ........................... <[#useFastQuads: 1, #ink: 0]>
+  [ 69] pushproplist ............................ <[#useFastQuads: 1, #ink: 0]>
+  [ 70] pusharglistnoret 2 ...................... <me, [#useFastQuads: 1, #ink: 0]>
+  [ 72] objcall 3941 ............................ me.setCopyPixelsParams([#useFastQuads: 1, #ink: 0])
+  [ 75] ret
+end
+
+on initZones me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 2447 ............................ <me.getNumEntries()>
+  [  7] setlocal 0 .............................. numtiles = me.getNumEntries()
+  [  9] getprop 1227 ............................ <pRoom>
+  [ 12] pusharglist 1 ........................... <pRoom>
+  [ 14] objcall 3898 ............................ <pRoom.getSpriteLoc()>
+  [ 17] setlocal 1 .............................. mapLocation = pRoom.getSpriteLoc()
+  [ 19] getparam 0 .............................. <me>
+  [ 21] pusharglist 1 ........................... <me>
+  [ 23] objcall 819 ............................. <me.getSize()>
+  [ 26] pushint8 2 .............................. <2>
+  [ 28] pusharglist 2 ........................... <me.getSize(), 2>
+  [ 30] objcall 109 ............................. <me.getSize()[2]>
+  [ 32] setlocal 2 .............................. columnHeight = me.getSize()[2]
+  [ 34] pushint8 1 .............................. <1>
+  [ 36] pushint8 1 .............................. <1>
+  [ 38] pusharglist 2 ........................... <1, 1>
+  [ 40] extcall 197 ............................. <point(1, 1)>
+  [ 42] setlocal 3 .............................. tileLoc = point(1, 1)
+  [ 44] getparam 0 .............................. <me>
+  [ 46] getchainedprop 1238 ..................... <me.pTileSet>
+  [ 49] pusharglist 1 ........................... <me.pTileSet>
+  [ 51] objcall 390 ............................. <me.pTileSet.getTileSize()>
+  [ 54] setlocal 4 .............................. tilesize = me.pTileSet.getTileSize()
+  [ 56] pusharglist 0 ........................... <[]>
+  [ 58] pushlist ................................ <[]>
+  [ 59] setlocal 5 .............................. zones = []
+  [ 61] pushsymb 49 ............................. <#none>
+  [ 63] setlocal 6 .............................. currentZone = #none
+  [ 65] pushsymb 3942 ........................... <#thisOne>
+  [ 68] setlocal 7 .............................. whichTile = #thisOne
+  [ 70] pushint8 1 .............................. <1>
+  [ 72] setlocal 8
+  [ 74] getlocal 8
+  [ 76] getlocal 0 .............................. <numtiles>
+  [ 78] lteq
+  [ 79] jmpifz [287] ............................ repeat with i = 1 to numtiles
+  [ 82] getparam 0 .............................. <me>
+  [ 84] getlocal 8 .............................. <i>
+  [ 86] getlocal 3 .............................. <tileLoc>
+  [ 88] pusharglist 3 ........................... <me, i, tileLoc>
+  [ 90] objcall 2448 ............................ <me.peekEntryNoVert(i, tileLoc)>
+  [ 93] setlocal 9 .............................. tileNum = me.peekEntryNoVert(i, tileLoc)
+  [ 95] getparam 0 .............................. <me>
+  [ 97] getchainedprop 1238 ..................... <me.pTileSet>
+  [100] getlocal 9 .............................. <tileNum>
+  [102] pusharglist 2 ........................... <me.pTileSet, tileNum>
+  [104] objcall 1260 ............................ <me.pTileSet.getTileSymbolByNum(tileNum)>
+  [107] setlocal 10 ............................. nSymbol = me.pTileSet.getTileSymbolByNum(tileNum)
+  [109] getlocal 6 .............................. <currentZone>
+  [111] pushsymb 49 ............................. <#none>
+  [113] eq ...................................... <currentZone = #none>
+  [114] jmpifz [149] ............................ if currentZone = #none then
+  [117] getlocal 3 .............................. <tileLoc>
+  [119] pushint8 1 .............................. <1>
+  [121] pushint8 1 .............................. <1>
+  [123] pusharglist 2 ........................... <1, 1>
+  [125] extcall 197 ............................. <point(1, 1)>
+  [127] sub ..................................... <tileLoc - point(1, 1)>
+  [128] getlocal 4 .............................. <tilesize>
+  [130] mul ..................................... <(tileLoc - point(1, 1)) * tilesize>
+  [131] getlocal 1 .............................. <mapLocation>
+  [133] add ..................................... <((tileLoc - point(1, 1)) * tilesize) + mapLocation>
+  [134] setlocal 11 ............................. startLoc = ((tileLoc - point(1, 1)) * tilesize) + mapLocation
+  [136] getparam 0 .............................. <me>
+  [138] getlocal 10 ............................. <nSymbol>
+  [140] getlocal 11 ............................. <startLoc>
+  [142] pusharglist 3 ........................... <me, nSymbol, startLoc>
+  [144] objcall 3937 ............................ <me.openZone(nSymbol, startLoc)>
+  [147] setlocal 6 .............................. currentZone = me.openZone(nSymbol, startLoc)
+  [149] getlocal 10 ............................. <nSymbol>
+  [151] getlocal 6 .............................. <currentZone>
+  [153] pusharglist 1 ........................... <currentZone>
+  [155] objcall 3943 ............................ <currentZone.getSym()>
+  [158] nteq .................................... <nSymbol <> currentZone.getSym()>
+  [159] getlocal 10 ............................. <nSymbol>
+  [161] pushsymb 2331 ........................... <#platform>
+  [164] eq ...................................... <nSymbol = #platform>
+  [165] or ...................................... <(nSymbol <> currentZone.getSym()) or (nSymbol = #platform)>
+  [166] jmpifz [237] ............................ if (nSymbol <> currentZone.getSym()) or (nSymbol = #platform) then
+  [169] getlocal 3 .............................. <tileLoc>
+  [171] pushzero ................................ <0>
+  [172] pushint8 1 .............................. <1>
+  [174] inv ..................................... <-1>
+  [175] pusharglist 2 ........................... <0, -1>
+  [177] extcall 197 ............................. <point(0, -1)>
+  [179] add ..................................... <tileLoc + point(0, -1)>
+  [180] setlocal 12 ............................. lastTileLoc = tileLoc + point(0, -1)
+  [182] getlocal 12 ............................. <lastTileLoc>
+  [184] getlocal 4 .............................. <tilesize>
+  [186] mul ..................................... <lastTileLoc * tilesize>
+  [187] getlocal 1 .............................. <mapLocation>
+  [189] add ..................................... <(lastTileLoc * tilesize) + mapLocation>
+  [190] setlocal 13 ............................. endLoc = (lastTileLoc * tilesize) + mapLocation
+  [192] getparam 0 .............................. <me>
+  [194] getlocal 6 .............................. <currentZone>
+  [196] getlocal 13 ............................. <endLoc>
+  [198] getlocal 5 .............................. <zones>
+  [200] pusharglistnoret 4 ...................... <me, currentZone, endLoc, zones>
+  [202] objcall 3933 ............................ me.closeZone(currentZone, endLoc, zones)
+  [205] getlocal 3 .............................. <tileLoc>
+  [207] pushint8 1 .............................. <1>
+  [209] pushint8 1 .............................. <1>
+  [211] pusharglist 2 ........................... <1, 1>
+  [213] extcall 197 ............................. <point(1, 1)>
+  [215] sub ..................................... <tileLoc - point(1, 1)>
+  [216] getlocal 4 .............................. <tilesize>
+  [218] mul ..................................... <(tileLoc - point(1, 1)) * tilesize>
+  [219] getlocal 1 .............................. <mapLocation>
+  [221] add ..................................... <((tileLoc - point(1, 1)) * tilesize) + mapLocation>
+  [222] setlocal 11 ............................. startLoc = ((tileLoc - point(1, 1)) * tilesize) + mapLocation
+  [224] getparam 0 .............................. <me>
+  [226] getlocal 10 ............................. <nSymbol>
+  [228] getlocal 11 ............................. <startLoc>
+  [230] pusharglist 3 ........................... <me, nSymbol, startLoc>
+  [232] objcall 3937 ............................ <me.openZone(nSymbol, startLoc)>
+  [235] setlocal 6 .............................. currentZone = me.openZone(nSymbol, startLoc)
+  [237] getlocal 3 .............................. <tileLoc>
+  [239] pushint8 2 .............................. <2>
+  [241] pusharglist 2 ........................... <tileLoc, 2>
+  [243] objcall 109 ............................. <tileLoc[2]>
+  [245] getlocal 2 .............................. <columnHeight>
+  [247] eq ...................................... <tileLoc[2] = columnHeight>
+  [248] jmpifz [278] ............................ if tileLoc[2] = columnHeight then
+  [251] getlocal 3 .............................. <tileLoc>
+  [253] getlocal 4 .............................. <tilesize>
+  [255] mul ..................................... <tileLoc * tilesize>
+  [256] getlocal 1 .............................. <mapLocation>
+  [258] add ..................................... <(tileLoc * tilesize) + mapLocation>
+  [259] setlocal 13 ............................. endLoc = (tileLoc * tilesize) + mapLocation
+  [261] getparam 0 .............................. <me>
+  [263] getlocal 6 .............................. <currentZone>
+  [265] getlocal 13 ............................. <endLoc>
+  [267] getlocal 5 .............................. <zones>
+  [269] pusharglistnoret 4 ...................... <me, currentZone, endLoc, zones>
+  [271] objcall 3933 ............................ me.closeZone(currentZone, endLoc, zones)
+  [274] pushsymb 49 ............................. <#none>
+  [276] setlocal 6 .............................. currentZone = #none
+  [278] pushint8 1
+  [280] getlocal 8
+  [282] add
+  [283] setlocal 8
+  [285] endrepeat [ 74]
+  [287] getlocal 5 .............................. <zones>
+  [289] setprop 3940 ............................ pZones = zones
+  [292] ret
+end
+
+on initZones_old_horiz me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 2447 ............................ <me.getNumEntries()>
+  [  7] setlocal 0 .............................. numtiles = me.getNumEntries()
+  [  9] getprop 1227 ............................ <pRoom>
+  [ 12] pusharglist 1 ........................... <pRoom>
+  [ 14] objcall 3898 ............................ <pRoom.getSpriteLoc()>
+  [ 17] setlocal 1 .............................. mapLocation = pRoom.getSpriteLoc()
+  [ 19] getparam 0 .............................. <me>
+  [ 21] pusharglist 1 ........................... <me>
+  [ 23] objcall 819 ............................. <me.getSize()>
+  [ 26] pushint8 1 .............................. <1>
+  [ 28] pusharglist 2 ........................... <me.getSize(), 1>
+  [ 30] objcall 109 ............................. <me.getSize()[1]>
+  [ 32] setlocal 2 .............................. rowWidth = me.getSize()[1]
+  [ 34] pushint8 1 .............................. <1>
+  [ 36] pushint8 1 .............................. <1>
+  [ 38] pusharglist 2 ........................... <1, 1>
+  [ 40] extcall 197 ............................. <point(1, 1)>
+  [ 42] setlocal 3 .............................. tileLoc = point(1, 1)
+  [ 44] getparam 0 .............................. <me>
+  [ 46] getchainedprop 1238 ..................... <me.pTileSet>
+  [ 49] pusharglist 1 ........................... <me.pTileSet>
+  [ 51] objcall 390 ............................. <me.pTileSet.getTileSize()>
+  [ 54] setlocal 4 .............................. tilesize = me.pTileSet.getTileSize()
+  [ 56] pusharglist 0 ........................... <[]>
+  [ 58] pushlist ................................ <[]>
+  [ 59] setlocal 5 .............................. zones = []
+  [ 61] pushsymb 49 ............................. <#none>
+  [ 63] setlocal 6 .............................. currentZone = #none
+  [ 65] pushsymb 3942 ........................... <#thisOne>
+  [ 68] setlocal 7 .............................. whichTile = #thisOne
+  [ 70] pushint8 1 .............................. <1>
+  [ 72] setlocal 8
+  [ 74] getlocal 8
+  [ 76] getlocal 0 .............................. <numtiles>
+  [ 78] lteq
+  [ 79] jmpifz [280] ............................ repeat with i = 1 to numtiles
+  [ 82] getparam 0 .............................. <me>
+  [ 84] getlocal 8 .............................. <i>
+  [ 86] getlocal 3 .............................. <tileLoc>
+  [ 88] pusharglist 3 ........................... <me, i, tileLoc>
+  [ 90] objcall 822 ............................. <me.peekEntryNo(i, tileLoc)>
+  [ 93] setlocal 9 .............................. tileNum = me.peekEntryNo(i, tileLoc)
+  [ 95] getparam 0 .............................. <me>
+  [ 97] getchainedprop 1238 ..................... <me.pTileSet>
+  [100] getlocal 9 .............................. <tileNum>
+  [102] pusharglist 2 ........................... <me.pTileSet, tileNum>
+  [104] objcall 1260 ............................ <me.pTileSet.getTileSymbolByNum(tileNum)>
+  [107] setlocal 10 ............................. nSymbol = me.pTileSet.getTileSymbolByNum(tileNum)
+  [109] getlocal 6 .............................. <currentZone>
+  [111] pushsymb 49 ............................. <#none>
+  [113] eq ...................................... <currentZone = #none>
+  [114] jmpifz [149] ............................ if currentZone = #none then
+  [117] getlocal 3 .............................. <tileLoc>
+  [119] pushint8 1 .............................. <1>
+  [121] pushint8 1 .............................. <1>
+  [123] pusharglist 2 ........................... <1, 1>
+  [125] extcall 197 ............................. <point(1, 1)>
+  [127] sub ..................................... <tileLoc - point(1, 1)>
+  [128] getlocal 4 .............................. <tilesize>
+  [130] mul ..................................... <(tileLoc - point(1, 1)) * tilesize>
+  [131] getlocal 1 .............................. <mapLocation>
+  [133] add ..................................... <((tileLoc - point(1, 1)) * tilesize) + mapLocation>
+  [134] setlocal 11 ............................. startLoc = ((tileLoc - point(1, 1)) * tilesize) + mapLocation
+  [136] getparam 0 .............................. <me>
+  [138] getlocal 10 ............................. <nSymbol>
+  [140] getlocal 11 ............................. <startLoc>
+  [142] pusharglist 3 ........................... <me, nSymbol, startLoc>
+  [144] objcall 3937 ............................ <me.openZone(nSymbol, startLoc)>
+  [147] setlocal 6 .............................. currentZone = me.openZone(nSymbol, startLoc)
+  [149] getlocal 10 ............................. <nSymbol>
+  [151] getlocal 6 .............................. <currentZone>
+  [153] pusharglist 1 ........................... <currentZone>
+  [155] objcall 3943 ............................ <currentZone.getSym()>
+  [158] nteq .................................... <nSymbol <> currentZone.getSym()>
+  [159] jmpifz [230] ............................ if nSymbol <> currentZone.getSym() then
+  [162] getlocal 3 .............................. <tileLoc>
+  [164] pushint8 1 .............................. <1>
+  [166] inv ..................................... <-1>
+  [167] pushzero ................................ <0>
+  [168] pusharglist 2 ........................... <-1, 0>
+  [170] extcall 197 ............................. <point(-1, 0)>
+  [172] add ..................................... <tileLoc + point(-1, 0)>
+  [173] setlocal 12 ............................. lastTileLoc = tileLoc + point(-1, 0)
+  [175] getlocal 12 ............................. <lastTileLoc>
+  [177] getlocal 4 .............................. <tilesize>
+  [179] mul ..................................... <lastTileLoc * tilesize>
+  [180] getlocal 1 .............................. <mapLocation>
+  [182] add ..................................... <(lastTileLoc * tilesize) + mapLocation>
+  [183] setlocal 13 ............................. endLoc = (lastTileLoc * tilesize) + mapLocation
+  [185] getparam 0 .............................. <me>
+  [187] getlocal 6 .............................. <currentZone>
+  [189] getlocal 13 ............................. <endLoc>
+  [191] getlocal 5 .............................. <zones>
+  [193] pusharglistnoret 4 ...................... <me, currentZone, endLoc, zones>
+  [195] objcall 3933 ............................ me.closeZone(currentZone, endLoc, zones)
+  [198] getlocal 3 .............................. <tileLoc>
+  [200] pushint8 1 .............................. <1>
+  [202] pushint8 1 .............................. <1>
+  [204] pusharglist 2 ........................... <1, 1>
+  [206] extcall 197 ............................. <point(1, 1)>
+  [208] sub ..................................... <tileLoc - point(1, 1)>
+  [209] getlocal 4 .............................. <tilesize>
+  [211] mul ..................................... <(tileLoc - point(1, 1)) * tilesize>
+  [212] getlocal 1 .............................. <mapLocation>
+  [214] add ..................................... <((tileLoc - point(1, 1)) * tilesize) + mapLocation>
+  [215] setlocal 11 ............................. startLoc = ((tileLoc - point(1, 1)) * tilesize) + mapLocation
+  [217] getparam 0 .............................. <me>
+  [219] getlocal 10 ............................. <nSymbol>
+  [221] getlocal 11 ............................. <startLoc>
+  [223] pusharglist 3 ........................... <me, nSymbol, startLoc>
+  [225] objcall 3937 ............................ <me.openZone(nSymbol, startLoc)>
+  [228] setlocal 6 .............................. currentZone = me.openZone(nSymbol, startLoc)
+  [230] getlocal 3 .............................. <tileLoc>
+  [232] pushint8 1 .............................. <1>
+  [234] pusharglist 2 ........................... <tileLoc, 1>
+  [236] objcall 109 ............................. <tileLoc[1]>
+  [238] getlocal 2 .............................. <rowWidth>
+  [240] eq ...................................... <tileLoc[1] = rowWidth>
+  [241] jmpifz [271] ............................ if tileLoc[1] = rowWidth then
+  [244] getlocal 3 .............................. <tileLoc>
+  [246] getlocal 4 .............................. <tilesize>
+  [248] mul ..................................... <tileLoc * tilesize>
+  [249] getlocal 1 .............................. <mapLocation>
+  [251] add ..................................... <(tileLoc * tilesize) + mapLocation>
+  [252] setlocal 13 ............................. endLoc = (tileLoc * tilesize) + mapLocation
+  [254] getparam 0 .............................. <me>
+  [256] getlocal 6 .............................. <currentZone>
+  [258] getlocal 13 ............................. <endLoc>
+  [260] getlocal 5 .............................. <zones>
+  [262] pusharglistnoret 4 ...................... <me, currentZone, endLoc, zones>
+  [264] objcall 3933 ............................ me.closeZone(currentZone, endLoc, zones)
+  [267] pushsymb 49 ............................. <#none>
+  [269] setlocal 6 .............................. currentZone = #none
+  [271] pushint8 1
+  [273] getlocal 8
+  [275] add
+  [276] setlocal 8
+  [278] endrepeat [ 74]
+  [280] getlocal 5 .............................. <zones>
+  [282] setprop 3940 ............................ pZones = zones
+  [285] ret
+end
+
+on addZones me, newZones, sym
+  [  0] getparam 1 .............................. <newZones>
+  [  2] peek 0
+  [  4] pusharglist 1
+  [  6] extcall 257
+  [  9] pushint8 1
+  [ 11] peek 0
+  [ 13] peek 2
+  [ 15] lteq
+  [ 16] jmpifz [ 88] ............................ repeat with nZoneRect in newZones
+  [ 19] peek 2
+  [ 21] peek 1
+  [ 23] pusharglist 2
+  [ 25] extcall 109
+  [ 27] setlocal 0
+  [ 29] getglobal 40 ............................ <g>
+  [ 31] getchainedprop 41 ....................... <g.objectMaster>
+  [ 33] pushsymb 3952 ........................... <#objZone>
+  [ 36] pusharglist 2 ........................... <g.objectMaster, #objZone>
+  [ 38] objcall 43 .............................. <g.objectMaster.requestObject(#objZone)>
+  [ 40] setlocal 1 .............................. currentZone = g.objectMaster.requestObject(#objZone)
+  [ 42] getlocal 1 .............................. <currentZone>
+  [ 44] pushsymb 1 .............................. <#init>
+  [ 46] pusharglist 2 ........................... <currentZone, #init>
+  [ 48] objcall 230 ............................. <currentZone.getParams(#init)>
+  [ 50] setlocal 2 .............................. params = currentZone.getParams(#init)
+  [ 52] getlocal 2 .............................. <params>
+  [ 54] getparam 2 .............................. <sym>
+  [ 56] setobjprop 82 ........................... params.sym = sym
+  [ 58] getlocal 2 .............................. <params>
+  [ 60] getlocal 0 .............................. <nZoneRect>
+  [ 62] setobjprop 263 .......................... params.rect = nZoneRect
+  [ 65] getlocal 1 .............................. <currentZone>
+  [ 67] getlocal 2 .............................. <params>
+  [ 69] pusharglistnoret 2 ...................... <currentZone, params>
+  [ 71] objcall 1 ............................... currentZone.init(params)
+  [ 73] getprop 3940 ............................ <pZones>
+  [ 76] getlocal 1 .............................. <currentZone>
+  [ 78] pusharglistnoret 2 ...................... <pZones, currentZone>
+  [ 80] objcall 256 ............................. pZones.append(currentZone)
+  [ 83] pushint8 1
+  [ 85] add
+  [ 86] endrepeat [ 11]
+  [ 88] pop 3
+  [ 90] getparam 0 .............................. <me>
+  [ 92] pusharglistnoret 1 ...................... <me>
+  [ 94] objcall 3936 ............................ me.mergeZones()
+  [ 97] getglobal 40 ............................ <g>
+  [ 99] getchainedprop 386 ...................... <g.collisionMaster>
+  [102] getprop 3940 ............................ <pZones>
+  [105] pusharglistnoret 2 ...................... <g.collisionMaster, pZones>
+  [107] objcall 3953 ............................ g.collisionMaster.setZones(pZones)
+  [110] ret
+end
+
+on finish me
+  [  0] getprop 3940 ............................ <pZones>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] nteq .................................... <pZones <> #none>
+  [  6] jmpifz [ 19] ............................ if pZones <> #none then
+  [  9] pushsymb 3 .............................. <#finish>
+  [ 11] getprop 3940 ............................ <pZones>
+  [ 14] pusharglistnoret 2 ...................... <#finish, pZones>
+  [ 16] extcall 479 ............................. call(#finish, pZones)
+  [ 19] getprop 33 .............................. <ancestor>
+  [ 21] pusharglistnoret 1 ...................... <ancestor>
+  [ 23] objcall 3 ............................... ancestor.finish()
+  [ 25] ret
+end
+
+on activateActors me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 2447 ............................ <me.getNumEntries()>
+  [  7] setlocal 0 .............................. numtiles = me.getNumEntries()
+  [  9] getprop 1227 ............................ <pRoom>
+  [ 12] pusharglist 1 ........................... <pRoom>
+  [ 14] objcall 3898 ............................ <pRoom.getSpriteLoc()>
+  [ 17] setlocal 1 .............................. mapLocation = pRoom.getSpriteLoc()
+  [ 19] pushzero ................................ <0>
+  [ 20] pushzero ................................ <0>
+  [ 21] pusharglist 2 ........................... <0, 0>
+  [ 23] extcall 197 ............................. <point(0, 0)>
+  [ 25] setlocal 2 .............................. tileLoc = point(0, 0)
+  [ 27] getparam 0 .............................. <me>
+  [ 29] getchainedprop 1238 ..................... <me.pTileSet>
+  [ 32] pusharglist 1 ........................... <me.pTileSet>
+  [ 34] objcall 390 ............................. <me.pTileSet.getTileSize()>
+  [ 37] setlocal 3 .............................. tilesize = me.pTileSet.getTileSize()
+  [ 39] pushint8 1 .............................. <1>
+  [ 41] setlocal 4
+  [ 43] getlocal 4
+  [ 45] getlocal 0 .............................. <numtiles>
+  [ 47] lteq
+  [ 48] jmpifz [166] ............................ repeat with i = 1 to numtiles
+  [ 51] getparam 0 .............................. <me>
+  [ 53] getlocal 4 .............................. <i>
+  [ 55] getlocal 2 .............................. <tileLoc>
+  [ 57] pusharglist 3 ........................... <me, i, tileLoc>
+  [ 59] objcall 822 ............................. <me.peekEntryNo(i, tileLoc)>
+  [ 62] setlocal 5 .............................. tileNum = me.peekEntryNo(i, tileLoc)
+  [ 64] getparam 0 .............................. <me>
+  [ 66] getchainedprop 1238 ..................... <me.pTileSet>
+  [ 69] getlocal 5 .............................. <tileNum>
+  [ 71] pusharglist 2 ........................... <me.pTileSet, tileNum>
+  [ 73] objcall 1260 ............................ <me.pTileSet.getTileSymbolByNum(tileNum)>
+  [ 76] setlocal 6 .............................. nSymbol = me.pTileSet.getTileSymbolByNum(tileNum)
+  [ 78] getlocal 6 .............................. <nSymbol>
+  [ 80] pushsymb 49 ............................. <#none>
+  [ 82] nteq .................................... <nSymbol <> #none>
+  [ 83] jmpifz [157] ............................ if nSymbol <> #none then
+  [ 86] getlocal 6 .............................. <nSymbol>
+  [ 88] pushsymb 1478 ........................... <#player>
+  [ 91] eq ...................................... <nSymbol = #player>
+  [ 92] getglobal 40 ............................ <g>
+  [ 94] getchainedprop 228 ...................... <g.actorMaster>
+  [ 96] pusharglist 1 ........................... <g.actorMaster>
+  [ 98] objcall 861 ............................. <g.actorMaster.getPlayer()>
+  [101] pushsymb 49 ............................. <#none>
+  [103] nteq .................................... <g.actorMaster.getPlayer() <> #none>
+  [104] and ..................................... <(nSymbol = #player) and (g.actorMaster.getPlayer() <> #none)>
+  [105] jmpifz [111] ............................ if (nSymbol = #player) and (g.actorMaster.getPlayer() <> #none) then
+  [108] jmp [157] ............................... next repeat
+  [111] getlocal 2 .............................. <tileLoc>
+  [113] getlocal 3 .............................. <tilesize>
+  [115] mul ..................................... <tileLoc * tilesize>
+  [116] getlocal 1 .............................. <mapLocation>
+  [118] add ..................................... <(tileLoc * tilesize) + mapLocation>
+  [119] setlocal 7 .............................. objectLoc = (tileLoc * tilesize) + mapLocation
+  [121] getglobal 40 ............................ <g>
+  [123] getchainedprop 228 ...................... <g.actorMaster>
+  [125] pushsymb 229 ............................ <#newActor>
+  [127] pusharglist 2 ........................... <g.actorMaster, #newActor>
+  [129] objcall 230 ............................. <g.actorMaster.getParams(#newActor)>
+  [131] setlocal 8 .............................. params = g.actorMaster.getParams(#newActor)
+  [133] getlocal 8 .............................. <params>
+  [135] getlocal 6 .............................. <nSymbol>
+  [137] setobjprop 232 .......................... params.typ = nSymbol
+  [139] getlocal 8 .............................. <params>
+  [141] getlocal 7 .............................. <objectLoc>
+  [143] setobjprop 233 .......................... params.startLoc = objectLoc
+  [145] getglobal 40 ............................ <g>
+  [147] getchainedprop 228 ...................... <g.actorMaster>
+  [149] getlocal 8 .............................. <params>
+  [151] pusharglist 2 ........................... <g.actorMaster, params>
+  [153] objcall 229 ............................. <g.actorMaster.newActor(params)>
+  [155] setlocal 9 .............................. nObj = g.actorMaster.newActor(params)
+  [157] pushint8 1
+  [159] getlocal 4
+  [161] add
+  [162] setlocal 4
+  [164] endrepeat [ 43]
+  [166] ret
+end
+
+on activateZones me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 3931 ............................ me.initZones()
+  [  7] getparam 0 .............................. <me>
+  [  9] pusharglistnoret 1 ...................... <me>
+  [ 11] objcall 3938 ............................ me.shiftZones()
+  [ 14] getparam 0 .............................. <me>
+  [ 16] pusharglistnoret 1 ...................... <me>
+  [ 18] objcall 3936 ............................ me.mergeZones()
+  [ 21] getglobal 40 ............................ <g>
+  [ 23] getchainedprop 386 ...................... <g.collisionMaster>
+  [ 26] getparam 0 .............................. <me>
+  [ 28] pusharglist 1 ........................... <me>
+  [ 30] objcall 3935 ............................ <me.getZones()>
+  [ 33] pusharglistnoret 2 ...................... <g.collisionMaster, me.getZones()>
+  [ 35] objcall 3953 ............................ g.collisionMaster.setZones(me.getZones())
+  [ 38] ret
+end
+
+on closeZone me, currentZone, endLoc, zones
+  [  0] getparam 1 .............................. <currentZone>
+  [  2] pusharglist 1 ........................... <currentZone>
+  [  4] objcall 3943 ............................ <currentZone.getSym()>
+  [  7] pushsymb 49 ............................. <#none>
+  [  9] eq ...................................... <currentZone.getSym() = #none>
+  [ 10] jmpifz [ 17] ............................ if currentZone.getSym() = #none then
+  [ 13] pusharglistnoret 0 ...................... <>
+  [ 15] extcall 35 .............................. return 
+  [ 17] getparam 1 .............................. <currentZone>
+  [ 19] getparam 2 .............................. <endLoc>
+  [ 21] pusharglistnoret 2 ...................... <currentZone, endLoc>
+  [ 23] objcall 3957 ............................ currentZone.setEndLoc(endLoc)
+  [ 26] getparam 3 .............................. <zones>
+  [ 28] getparam 1 .............................. <currentZone>
+  [ 30] pusharglistnoret 2 ...................... <zones, currentZone>
+  [ 32] objcall 256 ............................. zones.append(currentZone)
+  [ 35] ret
+end
+
+on displayZones me
+  [  0] pushsymb 1665 ........................... <#display>
+  [  3] getprop 3940 ............................ <pZones>
+  [  6] pusharglistnoret 2 ...................... <#display, pZones>
+  [  8] extcall 479 ............................. call(#display, pZones)
+  [ 11] ret
+end
+
+on finishZones me
+  [  0] pushsymb 3 .............................. <#finish>
+  [  2] getprop 3940 ............................ <pZones>
+  [  5] pusharglistnoret 2 ...................... <#finish, pZones>
+  [  7] extcall 479 ............................. call(#finish, pZones)
+  [ 10] pusharglist 0 ........................... <[]>
+  [ 12] pushlist ................................ <[]>
+  [ 13] setprop 3940 ............................ pZones = []
+  [ 16] ret
+end
+
+on getHostile me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 3595 ........................... <#exitArrows>
+  [  5] pusharglist 2 ........................... <me, #exitArrows>
+  [  7] objcall 824 ............................. <me.getMiniMapStatus(#exitArrows)>
+  [ 10] setlocal 0 .............................. miniMapStatus = me.getMiniMapStatus(#exitArrows)
+  [ 12] getlocal 0 .............................. <miniMapStatus>
+  [ 14] pushsymb 803 ............................ <#inf>
+  [ 17] eq ...................................... <miniMapStatus = #inf>
+  [ 18] jmpifz [ 30] ............................ if miniMapStatus = #inf then / else
+  [ 21] pushint8 1 .............................. <1>
+  [ 23] pusharglistnoret 1 ...................... <1>
+  [ 25] extcall 35 .............................. return 1
+  [ 27] jmp [ 35]
+  [ 30] pushzero ................................ <0>
+  [ 31] pusharglistnoret 1 ...................... <0>
+  [ 33] extcall 35 .............................. return 0
+  [ 35] ret
+end
+
+on getMiniMapStatus me, forWhat
+  [  0] getprop 3939 ............................ <pType>
+  [  3] pushsymb 3581 ........................... <#objects>
+  [  6] eq ...................................... <pType = #objects>
+  [  7] jmpifz [ 23] ............................ if pType = #objects then
+  [ 10] getprop 33 .............................. <ancestor>
+  [ 12] getparam 1 .............................. <forWhat>
+  [ 14] pusharglist 2 ........................... <ancestor, forWhat>
+  [ 16] objcall 824 ............................. <ancestor.getMiniMapStatus(forWhat)>
+  [ 19] pusharglistnoret 1 ...................... <ancestor.getMiniMapStatus(forWhat)>
+  [ 21] extcall 35 .............................. return ancestor.getMiniMapStatus(forWhat)
+  [ 23] ret
+end
+
+on getType me
+  [  0] getprop 3939 ............................ <pType>
+  [  3] pusharglistnoret 1 ...................... <pType>
+  [  5] extcall 35 .............................. return pType
+  [  7] ret
+end
+
+on getZones me
+  [  0] getprop 3940 ............................ <pZones>
+  [  3] pusharglist 1 ........................... <pZones>
+  [  5] objcall 175 ............................. <pZones.duplicate()>
+  [  7] pusharglistnoret 1 ...................... <pZones.duplicate()>
+  [  9] extcall 35 .............................. return pZones.duplicate()
+  [ 11] ret
+end
+
+on mergeZones me
+  [  0] getprop 3940 ............................ <pZones>
+  [  3] peek 0
+  [  5] pusharglist 1
+  [  7] extcall 257
+  [ 10] pushint8 1
+  [ 12] peek 0
+  [ 14] peek 2
+  [ 16] lteq
+  [ 17] jmpifz [117] ............................ repeat with zone in pZones
+  [ 20] peek 2
+  [ 22] peek 1
+  [ 24] pusharglist 2
+  [ 26] extcall 109
+  [ 28] setlocal 0
+  [ 30] pusharglistnoret 0 ...................... <>
+  [ 32] extcall 185 ............................. nothing()
+  [ 34] getlocal 0 .............................. <zone>
+  [ 36] pusharglist 1 ........................... <zone>
+  [ 38] objcall 3958 ............................ <zone.getMarkedForDeletion()>
+  [ 41] pushzero ................................ <0>
+  [ 42] eq ...................................... <zone.getMarkedForDeletion() = 0>
+  [ 43] jmpifz [112] ............................ if zone.getMarkedForDeletion() = 0 then
+  [ 46] getprop 3940 ............................ <pZones>
+  [ 49] peek 0
+  [ 51] pusharglist 1
+  [ 53] extcall 257
+  [ 56] pushint8 1
+  [ 58] peek 0
+  [ 60] peek 2
+  [ 62] lteq
+  [ 63] jmpifz [110] ............................ repeat with mergeZone in pZones
+  [ 66] peek 2
+  [ 68] peek 1
+  [ 70] pusharglist 2
+  [ 72] extcall 109
+  [ 74] setlocal 1
+  [ 76] getlocal 0 .............................. <zone>
+  [ 78] getlocal 1 .............................. <mergeZone>
+  [ 80] nteq .................................... <zone <> mergeZone>
+  [ 81] jmpifz [105] ............................ if zone <> mergeZone then
+  [ 84] getlocal 1 .............................. <mergeZone>
+  [ 86] pusharglist 1 ........................... <mergeZone>
+  [ 88] objcall 3958 ............................ <mergeZone.getMarkedForDeletion()>
+  [ 91] pushzero ................................ <0>
+  [ 92] eq ...................................... <mergeZone.getMarkedForDeletion() = 0>
+  [ 93] jmpifz [105] ............................ if mergeZone.getMarkedForDeletion() = 0 then
+  [ 96] getlocal 0 .............................. <zone>
+  [ 98] getlocal 1 .............................. <mergeZone>
+  [100] pusharglistnoret 2 ...................... <zone, mergeZone>
+  [102] objcall 3959 ............................ zone.attemptMerge(mergeZone)
+  [105] pushint8 1
+  [107] add
+  [108] endrepeat [ 58]
+  [110] pop 3
+  [112] pushint8 1
+  [114] add
+  [115] endrepeat [ 12]
+  [117] pop 3
+  [119] getprop 3940 ............................ <pZones>
+  [122] getobjprop 257 .......................... <pZones.count>
+  [125] setlocal 2
+  [127] getlocal 2
+  [129] pushint8 1 .............................. <1>
+  [131] gteq
+  [132] jmpifz [181] ............................ repeat with i = pZones.count down to 1
+  [135] getprop 3940 ............................ <pZones>
+  [138] getlocal 2 .............................. <i>
+  [140] pusharglist 2 ........................... <pZones, i>
+  [142] objcall 109 ............................. <pZones[i]>
+  [144] setlocal 3 .............................. nZone = pZones[i]
+  [146] getlocal 3 .............................. <nZone>
+  [148] pusharglist 1 ........................... <nZone>
+  [150] objcall 3958 ............................ <nZone.getMarkedForDeletion()>
+  [153] jmpifz [172] ............................ if nZone.getMarkedForDeletion() then
+  [156] getlocal 3 .............................. <nZone>
+  [158] pusharglistnoret 1 ...................... <nZone>
+  [160] objcall 3 ............................... nZone.finish()
+  [162] getprop 3940 ............................ <pZones>
+  [165] getlocal 2 .............................. <i>
+  [167] pusharglistnoret 2 ...................... <pZones, i>
+  [169] objcall 1087 ............................ pZones.deleteAt(i)
+  [172] pushint8 -1
+  [174] getlocal 2
+  [176] add
+  [177] setlocal 2
+  [179] endrepeat [127]
+  [181] ret
+end
+
+on openZone me, sym, startLoc
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 41 ....................... <g.objectMaster>
+  [  4] pushsymb 3952 ........................... <#objZone>
+  [  7] pusharglist 2 ........................... <g.objectMaster, #objZone>
+  [  9] objcall 43 .............................. <g.objectMaster.requestObject(#objZone)>
+  [ 11] setlocal 0 .............................. currentZone = g.objectMaster.requestObject(#objZone)
+  [ 13] getlocal 0 .............................. <currentZone>
+  [ 15] pushsymb 1 .............................. <#init>
+  [ 17] pusharglist 2 ........................... <currentZone, #init>
+  [ 19] objcall 230 ............................. <currentZone.getParams(#init)>
+  [ 21] setlocal 1 .............................. params = currentZone.getParams(#init)
+  [ 23] getlocal 1 .............................. <params>
+  [ 25] getparam 1 .............................. <sym>
+  [ 27] setobjprop 82 ........................... params.sym = sym
+  [ 29] getlocal 1 .............................. <params>
+  [ 31] getparam 2 .............................. <startLoc>
+  [ 33] setobjprop 233 .......................... params.startLoc = startLoc
+  [ 35] getlocal 0 .............................. <currentZone>
+  [ 37] getlocal 1 .............................. <params>
+  [ 39] pusharglistnoret 2 ...................... <currentZone, params>
+  [ 41] objcall 1 ............................... currentZone.init(params)
+  [ 43] getlocal 0 .............................. <currentZone>
+  [ 45] pusharglistnoret 1 ...................... <currentZone>
+  [ 47] extcall 35 .............................. return currentZone
+  [ 49] ret
+end
+
+on saveLayer me
+  [  0] pusharglist 0 ........................... <[:]>
+  [  2] pushproplist ............................ <[:]>
+  [  3] setlocal 0 .............................. myProps = [:]
+  [  5] getlocal 0 .............................. <myProps>
+  [  7] pushsymb 44 ............................. <#name>
+  [  9] getprop 3939 ............................ <pType>
+  [ 12] pusharglistnoret 3 ...................... <myProps, #name, pType>
+  [ 14] objcall 48 .............................. myProps[#name] = pType
+  [ 16] getlocal 0 .............................. <myProps>
+  [ 18] pushsymb 970 ............................ <#map>
+  [ 21] getparam 0 .............................. <me>
+  [ 23] pusharglist 1 ........................... <me>
+  [ 25] objcall 400 ............................. <me.getMap()>
+  [ 28] pusharglistnoret 3 ...................... <myProps, #map, me.getMap()>
+  [ 30] objcall 48 .............................. myProps[#map] = me.getMap()
+  [ 32] getlocal 0 .............................. <myProps>
+  [ 34] pusharglistnoret 1 ...................... <myProps>
+  [ 36] extcall 35 .............................. return myProps
+  [ 38] ret
+end
+
+on shiftZones me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 1238 ..................... <me.pTileSet>
+  [  5] pusharglist 1 ........................... <me.pTileSet>
+  [  7] objcall 390 ............................. <me.pTileSet.getTileSize()>
+  [ 10] setlocal 0 .............................. tilesize = me.pTileSet.getTileSize()
+  [ 12] getlocal 0 .............................. <tilesize>
+  [ 14] pushint8 1 .............................. <1>
+  [ 16] pusharglist 2 ........................... <tilesize, 1>
+  [ 18] objcall 109 ............................. <tilesize[1]>
+  [ 20] pushint8 1 .............................. <1>
+  [ 22] inv ..................................... <-1>
+  [ 23] mul ..................................... <tilesize[1] * -1>
+  [ 24] setlocal 1 .............................. shiftAmount = tilesize[1] * -1
+  [ 26] pushzero ................................ <0>
+  [ 27] getlocal 1 .............................. <shiftAmount>
+  [ 29] pushzero ................................ <0>
+  [ 30] getlocal 1 .............................. <shiftAmount>
+  [ 32] pusharglist 4 ........................... <0, shiftAmount, 0, shiftAmount>
+  [ 34] extcall 263 ............................. <rect(0, shiftAmount, 0, shiftAmount)>
+  [ 37] setlocal 2 .............................. shiftRect = rect(0, shiftAmount, 0, shiftAmount)
+  [ 39] getprop 3940 ............................ <pZones>
+  [ 42] peek 0
+  [ 44] pusharglist 1
+  [ 46] extcall 257
+  [ 49] pushint8 1
+  [ 51] peek 0
+  [ 53] peek 2
+  [ 55] lteq
+  [ 56] jmpifz [112] ............................ repeat with zone in pZones
+  [ 59] peek 2
+  [ 61] peek 1
+  [ 63] pusharglist 2
+  [ 65] extcall 109
+  [ 67] setlocal 3
+  [ 69] getlocal 3 .............................. <zone>
+  [ 71] pusharglist 1 ........................... <zone>
+  [ 73] objcall 3943 ............................ <zone.getSym()>
+  [ 76] pushsymb 2334 ........................... <#ceiling>
+  [ 79] eq ...................................... <zone.getSym() = #ceiling>
+  [ 80] jmpifz [107] ............................ if zone.getSym() = #ceiling then
+  [ 83] getlocal 3 .............................. <zone>
+  [ 85] pusharglist 1 ........................... <zone>
+  [ 87] objcall 113 ............................. <zone.getRect()>
+  [ 89] setlocal 4 .............................. zoneRect = zone.getRect()
+  [ 91] getlocal 4 .............................. <zoneRect>
+  [ 93] getlocal 2 .............................. <shiftRect>
+  [ 95] add ..................................... <zoneRect + shiftRect>
+  [ 96] setlocal 5 .............................. newRect = zoneRect + shiftRect
+  [ 98] getlocal 3 .............................. <zone>
+  [100] getlocal 5 .............................. <newRect>
+  [102] pusharglistnoret 2 ...................... <zone, newRect>
+  [104] objcall 1344 ............................ zone.setRect(newRect)
+  [107] pushint8 1
+  [109] add
+  [110] endrepeat [ 51]
+  [112] pop 3
+  [114] ret
+end
+
+on startObjects me
+  [  0] ret
+end

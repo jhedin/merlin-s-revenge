@@ -1,0 +1,153 @@
+[#name: "objChatter", #scriptType: #parent, #type: #script]
+global g
+
+property ancestor
+property pPerformed
+property pScriptToPerform
+property pTalkingMember
+property pTalkOnlyOnNavMode
+property pWaitingMember
+
+on new me
+  ancestor = new(script "objPowerUp")
+  
+  i = me.modifyParams(#init)
+  
+  i.flags.append(#player)
+  
+  i[#scriptToPerform] = #none
+  i[#talkingMember] = #none
+  i[#talkOnlyOnNavMode] = true
+  
+  me.addModule("modProp")
+  me.addModule("modThespian")
+  
+  return me
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  pScriptToPerform = params.scriptToPerform
+  pTalkingMember = params.talkingMember
+  pTalkOnlyOnNavMode = params.talkOnlyOnNavMode
+  pWaitingMember = params.member
+  
+  pPerformed = false
+end
+
+on checkDead me
+  return false
+end
+
+on collected me
+  -- temporarily disabled inGame Scripts
+  --return --removed disable
+  
+  if pPerformed = false then  
+    me.goMode(#talking)
+    
+    if pScriptToPerform <> #none then
+      g.cutSceneMaster.playCutScene(pScriptToPerform)
+    end if
+    
+    pPerformed = true
+  else
+    if me.pMode = #talking then
+      me.goMode(#finishedTalking)
+    end if
+    
+  end if
+end
+
+on getEnergy me
+  return 10
+end
+
+on getMaxEnergy me
+  return 10
+end
+
+on getTalkOnlyOnNavMode me
+  return pTalkOnlyOnNavMode
+end
+
+on goMode me, newMode
+  
+  case newMode of
+    #talking:
+      if pTalkingMember <> #none then
+        me.setMember(pTalkingMember)
+      end if
+      
+    #finishedTalking:
+      me.setMember(pWaitingMember)
+      
+  end case
+  
+  ancestor.goMode(newMode)
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

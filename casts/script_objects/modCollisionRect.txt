@@ -1,0 +1,195 @@
+[#name: "modCollisionRect", #scriptType: #parent, #type: #script]
+global g
+global gGameView
+
+property ancestor
+property pBox                       -- a box for displaying the collisionRect (for debugging purposes)
+property pCollisionRect             -- the collisionRect relative to the regPoint (the collision rect in absolute terms must be calculated each frame)
+property pCollisionRectClipTop      -- the amount to shave off the top (gives sideOn characters hair softness)
+property pCollisionRectMax          -- the maximum boundary of the collisionRect (the max values are usually related to the tilesize)
+property pCollisionRectType         -- whether the shape is #fixed (taken from the frame of the first rect) or #dynamic (taken from the current frame)
+
+on new me
+  ancestor = new(script"modModule")
+  
+  return me
+end
+
+on addModParams me
+  
+--  case gGameView of
+--    #sideOn:
+--      clipTop = 4
+--      
+--    #topDown:
+      clipTop = 0
+--  end case
+  
+  i = me.modifyParams(#init)
+  
+  i[#collisionRect] = #none
+  i[#collisionRectClipTop] = clipTop
+  -- can be #fixed, dynamic
+  -- dynamic means the collisionRect is re-calculated from the current image each time
+  i[#collisionRectType] = #fixed 
+  
+  ancestor.addModParams()
+end
+
+on init me, params
+  pBox = #none
+  
+  if (ilk(params.collisionRect, #rect)) then
+    pCollisionRect = params.collisionRect.duplicate()
+  else
+    pCollisionRect = params.collisionRect
+  end if
+  pCollisionRectClipTop = params.collisionRectClipTop
+  pCollisionRectMax = rect(-16,-16,16,16)
+  pCollisionRectType = params.collisionRectType
+  
+  ancestor.init(params)
+end
+
+on initRectFromCurrentImage me
+  currentMember = me.big.getAnimMember()
+  
+  currentRegPoint = currentMember.regPoint
+  currentHeight = currentMember.height
+  currentWidth = currentMember.width
+  
+  collisionRect = rect(0,0,0,0)
+  
+  collisionRect[1] = currentRegPoint[1] * -1
+  collisionRect[2] = currentRegPoint[2] * -1
+  
+  collisionRect[3] = currentWidth - currentRegPoint[1]
+  collisionRect[4] = currentHeight - currentRegPoint[2]
+  
+  -- constrain to max limits  
+  --- 1 and 2 are expected to be negative values
+  collisionRect[1] = max(collisionRect[1], pCollisionRectMax[1])
+  collisionRect[2] = max(collisionRect[2], pCollisionRectMax[2])
+  collisionRect[3] = min(collisionRect[3], pCollisionRectMax[3])
+  collisionRect[4] = min(collisionRect[4], pCollisionRectMax[4])
+  
+  -- shave off a pixel from each edge to 
+  --- allow a bit of "softness"
+  --- allow platform chars to walk on ground
+  --- avoid collision errors on chars that are 32 pixels wide
+  collisionRect = collisionRect.inflate(-1, -1)
+  
+  
+  pCollisionRect = collisionRect
+end
+
+on finish me
+  me.finishBox()
+  ancestor.finish()
+end
+
+on finishBox me
+  if pBox <> #none then
+    pBox.finish()
+  end if
+end
+
+on calcCollisionRect me, theLoc
+  
+  
+  if pCollisionRect = #none or pCollisionRectType = #dynamic then
+    me.initRectFromCurrentImage()
+  end if
+  
+  newRect = pCollisionRect + rect(theLoc, theLoc)
+  
+  newRect[2] = newRect[2] + pCollisionRectClipTop
+  
+  info = [#edgeOffset: pCollisionRect.duplicate(), rect: newRect]
+  
+  --    me.displayRect(newRect)
+  
+  return info
+end
+
+on displayRect me, theRect
+  me.finishBox()
+  
+  pBox = g.objectMaster.requestObject(#objBox)
+  
+  params = pBox.getParams(#init)
+  params.color = rgb(0,255,0)
+  params.initialRect = theRect.duplicate()
+  
+  pBox.init(params)
+end
+
+on getCollisionRect me
+  rectInfo = me.calcCollisionRect(me.getLoc())
+  return rectInfo.rect
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

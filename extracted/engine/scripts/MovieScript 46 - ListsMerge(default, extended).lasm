@@ -1,0 +1,35 @@
+on ListsMerge propListDefault, propListExtended
+  [  0] getparam 1 .............................. <propListExtended>
+  [  2] getobjprop 17 ........................... <propListExtended.count>
+  [  4] setlocal 0 .............................. countExtended = propListExtended.count
+  [  6] pushint8 1 .............................. <1>
+  [  8] setlocal 1
+  [ 10] getlocal 1
+  [ 12] getlocal 0 .............................. <countExtended>
+  [ 14] lteq
+  [ 15] jmpifz [ 57] ............................ repeat with i = 1 to countExtended
+  [ 18] getparam 1 .............................. <propListExtended>
+  [ 20] getlocal 1 .............................. <i>
+  [ 22] pusharglist 2 ........................... <propListExtended, i>
+  [ 24] objcall 237 ............................. <propListExtended.getPropAt(i)>
+  [ 26] setlocal 2 .............................. nProp = propListExtended.getPropAt(i)
+  [ 28] getparam 1 .............................. <propListExtended>
+  [ 30] getlocal 1 .............................. <i>
+  [ 32] pusharglist 2 ........................... <propListExtended, i>
+  [ 34] objcall 18 .............................. <propListExtended[i]>
+  [ 36] setlocal 3 .............................. nValue = propListExtended[i]
+  [ 38] getparam 0 .............................. <propListDefault>
+  [ 40] getlocal 2 .............................. <nProp>
+  [ 42] getlocal 3 .............................. <nValue>
+  [ 44] pusharglistnoret 3 ...................... <propListDefault, nProp, nValue>
+  [ 46] objcall 81 .............................. propListDefault[nProp] = nValue
+  [ 48] pushint8 1
+  [ 50] getlocal 1
+  [ 52] add
+  [ 53] setlocal 1
+  [ 55] endrepeat [ 10]
+  [ 57] getparam 0 .............................. <propListDefault>
+  [ 59] pusharglistnoret 1 ...................... <propListDefault>
+  [ 61] extcall 3 ............................... return propListDefault
+  [ 63] ret
+end

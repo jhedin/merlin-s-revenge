@@ -1,0 +1,114 @@
+[#name: "objMoveableEnergyBar", #scriptType: #parent, #type: #script]
+-- follows a target object around, displaying it's energy (health)
+
+global g
+
+property ancestor
+property pEnergyBar       -- the energy bar that sits on the surrounding rect
+property pSurroundHeight  -- the height of the surrounding rect
+property pTarget          -- the object whose energy to display
+
+on new me
+  ancestor = new(script "objSpriteMember")
+  
+  i = me.modifyParams(#init)
+  
+  i[#surroundHeight] = 4
+  
+  return me
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  pEnergyBar = #none
+  pSurroundHeight = params.surroundHeight
+  pTarget = #none
+end
+
+on finish me
+  me.finishEnergyBar()
+  ancestor.finish()
+end
+
+on finishEnergyBar me
+  if pEnergyBar <> #none then
+    pEnergyBar.finish()
+    pEnergyBar = #none
+    pTarget = #none
+  end if
+end
+
+on calcSurroundRect me
+  -- old method
+  -- spriteRect = pTarget.getSpriteRect().duplicate()
+  -- targetRect = pTarget.calcCollisionRect(pTarget.getLoc()).rect
+  
+  energyRect = pTarget.calcEnergyRectBottom()
+  surroundRectBottom = energyRect.bottom + pSurroundHeight
+  surroundRect = rect(energyRect.left, energyRect.bottom, energyRect.right, surroundRectBottom)
+  
+  return surroundRect
+end
+
+on displayTargetEnergy me
+  surroundRect = me.calcSurroundRect()
+  me.setSpriteRect(surroundRect)
+  me.updateEnergyBar(surroundRect)
+end
+
+on ensureEnergyBar me
+  if pEnergyBar = #none then
+    pEnergyBar = g.objectMaster.requestObject(#objEnergyBar)
+    params = pEnergyBar.getParams(#init)
+    params.barBorder = 1
+    --params.layer = me.getLayer()
+    params.surroundSpr = me.getSprite()
+    pEnergyBar.init(params)
+  end if
+end
+
+on clearTarget me
+  me.targetDead()
+end
+
+on setTarget me, theObj
+  pTarget = theObj
+  
+  me.ensureSpriteAndMember()
+  me.ensureEnergyBar()
+  
+  targetTeamColour = g.teamMaster.getTeamColour(pTarget.getTeam())
+  pEnergyBar.reset(pTarget.getEnergy(), pTarget.getMaxEnergy(), targetTeamColour)
+end
+
+on targetDead me
+  pTarget = #none
+  me.finishEnergyBar()  
+  me.offScreen()
+end
+
+on update me
+  if pTarget <> #none then
+    if pTarget.checkDead() = false and pTarget.getDead() = false then
+      me.displayTargetEnergy()
+    else
+      me.targetDead()
+    end if
+  end if
+end
+
+on updateEnergyBar me, surroundRect
+  -- causes energy bar to update surround rect
+  pEnergyBar.setSurroundRect(surroundRect)
+  
+  -- redraw bar
+  pEnergyBar.updateBarOnSurround()
+
+  -- update energy (modifies the redraw)
+  pEnergyBar.updateEnergy(pTarget.getEnergy())
+  
+end
+
+
+

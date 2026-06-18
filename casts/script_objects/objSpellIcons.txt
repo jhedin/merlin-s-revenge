@@ -1,0 +1,141 @@
+[#name: "objSpellIcons", #scriptType: #parent, #type: #script]
+-- displays the little icons on multistage spells
+
+property ancestor
+property pSpellToAttachTo -- the spell upon which we are displaying icons
+property pSpellStrip      -- the symbol of the spell's animstrip (usually the same as the name of the spell eg. #armySummon)
+property pUnitAvailableBlend  -- the blend setting for the icon when the unit it refers to is available
+property pUnitNotAvailableBlend -- the blend setting for the icon when the unit it refers to is unavailable
+
+on new me
+  ancestor = new(script "objAutoUpdate")
+  
+  i = me.modifyParams(#init)
+  
+  i[#spellStrip] = #none
+  i[#spellToAttachTo] = #none
+  
+  me.addModule("modAnimSet")
+  me.addModule("modFader")
+  me.addModule("modSprite")
+  
+  return me
+end
+
+on addModParams me
+  ancestor.addModParams()
+  
+  i = me.modifyParams(#init)
+  
+  i.character = #spellIcons
+  i.name = "spellIcons"
+end 
+
+on init me, params
+  ancestor.init(params)
+  
+  pSpellToAttachTo = params.spellToAttachTo
+  pSpellStrip = params.spellStrip
+  pUnitAvailableBlend = 100
+  pUnitNotAvailableBlend = 50
+  
+  me.calcStart()
+  me.pauseAnim()
+  
+  me.setLocZ(pSpellToAttachTo.getLocZ() +1)
+end
+
+on displayIconNumber me, theNum, available
+  me.gotoAnimFrame(theNum)
+  me.frameAdvance()
+  
+  if available then
+    me.setBlend(pUnitAvailableBlend)
+  else
+    me.setBlend(pUnitNotAvailableBlend)
+  end if
+end
+
+on explode me
+  -- start to fade
+  me.startQuickFade()
+end
+
+on finishConditionMet me
+  return false
+end
+
+on getAnimSym me, theSym
+  return pSpellStrip
+end
+
+on update me
+  ancestor.update()
+  
+  spellRect = pSpellToAttachTo.getRect()
+  me.big.setRect(spellRect)
+  spellLoc = pSpellToAttachTo.getLoc()
+  me.big.setLoc(spellLoc)
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

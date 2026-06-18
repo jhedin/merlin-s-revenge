@@ -1,0 +1,592 @@
+property pDefaultVolume, pNextChan, pMixMaster, pSoundList, pSoundsAdded, pActive, pEnable, pSprite, pMyLoc, pAutoSound, pCast, pMemOn, pMemOff, pLastMusic, pMusicChannel, pSFXCast, pSpriteOn
+global g
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 3 ............................... return me
+  [  6] ret
+end
+
+on init me
+  [  0] pushint16 150 ........................... <150>
+  [  3] setprop 844 ............................. pDefaultVolume = 150
+  [  6] pushint8 1 .............................. <1>
+  [  8] setprop 845 ............................. pAutoSound = 1
+  [ 11] pushsymb 103 ............................ <#none>
+  [ 13] setprop 846 ............................. pLastMusic = #none
+  [ 16] pushint8 1 .............................. <1>
+  [ 18] setprop 847 ............................. pMusicChannel = 1
+  [ 21] pushint8 2 .............................. <2>
+  [ 23] setprop 848 ............................. pNextChan = 2
+  [ 26] pushcons 0 .............................. <"sfx">
+  [ 28] setprop 849 ............................. pSFXCast = "sfx"
+  [ 31] pushzero ................................ <0>
+  [ 32] setprop 850 ............................. pSpriteOn = 0
+  [ 35] getprop 849 ............................. <pSFXCast>
+  [ 38] pushint8 2 .............................. <2>
+  [ 40] get 8 ................................... <the number of castMembers of castLib pSFXCast>
+  [ 42] setlocal 0 .............................. numsounds = the number of castMembers of castLib pSFXCast
+  [ 44] getprop 850 ............................. <pSpriteOn>
+  [ 47] jmpifz [ 84] ............................ if pSpriteOn then
+  [ 50] pushcons 1 .............................. <"soundImages">
+  [ 52] pusharglist 1 ........................... <"soundImages">
+  [ 54] extcall 852 ............................. <cast("soundImages")>
+  [ 57] setprop 851 ............................. pCast = cast("soundImages")
+  [ 60] pushcons 2 .............................. <"soundOn">
+  [ 62] getprop 851 ............................. <pCast>
+  [ 65] pusharglist 2 ........................... <"soundOn", pCast>
+  [ 67] extcall 193 ............................. <member("soundOn", pCast)>
+  [ 69] setprop 853 ............................. pMemOn = member("soundOn", pCast)
+  [ 72] pushcons 3 .............................. <"soundOff">
+  [ 74] getprop 851 ............................. <pCast>
+  [ 77] pusharglist 2 ........................... <"soundOff", pCast>
+  [ 79] extcall 193 ............................. <member("soundOff", pCast)>
+  [ 81] setprop 854 ............................. pMemOff = member("soundOff", pCast)
+  [ 84] pushint8 1 .............................. <1>
+  [ 86] setlocal 1
+  [ 88] getlocal 1
+  [ 90] getlocal 0 .............................. <numsounds>
+  [ 92] lteq
+  [ 93] jmpifz [149] ............................ repeat with so = 1 to numsounds
+  [ 96] getlocal 1 .............................. <so>
+  [ 98] getprop 849 ............................. <pSFXCast>
+  [101] pusharglist 2 ........................... <so, pSFXCast>
+  [103] extcall 193 ............................. <member(so, pSFXCast)>
+  [105] setlocal 2 .............................. mem = member(so, pSFXCast)
+  [107] getlocal 2 .............................. <mem>
+  [109] getobjprop 158 .......................... <mem.type>
+  [111] pushsymb 855 ............................ <#swa>
+  [114] eq ...................................... <mem.type = #swa>
+  [115] jmpifz [140] ............................ if mem.type = #swa then
+  [118] getlocal 2 .............................. <mem>
+  [120] getlocal 2 .............................. <mem>
+  [122] getobjprop 856 .......................... <mem.duration>
+  [125] pusharglist 1 ........................... <mem.duration>
+  [127] extcall 351 ............................. <integer(mem.duration)>
+  [130] setobjprop 857 .......................... mem.preloadTime = integer(mem.duration)
+  [133] getlocal 2 .............................. <mem>
+  [135] pusharglistnoret 1 ...................... <mem>
+  [137] objcall 858 ............................. mem.preloadBuffer()
+  [140] pushint8 1
+  [142] getlocal 1
+  [144] add
+  [145] setlocal 1
+  [147] endrepeat [ 88]
+  [149] pusharglist 0 ........................... <[:]>
+  [151] pushproplist ............................ <[:]>
+  [152] setprop 859 ............................. pSoundList = [:]
+  [155] pushint8 1 .............................. <1>
+  [157] setlocal 1
+  [159] getlocal 1
+  [161] getlocal 0 .............................. <numsounds>
+  [163] lteq
+  [164] jmpifz [310] ............................ repeat with so = 1 to numsounds
+  [167] getlocal 1 .............................. <so>
+  [169] getprop 849 ............................. <pSFXCast>
+  [172] pusharglist 2 ........................... <so, pSFXCast>
+  [174] extcall 193 ............................. <member(so, pSFXCast)>
+  [176] setlocal 2 .............................. mem = member(so, pSFXCast)
+  [178] getlocal 2 .............................. <mem>
+  [180] getobjprop 158 .......................... <mem.type>
+  [182] pushsymb 855 ............................ <#swa>
+  [185] eq ...................................... <mem.type = #swa>
+  [186] jmpifz [301] ............................ if mem.type = #swa then
+  [189] getlocal 2 .............................. <mem>
+  [191] getobjprop 138 .......................... <mem.name>
+  [193] setlocal 3 .............................. memname = mem.name
+  [195] getlocal 3 .............................. <memname>
+  [197] setlocal 4 .............................. typname = memname
+  [199] pushint8 4 .............................. <4>
+  [201] pushchunkvarref 5 ....................... <typname>
+  [203] pushsymb 439 ............................ <#char>
+  [206] pushint8 1 .............................. <1>
+  [208] pusharglist 3 ........................... <typname, #char, 1>
+  [210] objcall 363 ............................. <typname.char[1]>
+  [213] pusharglistnoret 1 ...................... <typname.char[1]>
+  [215] objcall 860 ............................. delete typname.char[1]
+  [218] getlocal 4 .............................. <typname>
+  [220] getobjprop 442 .......................... <typname.symbol>
+  [223] setlocal 5 .............................. typsym = typname.symbol
+  [225] getprop 859 ............................. <pSoundList>
+  [228] getlocal 5 .............................. <typsym>
+  [230] pusharglist 2 ........................... <pSoundList, typsym>
+  [232] objcall 301 ............................. <pSoundList[typsym]>
+  [235] pushsymb 494 ............................ <#list>
+  [238] pusharglist 2 ........................... <pSoundList[typsym], #list>
+  [240] extcall 350 ............................. <ilk(pSoundList[typsym], #list)>
+  [243] not ..................................... <not ilk(pSoundList[typsym], #list)>
+  [244] jmpifz [284] ............................ if not ilk(pSoundList[typsym], #list) then
+  [247] getlocal 4 .............................. <typname>
+  [249] pushcons 4 .............................. <"count">
+  [251] joinstr ................................. <typname & "count">
+  [252] setlocal 6 .............................. countname = typname & "count"
+  [254] getlocal 6 .............................. <countname>
+  [256] getobjprop 442 .......................... <countname.symbol>
+  [259] setlocal 7 .............................. countsym = countname.symbol
+  [261] getprop 859 ............................. <pSoundList>
+  [264] getlocal 5 .............................. <typsym>
+  [266] pusharglist 0 ........................... <[]>
+  [268] pushlist ................................ <[]>
+  [269] pusharglistnoret 3 ...................... <pSoundList, typsym, []>
+  [271] objcall 54 .............................. pSoundList[typsym] = []
+  [273] getprop 859 ............................. <pSoundList>
+  [276] getlocal 7 .............................. <countsym>
+  [278] pushint8 1 .............................. <1>
+  [280] pusharglistnoret 3 ...................... <pSoundList, countsym, 1>
+  [282] objcall 54 .............................. pSoundList[countsym] = 1
+  [284] getprop 859 ............................. <pSoundList>
+  [287] getlocal 5 .............................. <typsym>
+  [289] pusharglist 2 ........................... <pSoundList, typsym>
+  [291] objcall 301 ............................. <pSoundList[typsym]>
+  [294] getlocal 3 .............................. <memname>
+  [296] pusharglistnoret 2 ...................... <pSoundList[typsym], memname>
+  [298] objcall 506 ............................. pSoundList[typsym].append(memname)
+  [301] pushint8 1
+  [303] getlocal 1
+  [305] add
+  [306] setlocal 1
+  [308] endrepeat [159]
+  [310] getprop 859 ............................. <pSoundList>
+  [313] getobjprop 348 .......................... <pSoundList.count>
+  [316] setlocal 8 .............................. soundlenth = pSoundList.count
+  [318] pushint8 1 .............................. <1>
+  [320] setlocal 1
+  [322] getlocal 1
+  [324] getlocal 8 .............................. <soundlenth>
+  [326] lteq
+  [327] jmpifz [408] ............................ repeat with so = 1 to soundlenth
+  [330] getprop 859 ............................. <pSoundList>
+  [333] getlocal 1 .............................. <so>
+  [335] pusharglist 2 ........................... <pSoundList, so>
+  [337] extcall 415 ............................. <getPropAt(pSoundList, so)>
+  [340] setlocal 9 .............................. propname = getPropAt(pSoundList, so)
+  [342] getprop 859 ............................. <pSoundList>
+  [345] getlocal 9 .............................. <propname>
+  [347] pusharglist 2 ........................... <pSoundList, propname>
+  [349] objcall 301 ............................. <pSoundList[propname]>
+  [352] setlocal 10 ............................. propval = pSoundList[propname]
+  [354] getlocal 10 ............................. <propval>
+  [356] pushsymb 494 ............................ <#list>
+  [359] pusharglist 2 ........................... <propval, #list>
+  [361] extcall 350 ............................. <ilk(propval, #list)>
+  [364] jmpifz [399] ............................ if ilk(propval, #list) then
+  [367] getlocal 10 ............................. <propval>
+  [369] getobjprop 348 .......................... <propval.count>
+  [372] setlocal 11 ............................. proplenth = propval.count
+  [374] getlocal 9 .............................. <propname>
+  [376] pushcons 5 .............................. <"lenth">
+  [378] joinstr ................................. <propname & "lenth">
+  [379] setlocal 12 ............................. lenthsym = propname & "lenth"
+  [381] getlocal 12 ............................. <lenthsym>
+  [383] getobjprop 442 .......................... <lenthsym.symbol>
+  [386] setlocal 12 ............................. lenthsym = lenthsym.symbol
+  [388] getprop 859 ............................. <pSoundList>
+  [391] getlocal 12 ............................. <lenthsym>
+  [393] getlocal 11 ............................. <proplenth>
+  [395] pusharglistnoret 3 ...................... <pSoundList, lenthsym, proplenth>
+  [397] objcall 54 .............................. pSoundList[lenthsym] = proplenth
+  [399] pushint8 1
+  [401] getlocal 1
+  [403] add
+  [404] setlocal 1
+  [406] endrepeat [322]
+  [408] pusharglist 0 ........................... <[]>
+  [410] pushlist ................................ <[]>
+  [411] setprop 861 ............................. pMixMaster = []
+  [414] pushint8 1 .............................. <1>
+  [416] setlocal 13
+  [418] getlocal 13
+  [420] pushint8 8 .............................. <8>
+  [422] lteq
+  [423] jmpifz [446] ............................ repeat with chan = 1 to 8
+  [426] getprop 861 ............................. <pMixMaster>
+  [429] getlocal 13 ............................. <chan>
+  [431] pushcons 6 .............................. <"empty">
+  [433] pusharglistnoret 3 ...................... <pMixMaster, chan, "empty">
+  [435] objcall 54 .............................. pMixMaster[chan] = "empty"
+  [437] pushint8 1
+  [439] getlocal 13
+  [441] add
+  [442] setlocal 13
+  [444] endrepeat [418]
+  [446] pushint8 1 .............................. <1>
+  [448] setprop 862 ............................. pActive = 1
+  [451] pushint8 1 .............................. <1>
+  [453] setprop 863 ............................. pEnable = 1
+  [456] ret
+end
+
+on addSaveData me, sd
+  [  0] getparam 1 .............................. <sd>
+  [  2] pushsymb 862 ............................ <#pActive>
+  [  5] getprop 862 ............................. <pActive>
+  [  8] pusharglistnoret 3 ...................... <sd, #pActive, pActive>
+  [ 10] objcall 54 .............................. sd[#pActive] = pActive
+  [ 12] ret
+end
+
+on isMenuItemShadowed me, theComm
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. shadowed = 0
+  [  3] getparam 1 .............................. <theComm>
+  [  5] peek 0 .................................. case theComm of
+  [  7] pushsymb 653 ............................ <#soundOn>
+  [ 10] eq
+  [ 11] jmpifz [ 33] ............................ (case) #soundOn:
+  [ 14] getprop 862 ............................. <pActive>
+  [ 17] getprop 863 ............................. <pEnable>
+  [ 20] pushzero ................................ <0>
+  [ 21] eq ...................................... <pEnable = 0>
+  [ 22] or ...................................... <pActive or (pEnable = 0)>
+  [ 23] jmpifz [ 30] ............................ if pActive or (pEnable = 0) then
+  [ 26] pushint8 1 .............................. <1>
+  [ 28] setlocal 0 .............................. shadowed = 1
+  [ 30] jmp [ 54]
+  [ 33] peek 0
+  [ 35] pushsymb 651 ............................ <#soundOff>
+  [ 38] eq
+  [ 39] jmpifz [ 54] ............................ (case) #soundOff:
+  [ 42] getprop 862 ............................. <pActive>
+  [ 45] pushzero ................................ <0>
+  [ 46] eq ...................................... <pActive = 0>
+  [ 47] jmpifz [ 54] ............................ if pActive = 0 then
+  [ 50] pushint8 1 .............................. <1>
+  [ 52] setlocal 0 .............................. shadowed = 1
+  [ 54] pop 1 ................................... end case
+  [ 56] getlocal 0 .............................. <shadowed>
+  [ 58] pusharglistnoret 1 ...................... <shadowed>
+  [ 60] extcall 3 ............................... return shadowed
+  [ 62] ret
+end
+
+on calcVolumeDefault me, vol
+  [  0] getparam 1 .............................. <vol>
+  [  2] pusharglist 0 ........................... <>
+  [  4] extcall 388 ............................. <VOID>
+  [  7] eq ...................................... <vol = VOID>
+  [  8] jmpifz [ 16] ............................ if vol = VOID then
+  [ 11] getprop 844 ............................. <pDefaultVolume>
+  [ 14] setparam 1 .............................. vol = pDefaultVolume
+  [ 16] getparam 1 .............................. <vol>
+  [ 18] pushsymb 103 ............................ <#none>
+  [ 20] eq ...................................... <vol = #none>
+  [ 21] jmpifz [ 29] ............................ if vol = #none then
+  [ 24] getprop 844 ............................. <pDefaultVolume>
+  [ 27] setparam 1 .............................. vol = pDefaultVolume
+  [ 29] getparam 1 .............................. <vol>
+  [ 31] pusharglistnoret 1 ...................... <vol>
+  [ 33] extcall 3 ............................... return vol
+  [ 35] ret
+end
+
+on checkRestartMusic me, memberName
+  [  0] pushint8 1 .............................. <1>
+  [  2] setlocal 0 .............................. restartMusic = 1
+  [  4] getparam 1 .............................. <memberName>
+  [  6] getprop 846 ............................. <pLastMusic>
+  [  9] eq ...................................... <memberName = pLastMusic>
+  [ 10] jmpifz [ 27] ............................ if memberName = pLastMusic then
+  [ 13] getprop 847 ............................. <pMusicChannel>
+  [ 16] pusharglist 1 ........................... <pMusicChannel>
+  [ 18] extcall 878 ............................. <soundBusy(pMusicChannel)>
+  [ 21] jmpifz [ 27] ............................ if soundBusy(pMusicChannel) then
+  [ 24] pushzero ................................ <0>
+  [ 25] setlocal 0 .............................. restartMusic = 0
+  [ 27] getlocal 0 .............................. <restartMusic>
+  [ 29] pusharglistnoret 1 ...................... <restartMusic>
+  [ 31] extcall 3 ............................... return restartMusic
+  [ 33] ret
+end
+
+on playMusic me, memberName, vol
+  [  0] getparam 1 .............................. <memberName>
+  [  2] pushcons 7 .............................. <"stopMusic">
+  [  4] eq ...................................... <memberName = "stopMusic">
+  [  5] jmpifz [ 19] ............................ if memberName = "stopMusic" then
+  [  8] getparam 0 .............................. <me>
+  [ 10] pusharglistnoret 1 ...................... <me>
+  [ 12] objcall 837 ............................. me.stopMusic()
+  [ 15] pusharglistnoret 0 ...................... <>
+  [ 17] extcall 3 ............................... return 
+  [ 19] getparam 0 .............................. <me>
+  [ 21] getparam 1 .............................. <memberName>
+  [ 23] pusharglist 2 ........................... <me, memberName>
+  [ 25] objcall 832 ............................. <me.checkRestartMusic(memberName)>
+  [ 28] setlocal 0 .............................. restartMusic = me.checkRestartMusic(memberName)
+  [ 30] getlocal 0 .............................. <restartMusic>
+  [ 32] pushzero ................................ <0>
+  [ 33] eq ...................................... <restartMusic = 0>
+  [ 34] jmpifz [ 41] ............................ if restartMusic = 0 then
+  [ 37] pusharglistnoret 0 ...................... <>
+  [ 39] extcall 3 ............................... return 
+  [ 41] getparam 0 .............................. <me>
+  [ 43] getparam 1 .............................. <memberName>
+  [ 45] pusharglist 2 ........................... <me, memberName>
+  [ 47] objcall 834 ............................. <me.retrieveSoundMember(memberName)>
+  [ 50] setlocal 1 .............................. soundMember = me.retrieveSoundMember(memberName)
+  [ 52] getlocal 1 .............................. <soundMember>
+  [ 54] pushsymb 103 ............................ <#none>
+  [ 56] eq ...................................... <soundMember = #none>
+  [ 57] jmpifz [ 64] ............................ if soundMember = #none then
+  [ 60] pusharglistnoret 0 ...................... <>
+  [ 62] extcall 3 ............................... return 
+  [ 64] getprop 862 ............................. <pActive>
+  [ 67] jmpifz [ 81] ............................ if pActive then
+  [ 70] getparam 0 .............................. <me>
+  [ 72] getparam 2 .............................. <vol>
+  [ 74] pusharglist 2 ........................... <me, vol>
+  [ 76] objcall 831 ............................. <me.calcVolumeDefault(vol)>
+  [ 79] setparam 2 .............................. vol = me.calcVolumeDefault(vol)
+  [ 81] getprop 847 ............................. <pMusicChannel>
+  [ 84] getlocal 1 .............................. <soundMember>
+  [ 86] pusharglistnoret 2 ...................... <pMusicChannel, soundMember>
+  [ 88] extcall 881 ............................. puppetSound(pMusicChannel, soundMember)
+  [ 91] getprop 847 ............................. <pMusicChannel>
+  [ 94] pusharglist 1 ........................... <pMusicChannel>
+  [ 96] extcall 150 ............................. <sound(pMusicChannel)>
+  [ 98] getparam 2 .............................. <vol>
+  [100] setobjprop 160 .......................... sound(pMusicChannel).volume = vol
+  [102] getparam 1 .............................. <memberName>
+  [104] setprop 846 ............................. pLastMusic = memberName
+  [107] ret
+end
+
+on PlaySound me, mem, vol
+  [  0] getparam 1 .............................. <mem>
+  [  2] pushint8 1 .............................. <1>
+  [  4] inv ..................................... <-1>
+  [  5] pushint8 1 .............................. <1>
+  [  7] pusharglist 2 ........................... <-1, 1>
+  [  9] extcall 193 ............................. <member(-1, 1)>
+  [ 11] eq ...................................... <mem = member(-1, 1)>
+  [ 12] jmpifz [ 16] ............................ if mem = member(-1, 1) then
+  [ 15] ret ..................................... exit
+  [ 16] getparam 1 .............................. <mem>
+  [ 18] getprop 849 ............................. <pSFXCast>
+  [ 21] pusharglist 2 ........................... <mem, pSFXCast>
+  [ 23] extcall 193 ............................. <member(mem, pSFXCast)>
+  [ 25] setparam 1 .............................. mem = member(mem, pSFXCast)
+  [ 27] getprop 862 ............................. <pActive>
+  [ 30] jmpifz [110] ............................ if pActive then
+  [ 33] getparam 0 .............................. <me>
+  [ 35] getparam 2 .............................. <vol>
+  [ 37] pusharglist 2 ........................... <me, vol>
+  [ 39] objcall 831 ............................. <me.calcVolumeDefault(vol)>
+  [ 42] setparam 2 .............................. vol = me.calcVolumeDefault(vol)
+  [ 44] getprop 848 ............................. <pNextChan>
+  [ 47] pusharglist 1 ........................... <pNextChan>
+  [ 49] extcall 878 ............................. <soundBusy(pNextChan)>
+  [ 52] jmpifz [ 65] ............................ if soundBusy(pNextChan) then / else
+  [ 55] pusharglist 0 ........................... <>
+  [ 57] extcall 883 ............................. <SoundEmptyChan()>
+  [ 60] setlocal 0 .............................. nextchan = SoundEmptyChan()
+  [ 62] jmp [ 70]
+  [ 65] getprop 848 ............................. <pNextChan>
+  [ 68] setlocal 0 .............................. nextchan = pNextChan
+  [ 70] getlocal 0 .............................. <nextchan>
+  [ 72] pushzero ................................ <0>
+  [ 73] gt ...................................... <nextchan > 0>
+  [ 74] jmpifz [ 96] ............................ if nextchan > 0 then
+  [ 77] getlocal 0 .............................. <nextchan>
+  [ 79] getparam 1 .............................. <mem>
+  [ 81] pusharglistnoret 2 ...................... <nextchan, mem>
+  [ 83] extcall 881 ............................. puppetSound(nextchan, mem)
+  [ 86] getlocal 0 .............................. <nextchan>
+  [ 88] pusharglist 1 ........................... <nextchan>
+  [ 90] extcall 150 ............................. <sound(nextchan)>
+  [ 92] getparam 2 .............................. <vol>
+  [ 94] setobjprop 160 .......................... sound(nextchan).volume = vol
+  [ 96] getprop 848 ............................. <pNextChan>
+  [ 99] pushint8 1 .............................. <1>
+  [101] pushint8 8 .............................. <8>
+  [103] pushint8 1 .............................. <1>
+  [105] pusharglistnoret 4 ...................... <pNextChan, 1, 8, 1>
+  [107] extcall 884 ............................. VarChangeinRange(pNextChan, 1, 8, 1)
+  [110] getlocal 0 .............................. <nextchan>
+  [112] pusharglistnoret 1 ...................... <nextchan>
+  [114] extcall 3 ............................... return nextchan
+  [116] ret
+end
+
+on adjustVol me, theChan, theVol
+  [  0] getparam 1 .............................. <theChan>
+  [  2] pusharglist 1 ........................... <theChan>
+  [  4] extcall 150 ............................. <sound(theChan)>
+  [  6] getparam 2 .............................. <theVol>
+  [  8] setobjprop 160 .......................... sound(theChan).volume = theVol
+  [ 10] ret
+end
+
+on retrieveSoundMember me, mem
+  [  0] getparam 1 .............................. <mem>
+  [  2] getprop 849 ............................. <pSFXCast>
+  [  5] pusharglist 2 ........................... <mem, pSFXCast>
+  [  7] extcall 193 ............................. <member(mem, pSFXCast)>
+  [  9] setlocal 0 .............................. soundMember = member(mem, pSFXCast)
+  [ 11] getlocal 0 .............................. <soundMember>
+  [ 13] pusharglist 0 ........................... <>
+  [ 15] extcall 388 ............................. <VOID>
+  [ 18] eq ...................................... <soundMember = VOID>
+  [ 19] jmpifz [ 36] ............................ if soundMember = VOID then
+  [ 22] pushcons 8 .............................. <"soundMaster.retrieveSoundMember() member not found: ">
+  [ 24] getparam 1 .............................. <mem>
+  [ 26] joinstr ................................. <"soundMaster.retrieveSoundMember() member not found: " & mem>
+  [ 27] pusharglistnoret 1 ...................... <"soundMaster.retrieveSoundMember() member not found: " & mem>
+  [ 29] extcall 414 ............................. put "soundMaster.retrieveSoundMember() member not found: " & mem
+  [ 32] pushsymb 103 ............................ <#none>
+  [ 34] setlocal 0 .............................. soundMember = #none
+  [ 36] getlocal 0 .............................. <soundMember>
+  [ 38] pusharglistnoret 1 ...................... <soundMember>
+  [ 40] extcall 3 ............................... return soundMember
+  [ 42] ret
+end
+
+on restoreFromSave me, sd
+  [  0] getparam 1 .............................. <sd>
+  [  2] getobjprop 862 .......................... <sd.pActive>
+  [  5] setprop 862 ............................. pActive = sd.pActive
+  [  8] ret
+end
+
+on stop me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 836 ............................. me.stopAllSound()
+  [  7] ret
+end
+
+on stopAllSound me
+  [  0] pushint8 1 .............................. <1>
+  [  2] setlocal 0
+  [  4] getlocal 0
+  [  6] pushint8 8 .............................. <8>
+  [  8] lteq
+  [  9] jmpifz [ 30] ............................ repeat with chan = 1 to 8
+  [ 12] getparam 0 .............................. <me>
+  [ 14] getlocal 0 .............................. <chan>
+  [ 16] pusharglistnoret 2 ...................... <me, chan>
+  [ 18] objcall 838 ............................. me.stopSound(chan)
+  [ 21] pushint8 1
+  [ 23] getlocal 0
+  [ 25] add
+  [ 26] setlocal 0
+  [ 28] endrepeat [  4]
+  [ 30] ret
+end
+
+on stopMusic me
+  [  0] getparam 0 .............................. <me>
+  [  2] getprop 847 ............................. <pMusicChannel>
+  [  5] pusharglistnoret 2 ...................... <me, pMusicChannel>
+  [  7] objcall 838 ............................. me.stopSound(pMusicChannel)
+  [ 10] ret
+end
+
+on stopSound me, theChan
+  [  0] getparam 1 .............................. <theChan>
+  [  2] pusharglist 1 ........................... <theChan>
+  [  4] extcall 150 ............................. <sound(theChan)>
+  [  6] pusharglistnoret 1 ...................... <sound(theChan)>
+  [  8] objcall 2 ............................... sound(theChan).stop()
+  [ 10] ret
+end
+
+on newframe me
+  [  0] pushzero ................................ <0>
+  [  1] setprop 888 ............................. pSoundsAdded = 0
+  [  4] ret
+end
+
+on checkadded me
+  [  0] getprop 888 ............................. <pSoundsAdded>
+  [  3] pushint8 1 .............................. <1>
+  [  5] add ..................................... <pSoundsAdded + 1>
+  [  6] setprop 888 ............................. pSoundsAdded = pSoundsAdded + 1
+  [  9] getprop 888 ............................. <pSoundsAdded>
+  [ 12] pushint8 4 .............................. <4>
+  [ 14] gt ...................................... <pSoundsAdded > 4>
+  [ 15] jmpifz [ 24] ............................ if pSoundsAdded > 4 then / else
+  [ 18] pushzero ................................ <0>
+  [ 19] setlocal 0 .............................. Ok = 0
+  [ 21] jmp [ 28]
+  [ 24] pushint8 1 .............................. <1>
+  [ 26] setlocal 0 .............................. Ok = 1
+  [ 28] getlocal 0 .............................. <Ok>
+  [ 30] pusharglistnoret 1 ...................... <Ok>
+  [ 32] extcall 3 ............................... return Ok
+  [ 34] ret
+end
+
+on toggle me, which
+  [  0] getprop 863 ............................. <pEnable>
+  [  3] jmpifz [ 39] ............................ if pEnable then
+  [  6] getparam 1 .............................. <which>
+  [  8] pushsymb 351 ............................ <#integer>
+  [ 11] pusharglist 2 ........................... <which, #integer>
+  [ 13] extcall 350 ............................. <ilk(which, #integer)>
+  [ 16] not ..................................... <not ilk(which, #integer)>
+  [ 17] jmpifz [ 34] ............................ if not ilk(which, #integer) then / else
+  [ 20] getprop 862 ............................. <pActive>
+  [ 23] not ..................................... <not pActive>
+  [ 24] setprop 862 ............................. pActive = not pActive
+  [ 27] pushzero ................................ <0>
+  [ 28] setprop 845 ............................. pAutoSound = 0
+  [ 31] jmp [ 39]
+  [ 34] getparam 1 .............................. <which>
+  [ 36] setprop 862 ............................. pActive = which
+  [ 39] ret
+end
+
+on onscreen me
+  [  0] pushint16 604 ........................... <604>
+  [  3] pushint16 368 ........................... <368>
+  [  6] pusharglist 2 ........................... <604, 368>
+  [  8] extcall 122 ............................. <point(604, 368)>
+  [ 10] setprop 889 ............................. pMyLoc = point(604, 368)
+  [ 13] getparam 0 .............................. <me>
+  [ 15] pusharglistnoret 1 ...................... <me>
+  [ 17] localcall 20 ............................ updateLoc(me)
+  [ 19] ret
+end
+
+on offscreen me
+  [  0] pushint8 100 ............................ <100>
+  [  2] inv ..................................... <-100>
+  [  3] pushint8 100 ............................ <100>
+  [  5] inv ..................................... <-100>
+  [  6] pusharglist 2 ........................... <-100, -100>
+  [  8] extcall 122 ............................. <point(-100, -100)>
+  [ 10] setprop 889 ............................. pMyLoc = point(-100, -100)
+  [ 13] getparam 0 .............................. <me>
+  [ 15] pusharglistnoret 1 ...................... <me>
+  [ 17] localcall 20 ............................ updateLoc(me)
+  [ 19] ret
+end
+
+on updateLoc me
+  [  0] getprop 890 ............................. <pSprite>
+  [  3] getchainedprop 891 ...................... <pSprite.spriteparams>
+  [  6] getchainedprop 161 ...................... <pSprite.spriteparams.a>
+  [  8] getprop 889 ............................. <pMyLoc>
+  [ 11] setobjprop 481 .......................... pSprite.spriteparams.a.loc = pMyLoc
+  [ 14] ret
+end
+
+on updatesprite me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 892 ............................. updatemember(me)
+  [  7] getparam 0 .............................. <me>
+  [  9] pusharglistnoret 1 ...................... <me>
+  [ 11] localcall 20 ............................ updateLoc(me)
+  [ 13] ret
+end
+
+on disable me
+  [  0] pushzero ................................ <0>
+  [  1] setprop 863 ............................. pEnable = 0
+  [  4] pushzero ................................ <0>
+  [  5] setprop 862 ............................. pActive = 0
+  [  8] ret
+end

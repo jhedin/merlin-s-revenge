@@ -1,0 +1,107 @@
+property ancestor, pCallingPrg, pNetError, pNetID, pRequestURL
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"objAutoUpdate">
+  [  2] pusharglist 1 ........................... <"objAutoUpdate">
+  [  4] extcall 34 .............................. <script("objAutoUpdate")>
+  [  6] pusharglist 1 ........................... <script("objAutoUpdate")>
+  [  8] extcall 0 ............................... <new(script("objAutoUpdate"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objAutoUpdate"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 474 ............................ <#callingPrg>
+  [ 27] pushsymb 49 ............................. <#none>
+  [ 29] pusharglistnoret 3 ...................... <i, #callingPrg, #none>
+  [ 31] objcall 48 .............................. i[#callingPrg] = #none
+  [ 33] getlocal 0 .............................. <i>
+  [ 35] pushsymb 3453 ........................... <#NetID>
+  [ 38] pushsymb 49 ............................. <#none>
+  [ 40] pusharglistnoret 3 ...................... <i, #NetID, #none>
+  [ 42] objcall 48 .............................. i[#NetID] = #none
+  [ 44] getlocal 0 .............................. <i>
+  [ 46] pushsymb 3452 ........................... <#requestURL>
+  [ 49] pushcons 1 .............................. <EMPTY>
+  [ 51] pusharglistnoret 3 ...................... <i, #requestURL, EMPTY>
+  [ 53] objcall 48 .............................. i[#requestURL] = EMPTY
+  [ 55] getparam 0 .............................. <me>
+  [ 57] pusharglistnoret 1 ...................... <me>
+  [ 59] extcall 35 .............................. return me
+  [ 61] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 474 .......................... <params.callingPrg>
+  [ 13] setprop 2081 ............................ pCallingPrg = params.callingPrg
+  [ 16] getparam 1 .............................. <params>
+  [ 18] getobjprop 3452 ......................... <params.requestURL>
+  [ 21] setprop 3454 ............................ pRequestURL = params.requestURL
+  [ 24] pushsymb 49 ............................. <#none>
+  [ 26] setprop 3455 ............................ pNetError = #none
+  [ 29] getparam 0 .............................. <me>
+  [ 31] pusharglistnoret 1 ...................... <me>
+  [ 33] objcall 1590 ............................ me.start()
+  [ 36] ret
+end
+
+on requestURL me
+  [  0] getprop 3454 ............................ <pRequestURL>
+  [  3] pusharglist 1 ........................... <pRequestURL>
+  [  5] extcall 3457 ............................ <getNetText(pRequestURL)>
+  [  8] setprop 3456 ............................ pNetID = getNetText(pRequestURL)
+  [ 11] getglobal 40 ............................ <g>
+  [ 13] getchainedprop 833 ...................... <g.updater>
+  [ 16] getparam 0 .............................. <me>
+  [ 18] getobjprop 51 ........................... <me.big>
+  [ 20] pushsymb 2198 ........................... <#hi>
+  [ 23] pusharglistnoret 3 ...................... <g.updater, me.big, #hi>
+  [ 25] objcall 835 ............................. g.updater.addPrg(me.big, #hi)
+  [ 28] ret
+end
+
+on start me
+  [  0] getprop 3454 ............................ <pRequestURL>
+  [  3] pushcons 1 .............................. <EMPTY>
+  [  5] nteq .................................... <pRequestURL <> EMPTY>
+  [  6] jmpifz [ 16] ............................ if pRequestURL <> EMPTY then
+  [  9] getparam 0 .............................. <me>
+  [ 11] pusharglistnoret 1 ...................... <me>
+  [ 13] objcall 3452 ............................ me.requestURL()
+  [ 16] ret
+end
+
+on update me
+  [  0] getprop 3456 ............................ <pNetID>
+  [  3] pusharglist 1 ........................... <pNetID>
+  [  5] extcall 3458 ............................ <netDone(pNetID)>
+  [  8] jmpifz [ 58] ............................ if netDone(pNetID) then
+  [ 11] getprop 3456 ............................ <pNetID>
+  [ 14] pusharglist 1 ........................... <pNetID>
+  [ 16] extcall 3459 ............................ <netError(pNetID)>
+  [ 19] setprop 3455 ............................ pNetError = netError(pNetID)
+  [ 22] getprop 3456 ............................ <pNetID>
+  [ 25] pusharglist 1 ........................... <pNetID>
+  [ 27] extcall 3460 ............................ <netTextResult(pNetID)>
+  [ 30] setlocal 0 .............................. theResult = netTextResult(pNetID)
+  [ 32] getprop 2081 ............................ <pCallingPrg>
+  [ 35] getparam 0 .............................. <me>
+  [ 37] getobjprop 51 ........................... <me.big>
+  [ 39] getlocal 0 .............................. <theResult>
+  [ 41] pusharglistnoret 3 ...................... <pCallingPrg, me.big, theResult>
+  [ 43] objcall 3461 ............................ pCallingPrg.netRequestFinished(me.big, theResult)
+  [ 46] getglobal 40 ............................ <g>
+  [ 48] getchainedprop 833 ...................... <g.updater>
+  [ 51] getparam 0 .............................. <me>
+  [ 53] pusharglistnoret 2 ...................... <g.updater, me>
+  [ 55] objcall 857 ............................. g.updater.removePrg(me)
+  [ 58] ret
+end

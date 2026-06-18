@@ -1,0 +1,124 @@
+[#name: "modFreeze", #scriptType: #parent, #type: #script]
+property ancestor
+property pFreezeCounter            --counter for slowing down as frozen
+property pFrozen                   --whether character is frozen
+property pFreezeTime               --how long to remain frozen
+property pPreviousWalkSpeed        --what the speed was before adjustments were made
+property pGlowTeal 
+
+on new me
+  ancestor = new (script("modModule"))
+  return me
+end
+
+on addModParams me
+  i = me.modifyParams(#init)
+  
+  ancestor.addModParams()
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  pFreezeCounter = CounterNew()
+  pFreezeCounter.inc = 1
+  pFreezeCounter.tim = [0, 1000]
+  pFrozen = false
+  pGlowTeal = false
+  
+end
+
+on defrost me
+  pFrozen = false
+  currSpeed = me.getSpeed()
+  speedChange = (2*currSpeed - pPreviousWalkSpeed)/2 --how much was gained by leveling or potions while the speed was changed
+  walkSpeed = 2*currSpeed - speedChange
+  me.setSpeed(walkSpeed)
+  if pGlowTeal = true then
+    me.big.stopGlowTeal()
+    pGlowTeal = false
+  end if
+  
+end
+
+on getSpeed me
+  if me.big.modIsInstalled(#modNavMode) then
+    return me.big.getAcceleration()
+  else
+    return me.big.getWalkSpeed()
+  end if
+end
+
+on internalEvent me, theEvent  
+  ancestor.internalEvent(theEvent)
+  case theEvent of
+    #colourTransformFin:
+      if pGlowTeal then 
+        me.big.glowTeal()
+      end if          
+  end case  
+end
+
+on setSpeed me, newVal
+  if me.big.modIsInstalled(#modNavMode) then
+    return me.big.setAcceleration(newVal)
+  else
+    return me.big.setWalkSpeed(newVal)
+  end if
+end
+
+on takeFreeze me, collisionVect, attackingObj, owner
+  if pFrozen = false then
+    pFrozen = true
+    CounterReset(pFreezeCounter)
+    CounterSetCount(pFreezeCounter,999)
+    pPreviousWalkSpeed = me.getSpeed()
+    me.setSpeed(0.5*pPreviousWalkSpeed)
+    if attackingObj.getAttack().glowTeal then
+      me.big.glowTeal()
+      pGlowTeal = true
+    end if
+  end if
+  
+  collSpeedX = VarPositive(collisionVect[1])
+  collSpeedY = VarPositive(collisionVect[2])
+  multiplier = attackingObj.getAttack().freezeMultiplier
+  freezeTime = (collSpeedX + collSpeedY) * multiplier*4
+  CounterSetCount(pFreezeCounter, pFreezeCounter.theCount - freezeTime)
+end
+
+on update me
+  ancestor.update()
+  
+  if pFrozen then 
+    me.updateFreeze()
+  end if  
+end
+
+on updateFreeze me
+  Counter(pFreezeCounter)
+  if pFreezeCounter.fin then
+    me.defrost()
+  end if
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

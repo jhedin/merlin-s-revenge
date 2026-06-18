@@ -1,0 +1,38 @@
+property ancestor, pToolPalette
+
+on new me
+  [  0] pushcons 0 .............................. <"objParams">
+  [  2] pusharglist 1 ........................... <"objParams">
+  [  4] extcall 27 .............................. <script("objParams")>
+  [  6] pusharglist 1 ........................... <script("objParams")>
+  [  8] extcall 0 ............................... <new(script("objParams"))>
+  [ 10] setprop 77 .............................. ancestor = new(script("objParams"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 221 ............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 679 ............................ <#toolPalette>
+  [ 27] pushsymb 22 ............................. <#none>
+  [ 29] pusharglistnoret 3 ...................... <i, #toolPalette, #none>
+  [ 31] objcall 37 .............................. i[#toolPalette] = #none
+  [ 33] getparam 0 .............................. <me>
+  [ 35] pusharglistnoret 1 ...................... <me>
+  [ 37] extcall 17 .............................. return me
+  [ 39] ret
+end
+
+on init me, params
+  [  0] getparam 1 .............................. <params>
+  [  2] getobjprop 679 .......................... <params.toolPalette>
+  [  5] setprop 680 ............................. pToolPalette = params.toolPalette
+  [  8] ret
+end
+
+on getToolPalette me
+  [  0] getprop 680 ............................. <pToolPalette>
+  [  3] pusharglistnoret 1 ...................... <pToolPalette>
+  [  5] extcall 17 .............................. return pToolPalette
+  [  7] ret
+end

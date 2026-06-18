@@ -1,0 +1,184 @@
+[#name: "reservationsMaster", #scriptType: #parent, #type: #script]
+-- works closely with teamMaster to keep track of how many members of each team
+-- is on screen at once
+-- gives permission for character-creating objects to release their characters.
+
+property pTeams
+property pDebug
+property pReservations
+property pTeamOverride
+
+on new me
+  return me
+end
+
+on init me
+  pTeams = [:]
+  pDebug =  false
+  pReservations = []
+end
+
+on cancelReservation me, obj
+  -- get the reservation for this obj
+  reservation = me.getReservationForObj(obj)
+  -- the object may not have a reservation e.g. spell
+  if reservation = #none then
+    return
+  end if
+  -- get the team this object belongs to
+  team = me.getTeamForObj(obj)
+  -- reduce the number of reserved slots by the amount in the reservation
+  team.reservedSlots = team.reservedSlots - reservation.num
+  -- delete the reservation
+  pReservations.deleteOne(reservation)
+end
+
+on cancelReservationTeam me, obj, team
+  -- get the reservation for this obj
+  reservation = me.getReservationForObj(obj)
+  -- the object may not have a reservation e.g. spell
+  if reservation = #none then
+    return
+  end if
+  -- reduce the number of reserved slots by the amount in the reservation
+  if team <> void and team <> #none then
+    team.reservedSlots = team.reservedSlots - reservation.num
+  end if
+  -- delete the reservation
+  pReservations.deleteOne(reservation)
+end
+
+on getPermissionToRelease me, obj, numToRelease
+  permission = false
+  
+  teamName = obj.getTeam()
+  team = pTeams[teamName]
+  maxMembers = team.maxMembers
+  if pTeamOverride and maxMembers > 5 then
+    maxMembers = maxMembers/2
+  end if
+  if team.currentMembers + team.reservedSlots + numToRelease <= maxMembers then
+    permission = true
+    team.reservedSlots = team.reservedSlots + numToRelease
+    --put "Team " & team.teamName & " has " & team.reservedSlots & " reserved slots"
+    me.makeReservation(obj, numToRelease)
+    me.printReport(team)
+  end if
+  
+  return permission
+end
+
+on getPermissionToReleaseTeam me, obj, numToRelease, team
+  permission = false
+  teamName = team.teamName
+  if pTeams[teamName] = void then
+    team[#currentMembers] = 0
+    team[#reservedSlots] = 0
+    pTeams[teamName] = team
+  end if
+  team = pTeams[teamName]
+  maxMembers = team.maxMembers
+  if pTeamOverride and maxMembers > 5 then
+    maxMembers = maxMembers/2
+  end if
+  if team.currentMembers + team.reservedSlots + numToRelease <= maxMembers then
+    permission = true
+    team.reservedSlots = team.reservedSlots + numToRelease
+    --put "Team " & team.teamName & " has " & team.reservedSlots & " reserved slots"
+    me.makeReservation(obj, numToRelease)
+    me.printReport(team)
+  end if
+  
+  return permission
+end
+
+on getReservationForObj me, obj
+  -- get the reservation made by this object
+  reservationPos = ListGetPosByProp(pReservations, #obj, obj)
+  -- if the object doesn't have a reservation
+  if reservationPos = 0 then
+    return #none
+  end if
+  -- if it does
+  reservation = pReservations[reservationPos]
+  return reservation
+end
+
+on getTeamForObj me, obj
+  -- get the team an obj belongs to
+  teamName = obj.getTeam()
+  team = pTeams[teamName]
+  return team
+end
+
+on makeReservation me, obj, num
+  newRes = [#obj: obj, #num: num]
+  pReservations.append(newRes)
+end
+
+on objectJoined me, team, teamRole, obj
+  teamName = team.teamName
+  
+  -- add the team if it's not already there
+  if pTeams[teamName] = void then
+    pTeams[teamName] = team
+    team[#currentMembers] = 0
+    team[#reservedSlots] = 0
+  end if
+  
+  if teamRole = #teamMembers then
+    team.currentMembers = team.currentMembers + 1
+    --put "Team " & team.teamName & " has " & team.currentMembers & " members"
+    me.printReport(team)
+  end if
+end
+
+on objectLeft me, team, teamRole, obj
+  if teamRole <> #teamMembers then
+    return
+  end if
+  
+  team.currentMembers = team.currentMembers - 1
+  --put "Team " & team.teamName & " has " & team.currentMembers & " members"
+  me.printReport(team)
+end
+
+on objectReleasedFromReservation me, obj
+  team = me.getTeamForObj(obj)
+  
+  team.reservedSlots = team.reservedSlots - 1
+  reservation = me.getReservationForObj(obj)
+  reservation.num = reservation.num - 1
+  if reservation.num < 1 then
+    pReservations.deleteOne(reservation)
+  end if
+end
+
+on objectReleasedFromReservationTeam me, obj, theTeam
+  theTeam.reservedSlots = theTeam.reservedSlots - 1
+  reservation = me.getReservationForObj(obj)
+  reservation.num = reservation.num - 1
+  if reservation.num < 1 then
+    pReservations.deleteOne(reservation)
+  end if
+end
+
+on printReport me, team
+  if pDebug then
+    put "Team " & team.teamName &" : " & team.currentMembers & " mems, " & team.reservedSlots & " res, " & team.maxMembers & " max."
+  end if
+end
+
+on setTeamOverride me, theState
+  pTeamOverride = theState
+end
+
+on start me
+  nothing
+end
+
+on stop me
+  nothing
+end
+
+

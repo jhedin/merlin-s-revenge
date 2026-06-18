@@ -1,0 +1,46 @@
+on MovieBakeCasts me
+  [  0] pushcons 0 .............................. <"main">
+  [  2] pushcons 1 .............................. <"general_functions">
+  [  4] pushcons 2 .............................. <"script_objects">
+  [  6] pushcons 3 .............................. <"master_objects">
+  [  8] pusharglist 4 ........................... <["main", "general_functions", "script_objects", "master_objects"]>
+  [ 10] pushlist ................................ <["main", "general_functions", "script_objects", "master_objects"]>
+  [ 11] setlocal 0 .............................. castNames = ["main", "general_functions", "script_objects", "master_objects"]
+  [ 13] pushcons 4 .............................. <"_int">
+  [ 15] setlocal 1 .............................. internalSuffix = "_int"
+  [ 17] getlocal 0 .............................. <castNames>
+  [ 19] peek 0
+  [ 21] pusharglist 1
+  [ 23] extcall 17
+  [ 25] pushint8 1
+  [ 27] peek 0
+  [ 29] peek 2
+  [ 31] lteq
+  [ 32] jmpifz [ 83] ............................ repeat with castname in castNames
+  [ 35] peek 2
+  [ 37] peek 1
+  [ 39] pusharglist 2
+  [ 41] extcall 18
+  [ 43] setlocal 2
+  [ 45] getlocal 2 .............................. <castname>
+  [ 47] pusharglist 1 ........................... <castname>
+  [ 49] extcall 71 .............................. <castLib(castname)>
+  [ 51] getobjprop 289 .......................... <castLib(castname).number>
+  [ 54] setlocal 3 .............................. nFromCast = castLib(castname).number
+  [ 56] getlocal 2 .............................. <castname>
+  [ 58] getlocal 1 .............................. <internalSuffix>
+  [ 60] joinstr ................................. <castname & internalSuffix>
+  [ 61] pusharglist 1 ........................... <castname & internalSuffix>
+  [ 63] extcall 71 .............................. <castLib(castname & internalSuffix)>
+  [ 65] getobjprop 289 .......................... <castLib(castname & internalSuffix).number>
+  [ 68] setlocal 4 .............................. nToCast = castLib(castname & internalSuffix).number
+  [ 70] getlocal 3 .............................. <nFromCast>
+  [ 72] getlocal 4 .............................. <nToCast>
+  [ 74] pusharglistnoret 2 ...................... <nFromCast, nToCast>
+  [ 76] extcall 70 .............................. CastCopy(nFromCast, nToCast)
+  [ 78] pushint8 1
+  [ 80] add
+  [ 81] endrepeat [ 27]
+  [ 83] pop 3
+  [ 85] ret
+end

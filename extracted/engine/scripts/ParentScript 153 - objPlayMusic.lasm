@@ -1,0 +1,52 @@
+property ancestor, pMusicToPlay
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"objParams">
+  [  2] pusharglist 1 ........................... <"objParams">
+  [  4] extcall 34 .............................. <script("objParams")>
+  [  6] pusharglist 1 ........................... <script("objParams")>
+  [  8] extcall 0 ............................... <new(script("objParams"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objParams"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 3293 ........................... <#definition>
+  [ 27] pushsymb 49 ............................. <#none>
+  [ 29] pusharglistnoret 3 ...................... <i, #definition, #none>
+  [ 31] objcall 48 .............................. i[#definition] = #none
+  [ 33] getparam 0 .............................. <me>
+  [ 35] pusharglistnoret 1 ...................... <me>
+  [ 37] extcall 35 .............................. return me
+  [ 39] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 3293 ......................... <params.definition>
+  [ 13] setprop 3500 ............................ pMusicToPlay = params.definition
+  [ 16] ret
+end
+
+on finish me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 3 ............................... ancestor.finish()
+  [  6] ret
+end
+
+on playMusic me
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 1268 ..................... <g.soundmaster>
+  [  5] getprop 3500 ............................ <pMusicToPlay>
+  [  8] pusharglistnoret 2 ...................... <g.soundmaster, pMusicToPlay>
+  [ 10] objcall 3451 ............................ g.soundmaster.playMusic(pMusicToPlay)
+  [ 13] ret
+end

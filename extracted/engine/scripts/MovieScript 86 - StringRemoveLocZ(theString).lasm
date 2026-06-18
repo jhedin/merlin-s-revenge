@@ -1,0 +1,24 @@
+on StringRemoveLocZ theString
+  [  0] pushcons 0 .............................. <"_locz">
+  [  2] getparam 0 .............................. <theString>
+  [  4] pusharglist 2 ........................... <"_locz", theString>
+  [  6] extcall 283 ............................. <offset("_locz", theString)>
+  [  9] setlocal 0 .............................. pos = offset("_locz", theString)
+  [ 11] getlocal 0 .............................. <pos>
+  [ 13] pushzero ................................ <0>
+  [ 14] gt ...................................... <pos > 0>
+  [ 15] jmpifz [ 36] ............................ if pos > 0 then
+  [ 18] getparam 0 .............................. <theString>
+  [ 20] pushsymb 284 ............................ <#char>
+  [ 23] pushint8 1 .............................. <1>
+  [ 25] getlocal 0 .............................. <pos>
+  [ 27] pushint8 1 .............................. <1>
+  [ 29] sub ..................................... <pos - 1>
+  [ 30] pusharglist 4 ........................... <theString, #char, 1, pos - 1>
+  [ 32] objcall 123 ............................. <theString.char[1..pos - 1]>
+  [ 34] setparam 0 .............................. theString = theString.char[1..pos - 1]
+  [ 36] getparam 0 .............................. <theString>
+  [ 38] pusharglistnoret 1 ...................... <theString>
+  [ 40] extcall 3 ............................... return theString
+  [ 42] ret
+end

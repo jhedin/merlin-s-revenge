@@ -1,0 +1,152 @@
+[#name: "objTileSetKey", #scriptType: #parent, #type: #script]
+-- like a tile set adds a key 
+-- key is taken from a member with name <tileSetName>_key
+-- you're now able to access the tiles by their keyName rather than by number.
+
+global g
+
+property ancestor
+property pDefinition
+property pMember
+
+on new me
+  ancestor = new(script"objTileSet")
+  
+  i = me.modifyParams(#init)
+  
+  i[#member] = #none
+  
+  return me
+end
+
+on init me, params
+  pDefinition = g.structMaster.getStruct(#tileSetDefinition)
+  pMember = params.member
+  
+  me.interpretDefinition()
+  me.initParams(params)
+  
+  ancestor.init(params)
+end
+
+on initParams me, params
+  params.allTilesImage = params.member.image
+  params.tileSize = pDefinition.tileSize
+end
+
+on extractDefinitionValue me, theLine
+  pipePos = StringGetPos(theLine, "|")
+  theValue = value(theLine.char[(pipepos+2) .. 99])
+  return theValue
+end
+
+on getTileNum me, theSymbol
+  tileNum = pDefinition.theKey.getPos(theSymbol)
+  return tileNum
+end
+
+on getTileSymbol me, theLoc
+  tileNum = 0 
+  tileNum = tileNum + me.pSizeInTiles[2] * (theLoc[2] -1)
+  tileNum = tileNum + theLoc[1]
+  tileSymbol = me.getTileSymbolByNum(tileNum)
+  return tileSymbol
+end
+
+on getTileSymbolByNum me, tileNum
+  if tileNum = 0 then
+    tileSymbol = #none
+  else
+    tileSymbol = pDefinition.theKey[tileNum]
+  end if
+  
+  return tileSymbol
+end
+
+on interpretDefinition me
+  castLibrary = pMember.castLibNum
+  
+  defTxt = member(pMember.name & "_key", castLibrary).text
+  
+  numLines = defTxt.lines.count
+  
+  tileNo = 1
+  
+  repeat with i = 1 to numLines
+    nLine = defTxt.line[i]
+    firstWord = nLine.word[1]
+    case firstWord of
+      "--":
+        continue
+        
+      "tileSize":
+        pDefinition.tileSize = me.extractDefinitionValue(nLine)
+        
+      otherwise:
+        pDefinition.theKey[tileNo] = value(nLine)
+        tileNo = tileNo + 1
+    end case
+  end repeat
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

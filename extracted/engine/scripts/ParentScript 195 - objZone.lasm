@@ -1,0 +1,738 @@
+property ancestor, pBox, pEndLoc, pMarkedForDeletion, prect, pStartLoc, pSym
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"objParams">
+  [  2] pusharglist 1 ........................... <"objParams">
+  [  4] extcall 34 .............................. <script("objParams")>
+  [  6] pusharglist 1 ........................... <script("objParams")>
+  [  8] extcall 0 ............................... <new(script("objParams"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objParams"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 263 ............................ <#rect>
+  [ 27] pushzero ................................ <0>
+  [ 28] pushzero ................................ <0>
+  [ 29] pushint8 1 .............................. <1>
+  [ 31] pushint8 1 .............................. <1>
+  [ 33] pusharglist 4 ........................... <0, 0, 1, 1>
+  [ 35] extcall 263 ............................. <rect(0, 0, 1, 1)>
+  [ 38] pusharglistnoret 3 ...................... <i, #rect, rect(0, 0, 1, 1)>
+  [ 40] objcall 48 .............................. i[#rect] = rect(0, 0, 1, 1)
+  [ 42] getlocal 0 .............................. <i>
+  [ 44] pushsymb 233 ............................ <#startLoc>
+  [ 46] pushzero ................................ <0>
+  [ 47] pushzero ................................ <0>
+  [ 48] pusharglist 2 ........................... <0, 0>
+  [ 50] extcall 197 ............................. <point(0, 0)>
+  [ 52] pusharglistnoret 3 ...................... <i, #startLoc, point(0, 0)>
+  [ 54] objcall 48 .............................. i[#startLoc] = point(0, 0)
+  [ 56] getlocal 0 .............................. <i>
+  [ 58] pushsymb 3950 ........................... <#endLoc>
+  [ 61] pushint8 1 .............................. <1>
+  [ 63] pushint8 1 .............................. <1>
+  [ 65] pusharglist 2 ........................... <1, 1>
+  [ 67] extcall 197 ............................. <point(1, 1)>
+  [ 69] pusharglistnoret 3 ...................... <i, #endLoc, point(1, 1)>
+  [ 71] objcall 48 .............................. i[#endLoc] = point(1, 1)
+  [ 73] getlocal 0 .............................. <i>
+  [ 75] pushsymb 82 ............................. <#sym>
+  [ 77] pushsymb 49 ............................. <#none>
+  [ 79] pusharglistnoret 3 ...................... <i, #sym, #none>
+  [ 81] objcall 48 .............................. i[#sym] = #none
+  [ 83] getparam 0 .............................. <me>
+  [ 85] pusharglistnoret 1 ...................... <me>
+  [ 87] extcall 35 .............................. return me
+  [ 89] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pushsymb 49 ............................. <#none>
+  [ 10] setprop 417 ............................. pBox = #none
+  [ 13] pushzero ................................ <0>
+  [ 14] setprop 4126 ............................ pMarkedForDeletion = 0
+  [ 17] getparam 1 .............................. <params>
+  [ 19] getobjprop 82 ........................... <params.sym>
+  [ 21] setprop 3468 ............................ pSym = params.sym
+  [ 24] getparam 1 .............................. <params>
+  [ 26] getobjprop 3950 ......................... <params.endLoc>
+  [ 29] setprop 4127 ............................ pEndLoc = params.endLoc
+  [ 32] getparam 1 .............................. <params>
+  [ 34] getobjprop 263 .......................... <params.rect>
+  [ 37] setprop 2106 ............................ prect = params.rect
+  [ 40] getparam 1 .............................. <params>
+  [ 42] getobjprop 233 .......................... <params.startLoc>
+  [ 44] setprop 4128 ............................ pStartLoc = params.startLoc
+  [ 47] getparam 1 .............................. <params>
+  [ 49] getobjprop 263 .......................... <params.rect>
+  [ 52] pushzero ................................ <0>
+  [ 53] pushzero ................................ <0>
+  [ 54] pushint8 1 .............................. <1>
+  [ 56] pushint8 1 .............................. <1>
+  [ 58] pusharglist 4 ........................... <0, 0, 1, 1>
+  [ 60] extcall 263 ............................. <rect(0, 0, 1, 1)>
+  [ 63] nteq .................................... <params.rect <> rect(0, 0, 1, 1)>
+  [ 64] jmpifz [ 82] ............................ if params.rect <> rect(0, 0, 1, 1) then / else
+  [ 67] getparam 0 .............................. <me>
+  [ 69] getparam 1 .............................. <params>
+  [ 71] getobjprop 263 .......................... <params.rect>
+  [ 74] pusharglistnoret 2 ...................... <me, params.rect>
+  [ 76] objcall 1344 ............................ me.setRect(params.rect)
+  [ 79] jmp [105]
+  [ 82] getparam 0 .............................. <me>
+  [ 84] getparam 1 .............................. <params>
+  [ 86] getobjprop 233 .......................... <params.startLoc>
+  [ 88] pusharglistnoret 2 ...................... <me, params.startLoc>
+  [ 90] objcall 4123 ............................ me.setStartLoc(params.startLoc)
+  [ 93] getparam 0 .............................. <me>
+  [ 95] getparam 1 .............................. <params>
+  [ 97] getobjprop 3950 ......................... <params.endLoc>
+  [100] pusharglistnoret 2 ...................... <me, params.endLoc>
+  [102] objcall 3957 ............................ me.setEndLoc(params.endLoc)
+  [105] ret
+end
+
+on finish me
+  [  0] getprop 417 ............................. <pBox>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] nteq .................................... <pBox <> #none>
+  [  6] jmpifz [ 16] ............................ if pBox <> #none then
+  [  9] getprop 417 ............................. <pBox>
+  [ 12] pusharglistnoret 1 ...................... <pBox>
+  [ 14] objcall 3 ............................... pBox.finish()
+  [ 16] getprop 33 .............................. <ancestor>
+  [ 18] pusharglistnoret 1 ...................... <ancestor>
+  [ 20] objcall 3 ............................... ancestor.finish()
+  [ 22] ret
+end
+
+on attemptMerge me, mergeZone
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 3943 ............................ <me.getSym()>
+  [  7] setlocal 0 .............................. mySym = me.getSym()
+  [  9] getparam 1 .............................. <mergeZone>
+  [ 11] pusharglist 1 ........................... <mergeZone>
+  [ 13] objcall 3943 ............................ <mergeZone.getSym()>
+  [ 16] setlocal 1 .............................. mergeSym = mergeZone.getSym()
+  [ 18] getlocal 0 .............................. <mySym>
+  [ 20] getlocal 1 .............................. <mergeSym>
+  [ 22] nteq .................................... <mySym <> mergeSym>
+  [ 23] jmpifz [ 31] ............................ if mySym <> mergeSym then
+  [ 26] pushzero ................................ <0>
+  [ 27] pusharglistnoret 1 ...................... <0>
+  [ 29] extcall 35 .............................. return 0
+  [ 31] getparam 0 .............................. <me>
+  [ 33] pusharglist 1 ........................... <me>
+  [ 35] objcall 113 ............................. <me.getRect()>
+  [ 37] setlocal 2 .............................. myRect = me.getRect()
+  [ 39] getparam 1 .............................. <mergeZone>
+  [ 41] pusharglist 1 ........................... <mergeZone>
+  [ 43] objcall 113 ............................. <mergeZone.getRect()>
+  [ 45] setlocal 3 .............................. mergeRect = mergeZone.getRect()
+  [ 47] pushsymb 49 ............................. <#none>
+  [ 49] setlocal 4 .............................. potentialMerge = #none
+  [ 51] getlocal 2 .............................. <myRect>
+  [ 53] pushint8 1 .............................. <1>
+  [ 55] pusharglist 2 ........................... <myRect, 1>
+  [ 57] objcall 109 ............................. <myRect[1]>
+  [ 59] getlocal 3 .............................. <mergeRect>
+  [ 61] pushint8 1 .............................. <1>
+  [ 63] pusharglist 2 ........................... <mergeRect, 1>
+  [ 65] objcall 109 ............................. <mergeRect[1]>
+  [ 67] eq ...................................... <myRect[1] = mergeRect[1]>
+  [ 68] getlocal 2 .............................. <myRect>
+  [ 70] pushint8 3 .............................. <3>
+  [ 72] pusharglist 2 ........................... <myRect, 3>
+  [ 74] objcall 109 ............................. <myRect[3]>
+  [ 76] getlocal 3 .............................. <mergeRect>
+  [ 78] pushint8 3 .............................. <3>
+  [ 80] pusharglist 2 ........................... <mergeRect, 3>
+  [ 82] objcall 109 ............................. <mergeRect[3]>
+  [ 84] eq ...................................... <myRect[3] = mergeRect[3]>
+  [ 85] and ..................................... <(myRect[1] = mergeRect[1]) and (myRect[3] = mergeRect[3])>
+  [ 86] jmpifz [ 94] ............................ if (myRect[1] = mergeRect[1]) and (myRect[3] = mergeRect[3]) then
+  [ 89] pushsymb 2355 ........................... <#vert>
+  [ 92] setlocal 4 .............................. potentialMerge = #vert
+  [ 94] getlocal 2 .............................. <myRect>
+  [ 96] pushint8 2 .............................. <2>
+  [ 98] pusharglist 2 ........................... <myRect, 2>
+  [100] objcall 109 ............................. <myRect[2]>
+  [102] getlocal 3 .............................. <mergeRect>
+  [104] pushint8 2 .............................. <2>
+  [106] pusharglist 2 ........................... <mergeRect, 2>
+  [108] objcall 109 ............................. <mergeRect[2]>
+  [110] eq ...................................... <myRect[2] = mergeRect[2]>
+  [111] getlocal 2 .............................. <myRect>
+  [113] pushint8 4 .............................. <4>
+  [115] pusharglist 2 ........................... <myRect, 4>
+  [117] objcall 109 ............................. <myRect[4]>
+  [119] getlocal 3 .............................. <mergeRect>
+  [121] pushint8 4 .............................. <4>
+  [123] pusharglist 2 ........................... <mergeRect, 4>
+  [125] objcall 109 ............................. <mergeRect[4]>
+  [127] eq ...................................... <myRect[4] = mergeRect[4]>
+  [128] and ..................................... <(myRect[2] = mergeRect[2]) and (myRect[4] = mergeRect[4])>
+  [129] jmpifz [137] ............................ if (myRect[2] = mergeRect[2]) and (myRect[4] = mergeRect[4]) then
+  [132] pushsymb 4129 ........................... <#horiz>
+  [135] setlocal 4 .............................. potentialMerge = #horiz
+  [137] getlocal 4 .............................. <potentialMerge>
+  [139] pushsymb 2355 ........................... <#vert>
+  [142] eq ...................................... <potentialMerge = #vert>
+  [143] getlocal 0 .............................. <mySym>
+  [145] pushsymb 2331 ........................... <#platform>
+  [148] eq ...................................... <mySym = #platform>
+  [149] and ..................................... <(potentialMerge = #vert) and (mySym = #platform)>
+  [150] jmpifz [158] ............................ if (potentialMerge = #vert) and (mySym = #platform) then
+  [153] pushzero ................................ <0>
+  [154] pusharglistnoret 1 ...................... <0>
+  [156] extcall 35 .............................. return 0
+  [158] getlocal 4 .............................. <potentialMerge>
+  [160] peek 0 .................................. case potentialMerge of
+  [162] pushsymb 2355 ........................... <#vert>
+  [165] eq
+  [166] jmpifz [215] ............................ (case) #vert:
+  [169] getlocal 2 .............................. <myRect>
+  [171] pushint8 2 .............................. <2>
+  [173] pusharglist 2 ........................... <myRect, 2>
+  [175] objcall 109 ............................. <myRect[2]>
+  [177] getlocal 3 .............................. <mergeRect>
+  [179] pushint8 4 .............................. <4>
+  [181] pusharglist 2 ........................... <mergeRect, 4>
+  [183] objcall 109 ............................. <mergeRect[4]>
+  [185] eq ...................................... <myRect[2] = mergeRect[4]>
+  [186] getlocal 2 .............................. <myRect>
+  [188] pushint8 4 .............................. <4>
+  [190] pusharglist 2 ........................... <myRect, 4>
+  [192] objcall 109 ............................. <myRect[4]>
+  [194] getlocal 3 .............................. <mergeRect>
+  [196] pushint8 2 .............................. <2>
+  [198] pusharglist 2 ........................... <mergeRect, 2>
+  [200] objcall 109 ............................. <mergeRect[2]>
+  [202] eq ...................................... <myRect[4] = mergeRect[2]>
+  [203] or ...................................... <(myRect[2] = mergeRect[4]) or (myRect[4] = mergeRect[2])>
+  [204] jmpifz [212] ............................ if (myRect[2] = mergeRect[4]) or (myRect[4] = mergeRect[2]) then
+  [207] pushsymb 2918 ........................... <#success>
+  [210] setlocal 4 .............................. potentialMerge = #success
+  [212] jmp [267]
+  [215] peek 0
+  [217] pushsymb 4129 ........................... <#horiz>
+  [220] eq
+  [221] jmpifz [267] ............................ (case) #horiz:
+  [224] getlocal 2 .............................. <myRect>
+  [226] pushint8 1 .............................. <1>
+  [228] pusharglist 2 ........................... <myRect, 1>
+  [230] objcall 109 ............................. <myRect[1]>
+  [232] getlocal 3 .............................. <mergeRect>
+  [234] pushint8 3 .............................. <3>
+  [236] pusharglist 2 ........................... <mergeRect, 3>
+  [238] objcall 109 ............................. <mergeRect[3]>
+  [240] eq ...................................... <myRect[1] = mergeRect[3]>
+  [241] getlocal 2 .............................. <myRect>
+  [243] pushint8 3 .............................. <3>
+  [245] pusharglist 2 ........................... <myRect, 3>
+  [247] objcall 109 ............................. <myRect[3]>
+  [249] getlocal 3 .............................. <mergeRect>
+  [251] pushint8 1 .............................. <1>
+  [253] pusharglist 2 ........................... <mergeRect, 1>
+  [255] objcall 109 ............................. <mergeRect[1]>
+  [257] eq ...................................... <myRect[3] = mergeRect[1]>
+  [258] or ...................................... <(myRect[1] = mergeRect[3]) or (myRect[3] = mergeRect[1])>
+  [259] jmpifz [267] ............................ if (myRect[1] = mergeRect[3]) or (myRect[3] = mergeRect[1]) then
+  [262] pushsymb 2918 ........................... <#success>
+  [265] setlocal 4 .............................. potentialMerge = #success
+  [267] pop 1 ................................... end case
+  [269] getlocal 4 .............................. <potentialMerge>
+  [271] pushsymb 2918 ........................... <#success>
+  [274] eq ...................................... <potentialMerge = #success>
+  [275] jmpifz [300] ............................ if potentialMerge = #success then
+  [278] getparam 0 .............................. <me>
+  [280] getlocal 3 .............................. <mergeRect>
+  [282] pusharglistnoret 2 ...................... <me, mergeRect>
+  [284] objcall 4121 ............................ me.mergeRect(mergeRect)
+  [287] getparam 1 .............................. <mergeZone>
+  [289] pusharglistnoret 1 ...................... <mergeZone>
+  [291] objcall 4120 ............................ mergeZone.markForDeletion()
+  [294] pushint8 1 .............................. <1>
+  [296] pusharglistnoret 1 ...................... <1>
+  [298] extcall 35 .............................. return 1
+  [300] pushzero ................................ <0>
+  [301] pusharglistnoret 1 ...................... <0>
+  [303] extcall 35 .............................. return 0
+  [305] ret
+end
+
+on calcLocs me
+  [  0] getprop 2106 ............................ <prect>
+  [  3] pushint8 1 .............................. <1>
+  [  5] pusharglist 2 ........................... <prect, 1>
+  [  7] objcall 109 ............................. <prect[1]>
+  [  9] getprop 2106 ............................ <prect>
+  [ 12] pushint8 2 .............................. <2>
+  [ 14] pusharglist 2 ........................... <prect, 2>
+  [ 16] objcall 109 ............................. <prect[2]>
+  [ 18] pusharglist 2 ........................... <prect[1], prect[2]>
+  [ 20] extcall 197 ............................. <point(prect[1], prect[2])>
+  [ 22] setprop 4128 ............................ pStartLoc = point(prect[1], prect[2])
+  [ 25] getprop 2106 ............................ <prect>
+  [ 28] pushint8 3 .............................. <3>
+  [ 30] pusharglist 2 ........................... <prect, 3>
+  [ 32] objcall 109 ............................. <prect[3]>
+  [ 34] getprop 2106 ............................ <prect>
+  [ 37] pushint8 4 .............................. <4>
+  [ 39] pusharglist 2 ........................... <prect, 4>
+  [ 41] objcall 109 ............................. <prect[4]>
+  [ 43] pusharglist 2 ........................... <prect[3], prect[4]>
+  [ 45] extcall 197 ............................. <point(prect[3], prect[4])>
+  [ 47] setprop 4127 ............................ pEndLoc = point(prect[3], prect[4])
+  [ 50] ret
+end
+
+on calcRect me
+  [  0] getprop 4128 ............................ <pStartLoc>
+  [  3] pushint8 1 .............................. <1>
+  [  5] pusharglist 2 ........................... <pStartLoc, 1>
+  [  7] objcall 109 ............................. <pStartLoc[1]>
+  [  9] getprop 4128 ............................ <pStartLoc>
+  [ 12] pushint8 2 .............................. <2>
+  [ 14] pusharglist 2 ........................... <pStartLoc, 2>
+  [ 16] objcall 109 ............................. <pStartLoc[2]>
+  [ 18] getprop 4127 ............................ <pEndLoc>
+  [ 21] pushint8 1 .............................. <1>
+  [ 23] pusharglist 2 ........................... <pEndLoc, 1>
+  [ 25] objcall 109 ............................. <pEndLoc[1]>
+  [ 27] getprop 4127 ............................ <pEndLoc>
+  [ 30] pushint8 2 .............................. <2>
+  [ 32] pusharglist 2 ........................... <pEndLoc, 2>
+  [ 34] objcall 109 ............................. <pEndLoc[2]>
+  [ 36] pusharglist 4 ........................... <pStartLoc[1], pStartLoc[2], pEndLoc[1], pEndLoc[2]>
+  [ 38] extcall 263 ............................. <rect(pStartLoc[1], pStartLoc[2], pEndLoc[1], pEndLoc[2])>
+  [ 41] setprop 2106 ............................ prect = rect(pStartLoc[1], pStartLoc[2], pEndLoc[1], pEndLoc[2])
+  [ 44] ret
+end
+
+on checkcollision me, gameObject, zoneType, newLoc, axesToUse
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 2 .............................. <zoneType>
+  [  4] pusharglist 2 ........................... <me, zoneType>
+  [  6] objcall 113 ............................. <me.getRect(zoneType)>
+  [  8] setlocal 0 .............................. zoneRect = me.getRect(zoneType)
+  [ 10] getparam 1 .............................. <gameObject>
+  [ 12] getparam 3 .............................. <newLoc>
+  [ 14] pusharglist 2 ........................... <gameObject, newLoc>
+  [ 16] objcall 409 ............................. <gameObject.calcCollisionRect(newLoc)>
+  [ 19] setlocal 1 .............................. rectInfo = gameObject.calcCollisionRect(newLoc)
+  [ 21] getlocal 1 .............................. <rectInfo>
+  [ 23] getobjprop 263 .......................... <rectInfo.rect>
+  [ 26] setlocal 2 .............................. newObjectRect = rectInfo.rect
+  [ 28] getparam 4 .............................. <axesToUse>
+  [ 30] setlocal 3 .............................. a = axesToUse
+  [ 32] getlocal 2 .............................. <newObjectRect>
+  [ 34] getlocal 0 .............................. <zoneRect>
+  [ 36] pusharglist 2 ........................... <newObjectRect, zoneRect>
+  [ 38] extcall 4133 ............................ <RectCollideRect(newObjectRect, zoneRect)>
+  [ 41] jmpifz [290] ............................ if RectCollideRect(newObjectRect, zoneRect) then
+  [ 44] getparam 0 .............................. <me>
+  [ 46] pushsymb 4134 ........................... <#collisionZone>
+  [ 49] getparam 2 .............................. <zoneType>
+  [ 51] getparam 1 .............................. <gameObject>
+  [ 53] pusharglist 4 ........................... <me, #collisionZone, zoneType, gameObject>
+  [ 55] objcall 4125 ............................ <me.zoneTypeIs(#collisionZone, zoneType, gameObject)>
+  [ 58] jmpifz [290] ............................ if me.zoneTypeIs(#collisionZone, zoneType, gameObject) then / else
+  [ 61] getparam 1 .............................. <gameObject>
+  [ 63] pusharglist 1 ........................... <gameObject>
+  [ 65] objcall 111 ............................. <gameObject.getLoc()>
+  [ 67] setlocal 4 .............................. oldloc = gameObject.getLoc()
+  [ 69] getparam 1 .............................. <gameObject>
+  [ 71] getlocal 4 .............................. <oldloc>
+  [ 73] pusharglist 2 ........................... <gameObject, oldloc>
+  [ 75] objcall 409 ............................. <gameObject.calcCollisionRect(oldloc)>
+  [ 78] setlocal 5 .............................. oldRectInfo = gameObject.calcCollisionRect(oldloc)
+  [ 80] getlocal 5 .............................. <oldRectInfo>
+  [ 82] getobjprop 263 .......................... <oldRectInfo.rect>
+  [ 85] setlocal 6 .............................. oldObjectRect = oldRectInfo.rect
+  [ 87] getlocal 2 .............................. <newObjectRect>
+  [ 89] getlocal 3 .............................. <a>
+  [ 91] getobjprop 4135 ......................... <a.objectRectSide>
+  [ 94] pusharglist 2 ........................... <newObjectRect, a.objectRectSide>
+  [ 96] objcall 109 ............................. <newObjectRect[a.objectRectSide]>
+  [ 98] setlocal 7 .............................. newObjectEdge = newObjectRect[a.objectRectSide]
+  [100] getlocal 6 .............................. <oldObjectRect>
+  [102] getlocal 3 .............................. <a>
+  [104] getobjprop 4135 ......................... <a.objectRectSide>
+  [107] pusharglist 2 ........................... <oldObjectRect, a.objectRectSide>
+  [109] objcall 109 ............................. <oldObjectRect[a.objectRectSide]>
+  [111] setlocal 8 .............................. oldObjectEdge = oldObjectRect[a.objectRectSide]
+  [113] getlocal 0 .............................. <zoneRect>
+  [115] getlocal 3 .............................. <a>
+  [117] getobjprop 4136 ......................... <a.zoneRectSide>
+  [120] pusharglist 2 ........................... <zoneRect, a.zoneRectSide>
+  [122] objcall 109 ............................. <zoneRect[a.zoneRectSide]>
+  [124] setlocal 9 .............................. zoneEdge = zoneRect[a.zoneRectSide]
+  [126] getlocal 3 .............................. <a>
+  [128] getobjprop 4136 ......................... <a.zoneRectSide>
+  [131] pushint8 1 .............................. <1>
+  [133] eq ...................................... <a.zoneRectSide = 1>
+  [134] getlocal 3 .............................. <a>
+  [136] getobjprop 4136 ......................... <a.zoneRectSide>
+  [139] pushint8 2 .............................. <2>
+  [141] eq ...................................... <a.zoneRectSide = 2>
+  [142] or ...................................... <(a.zoneRectSide = 1) or (a.zoneRectSide = 2)>
+  [143] jmpifz [154] ............................ if (a.zoneRectSide = 1) or (a.zoneRectSide = 2) then / else
+  [146] pushsymb 4137 ........................... <#moreThan>
+  [149] setlocal 10 ............................. check = #moreThan
+  [151] jmp [159]
+  [154] pushsymb 4138 ........................... <#lessThan>
+  [157] setlocal 10 ............................. check = #lessThan
+  [159] pushzero ................................ <0>
+  [160] setlocal 11 ............................. collided = 0
+  [162] getlocal 10 ............................. <check>
+  [164] peek 0 .................................. case check of
+  [166] pushsymb 4138 ........................... <#lessThan>
+  [169] eq
+  [170] jmpifz [194] ............................ (case) #lessThan:
+  [173] getlocal 7 .............................. <newObjectEdge>
+  [175] getlocal 9 .............................. <zoneEdge>
+  [177] lteq .................................... <newObjectEdge <= zoneEdge>
+  [178] getlocal 8 .............................. <oldObjectEdge>
+  [180] getlocal 9 .............................. <zoneEdge>
+  [182] gteq .................................... <oldObjectEdge >= zoneEdge>
+  [183] and ..................................... <(newObjectEdge <= zoneEdge) and (oldObjectEdge >= zoneEdge)>
+  [184] jmpifz [191] ............................ if (newObjectEdge <= zoneEdge) and (oldObjectEdge >= zoneEdge) then
+  [187] pushint8 1 .............................. <1>
+  [189] setlocal 11 ............................. collided = 1
+  [191] jmp [221]
+  [194] peek 0
+  [196] pushsymb 4137 ........................... <#moreThan>
+  [199] eq
+  [200] jmpifz [221] ............................ (case) #moreThan:
+  [203] getlocal 7 .............................. <newObjectEdge>
+  [205] getlocal 9 .............................. <zoneEdge>
+  [207] gteq .................................... <newObjectEdge >= zoneEdge>
+  [208] getlocal 8 .............................. <oldObjectEdge>
+  [210] getlocal 9 .............................. <zoneEdge>
+  [212] lteq .................................... <oldObjectEdge <= zoneEdge>
+  [213] and ..................................... <(newObjectEdge >= zoneEdge) and (oldObjectEdge <= zoneEdge)>
+  [214] jmpifz [221] ............................ if (newObjectEdge >= zoneEdge) and (oldObjectEdge <= zoneEdge) then
+  [217] pushint8 1 .............................. <1>
+  [219] setlocal 11 ............................. collided = 1
+  [221] pop 1 ................................... end case
+  [223] getlocal 11 ............................. <collided>
+  [225] jmpifz [287] ............................ if collided then
+  [228] getparam 3 .............................. <newLoc>
+  [230] getlocal 3 .............................. <a>
+  [232] getobjprop 4139 ......................... <a.objectAxis>
+  [235] getlocal 9 .............................. <zoneEdge>
+  [237] getlocal 1 .............................. <rectInfo>
+  [239] pushsymb 431 ............................ <#edgeOffset>
+  [242] getlocal 3 .............................. <a>
+  [244] getobjprop 4135 ......................... <a.objectRectSide>
+  [247] pusharglist 3 ........................... <rectInfo, #edgeOffset, a.objectRectSide>
+  [249] objcall 381 ............................. <rectInfo.edgeOffset[a.objectRectSide]>
+  [252] sub ..................................... <zoneEdge - rectInfo.edgeOffset[a.objectRectSide]>
+  [253] pusharglistnoret 3 ...................... <newLoc, a.objectAxis, zoneEdge - rectInfo.edgeOffset[a.objectRectSide]>
+  [255] objcall 48 .............................. newLoc[a.objectAxis] = zoneEdge - rectInfo.edgeOffset[a.objectRectSide]
+  [257] getparam 1 .............................. <gameObject>
+  [259] getparam 2 .............................. <zoneType>
+  [261] pusharglistnoret 2 ...................... <gameObject, zoneType>
+  [263] objcall 2722 ............................ gameObject.collisionWithZone(zoneType)
+  [266] getparam 2 .............................. <zoneType>
+  [268] pushsymb 2331 ........................... <#platform>
+  [271] eq ...................................... <zoneType = #platform>
+  [272] jmpifz [287] ............................ if zoneType = #platform then
+  [275] getglobal 40 ............................ <g>
+  [277] getchainedprop 386 ...................... <g.collisionMaster>
+  [280] pushint8 1 .............................. <1>
+  [282] pusharglistnoret 2 ...................... <g.collisionMaster, 1>
+  [284] objcall 4140 ............................ g.collisionMaster.setCollisionWithPlatform(1)
+  [287] jmp [290]
+  [290] getparam 3 .............................. <newLoc>
+  [292] pusharglistnoret 1 ...................... <newLoc>
+  [294] extcall 35 .............................. return newLoc
+  [296] ret
+end
+
+on display me
+  [  0] getprop 3468 ............................ <pSym>
+  [  3] peek 0 .................................. case pSym of
+  [  5] pushsymb 2334 ........................... <#ceiling>
+  [  8] eq
+  [  9] jmpifz [ 29] ............................ (case) #ceiling:
+  [ 12] pushint16 255 ........................... <255>
+  [ 15] pushzero ................................ <0>
+  [ 16] pushint16 255 ........................... <255>
+  [ 19] pusharglist 3 ........................... <255, 0, 255>
+  [ 21] extcall 436 ............................. <rgb(255, 0, 255)>
+  [ 24] setlocal 0 .............................. boxCol = rgb(255, 0, 255)
+  [ 26] jmp [ 91]
+  [ 29] peek 0
+  [ 31] pushsymb 1221 ........................... <#solid>
+  [ 34] eq
+  [ 35] jmpifz [ 55] ............................ (case) #solid:
+  [ 38] pushint16 255 ........................... <255>
+  [ 41] pushint16 255 ........................... <255>
+  [ 44] pushzero ................................ <0>
+  [ 45] pusharglist 3 ........................... <255, 255, 0>
+  [ 47] extcall 436 ............................. <rgb(255, 255, 0)>
+  [ 50] setlocal 0 .............................. boxCol = rgb(255, 255, 0)
+  [ 52] jmp [ 91]
+  [ 55] peek 0
+  [ 57] pushsymb 2331 ........................... <#platform>
+  [ 60] eq
+  [ 61] jmpifz [ 79] ............................ (case) #platform:
+  [ 64] pushzero ................................ <0>
+  [ 65] pushint16 255 ........................... <255>
+  [ 68] pushzero ................................ <0>
+  [ 69] pusharglist 3 ........................... <0, 255, 0>
+  [ 71] extcall 436 ............................. <rgb(0, 255, 0)>
+  [ 74] setlocal 0 .............................. boxCol = rgb(0, 255, 0)
+  [ 76] jmp [ 91] ............................... (case) otherwise:
+  [ 79] pushint16 255 ........................... <255>
+  [ 82] pushzero ................................ <0>
+  [ 83] pushzero ................................ <0>
+  [ 84] pusharglist 3 ........................... <255, 0, 0>
+  [ 86] extcall 436 ............................. <rgb(255, 0, 0)>
+  [ 89] setlocal 0 .............................. boxCol = rgb(255, 0, 0)
+  [ 91] pop 1 ................................... end case
+  [ 93] getglobal 40 ............................ <g>
+  [ 95] getchainedprop 41 ....................... <g.objectMaster>
+  [ 97] pushsymb 435 ............................ <#objBox>
+  [100] pusharglist 2 ........................... <g.objectMaster, #objBox>
+  [102] objcall 43 .............................. <g.objectMaster.requestObject(#objBox)>
+  [104] setprop 417 ............................. pBox = g.objectMaster.requestObject(#objBox)
+  [107] getprop 417 ............................. <pBox>
+  [110] pushsymb 1 .............................. <#init>
+  [112] pusharglist 2 ........................... <pBox, #init>
+  [114] objcall 230 ............................. <pBox.getParams(#init)>
+  [116] setlocal 1 .............................. params = pBox.getParams(#init)
+  [118] getlocal 1 .............................. <params>
+  [120] getlocal 0 .............................. <boxCol>
+  [122] setobjprop 437 .......................... params.color = boxCol
+  [125] getlocal 1 .............................. <params>
+  [127] getparam 0 .............................. <me>
+  [129] pusharglist 1 ........................... <me>
+  [131] objcall 113 ............................. <me.getRect()>
+  [133] setobjprop 438 .......................... params.initialRect = me.getRect()
+  [136] getprop 417 ............................. <pBox>
+  [139] getlocal 1 .............................. <params>
+  [141] pusharglistnoret 2 ...................... <pBox, params>
+  [143] objcall 1 ............................... pBox.init(params)
+  [145] getprop 417 ............................. <pBox>
+  [148] pusharglistnoret 1 ...................... <pBox>
+  [150] objcall 1665 ............................ pBox.display()
+  [153] ret
+end
+
+on getMarkedForDeletion me
+  [  0] getprop 4126 ............................ <pMarkedForDeletion>
+  [  3] pusharglistnoret 1 ...................... <pMarkedForDeletion>
+  [  5] extcall 35 .............................. return pMarkedForDeletion
+  [  7] ret
+end
+
+on getRect me, zoneType
+  [  0] getprop 2106 ............................ <prect>
+  [  3] pusharglist 1 ........................... <prect>
+  [  5] objcall 175 ............................. <prect.duplicate()>
+  [  7] setlocal 0 .............................. myRect = prect.duplicate()
+  [  9] getparam 1 .............................. <zoneType>
+  [ 11] pushsymb 2330 ........................... <#wallLeft>
+  [ 14] eq ...................................... <zoneType = #wallLeft>
+  [ 15] getparam 1 .............................. <zoneType>
+  [ 17] pushsymb 2333 ........................... <#wallRight>
+  [ 20] eq ...................................... <zoneType = #wallRight>
+  [ 21] or ...................................... <(zoneType = #wallLeft) or (zoneType = #wallRight)>
+  [ 22] jmpifz [ 44] ............................ if (zoneType = #wallLeft) or (zoneType = #wallRight) then
+  [ 25] getlocal 0 .............................. <myRect>
+  [ 27] pushint8 2 .............................. <2>
+  [ 29] getlocal 0 .............................. <myRect>
+  [ 31] pushint8 2 .............................. <2>
+  [ 33] pusharglist 2 ........................... <myRect, 2>
+  [ 35] objcall 109 ............................. <myRect[2]>
+  [ 37] pushint8 1 .............................. <1>
+  [ 39] add ..................................... <myRect[2] + 1>
+  [ 40] pusharglistnoret 3 ...................... <myRect, 2, myRect[2] + 1>
+  [ 42] objcall 48 .............................. myRect[2] = myRect[2] + 1
+  [ 44] getlocal 0 .............................. <myRect>
+  [ 46] pusharglistnoret 1 ...................... <myRect>
+  [ 48] extcall 35 .............................. return myRect
+  [ 50] ret
+end
+
+on getSym me
+  [  0] getprop 3468 ............................ <pSym>
+  [  3] pusharglistnoret 1 ...................... <pSym>
+  [  5] extcall 35 .............................. return pSym
+  [  7] ret
+end
+
+on markForDeletion me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushint8 1 .............................. <1>
+  [  4] pusharglistnoret 2 ...................... <me, 1>
+  [  6] objcall 4122 ............................ me.setMarkedForDeletion(1)
+  [  9] ret
+end
+
+on mergeRect me, therect
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 113 ............................. <me.getRect()>
+  [  6] getparam 1 .............................. <therect>
+  [  8] pusharglist 2 ........................... <me.getRect(), therect>
+  [ 10] objcall 4149 ............................ <me.getRect().union(therect)>
+  [ 13] setlocal 0 .............................. newRect = me.getRect().union(therect)
+  [ 15] getparam 0 .............................. <me>
+  [ 17] getlocal 0 .............................. <newRect>
+  [ 19] pusharglistnoret 2 ...................... <me, newRect>
+  [ 21] objcall 1344 ............................ me.setRect(newRect)
+  [ 24] ret
+end
+
+on setEndLoc me, theloc
+  [  0] getparam 1 .............................. <theloc>
+  [  2] pusharglist 1 ........................... <theloc>
+  [  4] objcall 175 ............................. <theloc.duplicate()>
+  [  6] setprop 4127 ............................ pEndLoc = theloc.duplicate()
+  [  9] getparam 0 .............................. <me>
+  [ 11] pusharglistnoret 1 ...................... <me>
+  [ 13] objcall 4118 ............................ me.calcRect()
+  [ 16] ret
+end
+
+on setMarkedForDeletion me, newVal
+  [  0] getparam 1 .............................. <newVal>
+  [  2] setprop 4126 ............................ pMarkedForDeletion = newVal
+  [  5] ret
+end
+
+on setRect me, therect
+  [  0] getparam 1 .............................. <therect>
+  [  2] pusharglist 1 ........................... <therect>
+  [  4] objcall 175 ............................. <therect.duplicate()>
+  [  6] setprop 2106 ............................ prect = therect.duplicate()
+  [  9] getparam 0 .............................. <me>
+  [ 11] pusharglistnoret 1 ...................... <me>
+  [ 13] objcall 4117 ............................ me.calcLocs()
+  [ 16] ret
+end
+
+on setStartLoc me, theloc
+  [  0] getparam 1 .............................. <theloc>
+  [  2] pusharglist 1 ........................... <theloc>
+  [  4] objcall 175 ............................. <theloc.duplicate()>
+  [  6] setprop 4128 ............................ pStartLoc = theloc.duplicate()
+  [  9] getparam 0 .............................. <me>
+  [ 11] pusharglistnoret 1 ...................... <me>
+  [ 13] objcall 4118 ............................ me.calcRect()
+  [ 16] ret
+end
+
+on typeEquals me, theType
+  [  0] getparam 1 .............................. <theType>
+  [  2] getparam 0 .............................. <me>
+  [  4] pusharglist 1 ........................... <me>
+  [  6] objcall 3943 ............................ <me.getSym()>
+  [  9] eq ...................................... <theType = me.getSym()>
+  [ 10] jmpifz [ 19] ............................ if theType = me.getSym() then
+  [ 13] pushint8 1 .............................. <1>
+  [ 15] pusharglistnoret 1 ...................... <1>
+  [ 17] extcall 35 .............................. return 1
+  [ 19] getparam 0 .............................. <me>
+  [ 21] pusharglist 1 ........................... <me>
+  [ 23] objcall 3943 ............................ <me.getSym()>
+  [ 26] pushsymb 1221 ........................... <#solid>
+  [ 29] eq ...................................... <me.getSym() = #solid>
+  [ 30] jmpifz [ 81] ............................ if me.getSym() = #solid then
+  [ 33] getparam 1 .............................. <theType>
+  [ 35] peek 0 .................................. case theType of
+  [ 37] pushsymb 2331 ........................... <#platform>
+  [ 40] nteq
+  [ 41] jmpifz [ 71] ............................ (case) #platform, ...
+  [ 44] peek 0
+  [ 46] pushsymb 2330 ........................... <#wallLeft>
+  [ 49] nteq
+  [ 50] jmpifz [ 71] ............................ (case) ..., #wallLeft, ...
+  [ 53] peek 0
+  [ 55] pushsymb 2333 ........................... <#wallRight>
+  [ 58] nteq
+  [ 59] jmpifz [ 71] ............................ (case) ..., #wallRight, ...
+  [ 62] peek 0
+  [ 64] pushsymb 2334 ........................... <#ceiling>
+  [ 67] eq
+  [ 68] jmpifz [ 79] ............................ (case) ..., #ceiling:
+  [ 71] pop 1
+  [ 73] pushint8 1 .............................. <1>
+  [ 75] pusharglistnoret 1 ...................... <1>
+  [ 77] extcall 35 .............................. return 1
+  [ 79] pop 1
+  [ 81] ret
+end
+
+on zoneTypeIs me, theType, zoneType, gameObject
+  [  0] getparam 1 .............................. <theType>
+  [  2] peek 0 .................................. case theType of
+  [  4] pushsymb 4134 ........................... <#collisionZone>
+  [  7] eq
+  [  8] jmpifz [114] ............................ (case) #collisionZone:
+  [ 11] getparam 2 .............................. <zoneType>
+  [ 13] peek 0 .................................. case zoneType of
+  [ 15] pushsymb 2334 ........................... <#ceiling>
+  [ 18] nteq
+  [ 19] jmpifz [ 40] ............................ (case) #ceiling, ...
+  [ 22] peek 0
+  [ 24] pushsymb 2330 ........................... <#wallLeft>
+  [ 27] nteq
+  [ 28] jmpifz [ 40] ............................ (case) ..., #wallLeft, ...
+  [ 31] peek 0
+  [ 33] pushsymb 2333 ........................... <#wallRight>
+  [ 36] eq
+  [ 37] jmpifz [ 51] ............................ (case) ..., #wallRight:
+  [ 40] pop 2
+  [ 42] pushint8 1 .............................. <1>
+  [ 44] pusharglistnoret 1 ...................... <1>
+  [ 46] extcall 35 .............................. return 1
+  [ 48] jmp [109]
+  [ 51] peek 0
+  [ 53] pushsymb 2331 ........................... <#platform>
+  [ 56] eq
+  [ 57] jmpifz [102] ............................ (case) #platform:
+  [ 60] getparam 0 .............................. <me>
+  [ 62] pusharglist 1 ........................... <me>
+  [ 64] objcall 3943 ............................ <me.getSym()>
+  [ 67] pushsymb 1221 ........................... <#solid>
+  [ 70] eq ...................................... <me.getSym() = #solid>
+  [ 71] jmpifz [ 85] ............................ if me.getSym() = #solid then / else
+  [ 74] pop 2
+  [ 76] pushint8 1 .............................. <1>
+  [ 78] pusharglistnoret 1 ...................... <1>
+  [ 80] extcall 35 .............................. return 1
+  [ 82] jmp [ 99]
+  [ 85] pop 2
+  [ 87] getparam 3 .............................. <gameObject>
+  [ 89] pusharglist 1 ........................... <gameObject>
+  [ 91] objcall 1961 ............................ <gameObject.getAIPlatformDrop()>
+  [ 94] not ..................................... <not gameObject.getAIPlatformDrop()>
+  [ 95] pusharglistnoret 1 ...................... <not gameObject.getAIPlatformDrop()>
+  [ 97] extcall 35 .............................. return not gameObject.getAIPlatformDrop()
+  [ 99] jmp [109] ............................... (case) otherwise:
+  [102] pop 2
+  [104] pushzero ................................ <0>
+  [105] pusharglistnoret 1 ...................... <0>
+  [107] extcall 35 .............................. return 0
+  [109] pop 1 ................................... end case
+  [111] jmp [120] ............................... (case) otherwise:
+  [114] pushcons 1 .............................. <"objZone.zoneTypeIs: collisionZone type not found">
+  [116] pusharglistnoret 1 ...................... <"objZone.zoneTypeIs: collisionZone type not found">
+  [118] extcall 167 ............................. put "objZone.zoneTypeIs: collisionZone type not found"
+  [120] pop 1 ................................... end case
+  [122] ret
+end

@@ -1,0 +1,117 @@
+[#name: "objAiChatter", #scriptType: #parent, #type: #script]
+global g
+
+property ancestor
+property pPlayer
+
+
+on new me
+  ancestor = new(script"objAi")
+  return me
+end 
+
+on init me, params
+  ancestor.init(params)
+  
+  pPlayer = g.actorMaster.getPlayer()
+  me.goMode(#waitingToTalk)
+end
+
+on checkNavModeActive me
+  -- check the player is in nav mode (eg. all fighting has finished)
+  player = g.actorMaster.getPlayer()
+  navModeActive = player.getNavModeActive()
+  return navModeActive
+end
+
+on checkPossibleToTalk me
+  -- check whether there is a possibility to perform the script
+  possible = false
+  talkOnlyOnNavMode = me.pCharacterPrg.getTalkOnlyOnNavMode()
+  if talkOnlyOnNavMode and me.checkNavModeActive() then
+    possible = true
+  end if
+  
+  if talkOnlyOnNavMode = false then
+    possible = true
+  end if
+  
+  return possible
+end
+
+on update me
+  case me.pMode of
+    #waitingToTalk:
+      if me.checkPossibleToTalk() then    
+        if me.pCharacterPrg.checkForCollisionWithPlayer() then
+          me.pCharacterPrg.collected()
+          me.goMode(#active)
+        end if
+      end if
+      
+  end case
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

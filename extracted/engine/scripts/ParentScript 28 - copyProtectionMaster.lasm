@@ -1,0 +1,114 @@
+property pCopyProtectionURL, pmode, pNetRequest
+global g, gCopyProtectionContent, gCopyProtectionPage
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 3 ............................... return me
+  [  6] ret
+end
+
+on init me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 1304 ............................ <me.calcCopyProtectionURL()>
+  [  7] setprop 1308 ............................ pCopyProtectionURL = me.calcCopyProtectionURL()
+  [ 10] pushsymb 103 ............................ <#none>
+  [ 12] setprop 1309 ............................ pNetRequest = #none
+  [ 15] ret
+end
+
+on finish me
+  [  0] getprop 1309 ............................ <pNetRequest>
+  [  3] pusharglist 1 ........................... <pNetRequest>
+  [  5] extcall 350 ............................. <ilk(pNetRequest)>
+  [  8] pushsymb 388 ............................ <#void>
+  [ 11] nteq .................................... <ilk(pNetRequest) <> #void>
+  [ 12] getprop 1309 ............................ <pNetRequest>
+  [ 15] pushsymb 103 ............................ <#none>
+  [ 17] nteq .................................... <pNetRequest <> #none>
+  [ 18] and ..................................... <(ilk(pNetRequest) <> #void) and (pNetRequest <> #none)>
+  [ 19] jmpifz [ 34] ............................ if (ilk(pNetRequest) <> #void) and (pNetRequest <> #none) then
+  [ 22] getprop 1309 ............................ <pNetRequest>
+  [ 25] pusharglistnoret 1 ...................... <pNetRequest>
+  [ 27] objcall 239 ............................. pNetRequest.finish()
+  [ 29] pushsymb 103 ............................ <#none>
+  [ 31] setprop 1309 ............................ pNetRequest = #none
+  [ 34] ret
+end
+
+on calcCopyProtectionURL me
+  [  0] getglobal 1311 .......................... <gCopyProtectionPage>
+  [  3] pusharglist 1 ........................... <gCopyProtectionPage>
+  [  5] extcall 1310 ............................ <URLOfPage(gCopyProtectionPage)>
+  [  8] setlocal 0 .............................. theurl = URLOfPage(gCopyProtectionPage)
+  [ 10] getlocal 0 .............................. <theurl>
+  [ 12] pusharglistnoret 1 ...................... <theurl>
+  [ 14] extcall 3 ............................... return theurl
+  [ 16] ret
+end
+
+on getMode me
+  [  0] getprop 1266 ............................ <pmode>
+  [  3] pusharglistnoret 1 ...................... <pmode>
+  [  5] extcall 3 ............................... return pmode
+  [  7] ret
+end
+
+on netRequestFinished me, theNetPrg, theResult
+  [  0] getparam 2 .............................. <theResult>
+  [  2] getglobal 1313 .......................... <gCopyProtectionContent>
+  [  5] eq ...................................... <theResult = gCopyProtectionContent>
+  [  6] jmpifz [ 17] ............................ if theResult = gCopyProtectionContent then / else
+  [  9] pushsymb 614 ............................ <#Ok>
+  [ 12] setlocal 0 .............................. copyProtectionStatus = #Ok
+  [ 14] jmp [ 22]
+  [ 17] pushsymb 673 ............................ <#invalid>
+  [ 20] setlocal 0 .............................. copyProtectionStatus = #invalid
+  [ 22] getglobal 191 ........................... <g>
+  [ 24] getchainedprop 735 ...................... <g.gamemaster>
+  [ 27] getlocal 0 .............................. <copyProtectionStatus>
+  [ 29] pusharglistnoret 2 ...................... <g.gamemaster, copyProtectionStatus>
+  [ 31] objcall 612 ............................. g.gamemaster.updateCopyProtectionStatus(copyProtectionStatus)
+  [ 34] ret
+end
+
+on startCopyProtectionCheck me
+  [  0] getprop 1309 ............................ <pNetRequest>
+  [  3] pushsymb 103 ............................ <#none>
+  [  5] eq ...................................... <pNetRequest = #none>
+  [  6] jmpifz [ 60] ............................ if pNetRequest = #none then
+  [  9] getglobal 191 ........................... <g>
+  [ 11] getchainedprop 336 ...................... <g.objectMaster>
+  [ 14] pushsymb 1317 ........................... <#objNetRequest>
+  [ 17] pusharglist 2 ........................... <g.objectMaster, #objNetRequest>
+  [ 19] objcall 338 ............................. <g.objectMaster.requestObject(#objNetRequest)>
+  [ 22] setprop 1309 ............................ pNetRequest = g.objectMaster.requestObject(#objNetRequest)
+  [ 25] getprop 1309 ............................ <pNetRequest>
+  [ 28] pushsymb 1 .............................. <#init>
+  [ 30] pusharglist 2 ........................... <pNetRequest, #init>
+  [ 32] objcall 339 ............................. <pNetRequest.getParams(#init)>
+  [ 35] setlocal 0 .............................. params = pNetRequest.getParams(#init)
+  [ 37] getlocal 0 .............................. <params>
+  [ 39] getparam 0 .............................. <me>
+  [ 41] setobjprop 236 .......................... params.callingPrg = me
+  [ 43] getlocal 0 .............................. <params>
+  [ 45] getprop 1308 ............................ <pCopyProtectionURL>
+  [ 48] setobjprop 1318 ......................... params.requestURL = pCopyProtectionURL
+  [ 51] getprop 1309 ............................ <pNetRequest>
+  [ 54] getlocal 0 .............................. <params>
+  [ 56] pusharglistnoret 2 ...................... <pNetRequest, params>
+  [ 58] objcall 1 ............................... pNetRequest.init(params)
+  [ 60] ret
+end
+
+on start me
+  [  0] ret
+end
+
+on stop me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 239 ............................. me.finish()
+  [  6] ret
+end

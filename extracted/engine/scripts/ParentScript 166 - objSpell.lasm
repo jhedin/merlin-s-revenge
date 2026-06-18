@@ -1,0 +1,657 @@
+property ancestor, pChargeOffsetSide, pCharger, pCurrentCharge, pReleaseSpeed, pReleaseTargetLoc, pSpellProperties
+global g, gGameBulletLayer
+
+on new me
+  [  0] pushcons 0 .............................. <"objGameObject">
+  [  2] pusharglist 1 ........................... <"objGameObject">
+  [  4] extcall 34 .............................. <script("objGameObject")>
+  [  6] pusharglist 1 ........................... <script("objGameObject")>
+  [  8] extcall 0 ............................... <new(script("objGameObject"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objGameObject"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 78 ............................. <#charge>
+  [ 26] setobjprop 2753 ......................... i.initMode = #charge
+  [ 29] getlocal 0 .............................. <i>
+  [ 31] getglobal 2142 .......................... <gGameBulletLayer>
+  [ 34] setobjprop 2143 ......................... i.layerZ = gGameBulletLayer
+  [ 37] getparam 0 .............................. <me>
+  [ 39] pushsymb 1763 ........................... <#setSpellProperties>
+  [ 42] pusharglist 2 ........................... <me, #setSpellProperties>
+  [ 44] objcall 47 .............................. <me.modifyParams(#setSpellProperties)>
+  [ 46] setlocal 1 .............................. s = me.modifyParams(#setSpellProperties)
+  [ 48] getlocal 1 .............................. <s>
+  [ 50] pushsymb 145 ............................ <#attack>
+  [ 52] pushsymb 49 ............................. <#none>
+  [ 54] pusharglistnoret 3 ...................... <s, #attack, #none>
+  [ 56] objcall 48 .............................. s[#attack] = #none
+  [ 58] getlocal 1 .............................. <s>
+  [ 60] pushsymb 1765 ........................... <#chargeOffsetSide>
+  [ 63] pushsymb 265 ............................ <#top>
+  [ 66] pusharglistnoret 3 ...................... <s, #chargeOffsetSide, #top>
+  [ 68] objcall 48 .............................. s[#chargeOffsetSide] = #top
+  [ 70] getlocal 1 .............................. <s>
+  [ 72] pushsymb 1296 ........................... <#team>
+  [ 75] pushsymb 49 ............................. <#none>
+  [ 77] pusharglistnoret 3 ...................... <s, #team, #none>
+  [ 79] objcall 48 .............................. s[#team] = #none
+  [ 81] getparam 0 .............................. <me>
+  [ 83] pushcons 1 .............................. <"modAnimSet">
+  [ 85] pusharglistnoret 2 ...................... <me, "modAnimSet">
+  [ 87] objcall 1717 ............................ me.addModule("modAnimSet")
+  [ 90] getparam 0 .............................. <me>
+  [ 92] pushcons 2 .............................. <"modAttack">
+  [ 94] pusharglistnoret 2 ...................... <me, "modAttack">
+  [ 96] objcall 1717 ............................ me.addModule("modAttack")
+  [ 99] getparam 0 .............................. <me>
+  [101] pushcons 3 .............................. <"modFader">
+  [103] pusharglistnoret 2 ...................... <me, "modFader">
+  [105] objcall 1717 ............................ me.addModule("modFader")
+  [108] getparam 0 .............................. <me>
+  [110] pushcons 4 .............................. <"modFireBullets">
+  [112] pusharglistnoret 2 ...................... <me, "modFireBullets">
+  [114] objcall 1717 ............................ me.addModule("modFireBullets")
+  [117] getparam 0 .............................. <me>
+  [119] pushcons 5 .............................. <"modSpellMultiStage">
+  [121] pusharglistnoret 2 ...................... <me, "modSpellMultiStage">
+  [123] objcall 1717 ............................ me.addModule("modSpellMultiStage")
+  [126] getparam 0 .............................. <me>
+  [128] pusharglistnoret 1 ...................... <me>
+  [130] extcall 35 .............................. return me
+  [132] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pushint8 1 .............................. <1>
+  [ 10] setprop 3870 ............................ pCurrentCharge = 1
+  [ 13] getparam 1 .............................. <params>
+  [ 15] getobjprop 2753 ......................... <params.initMode>
+  [ 18] setlocal 0 .............................. pmode = params.initMode
+  [ 20] pushzero ................................ <0>
+  [ 21] pushzero ................................ <0>
+  [ 22] pusharglist 2 ........................... <0, 0>
+  [ 24] extcall 197 ............................. <point(0, 0)>
+  [ 26] setprop 3871 ............................ pReleaseTargetLoc = point(0, 0)
+  [ 29] pushint8 1 .............................. <1>
+  [ 31] setprop 3872 ............................ pReleaseSpeed = 1
+  [ 34] pusharglist 0 ........................... <[:]>
+  [ 36] pushproplist ............................ <[:]>
+  [ 37] setprop 3873 ............................ pSpellProperties = [:]
+  [ 40] ret
+end
+
+on finish me
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 228 ...................... <g.actorMaster>
+  [  4] pusharglist 1 ........................... <g.actorMaster>
+  [  6] objcall 861 ............................. <g.actorMaster.getPlayer()>
+  [  9] setlocal 0 .............................. player = g.actorMaster.getPlayer()
+  [ 11] getlocal 0 .............................. <player>
+  [ 13] pushsymb 49 ............................. <#none>
+  [ 15] nteq .................................... <player <> #none>
+  [ 16] jmpifz [ 52] ............................ if player <> #none then
+  [ 19] getlocal 0 .............................. <player>
+  [ 21] pusharglist 1 ........................... <player>
+  [ 23] objcall 1741 ............................ <player.getChargingSpell()>
+  [ 26] getparam 0 .............................. <me>
+  [ 28] getchainedprop 57 ....................... <me.id>
+  [ 30] getobjprop 58 ........................... <me.id.bigMe>
+  [ 32] eq ...................................... <player.getChargingSpell() = me.id.bigMe>
+  [ 33] jmpifz [ 52] ............................ if player.getChargingSpell() = me.id.bigMe then
+  [ 36] getlocal 0 .............................. <player>
+  [ 38] pusharglist 1 ........................... <player>
+  [ 40] objcall 1694 ............................ <player.getAI()>
+  [ 43] setlocal 1 .............................. playerAI = player.getAI()
+  [ 45] getlocal 1 .............................. <playerAI>
+  [ 47] pusharglistnoret 1 ...................... <playerAI>
+  [ 49] objcall 1739 ............................ playerAI.chargingSpellFinished()
+  [ 52] getprop 33 .............................. <ancestor>
+  [ 54] pusharglistnoret 1 ...................... <ancestor>
+  [ 56] objcall 3 ............................... ancestor.finish()
+  [ 58] ret
+end
+
+on addSaveData me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 4 ............................... ancestor.addSaveData(sd)
+  [  8] getglobal 40 ............................ <g>
+  [ 10] getchainedprop 228 ...................... <g.actorMaster>
+  [ 12] pusharglist 1 ........................... <g.actorMaster>
+  [ 14] objcall 861 ............................. <g.actorMaster.getPlayer()>
+  [ 17] setlocal 0 .............................. player = g.actorMaster.getPlayer()
+  [ 19] getparam 1 .............................. <sd>
+  [ 21] pushsymb 3875 ........................... <#isChargingSpell>
+  [ 24] getlocal 0 .............................. <player>
+  [ 26] pusharglist 1 ........................... <player>
+  [ 28] objcall 1741 ............................ <player.getChargingSpell()>
+  [ 31] getparam 0 .............................. <me>
+  [ 33] getobjprop 51 ........................... <me.big>
+  [ 35] eq ...................................... <player.getChargingSpell() = me.big>
+  [ 36] pusharglistnoret 3 ...................... <sd, #isChargingSpell, player.getChargingSpell() = me.big>
+  [ 38] objcall 48 .............................. sd[#isChargingSpell] = player.getChargingSpell() = me.big
+  [ 40] getparam 1 .............................. <sd>
+  [ 42] pushsymb 2213 ........................... <#pChargeOffsetSide>
+  [ 45] getprop 2213 ............................ <pChargeOffsetSide>
+  [ 48] pusharglistnoret 3 ...................... <sd, #pChargeOffsetSide, pChargeOffsetSide>
+  [ 50] objcall 48 .............................. sd[#pChargeOffsetSide] = pChargeOffsetSide
+  [ 52] getparam 1 .............................. <sd>
+  [ 54] pushsymb 3870 ........................... <#pCurrentCharge>
+  [ 57] getprop 3870 ............................ <pCurrentCharge>
+  [ 60] pusharglistnoret 3 ...................... <sd, #pCurrentCharge, pCurrentCharge>
+  [ 62] objcall 48 .............................. sd[#pCurrentCharge] = pCurrentCharge
+  [ 64] getparam 1 .............................. <sd>
+  [ 66] pushsymb 3873 ........................... <#pSpellProperties>
+  [ 69] getprop 3873 ............................ <pSpellProperties>
+  [ 72] pusharglistnoret 3 ...................... <sd, #pSpellProperties, pSpellProperties>
+  [ 74] objcall 48 .............................. sd[#pSpellProperties] = pSpellProperties
+  [ 76] ret
+end
+
+on align me, chargeLoc
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 3865 ............................ <me.calcChargeOffset()>
+  [  7] setlocal 0 .............................. chargeOffset = me.calcChargeOffset()
+  [  9] getparam 1 .............................. <chargeLoc>
+  [ 11] getlocal 0 .............................. <chargeOffset>
+  [ 13] add ..................................... <chargeLoc + chargeOffset>
+  [ 14] setparam 1 .............................. chargeLoc = chargeLoc + chargeOffset
+  [ 16] getparam 0 .............................. <me>
+  [ 18] getparam 1 .............................. <chargeLoc>
+  [ 20] pusharglistnoret 2 ...................... <me, chargeLoc>
+  [ 22] objcall 669 ............................. me.setLoc(chargeLoc)
+  [ 25] ret
+end
+
+on animUpdated me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 52 .............................. <me.getMode()>
+  [  6] peek 0 .................................. case me.getMode() of
+  [  8] pushsymb 78 ............................. <#charge>
+  [ 10] nteq
+  [ 11] jmpifz [ 31] ............................ (case) #charge, ...
+  [ 14] peek 0
+  [ 16] pushsymb 180 ............................ <#explode>
+  [ 18] nteq
+  [ 19] jmpifz [ 31] ............................ (case) ..., #explode, ...
+  [ 22] peek 0
+  [ 24] pushsymb 704 ............................ <#fireBullets>
+  [ 27] eq
+  [ 28] jmpifz [ 38] ............................ (case) ..., #fireBullets:
+  [ 31] getparam 0 .............................. <me>
+  [ 33] pusharglistnoret 1 ...................... <me>
+  [ 35] objcall 3869 ............................ me.updateSize()
+  [ 38] pop 1
+  [ 40] ret
+end
+
+on calcChargeOffset me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 3866 ............................ <me.calcSize()>
+  [  7] pushint8 2 .............................. <2>
+  [  9] div ..................................... <me.calcSize() / 2>
+  [ 10] setlocal 0 .............................. offsetFromSize = me.calcSize() / 2
+  [ 12] getprop 2213 ............................ <pChargeOffsetSide>
+  [ 15] peek 0 .................................. case pChargeOffsetSide of
+  [ 17] pushsymb 265 ............................ <#top>
+  [ 20] eq
+  [ 21] jmpifz [ 37] ............................ (case) #top:
+  [ 24] pushzero ................................ <0>
+  [ 25] getlocal 0 .............................. <offsetFromSize>
+  [ 27] inv ..................................... <-offsetFromSize>
+  [ 28] pusharglist 2 ........................... <0, -offsetFromSize>
+  [ 30] extcall 197 ............................. <point(0, -offsetFromSize)>
+  [ 32] setlocal 1 .............................. chargeOffset = point(0, -offsetFromSize)
+  [ 34] jmp [ 90]
+  [ 37] peek 0
+  [ 39] pushsymb 2353 ........................... <#side>
+  [ 42] eq
+  [ 43] jmpifz [ 90] ............................ (case) #side:
+  [ 46] pushzero ................................ <0>
+  [ 47] setlocal 2 .............................. Dir = 0
+  [ 49] getparam 0 .............................. <me>
+  [ 51] pushsymb 561 ............................ <#owner>
+  [ 54] pusharglist 2 ........................... <me, #owner>
+  [ 56] objcall 606 ............................. <me.getRelation(#owner)>
+  [ 59] setlocal 3 .............................. owner = me.getRelation(#owner)
+  [ 61] getlocal 3 .............................. <owner>
+  [ 63] pushsymb 49 ............................. <#none>
+  [ 65] nteq .................................... <owner <> #none>
+  [ 66] jmpifz [ 78] ............................ if owner <> #none then
+  [ 69] getlocal 3 .............................. <owner>
+  [ 71] pusharglist 1 ........................... <owner>
+  [ 73] objcall 1018 ............................ <owner.getFlipAsDir()>
+  [ 76] setlocal 2 .............................. Dir = owner.getFlipAsDir()
+  [ 78] getlocal 0 .............................. <offsetFromSize>
+  [ 80] getlocal 2 .............................. <Dir>
+  [ 82] mul ..................................... <offsetFromSize * Dir>
+  [ 83] pushzero ................................ <0>
+  [ 84] pusharglist 2 ........................... <offsetFromSize * Dir, 0>
+  [ 86] extcall 197 ............................. <point(offsetFromSize * Dir, 0)>
+  [ 88] setlocal 1 .............................. chargeOffset = point(offsetFromSize * Dir, 0)
+  [ 90] pop 1 ................................... end case
+  [ 92] getlocal 1 .............................. <chargeOffset>
+  [ 94] pusharglistnoret 1 ...................... <chargeOffset>
+  [ 96] extcall 35 .............................. return chargeOffset
+  [ 98] ret
+end
+
+on calcSize me
+  [  0] getprop 3870 ............................ <pCurrentCharge>
+  [  3] getparam 0 .............................. <me>
+  [  5] pusharglist 1 ........................... <me>
+  [  7] objcall 141 ............................. <me.getAttack()>
+  [  9] getobjprop 3878 ......................... <me.getAttack().chargeSize>
+  [ 12] mul ..................................... <pCurrentCharge * me.getAttack().chargeSize>
+  [ 13] pusharglistnoret 1 ...................... <pCurrentCharge * me.getAttack().chargeSize>
+  [ 15] extcall 35 .............................. return pCurrentCharge * me.getAttack().chargeSize
+  [ 17] ret
+end
+
+on charge me, chargeAmount, chargeLoc
+  [  0] getparam 1 .............................. <chargeAmount>
+  [  2] setprop 3870 ............................ pCurrentCharge = chargeAmount
+  [  5] getparam 0 .............................. <me>
+  [  7] getparam 2 .............................. <chargeLoc>
+  [  9] pusharglistnoret 2 ...................... <me, chargeLoc>
+  [ 11] objcall 1766 ............................ me.align(chargeLoc)
+  [ 14] getparam 0 .............................. <me>
+  [ 16] pushsymb 78 ............................. <#charge>
+  [ 18] pusharglistnoret 2 ...................... <me, #charge>
+  [ 20] objcall 22 .............................. me.internalEvent(#charge)
+  [ 22] ret
+end
+
+on checkCollisions me, newVal
+  [  0] getparam 1 .............................. <newVal>
+  [  2] pusharglistnoret 1 ...................... <newVal>
+  [  4] extcall 35 .............................. return newVal
+  [  6] ret
+end
+
+on checkDead me
+  [  0] pushzero ................................ <0>
+  [  1] pusharglistnoret 1 ...................... <0>
+  [  3] extcall 35 .............................. return 0
+  [  5] ret
+end
+
+on gainExperience me, theAmount
+  [  0] pusharglistnoret 0 ...................... <>
+  [  2] extcall 185 ............................. nothing()
+  [  4] ret
+end
+
+on gainExperienceFromHealing me
+  [  0] pusharglistnoret 0 ...................... <>
+  [  2] extcall 185 ............................. nothing()
+  [  4] ret
+end
+
+on goMode me, newMode
+  [  0] getparam 1 .............................. <newMode>
+  [  2] peek 0 .................................. case newMode of
+  [  4] pushsymb 180 ............................ <#explode>
+  [  6] eq
+  [  7] jmpifz [102] ............................ (case) #explode:
+  [ 10] getparam 0 .............................. <me>
+  [ 12] pusharglist 1 ........................... <me>
+  [ 14] objcall 141 ............................. <me.getAttack()>
+  [ 16] setlocal 0 .............................. attack = me.getAttack()
+  [ 18] getprop 3870 ............................ <pCurrentCharge>
+  [ 21] getlocal 0 .............................. <attack>
+  [ 23] getchainedprop 3879 ..................... <attack.chargeVolumeMap>
+  [ 26] getobjprop 78 ........................... <attack.chargeVolumeMap.charge>
+  [ 28] getlocal 0 .............................. <attack>
+  [ 30] getchainedprop 3879 ..................... <attack.chargeVolumeMap>
+  [ 33] getobjprop 3880 ......................... <attack.chargeVolumeMap.vol>
+  [ 36] pusharglist 3 ........................... <pCurrentCharge, attack.chargeVolumeMap.charge, attack.chargeVolumeMap.vol>
+  [ 38] extcall 863 ............................. <varMapRange(pCurrentCharge, attack.chargeVolumeMap.charge, attack.chargeVolumeMap.vol)>
+  [ 41] setlocal 1 .............................. explodeVolume = varMapRange(pCurrentCharge, attack.chargeVolumeMap.charge, attack.chargeVolumeMap.vol)
+  [ 43] getprop 3870 ............................ <pCurrentCharge>
+  [ 46] getlocal 0 .............................. <attack>
+  [ 48] getobjprop 3881 ......................... <attack.chargeExplodeFactor>
+  [ 51] mul ..................................... <pCurrentCharge * attack.chargeExplodeFactor>
+  [ 52] setprop 3870 ............................ pCurrentCharge = pCurrentCharge * attack.chargeExplodeFactor
+  [ 55] getparam 0 .............................. <me>
+  [ 57] pusharglistnoret 1 ...................... <me>
+  [ 59] objcall 679 ............................. me.startQuickFade()
+  [ 62] getglobal 40 ............................ <g>
+  [ 64] getchainedprop 642 ...................... <g.teamMaster>
+  [ 67] getparam 0 .............................. <me>
+  [ 69] getchainedprop 57 ....................... <me.id>
+  [ 71] getobjprop 58 ........................... <me.id.bigMe>
+  [ 73] pusharglistnoret 2 ...................... <g.teamMaster, me.id.bigMe>
+  [ 75] objcall 643 ............................. g.teamMaster.impactAttack(me.id.bigMe)
+  [ 78] getparam 0 .............................. <me>
+  [ 80] getlocal 0 .............................. <attack>
+  [ 82] getobjprop 635 .......................... <attack.explodeSound>
+  [ 85] getlocal 1 .............................. <explodeVolume>
+  [ 87] pusharglistnoret 3 ...................... <me, attack.explodeSound, explodeVolume>
+  [ 89] objcall 551 ............................. me.PlaySound(attack.explodeSound, explodeVolume)
+  [ 92] getparam 0 .............................. <me>
+  [ 94] getchainedprop 51 ....................... <me.big>
+  [ 96] pushsymb 180 ............................ <#explode>
+  [ 98] pusharglistnoret 2 ...................... <me.big, #explode>
+  [100] objcall 22 .............................. me.big.internalEvent(#explode)
+  [102] pop 1
+  [104] getprop 33 .............................. <ancestor>
+  [106] getparam 1 .............................. <newMode>
+  [108] pusharglistnoret 2 ...................... <ancestor, newMode>
+  [110] objcall 278 ............................. ancestor.goMode(newMode)
+  [113] ret
+end
+
+on calcAttackLoc me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 111 ............................. <me.getLoc()>
+  [  6] pusharglistnoret 1 ...................... <me.getLoc()>
+  [  8] extcall 35 .............................. return me.getLoc()
+  [ 10] ret
+end
+
+on getAnimSym me, sym
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 52 .............................. <me.getMode()>
+  [  6] setparam 1 .............................. sym = me.getMode()
+  [  8] getparam 1 .............................. <sym>
+  [ 10] peek 0 .................................. case sym of
+  [ 12] pushsymb 2147 ........................... <#fly>
+  [ 15] nteq
+  [ 16] jmpifz [ 27] ............................ (case) #fly, ...
+  [ 19] peek 0
+  [ 21] pushsymb 180 ............................ <#explode>
+  [ 23] eq
+  [ 24] jmpifz [ 31] ............................ (case) ..., #explode:
+  [ 27] pushsymb 78 ............................. <#charge>
+  [ 29] setparam 1 .............................. sym = #charge
+  [ 31] pop 1
+  [ 33] getparam 1 .............................. <sym>
+  [ 35] pusharglistnoret 1 ...................... <sym>
+  [ 37] extcall 35 .............................. return sym
+  [ 39] ret
+end
+
+on getCharge me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 189 ............................. <me.getCurrentCharge()>
+  [  6] pusharglistnoret 1 ...................... <me.getCurrentCharge()>
+  [  8] extcall 35 .............................. return me.getCurrentCharge()
+  [ 10] ret
+end
+
+on getCurrentCharge me
+  [  0] getprop 3870 ............................ <pCurrentCharge>
+  [  3] pusharglistnoret 1 ...................... <pCurrentCharge>
+  [  5] extcall 35 .............................. return pCurrentCharge
+  [  7] ret
+end
+
+on getChargeOffsetSide me
+  [  0] getprop 2213 ............................ <pChargeOffsetSide>
+  [  3] pusharglistnoret 1 ...................... <pChargeOffsetSide>
+  [  5] extcall 35 .............................. return pChargeOffsetSide
+  [  7] ret
+end
+
+on getSpellProperties me
+  [  0] getprop 3873 ............................ <pSpellProperties>
+  [  3] pusharglistnoret 1 ...................... <pSpellProperties>
+  [  5] extcall 35 .............................. return pSpellProperties
+  [  7] ret
+end
+
+on getTargetLoc me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 240 ............................. <me.getOwner()>
+  [  6] setlocal 0 .............................. owner = me.getOwner()
+  [  8] getlocal 0 .............................. <owner>
+  [ 10] pushsymb 49 ............................. <#none>
+  [ 12] nteq .................................... <owner <> #none>
+  [ 13] jmpifz [ 29] ............................ if owner <> #none then / else
+  [ 16] getlocal 0 .............................. <owner>
+  [ 18] pusharglist 1 ........................... <owner>
+  [ 20] objcall 223 ............................. <owner.getTargetLoc()>
+  [ 22] pusharglistnoret 1 ...................... <owner.getTargetLoc()>
+  [ 24] extcall 35 .............................. return owner.getTargetLoc()
+  [ 26] jmp [ 35]
+  [ 29] pushsymb 49 ............................. <#none>
+  [ 31] pusharglistnoret 1 ...................... <#none>
+  [ 33] extcall 35 .............................. return #none
+  [ 35] ret
+end
+
+on internalEvent me, theEvent
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <theEvent>
+  [  4] pusharglistnoret 2 ...................... <ancestor, theEvent>
+  [  6] objcall 22 .............................. ancestor.internalEvent(theEvent)
+  [  8] getparam 1 .............................. <theEvent>
+  [ 10] peek 0 .................................. case theEvent of
+  [ 12] pushsymb 702 ............................ <#spellReleased>
+  [ 15] eq
+  [ 16] jmpifz [ 47] ............................ (case) #spellReleased:
+  [ 19] getparam 0 .............................. <me>
+  [ 21] pusharglist 1 ........................... <me>
+  [ 23] objcall 141 ............................. <me.getAttack()>
+  [ 25] getobjprop 703 .......................... <me.getAttack().releaseFunction>
+  [ 28] pushsymb 80 ............................. <#release>
+  [ 30] eq ...................................... <me.getAttack().releaseFunction = #release>
+  [ 31] jmpifz [ 47] ............................ if me.getAttack().releaseFunction = #release then
+  [ 34] getparam 0 .............................. <me>
+  [ 36] getprop 3871 ............................ <pReleaseTargetLoc>
+  [ 39] getprop 3872 ............................ <pReleaseSpeed>
+  [ 42] pusharglistnoret 3 ...................... <me, pReleaseTargetLoc, pReleaseSpeed>
+  [ 44] objcall 3868 ............................ me.releaseNormal(pReleaseTargetLoc, pReleaseSpeed)
+  [ 47] pop 1
+  [ 49] ret
+end
+
+on moveXYFin me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 907 ............................. ancestor.moveXYFin()
+  [  7] getparam 0 .............................. <me>
+  [  9] pushsymb 180 ............................ <#explode>
+  [ 11] pusharglistnoret 2 ...................... <me, #explode>
+  [ 13] objcall 278 ............................. me.goMode(#explode)
+  [ 16] ret
+end
+
+on playReleaseSound me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 141 ............................. <me.getAttack()>
+  [  6] setlocal 0 .............................. attack = me.getAttack()
+  [  8] getlocal 0 .............................. <attack>
+  [ 10] getobjprop 3879 ......................... <attack.chargeVolumeMap>
+  [ 13] setlocal 1 .............................. chargeVolumeMap = attack.chargeVolumeMap
+  [ 15] getprop 3870 ............................ <pCurrentCharge>
+  [ 18] getlocal 1 .............................. <chargeVolumeMap>
+  [ 20] getobjprop 78 ........................... <chargeVolumeMap.charge>
+  [ 22] getlocal 1 .............................. <chargeVolumeMap>
+  [ 24] getobjprop 3880 ......................... <chargeVolumeMap.vol>
+  [ 27] pusharglist 3 ........................... <pCurrentCharge, chargeVolumeMap.charge, chargeVolumeMap.vol>
+  [ 29] extcall 863 ............................. <varMapRange(pCurrentCharge, chargeVolumeMap.charge, chargeVolumeMap.vol)>
+  [ 32] setlocal 2 .............................. releaseVolume = varMapRange(pCurrentCharge, chargeVolumeMap.charge, chargeVolumeMap.vol)
+  [ 34] getparam 0 .............................. <me>
+  [ 36] getlocal 0 .............................. <attack>
+  [ 38] getobjprop 3882 ......................... <attack.releaseSound>
+  [ 41] getlocal 2 .............................. <releaseVolume>
+  [ 43] pusharglistnoret 3 ...................... <me, attack.releaseSound, releaseVolume>
+  [ 45] objcall 551 ............................. me.PlaySound(attack.releaseSound, releaseVolume)
+  [ 48] ret
+end
+
+on release me, targetloc, speed
+  [  0] getparam 1 .............................. <targetloc>
+  [  2] setprop 3871 ............................ pReleaseTargetLoc = targetloc
+  [  5] getparam 2 .............................. <speed>
+  [  7] setprop 3872 ............................ pReleaseSpeed = speed
+  [ 10] getparam 0 .............................. <me>
+  [ 12] getchainedprop 51 ....................... <me.big>
+  [ 14] pushsymb 702 ............................ <#spellReleased>
+  [ 17] pusharglistnoret 2 ...................... <me.big, #spellReleased>
+  [ 19] objcall 22 .............................. me.big.internalEvent(#spellReleased)
+  [ 21] ret
+end
+
+on releaseNormal me, targetloc, speed
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1037 ........................... <#moveToTarget>
+  [  5] pusharglist 2 ........................... <me, #moveToTarget>
+  [  7] objcall 2727 ............................ <me.getMoveXYParams(#moveToTarget)>
+  [ 10] setlocal 0 .............................. params = me.getMoveXYParams(#moveToTarget)
+  [ 12] getlocal 0 .............................. <params>
+  [ 14] getparam 1 .............................. <targetloc>
+  [ 16] setobjprop 216 .......................... params.targetloc = targetloc
+  [ 18] getlocal 0 .............................. <params>
+  [ 20] getparam 2 .............................. <speed>
+  [ 22] setobjprop 215 .......................... params.speed = speed
+  [ 24] getparam 0 .............................. <me>
+  [ 26] getlocal 0 .............................. <params>
+  [ 28] pusharglistnoret 2 ...................... <me, params>
+  [ 30] objcall 1037 ............................ me.moveToTarget(params)
+  [ 33] getparam 0 .............................. <me>
+  [ 35] pusharglistnoret 1 ...................... <me>
+  [ 37] objcall 3867 ............................ me.playReleaseSound()
+  [ 40] ret
+end
+
+on recordKill me
+  [  0] pusharglistnoret 0 ...................... <>
+  [  2] extcall 185 ............................. nothing()
+  [  4] ret
+end
+
+on restoreFromSave me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 26 .............................. ancestor.restoreFromSave(sd)
+  [  8] getparam 1 .............................. <sd>
+  [ 10] getobjprop 2213 ......................... <sd.pChargeOffsetSide>
+  [ 13] setprop 2213 ............................ pChargeOffsetSide = sd.pChargeOffsetSide
+  [ 16] getparam 1 .............................. <sd>
+  [ 18] getobjprop 3870 ......................... <sd.pCurrentCharge>
+  [ 21] setprop 3870 ............................ pCurrentCharge = sd.pCurrentCharge
+  [ 24] getparam 1 .............................. <sd>
+  [ 26] getobjprop 312 .......................... <sd.pmode>
+  [ 29] setlocal 0 .............................. pmode = sd.pmode
+  [ 31] getparam 0 .............................. <me>
+  [ 33] getparam 1 .............................. <sd>
+  [ 35] getobjprop 3873 ......................... <sd.pSpellProperties>
+  [ 38] pusharglistnoret 2 ...................... <me, sd.pSpellProperties>
+  [ 40] objcall 1763 ............................ me.setSpellProperties(sd.pSpellProperties)
+  [ 43] getparam 1 .............................. <sd>
+  [ 45] getobjprop 3875 ......................... <sd.isChargingSpell>
+  [ 48] pushint8 1 .............................. <1>
+  [ 50] eq ...................................... <sd.isChargingSpell = 1>
+  [ 51] jmpifz [ 76] ............................ if sd.isChargingSpell = 1 then
+  [ 54] getglobal 40 ............................ <g>
+  [ 56] getchainedprop 228 ...................... <g.actorMaster>
+  [ 58] pusharglist 1 ........................... <g.actorMaster>
+  [ 60] objcall 861 ............................. <g.actorMaster.getPlayer()>
+  [ 63] setlocal 1 .............................. player = g.actorMaster.getPlayer()
+  [ 65] getlocal 1 .............................. <player>
+  [ 67] getparam 0 .............................. <me>
+  [ 69] getobjprop 51 ........................... <me.big>
+  [ 71] pusharglistnoret 2 ...................... <player, me.big>
+  [ 73] objcall 1747 ............................ player.setChargingSpell(me.big)
+  [ 76] ret
+end
+
+on setCurrentCharge me, newVal
+  [  0] getparam 1 .............................. <newVal>
+  [  2] setprop 3870 ............................ pCurrentCharge = newVal
+  [  5] ret
+end
+
+on setSpellProperties me, params
+  [  0] getparam 1 .............................. <params>
+  [  2] getobjprop 145 .......................... <params.attack>
+  [  4] setlocal 0 .............................. attack = params.attack
+  [  6] getparam 0 .............................. <me>
+  [  8] getlocal 0 .............................. <attack>
+  [ 10] pusharglistnoret 2 ...................... <me, attack>
+  [ 12] objcall 144 ............................. me.setAttack(attack)
+  [ 14] getparam 0 .............................. <me>
+  [ 16] getlocal 0 .............................. <attack>
+  [ 18] getobjprop 3884 ......................... <attack.chargeColour>
+  [ 21] pusharglistnoret 2 ...................... <me, attack.chargeColour>
+  [ 23] objcall 470 ............................. me.setSpriteColour(attack.chargeColour)
+  [ 26] getparam 0 .............................. <me>
+  [ 28] getparam 1 .............................. <params>
+  [ 30] getobjprop 1296 ......................... <params.team>
+  [ 33] pusharglistnoret 2 ...................... <me, params.team>
+  [ 35] objcall 239 ............................. me.setTeam(params.team)
+  [ 37] getparam 1 .............................. <params>
+  [ 39] getobjprop 1765 ......................... <params.chargeOffsetSide>
+  [ 42] setprop 2213 ............................ pChargeOffsetSide = params.chargeOffsetSide
+  [ 45] getparam 1 .............................. <params>
+  [ 47] pusharglist 1 ........................... <params>
+  [ 49] objcall 175 ............................. <params.duplicate()>
+  [ 51] setprop 3873 ............................ pSpellProperties = params.duplicate()
+  [ 54] getparam 0 .............................. <me>
+  [ 56] pushsymb 1322 ........................... <#spellPropertiesSet>
+  [ 59] pusharglistnoret 2 ...................... <me, #spellPropertiesSet>
+  [ 61] objcall 22 .............................. me.internalEvent(#spellPropertiesSet)
+  [ 63] ret
+end
+
+on start me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 1590 ............................ ancestor.start()
+  [  7] getparam 0 .............................. <me>
+  [  9] pushzero ................................ <0>
+  [ 10] pusharglistnoret 2 ...................... <me, 0>
+  [ 12] objcall 2738 ............................ me.setCheckStalled(0)
+  [ 15] ret
+end
+
+on transBlendFin me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 3 ............................... me.finish()
+  [  6] ret
+end
+
+on updateSize me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 3866 ............................ <me.calcSize()>
+  [  7] setlocal 0 .............................. mySize = me.calcSize()
+  [  9] getparam 0 .............................. <me>
+  [ 11] getlocal 0 .............................. <mySize>
+  [ 13] pusharglistnoret 2 ...................... <me, mySize>
+  [ 15] objcall 1012 ............................ me.setSpriteWidth(mySize)
+  [ 18] getparam 0 .............................. <me>
+  [ 20] getlocal 0 .............................. <mySize>
+  [ 22] pusharglistnoret 2 ...................... <me, mySize>
+  [ 24] objcall 1011 ............................ me.setSpriteHeight(mySize)
+  [ 27] ret
+end
+
+on update me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 31 .............................. ancestor.update()
+  [  6] ret
+end

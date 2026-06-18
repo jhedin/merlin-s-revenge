@@ -1,0 +1,18 @@
+on VarKeepInRange var, rangest, rangefin
+  [  0] getparam 0 .............................. <var>
+  [  2] getparam 2 .............................. <rangefin>
+  [  4] gt ...................................... <var > rangefin>
+  [  5] jmpifz [ 12] ............................ if var > rangefin then
+  [  8] getparam 2 .............................. <rangefin>
+  [ 10] setparam 0 .............................. var = rangefin
+  [ 12] getparam 0 .............................. <var>
+  [ 14] getparam 1 .............................. <rangest>
+  [ 16] lt ...................................... <var < rangest>
+  [ 17] jmpifz [ 24] ............................ if var < rangest then
+  [ 20] getparam 1 .............................. <rangest>
+  [ 22] setparam 0 .............................. var = rangest
+  [ 24] getparam 0 .............................. <var>
+  [ 26] pusharglistnoret 1 ...................... <var>
+  [ 28] extcall 3 ............................... return var
+  [ 30] ret
+end

@@ -1,0 +1,20 @@
+on GeomDistSqr loc1, loc2
+  [  0] getparam 1 .............................. <loc2>
+  [  2] getparam 0 .............................. <loc1>
+  [  4] sub ..................................... <loc2 - loc1>
+  [  5] setlocal 0 .............................. distxy = loc2 - loc1
+  [  7] getlocal 0 .............................. <distxy>
+  [  9] getobjprop 158 .......................... <distxy.locH>
+  [ 11] getlocal 0 .............................. <distxy>
+  [ 13] getobjprop 158 .......................... <distxy.locH>
+  [ 15] mul ..................................... <distxy.locH * distxy.locH>
+  [ 16] getlocal 0 .............................. <distxy>
+  [ 18] getobjprop 159 .......................... <distxy.locV>
+  [ 20] getlocal 0 .............................. <distxy>
+  [ 22] getobjprop 159 .......................... <distxy.locV>
+  [ 24] mul ..................................... <distxy.locV * distxy.locV>
+  [ 25] add ..................................... <(distxy.locH * distxy.locH) + (distxy.locV * distxy.locV)>
+  [ 26] pusharglistnoret 1 ...................... <(distxy.locH * distxy.locH) + (distxy.locV * distxy.locV)>
+  [ 28] extcall 3 ............................... return (distxy.locH * distxy.locH) + (distxy.locV * distxy.locV)
+  [ 30] ret
+end

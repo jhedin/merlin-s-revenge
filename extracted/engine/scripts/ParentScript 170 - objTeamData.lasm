@@ -1,0 +1,25 @@
+property ancestor
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"objTextData">
+  [  2] pusharglist 1 ........................... <"objTextData">
+  [  4] extcall 34 .............................. <script("objTextData")>
+  [  6] pusharglist 1 ........................... <script("objTextData")>
+  [  8] extcall 0 ............................... <new(script("objTextData"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objTextData"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 99 ............................. <#member>
+  [ 26] pushsymb 49 ............................. <#none>
+  [ 28] pusharglistnoret 3 ...................... <i, #member, #none>
+  [ 30] objcall 48 .............................. i[#member] = #none
+  [ 32] getparam 0 .............................. <me>
+  [ 34] pusharglistnoret 1 ...................... <me>
+  [ 36] extcall 35 .............................. return me
+  [ 38] ret
+end

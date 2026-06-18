@@ -1,0 +1,53 @@
+on TextAddRem theScriptMember
+  [  0] getparam 0 .............................. <theScriptMember>
+  [  2] getobjprop 297 .......................... <theScriptMember.scriptText>
+  [  5] setlocal 0 .............................. theText = theScriptMember.scriptText
+  [  7] pushcons 0 .............................. <EMPTY>
+  [  9] setlocal 1 .............................. newText = EMPTY
+  [ 11] pushint8 1 .............................. <1>
+  [ 13] setlocal 2
+  [ 15] getlocal 2
+  [ 17] getlocal 0 .............................. <theText>
+  [ 19] pushsymb 447 ............................ <#lines>
+  [ 22] pusharglist 2 ........................... <theText, #lines>
+  [ 24] objcall 17 .............................. <theText.lines.count>
+  [ 26] lteq
+  [ 27] jmpifz [ 95] ............................ repeat with i = 1 to theText.lines.count
+  [ 30] getlocal 0 .............................. <theText>
+  [ 32] pushsymb 448 ............................ <#line>
+  [ 35] getlocal 2 .............................. <i>
+  [ 37] pusharglist 3 ........................... <theText, #line, i>
+  [ 39] objcall 123 ............................. <theText.line[i]>
+  [ 41] setlocal 3 .............................. nLine = theText.line[i]
+  [ 43] getlocal 3 .............................. <nLine>
+  [ 45] pushsymb 284 ............................ <#char>
+  [ 48] pushint8 1 .............................. <1>
+  [ 50] pushint8 2 .............................. <2>
+  [ 52] pusharglist 4 ........................... <nLine, #char, 1, 2>
+  [ 54] objcall 123 ............................. <nLine.char[1..2]>
+  [ 56] pushcons 1 .............................. <"--">
+  [ 58] eq ...................................... <nLine.char[1..2] = "--">
+  [ 59] jmpifz [ 69] ............................ if nLine.char[1..2] = "--" then / else
+  [ 62] pusharglistnoret 0 ...................... <>
+  [ 64] extcall 25 .............................. nothing()
+  [ 66] jmp [ 76]
+  [ 69] pushcons 2 .............................. <"-- ">
+  [ 71] getlocal 3 .............................. <nLine>
+  [ 73] joinstr ................................. <"-- " & nLine>
+  [ 74] setlocal 3 .............................. nLine = "-- " & nLine
+  [ 76] getlocal 1 .............................. <newText>
+  [ 78] getlocal 3 .............................. <nLine>
+  [ 80] joinstr ................................. <newText & nLine>
+  [ 81] pushcons 3 .............................. <RETURN>
+  [ 83] joinstr ................................. <newText & nLine & RETURN>
+  [ 84] setlocal 1 .............................. newText = newText & nLine & RETURN
+  [ 86] pushint8 1
+  [ 88] getlocal 2
+  [ 90] add
+  [ 91] setlocal 2
+  [ 93] endrepeat [ 15]
+  [ 95] getparam 0 .............................. <theScriptMember>
+  [ 97] getlocal 1 .............................. <newText>
+  [ 99] setobjprop 297 .......................... theScriptMember.scriptText = newText
+  [102] ret
+end

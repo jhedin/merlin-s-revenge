@@ -1,0 +1,128 @@
+[#name: "objTextImage", #scriptType: #parent, #type: #script]
+-- displays some text on the screen
+-- layer, colour, font can be defined
+
+global g
+
+property ancestor
+property pFont      -- the symbol of the font to be used for the text
+property pImage     -- the image of the text
+property pText      -- the text to be displayed
+
+on new me
+  ancestor = new(script "objMenuTitle")
+  
+  i = me.modifyParams(#init)
+  
+  i[#font] = #menu
+  i[#text] = "some text"
+  
+  return me
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  pFont = params.font
+  pText = params.text
+  
+  pImage = me.makeImage()
+end
+
+on displayCentered me, x1, x2, yLoc
+  -- displays centered between the two xLocs
+  
+  myWidth = pImage.width
+  xWidth = x2 - x1
+  
+  spaces = xWidth - myWidth
+  leftSpace = spaces / 2
+  xOffset = leftSpace
+  
+  xLoc = x1 + xOffset
+  
+  me.displayAtLoc(point(xLoc, yLoc))
+end
+
+on displayAtLoc me, theLoc
+  me.displayImageAtLoc(pImage, theLoc)
+end
+
+on getImageHeight me
+  return pImage.height
+end
+
+on getImageWidth me
+  return pImage.width
+end
+
+on makeImage me
+  theFont = g.collectionsMaster.getObject(#objFont, pFont)
+  theImage = theFont.getString(pText)  
+  return theImage
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

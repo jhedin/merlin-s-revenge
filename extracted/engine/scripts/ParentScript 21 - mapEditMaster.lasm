@@ -1,0 +1,175 @@
+property pCurrentMap, pFirstMenu, pLocation, pMapController, pMenuController
+global g, r
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 3 ............................... return me
+  [  6] ret
+end
+
+on init me
+  [  0] pushsymb 103 ............................ <#none>
+  [  2] setprop 1074 ............................ pCurrentMap = #none
+  [  5] pushcons 0 .............................. <"start">
+  [  7] setprop 1075 ............................ pFirstMenu = "start"
+  [ 10] pushsymb 103 ............................ <#none>
+  [ 12] setprop 1076 ............................ pLocation = #none
+  [ 15] getglobal 191 ........................... <g>
+  [ 17] getchainedprop 639 ...................... <g.controllerMaster>
+  [ 20] pushsymb 166 ............................ <#map>
+  [ 22] pusharglist 2 ........................... <g.controllerMaster, #map>
+  [ 24] objcall 640 ............................. <g.controllerMaster.getController(#map)>
+  [ 27] setprop 1077 ............................ pMapController = g.controllerMaster.getController(#map)
+  [ 30] getglobal 191 ........................... <g>
+  [ 32] getchainedprop 639 ...................... <g.controllerMaster>
+  [ 35] pushsymb 711 ............................ <#menu>
+  [ 38] pusharglist 2 ........................... <g.controllerMaster, #menu>
+  [ 40] objcall 640 ............................. <g.controllerMaster.getController(#menu)>
+  [ 43] setprop 1078 ............................ pMenuController = g.controllerMaster.getController(#menu)
+  [ 46] ret
+end
+
+on finish me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 1070 ............................ me.finishCurrentMap()
+  [  7] ret
+end
+
+on start me, location
+  [  0] getparam 1 .............................. <location>
+  [  2] setprop 1076 ............................ pLocation = location
+  [  5] getprop 1078 ............................ <pMenuController>
+  [  8] pushcons 1 .............................. <"dd_menu_">
+  [ 10] getprop 1075 ............................ <pFirstMenu>
+  [ 13] joinstr ................................. <"dd_menu_" & pFirstMenu>
+  [ 14] pushcons 2 .............................. <"gfx">
+  [ 16] pusharglist 2 ........................... <"dd_menu_" & pFirstMenu, "gfx">
+  [ 18] extcall 193 ............................. <member("dd_menu_" & pFirstMenu, "gfx")>
+  [ 20] getprop 1076 ............................ <pLocation>
+  [ 23] pusharglistnoret 3 ...................... <pMenuController, member("dd_menu_" & pFirstMenu, "gfx"), pLocation>
+  [ 25] objcall 709 ............................. pMenuController.newObject(member("dd_menu_" & pFirstMenu, "gfx"), pLocation)
+  [ 28] ret
+end
+
+on finishCurrentMap me
+  [  0] getprop 1074 ............................ <pCurrentMap>
+  [  3] pusharglist 1 ........................... <pCurrentMap>
+  [  5] extcall 350 ............................. <ilk(pCurrentMap)>
+  [  8] pushsymb 388 ............................ <#void>
+  [ 11] nteq .................................... <ilk(pCurrentMap) <> #void>
+  [ 12] getprop 1074 ............................ <pCurrentMap>
+  [ 15] pushsymb 103 ............................ <#none>
+  [ 17] nteq .................................... <pCurrentMap <> #none>
+  [ 18] and ..................................... <(ilk(pCurrentMap) <> #void) and (pCurrentMap <> #none)>
+  [ 19] jmpifz [ 29] ............................ if (ilk(pCurrentMap) <> #void) and (pCurrentMap <> #none) then
+  [ 22] getprop 1074 ............................ <pCurrentMap>
+  [ 25] pusharglistnoret 1 ...................... <pCurrentMap>
+  [ 27] objcall 239 ............................. pCurrentMap.finish()
+  [ 29] ret
+end
+
+on loadClicked me, theMenu
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 1073 ............................ <me.getListOfMaps()>
+  [  7] setlocal 0 .............................. listOfMaps = me.getListOfMaps()
+  [  9] getparam 1 .............................. <theMenu>
+  [ 11] pusharglist 1 ........................... <theMenu>
+  [ 13] objcall 1079 ............................ <theMenu.getNextLocation()>
+  [ 16] setlocal 1 .............................. location = theMenu.getNextLocation()
+  [ 18] getprop 1078 ............................ <pMenuController>
+  [ 21] pushcons 3 .............................. <"Load a Map">
+  [ 23] getlocal 0 .............................. <listOfMaps>
+  [ 25] getlocal 1 .............................. <location>
+  [ 27] pusharglistnoret 4 ...................... <pMenuController, "Load a Map", listOfMaps, location>
+  [ 29] objcall 1080 ............................ pMenuController.newDialogue("Load a Map", listOfMaps, location)
+  [ 32] ret
+end
+
+on loadMap me, themap
+  [  0] getprop 1078 ............................ <pMenuController>
+  [  3] pusharglistnoret 1 ...................... <pMenuController>
+  [  5] objcall 1082 ............................ pMenuController.clearAll()
+  [  8] pushcons 4 .............................. <"dd_map_">
+  [ 10] getparam 1 .............................. <themap>
+  [ 12] pusharglist 1 ........................... <themap>
+  [ 14] extcall 530 ............................. <string(themap)>
+  [ 17] joinstr ................................. <"dd_map_" & string(themap)>
+  [ 18] setlocal 0 .............................. theMapName = "dd_map_" & string(themap)
+  [ 20] getparam 0 .............................. <me>
+  [ 22] pusharglistnoret 1 ...................... <me>
+  [ 24] objcall 1070 ............................ me.finishCurrentMap()
+  [ 27] getlocal 0 .............................. <theMapName>
+  [ 29] pushcons 2 .............................. <"gfx">
+  [ 31] pusharglist 2 ........................... <theMapName, "gfx">
+  [ 33] extcall 193 ............................. <member(theMapName, "gfx")>
+  [ 35] setlocal 1 .............................. definition = member(theMapName, "gfx")
+  [ 37] getprop 1077 ............................ <pMapController>
+  [ 40] getlocal 1 .............................. <definition>
+  [ 42] getprop 1076 ............................ <pLocation>
+  [ 45] getlocal 0 .............................. <theMapName>
+  [ 47] pusharglist 4 ........................... <pMapController, definition, pLocation, theMapName>
+  [ 49] objcall 1083 ............................ <pMapController.makeNewObject(definition, pLocation, theMapName)>
+  [ 52] setprop 1074 ............................ pCurrentMap = pMapController.makeNewObject(definition, pLocation, theMapName)
+  [ 55] getprop 1074 ............................ <pCurrentMap>
+  [ 58] pusharglistnoret 1 ...................... <pCurrentMap>
+  [ 60] objcall 1084 ............................ pCurrentMap.goEditMode()
+  [ 63] getprop 1074 ............................ <pCurrentMap>
+  [ 66] pusharglistnoret 1 ...................... <pCurrentMap>
+  [ 68] objcall 511 ............................. pCurrentMap.onscreen()
+  [ 71] ret
+end
+
+on getListOfMaps me
+  [  0] pusharglist 0 ........................... <[]>
+  [  2] pushlist ................................ <[]>
+  [  3] setlocal 0 .............................. nameList = []
+  [  5] pushcons 4 .............................. <"dd_map_">
+  [  7] pushcons 2 .............................. <"gfx">
+  [  9] pusharglist 2 ........................... <"dd_map_", "gfx">
+  [ 11] extcall 1087 ............................ <CastGetMembersContaining("dd_map_", "gfx")>
+  [ 14] setlocal 1 .............................. memList = CastGetMembersContaining("dd_map_", "gfx")
+  [ 16] getlocal 1 .............................. <memList>
+  [ 18] peek 0
+  [ 20] pusharglist 1
+  [ 22] extcall 348
+  [ 25] pushint8 1
+  [ 27] peek 0
+  [ 29] peek 2
+  [ 31] lteq
+  [ 32] jmpifz [ 78] ............................ repeat with mem in memList
+  [ 35] peek 2
+  [ 37] peek 1
+  [ 39] pusharglist 2
+  [ 41] extcall 301
+  [ 44] setlocal 2
+  [ 46] getlocal 2 .............................. <mem>
+  [ 48] getchainedprop 138 ...................... <mem.name>
+  [ 50] pushsymb 439 ............................ <#char>
+  [ 53] pushint8 8 .............................. <8>
+  [ 55] pushint8 99 ............................. <99>
+  [ 57] pusharglist 4 ........................... <mem.name, #char, 8, 99>
+  [ 59] objcall 352 ............................. <mem.name.char[8..99]>
+  [ 62] setlocal 3 .............................. nName = mem.name.char[8..99]
+  [ 64] getlocal 0 .............................. <nameList>
+  [ 66] getlocal 3 .............................. <nName>
+  [ 68] pusharglistnoret 2 ...................... <nameList, nName>
+  [ 70] objcall 506 ............................. nameList.append(nName)
+  [ 73] pushint8 1
+  [ 75] add
+  [ 76] endrepeat [ 27]
+  [ 78] pop 3
+  [ 80] getlocal 0 .............................. <nameList>
+  [ 82] pusharglistnoret 1 ...................... <nameList>
+  [ 84] extcall 3 ............................... return nameList
+  [ 86] ret
+end
+
+on stop me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 239 ............................. me.finish()
+  [  6] ret
+end

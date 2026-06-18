@@ -1,0 +1,196 @@
+#!/usr/bin/env python3
+"""
+Extract embedded assets from a Macromedia/Adobe Director RIFX movie (.dir).
+
+Handles little-endian (XFIR) Director MX-era files and pulls out:
+  * sounds  -> WAV   (sndH header + sndS PCM, paired via the KEY* table)
+  * bitmaps -> PNG   (BITD PackBits, 1/8/16/32-bit, alpha plane preserved)
+
+Cast-member names are recovered from the CastInfo block where present.
+Director stores 32-bit bitmaps planar-per-scanline in A,R,G,B order.
+
+Usage: extract_assets.py <movie.dir> <output_dir>
+"""
+import struct, os, sys, wave, array, re
+import numpy as np
+from PIL import Image
+
+def parse(path):
+    data = open(path, 'rb').read()
+    if data[:4] != b'XFIR':
+        raise SystemExit("expected little-endian RIFX (XFIR): %r" % data[:4])
+    end = '<'
+    u32 = lambda o: struct.unpack(end+'I', data[o:o+4])[0]
+    size = u32(16); body = data[20:20+size]
+    mmap_off = struct.unpack(end+'I', body[4:8])[0]
+    msize = u32(mmap_off+4); mb = data[mmap_off+8:mmap_off+8+msize]
+    hl, el, cmax, cused = struct.unpack(end+'HHII', mb[0:12])
+    fc = lambda b: b[::-1].decode('latin1')
+    ents = {}
+    for i in range(cused):
+        e = mb[hl+i*el:hl+(i+1)*el]
+        if len(e) < 12: break
+        t = fc(e[0:4]); s, o = struct.unpack(end+'II', e[4:12])
+        ents[i] = (t, s, o)
+    keyid = next(i for i in ents if ents[i][0] == 'KEY*')
+    _, s, o = ents[keyid]; kb = data[o+8:o+8+s]
+    khl, kel, kmax, kused = struct.unpack(end+'HHII', kb[0:12])
+    owner_to = {}
+    for i in range(kused):
+        e = kb[khl+i*kel:khl+(i+1)*kel]
+        child, owner = struct.unpack(end+'II', e[0:8]); cc = fc(e[8:12])
+        owner_to.setdefault(owner, {})[cc] = child
+    return data, ents, owner_to
+
+def chunk(data, ents, rid):
+    t, s, o = ents[rid]; return data[o+8:o+8+s]
+
+def cast_name(data, ents, owner):
+    b = chunk(data, ents, owner)
+    if len(b) < 12: return None
+    ctype, infoLen, specLen = struct.unpack('>III', b[0:12])
+    info = b[12:12+infoLen]
+    names = re.findall(rb'[A-Za-z0-9_][ -~]{1,38}', info)
+    names = [n for n in names if re.search(rb'[A-Za-z]', n)]
+    return names[0].decode('latin1').strip() if names else None
+
+def bmp_info(data, ents, owner):
+    b = chunk(data, ents, owner)
+    ctype, infoLen, specLen = struct.unpack('>III', b[0:12])
+    sp = b[12+infoLen:12+infoLen+specLen]
+    s16 = lambda o: struct.unpack('>h', sp[o:o+2])[0]
+    u16 = lambda o: struct.unpack('>H', sp[o:o+2])[0]
+    pitch = u16(0) & 0x7fff
+    top, left, bottom, right = s16(2), s16(4), s16(6), s16(8)
+    depth = sp[23] if specLen >= 24 else 1
+    return dict(w=right-left, h=bottom-top, pitch=pitch, depth=depth, specLen=specLen)
+
+def unpackbits(src, expected):
+    """Director BITD PackBits RLE -> exactly `expected` bytes."""
+    if len(src) >= expected:                       # already raw / uncompressed
+        return src[:expected]
+    out = bytearray(); i = 0; n = len(src)
+    while i < n and len(out) < expected:
+        b = src[i]; i += 1
+        if b <= 0x7f:
+            out += src[i:i+b+1]; i += b+1
+        else:
+            if i >= n: break
+            out += bytes([src[i]]) * (0x101 - b); i += 1
+    if len(out) < expected:
+        out += bytes(expected - len(out))
+    return bytes(out)
+
+MAC_SYS = None
+def mac_palette():
+    """Standard Mac OS 8-bit system palette (used as default for 8-bit casts)."""
+    global MAC_SYS
+    if MAC_SYS is not None: return MAC_SYS
+    levels = [255, 204, 153, 102, 51, 0]
+    pal = []
+    for r in levels:
+        for g in levels:
+            for b in levels:
+                pal.append((r, g, b))
+    extra = [0xEE,0xDD,0xBB,0xAA,0x88,0x77,0x55,0x44,0x22,0x11]
+    for v in extra: pal.append((v,0,0))
+    for v in extra: pal.append((0,v,0))
+    for v in extra: pal.append((0,0,v))
+    for v in extra: pal.append((v,v,v))
+    pal.append((0,0,0))
+    pal = (pal + [(0,0,0)]*256)[:256]
+    MAC_SYS = pal
+    return pal
+
+def get_clut(data, ents, owner_to, owner):
+    ch = owner_to.get(owner, {})
+    if 'CLUT' in ch:
+        raw = chunk(data, ents, ch['CLUT'])
+        # CLUT entries are 6 bytes: R,R,G,G,B,B (16-bit per channel, big-endian)
+        n = len(raw) // 6
+        pal = []
+        for i in range(n):
+            r = raw[i*6]; g = raw[i*6+2]; b = raw[i*6+4]
+            pal.append((r, g, b))
+        pal = (pal + [(0,0,0)]*256)[:256]
+        return pal
+    return mac_palette()
+
+def decode_bitmap(data, ents, owner_to, owner):
+    info = bmp_info(data, ents, owner)
+    w, h, pitch, depth = info['w'], info['h'], info['pitch'], info['depth']
+    if w <= 0 or h <= 0 or 'BITD' not in owner_to.get(owner, {}):
+        return None
+    raw = chunk(data, ents, owner_to[owner]['BITD'])
+    buf = unpackbits(raw, pitch*h)
+    a = np.frombuffer(buf, dtype=np.uint8)[:pitch*h].reshape(h, pitch)
+    if depth == 32:
+        al, r, g, b = a[:, 0:w], a[:, w:2*w], a[:, 2*w:3*w], a[:, 3*w:4*w]
+        img = np.dstack([r, g, b, al]).astype(np.uint8)
+        return Image.fromarray(img, 'RGBA')
+    if depth == 16:
+        hi = a[:, 0:2*w:2].astype(np.uint16); lo = a[:, 1:2*w:2].astype(np.uint16)
+        v = (hi << 8) | lo
+        r = ((v >> 10) & 31) << 3; g = ((v >> 5) & 31) << 3; bl = (v & 31) << 3
+        img = np.dstack([r, g, bl, np.full_like(r, 255)]).astype(np.uint8)
+        return Image.fromarray(img, 'RGBA')
+    if depth == 8:
+        pal = np.array(get_clut(data, ents, owner_to, owner), dtype=np.uint8)
+        idx = a[:, :w]
+        rgb = pal[idx]
+        return Image.fromarray(rgb, 'RGB')
+    if depth == 1:
+        bits = np.unpackbits(a, axis=1)[:, :w]
+        img = np.where(bits == 0, 255, 0).astype(np.uint8)
+        return Image.fromarray(img, 'L')
+    return None
+
+def safe(name, fallback):
+    if not name: return fallback
+    s = "".join(c if c.isalnum() or c in "-_." else "_" for c in name)[:40].strip("_")
+    return s or fallback
+
+def extract_sounds(data, ents, owner_to, outdir):
+    os.makedirs(outdir, exist_ok=True)
+    beu = lambda b, o, n: int.from_bytes(b[o:o+n], 'big')
+    n = 0
+    for owner, ch in owner_to.items():
+        if 'sndH' not in ch or 'sndS' not in ch: continue
+        h = chunk(data, ents, ch['sndH']); pcm = chunk(data, ents, ch['sndS'])
+        rate = beu(h, 0x30, 4) or 22050
+        bps = beu(h, 0x50, 4); bps = bps if bps in (1, 2) else 2
+        chs = beu(h, 0x4c, 4); chs = chs if chs in (1, 2) else 1
+        nm = safe(cast_name(data, ents, owner) if ents.get(owner, ('',))[0] == 'CASt' else None, "snd_%d" % owner)
+        fn = os.path.join(outdir, "%03d_%s.wav" % (n, nm))
+        w = wave.open(fn, 'wb'); w.setnchannels(chs); w.setsampwidth(bps); w.setframerate(rate)
+        if bps == 2:
+            arr = array.array('h'); arr.frombytes(pcm[:len(pcm)//2*2]); arr.byteswap()
+            w.writeframes(arr.tobytes())
+        else:
+            w.writeframes(bytes((x+128) & 0xff for x in pcm))
+        w.close(); n += 1
+    return n
+
+def extract_bitmaps(data, ents, owner_to, outdir):
+    os.makedirs(outdir, exist_ok=True)
+    n = 0; fail = 0
+    for owner, ch in owner_to.items():
+        if 'BITD' not in ch: continue
+        if ents.get(owner, ('',))[0] != 'CASt': continue
+        try:
+            img = decode_bitmap(data, ents, owner_to, owner)
+            if img is None: continue
+            nm = safe(cast_name(data, ents, owner), "")
+            base = ("%05d_%s" % (owner, nm)).rstrip("_")
+            img.save(os.path.join(outdir, base + ".png"))
+            n += 1
+        except Exception:
+            fail += 1
+    return n, fail
+
+if __name__ == "__main__":
+    movie, outdir = sys.argv[1], sys.argv[2]
+    data, ents, owner_to = parse(movie)
+    ns = extract_sounds(data, ents, owner_to, os.path.join(outdir, "sounds"))
+    nb, fb = extract_bitmaps(data, ents, owner_to, os.path.join(outdir, "bitmaps"))
+    print("%s: %d sounds, %d bitmaps (%d failed)" % (os.path.basename(movie), ns, nb, fb))

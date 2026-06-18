@@ -1,0 +1,139 @@
+[#name: "objFlyingEnemyCharacter", #scriptType: #parent, #type: #script]
+property ancestor
+property pFlapFrame
+property pFlapSound
+property pJumpType
+
+on new me
+  ancestor = new(script"objEnemyCharacter")
+  
+  i = me.modifyParams(#init)
+  i[#flapFrame] = 3
+  i[#jumpType] = #jump
+  i[#flapSound] = "flap_wings"
+  
+  return me
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  pFlapFrame = params.flapFrame
+  pFlapSound = params.flapSound
+  pJumpType = params.jumpType
+end
+
+on doJump me
+  
+  animSym = me.ID.bigMe.getAnimSym(#none)
+  
+  case animSym of
+    #fly:
+      if me.getAnimFrame() = pFlapFrame then
+        me.ID.bigMe.goMode(pJumpType)
+        me.playSound(pFlapSound)
+      end if
+      
+    #glide:
+      me.ID.bigMe.goMode(#jump)
+  end case
+  
+end
+
+on getAnimSym me,sym
+  if sym = #none then
+    sym = me.pMode
+  end if
+  
+  case sym of
+    #jump, #landed, #walk, #lift:
+      sym = #fly
+      
+    #fall:
+      sym = #glide
+      
+  end case
+  
+  return ancestor.getAnimSym(sym)
+end
+
+on goMode me, newMode
+  
+  case newMode of
+    #reelFly:
+      me.frictionYOff()
+      
+    #reelLanded:
+      me.frictionYOn()
+      
+    #lift:
+      me.pMoveXY.addVectY(me.pJumpPower)
+      
+  end case
+  
+  ancestor.goMode(newMode)
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

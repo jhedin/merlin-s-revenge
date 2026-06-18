@@ -1,0 +1,6 @@
+on PointDir aPoint
+  dirPoint = point(0, 0)
+  dirPoint[1] = VarMoreLess(0, aPoint[1])
+  dirPoint[2] = VarMoreLess(0, aPoint[2])
+  return dirPoint
+end

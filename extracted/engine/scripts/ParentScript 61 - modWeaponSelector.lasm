@@ -1,0 +1,639 @@
+property ancestor, pDisplaying, pGreenBoxMember, pPaletteDefinitionMembers, pPaletteDefinitionStart, pPaletteImageMembers, pPaletteObjects, pPaletteOffsets, pPaletteTypes, pTimer, pWeapons, pYellowBoxMember
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on init me, params
+  [  0] pushzero ................................ <0>
+  [  1] setprop 1636 ............................ pDisplaying = 0
+  [  4] pushcons 1 .............................. <"greenBox_ws">
+  [  6] pushcons 2 .............................. <"gfx">
+  [  8] pusharglist 2 ........................... <"greenBox_ws", "gfx">
+  [ 10] extcall 99 .............................. <member("greenBox_ws", "gfx")>
+  [ 12] setprop 1637 ............................ pGreenBoxMember = member("greenBox_ws", "gfx")
+  [ 15] pusharglist 0 ........................... <[:]>
+  [ 17] pushproplist ............................ <[:]>
+  [ 18] setprop 1638 ............................ pPaletteDefinitionMembers = [:]
+  [ 21] pushcons 3 .............................. <"tileSize | point(18,16)">
+  [ 23] pushcons 4 .............................. <RETURN>
+  [ 25] joinstr ................................. <"tileSize | point(18,16)" & RETURN>
+  [ 26] setprop 1639 ............................ pPaletteDefinitionStart = "tileSize | point(18,16)" & RETURN
+  [ 29] pusharglist 0 ........................... <[:]>
+  [ 31] pushproplist ............................ <[:]>
+  [ 32] setprop 1640 ............................ pPaletteImageMembers = [:]
+  [ 35] pusharglist 0 ........................... <[:]>
+  [ 37] pushproplist ............................ <[:]>
+  [ 38] setprop 1641 ............................ pPaletteObjects = [:]
+  [ 41] getglobal 40 ............................ <g>
+  [ 43] getchainedprop 1168 ..................... <g.structMaster>
+  [ 46] pushsymb 1643 ........................... <#weaponSelectorPaletteOffsets>
+  [ 49] pusharglist 2 ........................... <g.structMaster, #weaponSelectorPaletteOffsets>
+  [ 51] objcall 1170 ............................ <g.structMaster.getStruct(#weaponSelectorPaletteOffsets)>
+  [ 54] setprop 1642 ............................ pPaletteOffsets = g.structMaster.getStruct(#weaponSelectorPaletteOffsets)
+  [ 57] getglobal 40 ............................ <g>
+  [ 59] getchainedprop 1168 ..................... <g.structMaster>
+  [ 62] pushsymb 1645 ........................... <#weaponSelectorPaletteTypes>
+  [ 65] pusharglist 2 ........................... <g.structMaster, #weaponSelectorPaletteTypes>
+  [ 67] objcall 1170 ............................ <g.structMaster.getStruct(#weaponSelectorPaletteTypes)>
+  [ 70] setprop 1644 ............................ pPaletteTypes = g.structMaster.getStruct(#weaponSelectorPaletteTypes)
+  [ 73] pusharglist 0 ........................... <>
+  [ 75] extcall 529 ............................. <CounterNew()>
+  [ 78] setprop 1646 ............................ pTimer = CounterNew()
+  [ 81] getprop 1646 ............................ <pTimer>
+  [ 84] pushsymb 530 ............................ <#tim>
+  [ 87] pushint8 2 .............................. <2>
+  [ 89] pushint8 60 ............................. <60>
+  [ 91] pusharglistnoret 4 ...................... <pTimer, #tim, 2, 60>
+  [ 93] objcall 531 ............................. pTimer.tim[2] = 60
+  [ 96] pushcons 5 .............................. <"yellowBox_ws">
+  [ 98] pushcons 2 .............................. <"gfx">
+  [100] pusharglist 2 ........................... <"yellowBox_ws", "gfx">
+  [102] extcall 99 .............................. <member("yellowBox_ws", "gfx")>
+  [104] setprop 1647 ............................ pYellowBoxMember = member("yellowBox_ws", "gfx")
+  [107] pusharglist 0 ........................... <[:]>
+  [109] pushproplist ............................ <[:]>
+  [110] setprop 1608 ............................ pWeapons = [:]
+  [113] getprop 33 .............................. <ancestor>
+  [115] getparam 1 .............................. <params>
+  [117] pusharglistnoret 2 ...................... <ancestor, params>
+  [119] objcall 1 ............................... ancestor.init(params)
+  [121] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getprop 33 .............................. <ancestor>
+  [ 12] pusharglistnoret 1 ...................... <ancestor>
+  [ 14] objcall 2 ............................... ancestor.addModParams()
+  [ 16] ret
+end
+
+on finish me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 1626 ............................ me.finishMembers()
+  [  7] getprop 33 .............................. <ancestor>
+  [  9] pusharglistnoret 1 ...................... <ancestor>
+  [ 11] objcall 3 ............................... ancestor.finish()
+  [ 13] ret
+end
+
+on finishMembers me
+  [  0] getprop 1638 ............................ <pPaletteDefinitionMembers>
+  [  3] pusharglist 0 ........................... <[:]>
+  [  5] pushproplist ............................ <[:]>
+  [  6] nteq .................................... <pPaletteDefinitionMembers <> [:]>
+  [  7] jmpifz [ 65] ............................ if pPaletteDefinitionMembers <> [:] then
+  [ 10] getprop 1638 ............................ <pPaletteDefinitionMembers>
+  [ 13] peek 0
+  [ 15] pusharglist 1
+  [ 17] extcall 257
+  [ 20] pushint8 1
+  [ 22] peek 0
+  [ 24] peek 2
+  [ 26] lteq
+  [ 27] jmpifz [ 57] ............................ repeat with nMember in pPaletteDefinitionMembers
+  [ 30] peek 2
+  [ 32] peek 1
+  [ 34] pusharglist 2
+  [ 36] extcall 109
+  [ 38] setlocal 0
+  [ 40] getglobal 40 ............................ <g>
+  [ 42] getchainedprop 858 ...................... <g.memberMaster>
+  [ 45] getlocal 0 .............................. <nMember>
+  [ 47] pusharglistnoret 2 ...................... <g.memberMaster, nMember>
+  [ 49] objcall 859 ............................. g.memberMaster.freeMember(nMember)
+  [ 52] pushint8 1
+  [ 54] add
+  [ 55] endrepeat [ 22]
+  [ 57] pop 3
+  [ 59] pusharglist 0 ........................... <[:]>
+  [ 61] pushproplist ............................ <[:]>
+  [ 62] setprop 1638 ............................ pPaletteDefinitionMembers = [:]
+  [ 65] getprop 1640 ............................ <pPaletteImageMembers>
+  [ 68] pusharglist 0 ........................... <[:]>
+  [ 70] pushproplist ............................ <[:]>
+  [ 71] nteq .................................... <pPaletteImageMembers <> [:]>
+  [ 72] jmpifz [130] ............................ if pPaletteImageMembers <> [:] then
+  [ 75] getprop 1640 ............................ <pPaletteImageMembers>
+  [ 78] peek 0
+  [ 80] pusharglist 1
+  [ 82] extcall 257
+  [ 85] pushint8 1
+  [ 87] peek 0
+  [ 89] peek 2
+  [ 91] lteq
+  [ 92] jmpifz [122] ............................ repeat with nMember in pPaletteImageMembers
+  [ 95] peek 2
+  [ 97] peek 1
+  [ 99] pusharglist 2
+  [101] extcall 109
+  [103] setlocal 0
+  [105] getglobal 40 ............................ <g>
+  [107] getchainedprop 858 ...................... <g.memberMaster>
+  [110] getlocal 0 .............................. <nMember>
+  [112] pusharglistnoret 2 ...................... <g.memberMaster, nMember>
+  [114] objcall 859 ............................. g.memberMaster.freeMember(nMember)
+  [117] pushint8 1
+  [119] add
+  [120] endrepeat [ 87]
+  [122] pop 3
+  [124] pusharglist 0 ........................... <[:]>
+  [126] pushproplist ............................ <[:]>
+  [127] setprop 1640 ............................ pPaletteImageMembers = [:]
+  [130] getprop 1641 ............................ <pPaletteObjects>
+  [133] pusharglist 0 ........................... <[:]>
+  [135] pushproplist ............................ <[:]>
+  [136] nteq .................................... <pPaletteObjects <> [:]>
+  [137] jmpifz [156] ............................ if pPaletteObjects <> [:] then
+  [140] pushsymb 3 .............................. <#finish>
+  [142] getprop 1641 ............................ <pPaletteObjects>
+  [145] pusharglistnoret 2 ...................... <#finish, pPaletteObjects>
+  [147] extcall 479 ............................. call(#finish, pPaletteObjects)
+  [150] pusharglist 0 ........................... <[:]>
+  [152] pushproplist ............................ <[:]>
+  [153] setprop 1641 ............................ pPaletteObjects = [:]
+  [156] ret
+end
+
+on commandIssued me, theWeapon
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 57 ....................... <me.id>
+  [  4] getchainedprop 58 ....................... <me.id.bigMe>
+  [  6] getparam 1 .............................. <theWeapon>
+  [  8] pusharglistnoret 2 ...................... <me.id.bigMe, theWeapon>
+  [ 10] objcall 1600 ............................ me.id.bigMe.setCurrentWeapon(theWeapon)
+  [ 13] getparam 0 .............................. <me>
+  [ 15] pusharglistnoret 1 ...................... <me>
+  [ 17] objcall 375 ............................. me.offscreen()
+  [ 20] ret
+end
+
+on constructImage me, weapons
+  [  0] getparam 1 .............................. <weapons>
+  [  2] getobjprop 257 .......................... <weapons.count>
+  [  5] pushzero ................................ <0>
+  [  6] eq ...................................... <weapons.count = 0>
+  [  7] jmpifz [ 16] ............................ if weapons.count = 0 then
+  [ 10] pushsymb 49 ............................. <#none>
+  [ 12] pusharglistnoret 1 ...................... <#none>
+  [ 14] extcall 35 .............................. return #none
+  [ 16] getparam 0 .............................. <me>
+  [ 18] getparam 1 .............................. <weapons>
+  [ 20] pushint8 1 .............................. <1>
+  [ 22] pusharglist 2 ........................... <weapons, 1>
+  [ 24] objcall 109 ............................. <weapons[1]>
+  [ 26] pusharglist 2 ........................... <me, weapons[1]>
+  [ 28] objcall 1632 ............................ <me.getWeaponIcon(weapons[1])>
+  [ 31] setlocal 0 .............................. firstIcon = me.getWeaponIcon(weapons[1])
+  [ 33] getlocal 0 .............................. <firstIcon>
+  [ 35] getobjprop 423 .......................... <firstIcon.height>
+  [ 38] setlocal 1 .............................. iconHeight = firstIcon.height
+  [ 40] getlocal 0 .............................. <firstIcon>
+  [ 42] getobjprop 424 .......................... <firstIcon.width>
+  [ 45] setlocal 2 .............................. iconWidth = firstIcon.width
+  [ 47] getlocal 1 .............................. <iconHeight>
+  [ 49] setlocal 3 .............................. imageHeight = iconHeight
+  [ 51] getlocal 2 .............................. <iconWidth>
+  [ 53] getparam 1 .............................. <weapons>
+  [ 55] getobjprop 257 .......................... <weapons.count>
+  [ 58] mul ..................................... <iconWidth * weapons.count>
+  [ 59] setlocal 4 .............................. imageWidth = iconWidth * weapons.count
+  [ 61] getlocal 4 .............................. <imageWidth>
+  [ 63] getlocal 3 .............................. <imageHeight>
+  [ 65] pushint8 32 ............................. <32>
+  [ 67] pusharglist 3 ........................... <imageWidth, imageHeight, 32>
+  [ 69] extcall 800 ............................. <image(imageWidth, imageHeight, 32)>
+  [ 72] setlocal 5 .............................. newImage = image(imageWidth, imageHeight, 32)
+  [ 74] pushint8 1 .............................. <1>
+  [ 76] setlocal 6
+  [ 78] getlocal 6
+  [ 80] getparam 1 .............................. <weapons>
+  [ 82] getobjprop 257 .......................... <weapons.count>
+  [ 85] lteq
+  [ 86] jmpifz [178] ............................ repeat with i = 1 to weapons.count
+  [ 89] getparam 1 .............................. <weapons>
+  [ 91] getlocal 6 .............................. <i>
+  [ 93] pusharglist 2 ........................... <weapons, i>
+  [ 95] objcall 109 ............................. <weapons[i]>
+  [ 97] setlocal 7 .............................. nWeapon = weapons[i]
+  [ 99] getparam 0 .............................. <me>
+  [101] getlocal 7 .............................. <nWeapon>
+  [103] pusharglist 2 ........................... <me, nWeapon>
+  [105] objcall 1632 ............................ <me.getWeaponIcon(nWeapon)>
+  [108] setlocal 8 .............................. nIcon = me.getWeaponIcon(nWeapon)
+  [110] getlocal 8 .............................. <nIcon>
+  [112] getobjprop 263 .......................... <nIcon.rect>
+  [115] setlocal 9 .............................. srcRect = nIcon.rect
+  [117] getlocal 6 .............................. <i>
+  [119] pushint8 1 .............................. <1>
+  [121] sub ..................................... <i - 1>
+  [122] getlocal 2 .............................. <iconWidth>
+  [124] mul ..................................... <(i - 1) * iconWidth>
+  [125] setlocal 10 ............................. x1 = (i - 1) * iconWidth
+  [127] getlocal 6 .............................. <i>
+  [129] getlocal 2 .............................. <iconWidth>
+  [131] mul ..................................... <i * iconWidth>
+  [132] setlocal 11 ............................. x2 = i * iconWidth
+  [134] getlocal 10 ............................. <x1>
+  [136] pushzero ................................ <0>
+  [137] getlocal 11 ............................. <x2>
+  [139] getlocal 3 .............................. <imageHeight>
+  [141] pusharglist 4 ........................... <x1, 0, x2, imageHeight>
+  [143] extcall 263 ............................. <rect(x1, 0, x2, imageHeight)>
+  [146] setlocal 12 ............................. destRect = rect(x1, 0, x2, imageHeight)
+  [148] getlocal 5 .............................. <newImage>
+  [150] getlocal 8 .............................. <nIcon>
+  [152] getlocal 12 ............................. <destRect>
+  [154] getlocal 9 .............................. <srcRect>
+  [156] pushsymb 839 ............................ <#useFastQuads>
+  [159] pushint8 1 .............................. <1>
+  [161] pusharglist 2 ........................... <[#useFastQuads: 1]>
+  [163] pushproplist ............................ <[#useFastQuads: 1]>
+  [164] pusharglistnoret 5 ...................... <newImage, nIcon, destRect, srcRect, [#useFastQuads: 1]>
+  [166] objcall 841 ............................. newImage.copyPixels(nIcon, destRect, srcRect, [#useFastQuads: 1])
+  [169] pushint8 1
+  [171] getlocal 6
+  [173] add
+  [174] setlocal 6
+  [176] endrepeat [ 78]
+  [178] getlocal 5 .............................. <newImage>
+  [180] pusharglistnoret 1 ...................... <newImage>
+  [182] extcall 35 .............................. return newImage
+  [184] ret
+end
+
+on displayWeaponSelector me
+  [  0] getprop 1636 ............................ <pDisplaying>
+  [  3] pushint8 1 .............................. <1>
+  [  5] eq ...................................... <pDisplaying = 1>
+  [  6] jmpifz [ 13] ............................ if pDisplaying = 1 then
+  [  9] pusharglistnoret 0 ...................... <>
+  [ 11] extcall 35 .............................. return 
+  [ 13] getprop 1644 ............................ <pPaletteTypes>
+  [ 16] peek 0
+  [ 18] pusharglist 1
+  [ 20] extcall 257
+  [ 23] pushint8 1
+  [ 25] peek 0
+  [ 27] peek 2
+  [ 29] lteq
+  [ 30] jmpifz [343] ............................ repeat with nType in pPaletteTypes
+  [ 33] peek 2
+  [ 35] peek 1
+  [ 37] pusharglist 2
+  [ 39] extcall 109
+  [ 41] setlocal 0
+  [ 43] getparam 0 .............................. <me>
+  [ 45] getchainedprop 57 ....................... <me.id>
+  [ 47] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 49] getlocal 0 .............................. <nType>
+  [ 51] pusharglist 2 ........................... <me.id.bigMe, nType>
+  [ 53] objcall 1597 ............................ <me.id.bigMe.getWeapons(nType)>
+  [ 56] setlocal 1 .............................. weapons = me.id.bigMe.getWeapons(nType)
+  [ 58] getprop 1608 ............................ <pWeapons>
+  [ 61] getlocal 0 .............................. <nType>
+  [ 63] getlocal 1 .............................. <weapons>
+  [ 65] pusharglist 1 ........................... <weapons>
+  [ 67] objcall 175 ............................. <weapons.duplicate()>
+  [ 69] pusharglistnoret 3 ...................... <pWeapons, nType, weapons.duplicate()>
+  [ 71] objcall 48 .............................. pWeapons[nType] = weapons.duplicate()
+  [ 73] getparam 0 .............................. <me>
+  [ 75] getlocal 1 .............................. <weapons>
+  [ 77] pusharglist 2 ........................... <me, weapons>
+  [ 79] objcall 1635 ............................ <me.writePaletteDefinition(weapons)>
+  [ 82] setlocal 2 .............................. paletteDefinition = me.writePaletteDefinition(weapons)
+  [ 84] getparam 0 .............................. <me>
+  [ 86] getlocal 1 .............................. <weapons>
+  [ 88] pusharglist 2 ........................... <me, weapons>
+  [ 90] objcall 1628 ............................ <me.constructImage(weapons)>
+  [ 93] setlocal 3 .............................. paletteImage = me.constructImage(weapons)
+  [ 95] getlocal 3 .............................. <paletteImage>
+  [ 97] pushsymb 49 ............................. <#none>
+  [ 99] nteq .................................... <paletteImage <> #none>
+  [100] jmpifz [337] ............................ if paletteImage <> #none then
+  [103] getlocal 0 .............................. <nType>
+  [105] pusharglist 1 ........................... <nType>
+  [107] extcall 667 ............................. <string(nType)>
+  [110] pushcons 6 .............................. <"Palette_key">
+  [112] joinstr ................................. <string(nType) & "Palette_key">
+  [113] setlocal 4 .............................. memberName = string(nType) & "Palette_key"
+  [115] getprop 1638 ............................ <pPaletteDefinitionMembers>
+  [118] getlocal 0 .............................. <nType>
+  [120] getglobal 40 ............................ <g>
+  [122] getchainedprop 858 ...................... <g.memberMaster>
+  [125] pushsymb 1657 ........................... <#field>
+  [128] getlocal 4 .............................. <memberName>
+  [130] pusharglist 3 ........................... <g.memberMaster, #field, memberName>
+  [132] objcall 870 ............................. <g.memberMaster.requestMember(#field, memberName)>
+  [135] pusharglistnoret 3 ...................... <pPaletteDefinitionMembers, nType, g.memberMaster.requestMember(#field, memberName)>
+  [137] objcall 48 .............................. pPaletteDefinitionMembers[nType] = g.memberMaster.requestMember(#field, memberName)
+  [139] getprop 1638 ............................ <pPaletteDefinitionMembers>
+  [142] getlocal 0 .............................. <nType>
+  [144] pusharglist 2 ........................... <pPaletteDefinitionMembers, nType>
+  [146] objcall 109 ............................. <pPaletteDefinitionMembers[nType]>
+  [148] getlocal 2 .............................. <paletteDefinition>
+  [150] setobjprop 670 .......................... pPaletteDefinitionMembers[nType].text = paletteDefinition
+  [153] getlocal 0 .............................. <nType>
+  [155] pusharglist 1 ........................... <nType>
+  [157] extcall 667 ............................. <string(nType)>
+  [160] pushcons 7 .............................. <"Palette">
+  [162] joinstr ................................. <string(nType) & "Palette">
+  [163] setlocal 4 .............................. memberName = string(nType) & "Palette"
+  [165] getprop 1640 ............................ <pPaletteImageMembers>
+  [168] getlocal 0 .............................. <nType>
+  [170] getglobal 40 ............................ <g>
+  [172] getchainedprop 858 ...................... <g.memberMaster>
+  [175] pushsymb 477 ............................ <#bitmap>
+  [178] getlocal 4 .............................. <memberName>
+  [180] pusharglist 3 ........................... <g.memberMaster, #bitmap, memberName>
+  [182] objcall 870 ............................. <g.memberMaster.requestMember(#bitmap, memberName)>
+  [185] pusharglistnoret 3 ...................... <pPaletteImageMembers, nType, g.memberMaster.requestMember(#bitmap, memberName)>
+  [187] objcall 48 .............................. pPaletteImageMembers[nType] = g.memberMaster.requestMember(#bitmap, memberName)
+  [189] getprop 1640 ............................ <pPaletteImageMembers>
+  [192] getlocal 0 .............................. <nType>
+  [194] pusharglist 2 ........................... <pPaletteImageMembers, nType>
+  [196] objcall 109 ............................. <pPaletteImageMembers[nType]>
+  [198] getlocal 3 .............................. <paletteImage>
+  [200] setobjprop 800 .......................... pPaletteImageMembers[nType].image = paletteImage
+  [203] getglobal 40 ............................ <g>
+  [205] getchainedprop 41 ....................... <g.objectMaster>
+  [207] pushsymb 1658 ........................... <#objPalette>
+  [210] pusharglist 2 ........................... <g.objectMaster, #objPalette>
+  [212] objcall 43 .............................. <g.objectMaster.requestObject(#objPalette)>
+  [214] setlocal 5 .............................. nObject = g.objectMaster.requestObject(#objPalette)
+  [216] getlocal 5 .............................. <nObject>
+  [218] pushsymb 1 .............................. <#init>
+  [220] pusharglist 2 ........................... <nObject, #init>
+  [222] objcall 230 ............................. <nObject.getParams(#init)>
+  [224] setlocal 6 .............................. params = nObject.getParams(#init)
+  [226] getlocal 6 .............................. <params>
+  [228] getlocal 3 .............................. <paletteImage>
+  [230] setobjprop 1659 ......................... params.allTilesImage = paletteImage
+  [233] getlocal 6 .............................. <params>
+  [235] pushint8 1 .............................. <1>
+  [237] setobjprop 1660 ......................... params.displayScale = 1
+  [240] getlocal 6 .............................. <params>
+  [242] getprop 1637 ............................ <pGreenBoxMember>
+  [245] setobjprop 1661 ......................... params.greenBoxMember = pGreenBoxMember
+  [248] getlocal 6 .............................. <params>
+  [250] getprop 1640 ............................ <pPaletteImageMembers>
+  [253] getlocal 0 .............................. <nType>
+  [255] pusharglist 2 ........................... <pPaletteImageMembers, nType>
+  [257] objcall 109 ............................. <pPaletteImageMembers[nType]>
+  [259] setobjprop 99 ........................... params.member = pPaletteImageMembers[nType]
+  [261] getlocal 6 .............................. <params>
+  [263] getlocal 0 .............................. <nType>
+  [265] setobjprop 82 ........................... params.sym = nType
+  [267] getlocal 6 .............................. <params>
+  [269] getglobal 40 ............................ <g>
+  [271] getchainedprop 1399 ..................... <g.mouseMaster>
+  [274] pusharglist 1 ........................... <g.mouseMaster>
+  [276] objcall 1400 ............................ <g.mouseMaster.getMouseLoc()>
+  [279] getparam 0 .............................. <me>
+  [281] getlocal 0 .............................. <nType>
+  [283] pusharglist 2 ........................... <me, nType>
+  [285] objcall 1631 ............................ <me.getPaletteOffset(nType)>
+  [288] add ..................................... <g.mouseMaster.getMouseLoc() + me.getPaletteOffset(nType)>
+  [289] setobjprop 1662 ......................... params.location = g.mouseMaster.getMouseLoc() + me.getPaletteOffset(nType)
+  [292] getlocal 6 .............................. <params>
+  [294] getparam 0 .............................. <me>
+  [296] getchainedprop 57 ....................... <me.id>
+  [298] getobjprop 58 ........................... <me.id.bigMe>
+  [300] setobjprop 1663 ......................... params.targetObject = me.id.bigMe
+  [303] getlocal 6 .............................. <params>
+  [305] getprop 1647 ............................ <pYellowBoxMember>
+  [308] setobjprop 1664 ......................... params.yellowBoxMember = pYellowBoxMember
+  [311] getlocal 5 .............................. <nObject>
+  [313] getlocal 6 .............................. <params>
+  [315] pusharglistnoret 2 ...................... <nObject, params>
+  [317] objcall 1 ............................... nObject.init(params)
+  [319] getlocal 5 .............................. <nObject>
+  [321] pusharglistnoret 1 ...................... <nObject>
+  [323] objcall 1665 ............................ nObject.display()
+  [326] getprop 1641 ............................ <pPaletteObjects>
+  [329] getlocal 0 .............................. <nType>
+  [331] getlocal 5 .............................. <nObject>
+  [333] pusharglistnoret 3 ...................... <pPaletteObjects, nType, nObject>
+  [335] objcall 48 .............................. pPaletteObjects[nType] = nObject
+  [337] pushint8 1
+  [339] add
+  [340] endrepeat [ 25]
+  [343] pop 3
+  [345] getprop 1646 ............................ <pTimer>
+  [348] pusharglistnoret 1 ...................... <pTimer>
+  [350] extcall 706 ............................. CounterReset(pTimer)
+  [353] pushint8 1 .............................. <1>
+  [355] setprop 1636 ............................ pDisplaying = 1
+  [358] ret
+end
+
+on getInitialGridSelection me, paletteType
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 57 ....................... <me.id>
+  [  4] getchainedprop 58 ....................... <me.id.bigMe>
+  [  6] pusharglist 1 ........................... <me.id.bigMe>
+  [  8] objcall 1596 ............................ <me.id.bigMe.getCurrentWeapon()>
+  [ 11] setlocal 0 .............................. currentWeapon = me.id.bigMe.getCurrentWeapon()
+  [ 13] getprop 1608 ............................ <pWeapons>
+  [ 16] getparam 1 .............................. <paletteType>
+  [ 18] pusharglist 2 ........................... <pWeapons, paletteType>
+  [ 20] objcall 109 ............................. <pWeapons[paletteType]>
+  [ 22] getlocal 0 .............................. <currentWeapon>
+  [ 24] pusharglist 2 ........................... <pWeapons[paletteType], currentWeapon>
+  [ 26] objcall 219 ............................. <pWeapons[paletteType].getPos(currentWeapon)>
+  [ 28] setlocal 1 .............................. weaponPos = pWeapons[paletteType].getPos(currentWeapon)
+  [ 30] getlocal 1 .............................. <weaponPos>
+  [ 32] pushzero ................................ <0>
+  [ 33] eq ...................................... <weaponPos = 0>
+  [ 34] jmpifz [ 46] ............................ if weaponPos = 0 then / else
+  [ 37] pushsymb 49 ............................. <#none>
+  [ 39] pusharglistnoret 1 ...................... <#none>
+  [ 41] extcall 35 .............................. return #none
+  [ 43] jmp [ 62]
+  [ 46] getlocal 1 .............................. <weaponPos>
+  [ 48] pushint8 1 .............................. <1>
+  [ 50] pusharglist 2 ........................... <weaponPos, 1>
+  [ 52] extcall 197 ............................. <point(weaponPos, 1)>
+  [ 54] setlocal 2 .............................. gridLoc = point(weaponPos, 1)
+  [ 56] getlocal 2 .............................. <gridLoc>
+  [ 58] pusharglistnoret 1 ...................... <gridLoc>
+  [ 60] extcall 35 .............................. return gridLoc
+  [ 62] ret
+end
+
+on getPaletteOffset me, theType
+  [  0] getprop 1640 ............................ <pPaletteImageMembers>
+  [  3] getparam 1 .............................. <theType>
+  [  5] pusharglist 2 ........................... <pPaletteImageMembers, theType>
+  [  7] objcall 109 ............................. <pPaletteImageMembers[theType]>
+  [  9] getobjprop 424 .......................... <pPaletteImageMembers[theType].width>
+  [ 12] setlocal 0 .............................. imageWidth = pPaletteImageMembers[theType].width
+  [ 14] getprop 1642 ............................ <pPaletteOffsets>
+  [ 17] getparam 1 .............................. <theType>
+  [ 19] pusharglist 2 ........................... <pPaletteOffsets, theType>
+  [ 21] objcall 109 ............................. <pPaletteOffsets[theType]>
+  [ 23] setlocal 1 .............................. yOffset = pPaletteOffsets[theType]
+  [ 25] getlocal 0 .............................. <imageWidth>
+  [ 27] pushint8 2 .............................. <2>
+  [ 29] div ..................................... <imageWidth / 2>
+  [ 30] pushint8 1 .............................. <1>
+  [ 32] inv ..................................... <-1>
+  [ 33] mul ..................................... <imageWidth / 2 * -1>
+  [ 34] setlocal 2 .............................. xOffset = imageWidth / 2 * -1
+  [ 36] getlocal 2 .............................. <xOffset>
+  [ 38] getlocal 1 .............................. <yOffset>
+  [ 40] pusharglist 2 ........................... <xOffset, yOffset>
+  [ 42] extcall 197 ............................. <point(xOffset, yOffset)>
+  [ 44] pusharglistnoret 1 ...................... <point(xOffset, yOffset)>
+  [ 46] extcall 35 .............................. return point(xOffset, yOffset)
+  [ 48] ret
+end
+
+on getWeaponIcon me, weaponSym
+  [  0] getparam 1 .............................. <weaponSym>
+  [  2] pusharglist 1 ........................... <weaponSym>
+  [  4] extcall 667 ............................. <string(weaponSym)>
+  [  7] pushcons 8 .............................. <"_ws">
+  [  9] joinstr ................................. <string(weaponSym) & "_ws">
+  [ 10] setlocal 0 .............................. memname = string(weaponSym) & "_ws"
+  [ 12] getlocal 0 .............................. <memname>
+  [ 14] pushcons 2 .............................. <"gfx">
+  [ 16] pusharglist 2 ........................... <memname, "gfx">
+  [ 18] extcall 99 .............................. <member(memname, "gfx")>
+  [ 20] getobjprop 800 .......................... <member(memname, "gfx").image>
+  [ 23] pusharglistnoret 1 ...................... <member(memname, "gfx").image>
+  [ 25] extcall 35 .............................. return member(memname, "gfx").image
+  [ 27] ret
+end
+
+on offscreen me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 1626 ............................ me.finishMembers()
+  [  7] pushzero ................................ <0>
+  [  8] setprop 1636 ............................ pDisplaying = 0
+  [ 11] ret
+end
+
+on update me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 31 .............................. ancestor.update()
+  [  6] getprop 1636 ............................ <pDisplaying>
+  [  9] jmpifz [ 19] ............................ if pDisplaying then
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] objcall 1634 ............................ me.updateTimer()
+  [ 19] ret
+end
+
+on updateLocation me
+  [  0] pushint8 1 .............................. <1>
+  [  2] setlocal 0
+  [  4] getlocal 0
+  [  6] getprop 1640 ............................ <pPaletteImageMembers>
+  [  9] getobjprop 257 .......................... <pPaletteImageMembers.count>
+  [ 12] lteq
+  [ 13] jmpifz [ 75] ............................ repeat with i = 1 to pPaletteImageMembers.count
+  [ 16] getprop 1640 ............................ <pPaletteImageMembers>
+  [ 19] getlocal 0 .............................. <i>
+  [ 21] pusharglist 2 ........................... <pPaletteImageMembers, i>
+  [ 23] objcall 1092 ............................ <pPaletteImageMembers.getPropAt(i)>
+  [ 26] setlocal 1 .............................. nType = pPaletteImageMembers.getPropAt(i)
+  [ 28] getprop 1641 ............................ <pPaletteObjects>
+  [ 31] getlocal 1 .............................. <nType>
+  [ 33] pusharglist 2 ........................... <pPaletteObjects, nType>
+  [ 35] objcall 109 ............................. <pPaletteObjects[nType]>
+  [ 37] setlocal 2 .............................. nObject = pPaletteObjects[nType]
+  [ 39] getlocal 2 .............................. <nObject>
+  [ 41] getparam 0 .............................. <me>
+  [ 43] getchainedprop 57 ....................... <me.id>
+  [ 45] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 47] pusharglist 1 ........................... <me.id.bigMe>
+  [ 49] objcall 111 ............................. <me.id.bigMe.getLoc()>
+  [ 51] getparam 0 .............................. <me>
+  [ 53] getlocal 1 .............................. <nType>
+  [ 55] pusharglist 2 ........................... <me, nType>
+  [ 57] objcall 1631 ............................ <me.getPaletteOffset(nType)>
+  [ 60] add ..................................... <me.id.bigMe.getLoc() + me.getPaletteOffset(nType)>
+  [ 61] pusharglistnoret 2 ...................... <nObject, me.id.bigMe.getLoc() + me.getPaletteOffset(nType)>
+  [ 63] objcall 1633 ............................ nObject.updateLocation(me.id.bigMe.getLoc() + me.getPaletteOffset(nType))
+  [ 66] pushint8 1
+  [ 68] getlocal 0
+  [ 70] add
+  [ 71] setlocal 0
+  [ 73] endrepeat [  4]
+  [ 75] ret
+end
+
+on updateTimer me
+  [  0] getprop 1646 ............................ <pTimer>
+  [  3] pusharglistnoret 1 ...................... <pTimer>
+  [  5] extcall 553 ............................. counter(pTimer)
+  [  8] getprop 1646 ............................ <pTimer>
+  [ 11] getobjprop 552 .......................... <pTimer.fin>
+  [ 14] jmpifz [ 24] ............................ if pTimer.fin then
+  [ 17] getparam 0 .............................. <me>
+  [ 19] pusharglistnoret 1 ...................... <me>
+  [ 21] objcall 375 ............................. me.offscreen()
+  [ 24] ret
+end
+
+on writePaletteDefinition me, weaponsList
+  [  0] getparam 1 .............................. <weaponsList>
+  [  2] getobjprop 257 .......................... <weaponsList.count>
+  [  5] pushzero ................................ <0>
+  [  6] eq ...................................... <weaponsList.count = 0>
+  [  7] jmpifz [ 16] ............................ if weaponsList.count = 0 then
+  [ 10] pushsymb 49 ............................. <#none>
+  [ 12] pusharglistnoret 1 ...................... <#none>
+  [ 14] extcall 35 .............................. return #none
+  [ 16] getprop 1639 ............................ <pPaletteDefinitionStart>
+  [ 19] setlocal 0 .............................. newDefinition = pPaletteDefinitionStart
+  [ 21] getparam 1 .............................. <weaponsList>
+  [ 23] peek 0
+  [ 25] pusharglist 1
+  [ 27] extcall 257
+  [ 30] pushint8 1
+  [ 32] peek 0
+  [ 34] peek 2
+  [ 36] lteq
+  [ 37] jmpifz [ 68] ............................ repeat with nWeapon in weaponsList
+  [ 40] peek 2
+  [ 42] peek 1
+  [ 44] pusharglist 2
+  [ 46] extcall 109
+  [ 48] setlocal 1
+  [ 50] getlocal 0 .............................. <newDefinition>
+  [ 52] pushcons 9 .............................. <"#">
+  [ 54] joinstr ................................. <newDefinition & "#">
+  [ 55] getlocal 1 .............................. <nWeapon>
+  [ 57] joinstr ................................. <newDefinition & "#" & nWeapon>
+  [ 58] pushcons 4 .............................. <RETURN>
+  [ 60] joinstr ................................. <newDefinition & "#" & nWeapon & RETURN>
+  [ 61] setlocal 0 .............................. newDefinition = newDefinition & "#" & nWeapon & RETURN
+  [ 63] pushint8 1
+  [ 65] add
+  [ 66] endrepeat [ 32]
+  [ 68] pop 3
+  [ 70] getlocal 0 .............................. <newDefinition>
+  [ 72] pusharglistnoret 1 ...................... <newDefinition>
+  [ 74] extcall 35 .............................. return newDefinition
+  [ 76] ret
+end

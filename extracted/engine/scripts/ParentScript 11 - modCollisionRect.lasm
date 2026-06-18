@@ -1,0 +1,331 @@
+property ancestor, pBox, pCollisionRect, pCollisionRectClipTop, pCollisionRectMax, pCollisionRectType
+global g, gGameView
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on addModParams me
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. clipTop = 0
+  [  3] getparam 0 .............................. <me>
+  [  5] pushsymb 1 .............................. <#init>
+  [  7] pusharglist 2 ........................... <me, #init>
+  [  9] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 11] setlocal 1 .............................. i = me.modifyParams(#init)
+  [ 13] getlocal 1 .............................. <i>
+  [ 15] pushsymb 412 ............................ <#collisionRect>
+  [ 18] pushsymb 49 ............................. <#none>
+  [ 20] pusharglistnoret 3 ...................... <i, #collisionRect, #none>
+  [ 22] objcall 48 .............................. i[#collisionRect] = #none
+  [ 24] getlocal 1 .............................. <i>
+  [ 26] pushsymb 413 ............................ <#collisionRectClipTop>
+  [ 29] getlocal 0 .............................. <clipTop>
+  [ 31] pusharglistnoret 3 ...................... <i, #collisionRectClipTop, clipTop>
+  [ 33] objcall 48 .............................. i[#collisionRectClipTop] = clipTop
+  [ 35] getlocal 1 .............................. <i>
+  [ 37] pushsymb 414 ............................ <#collisionRectType>
+  [ 40] pushsymb 415 ............................ <#fixed>
+  [ 43] pusharglistnoret 3 ...................... <i, #collisionRectType, #fixed>
+  [ 45] objcall 48 .............................. i[#collisionRectType] = #fixed
+  [ 47] getprop 33 .............................. <ancestor>
+  [ 49] pusharglistnoret 1 ...................... <ancestor>
+  [ 51] objcall 2 ............................... ancestor.addModParams()
+  [ 53] ret
+end
+
+on init me, params
+  [  0] pushsymb 49 ............................. <#none>
+  [  2] setprop 417 ............................. pBox = #none
+  [  5] getparam 1 .............................. <params>
+  [  7] getobjprop 412 .......................... <params.collisionRect>
+  [ 10] pushsymb 263 ............................ <#rect>
+  [ 13] pusharglist 2 ........................... <params.collisionRect, #rect>
+  [ 15] extcall 206 ............................. <ilk(params.collisionRect, #rect)>
+  [ 17] jmpifz [ 35] ............................ if ilk(params.collisionRect, #rect) then / else
+  [ 20] getparam 1 .............................. <params>
+  [ 22] getchainedprop 412 ...................... <params.collisionRect>
+  [ 25] pusharglist 1 ........................... <params.collisionRect>
+  [ 27] objcall 175 ............................. <params.collisionRect.duplicate()>
+  [ 29] setprop 418 ............................. pCollisionRect = params.collisionRect.duplicate()
+  [ 32] jmp [ 43]
+  [ 35] getparam 1 .............................. <params>
+  [ 37] getobjprop 412 .......................... <params.collisionRect>
+  [ 40] setprop 418 ............................. pCollisionRect = params.collisionRect
+  [ 43] getparam 1 .............................. <params>
+  [ 45] getobjprop 413 .......................... <params.collisionRectClipTop>
+  [ 48] setprop 419 ............................. pCollisionRectClipTop = params.collisionRectClipTop
+  [ 51] pushint8 16 ............................. <16>
+  [ 53] inv ..................................... <-16>
+  [ 54] pushint8 16 ............................. <16>
+  [ 56] inv ..................................... <-16>
+  [ 57] pushint8 16 ............................. <16>
+  [ 59] pushint8 16 ............................. <16>
+  [ 61] pusharglist 4 ........................... <-16, -16, 16, 16>
+  [ 63] extcall 263 ............................. <rect(-16, -16, 16, 16)>
+  [ 66] setprop 420 ............................. pCollisionRectMax = rect(-16, -16, 16, 16)
+  [ 69] getparam 1 .............................. <params>
+  [ 71] getobjprop 414 .......................... <params.collisionRectType>
+  [ 74] setprop 421 ............................. pCollisionRectType = params.collisionRectType
+  [ 77] getprop 33 .............................. <ancestor>
+  [ 79] getparam 1 .............................. <params>
+  [ 81] pusharglistnoret 2 ...................... <ancestor, params>
+  [ 83] objcall 1 ............................... ancestor.init(params)
+  [ 85] ret
+end
+
+on initRectFromCurrentImage me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 51 ....................... <me.big>
+  [  4] pusharglist 1 ........................... <me.big>
+  [  6] objcall 17 .............................. <me.big.getAnimMember()>
+  [  8] setlocal 0 .............................. currentMember = me.big.getAnimMember()
+  [ 10] getlocal 0 .............................. <currentMember>
+  [ 12] getobjprop 422 .......................... <currentMember.regPoint>
+  [ 15] setlocal 1 .............................. currentRegPoint = currentMember.regPoint
+  [ 17] getlocal 0 .............................. <currentMember>
+  [ 19] getobjprop 423 .......................... <currentMember.height>
+  [ 22] setlocal 2 .............................. currentHeight = currentMember.height
+  [ 24] getlocal 0 .............................. <currentMember>
+  [ 26] getobjprop 424 .......................... <currentMember.width>
+  [ 29] setlocal 3 .............................. currentWidth = currentMember.width
+  [ 31] pushzero ................................ <0>
+  [ 32] pushzero ................................ <0>
+  [ 33] pushzero ................................ <0>
+  [ 34] pushzero ................................ <0>
+  [ 35] pusharglist 4 ........................... <0, 0, 0, 0>
+  [ 37] extcall 263 ............................. <rect(0, 0, 0, 0)>
+  [ 40] setlocal 4 .............................. collisionRect = rect(0, 0, 0, 0)
+  [ 42] getlocal 4 .............................. <collisionRect>
+  [ 44] pushint8 1 .............................. <1>
+  [ 46] getlocal 1 .............................. <currentRegPoint>
+  [ 48] pushint8 1 .............................. <1>
+  [ 50] pusharglist 2 ........................... <currentRegPoint, 1>
+  [ 52] objcall 109 ............................. <currentRegPoint[1]>
+  [ 54] pushint8 1 .............................. <1>
+  [ 56] inv ..................................... <-1>
+  [ 57] mul ..................................... <currentRegPoint[1] * -1>
+  [ 58] pusharglistnoret 3 ...................... <collisionRect, 1, currentRegPoint[1] * -1>
+  [ 60] objcall 48 .............................. collisionRect[1] = currentRegPoint[1] * -1
+  [ 62] getlocal 4 .............................. <collisionRect>
+  [ 64] pushint8 2 .............................. <2>
+  [ 66] getlocal 1 .............................. <currentRegPoint>
+  [ 68] pushint8 2 .............................. <2>
+  [ 70] pusharglist 2 ........................... <currentRegPoint, 2>
+  [ 72] objcall 109 ............................. <currentRegPoint[2]>
+  [ 74] pushint8 1 .............................. <1>
+  [ 76] inv ..................................... <-1>
+  [ 77] mul ..................................... <currentRegPoint[2] * -1>
+  [ 78] pusharglistnoret 3 ...................... <collisionRect, 2, currentRegPoint[2] * -1>
+  [ 80] objcall 48 .............................. collisionRect[2] = currentRegPoint[2] * -1
+  [ 82] getlocal 4 .............................. <collisionRect>
+  [ 84] pushint8 3 .............................. <3>
+  [ 86] getlocal 3 .............................. <currentWidth>
+  [ 88] getlocal 1 .............................. <currentRegPoint>
+  [ 90] pushint8 1 .............................. <1>
+  [ 92] pusharglist 2 ........................... <currentRegPoint, 1>
+  [ 94] objcall 109 ............................. <currentRegPoint[1]>
+  [ 96] sub ..................................... <currentWidth - currentRegPoint[1]>
+  [ 97] pusharglistnoret 3 ...................... <collisionRect, 3, currentWidth - currentRegPoint[1]>
+  [ 99] objcall 48 .............................. collisionRect[3] = currentWidth - currentRegPoint[1]
+  [101] getlocal 4 .............................. <collisionRect>
+  [103] pushint8 4 .............................. <4>
+  [105] getlocal 2 .............................. <currentHeight>
+  [107] getlocal 1 .............................. <currentRegPoint>
+  [109] pushint8 2 .............................. <2>
+  [111] pusharglist 2 ........................... <currentRegPoint, 2>
+  [113] objcall 109 ............................. <currentRegPoint[2]>
+  [115] sub ..................................... <currentHeight - currentRegPoint[2]>
+  [116] pusharglistnoret 3 ...................... <collisionRect, 4, currentHeight - currentRegPoint[2]>
+  [118] objcall 48 .............................. collisionRect[4] = currentHeight - currentRegPoint[2]
+  [120] getlocal 4 .............................. <collisionRect>
+  [122] pushint8 1 .............................. <1>
+  [124] getlocal 4 .............................. <collisionRect>
+  [126] pushint8 1 .............................. <1>
+  [128] pusharglist 2 ........................... <collisionRect, 1>
+  [130] objcall 109 ............................. <collisionRect[1]>
+  [132] getprop 420 ............................. <pCollisionRectMax>
+  [135] pushint8 1 .............................. <1>
+  [137] pusharglist 2 ........................... <pCollisionRectMax, 1>
+  [139] objcall 109 ............................. <pCollisionRectMax[1]>
+  [141] pusharglist 2 ........................... <collisionRect[1], pCollisionRectMax[1]>
+  [143] extcall 425 ............................. <max(collisionRect[1], pCollisionRectMax[1])>
+  [146] pusharglistnoret 3 ...................... <collisionRect, 1, max(collisionRect[1], pCollisionRectMax[1])>
+  [148] objcall 48 .............................. collisionRect[1] = max(collisionRect[1], pCollisionRectMax[1])
+  [150] getlocal 4 .............................. <collisionRect>
+  [152] pushint8 2 .............................. <2>
+  [154] getlocal 4 .............................. <collisionRect>
+  [156] pushint8 2 .............................. <2>
+  [158] pusharglist 2 ........................... <collisionRect, 2>
+  [160] objcall 109 ............................. <collisionRect[2]>
+  [162] getprop 420 ............................. <pCollisionRectMax>
+  [165] pushint8 2 .............................. <2>
+  [167] pusharglist 2 ........................... <pCollisionRectMax, 2>
+  [169] objcall 109 ............................. <pCollisionRectMax[2]>
+  [171] pusharglist 2 ........................... <collisionRect[2], pCollisionRectMax[2]>
+  [173] extcall 425 ............................. <max(collisionRect[2], pCollisionRectMax[2])>
+  [176] pusharglistnoret 3 ...................... <collisionRect, 2, max(collisionRect[2], pCollisionRectMax[2])>
+  [178] objcall 48 .............................. collisionRect[2] = max(collisionRect[2], pCollisionRectMax[2])
+  [180] getlocal 4 .............................. <collisionRect>
+  [182] pushint8 3 .............................. <3>
+  [184] getlocal 4 .............................. <collisionRect>
+  [186] pushint8 3 .............................. <3>
+  [188] pusharglist 2 ........................... <collisionRect, 3>
+  [190] objcall 109 ............................. <collisionRect[3]>
+  [192] getprop 420 ............................. <pCollisionRectMax>
+  [195] pushint8 3 .............................. <3>
+  [197] pusharglist 2 ........................... <pCollisionRectMax, 3>
+  [199] objcall 109 ............................. <pCollisionRectMax[3]>
+  [201] pusharglist 2 ........................... <collisionRect[3], pCollisionRectMax[3]>
+  [203] extcall 152 ............................. <min(collisionRect[3], pCollisionRectMax[3])>
+  [205] pusharglistnoret 3 ...................... <collisionRect, 3, min(collisionRect[3], pCollisionRectMax[3])>
+  [207] objcall 48 .............................. collisionRect[3] = min(collisionRect[3], pCollisionRectMax[3])
+  [209] getlocal 4 .............................. <collisionRect>
+  [211] pushint8 4 .............................. <4>
+  [213] getlocal 4 .............................. <collisionRect>
+  [215] pushint8 4 .............................. <4>
+  [217] pusharglist 2 ........................... <collisionRect, 4>
+  [219] objcall 109 ............................. <collisionRect[4]>
+  [221] getprop 420 ............................. <pCollisionRectMax>
+  [224] pushint8 4 .............................. <4>
+  [226] pusharglist 2 ........................... <pCollisionRectMax, 4>
+  [228] objcall 109 ............................. <pCollisionRectMax[4]>
+  [230] pusharglist 2 ........................... <collisionRect[4], pCollisionRectMax[4]>
+  [232] extcall 152 ............................. <min(collisionRect[4], pCollisionRectMax[4])>
+  [234] pusharglistnoret 3 ...................... <collisionRect, 4, min(collisionRect[4], pCollisionRectMax[4])>
+  [236] objcall 48 .............................. collisionRect[4] = min(collisionRect[4], pCollisionRectMax[4])
+  [238] getlocal 4 .............................. <collisionRect>
+  [240] pushint8 1 .............................. <1>
+  [242] inv ..................................... <-1>
+  [243] pushint8 1 .............................. <1>
+  [245] inv ..................................... <-1>
+  [246] pusharglist 3 ........................... <collisionRect, -1, -1>
+  [248] objcall 261 ............................. <collisionRect.inflate(-1, -1)>
+  [251] setlocal 4 .............................. collisionRect = collisionRect.inflate(-1, -1)
+  [253] getlocal 4 .............................. <collisionRect>
+  [255] setprop 418 ............................. pCollisionRect = collisionRect
+  [258] ret
+end
+
+on finish me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 408 ............................. me.finishBox()
+  [  7] getprop 33 .............................. <ancestor>
+  [  9] pusharglistnoret 1 ...................... <ancestor>
+  [ 11] objcall 3 ............................... ancestor.finish()
+  [ 13] ret
+end
+
+on finishBox me
+  [  0] getprop 417 ............................. <pBox>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] nteq .................................... <pBox <> #none>
+  [  6] jmpifz [ 16] ............................ if pBox <> #none then
+  [  9] getprop 417 ............................. <pBox>
+  [ 12] pusharglistnoret 1 ...................... <pBox>
+  [ 14] objcall 3 ............................... pBox.finish()
+  [ 16] ret
+end
+
+on calcCollisionRect me, theloc
+  [  0] getprop 418 ............................. <pCollisionRect>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] eq ...................................... <pCollisionRect = #none>
+  [  6] getprop 421 ............................. <pCollisionRectType>
+  [  9] pushsymb 430 ............................ <#dynamic>
+  [ 12] eq ...................................... <pCollisionRectType = #dynamic>
+  [ 13] or ...................................... <(pCollisionRect = #none) or (pCollisionRectType = #dynamic)>
+  [ 14] jmpifz [ 24] ............................ if (pCollisionRect = #none) or (pCollisionRectType = #dynamic) then
+  [ 17] getparam 0 .............................. <me>
+  [ 19] pusharglistnoret 1 ...................... <me>
+  [ 21] objcall 407 ............................. me.initRectFromCurrentImage()
+  [ 24] getprop 418 ............................. <pCollisionRect>
+  [ 27] getparam 1 .............................. <theloc>
+  [ 29] getparam 1 .............................. <theloc>
+  [ 31] pusharglist 2 ........................... <theloc, theloc>
+  [ 33] extcall 263 ............................. <rect(theloc, theloc)>
+  [ 36] add ..................................... <pCollisionRect + rect(theloc, theloc)>
+  [ 37] setlocal 0 .............................. newRect = pCollisionRect + rect(theloc, theloc)
+  [ 39] getlocal 0 .............................. <newRect>
+  [ 41] pushint8 2 .............................. <2>
+  [ 43] getlocal 0 .............................. <newRect>
+  [ 45] pushint8 2 .............................. <2>
+  [ 47] pusharglist 2 ........................... <newRect, 2>
+  [ 49] objcall 109 ............................. <newRect[2]>
+  [ 51] getprop 419 ............................. <pCollisionRectClipTop>
+  [ 54] add ..................................... <newRect[2] + pCollisionRectClipTop>
+  [ 55] pusharglistnoret 3 ...................... <newRect, 2, newRect[2] + pCollisionRectClipTop>
+  [ 57] objcall 48 .............................. newRect[2] = newRect[2] + pCollisionRectClipTop
+  [ 59] pushsymb 431 ............................ <#edgeOffset>
+  [ 62] getprop 418 ............................. <pCollisionRect>
+  [ 65] pusharglist 1 ........................... <pCollisionRect>
+  [ 67] objcall 175 ............................. <pCollisionRect.duplicate()>
+  [ 69] pushsymb 263 ............................ <#rect>
+  [ 72] getlocal 0 .............................. <newRect>
+  [ 74] pusharglist 4 ........................... <[#edgeOffset: pCollisionRect.duplicate(), #rect: newRect]>
+  [ 76] pushproplist ............................ <[#edgeOffset: pCollisionRect.duplicate(), #rect: newRect]>
+  [ 77] setlocal 1 .............................. info = [#edgeOffset: pCollisionRect.duplicate(), #rect: newRect]
+  [ 79] getlocal 1 .............................. <info>
+  [ 81] pusharglistnoret 1 ...................... <info>
+  [ 83] extcall 35 .............................. return info
+  [ 85] ret
+end
+
+on displayRect me, therect
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 408 ............................. me.finishBox()
+  [  7] getglobal 40 ............................ <g>
+  [  9] getchainedprop 41 ....................... <g.objectMaster>
+  [ 11] pushsymb 435 ............................ <#objBox>
+  [ 14] pusharglist 2 ........................... <g.objectMaster, #objBox>
+  [ 16] objcall 43 .............................. <g.objectMaster.requestObject(#objBox)>
+  [ 18] setprop 417 ............................. pBox = g.objectMaster.requestObject(#objBox)
+  [ 21] getprop 417 ............................. <pBox>
+  [ 24] pushsymb 1 .............................. <#init>
+  [ 26] pusharglist 2 ........................... <pBox, #init>
+  [ 28] objcall 230 ............................. <pBox.getParams(#init)>
+  [ 30] setlocal 0 .............................. params = pBox.getParams(#init)
+  [ 32] getlocal 0 .............................. <params>
+  [ 34] pushzero ................................ <0>
+  [ 35] pushint16 255 ........................... <255>
+  [ 38] pushzero ................................ <0>
+  [ 39] pusharglist 3 ........................... <0, 255, 0>
+  [ 41] extcall 436 ............................. <rgb(0, 255, 0)>
+  [ 44] setobjprop 437 .......................... params.color = rgb(0, 255, 0)
+  [ 47] getlocal 0 .............................. <params>
+  [ 49] getparam 1 .............................. <therect>
+  [ 51] pusharglist 1 ........................... <therect>
+  [ 53] objcall 175 ............................. <therect.duplicate()>
+  [ 55] setobjprop 438 .......................... params.initialRect = therect.duplicate()
+  [ 58] getprop 417 ............................. <pBox>
+  [ 61] getlocal 0 .............................. <params>
+  [ 63] pusharglistnoret 2 ...................... <pBox, params>
+  [ 65] objcall 1 ............................... pBox.init(params)
+  [ 67] ret
+end
+
+on getCollisionRect me
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 0 .............................. <me>
+  [  4] pusharglist 1 ........................... <me>
+  [  6] objcall 111 ............................. <me.getLoc()>
+  [  8] pusharglist 2 ........................... <me, me.getLoc()>
+  [ 10] objcall 409 ............................. <me.calcCollisionRect(me.getLoc())>
+  [ 13] setlocal 0 .............................. rectInfo = me.calcCollisionRect(me.getLoc())
+  [ 15] getlocal 0 .............................. <rectInfo>
+  [ 17] getobjprop 263 .......................... <rectInfo.rect>
+  [ 20] pusharglistnoret 1 ...................... <rectInfo.rect>
+  [ 22] extcall 35 .............................. return rectInfo.rect
+  [ 24] ret
+end

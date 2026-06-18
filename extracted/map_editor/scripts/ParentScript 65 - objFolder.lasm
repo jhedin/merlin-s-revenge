@@ -1,0 +1,386 @@
+property ancestor, pContents, pSymbol, pParentFolder
+
+on new me
+  [  0] pushcons 0 .............................. <"objParams">
+  [  2] pusharglist 1 ........................... <"objParams">
+  [  4] extcall 27 .............................. <script("objParams")>
+  [  6] pusharglist 1 ........................... <script("objParams")>
+  [  8] extcall 0 ............................... <new(script("objParams"))>
+  [ 10] setprop 77 .............................. ancestor = new(script("objParams"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 221 ............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 100 ............................ <#symbol>
+  [ 26] pushsymb 22 ............................. <#none>
+  [ 28] pusharglistnoret 3 ...................... <i, #symbol, #none>
+  [ 30] objcall 37 .............................. i[#symbol] = #none
+  [ 32] getlocal 0 .............................. <i>
+  [ 34] pushsymb 482 ............................ <#parentFolder>
+  [ 37] pushsymb 22 ............................. <#none>
+  [ 39] pusharglistnoret 3 ...................... <i, #parentFolder, #none>
+  [ 41] objcall 37 .............................. i[#parentFolder] = #none
+  [ 43] getparam 0 .............................. <me>
+  [ 45] pusharglistnoret 1 ...................... <me>
+  [ 47] extcall 17 .............................. return me
+  [ 49] ret
+end
+
+on init me, params
+  [  0] getparam 1 .............................. <params>
+  [  2] getobjprop 482 .......................... <params.parentFolder>
+  [  5] setprop 483 ............................. pParentFolder = params.parentFolder
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 100 .......................... <params.symbol>
+  [ 12] setprop 484 ............................. pSymbol = params.symbol
+  [ 15] pusharglist 0 ........................... <[]>
+  [ 17] pushlist ................................ <[]>
+  [ 18] setprop 485 ............................. pContents = []
+  [ 21] ret
+end
+
+on addContents me, theVal
+  [  0] getprop 485 ............................. <pContents>
+  [  3] getparam 1 .............................. <theVal>
+  [  5] pusharglistnoret 2 ...................... <pContents, theVal>
+  [  7] objcall 111 ............................. pContents.append(theVal)
+  [  9] ret
+end
+
+on convertContents me
+  [  0] pusharglist 0 ........................... <[:]>
+  [  2] pushproplist ............................ <[:]>
+  [  3] setlocal 0 .............................. convertedContents = [:]
+  [  5] pusharglist 0 ........................... <[]>
+  [  7] pushlist ................................ <[]>
+  [  8] setlocal 1 .............................. listedContent = []
+  [ 10] pushint8 1 .............................. <1>
+  [ 12] setlocal 2 .............................. ind = 1
+  [ 14] getprop 485 ............................. <pContents>
+  [ 17] peek 0
+  [ 19] pusharglist 1
+  [ 21] extcall 28
+  [ 23] pushint8 1
+  [ 25] peek 0
+  [ 27] peek 2
+  [ 29] lteq
+  [ 30] jmpifz [185] ............................ repeat with nContent in pContents
+  [ 33] peek 2
+  [ 35] peek 1
+  [ 37] pusharglist 2
+  [ 39] extcall 38
+  [ 41] setlocal 3
+  [ 43] getlocal 3 .............................. <nContent>
+  [ 45] pushsymb 487 ............................ <#object>
+  [ 48] pusharglist 2 ........................... <nContent, #object>
+  [ 50] extcall 205 ............................. <ilk(nContent, #object)>
+  [ 52] jmpifz [180] ............................ if ilk(nContent, #object) then
+  [ 55] getlocal 3 .............................. <nContent>
+  [ 57] pusharglist 1 ........................... <nContent>
+  [ 59] objcall 479 ............................. <nContent.getSymbol()>
+  [ 62] setlocal 4 .............................. nSym = nContent.getSymbol()
+  [ 64] getlocal 0 .............................. <convertedContents>
+  [ 66] getlocal 4 .............................. <nSym>
+  [ 68] pusharglist 2 ........................... <convertedContents, nSym>
+  [ 70] objcall 38 .............................. <convertedContents[nSym]>
+  [ 72] pusharglist 0 ........................... <>
+  [ 74] extcall 36 .............................. <VOID>
+  [ 76] eq ...................................... <convertedContents[nSym] = VOID>
+  [ 77] jmpifz [ 98] ............................ if convertedContents[nSym] = VOID then / else
+  [ 80] getlocal 0 .............................. <convertedContents>
+  [ 82] getlocal 4 .............................. <nSym>
+  [ 84] getlocal 3 .............................. <nContent>
+  [ 86] pusharglist 1 ........................... <nContent>
+  [ 88] objcall 475 ............................. <nContent.convertContents()>
+  [ 91] pusharglistnoret 3 ...................... <convertedContents, nSym, nContent.convertContents()>
+  [ 93] objcall 37 .............................. convertedContents[nSym] = nContent.convertContents()
+  [ 95] jmp [173]
+  [ 98] getlocal 1 .............................. <listedContent>
+  [100] getlocal 4 .............................. <nSym>
+  [102] pusharglist 2 ........................... <listedContent, nSym>
+  [104] objcall 50 .............................. <listedContent.getPos(nSym)>
+  [106] pushzero ................................ <0>
+  [107] eq ...................................... <listedContent.getPos(nSym) = 0>
+  [108] jmpifz [154] ............................ if listedContent.getPos(nSym) = 0 then
+  [111] getlocal 0 .............................. <convertedContents>
+  [113] getlocal 4 .............................. <nSym>
+  [115] pusharglist 2 ........................... <convertedContents, nSym>
+  [117] objcall 38 .............................. <convertedContents[nSym]>
+  [119] setlocal 5 .............................. exisitingContent = convertedContents[nSym]
+  [121] getlocal 0 .............................. <convertedContents>
+  [123] getlocal 4 .............................. <nSym>
+  [125] pusharglist 0 ........................... <[]>
+  [127] pushlist ................................ <[]>
+  [128] pusharglistnoret 3 ...................... <convertedContents, nSym, []>
+  [130] objcall 37 .............................. convertedContents[nSym] = []
+  [132] getlocal 0 .............................. <convertedContents>
+  [134] getlocal 4 .............................. <nSym>
+  [136] pusharglist 2 ........................... <convertedContents, nSym>
+  [138] objcall 38 .............................. <convertedContents[nSym]>
+  [140] getlocal 5 .............................. <exisitingContent>
+  [142] pusharglistnoret 2 ...................... <convertedContents[nSym], exisitingContent>
+  [144] objcall 111 ............................. convertedContents[nSym].append(exisitingContent)
+  [146] getlocal 1 .............................. <listedContent>
+  [148] getlocal 4 .............................. <nSym>
+  [150] pusharglistnoret 2 ...................... <listedContent, nSym>
+  [152] objcall 111 ............................. listedContent.append(nSym)
+  [154] getlocal 0 .............................. <convertedContents>
+  [156] getlocal 4 .............................. <nSym>
+  [158] pusharglist 2 ........................... <convertedContents, nSym>
+  [160] objcall 38 .............................. <convertedContents[nSym]>
+  [162] getlocal 3 .............................. <nContent>
+  [164] pusharglist 1 ........................... <nContent>
+  [166] objcall 475 ............................. <nContent.convertContents()>
+  [169] pusharglistnoret 2 ...................... <convertedContents[nSym], nContent.convertContents()>
+  [171] objcall 111 ............................. convertedContents[nSym].append(nContent.convertContents())
+  [173] getlocal 2 .............................. <ind>
+  [175] pushint8 1 .............................. <1>
+  [177] add ..................................... <ind + 1>
+  [178] setlocal 2 .............................. ind = ind + 1
+  [180] pushint8 1
+  [182] add
+  [183] endrepeat [ 25]
+  [185] pop 3
+  [187] getlocal 0 .............................. <convertedContents>
+  [189] getobjprop 28 ........................... <convertedContents.count>
+  [191] pushzero ................................ <0>
+  [192] gt ...................................... <convertedContents.count > 0>
+  [193] jmpifz [202] ............................ if convertedContents.count > 0 then
+  [196] getlocal 0 .............................. <convertedContents>
+  [198] pusharglistnoret 1 ...................... <convertedContents>
+  [200] extcall 17 .............................. return convertedContents
+  [202] getprop 485 ............................. <pContents>
+  [205] getobjprop 28 ........................... <pContents.count>
+  [207] pushint8 1 .............................. <1>
+  [209] eq ...................................... <pContents.count = 1>
+  [210] jmpifz [229] ............................ if pContents.count = 1 then / else
+  [213] getprop 485 ............................. <pContents>
+  [216] pushint8 1 .............................. <1>
+  [218] pusharglist 2 ........................... <pContents, 1>
+  [220] objcall 38 .............................. <pContents[1]>
+  [222] pusharglistnoret 1 ...................... <pContents[1]>
+  [224] extcall 17 .............................. return pContents[1]
+  [226] jmp [236]
+  [229] getprop 485 ............................. <pContents>
+  [232] pusharglistnoret 1 ...................... <pContents>
+  [234] extcall 17 .............................. return pContents
+  [236] ret
+end
+
+on convertToPropList me, thePropList
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <thePropList>
+  [  4] pusharglist 2 ........................... <me, thePropList>
+  [  6] objcall 475 ............................. <me.convertContents(thePropList)>
+  [  9] setparam 1 .............................. thePropList = me.convertContents(thePropList)
+  [ 11] getparam 1 .............................. <thePropList>
+  [ 13] pusharglistnoret 1 ...................... <thePropList>
+  [ 15] extcall 17 .............................. return thePropList
+  [ 17] ret
+end
+
+on getParentFolder me
+  [  0] getprop 483 ............................. <pParentFolder>
+  [  3] pusharglistnoret 1 ...................... <pParentFolder>
+  [  5] extcall 17 .............................. return pParentFolder
+  [  7] ret
+end
+
+on getFolderWithSymbol me, theSym
+  [  0] getprop 485 ............................. <pContents>
+  [  3] peek 0
+  [  5] pusharglist 1
+  [  7] extcall 28
+  [  9] pushint8 1
+  [ 11] peek 0
+  [ 13] peek 2
+  [ 15] lteq
+  [ 16] jmpifz [ 69] ............................ repeat with nContent in pContents
+  [ 19] peek 2
+  [ 21] peek 1
+  [ 23] pusharglist 2
+  [ 25] extcall 38
+  [ 27] setlocal 0
+  [ 29] getlocal 0 .............................. <nContent>
+  [ 31] pushsymb 487 ............................ <#object>
+  [ 34] pusharglist 2 ........................... <nContent, #object>
+  [ 36] extcall 205 ............................. <ilk(nContent, #object)>
+  [ 38] jmpifz [ 64] ............................ if ilk(nContent, #object) then
+  [ 41] getlocal 0 .............................. <nContent>
+  [ 43] pusharglist 1 ........................... <nContent>
+  [ 45] objcall 479 ............................. <nContent.getSymbol()>
+  [ 48] setlocal 1 .............................. nSym = nContent.getSymbol()
+  [ 50] getlocal 1 .............................. <nSym>
+  [ 52] getparam 1 .............................. <theSym>
+  [ 54] eq ...................................... <nSym = theSym>
+  [ 55] jmpifz [ 64] ............................ if nSym = theSym then
+  [ 58] getlocal 0 .............................. <nContent>
+  [ 60] pusharglistnoret 1 ...................... <nContent>
+  [ 62] extcall 17 .............................. return nContent
+  [ 64] pushint8 1
+  [ 66] add
+  [ 67] endrepeat [ 11]
+  [ 69] pop 3
+  [ 71] pushcons 1 .............................. <"objFolder.getFolderWithSymbol: folder not found: ">
+  [ 73] getparam 1 .............................. <theSym>
+  [ 75] joinstr ................................. <"objFolder.getFolderWithSymbol: folder not found: " & theSym>
+  [ 76] pusharglistnoret 1 ...................... <"objFolder.getFolderWithSymbol: folder not found: " & theSym>
+  [ 78] extcall 57 .............................. put "objFolder.getFolderWithSymbol: folder not found: " & theSym
+  [ 80] pusharglistnoret 0 ...................... <>
+  [ 82] extcall 340 ............................. halt()
+  [ 85] ret
+end
+
+on getSymbol me
+  [  0] getprop 484 ............................. <pSymbol>
+  [  3] pusharglistnoret 1 ...................... <pSymbol>
+  [  5] extcall 17 .............................. return pSymbol
+  [  7] ret
+end
+
+on finish me
+  [  0] getprop 485 ............................. <pContents>
+  [  3] peek 0
+  [  5] pusharglist 1
+  [  7] extcall 28
+  [  9] pushint8 1
+  [ 11] peek 0
+  [ 13] peek 2
+  [ 15] lteq
+  [ 16] jmpifz [ 52] ............................ repeat with nContent in pContents
+  [ 19] peek 2
+  [ 21] peek 1
+  [ 23] pusharglist 2
+  [ 25] extcall 38
+  [ 27] setlocal 0
+  [ 29] getlocal 0 .............................. <nContent>
+  [ 31] pushsymb 487 ............................ <#object>
+  [ 34] pusharglist 2 ........................... <nContent, #object>
+  [ 36] extcall 205 ............................. <ilk(nContent, #object)>
+  [ 38] jmpifz [ 47] ............................ if ilk(nContent, #object) then
+  [ 41] getlocal 0 .............................. <nContent>
+  [ 43] pusharglistnoret 1 ...................... <nContent>
+  [ 45] objcall 39 .............................. nContent.finish()
+  [ 47] pushint8 1
+  [ 49] add
+  [ 50] endrepeat [ 11]
+  [ 52] pop 3
+  [ 54] getprop 77 .............................. <ancestor>
+  [ 56] pusharglistnoret 1 ...................... <ancestor>
+  [ 58] objcall 39 .............................. ancestor.finish()
+  [ 60] ret
+end
+
+on navigateTo me, thepath
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <thepath>
+  [  4] pushint8 1 .............................. <1>
+  [  6] pusharglist 2 ........................... <thepath, 1>
+  [  8] objcall 38 .............................. <thepath[1]>
+  [ 10] pusharglist 2 ........................... <me, thepath[1]>
+  [ 12] objcall 478 ............................. <me.getFolderWithSymbol(thepath[1])>
+  [ 15] setlocal 0 .............................. navFolder = me.getFolderWithSymbol(thepath[1])
+  [ 17] getparam 1 .............................. <thepath>
+  [ 19] getobjprop 28 ........................... <thepath.count>
+  [ 21] pushint8 1 .............................. <1>
+  [ 23] eq ...................................... <thepath.count = 1>
+  [ 24] jmpifz [ 36] ............................ if thepath.count = 1 then / else
+  [ 27] getlocal 0 .............................. <navFolder>
+  [ 29] pusharglistnoret 1 ...................... <navFolder>
+  [ 31] extcall 17 .............................. return navFolder
+  [ 33] jmp [ 60]
+  [ 36] getparam 1 .............................. <thepath>
+  [ 38] pushsymb 343 ............................ <#deleteAt>
+  [ 41] pushint8 1 .............................. <1>
+  [ 43] pusharglist 3 ........................... <thepath, #deleteAt, 1>
+  [ 45] objcall 209 ............................. <thepath.deleteAt[1]>
+  [ 47] getlocal 0 .............................. <navFolder>
+  [ 49] getparam 1 .............................. <thepath>
+  [ 51] pusharglist 2 ........................... <navFolder, thepath>
+  [ 53] objcall 480 ............................. <navFolder.navigateTo(thepath)>
+  [ 56] pusharglistnoret 1 ...................... <navFolder.navigateTo(thepath)>
+  [ 58] extcall 17 .............................. return navFolder.navigateTo(thepath)
+  [ 60] ret
+end
+
+on printContents me, numTabs
+  [  0] getparam 1 .............................. <numTabs>
+  [  2] pusharglist 0 ........................... <>
+  [  4] extcall 36 .............................. <VOID>
+  [  6] eq ...................................... <numTabs = VOID>
+  [  7] jmpifz [ 13] ............................ if numTabs = VOID then
+  [ 10] pushzero ................................ <0>
+  [ 11] setparam 1 .............................. numTabs = 0
+  [ 13] pushcons 2 .............................. <EMPTY>
+  [ 15] setlocal 0 .............................. tabTxt = EMPTY
+  [ 17] pushint8 1 .............................. <1>
+  [ 19] setlocal 1
+  [ 21] getlocal 1
+  [ 23] getparam 1 .............................. <numTabs>
+  [ 25] lteq
+  [ 26] jmpifz [ 45] ............................ repeat with i = 1 to numTabs
+  [ 29] getlocal 0 .............................. <tabTxt>
+  [ 31] pushcons 3 .............................. <TAB>
+  [ 33] joinstr ................................. <tabTxt & TAB>
+  [ 34] setlocal 0 .............................. tabTxt = tabTxt & TAB
+  [ 36] pushint8 1
+  [ 38] getlocal 1
+  [ 40] add
+  [ 41] setlocal 1
+  [ 43] endrepeat [ 21]
+  [ 45] getlocal 0 .............................. <tabTxt>
+  [ 47] getprop 484 ............................. <pSymbol>
+  [ 50] joinstr ................................. <tabTxt & pSymbol>
+  [ 51] pushcons 4 .............................. <">>">
+  [ 53] joinstr ................................. <tabTxt & pSymbol & ">>">
+  [ 54] pusharglistnoret 1 ...................... <tabTxt & pSymbol & ">>">
+  [ 56] extcall 57 .............................. put tabTxt & pSymbol & ">>"
+  [ 58] getlocal 0 .............................. <tabTxt>
+  [ 60] pushcons 3 .............................. <TAB>
+  [ 62] joinstr ................................. <tabTxt & TAB>
+  [ 63] setlocal 0 .............................. tabTxt = tabTxt & TAB
+  [ 65] getparam 1 .............................. <numTabs>
+  [ 67] pushint8 1 .............................. <1>
+  [ 69] add ..................................... <numTabs + 1>
+  [ 70] setparam 1 .............................. numTabs = numTabs + 1
+  [ 72] getprop 485 ............................. <pContents>
+  [ 75] peek 0
+  [ 77] pusharglist 1
+  [ 79] extcall 28
+  [ 81] pushint8 1
+  [ 83] peek 0
+  [ 85] peek 2
+  [ 87] lteq
+  [ 88] jmpifz [146] ............................ repeat with nContent in pContents
+  [ 91] peek 2
+  [ 93] peek 1
+  [ 95] pusharglist 2
+  [ 97] extcall 38
+  [ 99] setlocal 2
+  [101] getlocal 2 .............................. <nContent>
+  [103] pushsymb 487 ............................ <#object>
+  [106] pusharglist 2 ........................... <nContent, #object>
+  [108] extcall 205 ............................. <ilk(nContent, #object)>
+  [110] jmpifz [128] ............................ if ilk(nContent, #object) then
+  [113] getlocal 2 .............................. <nContent>
+  [115] getparam 1 .............................. <numTabs>
+  [117] pushint8 1 .............................. <1>
+  [119] add ..................................... <numTabs + 1>
+  [120] pusharglistnoret 2 ...................... <nContent, numTabs + 1>
+  [122] objcall 481 ............................. nContent.printContents(numTabs + 1)
+  [125] jmp [141] ............................... next repeat
+  [128] getlocal 0 .............................. <tabTxt>
+  [130] getlocal 2 .............................. <nContent>
+  [132] pusharglist 1 ........................... <nContent>
+  [134] extcall 61 .............................. <string(nContent)>
+  [136] joinstr ................................. <tabTxt & string(nContent)>
+  [137] pusharglistnoret 1 ...................... <tabTxt & string(nContent)>
+  [139] extcall 57 .............................. put tabTxt & string(nContent)
+  [141] pushint8 1
+  [143] add
+  [144] endrepeat [ 83]
+  [146] pop 3
+  [148] ret
+end

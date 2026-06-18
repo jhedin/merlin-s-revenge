@@ -1,0 +1,89 @@
+property pLoc, pGmgDisplayer
+global g
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 3 ............................... return me
+  [  6] ret
+end
+
+on init me
+  [  0] pushzero ................................ <0>
+  [  1] pushzero ................................ <0>
+  [  2] pusharglist 2 ........................... <0, 0>
+  [  4] extcall 122 ............................. <point(0, 0)>
+  [  6] setprop 1135 ............................ pLoc = point(0, 0)
+  [  9] pushsymb 103 ............................ <#none>
+  [ 11] setprop 1890 ............................ pGmgDisplayer = #none
+  [ 14] ret
+end
+
+on finish me
+  [  0] getprop 1890 ............................ <pGmgDisplayer>
+  [  3] pusharglist 0 ........................... <>
+  [  5] extcall 388 ............................. <VOID>
+  [  8] nteq .................................... <pGmgDisplayer <> VOID>
+  [  9] getprop 1890 ............................ <pGmgDisplayer>
+  [ 12] pushsymb 103 ............................ <#none>
+  [ 14] nteq .................................... <pGmgDisplayer <> #none>
+  [ 15] and ..................................... <(pGmgDisplayer <> VOID) and (pGmgDisplayer <> #none)>
+  [ 16] jmpifz [ 31] ............................ if (pGmgDisplayer <> VOID) and (pGmgDisplayer <> #none) then
+  [ 19] getprop 1890 ............................ <pGmgDisplayer>
+  [ 22] pusharglistnoret 1 ...................... <pGmgDisplayer>
+  [ 24] objcall 239 ............................. pGmgDisplayer.finish()
+  [ 26] pushsymb 103 ............................ <#none>
+  [ 28] setprop 1890 ............................ pGmgDisplayer = #none
+  [ 31] ret
+end
+
+on start me, theloc
+  [  0] getparam 1 .............................. <theloc>
+  [  2] setprop 1135 ............................ pLoc = theloc
+  [  5] getglobal 191 ........................... <g>
+  [  7] getchainedprop 336 ...................... <g.objectMaster>
+  [ 10] pushsymb 1891 ........................... <#objGmgDisplayer>
+  [ 13] pusharglist 2 ........................... <g.objectMaster, #objGmgDisplayer>
+  [ 15] objcall 338 ............................. <g.objectMaster.requestObject(#objGmgDisplayer)>
+  [ 18] setprop 1890 ............................ pGmgDisplayer = g.objectMaster.requestObject(#objGmgDisplayer)
+  [ 21] getprop 1890 ............................ <pGmgDisplayer>
+  [ 24] pushsymb 1 .............................. <#init>
+  [ 26] pusharglist 2 ........................... <pGmgDisplayer, #init>
+  [ 28] objcall 339 ............................. <pGmgDisplayer.getParams(#init)>
+  [ 31] setlocal 0 .............................. params = pGmgDisplayer.getParams(#init)
+  [ 33] getlocal 0 .............................. <params>
+  [ 35] getparam 1 .............................. <theloc>
+  [ 37] setobjprop 1138 ......................... params.displayLoc = theloc
+  [ 40] getlocal 0 .............................. <params>
+  [ 42] pushcons 0 .............................. <"gmg_off">
+  [ 44] pushcons 1 .............................. <"gfx">
+  [ 46] pusharglist 2 ........................... <"gmg_off", "gfx">
+  [ 48] extcall 193 ............................. <member("gmg_off", "gfx")>
+  [ 50] setobjprop 1139 ......................... params.offMember = member("gmg_off", "gfx")
+  [ 53] getlocal 0 .............................. <params>
+  [ 55] pushcons 2 .............................. <"gmg_on">
+  [ 57] pushcons 1 .............................. <"gfx">
+  [ 59] pusharglist 2 ........................... <"gmg_on", "gfx">
+  [ 61] extcall 193 ............................. <member("gmg_on", "gfx")>
+  [ 63] setobjprop 1140 ......................... params.onMember = member("gmg_on", "gfx")
+  [ 66] getprop 1890 ............................ <pGmgDisplayer>
+  [ 69] getlocal 0 .............................. <params>
+  [ 71] pusharglistnoret 2 ...................... <pGmgDisplayer, params>
+  [ 73] objcall 1 ............................... pGmgDisplayer.init(params)
+  [ 75] ret
+end
+
+on stop me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 239 ............................. me.finish()
+  [  6] ret
+end
+
+on updateDisplay me, theState
+  [  0] getprop 1890 ............................ <pGmgDisplayer>
+  [  3] getparam 1 .............................. <theState>
+  [  5] pusharglistnoret 2 ...................... <pGmgDisplayer, theState>
+  [  7] objcall 1892 ............................ pGmgDisplayer.updateActive(theState)
+  [ 10] ret
+end

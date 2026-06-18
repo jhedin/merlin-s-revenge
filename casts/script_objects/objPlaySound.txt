@@ -1,0 +1,94 @@
+[#name: "objPlaySound", #scriptType: #parent, #type: #script]
+global g
+
+property ancestor
+property pSoundChannel   -- the channel our sound is playing in (so we can stop it on finish)
+property pSoundToPlay    -- the name of the sound cast member to play
+
+on new me
+  ancestor = new(script "objParams")
+  
+  i = me.modifyParams(#init)
+  
+  i[#definition] = #none
+  
+  return me
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  
+  pSoundToPlay = params.definition
+end
+
+on finish me
+  ancestor.finish()
+  -- g.soundMaster.stopSound(pSoundChannel)
+end
+
+on playSound me
+  pSoundChannel = g.soundMaster.playSound(pSoundToPlay)
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

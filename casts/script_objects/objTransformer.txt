@@ -1,0 +1,193 @@
+[#name: "objTransformer", #scriptType: #parent, #type: #script]
+global gGameSpeed
+
+property ancestor
+property pCurr
+property pFirstFrame       -- stores whether this is the first frame after init. if yes, it won't update otherwise first value is not displayed
+property pTarget
+property pCallingPrg
+property pCallingPrgHistory  -- keeps track of all programs that have called this object. Should only be used in debugging.
+property pFin
+property pInitialValue
+property pPingPong
+property pSpeed
+
+on new me
+  me.ancestor = new (script "objAutoUpdate")
+  
+  i = me.modifyParams(#init)
+  i.callingPrgMessage = #transformFin
+  
+  i[#callingPrg] = #none
+  i[#initialValue] = #none
+  i[#pingPong] = false
+  i[#speed] = 10 * gGameSpeed
+  i[#targetValue] = #none
+  
+  pCallingPrgHistory = []
+  
+  return me
+end
+
+on init me, params
+  me.ancestor.init(params)
+  
+  pCurr = params.initialValue
+  pInitialValue = params.initialValue
+  pTarget = params.targetValue
+  pCallingPrg = params.callingPrg
+  -- debugging
+  --  pCallingPrgHistory.append(pCallingPrg)
+  pFin = false
+  pFirstFrame = true
+  pPingPong = params.pingPong
+  pSpeed = params.speed
+end init
+
+on addSaveData me, sd
+  
+  sd[#pCurr] = pCurr
+  sd[#pFin] = pFin
+  sd[#pFirstFrame] = pFirstFrame
+  sd[#pInitialValue] = pInitialValue
+  sd[#pPingPong] = pPingPong
+  sd[#pSpeed] = pSpeed
+  sd[#pTarget] = pTarget
+  
+  ancestor.addSaveData(sd)
+end
+
+on finishConditionMet me
+  if pPingPong then
+    if pCurr = pTarget then
+      pTarget = pInitialValue
+      pInitialValue = pCurr
+    end if
+  else
+    return pCurr = pTarget
+  end if
+end
+
+on isFirstFrame me
+  first = pFirstFrame
+  pFirstFrame = false
+  return first
+end
+
+on getCallingPrg me
+  return pCallingPrg
+end
+
+--on informCallingPrg me
+--  pCallingPrg.transformFin()
+--end
+
+on restoreFromSave me, sd
+  pCurr = sd.pCurr
+  pFin = sd.pFin
+  pFirstFrame = sd.pFirstFrame
+  pInitialValue = sd.pInitialValue
+  pPingPong = sd.pPingPong
+  pSpeed = sd.pSpeed
+  pTarget = sd.pTarget
+  
+  ancestor.restoreFromSave(sd)
+end
+
+on setCallingPrg me, callingPrg
+  pCallingPrg = callingPrg  
+end
+
+on setCurrent me, curr
+  pCurr = curr  
+  me.calcFin()
+  me.calcStart()
+end setCurrent
+
+on setTarget me, targ
+  pTarget = targ
+  me.calcFin()
+  me.calcStart()
+end setTarget
+
+on setSpeed me, speed
+  pSpeed = speed * gGameSpeed
+end setSpeed
+
+on update me
+  if me.isFirstFrame() then
+    me.ID.bigMe.updateAttribute()
+    return
+  end if
+  
+  pCurr = VarToward(pCurr, pTarget, pSpeed)
+  
+  me.ID.bigMe.updateAttribute()
+  
+  me.calcFin()
+end update
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

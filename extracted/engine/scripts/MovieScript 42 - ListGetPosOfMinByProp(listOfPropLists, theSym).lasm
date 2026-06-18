@@ -1,0 +1,48 @@
+on ListGetPosOfMinByProp thelist, theSym
+  [  0] pusharglist 0 ........................... <>
+  [  2] thebuiltin 229 .......................... <the maxinteger>
+  [  4] setlocal 0 .............................. currentLowest = the maxinteger
+  [  6] pushsymb 24 ............................. <#none>
+  [  8] setlocal 1 .............................. currentPos = #none
+  [ 10] pushint8 1 .............................. <1>
+  [ 12] setlocal 2 .............................. i = 1
+  [ 14] getparam 0 .............................. <thelist>
+  [ 16] peek 0
+  [ 18] pusharglist 1
+  [ 20] extcall 17
+  [ 22] pushint8 1
+  [ 24] peek 0
+  [ 26] peek 2
+  [ 28] lteq
+  [ 29] jmpifz [ 80] ............................ repeat with nPropList in thelist
+  [ 32] peek 2
+  [ 34] peek 1
+  [ 36] pusharglist 2
+  [ 38] extcall 18
+  [ 40] setlocal 3
+  [ 42] getlocal 3 .............................. <nPropList>
+  [ 44] getparam 1 .............................. <theSym>
+  [ 46] pusharglist 2 ........................... <nPropList, theSym>
+  [ 48] objcall 18 .............................. <nPropList[theSym]>
+  [ 50] setlocal 4 .............................. nValue = nPropList[theSym]
+  [ 52] getlocal 4 .............................. <nValue>
+  [ 54] getlocal 0 .............................. <currentLowest>
+  [ 56] lt ...................................... <nValue < currentLowest>
+  [ 57] jmpifz [ 68] ............................ if nValue < currentLowest then
+  [ 60] getlocal 4 .............................. <nValue>
+  [ 62] setlocal 0 .............................. currentLowest = nValue
+  [ 64] getlocal 2 .............................. <i>
+  [ 66] setlocal 1 .............................. currentPos = i
+  [ 68] getlocal 2 .............................. <i>
+  [ 70] pushint8 1 .............................. <1>
+  [ 72] add ..................................... <i + 1>
+  [ 73] setlocal 2 .............................. i = i + 1
+  [ 75] pushint8 1
+  [ 77] add
+  [ 78] endrepeat [ 24]
+  [ 80] pop 3
+  [ 82] getlocal 1 .............................. <currentPos>
+  [ 84] pusharglistnoret 1 ...................... <currentPos>
+  [ 86] extcall 3 ............................... return currentPos
+  [ 88] ret
+end

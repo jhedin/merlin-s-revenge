@@ -1,0 +1,203 @@
+property ancestor, pBlendFin, pBlendSpeed, pHeightFin, pStretchDeath, pStretchDeathStarted, pStretchHeight, pStretchSpeed
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pushint8 1 .............................. <1>
+  [ 10] setprop 1361 ............................ pBlendFin = 1
+  [ 13] pushint8 1 .............................. <1>
+  [ 15] setprop 1362 ............................ pHeightFin = 1
+  [ 18] getparam 1 .............................. <params>
+  [ 20] getobjprop 1364 ......................... <params.blendSpeed>
+  [ 23] setprop 1363 ............................ pBlendSpeed = params.blendSpeed
+  [ 26] getparam 1 .............................. <params>
+  [ 28] getobjprop 1366 ......................... <params.stretchDeath>
+  [ 31] setprop 1365 ............................ pStretchDeath = params.stretchDeath
+  [ 34] pushzero ................................ <0>
+  [ 35] setprop 1367 ............................ pStretchDeathStarted = 0
+  [ 38] getparam 1 .............................. <params>
+  [ 40] getobjprop 1369 ......................... <params.stretchHeight>
+  [ 43] setprop 1368 ............................ pStretchHeight = params.stretchHeight
+  [ 46] getparam 1 .............................. <params>
+  [ 48] getobjprop 1371 ......................... <params.stretchSpeed>
+  [ 51] setprop 1370 ............................ pStretchSpeed = params.stretchSpeed
+  [ 54] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getlocal 0 .............................. <i>
+  [ 12] pushsymb 1364 ........................... <#blendSpeed>
+  [ 15] pushint8 3 .............................. <3>
+  [ 17] pusharglistnoret 3 ...................... <i, #blendSpeed, 3>
+  [ 19] objcall 48 .............................. i[#blendSpeed] = 3
+  [ 21] getlocal 0 .............................. <i>
+  [ 23] pushsymb 1366 ........................... <#stretchDeath>
+  [ 26] pushzero ................................ <0>
+  [ 27] pusharglistnoret 3 ...................... <i, #stretchDeath, 0>
+  [ 29] objcall 48 .............................. i[#stretchDeath] = 0
+  [ 31] getlocal 0 .............................. <i>
+  [ 33] pushsymb 1369 ........................... <#stretchHeight>
+  [ 36] pushint8 50 ............................. <50>
+  [ 38] pusharglistnoret 3 ...................... <i, #stretchHeight, 50>
+  [ 40] objcall 48 .............................. i[#stretchHeight] = 50
+  [ 42] getlocal 0 .............................. <i>
+  [ 44] pushsymb 1371 ........................... <#stretchSpeed>
+  [ 47] pushint8 1 .............................. <1>
+  [ 49] pusharglistnoret 3 ...................... <i, #stretchSpeed, 1>
+  [ 51] objcall 48 .............................. i[#stretchSpeed] = 1
+  [ 53] getprop 33 .............................. <ancestor>
+  [ 55] pusharglistnoret 1 ...................... <ancestor>
+  [ 57] objcall 2 ............................... ancestor.addModParams()
+  [ 59] ret
+end
+
+on checkFin me
+  [  0] getprop 1361 ............................ <pBlendFin>
+  [  3] getprop 1362 ............................ <pHeightFin>
+  [  6] and ..................................... <pBlendFin and pHeightFin>
+  [  7] jmpifz [ 21] ............................ if pBlendFin and pHeightFin then
+  [ 10] getparam 0 .............................. <me>
+  [ 12] getchainedprop 51 ....................... <me.big>
+  [ 14] pushsymb 1372 ........................... <#stretchDeathFin>
+  [ 17] pusharglistnoret 2 ...................... <me.big, #stretchDeathFin>
+  [ 19] objcall 22 .............................. me.big.internalEvent(#stretchDeathFin)
+  [ 21] ret
+end
+
+on getStretchDeath me
+  [  0] getprop 1365 ............................ <pStretchDeath>
+  [  3] pusharglistnoret 1 ...................... <pStretchDeath>
+  [  5] extcall 35 .............................. return pStretchDeath
+  [  7] ret
+end
+
+on internalEvent me, theEvent
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <theEvent>
+  [  4] pusharglistnoret 2 ...................... <ancestor, theEvent>
+  [  6] objcall 22 .............................. ancestor.internalEvent(theEvent)
+  [  8] getparam 1 .............................. <theEvent>
+  [ 10] peek 0 .................................. case theEvent of
+  [ 12] pushsymb 66 ............................. <#landed>
+  [ 14] nteq
+  [ 15] jmpifz [ 52] ............................ (case) #landed, ...
+  [ 18] peek 0
+  [ 20] pushsymb 484 ............................ <#outOfEnergy>
+  [ 23] nteq
+  [ 24] jmpifz [ 52] ............................ (case) ..., #outOfEnergy, ...
+  [ 27] peek 0
+  [ 29] pushsymb 1061 ........................... <#reelFinished>
+  [ 32] nteq
+  [ 33] jmpifz [ 52] ............................ (case) ..., #reelFinished, ...
+  [ 36] peek 0
+  [ 38] pushsymb 74 ............................. <#reelLanded>
+  [ 40] nteq
+  [ 41] jmpifz [ 52] ............................ (case) ..., #reelLanded, ...
+  [ 44] peek 0
+  [ 46] pushsymb 63 ............................. <#walk>
+  [ 48] eq
+  [ 49] jmpifz [110] ............................ (case) ..., #walk:
+  [ 52] getparam 0 .............................. <me>
+  [ 54] getchainedprop 51 ....................... <me.big>
+  [ 56] pusharglist 1 ........................... <me.big>
+  [ 58] objcall 499 ............................. <me.big.checkDead()>
+  [ 61] jmpifz [107] ............................ if me.big.checkDead() then
+  [ 64] getprop 1365 ............................ <pStretchDeath>
+  [ 67] pushint8 1 .............................. <1>
+  [ 69] eq ...................................... <pStretchDeath = 1>
+  [ 70] jmpifz [ 95] ............................ if pStretchDeath = 1 then / else
+  [ 73] getparam 0 .............................. <me>
+  [ 75] pusharglistnoret 1 ...................... <me>
+  [ 77] objcall 1360 ............................ me.startStretchDeath()
+  [ 80] getparam 0 .............................. <me>
+  [ 82] getchainedprop 51 ....................... <me.big>
+  [ 84] pushsymb 1373 ........................... <#dazed>
+  [ 87] pusharglistnoret 2 ...................... <me.big, #dazed>
+  [ 89] objcall 278 ............................. me.big.goMode(#dazed)
+  [ 92] jmp [107]
+  [ 95] getparam 0 .............................. <me>
+  [ 97] getchainedprop 51 ....................... <me.big>
+  [ 99] pushsymb 501 ............................ <#die>
+  [102] pusharglistnoret 2 ...................... <me.big, #die>
+  [104] objcall 278 ............................. me.big.goMode(#die)
+  [107] jmp [190]
+  [110] peek 0
+  [112] pushsymb 1372 ........................... <#stretchDeathFin>
+  [115] eq
+  [116] jmpifz [133] ............................ (case) #stretchDeathFin:
+  [119] getparam 0 .............................. <me>
+  [121] getchainedprop 51 ....................... <me.big>
+  [123] pushsymb 70 ............................. <#dead>
+  [125] pusharglistnoret 2 ...................... <me.big, #dead>
+  [127] objcall 278 ............................. me.big.goMode(#dead)
+  [130] jmp [190]
+  [133] peek 0
+  [135] pushsymb 682 ............................ <#transBlendFin>
+  [138] eq
+  [139] jmpifz [163] ............................ (case) #transBlendFin:
+  [142] getprop 1367 ............................ <pStretchDeathStarted>
+  [145] jmpifz [160] ............................ if pStretchDeathStarted then
+  [148] pushint8 1 .............................. <1>
+  [150] setprop 1361 ............................ pBlendFin = 1
+  [153] getparam 0 .............................. <me>
+  [155] pusharglistnoret 1 ...................... <me>
+  [157] objcall 1358 ............................ me.checkFin()
+  [160] jmp [190]
+  [163] peek 0
+  [165] pushsymb 1374 ........................... <#transHeightFin>
+  [168] eq
+  [169] jmpifz [190] ............................ (case) #transHeightFin:
+  [172] getprop 1367 ............................ <pStretchDeathStarted>
+  [175] jmpifz [190] ............................ if pStretchDeathStarted then
+  [178] pushint8 1 .............................. <1>
+  [180] setprop 1362 ............................ pHeightFin = 1
+  [183] getparam 0 .............................. <me>
+  [185] pusharglistnoret 1 ...................... <me>
+  [187] objcall 1358 ............................ me.checkFin()
+  [190] pop 1 ................................... end case
+  [192] ret
+end
+
+on startStretchDeath me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 51 ....................... <me.big>
+  [  4] getprop 1363 ............................ <pBlendSpeed>
+  [  7] pushsymb 689 ............................ <#out>
+  [ 10] pusharglistnoret 3 ...................... <me.big, pBlendSpeed, #out>
+  [ 12] objcall 681 ............................. me.big.startTransBlend(pBlendSpeed, #out)
+  [ 15] getparam 0 .............................. <me>
+  [ 17] getchainedprop 51 ....................... <me.big>
+  [ 19] getprop 1368 ............................ <pStretchHeight>
+  [ 22] getprop 1370 ............................ <pStretchSpeed>
+  [ 25] pusharglistnoret 3 ...................... <me.big, pStretchHeight, pStretchSpeed>
+  [ 27] objcall 1375 ............................ me.big.startStretchHeight(pStretchHeight, pStretchSpeed)
+  [ 30] pushint8 1 .............................. <1>
+  [ 32] setprop 1367 ............................ pStretchDeathStarted = 1
+  [ 35] getparam 0 .............................. <me>
+  [ 37] getchainedprop 51 ....................... <me.big>
+  [ 39] pushsymb 1376 ........................... <#stretchDeathStarted>
+  [ 42] pusharglistnoret 2 ...................... <me.big, #stretchDeathStarted>
+  [ 44] objcall 22 .............................. me.big.internalEvent(#stretchDeathStarted)
+  [ 46] ret
+end

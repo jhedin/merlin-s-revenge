@@ -1,0 +1,117 @@
+[#name: "modWastedMode", #scriptType: #parent, #type: #script]
+-- puts character into wasted mode
+
+property ancestor
+property pWastedModeBlend     -- the blend level of wasted mode
+property pWastedModeBlendOff  -- the blend level to reset to when wasted mode is switched off
+property pWastedModeHeight    -- the height the character should be when in wasted mode
+property pWastedModeIsOn      -- whether wasted mode is currently switched on
+
+on new me
+  ancestor = new (script("modModule"))
+  return me
+end
+
+on addModParams me
+  i = me.modifyParams(#init)
+  
+  ancestor.addModParams()
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  pWastedModeBlend = 30
+  pWastedModeBlendOff = 100
+  pWastedModeHeight = 60
+  pWastedModeIsOn = false
+end
+
+on finish me
+  ancestor.finish()
+end
+
+on wastedModeOn me
+  bigMe = me.ID.bigMe
+  
+  bigMe.setBlend(pWastedModeBlend)
+  bigMe.setAnimKeepSize(true)
+  bigMe.setSpriteHeight(pWastedModeHeight)
+  
+  pWastedModeIsOn = true
+end
+
+on wastedModeOff me
+  bigMe = me.ID.bigMe
+  
+  bigMe.setBlend(pWastedModeBlendOff)
+  bigMe.setAnimKeepSize(false)
+  
+  pWastedModeIsOn = false
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

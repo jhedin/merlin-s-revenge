@@ -1,0 +1,10 @@
+on VarRndRange first, fin
+  if ilk(first, #list) then
+    fin = first[2]
+    first = first[1]
+  end if
+  rndAmount = fin - first + 1
+  rndElement = random(rndAmount)
+  rndResult = rndElement + (first - 1)
+  return rndResult
+end

@@ -1,0 +1,77 @@
+property ancestor
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"objController">
+  [  2] pusharglist 1 ........................... <"objController">
+  [  4] extcall 34 .............................. <script("objController")>
+  [  6] pusharglist 1 ........................... <script("objController")>
+  [  8] extcall 0 ............................... <new(script("objController"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objController"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushzero ................................ <0>
+  [ 25] setobjprop 626 .......................... i.exclusive = 0
+  [ 28] getparam 0 .............................. <me>
+  [ 30] pusharglistnoret 1 ...................... <me>
+  [ 32] extcall 35 .............................. return me
+  [ 34] ret
+end
+
+on newObject me, definition, theloc, caller
+  [  0] getparam 1 .............................. <definition>
+  [  2] getobjprop 670 .......................... <definition.text>
+  [  5] pushcons 1 .............................. <RETURN>
+  [  7] pusharglist 2 ........................... <definition.text, RETURN>
+  [  9] extcall 3294 ............................ <StringEliminateChars(definition.text, RETURN)>
+  [ 12] setlocal 0 .............................. definitionText = StringEliminateChars(definition.text, RETURN)
+  [ 14] getlocal 0 .............................. <definitionText>
+  [ 16] pusharglist 1 ........................... <definitionText>
+  [ 18] extcall 1562 ............................ <value(definitionText)>
+  [ 21] setparam 1 .............................. definition = value(definitionText)
+  [ 23] getglobal 40 ............................ <g>
+  [ 25] getchainedprop 41 ....................... <g.objectMaster>
+  [ 27] pushsymb 3295 ........................... <#objMenuBackground>
+  [ 30] pusharglist 2 ........................... <g.objectMaster, #objMenuBackground>
+  [ 32] objcall 43 .............................. <g.objectMaster.requestObject(#objMenuBackground)>
+  [ 34] setlocal 1 .............................. newObj = g.objectMaster.requestObject(#objMenuBackground)
+  [ 36] getlocal 1 .............................. <newObj>
+  [ 38] pushsymb 1 .............................. <#init>
+  [ 40] pusharglist 2 ........................... <newObj, #init>
+  [ 42] objcall 230 ............................. <newObj.getParams(#init)>
+  [ 44] setlocal 2 .............................. params = newObj.getParams(#init)
+  [ 46] getlocal 2 .............................. <params>
+  [ 48] getparam 1 .............................. <definition>
+  [ 50] setobjprop 3293 ......................... params.definition = definition
+  [ 53] getlocal 2 .............................. <params>
+  [ 55] getparam 2 .............................. <theloc>
+  [ 57] setobjprop 1662 ......................... params.location = theloc
+  [ 60] getlocal 2 .............................. <params>
+  [ 62] getglobal 40 ............................ <g>
+  [ 64] getchainedprop 2508 ..................... <g.collectionsMaster>
+  [ 67] pushsymb 3069 ........................... <#objTileSetKey>
+  [ 70] pushsymb 3215 ........................... <#menu>
+  [ 73] pusharglist 3 ........................... <g.collectionsMaster, #objTileSetKey, #menu>
+  [ 75] objcall 3070 ............................ <g.collectionsMaster.getObj(#objTileSetKey, #menu)>
+  [ 78] setobjprop 2127 ......................... params.tileSet = g.collectionsMaster.getObj(#objTileSetKey, #menu)
+  [ 81] getlocal 1 .............................. <newObj>
+  [ 83] getlocal 2 .............................. <params>
+  [ 85] pusharglistnoret 2 ...................... <newObj, params>
+  [ 87] objcall 1 ............................... newObj.init(params)
+  [ 89] getlocal 1 .............................. <newObj>
+  [ 91] pusharglistnoret 1 ...................... <newObj>
+  [ 93] objcall 1665 ............................ newObj.display()
+  [ 96] getparam 0 .............................. <me>
+  [ 98] getchainedprop 2385 ..................... <me.pObjects>
+  [101] getlocal 1 .............................. <newObj>
+  [103] pusharglistnoret 2 ...................... <me.pObjects, newObj>
+  [105] objcall 256 ............................. me.pObjects.append(newObj)
+  [108] getlocal 1 .............................. <newObj>
+  [110] pusharglistnoret 1 ...................... <newObj>
+  [112] extcall 35 .............................. return newObj
+  [114] ret
+end

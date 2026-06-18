@@ -1,0 +1,57 @@
+property ancestor, pTeamToTarget
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"objGameObject">
+  [  2] pusharglist 1 ........................... <"objGameObject">
+  [  4] extcall 34 .............................. <script("objGameObject")>
+  [  6] pusharglist 1 ........................... <script("objGameObject")>
+  [  8] extcall 0 ............................... <new(script("objGameObject"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objGameObject"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushcons 1 .............................. <"modAnimSet">
+  [ 16] pusharglistnoret 2 ...................... <me, "modAnimSet">
+  [ 18] objcall 1717 ............................ me.addModule("modAnimSet")
+  [ 21] pushsymb 49 ............................. <#none>
+  [ 23] setprop 4561 ............................ pTeamToTarget = #none
+  [ 26] getparam 0 .............................. <me>
+  [ 28] pusharglistnoret 1 ...................... <me>
+  [ 30] extcall 35 .............................. return me
+  [ 32] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 4562 ......................... <params.teamToTarget>
+  [ 13] setprop 4561 ............................ pTeamToTarget = params.teamToTarget
+  [ 16] getglobal 40 ............................ <g>
+  [ 18] getchainedprop 642 ...................... <g.teamMaster>
+  [ 21] getprop 4561 ............................ <pTeamToTarget>
+  [ 24] pusharglistnoret 2 ...................... <g.teamMaster, pTeamToTarget>
+  [ 26] objcall 3917 ............................ g.teamMaster.setTeamOverride(pTeamToTarget)
+  [ 29] ret
+end
+
+on finish me
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 642 ...................... <g.teamMaster>
+  [  5] pushsymb 49 ............................. <#none>
+  [  7] pusharglistnoret 2 ...................... <g.teamMaster, #none>
+  [  9] objcall 3917 ............................ g.teamMaster.setTeamOverride(#none)
+  [ 12] getprop 33 .............................. <ancestor>
+  [ 14] pusharglistnoret 1 ...................... <ancestor>
+  [ 16] objcall 3 ............................... ancestor.finish()
+  [ 18] ret
+end
+
+on update me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 33 ....................... <me.ancestor>
+  [  4] pusharglistnoret 1 ...................... <me.ancestor>
+  [  6] objcall 31 .............................. me.ancestor.update()
+  [  8] ret
+end

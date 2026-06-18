@@ -1,0 +1,20 @@
+property id, pFlags
+
+on new me
+  [  0] pusharglist 0 ........................... <[]>
+  [  2] pushlist ................................ <[]>
+  [  3] setprop 69 .............................. pFlags = []
+  [  5] getparam 0 .............................. <me>
+  [  7] pusharglistnoret 1 ...................... <me>
+  [  9] extcall 17 .............................. return me
+  [ 11] ret
+end
+
+on finish me
+  [  0] getprop 67 .............................. <id>
+  [  2] getchainedprop 65 ....................... <id.master>
+  [  4] getprop 67 .............................. <id>
+  [  6] pusharglistnoret 2 ...................... <id.master, id>
+  [  8] objcall 15 .............................. id.master.objFree(id)
+  [ 10] ret
+end

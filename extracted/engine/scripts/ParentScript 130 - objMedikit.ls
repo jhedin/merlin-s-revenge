@@ -1,0 +1,11 @@
+property ancestor
+
+on new me
+  ancestor = new(script("objPowerUpWriting"))
+  return me
+end
+
+on collected me, collector
+  ancestor.collected(collector)
+  collector.medikitCollected(me.getCharacter())
+end

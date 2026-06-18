@@ -1,0 +1,458 @@
+[#name: "cutSceneMaster", #scriptType: #parent, #type: #script]
+global g, gCutSceneSpeechLayer
+global gErrorTrace
+
+property ancestor
+property pBackgroundMember     -- the member of the background sprite
+property pBackground           -- the obj in charge of the background rect
+property pBackgroundRandomFlashDefaultSpeed  -- the default speed for random flashing of the background
+property pBackgroundRandomFlashSpeed -- the speed to use on the current sequence
+property pEnvironment          -- whether we are in-game or in a cut scene
+property pMode                 -- our mode (used only for random screen changes at time of writing)
+property pScene                -- the name of the scene which is being performed
+property pScriptToPerform      -- the script obj which is to be performed
+property pScriptPerformer      -- the object which actually performs the script
+property pSetSceneColour       -- the colour the background should go during setScene
+property pSpeechGap            -- the gap between the top of the stage and the bottom of characters speech
+property pStageFloor           -- the floor on which the player-actors stand
+property pStageFloorHeight     -- the height of the stageFloor from the bottom of the stageRect
+property pStageRect            -- the rect within which the action takes place
+property pTitleMember          -- the member of the titleSprite
+property pTitle                -- the obj in charge of the title
+property pWaitTimer            -- times delay for the command #wait
+
+on new me
+  ancestor = new (script "objEventNotify")
+  
+  return me
+end
+
+on init me
+  ancestor.init()
+  
+  -- by pass usual creation method.
+  -- object not created by objectMaster, so redirect the objFree() to here instead.
+  -- this is probably a bad idea but hey ho.
+  me.ID[#master] = me
+  me.big = me
+  
+  pBackground = #none
+  pBackgroundMember = member("cutSceneStage", "gfx")
+  pBackgroundRandomFlashDefaultSpeed = 10
+  pBackgroundRandomFlashSpeed = pBackgroundRandomFlashDefaultSpeed
+  pEnvironment = #cutscene
+  pMode = #none
+  pScriptToPerform = #none
+  pScriptPerformer = #none
+  pSetSceneColour = rgb(0,0,0)
+  pSpeechGap = 4
+  pStageFloor = #none
+  pStageFloorHeight = 16
+  pStageRect = #none
+  pTitle = #none
+  pTitleMember = member("cutSceneTitle", "gfx")
+  pWaitTimer = #none
+end
+
+-- the redirected objFree message can be ignored.
+on objFree me
+end
+
+on finish me
+--  gErrorTrace.append(#cutSceneMasterFinish)
+  
+--  gErrorTrace.append(#ancestorFinish)
+  ancestor.finish()
+--  gErrorTrace.deleteOne(#ancestorFinish)
+  
+--  gErrorTrace.append(#pTitle)
+  if ilk(pTitle) <> #void and pTitle <> #none then
+    pTitle.finish()
+    pTitle = #none
+  end if
+--  gErrorTrace.deleteOne(#pTitle)
+  
+--  gErrorTrace.append(#clearStage)
+  me.clearStage()
+--  gErrorTrace.deleteOne(#clearStage)
+  
+--  gErrorTrace.append(#pBackground)
+  if ilk(pBackground) <> #void and pBackground <> #none then
+    pBackground.finish()
+    pBackground = #none
+  end if
+--  gErrorTrace.deleteOne(#pBackground)
+  
+  pScriptToPerform = #none
+  
+--  gErrorTrace.append(#pScriptToPerform)
+  if ilk(pScriptPerformer) <> #void and pScriptPerformer <> #none then
+    pScriptPerformer.finish()
+    pScriptPerformer = #none
+  end if
+--  gErrorTrace.deleteOne(#pScriptToPerform)
+  
+--  gErrorTrace.append(#cancelWaitTimer)
+  me.cancelWaitTimer()
+--  gErrorTrace.deleteOne(#cancelWaitTimer)
+  
+--  gErrorTrace.deleteOne(#cutSceneMasterFinish)
+end
+
+on acquireBackground me
+  backgroundSprite = g.spriteMaster.getSpriteWithMember(pBackgroundMember)
+  
+  -- if we are not playing an in-game script
+  if backgroundSprite <> #none then
+    
+    pBackground = g.objectMaster.requestObject(#objCutSceneBackground)
+    params = pBackground.getParams(#init)
+    params.spr = backgroundSprite
+    
+    pBackground.init(params)
+    
+    pStageRect = backgroundSprite.rect.duplicate()
+    
+  else
+    
+    currentMap = g.gameMaster.getCurrentMap()
+    pStageRect = currentMap.getSpriteRect()
+    
+  end if
+  
+  
+  pStageFloor = pStageRect.bottom - pStageFloorHeight
+  
+end
+
+on acquireSprites me
+  me.acquireBackground()
+  me.acquireTitle()
+end
+
+on acquireTitle me
+  titleSprite = g.spriteMaster.getSpriteWithMember(pTitleMember)
+  
+  -- if we are not in-game
+  if titleSprite <> #none then
+    pTitle = g.objectMaster.requestObject(#objCutSceneTitle)
+    params = pTitle.getParams(#init)
+    params.layer = gCutSceneSpeechLayer
+    params.spr = titleSprite
+    
+    pTitle.init(params)
+  end if
+  
+end
+
+on backgroundColour me, theColour
+  pBackground.setSpriteColour(theColour)
+  
+  -- cancel any backgroundColourRandomFlash that might be occuring
+  me.goMode(#none)
+  
+  pScriptPerformer.lineFinished()
+end
+
+on backgroundColourRandomFlash me, theSpeed
+  if theSpeed = void then
+    pBackgroundRandomFlashSpeed = pBackgroundRandomFlashDefaultSpeed
+  else
+    pBackgroundRandomFlashSpeed = theSpeed
+  end if
+  
+  me.goMode(#backgroundColourRandomFlash)
+  me.keepMePosted(pBackground, #colourTransformFin, #always)
+  
+  me.backgroundColourToRandom()
+  
+  pScriptPerformer.lineFinished()
+end
+
+on backgroundColourTo me, theColour
+  params = pBackground.getParams(#colourTransform)
+  params.targetColor = theColour
+  params.speed = 2
+  pBackground.colourTransform(params)
+  
+  -- cancel any backgroundColourRandomFlash that might be occuring
+  me.goMode(#none)
+  
+  pScriptPerformer.lineFinished()
+end
+
+on backgroundColourToRandom me
+  -- should not be called directly from script as
+  -- it does not trigger a lineFinished()
+  -- script will freeze here indefinately
+  -- call backgroundColourRandomFlash <speed> instead
+  -- call backgroundColourTo <colour> to stop the flashing
+  
+  params = pBackground.getParams(#colourTransform)
+  params.targetColor = ColourRandom()
+  params.speed = pBackgroundRandomFlashSpeed
+  pBackground.colourTransform(params)
+  
+end
+
+on beginPerformance me
+  
+  me.acquireSprites()
+  me.calcEnvironment()  
+  
+  pScriptPerformer = g.objectMaster.requestObject(#objScriptPerformer)
+  
+  params = pScriptPerformer.getParams(#init)
+  params.caller = me
+  params.theScript = pScriptToPerform
+  pScriptPerformer.init(params)
+  
+  pScriptPerformer.startPerformance()
+end
+
+on cancelWaitTimer me
+  if ilk(pWaitTimer) <> #void and pWaitTimer <> #none then
+    pWaitTimer.finish()
+    pWaitTimer = #none
+  end if
+end
+
+on calcEnvironment me
+  -- determines whether we are in-game based on whether we found a background sprite
+  if pBackground = #none then
+    pEnvironment = #ingame
+  else
+    pEnvironment = #cutScene
+  end if
+end
+
+on clearStage me
+  if ilk(pScriptPerformer) <> #void and pScriptPerformer <> #none then
+    if pEnvironment = #cutScene then
+      pScriptPerformer.finishAllPlayers()
+    end if
+  end if
+end
+
+on eventNotification me, theEvent, theObj
+  ancestor.eventNotification(theEvent, theObj)
+  case theEvent of
+    #colourTransformFin:
+      if pMode = #backgroundColourRandomFlash and theObj = pBackground then
+        -- if we're doing background random flashes, then start another one
+        me.backgroundColourToRandom()
+      end if
+  end case
+  
+end
+
+on fadeDown me
+  pScriptPerformer.lineFinished()
+end
+
+on fadeUp me
+  put "g.cutSceneMaster.fadeUp()"
+  pScriptPerformer.lineFinished()
+end
+
+on getCenterStage me
+  locx = VarHalfWay(pStageRect.left, pStageRect.right)
+  return locx
+end
+
+on getEnvironment me
+  return pEnvironment
+end
+
+on getSpeechDisplayMode me
+  return pEnvironment
+end
+
+on getSpeechFloor me
+  return pStageRect.top - pSpeechGap
+end
+
+on getStageFloor me
+  return pStageFloor
+end
+
+on getStageLeft me
+  return pStageRect.left
+end
+
+on getStageRight me
+  return pStageRect.right
+end
+
+on goMode me, newMode
+  pMode = newMode
+end
+
+on isScriptBeingPerformed me
+  if pScriptPerformer <> #none then
+    return true
+  end if
+  
+  return false
+end
+
+on lightsUp me
+  pScriptPerformer.lightsUp()
+end
+
+on lightsDown me
+  pScriptPerformer.lightsDown()
+end
+
+on performLine me, linePackage
+  call(linePackage.theCommand, me, linePackage.args)
+end
+
+on playCutScene me, theScene
+  pScene = theScene
+  pScriptToPerform = g.collectionsMaster.getObject(#objScript, theScene)
+  
+  me.beginPerformance()
+end
+
+on playMusic me, args
+  pScriptPerformer.playMusic(args)
+end
+
+on playSound me, args
+  pScriptPerformer.playSound(args)
+end
+
+on scriptCancelled me
+  if pScriptPerformer <> #none then
+    pScriptPerformer.scriptCancelled()
+  else
+    put "cutSceneMaster.scriptCancelled() pScriptPerformer = #none"
+  end if
+end
+
+on scriptFinished me
+  me.finish()
+  
+  g.movieMaster.cutSceneFinished(pScene)
+end
+
+on setStage me
+  pScriptPerformer.putPlayersIntoWings()
+  pScriptPerformer.makePlayersInvisible() 
+  
+  me.backgroundColour(pSetSceneColour)
+end
+
+on showTitle me, theTitle
+  pTitle.showTitle(theTitle)
+  pScriptPerformer.lineFinished()
+end
+
+on startWaitTimer me, noOfFrames
+  me.cancelWaitTimer()
+  
+  pWaitTimer = g.objectMaster.requestObject(#objTimer)
+  params = pWaitTimer.getParams()
+  params.callingPrg = me
+  params.callingPrgMessage = #waitTimerFinished
+  params.framesTime = noOfFrames
+  pWaitTimer.init(params)
+end
+
+on start me
+  ancestor.start()
+end
+
+on stop me
+  me.finish()
+end
+
+on walkScrollLeft me
+  pScriptPerformer.putPlayersIntoWalkMode(#left)
+  pScriptPerformer.lineFinished()
+end
+
+on walkScrollRight me
+  pScriptPerformer.putPlayersIntoWalkMode(#right)
+  pScriptPerformer.lineFinished()
+end
+
+on walkScrollStop me
+  pScriptPerformer.putPlayersIntoWalkMode(#stop)
+  pScriptPerformer.lineFinished()
+end
+
+on wait me, noOfFrames
+  me.startWaitTimer(noOfFrames)
+end
+
+on waitTimerFinished me
+  pWaitTimer = #none
+  
+  pScriptPerformer.lineFinished()
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

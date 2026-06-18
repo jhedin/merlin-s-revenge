@@ -1,0 +1,38 @@
+on CastGetMembersContaining phrase, theCast
+  [  0] pusharglist 0 ........................... <[]>
+  [  2] pushlist ................................ <[]>
+  [  3] setlocal 0 .............................. memList = []
+  [  5] getparam 1 .............................. <theCast>
+  [  7] pushint8 2 .............................. <2>
+  [  9] get 8 ................................... <the number of castMembers of castLib theCast>
+  [ 11] setlocal 1 .............................. numMembers = the number of castMembers of castLib theCast
+  [ 13] pushint8 1 .............................. <1>
+  [ 15] setlocal 2
+  [ 17] getlocal 2
+  [ 19] getlocal 1 .............................. <numMembers>
+  [ 21] lteq
+  [ 22] jmpifz [ 62] ............................ repeat with i = 1 to numMembers
+  [ 25] getlocal 2 .............................. <i>
+  [ 27] getparam 1 .............................. <theCast>
+  [ 29] pusharglist 2 ........................... <i, theCast>
+  [ 31] extcall 1 ............................... <member(i, theCast)>
+  [ 33] setlocal 3 .............................. nMem = member(i, theCast)
+  [ 35] getlocal 3 .............................. <nMem>
+  [ 37] getobjprop 18 ........................... <nMem.name>
+  [ 39] getparam 0 .............................. <phrase>
+  [ 41] containsstr ............................. <nMem.name contains phrase>
+  [ 42] jmpifz [ 53] ............................ if nMem.name contains phrase then
+  [ 45] getlocal 0 .............................. <memList>
+  [ 47] getlocal 3 .............................. <nMem>
+  [ 49] pusharglistnoret 2 ...................... <memList, nMem>
+  [ 51] objcall 29 .............................. memList.append(nMem)
+  [ 53] pushint8 1
+  [ 55] getlocal 2
+  [ 57] add
+  [ 58] setlocal 2
+  [ 60] endrepeat [ 17]
+  [ 62] getlocal 0 .............................. <memList>
+  [ 64] pusharglistnoret 1 ...................... <memList>
+  [ 66] extcall 24 .............................. return memList
+  [ 68] ret
+end

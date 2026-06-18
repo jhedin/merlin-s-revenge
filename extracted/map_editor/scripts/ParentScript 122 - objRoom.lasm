@@ -1,0 +1,1203 @@
+property ancestor, pCachedImage, pCurrentEditLayer, pDefaultScale, pFrontLayerBlendLevel, pLocation, pTileLayers, pTileSets, pMap, pmode, pnum
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"objSpriteMember">
+  [  2] pusharglist 1 ........................... <"objSpriteMember">
+  [  4] extcall 27 .............................. <script("objSpriteMember")>
+  [  6] pusharglist 1 ........................... <script("objSpriteMember")>
+  [  8] extcall 0 ............................... <new(script("objSpriteMember"))>
+  [ 10] setprop 77 .............................. ancestor = new(script("objSpriteMember"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 221 ............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 992 ............................ <#defaultEditLayer>
+  [ 27] pushsymb 993 ............................ <#backgroundPassive>
+  [ 30] pusharglistnoret 3 ...................... <i, #defaultEditLayer, #backgroundPassive>
+  [ 32] objcall 37 .............................. i[#defaultEditLayer] = #backgroundPassive
+  [ 34] getlocal 0 .............................. <i>
+  [ 36] pushsymb 994 ............................ <#defaultScale>
+  [ 39] pushint8 1 .............................. <1>
+  [ 41] pusharglistnoret 3 ...................... <i, #defaultScale, 1>
+  [ 43] objcall 37 .............................. i[#defaultScale] = 1
+  [ 45] getlocal 0 .............................. <i>
+  [ 47] pushsymb 995 ............................ <#frontLayerBlendLevel>
+  [ 50] pushint16 128 ........................... <128>
+  [ 53] pusharglistnoret 3 ...................... <i, #frontLayerBlendLevel, 128>
+  [ 55] objcall 37 .............................. i[#frontLayerBlendLevel] = 128
+  [ 57] getlocal 0 .............................. <i>
+  [ 59] pushsymb 996 ............................ <#tileSets>
+  [ 62] getglobal 101 ........................... <g>
+  [ 64] getchainedprop 458 ...................... <g.structMaster>
+  [ 67] pushsymb 997 ............................ <#roomTileSets>
+  [ 70] pusharglist 2 ........................... <g.structMaster, #roomTileSets>
+  [ 72] objcall 460 ............................. <g.structMaster.getStruct(#roomTileSets)>
+  [ 75] pusharglistnoret 3 ...................... <i, #tileSets, g.structMaster.getStruct(#roomTileSets)>
+  [ 77] objcall 37 .............................. i[#tileSets] = g.structMaster.getStruct(#roomTileSets)
+  [ 79] getlocal 0 .............................. <i>
+  [ 81] pushsymb 998 ............................ <#layerDefinitions>
+  [ 84] pushsymb 22 ............................. <#none>
+  [ 86] pusharglistnoret 3 ...................... <i, #layerDefinitions, #none>
+  [ 88] objcall 37 .............................. i[#layerDefinitions] = #none
+  [ 90] getlocal 0 .............................. <i>
+  [ 92] pushsymb 999 ............................ <#layers>
+  [ 95] pushsymb 22 ............................. <#none>
+  [ 97] pusharglistnoret 3 ...................... <i, #layers, #none>
+  [ 99] objcall 37 .............................. i[#layers] = #none
+  [101] getlocal 0 .............................. <i>
+  [103] pushsymb 254 ............................ <#map>
+  [105] pushsymb 22 ............................. <#none>
+  [107] pusharglistnoret 3 ...................... <i, #map, #none>
+  [109] objcall 37 .............................. i[#map] = #none
+  [111] getlocal 0 .............................. <i>
+  [113] pushsymb 1000 ........................... <#num>
+  [116] pushzero ................................ <0>
+  [117] pusharglistnoret 3 ...................... <i, #num, 0>
+  [119] objcall 37 .............................. i[#num] = 0
+  [121] getparam 0 .............................. <me>
+  [123] pusharglistnoret 1 ...................... <me>
+  [125] extcall 17 .............................. return me
+  [127] ret
+end
+
+on init me, params
+  [  0] getprop 77 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pushsymb 22 ............................. <#none>
+  [ 10] setprop 1001 ............................ pCachedImage = #none
+  [ 13] pushsymb 22 ............................. <#none>
+  [ 15] setprop 1002 ............................ pCurrentEditLayer = #none
+  [ 18] getparam 1 .............................. <params>
+  [ 20] getobjprop 994 .......................... <params.defaultScale>
+  [ 23] setprop 1003 ............................ pDefaultScale = params.defaultScale
+  [ 26] getparam 1 .............................. <params>
+  [ 28] getobjprop 995 .......................... <params.frontLayerBlendLevel>
+  [ 31] setprop 1004 ............................ pFrontLayerBlendLevel = params.frontLayerBlendLevel
+  [ 34] pushsymb 22 ............................. <#none>
+  [ 36] setprop 542 ............................. pLocation = #none
+  [ 39] getparam 1 .............................. <params>
+  [ 41] getobjprop 1000 ......................... <params.num>
+  [ 44] setprop 1005 ............................ pnum = params.num
+  [ 47] getparam 1 .............................. <params>
+  [ 49] getobjprop 254 .......................... <params.map>
+  [ 51] setprop 1006 ............................ pMap = params.map
+  [ 54] pushsymb 22 ............................. <#none>
+  [ 56] setprop 83 .............................. pmode = #none
+  [ 58] getparam 1 .............................. <params>
+  [ 60] getobjprop 996 .......................... <params.tileSets>
+  [ 63] setprop 948 ............................. pTileSets = params.tileSets
+  [ 66] getparam 0 .............................. <me>
+  [ 68] getparam 1 .............................. <params>
+  [ 70] pusharglistnoret 2 ...................... <me, params>
+  [ 72] objcall 973 ............................. me.initTileLayers(params)
+  [ 75] getparam 0 .............................. <me>
+  [ 77] getparam 1 .............................. <params>
+  [ 79] getobjprop 992 .......................... <params.defaultEditLayer>
+  [ 82] pusharglistnoret 2 ...................... <me, params.defaultEditLayer>
+  [ 84] objcall 989 ............................. me.setCurrentEditLayer(params.defaultEditLayer)
+  [ 87] ret
+end
+
+on initTileLayers me, params
+  [  0] getglobal 101 ........................... <g>
+  [  2] getchainedprop 458 ...................... <g.structMaster>
+  [  5] pushsymb 997 ............................ <#roomTileSets>
+  [  8] pusharglist 2 ........................... <g.structMaster, #roomTileSets>
+  [ 10] objcall 460 ............................. <g.structMaster.getStruct(#roomTileSets)>
+  [ 13] setprop 1007 ............................ pTileLayers = g.structMaster.getStruct(#roomTileSets)
+  [ 16] getparam 1 .............................. <params>
+  [ 18] getobjprop 999 .......................... <params.layers>
+  [ 21] setlocal 0 .............................. layerDefs = params.layers
+  [ 23] getlocal 0 .............................. <layerDefs>
+  [ 25] pushsymb 1008 ........................... <#propList>
+  [ 28] pusharglist 2 ........................... <layerDefs, #propList>
+  [ 30] extcall 205 ............................. <ilk(layerDefs, #propList)>
+  [ 32] jmpifz [ 42] ............................ if ilk(layerDefs, #propList) then
+  [ 35] getlocal 0 .............................. <layerDefs>
+  [ 37] pusharglist 1 ........................... <[layerDefs]>
+  [ 39] pushlist ................................ <[layerDefs]>
+  [ 40] setlocal 0 .............................. layerDefs = [layerDefs]
+  [ 42] pushint8 1 .............................. <1>
+  [ 44] setlocal 1
+  [ 46] getlocal 1
+  [ 48] getprop 948 ............................. <pTileSets>
+  [ 51] getobjprop 28 ........................... <pTileSets.count>
+  [ 53] lteq
+  [ 54] jmpifz [ 99] ............................ repeat with i = 1 to pTileSets.count
+  [ 57] getprop 948 ............................. <pTileSets>
+  [ 60] getlocal 1 .............................. <i>
+  [ 62] pusharglist 2 ........................... <pTileSets, i>
+  [ 64] objcall 29 .............................. <pTileSets.getPropAt(i)>
+  [ 66] setlocal 2 .............................. nLayerSym = pTileSets.getPropAt(i)
+  [ 68] getparam 0 .............................. <me>
+  [ 70] getlocal 2 .............................. <nLayerSym>
+  [ 72] getlocal 0 .............................. <layerDefs>
+  [ 74] pusharglist 3 ........................... <me, nLayerSym, layerDefs>
+  [ 76] objcall 976 ............................. <me.findDefForLayer(nLayerSym, layerDefs)>
+  [ 79] setlocal 3 .............................. layerDef = me.findDefForLayer(nLayerSym, layerDefs)
+  [ 81] getparam 0 .............................. <me>
+  [ 83] getlocal 3 .............................. <layerDef>
+  [ 85] pusharglistnoret 2 ...................... <me, layerDef>
+  [ 87] objcall 974 ............................. me.initTileLayer(layerDef)
+  [ 90] pushint8 1
+  [ 92] getlocal 1
+  [ 94] add
+  [ 95] setlocal 1
+  [ 97] endrepeat [ 46]
+  [ 99] ret
+end
+
+on initTileLayer me, layerDef
+  [  0] getparam 1 .............................. <layerDef>
+  [  2] getobjprop 94 ........................... <layerDef.name>
+  [  4] setlocal 0 .............................. layerSym = layerDef.name
+  [  6] getglobal 101 ........................... <g>
+  [  8] getchainedprop 102 ...................... <g.objectMaster>
+  [ 10] pushsymb 1012 ........................... <#objTileLayer>
+  [ 13] pusharglist 2 ........................... <g.objectMaster, #objTileLayer>
+  [ 15] objcall 3 ............................... <g.objectMaster.requestObject(#objTileLayer)>
+  [ 17] setlocal 1 .............................. layerObj = g.objectMaster.requestObject(#objTileLayer)
+  [ 19] getlocal 1 .............................. <layerObj>
+  [ 21] pushsymb 1 .............................. <#init>
+  [ 23] pusharglist 2 ........................... <layerObj, #init>
+  [ 25] objcall 136 ............................. <layerObj.getParams(#init)>
+  [ 27] setlocal 2 .............................. params = layerObj.getParams(#init)
+  [ 29] getlocal 2 .............................. <params>
+  [ 31] getparam 0 .............................. <me>
+  [ 33] setobjprop 954 .......................... params.room = me
+  [ 36] getlocal 2 .............................. <params>
+  [ 38] getprop 948 ............................. <pTileSets>
+  [ 41] pusharglist 1 ........................... <pTileSets>
+  [ 43] objcall 48 .............................. <pTileSets.duplicate()>
+  [ 45] setobjprop 997 .......................... params.roomTileSets = pTileSets.duplicate()
+  [ 48] getlocal 2 .............................. <params>
+  [ 50] getlocal 0 .............................. <layerSym>
+  [ 52] setobjprop 379 .......................... params.type = layerSym
+  [ 55] getlocal 2 .............................. <params>
+  [ 57] getparam 1 .............................. <layerDef>
+  [ 59] getobjprop 254 .......................... <layerDef.map>
+  [ 61] setobjprop 254 .......................... params.map = layerDef.map
+  [ 63] getlocal 2 .............................. <params>
+  [ 65] getobjprop 254 .......................... <params.map>
+  [ 67] pushsymb 22 ............................. <#none>
+  [ 69] eq ...................................... <params.map = #none>
+  [ 70] jmpifz [ 83] ............................ if params.map = #none then
+  [ 73] getlocal 2 .............................. <params>
+  [ 75] getparam 1 .............................. <layerDef>
+  [ 77] getobjprop 601 .......................... <layerDef.mapSize>
+  [ 80] setobjprop 601 .......................... params.mapSize = layerDef.mapSize
+  [ 83] getlocal 1 .............................. <layerObj>
+  [ 85] getlocal 2 .............................. <params>
+  [ 87] pusharglistnoret 2 ...................... <layerObj, params>
+  [ 89] objcall 1 ............................... layerObj.init(params)
+  [ 91] getprop 1007 ............................ <pTileLayers>
+  [ 94] getlocal 0 .............................. <layerSym>
+  [ 96] getlocal 1 .............................. <layerObj>
+  [ 98] pusharglistnoret 3 ...................... <pTileLayers, layerSym, layerObj>
+  [100] objcall 37 .............................. pTileLayers[layerSym] = layerObj
+  [102] ret
+end
+
+on calcSelectAll me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 1006 ..................... <me.pMap>
+  [  5] pusharglist 1 ........................... <me.pMap>
+  [  7] objcall 1015 ............................ <me.pMap.getRoomSize()>
+  [ 10] setlocal 0 .............................. mapSize = me.pMap.getRoomSize()
+  [ 12] pushint8 1 .............................. <1>
+  [ 14] pushint8 1 .............................. <1>
+  [ 16] getlocal 0 .............................. <mapSize>
+  [ 18] getobjprop 1016 ......................... <mapSize.locH>
+  [ 21] getlocal 0 .............................. <mapSize>
+  [ 23] getobjprop 1017 ......................... <mapSize.locV>
+  [ 26] pusharglist 4 ........................... <1, 1, mapSize.locH, mapSize.locV>
+  [ 28] extcall 160 ............................. <rect(1, 1, mapSize.locH, mapSize.locV)>
+  [ 30] setlocal 1 .............................. theSel = rect(1, 1, mapSize.locH, mapSize.locV)
+  [ 32] getlocal 1 .............................. <theSel>
+  [ 34] pusharglistnoret 1 ...................... <theSel>
+  [ 36] extcall 17 .............................. return theSel
+  [ 38] ret
+end
+
+on findDefForLayer me, theSym, layerDefs
+  [  0] getparam 2 .............................. <layerDefs>
+  [  2] peek 0
+  [  4] pusharglist 1
+  [  6] extcall 28
+  [  8] pushint8 1
+  [ 10] peek 0
+  [ 12] peek 2
+  [ 14] lteq
+  [ 15] jmpifz [ 53] ............................ repeat with nLayerDef in layerDefs
+  [ 18] peek 2
+  [ 20] peek 1
+  [ 22] pusharglist 2
+  [ 24] extcall 38
+  [ 26] setlocal 0
+  [ 28] getlocal 0 .............................. <nLayerDef>
+  [ 30] getobjprop 94 ........................... <nLayerDef.name>
+  [ 32] setlocal 1 .............................. nSym = nLayerDef.name
+  [ 34] getlocal 1 .............................. <nSym>
+  [ 36] getparam 1 .............................. <theSym>
+  [ 38] eq ...................................... <nSym = theSym>
+  [ 39] jmpifz [ 48] ............................ if nSym = theSym then
+  [ 42] getlocal 0 .............................. <nLayerDef>
+  [ 44] pusharglistnoret 1 ...................... <nLayerDef>
+  [ 46] extcall 17 .............................. return nLayerDef
+  [ 48] pushint8 1
+  [ 50] add
+  [ 51] endrepeat [ 10]
+  [ 53] pop 3
+  [ 55] getparam 0 .............................. <me>
+  [ 57] getparam 1 .............................. <theSym>
+  [ 59] pusharglist 2 ........................... <me, theSym>
+  [ 61] objcall 977 ............................. <me.getBlankLayerDef(theSym)>
+  [ 64] pusharglistnoret 1 ...................... <me.getBlankLayerDef(theSym)>
+  [ 66] extcall 17 .............................. return me.getBlankLayerDef(theSym)
+  [ 68] ret
+end
+
+on getBlankLayerDef me, theSym
+  [  0] getglobal 101 ........................... <g>
+  [  2] getchainedprop 458 ...................... <g.structMaster>
+  [  5] pushsymb 1019 ........................... <#blankRoomLayer>
+  [  8] pusharglist 2 ........................... <g.structMaster, #blankRoomLayer>
+  [ 10] objcall 460 ............................. <g.structMaster.getStruct(#blankRoomLayer)>
+  [ 13] setlocal 0 .............................. layerDef = g.structMaster.getStruct(#blankRoomLayer)
+  [ 15] getlocal 0 .............................. <layerDef>
+  [ 17] getparam 1 .............................. <theSym>
+  [ 19] setobjprop 94 ........................... layerDef.name = theSym
+  [ 21] getlocal 0 .............................. <layerDef>
+  [ 23] getprop 1006 ............................ <pMap>
+  [ 26] pusharglist 1 ........................... <pMap>
+  [ 28] objcall 1015 ............................ <pMap.getRoomSize()>
+  [ 31] setobjprop 601 .......................... layerDef.mapSize = pMap.getRoomSize()
+  [ 34] getlocal 0 .............................. <layerDef>
+  [ 36] pusharglistnoret 1 ...................... <layerDef>
+  [ 38] extcall 17 .............................. return layerDef
+  [ 40] ret
+end
+
+on getBlendLevelForLayer me, theLayer
+  [  0] getprop 83 .............................. <pmode>
+  [  2] peek 0 .................................. case pmode of
+  [  4] pushsymb 273 ............................ <#activate>
+  [  7] eq
+  [  8] jmpifz [ 22] ............................ (case) #activate:
+  [ 11] pop 1
+  [ 13] pushint8 100 ............................ <100>
+  [ 15] pusharglistnoret 1 ...................... <100>
+  [ 17] extcall 17 .............................. return 100
+  [ 19] jmp [ 71]
+  [ 22] peek 0
+  [ 24] pushsymb 1020 ........................... <#edit>
+  [ 27] eq
+  [ 28] jmpifz [ 71] ............................ (case) #edit:
+  [ 31] getparam 0 .............................. <me>
+  [ 33] getprop 1002 ............................ <pCurrentEditLayer>
+  [ 36] pusharglist 2 ........................... <me, pCurrentEditLayer>
+  [ 38] objcall 982 ............................. <me.getLayerPos(pCurrentEditLayer)>
+  [ 41] setlocal 0 .............................. editLayerPos = me.getLayerPos(pCurrentEditLayer)
+  [ 43] getparam 0 .............................. <me>
+  [ 45] getparam 1 .............................. <theLayer>
+  [ 47] pusharglist 2 ........................... <me, theLayer>
+  [ 49] objcall 982 ............................. <me.getLayerPos(theLayer)>
+  [ 52] setlocal 1 .............................. layerPos = me.getLayerPos(theLayer)
+  [ 54] getlocal 0 .............................. <editLayerPos>
+  [ 56] getlocal 1 .............................. <layerPos>
+  [ 58] lt ...................................... <editLayerPos < layerPos>
+  [ 59] jmpifz [ 71] ............................ if editLayerPos < layerPos then
+  [ 62] pop 1
+  [ 64] getprop 1004 ............................ <pFrontLayerBlendLevel>
+  [ 67] pusharglistnoret 1 ...................... <pFrontLayerBlendLevel>
+  [ 69] extcall 17 .............................. return pFrontLayerBlendLevel
+  [ 71] pop 1 ................................... end case
+  [ 73] ret
+end
+
+on getGridSize me
+  [  0] getprop 948 ............................. <pTileSets>
+  [  3] pushint8 1 .............................. <1>
+  [  5] pusharglist 2 ........................... <pTileSets, 1>
+  [  7] objcall 38 .............................. <pTileSets[1]>
+  [  9] pusharglist 1 ........................... <pTileSets[1]>
+  [ 11] objcall 576 ............................. <pTileSets[1].getTileSize()>
+  [ 14] pusharglistnoret 1 ...................... <pTileSets[1].getTileSize()>
+  [ 16] extcall 17 .............................. return pTileSets[1].getTileSize()
+  [ 18] ret
+end
+
+on getGridRect me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 654 ............................. <me.getSpriteRect()>
+  [  7] pusharglistnoret 1 ...................... <me.getSpriteRect()>
+  [  9] extcall 17 .............................. return me.getSpriteRect()
+  [ 11] ret
+end
+
+on getImage me
+  [  0] getparam 0 .............................. <me>
+  [  2] getprop 1003 ............................ <pDefaultScale>
+  [  5] pusharglist 2 ........................... <me, pDefaultScale>
+  [  7] objcall 983 ............................. <me.getScaleImage(pDefaultScale)>
+  [ 10] pusharglistnoret 1 ...................... <me.getScaleImage(pDefaultScale)>
+  [ 12] extcall 17 .............................. return me.getScaleImage(pDefaultScale)
+  [ 14] ret
+end
+
+on getImageSize me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 510 ............................. <me.getImage()>
+  [  7] setlocal 0 .............................. testImage = me.getImage()
+  [  9] getlocal 0 .............................. <testImage>
+  [ 11] getobjprop 162 .......................... <testImage.width>
+  [ 13] getlocal 0 .............................. <testImage>
+  [ 15] getobjprop 310 .......................... <testImage.height>
+  [ 18] pusharglist 2 ........................... <testImage.width, testImage.height>
+  [ 20] extcall 215 ............................. <point(testImage.width, testImage.height)>
+  [ 22] setlocal 1 .............................. imageSize = point(testImage.width, testImage.height)
+  [ 24] getlocal 1 .............................. <imageSize>
+  [ 26] pusharglistnoret 1 ...................... <imageSize>
+  [ 28] extcall 17 .............................. return imageSize
+  [ 30] ret
+end
+
+on getImageFromLayerSelection me, theLayer, theScale, theSelection
+  [  0] pushsymb 22 ............................. <#none>
+  [  2] setlocal 0 .............................. theImage = #none
+  [  4] getprop 1007 ............................ <pTileLayers>
+  [  7] getparam 1 .............................. <theLayer>
+  [  9] pusharglist 2 ........................... <pTileLayers, theLayer>
+  [ 11] objcall 38 .............................. <pTileLayers[theLayer]>
+  [ 13] pushsymb 22 ............................. <#none>
+  [ 15] nteq .................................... <pTileLayers[theLayer] <> #none>
+  [ 16] jmpifz [ 39] ............................ if pTileLayers[theLayer] <> #none then
+  [ 19] getprop 1007 ............................ <pTileLayers>
+  [ 22] getparam 1 .............................. <theLayer>
+  [ 24] pusharglist 2 ........................... <pTileLayers, theLayer>
+  [ 26] objcall 38 .............................. <pTileLayers[theLayer]>
+  [ 28] getparam 2 .............................. <theScale>
+  [ 30] getparam 3 .............................. <theSelection>
+  [ 32] pusharglist 3 ........................... <pTileLayers[theLayer], theScale, theSelection>
+  [ 34] objcall 1025 ............................ <pTileLayers[theLayer].getScaleImageSelection(theScale, theSelection)>
+  [ 37] setlocal 0 .............................. theImage = pTileLayers[theLayer].getScaleImageSelection(theScale, theSelection)
+  [ 39] getlocal 0 .............................. <theImage>
+  [ 41] pusharglistnoret 1 ...................... <theImage>
+  [ 43] extcall 17 .............................. return theImage
+  [ 45] ret
+end
+
+on getImageFromLayerSelectionTileSet me, theLayer, theScale, theSelection, tileSet
+  [  0] pushsymb 22 ............................. <#none>
+  [  2] setlocal 0 .............................. theImage = #none
+  [  4] getprop 1007 ............................ <pTileLayers>
+  [  7] getparam 1 .............................. <theLayer>
+  [  9] pusharglist 2 ........................... <pTileLayers, theLayer>
+  [ 11] objcall 38 .............................. <pTileLayers[theLayer]>
+  [ 13] pushsymb 22 ............................. <#none>
+  [ 15] nteq .................................... <pTileLayers[theLayer] <> #none>
+  [ 16] jmpifz [ 83] ............................ if pTileLayers[theLayer] <> #none then
+  [ 19] getprop 1007 ............................ <pTileLayers>
+  [ 22] getparam 1 .............................. <theLayer>
+  [ 24] pusharglist 2 ........................... <pTileLayers, theLayer>
+  [ 26] objcall 38 .............................. <pTileLayers[theLayer]>
+  [ 28] getobjprop 548 .......................... <pTileLayers[theLayer].pTileSet>
+  [ 31] setlocal 1 .............................. oldSet = pTileLayers[theLayer].pTileSet
+  [ 33] getprop 1007 ............................ <pTileLayers>
+  [ 36] getparam 1 .............................. <theLayer>
+  [ 38] pusharglist 2 ........................... <pTileLayers, theLayer>
+  [ 40] objcall 38 .............................. <pTileLayers[theLayer]>
+  [ 42] getparam 4 .............................. <tileSet>
+  [ 44] setobjprop 548 .......................... pTileLayers[theLayer].pTileSet = tileSet
+  [ 47] getprop 1007 ............................ <pTileLayers>
+  [ 50] getparam 1 .............................. <theLayer>
+  [ 52] pusharglist 2 ........................... <pTileLayers, theLayer>
+  [ 54] objcall 38 .............................. <pTileLayers[theLayer]>
+  [ 56] getparam 2 .............................. <theScale>
+  [ 58] getparam 3 .............................. <theSelection>
+  [ 60] getparam 4 .............................. <tileSet>
+  [ 62] pusharglist 4 ........................... <pTileLayers[theLayer], theScale, theSelection, tileSet>
+  [ 64] objcall 1025 ............................ <pTileLayers[theLayer].getScaleImageSelection(theScale, theSelection, tileSet)>
+  [ 67] setlocal 0 .............................. theImage = pTileLayers[theLayer].getScaleImageSelection(theScale, theSelection, tileSet)
+  [ 69] getprop 1007 ............................ <pTileLayers>
+  [ 72] getparam 1 .............................. <theLayer>
+  [ 74] pusharglist 2 ........................... <pTileLayers, theLayer>
+  [ 76] objcall 38 .............................. <pTileLayers[theLayer]>
+  [ 78] getlocal 1 .............................. <oldSet>
+  [ 80] setobjprop 548 .......................... pTileLayers[theLayer].pTileSet = oldSet
+  [ 83] getlocal 0 .............................. <theImage>
+  [ 85] pusharglistnoret 1 ...................... <theImage>
+  [ 87] extcall 17 .............................. return theImage
+  [ 89] ret
+end
+
+on getImageFromLayer me, theLayer, theScale
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 975 ............................. <me.calcSelectAll()>
+  [  7] setlocal 0 .............................. theSelection = me.calcSelectAll()
+  [  9] getparam 0 .............................. <me>
+  [ 11] getparam 1 .............................. <theLayer>
+  [ 13] getparam 2 .............................. <theScale>
+  [ 15] getlocal 0 .............................. <theSelection>
+  [ 17] pusharglist 4 ........................... <me, theLayer, theScale, theSelection>
+  [ 19] objcall 980 ............................. <me.getImageFromLayerSelection(theLayer, theScale, theSelection)>
+  [ 22] setlocal 1 .............................. theImage = me.getImageFromLayerSelection(theLayer, theScale, theSelection)
+  [ 24] getlocal 1 .............................. <theImage>
+  [ 26] pusharglistnoret 1 ...................... <theImage>
+  [ 28] extcall 17 .............................. return theImage
+  [ 30] ret
+end
+
+on getInitialGridSelection me
+  [  0] pushsymb 22 ............................. <#none>
+  [  2] pusharglistnoret 1 ...................... <#none>
+  [  4] extcall 17 .............................. return #none
+  [  6] ret
+end
+
+on getLayerPos me, theLayer
+  [  0] getparam 1 .............................. <theLayer>
+  [  2] pusharglist 1 ........................... <theLayer>
+  [  4] objcall 1027 ............................ <theLayer.getType()>
+  [  7] setlocal 0 .............................. layerSym = theLayer.getType()
+  [  9] pushint8 1 .............................. <1>
+  [ 11] setlocal 1 .............................. i = 1
+  [ 13] pushint8 1 .............................. <1>
+  [ 15] setlocal 1
+  [ 17] getlocal 1
+  [ 19] getprop 1007 ............................ <pTileLayers>
+  [ 22] getobjprop 28 ........................... <pTileLayers.count>
+  [ 24] lteq
+  [ 25] jmpifz [ 69] ............................ repeat with i = 1 to pTileLayers.count
+  [ 28] getprop 1007 ............................ <pTileLayers>
+  [ 31] getlocal 1 .............................. <i>
+  [ 33] pusharglist 2 ........................... <pTileLayers, i>
+  [ 35] objcall 29 .............................. <pTileLayers.getPropAt(i)>
+  [ 37] setlocal 2 .............................. nSym = pTileLayers.getPropAt(i)
+  [ 39] getlocal 2 .............................. <nSym>
+  [ 41] getlocal 0 .............................. <layerSym>
+  [ 43] eq ...................................... <nSym = layerSym>
+  [ 44] jmpifz [ 53] ............................ if nSym = layerSym then
+  [ 47] getlocal 1 .............................. <i>
+  [ 49] pusharglistnoret 1 ...................... <i>
+  [ 51] extcall 17 .............................. return i
+  [ 53] getlocal 1 .............................. <i>
+  [ 55] pushint8 1 .............................. <1>
+  [ 57] add ..................................... <i + 1>
+  [ 58] setlocal 1 .............................. i = i + 1
+  [ 60] pushint8 1
+  [ 62] getlocal 1
+  [ 64] add
+  [ 65] setlocal 1
+  [ 67] endrepeat [ 17]
+  [ 69] pushsymb 22 ............................. <#none>
+  [ 71] pusharglistnoret 1 ...................... <#none>
+  [ 73] extcall 17 .............................. return #none
+  [ 75] ret
+end
+
+on getRoomSize me
+  [  0] getprop 1006 ............................ <pMap>
+  [  3] getchainedprop 1189 ..................... <pMap.pDefinitionRoot>
+  [  6] getchainedprop 254 ...................... <pMap.pDefinitionRoot.map>
+  [  8] getobjprop 1202 ......................... <pMap.pDefinitionRoot.map.roomSize>
+  [ 11] pusharglistnoret 1 ...................... <pMap.pDefinitionRoot.map.roomSize>
+  [ 13] extcall 17 .............................. return pMap.pDefinitionRoot.map.roomSize
+  [ 15] ret
+end
+
+on getScaleImage me, theScale
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 975 ............................. <me.calcSelectAll()>
+  [  7] setlocal 0 .............................. theSel = me.calcSelectAll()
+  [  9] getparam 0 .............................. <me>
+  [ 11] getparam 1 .............................. <theScale>
+  [ 13] getlocal 0 .............................. <theSel>
+  [ 15] pusharglist 3 ........................... <me, theScale, theSel>
+  [ 17] objcall 984 ............................. <me.getScaleImageFromSelection(theScale, theSel)>
+  [ 20] setlocal 1 .............................. backgroundImage = me.getScaleImageFromSelection(theScale, theSel)
+  [ 22] getparam 1 .............................. <theScale>
+  [ 24] pushint8 1 .............................. <1>
+  [ 26] eq ...................................... <theScale = 1>
+  [ 27] jmpifz [ 35] ............................ if theScale = 1 then
+  [ 30] getlocal 1 .............................. <backgroundImage>
+  [ 32] setprop 1001 ............................ pCachedImage = backgroundImage
+  [ 35] getlocal 1 .............................. <backgroundImage>
+  [ 37] pusharglistnoret 1 ...................... <backgroundImage>
+  [ 39] extcall 17 .............................. return backgroundImage
+  [ 41] ret
+end
+
+on getScaleImageFromSelection me, theScale, theSelection
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 993 ............................ <#backgroundPassive>
+  [  5] getparam 1 .............................. <theScale>
+  [  7] getparam 2 .............................. <theSelection>
+  [  9] pusharglist 4 ........................... <me, #backgroundPassive, theScale, theSelection>
+  [ 11] objcall 980 ............................. <me.getImageFromLayerSelection(#backgroundPassive, theScale, theSelection)>
+  [ 14] setlocal 0 .............................. backgroundImage = me.getImageFromLayerSelection(#backgroundPassive, theScale, theSelection)
+  [ 16] getparam 0 .............................. <me>
+  [ 18] pushsymb 1029 ........................... <#backgroundActive>
+  [ 21] getparam 1 .............................. <theScale>
+  [ 23] getparam 2 .............................. <theSelection>
+  [ 25] pusharglist 4 ........................... <me, #backgroundActive, theScale, theSelection>
+  [ 27] objcall 980 ............................. <me.getImageFromLayerSelection(#backgroundActive, theScale, theSelection)>
+  [ 30] setlocal 1 .............................. backgroundSolid = me.getImageFromLayerSelection(#backgroundActive, theScale, theSelection)
+  [ 32] getparam 0 .............................. <me>
+  [ 34] pushsymb 1030 ........................... <#objects>
+  [ 37] getparam 1 .............................. <theScale>
+  [ 39] getparam 2 .............................. <theSelection>
+  [ 41] pusharglist 4 ........................... <me, #objects, theScale, theSelection>
+  [ 43] objcall 980 ............................. <me.getImageFromLayerSelection(#objects, theScale, theSelection)>
+  [ 46] setlocal 2 .............................. objects = me.getImageFromLayerSelection(#objects, theScale, theSelection)
+  [ 48] pushsymb 1031 ........................... <#useFastQuads>
+  [ 51] pushint8 1 .............................. <1>
+  [ 53] pushsymb 307 ............................ <#ink>
+  [ 56] pushint8 36 ............................. <36>
+  [ 58] pusharglist 4 ........................... <[#useFastQuads: 1, #ink: 36]>
+  [ 60] pushproplist ............................ <[#useFastQuads: 1, #ink: 36]>
+  [ 61] setlocal 3 .............................. copyPixelsParams = [#useFastQuads: 1, #ink: 36]
+  [ 63] getprop 1002 ............................ <pCurrentEditLayer>
+  [ 66] pusharglist 1 ........................... <pCurrentEditLayer>
+  [ 68] objcall 1027 ............................ <pCurrentEditLayer.getType()>
+  [ 71] setlocal 4 .............................. editLayer = pCurrentEditLayer.getType()
+  [ 73] getlocal 4 .............................. <editLayer>
+  [ 75] pushsymb 993 ............................ <#backgroundPassive>
+  [ 78] eq ...................................... <editLayer = #backgroundPassive>
+  [ 79] jmpifz [ 94] ............................ if editLayer = #backgroundPassive then
+  [ 82] getlocal 3 .............................. <copyPixelsParams>
+  [ 84] pushsymb 1032 ........................... <#blendLevel>
+  [ 87] getprop 1004 ............................ <pFrontLayerBlendLevel>
+  [ 90] pusharglistnoret 3 ...................... <copyPixelsParams, #blendLevel, pFrontLayerBlendLevel>
+  [ 92] objcall 37 .............................. copyPixelsParams[#blendLevel] = pFrontLayerBlendLevel
+  [ 94] getlocal 1 .............................. <backgroundSolid>
+  [ 96] pushsymb 22 ............................. <#none>
+  [ 98] nteq .................................... <backgroundSolid <> #none>
+  [ 99] jmpifz [121] ............................ if backgroundSolid <> #none then
+  [102] getlocal 0 .............................. <backgroundImage>
+  [104] getlocal 1 .............................. <backgroundSolid>
+  [106] getlocal 0 .............................. <backgroundImage>
+  [108] getobjprop 160 .......................... <backgroundImage.rect>
+  [110] getlocal 1 .............................. <backgroundSolid>
+  [112] getobjprop 160 .......................... <backgroundSolid.rect>
+  [114] getlocal 3 .............................. <copyPixelsParams>
+  [116] pusharglistnoret 5 ...................... <backgroundImage, backgroundSolid, backgroundImage.rect, backgroundSolid.rect, copyPixelsParams>
+  [118] objcall 1033 ............................ backgroundImage.copyPixels(backgroundSolid, backgroundImage.rect, backgroundSolid.rect, copyPixelsParams)
+  [121] getlocal 4 .............................. <editLayer>
+  [123] pushsymb 1029 ........................... <#backgroundActive>
+  [126] eq ...................................... <editLayer = #backgroundActive>
+  [127] jmpifz [142] ............................ if editLayer = #backgroundActive then
+  [130] getlocal 3 .............................. <copyPixelsParams>
+  [132] pushsymb 1032 ........................... <#blendLevel>
+  [135] getprop 1004 ............................ <pFrontLayerBlendLevel>
+  [138] pusharglistnoret 3 ...................... <copyPixelsParams, #blendLevel, pFrontLayerBlendLevel>
+  [140] objcall 37 .............................. copyPixelsParams[#blendLevel] = pFrontLayerBlendLevel
+  [142] getlocal 2 .............................. <objects>
+  [144] pushsymb 22 ............................. <#none>
+  [146] nteq .................................... <objects <> #none>
+  [147] jmpifz [169] ............................ if objects <> #none then
+  [150] getlocal 0 .............................. <backgroundImage>
+  [152] getlocal 2 .............................. <objects>
+  [154] getlocal 0 .............................. <backgroundImage>
+  [156] getobjprop 160 .......................... <backgroundImage.rect>
+  [158] getlocal 2 .............................. <objects>
+  [160] getobjprop 160 .......................... <objects.rect>
+  [162] getlocal 3 .............................. <copyPixelsParams>
+  [164] pusharglistnoret 5 ...................... <backgroundImage, objects, backgroundImage.rect, objects.rect, copyPixelsParams>
+  [166] objcall 1033 ............................ backgroundImage.copyPixels(objects, backgroundImage.rect, objects.rect, copyPixelsParams)
+  [169] getlocal 0 .............................. <backgroundImage>
+  [171] pusharglistnoret 1 ...................... <backgroundImage>
+  [173] extcall 17 .............................. return backgroundImage
+  [175] ret
+end
+
+on getScaleImageFromSelectionTileset me, theScale, theSelection, newTileSet
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 993 ............................ <#backgroundPassive>
+  [  5] getparam 1 .............................. <theScale>
+  [  7] getparam 2 .............................. <theSelection>
+  [  9] pusharglist 4 ........................... <me, #backgroundPassive, theScale, theSelection>
+  [ 11] objcall 980 ............................. <me.getImageFromLayerSelection(#backgroundPassive, theScale, theSelection)>
+  [ 14] setlocal 0 .............................. backgroundImage = me.getImageFromLayerSelection(#backgroundPassive, theScale, theSelection)
+  [ 16] getparam 0 .............................. <me>
+  [ 18] pushsymb 1029 ........................... <#backgroundActive>
+  [ 21] getparam 1 .............................. <theScale>
+  [ 23] getparam 2 .............................. <theSelection>
+  [ 25] pusharglist 4 ........................... <me, #backgroundActive, theScale, theSelection>
+  [ 27] objcall 980 ............................. <me.getImageFromLayerSelection(#backgroundActive, theScale, theSelection)>
+  [ 30] setlocal 1 .............................. backgroundSolid = me.getImageFromLayerSelection(#backgroundActive, theScale, theSelection)
+  [ 32] getparam 0 .............................. <me>
+  [ 34] pushsymb 1030 ........................... <#objects>
+  [ 37] getparam 1 .............................. <theScale>
+  [ 39] getparam 2 .............................. <theSelection>
+  [ 41] pusharglist 4 ........................... <me, #objects, theScale, theSelection>
+  [ 43] objcall 980 ............................. <me.getImageFromLayerSelection(#objects, theScale, theSelection)>
+  [ 46] setlocal 2 .............................. objects = me.getImageFromLayerSelection(#objects, theScale, theSelection)
+  [ 48] getparam 3 .............................. <newTileSet>
+  [ 50] pushsymb 537 ............................ <#pDefinition>
+  [ 53] pushsymb 1038 ........................... <#currentEditLayer>
+  [ 56] pusharglist 3 ........................... <newTileSet, #pDefinition, #currentEditLayer>
+  [ 58] objcall 209 ............................. <newTileSet.pDefinition[#currentEditLayer]>
+  [ 60] peek 0 .................................. case newTileSet.pDefinition[#currentEditLayer] of
+  [ 62] pushsymb 993 ............................ <#backgroundPassive>
+  [ 65] eq
+  [ 66] jmpifz [ 90] ............................ (case) #backgroundPassive:
+  [ 69] getparam 0 .............................. <me>
+  [ 71] pushsymb 993 ............................ <#backgroundPassive>
+  [ 74] getparam 1 .............................. <theScale>
+  [ 76] getparam 2 .............................. <theSelection>
+  [ 78] getparam 3 .............................. <newTileSet>
+  [ 80] pusharglist 5 ........................... <me, #backgroundPassive, theScale, theSelection, newTileSet>
+  [ 82] objcall 1909 ............................ <me.getImageFromLayerSelectionTileSet(#backgroundPassive, theScale, theSelection, newTileSet)>
+  [ 85] setlocal 0 .............................. backgroundImage = me.getImageFromLayerSelectionTileSet(#backgroundPassive, theScale, theSelection, newTileSet)
+  [ 87] jmp [147]
+  [ 90] peek 0
+  [ 92] pushsymb 1029 ........................... <#backgroundActive>
+  [ 95] eq
+  [ 96] jmpifz [120] ............................ (case) #backgroundActive:
+  [ 99] getparam 0 .............................. <me>
+  [101] pushsymb 1029 ........................... <#backgroundActive>
+  [104] getparam 1 .............................. <theScale>
+  [106] getparam 2 .............................. <theSelection>
+  [108] getparam 3 .............................. <newTileSet>
+  [110] pusharglist 5 ........................... <me, #backgroundActive, theScale, theSelection, newTileSet>
+  [112] objcall 1909 ............................ <me.getImageFromLayerSelectionTileSet(#backgroundActive, theScale, theSelection, newTileSet)>
+  [115] setlocal 1 .............................. backgroundSolid = me.getImageFromLayerSelectionTileSet(#backgroundActive, theScale, theSelection, newTileSet)
+  [117] jmp [147]
+  [120] peek 0
+  [122] pushsymb 1030 ........................... <#objects>
+  [125] eq
+  [126] jmpifz [147] ............................ (case) #objects:
+  [129] getparam 0 .............................. <me>
+  [131] pushsymb 1030 ........................... <#objects>
+  [134] getparam 1 .............................. <theScale>
+  [136] getparam 2 .............................. <theSelection>
+  [138] getparam 3 .............................. <newTileSet>
+  [140] pusharglist 5 ........................... <me, #objects, theScale, theSelection, newTileSet>
+  [142] objcall 1909 ............................ <me.getImageFromLayerSelectionTileSet(#objects, theScale, theSelection, newTileSet)>
+  [145] setlocal 2 .............................. objects = me.getImageFromLayerSelectionTileSet(#objects, theScale, theSelection, newTileSet)
+  [147] pop 1 ................................... end case
+  [149] pushsymb 1031 ........................... <#useFastQuads>
+  [152] pushint8 1 .............................. <1>
+  [154] pushsymb 307 ............................ <#ink>
+  [157] pushint8 36 ............................. <36>
+  [159] pusharglist 4 ........................... <[#useFastQuads: 1, #ink: 36]>
+  [161] pushproplist ............................ <[#useFastQuads: 1, #ink: 36]>
+  [162] setlocal 3 .............................. copyPixelsParams = [#useFastQuads: 1, #ink: 36]
+  [164] getprop 1002 ............................ <pCurrentEditLayer>
+  [167] pusharglist 1 ........................... <pCurrentEditLayer>
+  [169] objcall 1027 ............................ <pCurrentEditLayer.getType()>
+  [172] setlocal 4 .............................. editLayer = pCurrentEditLayer.getType()
+  [174] getlocal 4 .............................. <editLayer>
+  [176] pushsymb 993 ............................ <#backgroundPassive>
+  [179] eq ...................................... <editLayer = #backgroundPassive>
+  [180] jmpifz [195] ............................ if editLayer = #backgroundPassive then
+  [183] getlocal 3 .............................. <copyPixelsParams>
+  [185] pushsymb 1032 ........................... <#blendLevel>
+  [188] getprop 1004 ............................ <pFrontLayerBlendLevel>
+  [191] pusharglistnoret 3 ...................... <copyPixelsParams, #blendLevel, pFrontLayerBlendLevel>
+  [193] objcall 37 .............................. copyPixelsParams[#blendLevel] = pFrontLayerBlendLevel
+  [195] getlocal 1 .............................. <backgroundSolid>
+  [197] pushsymb 22 ............................. <#none>
+  [199] nteq .................................... <backgroundSolid <> #none>
+  [200] jmpifz [222] ............................ if backgroundSolid <> #none then
+  [203] getlocal 0 .............................. <backgroundImage>
+  [205] getlocal 1 .............................. <backgroundSolid>
+  [207] getlocal 0 .............................. <backgroundImage>
+  [209] getobjprop 160 .......................... <backgroundImage.rect>
+  [211] getlocal 1 .............................. <backgroundSolid>
+  [213] getobjprop 160 .......................... <backgroundSolid.rect>
+  [215] getlocal 3 .............................. <copyPixelsParams>
+  [217] pusharglistnoret 5 ...................... <backgroundImage, backgroundSolid, backgroundImage.rect, backgroundSolid.rect, copyPixelsParams>
+  [219] objcall 1033 ............................ backgroundImage.copyPixels(backgroundSolid, backgroundImage.rect, backgroundSolid.rect, copyPixelsParams)
+  [222] getlocal 4 .............................. <editLayer>
+  [224] pushsymb 1029 ........................... <#backgroundActive>
+  [227] eq ...................................... <editLayer = #backgroundActive>
+  [228] jmpifz [243] ............................ if editLayer = #backgroundActive then
+  [231] getlocal 3 .............................. <copyPixelsParams>
+  [233] pushsymb 1032 ........................... <#blendLevel>
+  [236] getprop 1004 ............................ <pFrontLayerBlendLevel>
+  [239] pusharglistnoret 3 ...................... <copyPixelsParams, #blendLevel, pFrontLayerBlendLevel>
+  [241] objcall 37 .............................. copyPixelsParams[#blendLevel] = pFrontLayerBlendLevel
+  [243] getlocal 2 .............................. <objects>
+  [245] pushsymb 22 ............................. <#none>
+  [247] nteq .................................... <objects <> #none>
+  [248] jmpifz [270] ............................ if objects <> #none then
+  [251] getlocal 0 .............................. <backgroundImage>
+  [253] getlocal 2 .............................. <objects>
+  [255] getlocal 0 .............................. <backgroundImage>
+  [257] getobjprop 160 .......................... <backgroundImage.rect>
+  [259] getlocal 2 .............................. <objects>
+  [261] getobjprop 160 .......................... <objects.rect>
+  [263] getlocal 3 .............................. <copyPixelsParams>
+  [265] pusharglistnoret 5 ...................... <backgroundImage, objects, backgroundImage.rect, objects.rect, copyPixelsParams>
+  [267] objcall 1033 ............................ backgroundImage.copyPixels(objects, backgroundImage.rect, objects.rect, copyPixelsParams)
+  [270] getlocal 0 .............................. <backgroundImage>
+  [272] pusharglistnoret 1 ...................... <backgroundImage>
+  [274] extcall 17 .............................. return backgroundImage
+  [276] ret
+end
+
+on getTilesInSelection me, theSel
+  [  0] getprop 1002 ............................ <pCurrentEditLayer>
+  [  3] getparam 1 .............................. <theSel>
+  [  5] pusharglist 2 ........................... <pCurrentEditLayer, theSel>
+  [  7] objcall 969 ............................. <pCurrentEditLayer.getTilesInSelection(theSel)>
+  [ 10] pusharglistnoret 1 ...................... <pCurrentEditLayer.getTilesInSelection(theSel)>
+  [ 12] extcall 17 .............................. return pCurrentEditLayer.getTilesInSelection(theSel)
+  [ 14] ret
+end
+
+on offscreen me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 165 ............................. me.freeSprite()
+  [  6] getparam 0 .............................. <me>
+  [  8] pusharglistnoret 1 ...................... <me>
+  [ 10] objcall 560 ............................. me.freeMember()
+  [ 13] ret
+end
+
+on onscreen me, theloc
+  [  0] getparam 1 .............................. <theloc>
+  [  2] setprop 542 ............................. pLocation = theloc
+  [  5] getprop 1006 ............................ <pMap>
+  [  8] pusharglist 1 ........................... <pMap>
+  [ 10] objcall 1037 ............................ <pMap.getCurrentEditLayer()>
+  [ 13] setlocal 0 .............................. currentEditLayer = pMap.getCurrentEditLayer()
+  [ 15] getparam 0 .............................. <me>
+  [ 17] getlocal 0 .............................. <currentEditLayer>
+  [ 19] pusharglistnoret 2 ...................... <me, currentEditLayer>
+  [ 21] objcall 989 ............................. me.setCurrentEditLayer(currentEditLayer)
+  [ 24] getparam 0 .............................. <me>
+  [ 26] pusharglistnoret 1 ...................... <me>
+  [ 28] objcall 593 ............................. me.requestMember()
+  [ 31] getparam 0 .............................. <me>
+  [ 33] pusharglistnoret 1 ...................... <me>
+  [ 35] objcall 156 ............................. me.requestSprite()
+  [ 37] getparam 0 .............................. <me>
+  [ 39] pusharglistnoret 1 ...................... <me>
+  [ 41] objcall 985 ............................. me.refreshImage()
+  [ 44] getparam 0 .............................. <me>
+  [ 46] pusharglistnoret 1 ...................... <me>
+  [ 48] objcall 660 ............................. me.setMember()
+  [ 51] getparam 0 .............................. <me>
+  [ 53] getparam 1 .............................. <theloc>
+  [ 55] pusharglistnoret 2 ...................... <me, theloc>
+  [ 57] objcall 662 ............................. me.setSpriteLoc(theloc)
+  [ 60] ret
+end
+
+on refreshImage me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 510 ............................. <me.getImage()>
+  [  7] setlocal 0 .............................. myImage = me.getImage()
+  [  9] getparam 0 .............................. <me>
+  [ 11] getlocal 0 .............................. <myImage>
+  [ 13] pusharglistnoret 2 ...................... <me, myImage>
+  [ 15] objcall 658 ............................. me.setImage(myImage)
+  [ 18] getparam 0 .............................. <me>
+  [ 20] pushsymb 635 ............................ <#topLeft>
+  [ 23] pusharglistnoret 2 ...................... <me, #topLeft>
+  [ 25] objcall 659 ............................. me.setRegpoint(#topLeft)
+  [ 28] ret
+end
+
+on saveLayers me
+  [  0] pusharglist 0 ........................... <[]>
+  [  2] pushlist ................................ <[]>
+  [  3] setlocal 0 .............................. layerProperties = []
+  [  5] getprop 1007 ............................ <pTileLayers>
+  [  8] peek 0
+  [ 10] pusharglist 1
+  [ 12] extcall 28
+  [ 14] pushint8 1
+  [ 16] peek 0
+  [ 18] peek 2
+  [ 20] lteq
+  [ 21] jmpifz [ 60] ............................ repeat with layer in pTileLayers
+  [ 24] peek 2
+  [ 26] peek 1
+  [ 28] pusharglist 2
+  [ 30] extcall 38
+  [ 32] setlocal 1
+  [ 34] getlocal 1 .............................. <layer>
+  [ 36] pushsymb 22 ............................. <#none>
+  [ 38] nteq .................................... <layer <> #none>
+  [ 39] jmpifz [ 55] ............................ if layer <> #none then
+  [ 42] getlocal 0 .............................. <layerProperties>
+  [ 44] getlocal 1 .............................. <layer>
+  [ 46] pusharglist 1 ........................... <layer>
+  [ 48] objcall 1039 ............................ <layer.saveLayer()>
+  [ 51] pusharglistnoret 2 ...................... <layerProperties, layer.saveLayer()>
+  [ 53] objcall 111 ............................. layerProperties.append(layer.saveLayer())
+  [ 55] pushint8 1
+  [ 57] add
+  [ 58] endrepeat [ 16]
+  [ 60] pop 3
+  [ 62] getlocal 0 .............................. <layerProperties>
+  [ 64] pusharglistnoret 1 ...................... <layerProperties>
+  [ 66] extcall 17 .............................. return layerProperties
+  [ 68] ret
+end
+
+on saveRoom me
+  [  0] pusharglist 0 ........................... <[:]>
+  [  2] pushproplist ............................ <[:]>
+  [  3] setlocal 0 .............................. myProperties = [:]
+  [  5] getlocal 0 .............................. <myProperties>
+  [  7] setlocal 1 .............................. p = myProperties
+  [  9] getlocal 1 .............................. <p>
+  [ 11] pushsymb 1000 ........................... <#num>
+  [ 14] getprop 1005 ............................ <pnum>
+  [ 17] pusharglistnoret 3 ...................... <p, #num, pnum>
+  [ 19] objcall 37 .............................. p[#num] = pnum
+  [ 21] getlocal 1 .............................. <p>
+  [ 23] pushsymb 999 ............................ <#layers>
+  [ 26] getparam 0 .............................. <me>
+  [ 28] pusharglist 1 ........................... <me>
+  [ 30] objcall 986 ............................. <me.saveLayers()>
+  [ 33] pusharglistnoret 3 ...................... <p, #layers, me.saveLayers()>
+  [ 35] objcall 37 .............................. p[#layers] = me.saveLayers()
+  [ 37] getlocal 0 .............................. <myProperties>
+  [ 39] pusharglistnoret 1 ...................... <myProperties>
+  [ 41] extcall 17 .............................. return myProperties
+  [ 43] ret
+end
+
+on setTile me, tileLoc, newTileNo
+  [  0] getprop 1002 ............................ <pCurrentEditLayer>
+  [  3] getparam 1 .............................. <tileLoc>
+  [  5] getparam 2 .............................. <newTileNo>
+  [  7] pusharglistnoret 3 ...................... <pCurrentEditLayer, tileLoc, newTileNo>
+  [  9] objcall 628 ............................. pCurrentEditLayer.poke(tileLoc, newTileNo)
+  [ 12] ret
+end
+
+on setTilesBrush me, theSel, theBrush
+  [  0] getparam 2 .............................. <theBrush>
+  [  2] pushint8 1 .............................. <1>
+  [  4] pusharglist 2 ........................... <theBrush, 1>
+  [  6] objcall 38 .............................. <theBrush[1]>
+  [  8] getobjprop 28 ........................... <theBrush[1].count>
+  [ 10] setlocal 0 .............................. brushWidth = theBrush[1].count
+  [ 12] getparam 2 .............................. <theBrush>
+  [ 14] getobjprop 28 ........................... <theBrush.count>
+  [ 16] setlocal 1 .............................. brushHeight = theBrush.count
+  [ 18] getparam 1 .............................. <theSel>
+  [ 20] setlocal 2 .............................. startPoint = theSel
+  [ 22] pushint8 1 .............................. <1>
+  [ 24] setlocal 3
+  [ 26] getlocal 3
+  [ 28] getlocal 1 .............................. <brushHeight>
+  [ 30] lteq
+  [ 31] jmpifz [113] ............................ repeat with y = 1 to brushHeight
+  [ 34] pushint8 1 .............................. <1>
+  [ 36] setlocal 4
+  [ 38] getlocal 4
+  [ 40] getlocal 0 .............................. <brushWidth>
+  [ 42] lteq
+  [ 43] jmpifz [104] ............................ repeat with x = 1 to brushWidth
+  [ 46] getparam 2 .............................. <theBrush>
+  [ 48] getlocal 3 .............................. <y>
+  [ 50] pusharglist 2 ........................... <theBrush, y>
+  [ 52] objcall 38 .............................. <theBrush[y]>
+  [ 54] getlocal 4 .............................. <x>
+  [ 56] pusharglist 2 ........................... <theBrush[y], x>
+  [ 58] objcall 38 .............................. <theBrush[y][x]>
+  [ 60] setlocal 5 .............................. nTile = theBrush[y][x]
+  [ 62] getlocal 2 .............................. <startPoint>
+  [ 64] getlocal 4 .............................. <x>
+  [ 66] getlocal 3 .............................. <y>
+  [ 68] pusharglist 2 ........................... <x, y>
+  [ 70] extcall 215 ............................. <point(x, y)>
+  [ 72] add ..................................... <startPoint + point(x, y)>
+  [ 73] pushint8 1 .............................. <1>
+  [ 75] pushint8 1 .............................. <1>
+  [ 77] pusharglist 2 ........................... <1, 1>
+  [ 79] extcall 215 ............................. <point(1, 1)>
+  [ 81] sub ..................................... <startPoint + point(x, y) - point(1, 1)>
+  [ 82] setlocal 6 .............................. nTilePos = startPoint + point(x, y) - point(1, 1)
+  [ 84] getparam 0 .............................. <me>
+  [ 86] getlocal 6 .............................. <nTilePos>
+  [ 88] getlocal 5 .............................. <nTile>
+  [ 90] pusharglistnoret 3 ...................... <me, nTilePos, nTile>
+  [ 92] objcall 988 ............................. me.setTile(nTilePos, nTile)
+  [ 95] pushint8 1
+  [ 97] getlocal 4
+  [ 99] add
+  [100] setlocal 4
+  [102] endrepeat [ 38]
+  [104] pushint8 1
+  [106] getlocal 3
+  [108] add
+  [109] setlocal 3
+  [111] endrepeat [ 26]
+  [113] ret
+end
+
+on setCurrentEditLayer me, layerSymbol
+  [  0] getprop 1007 ............................ <pTileLayers>
+  [  3] getparam 1 .............................. <layerSymbol>
+  [  5] pusharglist 2 ........................... <pTileLayers, layerSymbol>
+  [  7] objcall 38 .............................. <pTileLayers[layerSymbol]>
+  [  9] setprop 1002 ............................ pCurrentEditLayer = pTileLayers[layerSymbol]
+  [ 12] ret
+end
+
+on show me, theMode, theloc
+  [  0] getparam 1 .............................. <theMode>
+  [  2] setprop 83 .............................. pmode = theMode
+  [  4] getparam 0 .............................. <me>
+  [  6] getparam 2 .............................. <theloc>
+  [  8] pusharglistnoret 2 ...................... <me, theloc>
+  [ 10] objcall 223 ............................. me.onscreen(theloc)
+  [ 12] getprop 83 .............................. <pmode>
+  [ 14] peek 0 .................................. case pmode of
+  [ 16] pushsymb 273 ............................ <#activate>
+  [ 19] eq
+  [ 20] jmpifz [ 30] ............................ (case) #activate:
+  [ 23] getparam 0 .............................. <me>
+  [ 25] pusharglistnoret 1 ...................... <me>
+  [ 27] objcall 1051 ............................ me.activateActors()
+  [ 30] pop 1
+  [ 32] ret
+end
+
+on showTileSet me, theMode
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 656 ............................. <me.getSpriteWidth()>
+  [  7] setlocal 0 .............................. mywidth = me.getSpriteWidth()
+  [  9] getprop 542 ............................. <pLocation>
+  [ 12] getlocal 0 .............................. <mywidth>
+  [ 14] pushzero ................................ <0>
+  [ 15] pusharglist 2 ........................... <mywidth, 0>
+  [ 17] extcall 215 ............................. <point(mywidth, 0)>
+  [ 19] add ..................................... <pLocation + point(mywidth, 0)>
+  [ 20] pushint8 32 ............................. <32>
+  [ 22] pushzero ................................ <0>
+  [ 23] pusharglist 2 ........................... <32, 0>
+  [ 25] extcall 215 ............................. <point(32, 0)>
+  [ 27] add ..................................... <pLocation + point(mywidth, 0) + point(32, 0)>
+  [ 28] setlocal 1 .............................. theloc = pLocation + point(mywidth, 0) + point(32, 0)
+  [ 30] getprop 1002 ............................ <pCurrentEditLayer>
+  [ 33] getparam 1 .............................. <theMode>
+  [ 35] getlocal 1 .............................. <theloc>
+  [ 37] pusharglistnoret 3 ...................... <pCurrentEditLayer, theMode, theloc>
+  [ 39] objcall 991 ............................. pCurrentEditLayer.showTileSet(theMode, theloc)
+  [ 42] ret
+end
+
+on updateImage me, theSel, brushTiles
+  [  0] getprop 1001 ............................ <pCachedImage>
+  [  3] pushsymb 22 ............................. <#none>
+  [  5] eq ...................................... <pCachedImage = #none>
+  [  6] jmpifz [ 16] ............................ if pCachedImage = #none then
+  [  9] getparam 0 .............................. <me>
+  [ 11] pusharglistnoret 1 ...................... <me>
+  [ 13] objcall 510 ............................. me.getImage()
+  [ 16] getparam 1 .............................. <theSel>
+  [ 18] getobjprop 1016 ......................... <theSel.locH>
+  [ 21] getparam 2 .............................. <brushTiles>
+  [ 23] pushint8 1 .............................. <1>
+  [ 25] pusharglist 2 ........................... <brushTiles, 1>
+  [ 27] objcall 38 .............................. <brushTiles[1]>
+  [ 29] getobjprop 28 ........................... <brushTiles[1].count>
+  [ 31] add ..................................... <theSel.locH + brushTiles[1].count>
+  [ 32] pushint8 1 .............................. <1>
+  [ 34] sub ..................................... <theSel.locH + brushTiles[1].count - 1>
+  [ 35] setlocal 0 .............................. rectRight = theSel.locH + brushTiles[1].count - 1
+  [ 37] getparam 1 .............................. <theSel>
+  [ 39] getobjprop 1017 ......................... <theSel.locV>
+  [ 42] getparam 2 .............................. <brushTiles>
+  [ 44] getobjprop 28 ........................... <brushTiles.count>
+  [ 46] add ..................................... <theSel.locV + brushTiles.count>
+  [ 47] pushint8 1 .............................. <1>
+  [ 49] sub ..................................... <theSel.locV + brushTiles.count - 1>
+  [ 50] setlocal 1 .............................. rectBottom = theSel.locV + brushTiles.count - 1
+  [ 52] getparam 1 .............................. <theSel>
+  [ 54] getobjprop 1016 ......................... <theSel.locH>
+  [ 57] getparam 1 .............................. <theSel>
+  [ 59] getobjprop 1017 ......................... <theSel.locV>
+  [ 62] getlocal 0 .............................. <rectRight>
+  [ 64] getlocal 1 .............................. <rectBottom>
+  [ 66] pusharglist 4 ........................... <theSel.locH, theSel.locV, rectRight, rectBottom>
+  [ 68] extcall 160 ............................. <rect(theSel.locH, theSel.locV, rectRight, rectBottom)>
+  [ 70] setlocal 2 .............................. rectToUpdate = rect(theSel.locH, theSel.locV, rectRight, rectBottom)
+  [ 72] getparam 0 .............................. <me>
+  [ 74] getprop 1003 ............................ <pDefaultScale>
+  [ 77] getlocal 2 .............................. <rectToUpdate>
+  [ 79] pusharglist 3 ........................... <me, pDefaultScale, rectToUpdate>
+  [ 81] objcall 984 ............................. <me.getScaleImageFromSelection(pDefaultScale, rectToUpdate)>
+  [ 84] setlocal 3 .............................. changedSectionImage = me.getScaleImageFromSelection(pDefaultScale, rectToUpdate)
+  [ 86] getprop 1002 ............................ <pCurrentEditLayer>
+  [ 89] pusharglist 1 ........................... <pCurrentEditLayer>
+  [ 91] objcall 576 ............................. <pCurrentEditLayer.getTileSize()>
+  [ 94] setlocal 4 .............................. tilesize = pCurrentEditLayer.getTileSize()
+  [ 96] getlocal 2 .............................. <rectToUpdate>
+  [ 98] pusharglist 1 ........................... <rectToUpdate>
+  [100] objcall 48 .............................. <rectToUpdate.duplicate()>
+  [102] setlocal 5 .............................. imageAreaToUpdate = rectToUpdate.duplicate()
+  [104] getlocal 5 .............................. <imageAreaToUpdate>
+  [106] getlocal 5 .............................. <imageAreaToUpdate>
+  [108] getobjprop 461 .......................... <imageAreaToUpdate.top>
+  [111] pushint8 1 .............................. <1>
+  [113] sub ..................................... <imageAreaToUpdate.top - 1>
+  [114] setobjprop 461 .......................... imageAreaToUpdate.top = imageAreaToUpdate.top - 1
+  [117] getlocal 5 .............................. <imageAreaToUpdate>
+  [119] getlocal 5 .............................. <imageAreaToUpdate>
+  [121] getobjprop 148 .......................... <imageAreaToUpdate.left>
+  [123] pushint8 1 .............................. <1>
+  [125] sub ..................................... <imageAreaToUpdate.left - 1>
+  [126] setobjprop 148 .......................... imageAreaToUpdate.left = imageAreaToUpdate.left - 1
+  [128] getlocal 5 .............................. <imageAreaToUpdate>
+  [130] getlocal 4 .............................. <tilesize>
+  [132] getobjprop 1016 ......................... <tilesize.locH>
+  [135] getlocal 4 .............................. <tilesize>
+  [137] getobjprop 1017 ......................... <tilesize.locV>
+  [140] getlocal 4 .............................. <tilesize>
+  [142] getobjprop 1016 ......................... <tilesize.locH>
+  [145] getlocal 4 .............................. <tilesize>
+  [147] getobjprop 1017 ......................... <tilesize.locV>
+  [150] pusharglist 4 ........................... <tilesize.locH, tilesize.locV, tilesize.locH, tilesize.locV>
+  [152] extcall 160 ............................. <rect(tilesize.locH, tilesize.locV, tilesize.locH, tilesize.locV)>
+  [154] mul ..................................... <imageAreaToUpdate * rect(tilesize.locH, tilesize.locV, tilesize.locH, tilesize.locV)>
+  [155] setlocal 5 .............................. imageAreaToUpdate = imageAreaToUpdate * rect(tilesize.locH, tilesize.locV, tilesize.locH, tilesize.locV)
+  [157] pushsymb 1031 ........................... <#useFastQuads>
+  [160] pushint8 1 .............................. <1>
+  [162] pushsymb 307 ............................ <#ink>
+  [165] pushint8 36 ............................. <36>
+  [167] pusharglist 4 ........................... <[#useFastQuads: 1, #ink: 36]>
+  [169] pushproplist ............................ <[#useFastQuads: 1, #ink: 36]>
+  [170] setlocal 6 .............................. copyPixelsParams = [#useFastQuads: 1, #ink: 36]
+  [172] getprop 1001 ............................ <pCachedImage>
+  [175] getlocal 3 .............................. <changedSectionImage>
+  [177] getlocal 5 .............................. <imageAreaToUpdate>
+  [179] getlocal 3 .............................. <changedSectionImage>
+  [181] getobjprop 160 .......................... <changedSectionImage.rect>
+  [183] getlocal 6 .............................. <copyPixelsParams>
+  [185] pusharglistnoret 5 ...................... <pCachedImage, changedSectionImage, imageAreaToUpdate, changedSectionImage.rect, copyPixelsParams>
+  [187] objcall 1033 ............................ pCachedImage.copyPixels(changedSectionImage, imageAreaToUpdate, changedSectionImage.rect, copyPixelsParams)
+  [190] getparam 0 .............................. <me>
+  [192] getprop 1001 ............................ <pCachedImage>
+  [195] pusharglistnoret 2 ...................... <me, pCachedImage>
+  [197] objcall 658 ............................. me.setImage(pCachedImage)
+  [200] getparam 0 .............................. <me>
+  [202] pushsymb 635 ............................ <#topLeft>
+  [205] pusharglistnoret 2 ...................... <me, #topLeft>
+  [207] objcall 659 ............................. me.setRegpoint(#topLeft)
+  [210] ret
+end
+
+on updateImageTileset me, theSel, brushTiles, newTileSet
+  [  0] getprop 1001 ............................ <pCachedImage>
+  [  3] pushsymb 22 ............................. <#none>
+  [  5] eq ...................................... <pCachedImage = #none>
+  [  6] jmpifz [ 16] ............................ if pCachedImage = #none then
+  [  9] getparam 0 .............................. <me>
+  [ 11] pusharglistnoret 1 ...................... <me>
+  [ 13] objcall 510 ............................. me.getImage()
+  [ 16] getparam 1 .............................. <theSel>
+  [ 18] getobjprop 1016 ......................... <theSel.locH>
+  [ 21] getparam 2 .............................. <brushTiles>
+  [ 23] pushint8 1 .............................. <1>
+  [ 25] pusharglist 2 ........................... <brushTiles, 1>
+  [ 27] objcall 38 .............................. <brushTiles[1]>
+  [ 29] getobjprop 28 ........................... <brushTiles[1].count>
+  [ 31] add ..................................... <theSel.locH + brushTiles[1].count>
+  [ 32] pushint8 1 .............................. <1>
+  [ 34] sub ..................................... <theSel.locH + brushTiles[1].count - 1>
+  [ 35] setlocal 0 .............................. rectRight = theSel.locH + brushTiles[1].count - 1
+  [ 37] getparam 1 .............................. <theSel>
+  [ 39] getobjprop 1017 ......................... <theSel.locV>
+  [ 42] getparam 2 .............................. <brushTiles>
+  [ 44] getobjprop 28 ........................... <brushTiles.count>
+  [ 46] add ..................................... <theSel.locV + brushTiles.count>
+  [ 47] pushint8 1 .............................. <1>
+  [ 49] sub ..................................... <theSel.locV + brushTiles.count - 1>
+  [ 50] setlocal 1 .............................. rectBottom = theSel.locV + brushTiles.count - 1
+  [ 52] getparam 1 .............................. <theSel>
+  [ 54] getobjprop 1016 ......................... <theSel.locH>
+  [ 57] getparam 1 .............................. <theSel>
+  [ 59] getobjprop 1017 ......................... <theSel.locV>
+  [ 62] getlocal 0 .............................. <rectRight>
+  [ 64] getlocal 1 .............................. <rectBottom>
+  [ 66] pusharglist 4 ........................... <theSel.locH, theSel.locV, rectRight, rectBottom>
+  [ 68] extcall 160 ............................. <rect(theSel.locH, theSel.locV, rectRight, rectBottom)>
+  [ 70] setlocal 2 .............................. rectToUpdate = rect(theSel.locH, theSel.locV, rectRight, rectBottom)
+  [ 72] getparam 0 .............................. <me>
+  [ 74] getprop 1003 ............................ <pDefaultScale>
+  [ 77] getlocal 2 .............................. <rectToUpdate>
+  [ 79] getparam 3 .............................. <newTileSet>
+  [ 81] pusharglist 4 ........................... <me, pDefaultScale, rectToUpdate, newTileSet>
+  [ 83] objcall 1906 ............................ <me.getScaleImageFromSelectionTileset(pDefaultScale, rectToUpdate, newTileSet)>
+  [ 86] setlocal 3 .............................. changedSectionImage = me.getScaleImageFromSelectionTileset(pDefaultScale, rectToUpdate, newTileSet)
+  [ 88] getprop 1002 ............................ <pCurrentEditLayer>
+  [ 91] pusharglist 1 ........................... <pCurrentEditLayer>
+  [ 93] objcall 576 ............................. <pCurrentEditLayer.getTileSize()>
+  [ 96] setlocal 4 .............................. tilesize = pCurrentEditLayer.getTileSize()
+  [ 98] getlocal 2 .............................. <rectToUpdate>
+  [100] pusharglist 1 ........................... <rectToUpdate>
+  [102] objcall 48 .............................. <rectToUpdate.duplicate()>
+  [104] setlocal 5 .............................. imageAreaToUpdate = rectToUpdate.duplicate()
+  [106] getlocal 5 .............................. <imageAreaToUpdate>
+  [108] getlocal 5 .............................. <imageAreaToUpdate>
+  [110] getobjprop 461 .......................... <imageAreaToUpdate.top>
+  [113] pushint8 1 .............................. <1>
+  [115] sub ..................................... <imageAreaToUpdate.top - 1>
+  [116] setobjprop 461 .......................... imageAreaToUpdate.top = imageAreaToUpdate.top - 1
+  [119] getlocal 5 .............................. <imageAreaToUpdate>
+  [121] getlocal 5 .............................. <imageAreaToUpdate>
+  [123] getobjprop 148 .......................... <imageAreaToUpdate.left>
+  [125] pushint8 1 .............................. <1>
+  [127] sub ..................................... <imageAreaToUpdate.left - 1>
+  [128] setobjprop 148 .......................... imageAreaToUpdate.left = imageAreaToUpdate.left - 1
+  [130] getlocal 5 .............................. <imageAreaToUpdate>
+  [132] getlocal 4 .............................. <tilesize>
+  [134] getobjprop 1016 ......................... <tilesize.locH>
+  [137] getlocal 4 .............................. <tilesize>
+  [139] getobjprop 1017 ......................... <tilesize.locV>
+  [142] getlocal 4 .............................. <tilesize>
+  [144] getobjprop 1016 ......................... <tilesize.locH>
+  [147] getlocal 4 .............................. <tilesize>
+  [149] getobjprop 1017 ......................... <tilesize.locV>
+  [152] pusharglist 4 ........................... <tilesize.locH, tilesize.locV, tilesize.locH, tilesize.locV>
+  [154] extcall 160 ............................. <rect(tilesize.locH, tilesize.locV, tilesize.locH, tilesize.locV)>
+  [156] mul ..................................... <imageAreaToUpdate * rect(tilesize.locH, tilesize.locV, tilesize.locH, tilesize.locV)>
+  [157] setlocal 5 .............................. imageAreaToUpdate = imageAreaToUpdate * rect(tilesize.locH, tilesize.locV, tilesize.locH, tilesize.locV)
+  [159] pushsymb 1031 ........................... <#useFastQuads>
+  [162] pushint8 1 .............................. <1>
+  [164] pushsymb 307 ............................ <#ink>
+  [167] pushint8 36 ............................. <36>
+  [169] pusharglist 4 ........................... <[#useFastQuads: 1, #ink: 36]>
+  [171] pushproplist ............................ <[#useFastQuads: 1, #ink: 36]>
+  [172] setlocal 6 .............................. copyPixelsParams = [#useFastQuads: 1, #ink: 36]
+  [174] getprop 1001 ............................ <pCachedImage>
+  [177] getlocal 3 .............................. <changedSectionImage>
+  [179] getlocal 5 .............................. <imageAreaToUpdate>
+  [181] getlocal 3 .............................. <changedSectionImage>
+  [183] getobjprop 160 .......................... <changedSectionImage.rect>
+  [185] getlocal 6 .............................. <copyPixelsParams>
+  [187] pusharglistnoret 5 ...................... <pCachedImage, changedSectionImage, imageAreaToUpdate, changedSectionImage.rect, copyPixelsParams>
+  [189] objcall 1033 ............................ pCachedImage.copyPixels(changedSectionImage, imageAreaToUpdate, changedSectionImage.rect, copyPixelsParams)
+  [192] getparam 0 .............................. <me>
+  [194] getprop 1001 ............................ <pCachedImage>
+  [197] pusharglistnoret 2 ...................... <me, pCachedImage>
+  [199] objcall 658 ............................. me.setImage(pCachedImage)
+  [202] getparam 0 .............................. <me>
+  [204] pushsymb 635 ............................ <#topLeft>
+  [207] pusharglistnoret 2 ...................... <me, #topLeft>
+  [209] objcall 659 ............................. me.setRegpoint(#topLeft)
+  [212] ret
+end

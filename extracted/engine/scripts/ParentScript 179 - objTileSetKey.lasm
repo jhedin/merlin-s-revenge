@@ -1,0 +1,232 @@
+property ancestor, pDefinition, pMember
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"objTileSet">
+  [  2] pusharglist 1 ........................... <"objTileSet">
+  [  4] extcall 34 .............................. <script("objTileSet")>
+  [  6] pusharglist 1 ........................... <script("objTileSet")>
+  [  8] extcall 0 ............................... <new(script("objTileSet"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objTileSet"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 99 ............................. <#member>
+  [ 26] pushsymb 49 ............................. <#none>
+  [ 28] pusharglistnoret 3 ...................... <i, #member, #none>
+  [ 30] objcall 48 .............................. i[#member] = #none
+  [ 32] getparam 0 .............................. <me>
+  [ 34] pusharglistnoret 1 ...................... <me>
+  [ 36] extcall 35 .............................. return me
+  [ 38] ret
+end
+
+on init me, params
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 1168 ..................... <g.structMaster>
+  [  5] pushsymb 4024 ........................... <#tileSetDefinition>
+  [  8] pusharglist 2 ........................... <g.structMaster, #tileSetDefinition>
+  [ 10] objcall 1170 ............................ <g.structMaster.getStruct(#tileSetDefinition)>
+  [ 13] setprop 3029 ............................ pDefinition = g.structMaster.getStruct(#tileSetDefinition)
+  [ 16] getparam 1 .............................. <params>
+  [ 18] getobjprop 99 ........................... <params.member>
+  [ 20] setprop 813 ............................. pMember = params.member
+  [ 23] getparam 0 .............................. <me>
+  [ 25] pusharglistnoret 1 ...................... <me>
+  [ 27] objcall 3177 ............................ me.interpretDefinition()
+  [ 30] getparam 0 .............................. <me>
+  [ 32] getparam 1 .............................. <params>
+  [ 34] pusharglistnoret 2 ...................... <me, params>
+  [ 36] objcall 2689 ............................ me.initParams(params)
+  [ 39] getprop 33 .............................. <ancestor>
+  [ 41] getparam 1 .............................. <params>
+  [ 43] pusharglistnoret 2 ...................... <ancestor, params>
+  [ 45] objcall 1 ............................... ancestor.init(params)
+  [ 47] ret
+end
+
+on initParams me, params
+  [  0] getparam 1 .............................. <params>
+  [  2] getparam 1 .............................. <params>
+  [  4] getchainedprop 99 ....................... <params.member>
+  [  6] getobjprop 800 .......................... <params.member.image>
+  [  9] setobjprop 1659 ......................... params.allTilesImage = params.member.image
+  [ 12] getparam 1 .............................. <params>
+  [ 14] getprop 3029 ............................ <pDefinition>
+  [ 17] getobjprop 394 .......................... <pDefinition.tilesize>
+  [ 20] setobjprop 394 .......................... params.tilesize = pDefinition.tilesize
+  [ 23] ret
+end
+
+on extractDefinitionValue me, theLine
+  [  0] getparam 1 .............................. <theLine>
+  [  2] pushcons 1 .............................. <"|">
+  [  4] pusharglist 2 ........................... <theLine, "|">
+  [  6] extcall 2708 ............................ <StringGetPos(theLine, "|")>
+  [  9] setlocal 0 .............................. pipePos = StringGetPos(theLine, "|")
+  [ 11] getparam 1 .............................. <theLine>
+  [ 13] pushsymb 2713 ........................... <#char>
+  [ 16] getlocal 0 .............................. <pipePos>
+  [ 18] pushint8 2 .............................. <2>
+  [ 20] add ..................................... <pipePos + 2>
+  [ 21] pushint8 99 ............................. <99>
+  [ 23] pusharglist 4 ........................... <theLine, #char, pipePos + 2, 99>
+  [ 25] objcall 381 ............................. <theLine.char[pipePos + 2..99]>
+  [ 28] pusharglist 1 ........................... <theLine.char[pipePos + 2..99]>
+  [ 30] extcall 1562 ............................ <value(theLine.char[pipePos + 2..99])>
+  [ 33] setlocal 1 .............................. theValue = value(theLine.char[pipePos + 2..99])
+  [ 35] getlocal 1 .............................. <theValue>
+  [ 37] pusharglistnoret 1 ...................... <theValue>
+  [ 39] extcall 35 .............................. return theValue
+  [ 41] ret
+end
+
+on getTileNum me, theSymbol
+  [  0] getprop 3029 ............................ <pDefinition>
+  [  3] getchainedprop 2695 ..................... <pDefinition.theKey>
+  [  6] getparam 1 .............................. <theSymbol>
+  [  8] pusharglist 2 ........................... <pDefinition.theKey, theSymbol>
+  [ 10] objcall 219 ............................. <pDefinition.theKey.getPos(theSymbol)>
+  [ 12] setlocal 0 .............................. tileNum = pDefinition.theKey.getPos(theSymbol)
+  [ 14] getlocal 0 .............................. <tileNum>
+  [ 16] pusharglistnoret 1 ...................... <tileNum>
+  [ 18] extcall 35 .............................. return tileNum
+  [ 20] ret
+end
+
+on getTileSymbol me, theloc
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. tileNum = 0
+  [  3] getlocal 0 .............................. <tileNum>
+  [  5] getparam 0 .............................. <me>
+  [  7] pushsymb 4011 ........................... <#pSizeInTiles>
+  [ 10] pushint8 2 .............................. <2>
+  [ 12] pusharglist 3 ........................... <me, #pSizeInTiles, 2>
+  [ 14] objcall 381 ............................. <me.pSizeInTiles[2]>
+  [ 17] getparam 1 .............................. <theloc>
+  [ 19] pushint8 2 .............................. <2>
+  [ 21] pusharglist 2 ........................... <theloc, 2>
+  [ 23] objcall 109 ............................. <theloc[2]>
+  [ 25] pushint8 1 .............................. <1>
+  [ 27] sub ..................................... <theloc[2] - 1>
+  [ 28] mul ..................................... <me.pSizeInTiles[2] * (theloc[2] - 1)>
+  [ 29] add ..................................... <tileNum + (me.pSizeInTiles[2] * (theloc[2] - 1))>
+  [ 30] setlocal 0 .............................. tileNum = tileNum + (me.pSizeInTiles[2] * (theloc[2] - 1))
+  [ 32] getlocal 0 .............................. <tileNum>
+  [ 34] getparam 1 .............................. <theloc>
+  [ 36] pushint8 1 .............................. <1>
+  [ 38] pusharglist 2 ........................... <theloc, 1>
+  [ 40] objcall 109 ............................. <theloc[1]>
+  [ 42] add ..................................... <tileNum + theloc[1]>
+  [ 43] setlocal 0 .............................. tileNum = tileNum + theloc[1]
+  [ 45] getparam 0 .............................. <me>
+  [ 47] getlocal 0 .............................. <tileNum>
+  [ 49] pusharglist 2 ........................... <me, tileNum>
+  [ 51] objcall 1260 ............................ <me.getTileSymbolByNum(tileNum)>
+  [ 54] setlocal 1 .............................. tileSymbol = me.getTileSymbolByNum(tileNum)
+  [ 56] getlocal 1 .............................. <tileSymbol>
+  [ 58] pusharglistnoret 1 ...................... <tileSymbol>
+  [ 60] extcall 35 .............................. return tileSymbol
+  [ 62] ret
+end
+
+on getTileSymbolByNum me, tileNum
+  [  0] getparam 1 .............................. <tileNum>
+  [  2] pushzero ................................ <0>
+  [  3] eq ...................................... <tileNum = 0>
+  [  4] jmpifz [ 14] ............................ if tileNum = 0 then / else
+  [  7] pushsymb 49 ............................. <#none>
+  [  9] setlocal 0 .............................. tileSymbol = #none
+  [ 11] jmp [ 29]
+  [ 14] getprop 3029 ............................ <pDefinition>
+  [ 17] pushsymb 2695 ........................... <#theKey>
+  [ 20] getparam 1 .............................. <tileNum>
+  [ 22] pusharglist 3 ........................... <pDefinition, #theKey, tileNum>
+  [ 24] objcall 381 ............................. <pDefinition.theKey[tileNum]>
+  [ 27] setlocal 0 .............................. tileSymbol = pDefinition.theKey[tileNum]
+  [ 29] getlocal 0 .............................. <tileSymbol>
+  [ 31] pusharglistnoret 1 ...................... <tileSymbol>
+  [ 33] extcall 35 .............................. return tileSymbol
+  [ 35] ret
+end
+
+on interpretDefinition me
+  [  0] getprop 813 ............................. <pMember>
+  [  3] getobjprop 2533 ......................... <pMember.castLibNum>
+  [  6] setlocal 0 .............................. castLibrary = pMember.castLibNum
+  [  8] getprop 813 ............................. <pMember>
+  [ 11] getobjprop 44 ........................... <pMember.name>
+  [ 13] pushcons 2 .............................. <"_key">
+  [ 15] joinstr ................................. <pMember.name & "_key">
+  [ 16] getlocal 0 .............................. <castLibrary>
+  [ 18] pusharglist 2 ........................... <pMember.name & "_key", castLibrary>
+  [ 20] extcall 99 .............................. <member(pMember.name & "_key", castLibrary)>
+  [ 22] getobjprop 670 .......................... <member(pMember.name & "_key", castLibrary).text>
+  [ 25] setlocal 1 .............................. defTxt = member(pMember.name & "_key", castLibrary).text
+  [ 27] getlocal 1 .............................. <defTxt>
+  [ 29] pushsymb 3257 ........................... <#lines>
+  [ 32] pusharglist 2 ........................... <defTxt, #lines>
+  [ 34] objcall 257 ............................. <defTxt.lines.count>
+  [ 37] setlocal 2 .............................. numLines = defTxt.lines.count
+  [ 39] pushint8 1 .............................. <1>
+  [ 41] setlocal 3 .............................. tileNo = 1
+  [ 43] pushint8 1 .............................. <1>
+  [ 45] setlocal 4
+  [ 47] getlocal 4
+  [ 49] getlocal 2 .............................. <numLines>
+  [ 51] lteq
+  [ 52] jmpifz [165] ............................ repeat with i = 1 to numLines
+  [ 55] getlocal 1 .............................. <defTxt>
+  [ 57] pushsymb 3258 ........................... <#line>
+  [ 60] getlocal 4 .............................. <i>
+  [ 62] pusharglist 3 ........................... <defTxt, #line, i>
+  [ 64] objcall 381 ............................. <defTxt.line[i]>
+  [ 67] setlocal 5 .............................. nLine = defTxt.line[i]
+  [ 69] getlocal 5 .............................. <nLine>
+  [ 71] pushsymb 1560 ........................... <#word>
+  [ 74] pushint8 1 .............................. <1>
+  [ 76] pusharglist 3 ........................... <nLine, #word, 1>
+  [ 78] objcall 381 ............................. <nLine.word[1]>
+  [ 81] setlocal 6 .............................. firstWord = nLine.word[1]
+  [ 83] getlocal 6 .............................. <firstWord>
+  [ 85] peek 0 .................................. case firstWord of
+  [ 87] pushcons 3 .............................. <"--">
+  [ 89] eq
+  [ 90] jmpifz [101] ............................ (case) "--":
+  [ 93] pusharglistnoret 0 ...................... <>
+  [ 95] extcall 4029 ............................ continue()
+  [ 98] jmp [154]
+  [101] peek 0
+  [103] pushcons 4 .............................. <"tileSize">
+  [105] eq
+  [106] jmpifz [127] ............................ (case) "tileSize":
+  [109] getprop 3029 ............................ <pDefinition>
+  [112] getparam 0 .............................. <me>
+  [114] getlocal 5 .............................. <nLine>
+  [116] pusharglist 2 ........................... <me, nLine>
+  [118] objcall 4023 ............................ <me.extractDefinitionValue(nLine)>
+  [121] setobjprop 394 .......................... pDefinition.tilesize = me.extractDefinitionValue(nLine)
+  [124] jmp [154] ............................... (case) otherwise:
+  [127] getprop 3029 ............................ <pDefinition>
+  [130] pushsymb 2695 ........................... <#theKey>
+  [133] getlocal 3 .............................. <tileNo>
+  [135] getlocal 5 .............................. <nLine>
+  [137] pusharglist 1 ........................... <nLine>
+  [139] extcall 1562 ............................ <value(nLine)>
+  [142] pusharglistnoret 4 ...................... <pDefinition, #theKey, tileNo, value(nLine)>
+  [144] objcall 531 ............................. pDefinition.theKey[tileNo] = value(nLine)
+  [147] getlocal 3 .............................. <tileNo>
+  [149] pushint8 1 .............................. <1>
+  [151] add ..................................... <tileNo + 1>
+  [152] setlocal 3 .............................. tileNo = tileNo + 1
+  [154] pop 1 ................................... end case
+  [156] pushint8 1
+  [158] getlocal 4
+  [160] add
+  [161] setlocal 4
+  [163] endrepeat [ 47]
+  [165] ret
+end

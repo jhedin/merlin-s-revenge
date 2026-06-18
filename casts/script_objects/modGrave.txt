@@ -1,0 +1,113 @@
+[#name: "modGrave", #scriptType: #parent, #type: #script]
+-- leaves a permanant grave behind when an object dies
+global g
+
+property ancestor
+property pGraveOn
+
+on new me
+  ancestor = new (script("modModule"))
+  return me
+end
+
+on addModParams me
+  i = me.modifyParams(#init)
+  
+  i[#graveOn] = true
+  
+  ancestor.addModParams()
+end
+
+on init me, params
+  
+  ancestor.init(params)
+  
+  pGraveOn = params.graveOn
+  if params[#ghost] = true then
+    pGraveOn = false
+  end if
+end
+
+on drawGrave me
+  if pGraveOn = false then
+    return
+  end if
+  
+  me.big.setFlipFromDir(1)
+  currentRoom = g.gameMaster.getCurrentRoom()
+  currentRoom.drawAndRecordGrave(me.ID.bigMe)
+end
+
+on getGraveMember me
+  return me.big.getAnimMemberFromStrip(#grave)
+end
+
+on getGraveOn me
+  return pGraveOn
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

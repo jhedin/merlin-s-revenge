@@ -1,0 +1,91 @@
+[#name: "Counter (theCounter)", #scriptType: #movie, #type: #script]
+on Counter (theC)
+  
+  -- deal with counters that are going nowhere
+  if theC.tim[1] = theC.tim[2] then
+    theC.fin = true
+    return theC
+  end if
+  
+  
+  
+  if theC.fin = true then
+    theC = CounterReset(theC)
+    theC.looped = true
+    return theC
+  end if
+  
+  theC.looped = false
+  
+  theC.theCount = theC.theCount + theC.inc
+  if theC.theCount <= theC.tim[1] then
+    theC.theCount = theC.tim[1]
+    theC.fin = true
+  else if theC.theCount >= theC.tim[2] then
+    theC.theCount = theC.tim[2]
+    theC.fin = true
+  end if
+  Return theC
+end Counter
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

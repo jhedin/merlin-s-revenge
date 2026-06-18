@@ -1,0 +1,332 @@
+property pCurrentKeySet, pDefaultKeySet, pKeyBinding, pLastResults, pMoveKeyVectors, pMoveVector, pResults
+global g, gKeySetFileName
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 3 ............................... return me
+  [  6] ret
+end
+
+on init me
+  [  0] pushsymb 103 ............................ <#none>
+  [  2] setprop 1440 ............................ pCurrentKeySet = #none
+  [  5] pushsymb 1442 ........................... <#wasd>
+  [  8] setprop 1441 ............................ pDefaultKeySet = #wasd
+  [ 11] pusharglist 0 ........................... <[:]>
+  [ 13] pushproplist ............................ <[:]>
+  [ 14] setprop 1443 ............................ pKeyBinding = [:]
+  [ 17] pushzero ................................ <0>
+  [ 18] pushzero ................................ <0>
+  [ 19] pusharglist 2 ........................... <0, 0>
+  [ 21] extcall 122 ............................. <point(0, 0)>
+  [ 23] setprop 1444 ............................ pMoveVector = point(0, 0)
+  [ 26] pusharglist 0 ........................... <[:]>
+  [ 28] pushproplist ............................ <[:]>
+  [ 29] setprop 1445 ............................ pMoveKeyVectors = [:]
+  [ 32] getprop 1445 ............................ <pMoveKeyVectors>
+  [ 35] setlocal 0 .............................. m = pMoveKeyVectors
+  [ 37] getlocal 0 .............................. <m>
+  [ 39] pushsymb 184 ............................ <#up>
+  [ 41] pushzero ................................ <0>
+  [ 42] pushint8 1 .............................. <1>
+  [ 44] inv ..................................... <-1>
+  [ 45] pusharglist 2 ........................... <0, -1>
+  [ 47] extcall 122 ............................. <point(0, -1)>
+  [ 49] pusharglistnoret 3 ...................... <m, #up, point(0, -1)>
+  [ 51] objcall 54 .............................. m[#up] = point(0, -1)
+  [ 53] getlocal 0 .............................. <m>
+  [ 55] pushsymb 185 ............................ <#down>
+  [ 57] pushzero ................................ <0>
+  [ 58] pushint8 1 .............................. <1>
+  [ 60] pusharglist 2 ........................... <0, 1>
+  [ 62] extcall 122 ............................. <point(0, 1)>
+  [ 64] pusharglistnoret 3 ...................... <m, #down, point(0, 1)>
+  [ 66] objcall 54 .............................. m[#down] = point(0, 1)
+  [ 68] getlocal 0 .............................. <m>
+  [ 70] pushsymb 170 ............................ <#left>
+  [ 72] pushint8 1 .............................. <1>
+  [ 74] inv ..................................... <-1>
+  [ 75] pushzero ................................ <0>
+  [ 76] pusharglist 2 ........................... <-1, 0>
+  [ 78] extcall 122 ............................. <point(-1, 0)>
+  [ 80] pusharglistnoret 3 ...................... <m, #left, point(-1, 0)>
+  [ 82] objcall 54 .............................. m[#left] = point(-1, 0)
+  [ 84] getlocal 0 .............................. <m>
+  [ 86] pushsymb 171 ............................ <#right>
+  [ 88] pushint8 1 .............................. <1>
+  [ 90] pushzero ................................ <0>
+  [ 91] pusharglist 2 ........................... <1, 0>
+  [ 93] extcall 122 ............................. <point(1, 0)>
+  [ 95] pusharglistnoret 3 ...................... <m, #right, point(1, 0)>
+  [ 97] objcall 54 .............................. m[#right] = point(1, 0)
+  [ 99] pusharglist 0 ........................... <[:]>
+  [101] pushproplist ............................ <[:]>
+  [102] setprop 1446 ............................ pResults = [:]
+  [105] getparam 0 .............................. <me>
+  [107] pusharglist 1 ........................... <me>
+  [109] objcall 1436 ............................ <me.loadKeySet()>
+  [112] setlocal 1 .............................. keySet = me.loadKeySet()
+  [114] getparam 0 .............................. <me>
+  [116] getlocal 1 .............................. <keySet>
+  [118] pusharglistnoret 2 ...................... <me, keySet>
+  [120] objcall 1438 ............................ me.setKeySet(keySet)
+  [123] ret
+end
+
+on initResults me
+  [  0] pusharglist 0 ........................... <[:]>
+  [  2] pushproplist ............................ <[:]>
+  [  3] setprop 1446 ............................ pResults = [:]
+  [  6] pushint8 1 .............................. <1>
+  [  8] setlocal 0
+  [ 10] getlocal 0
+  [ 12] getprop 1443 ............................ <pKeyBinding>
+  [ 15] getobjprop 348 .......................... <pKeyBinding.count>
+  [ 18] lteq
+  [ 19] jmpifz [ 53] ............................ repeat with i = 1 to pKeyBinding.count
+  [ 22] getprop 1443 ............................ <pKeyBinding>
+  [ 25] getlocal 0 .............................. <i>
+  [ 27] pusharglist 2 ........................... <pKeyBinding, i>
+  [ 29] objcall 415 ............................. <pKeyBinding.getPropAt(i)>
+  [ 32] setlocal 1 .............................. nProp = pKeyBinding.getPropAt(i)
+  [ 34] getprop 1446 ............................ <pResults>
+  [ 37] getlocal 1 .............................. <nProp>
+  [ 39] pushzero ................................ <0>
+  [ 40] pusharglistnoret 3 ...................... <pResults, nProp, 0>
+  [ 42] objcall 54 .............................. pResults[nProp] = 0
+  [ 44] pushint8 1
+  [ 46] getlocal 0
+  [ 48] add
+  [ 49] setlocal 0
+  [ 51] endrepeat [ 10]
+  [ 53] ret
+end
+
+on finish me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 1437 ............................ me.saveKeySet()
+  [  7] ret
+end
+
+on checkKeys me
+  [  0] getprop 1446 ............................ <pResults>
+  [  3] pusharglist 1 ........................... <pResults>
+  [  5] objcall 302 ............................. <pResults.duplicate()>
+  [  8] setprop 1448 ............................ pLastResults = pResults.duplicate()
+  [ 11] pushint8 1 .............................. <1>
+  [ 13] setlocal 0
+  [ 15] getlocal 0
+  [ 17] getprop 1443 ............................ <pKeyBinding>
+  [ 20] getobjprop 348 .......................... <pKeyBinding.count>
+  [ 23] lteq
+  [ 24] jmpifz [ 82] ............................ repeat with i = 1 to pKeyBinding.count
+  [ 27] getprop 1443 ............................ <pKeyBinding>
+  [ 30] getlocal 0 .............................. <i>
+  [ 32] pusharglist 2 ........................... <pKeyBinding, i>
+  [ 34] objcall 301 ............................. <pKeyBinding[i]>
+  [ 37] setlocal 1 .............................. nKeyNum = pKeyBinding[i]
+  [ 39] getlocal 1 .............................. <nKeyNum>
+  [ 41] pusharglist 1 ........................... <nKeyNum>
+  [ 43] extcall 1449 ............................ <keyPressed(nKeyNum)>
+  [ 46] jmpifz [ 63] ............................ if keyPressed(nKeyNum) then
+  [ 49] getprop 1446 ............................ <pResults>
+  [ 52] getlocal 0 .............................. <i>
+  [ 54] pushint8 1 .............................. <1>
+  [ 56] pusharglistnoret 3 ...................... <pResults, i, 1>
+  [ 58] objcall 54 .............................. pResults[i] = 1
+  [ 60] jmp [ 73] ............................... next repeat
+  [ 63] getprop 1446 ............................ <pResults>
+  [ 66] getlocal 0 .............................. <i>
+  [ 68] pushzero ................................ <0>
+  [ 69] pusharglistnoret 3 ...................... <pResults, i, 0>
+  [ 71] objcall 54 .............................. pResults[i] = 0
+  [ 73] pushint8 1
+  [ 75] getlocal 0
+  [ 77] add
+  [ 78] setlocal 0
+  [ 80] endrepeat [ 15]
+  [ 82] getparam 0 .............................. <me>
+  [ 84] pusharglistnoret 1 ...................... <me>
+  [ 86] objcall 1439 ............................ me.updateMoveVector()
+  [ 89] ret
+end
+
+on checkOnce me, theKey
+  [  0] getprop 1446 ............................ <pResults>
+  [  3] getparam 1 .............................. <theKey>
+  [  5] pusharglist 2 ........................... <pResults, theKey>
+  [  7] objcall 301 ............................. <pResults[theKey]>
+  [ 10] pushint8 1 .............................. <1>
+  [ 12] eq ...................................... <pResults[theKey] = 1>
+  [ 13] getprop 1448 ............................ <pLastResults>
+  [ 16] getparam 1 .............................. <theKey>
+  [ 18] pusharglist 2 ........................... <pLastResults, theKey>
+  [ 20] objcall 301 ............................. <pLastResults[theKey]>
+  [ 23] pushzero ................................ <0>
+  [ 24] eq ...................................... <pLastResults[theKey] = 0>
+  [ 25] and ..................................... <(pResults[theKey] = 1) and (pLastResults[theKey] = 0)>
+  [ 26] jmpifz [ 35] ............................ if (pResults[theKey] = 1) and (pLastResults[theKey] = 0) then
+  [ 29] pushint8 1 .............................. <1>
+  [ 31] pusharglistnoret 1 ...................... <1>
+  [ 33] extcall 3 ............................... return 1
+  [ 35] ret
+end
+
+on getCurrentKeySet me
+  [  0] getprop 1440 ............................ <pCurrentKeySet>
+  [  3] pusharglistnoret 1 ...................... <pCurrentKeySet>
+  [  5] extcall 3 ............................... return pCurrentKeySet
+  [  7] ret
+end
+
+on getKeyFor me, theCommand
+  [  0] getprop 1443 ............................ <pKeyBinding>
+  [  3] getparam 1 .............................. <theCommand>
+  [  5] pusharglist 2 ........................... <pKeyBinding, theCommand>
+  [  7] objcall 301 ............................. <pKeyBinding[theCommand]>
+  [ 10] setlocal 0 .............................. keyNum = pKeyBinding[theCommand]
+  [ 12] getglobal 191 ........................... <g>
+  [ 14] getchainedprop 1451 ..................... <g.keyChooseMaster>
+  [ 17] getlocal 0 .............................. <keyNum>
+  [ 19] pusharglist 2 ........................... <g.keyChooseMaster, keyNum>
+  [ 21] objcall 1452 ............................ <g.keyChooseMaster.convertKeyNumToChar(keyNum)>
+  [ 24] setlocal 1 .............................. keyText = g.keyChooseMaster.convertKeyNumToChar(keyNum)
+  [ 26] getlocal 1 .............................. <keyText>
+  [ 28] pusharglistnoret 1 ...................... <keyText>
+  [ 30] extcall 3 ............................... return keyText
+  [ 32] ret
+end
+
+on getKeyResult me, theKey
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <theKey>
+  [  4] pusharglist 2 ........................... <me, theKey>
+  [  6] objcall 1431 ............................ <me.checkOnce(theKey)>
+  [  9] pusharglistnoret 1 ...................... <me.checkOnce(theKey)>
+  [ 11] extcall 3 ............................... return me.checkOnce(theKey)
+  [ 13] ret
+end
+
+on getMoveVector me
+  [  0] getprop 1444 ............................ <pMoveVector>
+  [  3] pusharglistnoret 1 ...................... <pMoveVector>
+  [  5] extcall 3 ............................... return pMoveVector
+  [  7] ret
+end
+
+on loadKeySet me
+  [  0] getglobal 1455 .......................... <gKeySetFileName>
+  [  3] pusharglist 1 ........................... <gKeySetFileName>
+  [  5] extcall 1344 ............................ <getPref(gKeySetFileName)>
+  [  8] setlocal 0 .............................. keySet = getPref(gKeySetFileName)
+  [ 10] getlocal 0 .............................. <keySet>
+  [ 12] pusharglist 0 ........................... <>
+  [ 14] extcall 388 ............................. <VOID>
+  [ 17] eq ...................................... <keySet = VOID>
+  [ 18] jmpifz [ 29] ............................ if keySet = VOID then / else
+  [ 21] getprop 1441 ............................ <pDefaultKeySet>
+  [ 24] setlocal 0 .............................. keySet = pDefaultKeySet
+  [ 26] jmp [ 38]
+  [ 29] getlocal 0 .............................. <keySet>
+  [ 31] pusharglist 1 ........................... <keySet>
+  [ 33] extcall 442 ............................. <symbol(keySet)>
+  [ 36] setlocal 0 .............................. keySet = symbol(keySet)
+  [ 38] getlocal 0 .............................. <keySet>
+  [ 40] pusharglistnoret 1 ...................... <keySet>
+  [ 42] extcall 3 ............................... return keySet
+  [ 44] ret
+end
+
+on saveKeySet me
+  [  0] getprop 1440 ............................ <pCurrentKeySet>
+  [  3] pusharglist 1 ........................... <pCurrentKeySet>
+  [  5] extcall 350 ............................. <ilk(pCurrentKeySet)>
+  [  8] pushsymb 388 ............................ <#void>
+  [ 11] nteq .................................... <ilk(pCurrentKeySet) <> #void>
+  [ 12] jmpifz [ 35] ............................ if ilk(pCurrentKeySet) <> #void then
+  [ 15] getprop 1440 ............................ <pCurrentKeySet>
+  [ 18] pusharglist 1 ........................... <pCurrentKeySet>
+  [ 20] extcall 530 ............................. <string(pCurrentKeySet)>
+  [ 23] setlocal 0 .............................. keySet = string(pCurrentKeySet)
+  [ 25] getglobal 1455 .......................... <gKeySetFileName>
+  [ 28] getlocal 0 .............................. <keySet>
+  [ 30] pusharglistnoret 2 ...................... <gKeySetFileName, keySet>
+  [ 32] extcall 1352 ............................ setPref(gKeySetFileName, keySet)
+  [ 35] ret
+end
+
+on setKeySet me, newValue
+  [  0] getparam 1 .............................. <newValue>
+  [  2] setprop 1440 ............................ pCurrentKeySet = newValue
+  [  5] getglobal 191 ........................... <g>
+  [  7] getchainedprop 658 ...................... <g.collectionsMaster>
+  [ 10] pushsymb 429 ............................ <#objKeyBinding>
+  [ 13] getprop 1440 ............................ <pCurrentKeySet>
+  [ 16] pusharglist 3 ........................... <g.collectionsMaster, #objKeyBinding, pCurrentKeySet>
+  [ 18] objcall 424 ............................. <g.collectionsMaster.getObject(#objKeyBinding, pCurrentKeySet)>
+  [ 21] setlocal 0 .............................. obj = g.collectionsMaster.getObject(#objKeyBinding, pCurrentKeySet)
+  [ 23] getlocal 0 .............................. <obj>
+  [ 25] pusharglist 1 ........................... <obj>
+  [ 27] objcall 931 ............................. <obj.getData()>
+  [ 30] setprop 1443 ............................ pKeyBinding = obj.getData()
+  [ 33] getparam 0 .............................. <me>
+  [ 35] pusharglistnoret 1 ...................... <me>
+  [ 37] objcall 1430 ............................ me.initResults()
+  [ 40] getparam 0 .............................. <me>
+  [ 42] pusharglistnoret 1 ...................... <me>
+  [ 44] objcall 685 ............................. me.checkKeys()
+  [ 47] ret
+end
+
+on start me
+  [  0] ret
+end
+
+on stop me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 239 ............................. me.finish()
+  [  6] ret
+end
+
+on updateMoveVector me
+  [  0] pushzero ................................ <0>
+  [  1] pushzero ................................ <0>
+  [  2] pusharglist 2 ........................... <0, 0>
+  [  4] extcall 122 ............................. <point(0, 0)>
+  [  6] setlocal 0 .............................. moveVector = point(0, 0)
+  [  8] pushint8 1 .............................. <1>
+  [ 10] setlocal 1
+  [ 12] getlocal 1
+  [ 14] getprop 1445 ............................ <pMoveKeyVectors>
+  [ 17] getobjprop 348 .......................... <pMoveKeyVectors.count>
+  [ 20] lteq
+  [ 21] jmpifz [ 73] ............................ repeat with i = 1 to pMoveKeyVectors.count
+  [ 24] getprop 1445 ............................ <pMoveKeyVectors>
+  [ 27] getlocal 1 .............................. <i>
+  [ 29] pusharglist 2 ........................... <pMoveKeyVectors, i>
+  [ 31] objcall 415 ............................. <pMoveKeyVectors.getPropAt(i)>
+  [ 34] setlocal 2 .............................. nDir = pMoveKeyVectors.getPropAt(i)
+  [ 36] getprop 1446 ............................ <pResults>
+  [ 39] getlocal 2 .............................. <nDir>
+  [ 41] pusharglist 2 ........................... <pResults, nDir>
+  [ 43] objcall 301 ............................. <pResults[nDir]>
+  [ 46] jmpifz [ 64] ............................ if pResults[nDir] then
+  [ 49] getlocal 0 .............................. <moveVector>
+  [ 51] getprop 1445 ............................ <pMoveKeyVectors>
+  [ 54] getlocal 2 .............................. <nDir>
+  [ 56] pusharglist 2 ........................... <pMoveKeyVectors, nDir>
+  [ 58] objcall 301 ............................. <pMoveKeyVectors[nDir]>
+  [ 61] add ..................................... <moveVector + pMoveKeyVectors[nDir]>
+  [ 62] setlocal 0 .............................. moveVector = moveVector + pMoveKeyVectors[nDir]
+  [ 64] pushint8 1
+  [ 66] getlocal 1
+  [ 68] add
+  [ 69] setlocal 1
+  [ 71] endrepeat [ 12]
+  [ 73] getlocal 0 .............................. <moveVector>
+  [ 75] setprop 1444 ............................ pMoveVector = moveVector
+  [ 78] ret
+end

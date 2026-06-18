@@ -1,0 +1,161 @@
+property ancestor, pInstalledModules, pModules, pModulesInit
+
+on new me
+  [  0] pushcons 0 .............................. <"objModuleCatcher">
+  [  2] pusharglist 1 ........................... <"objModuleCatcher">
+  [  4] extcall 34 .............................. <script("objModuleCatcher")>
+  [  6] pusharglist 1 ........................... <script("objModuleCatcher")>
+  [  8] extcall 0 ............................... <new(script("objModuleCatcher"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objModuleCatcher"))
+  [ 12] pusharglist 0 ........................... <[]>
+  [ 14] pushlist ................................ <[]>
+  [ 15] setprop 3330 ............................ pInstalledModules = []
+  [ 18] pushzero ................................ <0>
+  [ 19] setprop 3331 ............................ pModulesInit = 0
+  [ 22] pusharglist 0 ........................... <[]>
+  [ 24] pushlist ................................ <[]>
+  [ 25] setprop 3332 ............................ pModules = []
+  [ 28] getparam 0 .............................. <me>
+  [ 30] pusharglistnoret 1 ...................... <me>
+  [ 32] extcall 35 .............................. return me
+  [ 34] ret
+end
+
+on addModule me, theMod
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <theMod>
+  [  4] pusharglistnoret 2 ...................... <me, theMod>
+  [  6] objcall 3328 ............................ me.includeModOnce(theMod)
+  [  9] ret
+end
+
+on addModulesParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 57 ....................... <me.id>
+  [  4] getchainedprop 58 ....................... <me.id.bigMe>
+  [  6] pusharglistnoret 1 ...................... <me.id.bigMe>
+  [  8] objcall 2 ............................... me.id.bigMe.addModParams()
+  [ 10] ret
+end
+
+on createModules me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] setlocal 0 .............................. objParams = ancestor
+  [  4] pushsymb 49 ............................. <#none>
+  [  6] setlocal 1 .............................. prevMod = #none
+  [  8] getprop 3332 ............................ <pModules>
+  [ 11] peek 0
+  [ 13] pusharglist 1
+  [ 15] extcall 257
+  [ 18] pushint8 1
+  [ 20] peek 0
+  [ 22] peek 2
+  [ 24] lteq
+  [ 25] jmpifz [112] ............................ repeat with nModule in pModules
+  [ 28] peek 2
+  [ 30] peek 1
+  [ 32] pusharglist 2
+  [ 34] extcall 109
+  [ 36] setlocal 2
+  [ 38] getlocal 2 .............................. <nModule>
+  [ 40] pusharglist 1 ........................... <nModule>
+  [ 42] extcall 34 .............................. <script(nModule)>
+  [ 44] pusharglist 1 ........................... <script(nModule)>
+  [ 46] extcall 0 ............................... <new(script(nModule))>
+  [ 48] setlocal 3 .............................. nMod = new(script(nModule))
+  [ 50] getlocal 3 .............................. <nMod>
+  [ 52] getlocal 0 .............................. <objParams>
+  [ 54] pusharglistnoret 2 ...................... <nMod, objParams>
+  [ 56] objcall 871 ............................. nMod.setAncestor(objParams)
+  [ 59] getlocal 1 .............................. <prevMod>
+  [ 61] pushsymb 49 ............................. <#none>
+  [ 63] nteq .................................... <prevMod <> #none>
+  [ 64] jmpifz [ 79] ............................ if prevMod <> #none then / else
+  [ 67] getlocal 1 .............................. <prevMod>
+  [ 69] getlocal 3 .............................. <nMod>
+  [ 71] pusharglistnoret 2 ...................... <prevMod, nMod>
+  [ 73] objcall 871 ............................. prevMod.setAncestor(nMod)
+  [ 76] jmp [ 88]
+  [ 79] getparam 0 .............................. <me>
+  [ 81] getlocal 3 .............................. <nMod>
+  [ 83] pusharglistnoret 2 ...................... <me, nMod>
+  [ 85] objcall 871 ............................. me.setAncestor(nMod)
+  [ 88] getlocal 3 .............................. <nMod>
+  [ 90] setlocal 1 .............................. prevMod = nMod
+  [ 92] getprop 3330 ............................ <pInstalledModules>
+  [ 95] getlocal 2 .............................. <nModule>
+  [ 97] pusharglist 1 ........................... <nModule>
+  [ 99] extcall 1417 ............................ <symbol(nModule)>
+  [102] pusharglistnoret 2 ...................... <pInstalledModules, symbol(nModule)>
+  [104] objcall 256 ............................. pInstalledModules.append(symbol(nModule))
+  [107] pushint8 1
+  [109] add
+  [110] endrepeat [ 20]
+  [112] pop 3
+  [114] ret
+end
+
+on getParams me, function
+  [  0] getprop 3332 ............................ <pModules>
+  [  3] pusharglist 0 ........................... <[]>
+  [  5] pushlist ................................ <[]>
+  [  6] nteq .................................... <pModules <> []>
+  [  7] getprop 3331 ............................ <pModulesInit>
+  [ 10] pushzero ................................ <0>
+  [ 11] eq ...................................... <pModulesInit = 0>
+  [ 12] and ..................................... <(pModules <> []) and (pModulesInit = 0)>
+  [ 13] jmpifz [ 35] ............................ if (pModules <> []) and (pModulesInit = 0) then
+  [ 16] getparam 0 .............................. <me>
+  [ 18] pusharglistnoret 1 ...................... <me>
+  [ 20] objcall 3327 ............................ me.createModules()
+  [ 23] getparam 0 .............................. <me>
+  [ 25] pusharglistnoret 1 ...................... <me>
+  [ 27] objcall 3326 ............................ me.addModulesParams()
+  [ 30] pushint8 1 .............................. <1>
+  [ 32] setprop 3331 ............................ pModulesInit = 1
+  [ 35] getprop 33 .............................. <ancestor>
+  [ 37] getparam 1 .............................. <function>
+  [ 39] pusharglist 2 ........................... <ancestor, function>
+  [ 41] objcall 230 ............................. <ancestor.getParams(function)>
+  [ 43] pusharglistnoret 1 ...................... <ancestor.getParams(function)>
+  [ 45] extcall 35 .............................. return ancestor.getParams(function)
+  [ 47] ret
+end
+
+on includeModOnce me, theMod
+  [  0] getprop 3332 ............................ <pModules>
+  [  3] getparam 1 .............................. <theMod>
+  [  5] pusharglist 2 ........................... <pModules, theMod>
+  [  7] objcall 219 ............................. <pModules.getPos(theMod)>
+  [  9] pushint8 1 .............................. <1>
+  [ 11] lt ...................................... <pModules.getPos(theMod) < 1>
+  [ 12] jmpifz [ 25] ............................ if pModules.getPos(theMod) < 1 then
+  [ 15] getprop 3332 ............................ <pModules>
+  [ 18] getparam 1 .............................. <theMod>
+  [ 20] pusharglistnoret 2 ...................... <pModules, theMod>
+  [ 22] objcall 256 ............................. pModules.append(theMod)
+  [ 25] ret
+end
+
+on modIsInstalled me, theSym
+  [  0] getprop 3330 ............................ <pInstalledModules>
+  [  3] getparam 1 .............................. <theSym>
+  [  5] pusharglist 2 ........................... <pInstalledModules, theSym>
+  [  7] objcall 219 ............................. <pInstalledModules.getPos(theSym)>
+  [  9] pushzero ................................ <0>
+  [ 10] gt ...................................... <pInstalledModules.getPos(theSym) > 0>
+  [ 11] jmpifz [ 20] ............................ if pInstalledModules.getPos(theSym) > 0 then
+  [ 14] pushint8 1 .............................. <1>
+  [ 16] pusharglistnoret 1 ...................... <1>
+  [ 18] extcall 35 .............................. return 1
+  [ 20] pushzero ................................ <0>
+  [ 21] pusharglistnoret 1 ...................... <0>
+  [ 23] extcall 35 .............................. return 0
+  [ 25] ret
+end
+
+on setAncestor me, newVal
+  [  0] getparam 1 .............................. <newVal>
+  [  2] setprop 33 .............................. ancestor = newVal
+  [  4] ret
+end

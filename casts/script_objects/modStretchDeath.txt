@@ -1,0 +1,181 @@
+[#name: "modStretchDeath", #scriptType: #parent, #type: #script]
+-- for any character that needs a magical-style death.
+
+global g
+
+property ancestor
+property pBlendFin       -- whether the blend transform is finished
+property pBlendSpeed     -- the speed of the blend (target is always 0)
+property pHeightFin      -- whether the height transform is finished
+property pStretchDeath   -- whether the character should die with a stretch death
+property pStretchDeathStarted -- whether the stretch death has been started.
+property pStretchHeight  -- the height the character will stretch to
+property pStretchSpeed   -- the speed of the stretch
+
+
+on new me
+  ancestor = new (script("modModule"))
+  return me
+end
+
+on init me, params  
+  ancestor.init(params)
+  
+  pBlendFin = true
+  pHeightFin = true
+  pBlendSpeed = params.blendSpeed
+  pStretchDeath = params.stretchDeath
+  pStretchDeathStarted = false
+  pStretchHeight = params.stretchHeight
+  pStretchSpeed = params.stretchSpeed
+end
+
+on addModParams me
+  i = me.modifyParams(#init)
+  
+  i[#blendSpeed] = 3
+  i[#stretchDeath] = false
+  i[#stretchHeight] = 50
+  i[#stretchSpeed] = 1
+  
+  ancestor.addModParams()
+end
+
+on checkFin me
+  if pBlendFin and pHeightFin then
+    me.big.internalEvent(#stretchDeathFin)
+  end if
+end
+
+on getStretchDeath me
+  return pStretchDeath  
+end
+
+on internalEvent me, theEvent
+  ancestor.internalEvent(theEvent)
+  
+  case theEvent of
+    #landed, #outOfEnergy, #reelFinished, #reelLanded, #walk:
+      if me.big.checkDead() then
+        
+        if pStretchDeath = true then
+          me.startStretchDeath()
+          me.big.goMode(#dazed)
+        else
+          me.big.goMode(#die)
+        end if
+        
+      end if
+      
+    #stretchDeathFin:
+      me.big.goMode(#dead)
+      
+    #transBlendFin:
+      if pStretchDeathStarted then      
+        pBlendFin = true
+        me.checkFin()
+      end if
+      
+    #transHeightFin:
+      if pStretchDeathStarted then
+        pHeightFin = true
+        me.checkFin()
+      end if
+      
+  end case
+end
+
+on startStretchDeath me
+  --  pTransBlend = g.objectMaster.requestObject(#objTransBlend)
+  --  params = pTransBlend.getParams()
+  --  params.callingPrg = me.ID.bigMe
+  --  params.targetValue = 0
+  --  params.speed = pBlendSpeed
+  --  params.spr = me.ID.bigMe.getSprite()
+  --  
+  --  pTransBlend.init(params)
+  --  pTransBlend.calcStart()
+  
+  me.big.startTransBlend(pBlendSpeed, #out)
+  
+  --  pTransHeight = g.objectMaster.requestObject(#objTransHeight)
+  --  params = pTransHeight.getParams()
+  --  params.callingPrg = me.ID.bigMe
+  --  params.targetValue = pStretchHeight
+  --  params.speed = pStretchSpeed
+  --  params.spr = me.ID.bigMe.getSprite()
+  --  
+  --  pTransHeight.init(params)
+  --  pTransHeight.calcStart()
+  
+  me.big.startStretchHeight(pStretchHeight, pStretchSpeed)
+  
+  pStretchDeathStarted = true
+  
+  me.big.internalEvent(#stretchDeathStarted)
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

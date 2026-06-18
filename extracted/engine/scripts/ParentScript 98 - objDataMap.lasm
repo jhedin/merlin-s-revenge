@@ -1,0 +1,718 @@
+property ancestor, pBlankEntry, pErrorLocOutsideMapSymbol, pMap, pMapSize
+
+on new me
+  [  0] pushcons 0 .............................. <"objSpriteMember">
+  [  2] pusharglist 1 ........................... <"objSpriteMember">
+  [  4] extcall 34 .............................. <script("objSpriteMember")>
+  [  6] pusharglist 1 ........................... <script("objSpriteMember")>
+  [  8] extcall 0 ............................... <new(script("objSpriteMember"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objSpriteMember"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 2257 ........................... <#blankEntry>
+  [ 27] pushzero ................................ <0>
+  [ 28] pusharglistnoret 3 ...................... <i, #blankEntry, 0>
+  [ 30] objcall 48 .............................. i[#blankEntry] = 0
+  [ 32] getlocal 0 .............................. <i>
+  [ 34] pushsymb 2263 ........................... <#errorLocOutsideMapSymbol>
+  [ 37] pushsymb 853 ............................ <#errorOutsideMap>
+  [ 40] pusharglistnoret 3 ...................... <i, #errorLocOutsideMapSymbol, #errorOutsideMap>
+  [ 42] objcall 48 .............................. i[#errorLocOutsideMapSymbol] = #errorOutsideMap
+  [ 44] getlocal 0 .............................. <i>
+  [ 46] pushsymb 970 ............................ <#map>
+  [ 49] pushsymb 49 ............................. <#none>
+  [ 51] pusharglistnoret 3 ...................... <i, #map, #none>
+  [ 53] objcall 48 .............................. i[#map] = #none
+  [ 55] getlocal 0 .............................. <i>
+  [ 57] pushsymb 820 ............................ <#mapSize>
+  [ 60] pushint8 10 ............................. <10>
+  [ 62] pushint8 10 ............................. <10>
+  [ 64] pusharglist 2 ........................... <10, 10>
+  [ 66] extcall 197 ............................. <point(10, 10)>
+  [ 68] pusharglistnoret 3 ...................... <i, #mapSize, point(10, 10)>
+  [ 70] objcall 48 .............................. i[#mapSize] = point(10, 10)
+  [ 72] getparam 0 .............................. <me>
+  [ 74] pusharglistnoret 1 ...................... <me>
+  [ 76] extcall 35 .............................. return me
+  [ 78] ret
+end
+
+on init me, params
+  [  0] getparam 1 .............................. <params>
+  [  2] getobjprop 2263 ......................... <params.errorLocOutsideMapSymbol>
+  [  5] setprop 2453 ............................ pErrorLocOutsideMapSymbol = params.errorLocOutsideMapSymbol
+  [  8] getprop 33 .............................. <ancestor>
+  [ 10] getparam 1 .............................. <params>
+  [ 12] pusharglistnoret 2 ...................... <ancestor, params>
+  [ 14] objcall 1 ............................... ancestor.init(params)
+  [ 16] getparam 1 .............................. <params>
+  [ 18] getobjprop 970 .......................... <params.map>
+  [ 21] peek 0 .................................. case params.map of
+  [ 23] pushsymb 49 ............................. <#none>
+  [ 25] eq
+  [ 26] jmpifz [ 49] ............................ (case) #none:
+  [ 29] getparam 0 .............................. <me>
+  [ 31] getparam 1 .............................. <params>
+  [ 33] getobjprop 820 .......................... <params.mapSize>
+  [ 36] getparam 1 .............................. <params>
+  [ 38] getobjprop 2257 ......................... <params.blankEntry>
+  [ 41] pusharglistnoret 3 ...................... <me, params.mapSize, params.blankEntry>
+  [ 43] objcall 2443 ............................ me.createBlank(params.mapSize, params.blankEntry)
+  [ 46] jmp [ 85]
+  [ 49] peek 0
+  [ 51] pushsymb 2454 ........................... <#incremental>
+  [ 54] eq
+  [ 55] jmpifz [ 73] ............................ (case) #incremental:
+  [ 58] getparam 0 .............................. <me>
+  [ 60] getparam 1 .............................. <params>
+  [ 62] getobjprop 820 .......................... <params.mapSize>
+  [ 65] pusharglistnoret 2 ...................... <me, params.mapSize>
+  [ 67] objcall 2444 ............................ me.createIncremental(params.mapSize)
+  [ 70] jmp [ 85] ............................... (case) otherwise:
+  [ 73] getparam 0 .............................. <me>
+  [ 75] getparam 1 .............................. <params>
+  [ 77] getobjprop 970 .......................... <params.map>
+  [ 80] pusharglistnoret 2 ...................... <me, params.map>
+  [ 82] objcall 2450 ............................ me.setMap(params.map)
+  [ 85] pop 1 ................................... end case
+  [ 87] ret
+end
+
+on checkValidCol me, theCol
+  [  0] getparam 1 .............................. <theCol>
+  [  2] pushint8 1 .............................. <1>
+  [  4] getprop 2456 ............................ <pMapSize>
+  [  7] pushint8 1 .............................. <1>
+  [  9] pusharglist 2 ........................... <pMapSize, 1>
+  [ 11] objcall 109 ............................. <pMapSize[1]>
+  [ 13] pusharglist 3 ........................... <theCol, 1, pMapSize[1]>
+  [ 15] extcall 2455 ............................ <VarInRange(theCol, 1, pMapSize[1])>
+  [ 18] pusharglistnoret 1 ...................... <VarInRange(theCol, 1, pMapSize[1])>
+  [ 20] extcall 35 .............................. return VarInRange(theCol, 1, pMapSize[1])
+  [ 22] ret
+end
+
+on checkValidLoc me, theloc
+  [  0] getparam 1 .............................. <theloc>
+  [  2] pushint8 1 .............................. <1>
+  [  4] pushint8 1 .............................. <1>
+  [  6] getprop 2456 ............................ <pMapSize>
+  [  9] pushint8 1 .............................. <1>
+  [ 11] pusharglist 2 ........................... <pMapSize, 1>
+  [ 13] objcall 109 ............................. <pMapSize[1]>
+  [ 15] getprop 2456 ............................ <pMapSize>
+  [ 18] pushint8 2 .............................. <2>
+  [ 20] pusharglist 2 ........................... <pMapSize, 2>
+  [ 22] objcall 109 ............................. <pMapSize[2]>
+  [ 24] pusharglist 4 ........................... <1, 1, pMapSize[1], pMapSize[2]>
+  [ 26] extcall 263 ............................. <rect(1, 1, pMapSize[1], pMapSize[2])>
+  [ 29] pusharglist 2 ........................... <theloc, rect(1, 1, pMapSize[1], pMapSize[2])>
+  [ 31] extcall 2458 ............................ <GeomInside(theloc, rect(1, 1, pMapSize[1], pMapSize[2]))>
+  [ 34] pusharglistnoret 1 ...................... <GeomInside(theloc, rect(1, 1, pMapSize[1], pMapSize[2]))>
+  [ 36] extcall 35 .............................. return GeomInside(theloc, rect(1, 1, pMapSize[1], pMapSize[2]))
+  [ 38] ret
+end
+
+on checkValidRow me, theRow
+  [  0] getparam 1 .............................. <theRow>
+  [  2] pushint8 1 .............................. <1>
+  [  4] getprop 2456 ............................ <pMapSize>
+  [  7] pushint8 2 .............................. <2>
+  [  9] pusharglist 2 ........................... <pMapSize, 2>
+  [ 11] objcall 109 ............................. <pMapSize[2]>
+  [ 13] pusharglist 3 ........................... <theRow, 1, pMapSize[2]>
+  [ 15] extcall 2455 ............................ <VarInRange(theRow, 1, pMapSize[2])>
+  [ 18] pusharglistnoret 1 ...................... <VarInRange(theRow, 1, pMapSize[2])>
+  [ 20] extcall 35 .............................. return VarInRange(theRow, 1, pMapSize[2])
+  [ 22] ret
+end
+
+on createBlank me, mapSize, blankEntry
+  [  0] getparam 2 .............................. <blankEntry>
+  [  2] setprop 2460 ............................ pBlankEntry = blankEntry
+  [  5] getparam 0 .............................. <me>
+  [  7] getparam 1 .............................. <mapSize>
+  [  9] pushsymb 2461 ........................... <#Blank>
+  [ 12] getparam 2 .............................. <blankEntry>
+  [ 14] pusharglistnoret 4 ...................... <me, mapSize, #Blank, blankEntry>
+  [ 16] objcall 2445 ............................ me.createNew(mapSize, #Blank, blankEntry)
+  [ 19] ret
+end
+
+on createIncremental me, mapSize
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <mapSize>
+  [  4] pushsymb 2454 ........................... <#incremental>
+  [  7] pushint8 1 .............................. <1>
+  [  9] pusharglistnoret 4 ...................... <me, mapSize, #incremental, 1>
+  [ 11] objcall 2445 ............................ me.createNew(mapSize, #incremental, 1)
+  [ 14] ret
+end
+
+on createNew me, mapSize, theType, firstEntry
+  [  0] getparam 3 .............................. <firstEntry>
+  [  2] setlocal 0 .............................. nEntry = firstEntry
+  [  4] getparam 1 .............................. <mapSize>
+  [  6] setprop 2456 ............................ pMapSize = mapSize
+  [  9] pusharglist 0 ........................... <[]>
+  [ 11] pushlist ................................ <[]>
+  [ 12] setlocal 1 .............................. themap = []
+  [ 14] pushint8 1 .............................. <1>
+  [ 16] setlocal 2
+  [ 18] getlocal 2
+  [ 20] getprop 2456 ............................ <pMapSize>
+  [ 23] pushint8 2 .............................. <2>
+  [ 25] pusharglist 2 ........................... <pMapSize, 2>
+  [ 27] objcall 109 ............................. <pMapSize[2]>
+  [ 29] lteq
+  [ 30] jmpifz [115] ............................ repeat with r = 1 to pMapSize[2]
+  [ 33] pusharglist 0 ........................... <[]>
+  [ 35] pushlist ................................ <[]>
+  [ 36] setlocal 3 .............................. theRow = []
+  [ 38] pushint8 1 .............................. <1>
+  [ 40] setlocal 4
+  [ 42] getlocal 4
+  [ 44] getprop 2456 ............................ <pMapSize>
+  [ 47] pushint8 1 .............................. <1>
+  [ 49] pusharglist 2 ........................... <pMapSize, 1>
+  [ 51] objcall 109 ............................. <pMapSize[1]>
+  [ 53] lteq
+  [ 54] jmpifz [ 96] ............................ repeat with c = 1 to pMapSize[1]
+  [ 57] getlocal 3 .............................. <theRow>
+  [ 59] getlocal 4 .............................. <c>
+  [ 61] getlocal 0 .............................. <nEntry>
+  [ 63] pusharglistnoret 3 ...................... <theRow, c, nEntry>
+  [ 65] objcall 48 .............................. theRow[c] = nEntry
+  [ 67] getparam 2 .............................. <theType>
+  [ 69] peek 0 .................................. case theType of
+  [ 71] pushsymb 2454 ........................... <#incremental>
+  [ 74] eq
+  [ 75] jmpifz [ 85] ............................ (case) #incremental:
+  [ 78] getlocal 0 .............................. <nEntry>
+  [ 80] pushint8 1 .............................. <1>
+  [ 82] add ..................................... <nEntry + 1>
+  [ 83] setlocal 0 .............................. nEntry = nEntry + 1
+  [ 85] pop 1
+  [ 87] pushint8 1
+  [ 89] getlocal 4
+  [ 91] add
+  [ 92] setlocal 4
+  [ 94] endrepeat [ 42]
+  [ 96] getlocal 1 .............................. <themap>
+  [ 98] getlocal 2 .............................. <r>
+  [100] getlocal 3 .............................. <theRow>
+  [102] pusharglistnoret 3 ...................... <themap, r, theRow>
+  [104] objcall 48 .............................. themap[r] = theRow
+  [106] pushint8 1
+  [108] getlocal 2
+  [110] add
+  [111] setlocal 2
+  [113] endrepeat [ 18]
+  [115] getlocal 1 .............................. <themap>
+  [117] setprop 2462 ............................ pMap = themap
+  [120] ret
+end
+
+on calcEntryNum me, theloc
+  [  0] getparam 1 .............................. <theloc>
+  [  2] pushint8 2 .............................. <2>
+  [  4] pusharglist 2 ........................... <theloc, 2>
+  [  6] objcall 109 ............................. <theloc[2]>
+  [  8] pushint8 1 .............................. <1>
+  [ 10] sub ..................................... <theloc[2] - 1>
+  [ 11] getprop 2456 ............................ <pMapSize>
+  [ 14] pushint8 1 .............................. <1>
+  [ 16] pusharglist 2 ........................... <pMapSize, 1>
+  [ 18] objcall 109 ............................. <pMapSize[1]>
+  [ 20] mul ..................................... <(theloc[2] - 1) * pMapSize[1]>
+  [ 21] setlocal 0 .............................. entryNum = (theloc[2] - 1) * pMapSize[1]
+  [ 23] getlocal 0 .............................. <entryNum>
+  [ 25] getparam 1 .............................. <theloc>
+  [ 27] pushint8 1 .............................. <1>
+  [ 29] pusharglist 2 ........................... <theloc, 1>
+  [ 31] objcall 109 ............................. <theloc[1]>
+  [ 33] add ..................................... <entryNum + theloc[1]>
+  [ 34] setlocal 0 .............................. entryNum = entryNum + theloc[1]
+  [ 36] getlocal 0 .............................. <entryNum>
+  [ 38] pusharglistnoret 1 ...................... <entryNum>
+  [ 40] extcall 35 .............................. return entryNum
+  [ 42] ret
+end
+
+on getCount me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 2447 ............................ <me.getNumEntries()>
+  [  7] pusharglistnoret 1 ...................... <me.getNumEntries()>
+  [  9] extcall 35 .............................. return me.getNumEntries()
+  [ 11] ret
+end
+
+on getSize me
+  [  0] getprop 2456 ............................ <pMapSize>
+  [  3] pusharglistnoret 1 ...................... <pMapSize>
+  [  5] extcall 35 .............................. return pMapSize
+  [  7] ret
+end
+
+on getNumEntries me
+  [  0] getprop 2456 ............................ <pMapSize>
+  [  3] pushint8 1 .............................. <1>
+  [  5] pusharglist 2 ........................... <pMapSize, 1>
+  [  7] objcall 109 ............................. <pMapSize[1]>
+  [  9] getprop 2456 ............................ <pMapSize>
+  [ 12] pushint8 2 .............................. <2>
+  [ 14] pusharglist 2 ........................... <pMapSize, 2>
+  [ 16] objcall 109 ............................. <pMapSize[2]>
+  [ 18] mul ..................................... <pMapSize[1] * pMapSize[2]>
+  [ 19] pusharglistnoret 1 ...................... <pMapSize[1] * pMapSize[2]>
+  [ 21] extcall 35 .............................. return pMapSize[1] * pMapSize[2]
+  [ 23] ret
+end
+
+on getMap me
+  [  0] getprop 2462 ............................ <pMap>
+  [  3] pusharglist 1 ........................... <pMap>
+  [  5] objcall 175 ............................. <pMap.duplicate()>
+  [  7] pusharglistnoret 1 ...................... <pMap.duplicate()>
+  [  9] extcall 35 .............................. return pMap.duplicate()
+  [ 11] ret
+end
+
+on peek me, theloc
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <theloc>
+  [  4] pusharglist 2 ........................... <me, theloc>
+  [  6] objcall 2441 ............................ <me.checkValidLoc(theloc)>
+  [  9] pushzero ................................ <0>
+  [ 10] eq ...................................... <me.checkValidLoc(theloc) = 0>
+  [ 11] jmpifz [ 21] ............................ if me.checkValidLoc(theloc) = 0 then
+  [ 14] getprop 2453 ............................ <pErrorLocOutsideMapSymbol>
+  [ 17] pusharglistnoret 1 ...................... <pErrorLocOutsideMapSymbol>
+  [ 19] extcall 35 .............................. return pErrorLocOutsideMapSymbol
+  [ 21] getparam 1 .............................. <theloc>
+  [ 23] pushint8 1 .............................. <1>
+  [ 25] pusharglist 2 ........................... <theloc, 1>
+  [ 27] objcall 109 ............................. <theloc[1]>
+  [ 29] setlocal 0 .............................. mx = theloc[1]
+  [ 31] getparam 1 .............................. <theloc>
+  [ 33] pushint8 2 .............................. <2>
+  [ 35] pusharglist 2 ........................... <theloc, 2>
+  [ 37] objcall 109 ............................. <theloc[2]>
+  [ 39] setlocal 1 .............................. my = theloc[2]
+  [ 41] getprop 2462 ............................ <pMap>
+  [ 44] getlocal 1 .............................. <my>
+  [ 46] pusharglist 2 ........................... <pMap, my>
+  [ 48] objcall 109 ............................. <pMap[my]>
+  [ 50] getlocal 0 .............................. <mx>
+  [ 52] pusharglist 2 ........................... <pMap[my], mx>
+  [ 54] objcall 109 ............................. <pMap[my][mx]>
+  [ 56] pusharglistnoret 1 ...................... <pMap[my][mx]>
+  [ 58] extcall 35 .............................. return pMap[my][mx]
+  [ 60] ret
+end
+
+on peekEntryNo me, theNum, theloc
+  [  0] getparam 1 .............................. <theNum>
+  [  2] pushint8 1 .............................. <1>
+  [  4] sub ..................................... <theNum - 1>
+  [  5] getprop 2456 ............................ <pMapSize>
+  [  8] pushint8 1 .............................. <1>
+  [ 10] pusharglist 2 ........................... <pMapSize, 1>
+  [ 12] objcall 109 ............................. <pMapSize[1]>
+  [ 14] mod ..................................... <(theNum - 1) mod pMapSize[1]>
+  [ 15] pushint8 1 .............................. <1>
+  [ 17] add ..................................... <((theNum - 1) mod pMapSize[1]) + 1>
+  [ 18] setlocal 0 .............................. col = ((theNum - 1) mod pMapSize[1]) + 1
+  [ 20] getparam 1 .............................. <theNum>
+  [ 22] pushint8 1 .............................. <1>
+  [ 24] sub ..................................... <theNum - 1>
+  [ 25] getprop 2456 ............................ <pMapSize>
+  [ 28] pushint8 1 .............................. <1>
+  [ 30] pusharglist 2 ........................... <pMapSize, 1>
+  [ 32] objcall 109 ............................. <pMapSize[1]>
+  [ 34] div ..................................... <(theNum - 1) / pMapSize[1]>
+  [ 35] pushint8 1 .............................. <1>
+  [ 37] add ..................................... <((theNum - 1) / pMapSize[1]) + 1>
+  [ 38] setlocal 1 .............................. row = ((theNum - 1) / pMapSize[1]) + 1
+  [ 40] getparam 2 .............................. <theloc>
+  [ 42] pusharglist 0 ........................... <>
+  [ 44] extcall 166 ............................. <VOID>
+  [ 46] eq ...................................... <theloc = VOID>
+  [ 47] jmpifz [ 58] ............................ if theloc = VOID then
+  [ 50] pushzero ................................ <0>
+  [ 51] pushzero ................................ <0>
+  [ 52] pusharglist 2 ........................... <0, 0>
+  [ 54] extcall 197 ............................. <point(0, 0)>
+  [ 56] setparam 2 .............................. theloc = point(0, 0)
+  [ 58] getparam 2 .............................. <theloc>
+  [ 60] pushint8 1 .............................. <1>
+  [ 62] getlocal 0 .............................. <col>
+  [ 64] pusharglistnoret 3 ...................... <theloc, 1, col>
+  [ 66] objcall 48 .............................. theloc[1] = col
+  [ 68] getparam 2 .............................. <theloc>
+  [ 70] pushint8 2 .............................. <2>
+  [ 72] getlocal 1 .............................. <row>
+  [ 74] pusharglistnoret 3 ...................... <theloc, 2, row>
+  [ 76] objcall 48 .............................. theloc[2] = row
+  [ 78] getparam 0 .............................. <me>
+  [ 80] getparam 2 .............................. <theloc>
+  [ 82] pusharglist 2 ........................... <me, theloc>
+  [ 84] objcall 396 ............................. <me.peek(theloc)>
+  [ 87] pusharglistnoret 1 ...................... <me.peek(theloc)>
+  [ 89] extcall 35 .............................. return me.peek(theloc)
+  [ 91] ret
+end
+
+on peekEntryNoVert me, theNum, theloc
+  [  0] getparam 1 .............................. <theNum>
+  [  2] pushint8 1 .............................. <1>
+  [  4] sub ..................................... <theNum - 1>
+  [  5] getprop 2456 ............................ <pMapSize>
+  [  8] pushint8 2 .............................. <2>
+  [ 10] pusharglist 2 ........................... <pMapSize, 2>
+  [ 12] objcall 109 ............................. <pMapSize[2]>
+  [ 14] mod ..................................... <(theNum - 1) mod pMapSize[2]>
+  [ 15] pushint8 1 .............................. <1>
+  [ 17] add ..................................... <((theNum - 1) mod pMapSize[2]) + 1>
+  [ 18] setlocal 0 .............................. row = ((theNum - 1) mod pMapSize[2]) + 1
+  [ 20] getparam 1 .............................. <theNum>
+  [ 22] pushint8 1 .............................. <1>
+  [ 24] sub ..................................... <theNum - 1>
+  [ 25] getprop 2456 ............................ <pMapSize>
+  [ 28] pushint8 2 .............................. <2>
+  [ 30] pusharglist 2 ........................... <pMapSize, 2>
+  [ 32] objcall 109 ............................. <pMapSize[2]>
+  [ 34] div ..................................... <(theNum - 1) / pMapSize[2]>
+  [ 35] pushint8 1 .............................. <1>
+  [ 37] add ..................................... <((theNum - 1) / pMapSize[2]) + 1>
+  [ 38] setlocal 1 .............................. col = ((theNum - 1) / pMapSize[2]) + 1
+  [ 40] getparam 2 .............................. <theloc>
+  [ 42] pusharglist 0 ........................... <>
+  [ 44] extcall 166 ............................. <VOID>
+  [ 46] eq ...................................... <theloc = VOID>
+  [ 47] jmpifz [ 58] ............................ if theloc = VOID then
+  [ 50] pushzero ................................ <0>
+  [ 51] pushzero ................................ <0>
+  [ 52] pusharglist 2 ........................... <0, 0>
+  [ 54] extcall 197 ............................. <point(0, 0)>
+  [ 56] setparam 2 .............................. theloc = point(0, 0)
+  [ 58] getparam 2 .............................. <theloc>
+  [ 60] pushint8 1 .............................. <1>
+  [ 62] getlocal 1 .............................. <col>
+  [ 64] pusharglistnoret 3 ...................... <theloc, 1, col>
+  [ 66] objcall 48 .............................. theloc[1] = col
+  [ 68] getparam 2 .............................. <theloc>
+  [ 70] pushint8 2 .............................. <2>
+  [ 72] getlocal 0 .............................. <row>
+  [ 74] pusharglistnoret 3 ...................... <theloc, 2, row>
+  [ 76] objcall 48 .............................. theloc[2] = row
+  [ 78] getparam 0 .............................. <me>
+  [ 80] getparam 2 .............................. <theloc>
+  [ 82] pusharglist 2 ........................... <me, theloc>
+  [ 84] objcall 396 ............................. <me.peek(theloc)>
+  [ 87] pusharglistnoret 1 ...................... <me.peek(theloc)>
+  [ 89] extcall 35 .............................. return me.peek(theloc)
+  [ 91] ret
+end
+
+on peekCol me, theCol
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <theCol>
+  [  4] pusharglist 2 ........................... <me, theCol>
+  [  6] objcall 2440 ............................ <me.checkValidCol(theCol)>
+  [  9] jmpifz [ 89] ............................ if me.checkValidCol(theCol) then / else
+  [ 12] pusharglist 0 ........................... <[]>
+  [ 14] pushlist ................................ <[]>
+  [ 15] setlocal 0 .............................. column = []
+  [ 17] getparam 1 .............................. <theCol>
+  [ 19] pushzero ................................ <0>
+  [ 20] pusharglist 2 ........................... <theCol, 0>
+  [ 22] extcall 197 ............................. <point(theCol, 0)>
+  [ 24] setlocal 1 .............................. nPoint = point(theCol, 0)
+  [ 26] pushint8 1 .............................. <1>
+  [ 28] setlocal 2
+  [ 30] getlocal 2
+  [ 32] getprop 2456 ............................ <pMapSize>
+  [ 35] pushint8 2 .............................. <2>
+  [ 37] pusharglist 2 ........................... <pMapSize, 2>
+  [ 39] objcall 109 ............................. <pMapSize[2]>
+  [ 41] lteq
+  [ 42] jmpifz [ 80] ............................ repeat with r = 1 to pMapSize[2]
+  [ 45] getlocal 1 .............................. <nPoint>
+  [ 47] pushint8 2 .............................. <2>
+  [ 49] getlocal 2 .............................. <r>
+  [ 51] pusharglistnoret 3 ...................... <nPoint, 2, r>
+  [ 53] objcall 48 .............................. nPoint[2] = r
+  [ 55] getlocal 0 .............................. <column>
+  [ 57] getparam 0 .............................. <me>
+  [ 59] getlocal 1 .............................. <nPoint>
+  [ 61] pusharglist 2 ........................... <me, nPoint>
+  [ 63] objcall 396 ............................. <me.peek(nPoint)>
+  [ 66] pusharglistnoret 2 ...................... <column, me.peek(nPoint)>
+  [ 68] objcall 256 ............................. column.append(me.peek(nPoint))
+  [ 71] pushint8 1
+  [ 73] getlocal 2
+  [ 75] add
+  [ 76] setlocal 2
+  [ 78] endrepeat [ 30]
+  [ 80] getlocal 0 .............................. <column>
+  [ 82] pusharglistnoret 1 ...................... <column>
+  [ 84] extcall 35 .............................. return column
+  [ 86] jmp [ 96]
+  [ 89] getprop 2453 ............................ <pErrorLocOutsideMapSymbol>
+  [ 92] pusharglistnoret 1 ...................... <pErrorLocOutsideMapSymbol>
+  [ 94] extcall 35 .............................. return pErrorLocOutsideMapSymbol
+  [ 96] ret
+end
+
+on peekRow me, theRow
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <theRow>
+  [  4] pusharglist 2 ........................... <me, theRow>
+  [  6] objcall 2442 ............................ <me.checkValidRow(theRow)>
+  [  9] jmpifz [ 32] ............................ if me.checkValidRow(theRow) then / else
+  [ 12] getprop 2462 ............................ <pMap>
+  [ 15] getparam 1 .............................. <theRow>
+  [ 17] pusharglist 2 ........................... <pMap, theRow>
+  [ 19] objcall 109 ............................. <pMap[theRow]>
+  [ 21] pusharglist 1 ........................... <pMap[theRow]>
+  [ 23] objcall 175 ............................. <pMap[theRow].duplicate()>
+  [ 25] pusharglistnoret 1 ...................... <pMap[theRow].duplicate()>
+  [ 27] extcall 35 .............................. return pMap[theRow].duplicate()
+  [ 29] jmp [ 39]
+  [ 32] pushsymb 2474 ........................... <#errorRowOutsideMap>
+  [ 35] pusharglistnoret 1 ...................... <#errorRowOutsideMap>
+  [ 37] extcall 35 .............................. return #errorRowOutsideMap
+  [ 39] ret
+end
+
+on poke me, theloc, theVal
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <theloc>
+  [  4] pusharglist 2 ........................... <me, theloc>
+  [  6] objcall 2441 ............................ <me.checkValidLoc(theloc)>
+  [  9] pushzero ................................ <0>
+  [ 10] eq ...................................... <me.checkValidLoc(theloc) = 0>
+  [ 11] jmpifz [ 21] ............................ if me.checkValidLoc(theloc) = 0 then
+  [ 14] pushsymb 2475 ........................... <#errorLocOutsideMap>
+  [ 17] pusharglistnoret 1 ...................... <#errorLocOutsideMap>
+  [ 19] extcall 35 .............................. return #errorLocOutsideMap
+  [ 21] getparam 1 .............................. <theloc>
+  [ 23] pushint8 1 .............................. <1>
+  [ 25] pusharglist 2 ........................... <theloc, 1>
+  [ 27] objcall 109 ............................. <theloc[1]>
+  [ 29] setlocal 0 .............................. mx = theloc[1]
+  [ 31] getparam 1 .............................. <theloc>
+  [ 33] pushint8 2 .............................. <2>
+  [ 35] pusharglist 2 ........................... <theloc, 2>
+  [ 37] objcall 109 ............................. <theloc[2]>
+  [ 39] setlocal 1 .............................. my = theloc[2]
+  [ 41] getprop 2462 ............................ <pMap>
+  [ 44] getlocal 1 .............................. <my>
+  [ 46] pusharglist 2 ........................... <pMap, my>
+  [ 48] objcall 109 ............................. <pMap[my]>
+  [ 50] getlocal 0 .............................. <mx>
+  [ 52] getparam 2 .............................. <theVal>
+  [ 54] pusharglistnoret 3 ...................... <pMap[my], mx, theVal>
+  [ 56] objcall 48 .............................. pMap[my][mx] = theVal
+  [ 58] ret
+end
+
+on pokeAll me, theVal
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 2447 ............................ <me.getNumEntries()>
+  [  7] setlocal 0 .............................. numEntries = me.getNumEntries()
+  [  9] pushzero ................................ <0>
+  [ 10] pushzero ................................ <0>
+  [ 11] pusharglist 2 ........................... <0, 0>
+  [ 13] extcall 197 ............................. <point(0, 0)>
+  [ 15] setlocal 1 .............................. theloc = point(0, 0)
+  [ 17] pushint8 1 .............................. <1>
+  [ 19] setlocal 2
+  [ 21] getlocal 2
+  [ 23] getlocal 0 .............................. <numEntries>
+  [ 25] lteq
+  [ 26] jmpifz [ 62] ............................ repeat with i = 1 to numEntries
+  [ 29] getparam 0 .............................. <me>
+  [ 31] getlocal 2 .............................. <i>
+  [ 33] getlocal 1 .............................. <theloc>
+  [ 35] pusharglist 3 ........................... <me, i, theloc>
+  [ 37] objcall 822 ............................. <me.peekEntryNo(i, theloc)>
+  [ 40] setlocal 3 .............................. nEntry = me.peekEntryNo(i, theloc)
+  [ 42] getparam 0 .............................. <me>
+  [ 44] getlocal 1 .............................. <theloc>
+  [ 46] getparam 1 .............................. <theVal>
+  [ 48] pusharglistnoret 3 ...................... <me, theloc, theVal>
+  [ 50] objcall 854 ............................. me.poke(theloc, theVal)
+  [ 53] pushint8 1
+  [ 55] getlocal 2
+  [ 57] add
+  [ 58] setlocal 2
+  [ 60] endrepeat [ 21]
+  [ 62] ret
+end
+
+on pokeEntryNo me, theNum, newVal, theloc
+  [  0] getparam 1 .............................. <theNum>
+  [  2] pushint8 1 .............................. <1>
+  [  4] sub ..................................... <theNum - 1>
+  [  5] getprop 2456 ............................ <pMapSize>
+  [  8] pushint8 1 .............................. <1>
+  [ 10] pusharglist 2 ........................... <pMapSize, 1>
+  [ 12] objcall 109 ............................. <pMapSize[1]>
+  [ 14] mod ..................................... <(theNum - 1) mod pMapSize[1]>
+  [ 15] pushint8 1 .............................. <1>
+  [ 17] add ..................................... <((theNum - 1) mod pMapSize[1]) + 1>
+  [ 18] setlocal 0 .............................. col = ((theNum - 1) mod pMapSize[1]) + 1
+  [ 20] getparam 1 .............................. <theNum>
+  [ 22] pushint8 1 .............................. <1>
+  [ 24] sub ..................................... <theNum - 1>
+  [ 25] getprop 2456 ............................ <pMapSize>
+  [ 28] pushint8 1 .............................. <1>
+  [ 30] pusharglist 2 ........................... <pMapSize, 1>
+  [ 32] objcall 109 ............................. <pMapSize[1]>
+  [ 34] div ..................................... <(theNum - 1) / pMapSize[1]>
+  [ 35] pushint8 1 .............................. <1>
+  [ 37] add ..................................... <((theNum - 1) / pMapSize[1]) + 1>
+  [ 38] setlocal 1 .............................. row = ((theNum - 1) / pMapSize[1]) + 1
+  [ 40] getparam 3 .............................. <theloc>
+  [ 42] pusharglist 0 ........................... <>
+  [ 44] extcall 166 ............................. <VOID>
+  [ 46] eq ...................................... <theloc = VOID>
+  [ 47] jmpifz [ 58] ............................ if theloc = VOID then
+  [ 50] pushzero ................................ <0>
+  [ 51] pushzero ................................ <0>
+  [ 52] pusharglist 2 ........................... <0, 0>
+  [ 54] extcall 197 ............................. <point(0, 0)>
+  [ 56] setparam 3 .............................. theloc = point(0, 0)
+  [ 58] getparam 3 .............................. <theloc>
+  [ 60] pushint8 1 .............................. <1>
+  [ 62] getlocal 0 .............................. <col>
+  [ 64] pusharglistnoret 3 ...................... <theloc, 1, col>
+  [ 66] objcall 48 .............................. theloc[1] = col
+  [ 68] getparam 3 .............................. <theloc>
+  [ 70] pushint8 2 .............................. <2>
+  [ 72] getlocal 1 .............................. <row>
+  [ 74] pusharglistnoret 3 ...................... <theloc, 2, row>
+  [ 76] objcall 48 .............................. theloc[2] = row
+  [ 78] getparam 0 .............................. <me>
+  [ 80] getparam 3 .............................. <theloc>
+  [ 82] getparam 2 .............................. <newVal>
+  [ 84] pusharglist 3 ........................... <me, theloc, newVal>
+  [ 86] objcall 854 ............................. <me.poke(theloc, newVal)>
+  [ 89] pusharglistnoret 1 ...................... <me.poke(theloc, newVal)>
+  [ 91] extcall 35 .............................. return me.poke(theloc, newVal)
+  [ 93] ret
+end
+
+on pokeMap me, startLoc, objDataMap, inputSize
+  [  0] getparam 3 .............................. <inputSize>
+  [  2] pusharglist 1 ........................... <inputSize>
+  [  4] extcall 1757 ............................ <voidp(inputSize)>
+  [  7] jmpifz [ 19] ............................ if voidp(inputSize) then
+  [ 10] getparam 2 .............................. <objDataMap>
+  [ 12] pusharglist 1 ........................... <objDataMap>
+  [ 14] objcall 819 ............................. <objDataMap.getSize()>
+  [ 17] setparam 3 .............................. inputSize = objDataMap.getSize()
+  [ 19] pushzero ................................ <0>
+  [ 20] pushzero ................................ <0>
+  [ 21] pusharglist 2 ........................... <0, 0>
+  [ 23] extcall 197 ............................. <point(0, 0)>
+  [ 25] setlocal 0 .............................. peekPoint = point(0, 0)
+  [ 27] getparam 1 .............................. <startLoc>
+  [ 29] pushint8 1 .............................. <1>
+  [ 31] pushint8 1 .............................. <1>
+  [ 33] pusharglist 2 ........................... <1, 1>
+  [ 35] extcall 197 ............................. <point(1, 1)>
+  [ 37] sub ..................................... <startLoc - point(1, 1)>
+  [ 38] setlocal 1 .............................. startOffset = startLoc - point(1, 1)
+  [ 40] pushint8 1 .............................. <1>
+  [ 42] setlocal 2
+  [ 44] getlocal 2
+  [ 46] getparam 3 .............................. <inputSize>
+  [ 48] pushint8 2 .............................. <2>
+  [ 50] pusharglist 2 ........................... <inputSize, 2>
+  [ 52] objcall 109 ............................. <inputSize[2]>
+  [ 54] lteq
+  [ 55] jmpifz [143] ............................ repeat with y = 1 to inputSize[2]
+  [ 58] pushint8 1 .............................. <1>
+  [ 60] setlocal 3
+  [ 62] getlocal 3
+  [ 64] getparam 3 .............................. <inputSize>
+  [ 66] pushint8 1 .............................. <1>
+  [ 68] pusharglist 2 ........................... <inputSize, 1>
+  [ 70] objcall 109 ............................. <inputSize[1]>
+  [ 72] lteq
+  [ 73] jmpifz [134] ............................ repeat with x = 1 to inputSize[1]
+  [ 76] getlocal 0 .............................. <peekPoint>
+  [ 78] pushint8 1 .............................. <1>
+  [ 80] getlocal 3 .............................. <x>
+  [ 82] pusharglistnoret 3 ...................... <peekPoint, 1, x>
+  [ 84] objcall 48 .............................. peekPoint[1] = x
+  [ 86] getlocal 0 .............................. <peekPoint>
+  [ 88] pushint8 2 .............................. <2>
+  [ 90] getlocal 2 .............................. <y>
+  [ 92] pusharglistnoret 3 ...................... <peekPoint, 2, y>
+  [ 94] objcall 48 .............................. peekPoint[2] = y
+  [ 96] getlocal 0 .............................. <peekPoint>
+  [ 98] getlocal 1 .............................. <startOffset>
+  [100] add ..................................... <peekPoint + startOffset>
+  [101] setlocal 4 .............................. pokePoint = peekPoint + startOffset
+  [103] getparam 2 .............................. <objDataMap>
+  [105] getlocal 0 .............................. <peekPoint>
+  [107] pusharglist 2 ........................... <objDataMap, peekPoint>
+  [109] objcall 396 ............................. <objDataMap.peek(peekPoint)>
+  [112] setlocal 5 .............................. nData = objDataMap.peek(peekPoint)
+  [114] getparam 0 .............................. <me>
+  [116] getlocal 4 .............................. <pokePoint>
+  [118] getlocal 5 .............................. <nData>
+  [120] pusharglistnoret 3 ...................... <me, pokePoint, nData>
+  [122] objcall 854 ............................. me.poke(pokePoint, nData)
+  [125] pushint8 1
+  [127] getlocal 3
+  [129] add
+  [130] setlocal 3
+  [132] endrepeat [ 62]
+  [134] pushint8 1
+  [136] getlocal 2
+  [138] add
+  [139] setlocal 2
+  [141] endrepeat [ 44]
+  [143] ret
+end
+
+on setMap me, themap
+  [  0] getparam 1 .............................. <themap>
+  [  2] pushint8 1 .............................. <1>
+  [  4] pusharglist 2 ........................... <themap, 1>
+  [  6] objcall 109 ............................. <themap[1]>
+  [  8] getobjprop 257 .......................... <themap[1].count>
+  [ 11] setlocal 0 .............................. mapX = themap[1].count
+  [ 13] getparam 1 .............................. <themap>
+  [ 15] getobjprop 257 .......................... <themap.count>
+  [ 18] setlocal 1 .............................. mapY = themap.count
+  [ 20] getlocal 0 .............................. <mapX>
+  [ 22] getlocal 1 .............................. <mapY>
+  [ 24] pusharglist 2 ........................... <mapX, mapY>
+  [ 26] extcall 197 ............................. <point(mapX, mapY)>
+  [ 28] setprop 2456 ............................ pMapSize = point(mapX, mapY)
+  [ 31] getparam 1 .............................. <themap>
+  [ 33] pusharglist 1 ........................... <themap>
+  [ 35] objcall 175 ............................. <themap.duplicate()>
+  [ 37] setprop 2462 ............................ pMap = themap.duplicate()
+  [ 40] ret
+end
+
+on saveToMember me, theMember
+  [  0] ret
+end
+
+on trimToMaxNum me, maxNum
+  [  0] ret
+end

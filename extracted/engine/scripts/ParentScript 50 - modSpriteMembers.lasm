@@ -1,0 +1,113 @@
+property ancestor, pSpriteMembers
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getprop 33 .............................. <ancestor>
+  [ 12] pusharglistnoret 1 ...................... <ancestor>
+  [ 14] objcall 2 ............................... ancestor.addModParams()
+  [ 16] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pusharglist 0 ........................... <[]>
+  [ 10] pushlist ................................ <[]>
+  [ 11] setprop 1348 ............................ pSpriteMembers = []
+  [ 14] ret
+end
+
+on finish me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 3 ............................... ancestor.finish()
+  [  6] getparam 0 .............................. <me>
+  [  8] pusharglistnoret 1 ...................... <me>
+  [ 10] objcall 1346 ............................ me.finishSpriteMembers()
+  [ 13] ret
+end
+
+on finishSpriteMembers me
+  [  0] getprop 1348 ............................ <pSpriteMembers>
+  [  3] pusharglist 0 ........................... <[]>
+  [  5] pushlist ................................ <[]>
+  [  6] nteq .................................... <pSpriteMembers <> []>
+  [  7] jmpifz [ 53] ............................ if pSpriteMembers <> [] then
+  [ 10] getprop 1348 ............................ <pSpriteMembers>
+  [ 13] peek 0
+  [ 15] pusharglist 1
+  [ 17] extcall 257
+  [ 20] pushint8 1
+  [ 22] peek 0
+  [ 24] peek 2
+  [ 26] lteq
+  [ 27] jmpifz [ 51] ............................ repeat with sprMem in pSpriteMembers
+  [ 30] peek 2
+  [ 32] peek 1
+  [ 34] pusharglist 2
+  [ 36] extcall 109
+  [ 38] setlocal 0
+  [ 40] getlocal 0 .............................. <sprMem>
+  [ 42] pusharglistnoret 1 ...................... <sprMem>
+  [ 44] objcall 3 ............................... sprMem.finish()
+  [ 46] pushint8 1
+  [ 48] add
+  [ 49] endrepeat [ 22]
+  [ 51] pop 3
+  [ 53] pusharglist 0 ........................... <[]>
+  [ 55] pushlist ................................ <[]>
+  [ 56] setprop 1348 ............................ pSpriteMembers = []
+  [ 59] ret
+end
+
+on newSpriteMember me
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 41 ....................... <g.objectMaster>
+  [  4] pushsymb 1350 ........................... <#objSpriteMember>
+  [  7] pusharglist 2 ........................... <g.objectMaster, #objSpriteMember>
+  [  9] objcall 43 .............................. <g.objectMaster.requestObject(#objSpriteMember)>
+  [ 11] setlocal 0 .............................. newSprMem = g.objectMaster.requestObject(#objSpriteMember)
+  [ 13] getlocal 0 .............................. <newSprMem>
+  [ 15] pushsymb 1 .............................. <#init>
+  [ 17] pusharglist 2 ........................... <newSprMem, #init>
+  [ 19] objcall 230 ............................. <newSprMem.getParams(#init)>
+  [ 21] setlocal 1 .............................. params = newSprMem.getParams(#init)
+  [ 23] getlocal 1 .............................. <params>
+  [ 25] getparam 0 .............................. <me>
+  [ 27] getchainedprop 51 ....................... <me.big>
+  [ 29] pusharglist 1 ........................... <me.big>
+  [ 31] objcall 1351 ............................ <me.big.getLayer()>
+  [ 34] setobjprop 1352 ......................... params.layer = me.big.getLayer()
+  [ 37] getlocal 0 .............................. <newSprMem>
+  [ 39] getlocal 1 .............................. <params>
+  [ 41] pusharglistnoret 2 ...................... <newSprMem, params>
+  [ 43] objcall 1 ............................... newSprMem.init(params)
+  [ 45] getprop 1348 ............................ <pSpriteMembers>
+  [ 48] getlocal 0 .............................. <newSprMem>
+  [ 50] pusharglistnoret 2 ...................... <pSpriteMembers, newSprMem>
+  [ 52] objcall 256 ............................. pSpriteMembers.append(newSprMem)
+  [ 55] getlocal 0 .............................. <newSprMem>
+  [ 57] pusharglistnoret 1 ...................... <newSprMem>
+  [ 59] extcall 35 .............................. return newSprMem
+  [ 61] ret
+end

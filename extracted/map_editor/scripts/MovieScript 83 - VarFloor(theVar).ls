@@ -1,0 +1,7 @@
+on VarFloor theVar
+  theInt = integer(theVar * 1000)
+  theRemainder = theInt mod 1000
+  theInt = theInt - theRemainder
+  theInt = theInt / 1000
+  return theInt
+end

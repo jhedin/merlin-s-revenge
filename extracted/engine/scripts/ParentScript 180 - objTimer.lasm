@@ -1,0 +1,78 @@
+property ancestor, pTimeCounter
+
+on new me
+  [  0] pushcons 0 .............................. <"objAutoUpdate">
+  [  2] pusharglist 1 ........................... <"objAutoUpdate">
+  [  4] extcall 34 .............................. <script("objAutoUpdate")>
+  [  6] pusharglist 1 ........................... <script("objAutoUpdate")>
+  [  8] extcall 0 ............................... <new(script("objAutoUpdate"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objAutoUpdate"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 4031 ........................... <#timerFinished>
+  [ 27] setobjprop 1389 ......................... i.callingPrgMessage = #timerFinished
+  [ 30] getlocal 0 .............................. <i>
+  [ 32] pushsymb 2439 ........................... <#framesTime>
+  [ 35] pushint8 30 ............................. <30>
+  [ 37] pusharglistnoret 3 ...................... <i, #framesTime, 30>
+  [ 39] objcall 48 .............................. i[#framesTime] = 30
+  [ 41] getparam 0 .............................. <me>
+  [ 43] pusharglistnoret 1 ...................... <me>
+  [ 45] extcall 35 .............................. return me
+  [ 47] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pusharglist 0 ........................... <>
+  [ 10] extcall 529 ............................. <CounterNew()>
+  [ 13] setprop 2653 ............................ pTimeCounter = CounterNew()
+  [ 16] getprop 2653 ............................ <pTimeCounter>
+  [ 19] pushsymb 530 ............................ <#tim>
+  [ 22] pushint8 2 .............................. <2>
+  [ 24] getparam 1 .............................. <params>
+  [ 26] getobjprop 2439 ......................... <params.framesTime>
+  [ 29] pusharglistnoret 4 ...................... <pTimeCounter, #tim, 2, params.framesTime>
+  [ 31] objcall 531 ............................. pTimeCounter.tim[2] = params.framesTime
+  [ 34] getprop 2653 ............................ <pTimeCounter>
+  [ 37] pusharglistnoret 1 ...................... <pTimeCounter>
+  [ 39] extcall 706 ............................. CounterReset(pTimeCounter)
+  [ 42] getparam 0 .............................. <me>
+  [ 44] pusharglistnoret 1 ...................... <me>
+  [ 46] objcall 692 ............................. me.calcStart()
+  [ 49] ret
+end
+
+on finish me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 3 ............................... ancestor.finish()
+  [  6] pushsymb 49 ............................. <#none>
+  [  8] setprop 2653 ............................ pTimeCounter = #none
+  [ 11] ret
+end
+
+on finishConditionMet me
+  [  0] getprop 2653 ............................ <pTimeCounter>
+  [  3] getobjprop 552 .......................... <pTimeCounter.fin>
+  [  6] pusharglistnoret 1 ...................... <pTimeCounter.fin>
+  [  8] extcall 35 .............................. return pTimeCounter.fin
+  [ 10] ret
+end
+
+on update me
+  [  0] getprop 2653 ............................ <pTimeCounter>
+  [  3] pusharglistnoret 1 ...................... <pTimeCounter>
+  [  5] extcall 767 ............................. CounterOnce(pTimeCounter)
+  [  8] getprop 33 .............................. <ancestor>
+  [ 10] pusharglistnoret 1 ...................... <ancestor>
+  [ 12] objcall 31 .............................. ancestor.update()
+  [ 14] ret
+end

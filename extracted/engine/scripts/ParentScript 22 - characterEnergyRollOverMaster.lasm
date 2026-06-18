@@ -1,0 +1,306 @@
+property pEnergyBar, pFakeAttack, pLevelBar, pExperienceBar, pSurroundHeight, pTeam
+global g, gGameEnergyBarLayer
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 3 ............................... return me
+  [  6] ret
+end
+
+on init me
+  [  0] pushsymb 103 ............................ <#none>
+  [  2] setprop 1098 ............................ pEnergyBar = #none
+  [  5] getglobal 191 ........................... <g>
+  [  7] getchainedprop 192 ...................... <g.structMaster>
+  [  9] pushsymb 53 ............................. <#attack>
+  [ 11] pusharglist 2 ........................... <g.structMaster, #attack>
+  [ 13] objcall 51 .............................. <g.structMaster.getStruct(#attack)>
+  [ 15] setprop 1099 ............................ pFakeAttack = g.structMaster.getStruct(#attack)
+  [ 18] pushsymb 103 ............................ <#none>
+  [ 20] setprop 1100 ............................ pLevelBar = #none
+  [ 23] pushint8 4 .............................. <4>
+  [ 25] setprop 1101 ............................ pSurroundHeight = 4
+  [ 28] pushsymb 1103 ........................... <#healthRollover>
+  [ 31] setprop 1102 ............................ pTeam = #healthRollover
+  [ 34] getparam 0 .............................. <me>
+  [ 36] pusharglistnoret 1 ...................... <me>
+  [ 38] objcall 1090 ............................ me.initEnergyBar()
+  [ 41] getparam 0 .............................. <me>
+  [ 43] pusharglistnoret 1 ...................... <me>
+  [ 45] objcall 1091 ............................ me.initFakeAttack()
+  [ 48] getparam 0 .............................. <me>
+  [ 50] pusharglistnoret 1 ...................... <me>
+  [ 52] objcall 1092 ............................ me.initLevelBar()
+  [ 55] getparam 0 .............................. <me>
+  [ 57] pusharglistnoret 1 ...................... <me>
+  [ 59] objcall 1093 ............................ me.initExperienceBar()
+  [ 62] ret
+end
+
+on initEnergyBar me
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 336 ...................... <g.objectMaster>
+  [  5] pushsymb 1104 ........................... <#objMoveableEnergyBar>
+  [  8] pusharglist 2 ........................... <g.objectMaster, #objMoveableEnergyBar>
+  [ 10] objcall 338 ............................. <g.objectMaster.requestObject(#objMoveableEnergyBar)>
+  [ 13] setprop 1098 ............................ pEnergyBar = g.objectMaster.requestObject(#objMoveableEnergyBar)
+  [ 16] getprop 1098 ............................ <pEnergyBar>
+  [ 19] pusharglist 1 ........................... <pEnergyBar>
+  [ 21] objcall 339 ............................. <pEnergyBar.getParams()>
+  [ 24] setlocal 0 .............................. params = pEnergyBar.getParams()
+  [ 26] getlocal 0 .............................. <params>
+  [ 28] getglobal 1105 .......................... <gGameEnergyBarLayer>
+  [ 31] setobjprop 1106 ......................... params.layer = gGameEnergyBarLayer
+  [ 34] getlocal 0 .............................. <params>
+  [ 36] pushint8 4 .............................. <4>
+  [ 38] setobjprop 1107 ......................... params.surroundHeight = 4
+  [ 41] getprop 1098 ............................ <pEnergyBar>
+  [ 44] getlocal 0 .............................. <params>
+  [ 46] pusharglistnoret 2 ...................... <pEnergyBar, params>
+  [ 48] objcall 1 ............................... pEnergyBar.init(params)
+  [ 50] ret
+end
+
+on initFakeAttack me
+  [  0] getprop 1099 ............................ <pFakeAttack>
+  [  3] setlocal 0 .............................. a = pFakeAttack
+  [  5] getlocal 0 .............................. <a>
+  [  7] pushsymb 152 ............................ <#enemy>
+  [  9] setobjprop 151 .......................... a.targetAllegiance = #enemy
+  [ 11] getlocal 0 .............................. <a>
+  [ 13] pushsymb 154 ............................ <#closestDistance>
+  [ 15] setobjprop 153 .......................... a.targetCriteria = #closestDistance
+  [ 17] getlocal 0 .............................. <a>
+  [ 19] pushsymb 135 ............................ <#teamMembers>
+  [ 21] pushsymb 156 ............................ <#teamBuildings>
+  [ 23] pusharglist 2 ........................... <[#teamMembers, #teamBuildings]>
+  [ 25] pushlist ................................ <[#teamMembers, #teamBuildings]>
+  [ 26] pusharglist 1 ........................... <[[#teamMembers, #teamBuildings]]>
+  [ 28] pushlist ................................ <[[#teamMembers, #teamBuildings]]>
+  [ 29] setobjprop 155 .......................... a.targetRoles = [[#teamMembers, #teamBuildings]]
+  [ 31] ret
+end
+
+on initLevelBar me
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 336 ...................... <g.objectMaster>
+  [  5] pushsymb 1108 ........................... <#objMoveableLevelBar>
+  [  8] pusharglist 2 ........................... <g.objectMaster, #objMoveableLevelBar>
+  [ 10] objcall 338 ............................. <g.objectMaster.requestObject(#objMoveableLevelBar)>
+  [ 13] setprop 1100 ............................ pLevelBar = g.objectMaster.requestObject(#objMoveableLevelBar)
+  [ 16] getprop 1100 ............................ <pLevelBar>
+  [ 19] pusharglist 1 ........................... <pLevelBar>
+  [ 21] objcall 339 ............................. <pLevelBar.getParams()>
+  [ 24] setlocal 0 .............................. params = pLevelBar.getParams()
+  [ 26] getlocal 0 .............................. <params>
+  [ 28] getglobal 1105 .......................... <gGameEnergyBarLayer>
+  [ 31] setobjprop 1106 ......................... params.layer = gGameEnergyBarLayer
+  [ 34] getprop 1100 ............................ <pLevelBar>
+  [ 37] getlocal 0 .............................. <params>
+  [ 39] pusharglistnoret 2 ...................... <pLevelBar, params>
+  [ 41] objcall 1 ............................... pLevelBar.init(params)
+  [ 43] ret
+end
+
+on initExperienceBar me
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 336 ...................... <g.objectMaster>
+  [  5] pushsymb 1110 ........................... <#objMoveableExperienceBar>
+  [  8] pusharglist 2 ........................... <g.objectMaster, #objMoveableExperienceBar>
+  [ 10] objcall 338 ............................. <g.objectMaster.requestObject(#objMoveableExperienceBar)>
+  [ 13] setprop 1109 ............................ pExperienceBar = g.objectMaster.requestObject(#objMoveableExperienceBar)
+  [ 16] getprop 1109 ............................ <pExperienceBar>
+  [ 19] pusharglist 1 ........................... <pExperienceBar>
+  [ 21] objcall 339 ............................. <pExperienceBar.getParams()>
+  [ 24] setlocal 0 .............................. params = pExperienceBar.getParams()
+  [ 26] getlocal 0 .............................. <params>
+  [ 28] getglobal 1105 .......................... <gGameEnergyBarLayer>
+  [ 31] setobjprop 1106 ......................... params.layer = gGameEnergyBarLayer
+  [ 34] getlocal 0 .............................. <params>
+  [ 36] pushint8 4 .............................. <4>
+  [ 38] setobjprop 1107 ......................... params.surroundHeight = 4
+  [ 41] getprop 1109 ............................ <pExperienceBar>
+  [ 44] getlocal 0 .............................. <params>
+  [ 46] pusharglistnoret 2 ...................... <pExperienceBar, params>
+  [ 48] objcall 1 ............................... pExperienceBar.init(params)
+  [ 50] ret
+end
+
+on finish me
+  [  0] getprop 1098 ............................ <pEnergyBar>
+  [  3] pusharglist 1 ........................... <pEnergyBar>
+  [  5] extcall 350 ............................. <ilk(pEnergyBar)>
+  [  8] pushsymb 388 ............................ <#void>
+  [ 11] nteq .................................... <ilk(pEnergyBar) <> #void>
+  [ 12] jmpifz [ 22] ............................ if ilk(pEnergyBar) <> #void then
+  [ 15] getprop 1098 ............................ <pEnergyBar>
+  [ 18] pusharglistnoret 1 ...................... <pEnergyBar>
+  [ 20] objcall 239 ............................. pEnergyBar.finish()
+  [ 22] getprop 1100 ............................ <pLevelBar>
+  [ 25] pusharglist 1 ........................... <pLevelBar>
+  [ 27] extcall 350 ............................. <ilk(pLevelBar)>
+  [ 30] pushsymb 388 ............................ <#void>
+  [ 33] nteq .................................... <ilk(pLevelBar) <> #void>
+  [ 34] jmpifz [ 44] ............................ if ilk(pLevelBar) <> #void then
+  [ 37] getprop 1100 ............................ <pLevelBar>
+  [ 40] pusharglistnoret 1 ...................... <pLevelBar>
+  [ 42] objcall 239 ............................. pLevelBar.finish()
+  [ 44] getprop 1109 ............................ <pExperienceBar>
+  [ 47] pusharglist 1 ........................... <pExperienceBar>
+  [ 49] extcall 350 ............................. <ilk(pExperienceBar)>
+  [ 52] pushsymb 388 ............................ <#void>
+  [ 55] nteq .................................... <ilk(pExperienceBar) <> #void>
+  [ 56] jmpifz [ 66] ............................ if ilk(pExperienceBar) <> #void then
+  [ 59] getprop 1109 ............................ <pExperienceBar>
+  [ 62] pusharglistnoret 1 ...................... <pExperienceBar>
+  [ 64] objcall 239 ............................. pExperienceBar.finish()
+  [ 66] getglobal 191 ........................... <g>
+  [ 68] getchainedprop 677 ...................... <g.updater>
+  [ 71] getparam 0 .............................. <me>
+  [ 73] pusharglistnoret 2 ...................... <g.updater, me>
+  [ 75] objcall 792 ............................. g.updater.removePrg(me)
+  [ 78] ret
+end
+
+on checkMouseOverObj me, theObj
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 686 ...................... <g.mouseMaster>
+  [  5] pusharglist 1 ........................... <g.mouseMaster>
+  [  7] objcall 692 ............................. <g.mouseMaster.getMouseLoc()>
+  [ 10] setlocal 0 .............................. mLoc = g.mouseMaster.getMouseLoc()
+  [ 12] getparam 1 .............................. <theObj>
+  [ 14] pusharglist 1 ........................... <theObj>
+  [ 16] objcall 738 ............................. <theObj.getSpriteRect()>
+  [ 19] setlocal 1 .............................. objRect = theObj.getSpriteRect()
+  [ 21] getlocal 0 .............................. <mLoc>
+  [ 23] getlocal 1 .............................. <objRect>
+  [ 25] pusharglist 2 ........................... <mLoc, objRect>
+  [ 27] objcall 706 ............................. <mLoc.inside(objRect)>
+  [ 30] jmpifz [ 39] ............................ if mLoc.inside(objRect) then
+  [ 33] pushint8 1 .............................. <1>
+  [ 35] pusharglistnoret 1 ...................... <1>
+  [ 37] extcall 3 ............................... return 1
+  [ 39] pushzero ................................ <0>
+  [ 40] pusharglistnoret 1 ...................... <0>
+  [ 42] extcall 3 ............................... return 0
+  [ 44] ret
+end
+
+on getAttack me
+  [  0] getprop 1099 ............................ <pFakeAttack>
+  [  3] pusharglistnoret 1 ...................... <pFakeAttack>
+  [  5] extcall 3 ............................... return pFakeAttack
+  [  7] ret
+end
+
+on getActorType me
+  [  0] pushsymb 647 ............................ <#characterEnergyRollOverMaster>
+  [  3] pusharglistnoret 1 ...................... <#characterEnergyRollOverMaster>
+  [  5] extcall 3 ............................... return #characterEnergyRollOverMaster
+  [  7] ret
+end
+
+on getLoc me
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 686 ...................... <g.mouseMaster>
+  [  5] pusharglist 1 ........................... <g.mouseMaster>
+  [  7] objcall 692 ............................. <g.mouseMaster.getMouseLoc()>
+  [ 10] pusharglistnoret 1 ...................... <g.mouseMaster.getMouseLoc()>
+  [ 12] extcall 3 ............................... return g.mouseMaster.getMouseLoc()
+  [ 14] ret
+end
+
+on getTeam me
+  [  0] getprop 1102 ............................ <pTeam>
+  [  3] pusharglistnoret 1 ...................... <pTeam>
+  [  5] extcall 3 ............................... return pTeam
+  [  7] ret
+end
+
+on leaveNavMode me
+  [  0] getprop 1098 ............................ <pEnergyBar>
+  [  3] pusharglistnoret 1 ...................... <pEnergyBar>
+  [  5] objcall 1113 ............................ pEnergyBar.clearTarget()
+  [  8] getprop 1109 ............................ <pExperienceBar>
+  [ 11] pusharglistnoret 1 ...................... <pExperienceBar>
+  [ 13] objcall 1113 ............................ pExperienceBar.clearTarget()
+  [ 16] ret
+end
+
+on restoreFromSave me
+  [  0] getprop 1098 ............................ <pEnergyBar>
+  [  3] pusharglistnoret 1 ...................... <pEnergyBar>
+  [  5] objcall 1113 ............................ pEnergyBar.clearTarget()
+  [  8] ret
+end
+
+on start me
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 677 ...................... <g.updater>
+  [  5] getparam 0 .............................. <me>
+  [  7] pushsymb 779 ............................ <#hi>
+  [ 10] pusharglistnoret 3 ...................... <g.updater, me, #hi>
+  [ 12] objcall 679 ............................. g.updater.addPrg(me, #hi)
+  [ 15] ret
+end
+
+on stop me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 239 ............................. me.finish()
+  [  6] ret
+end
+
+on update me
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 645 ...................... <g.teamMaster>
+  [  5] getparam 0 .............................. <me>
+  [  7] pusharglist 2 ........................... <g.teamMaster, me>
+  [  9] objcall 1114 ............................ <g.teamMaster.findTarget(me)>
+  [ 12] setlocal 0 .............................. closestChar = g.teamMaster.findTarget(me)
+  [ 14] getlocal 0 .............................. <closestChar>
+  [ 16] getobjprop 187 .......................... <closestChar.obj>
+  [ 18] setlocal 1 .............................. obj = closestChar.obj
+  [ 20] getlocal 1 .............................. <obj>
+  [ 22] pushsymb 103 ............................ <#none>
+  [ 24] eq ...................................... <obj = #none>
+  [ 25] jmpifz [ 55] ............................ if obj = #none then / else
+  [ 28] getprop 1098 ............................ <pEnergyBar>
+  [ 31] pusharglistnoret 1 ...................... <pEnergyBar>
+  [ 33] objcall 1113 ............................ pEnergyBar.clearTarget()
+  [ 36] getprop 1109 ............................ <pExperienceBar>
+  [ 39] pusharglistnoret 1 ...................... <pExperienceBar>
+  [ 41] objcall 1113 ............................ pExperienceBar.clearTarget()
+  [ 44] getprop 1100 ............................ <pLevelBar>
+  [ 47] pusharglistnoret 1 ...................... <pLevelBar>
+  [ 49] objcall 1113 ............................ pLevelBar.clearTarget()
+  [ 52] jmp [ 97]
+  [ 55] getparam 0 .............................. <me>
+  [ 57] getlocal 1 .............................. <obj>
+  [ 59] pusharglist 2 ........................... <me, obj>
+  [ 61] objcall 1094 ............................ <me.checkMouseOverObj(obj)>
+  [ 64] jmpifz [ 97] ............................ if me.checkMouseOverObj(obj) then
+  [ 67] getprop 1098 ............................ <pEnergyBar>
+  [ 70] getlocal 1 .............................. <obj>
+  [ 72] pusharglistnoret 2 ...................... <pEnergyBar, obj>
+  [ 74] objcall 1115 ............................ pEnergyBar.setTarget(obj)
+  [ 77] getprop 1109 ............................ <pExperienceBar>
+  [ 80] getlocal 1 .............................. <obj>
+  [ 82] pusharglistnoret 2 ...................... <pExperienceBar, obj>
+  [ 84] objcall 1115 ............................ pExperienceBar.setTarget(obj)
+  [ 87] getprop 1100 ............................ <pLevelBar>
+  [ 90] getlocal 1 .............................. <obj>
+  [ 92] pusharglistnoret 2 ...................... <pLevelBar, obj>
+  [ 94] objcall 1115 ............................ pLevelBar.setTarget(obj)
+  [ 97] getprop 1098 ............................ <pEnergyBar>
+  [100] pusharglistnoret 1 ...................... <pEnergyBar>
+  [102] objcall 371 ............................. pEnergyBar.update()
+  [105] getprop 1100 ............................ <pLevelBar>
+  [108] pusharglistnoret 1 ...................... <pLevelBar>
+  [110] objcall 371 ............................. pLevelBar.update()
+  [113] getprop 1109 ............................ <pExperienceBar>
+  [116] pusharglistnoret 1 ...................... <pExperienceBar>
+  [118] objcall 371 ............................. pExperienceBar.update()
+  [121] ret
+end

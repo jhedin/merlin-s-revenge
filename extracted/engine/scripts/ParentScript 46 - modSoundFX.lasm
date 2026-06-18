@@ -1,0 +1,41 @@
+property ancestor
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getprop 33 .............................. <ancestor>
+  [ 12] pusharglistnoret 1 ...................... <ancestor>
+  [ 14] objcall 2 ............................... ancestor.addModParams()
+  [ 16] ret
+end
+
+on PlaySound me, theSound, theVol
+  [  0] getparam 1 .............................. <theSound>
+  [  2] pushsymb 49 ............................. <#none>
+  [  4] nteq .................................... <theSound <> #none>
+  [  5] jmpifz [ 22] ............................ if theSound <> #none then
+  [  8] getglobal 40 ............................ <g>
+  [ 10] getchainedprop 1268 ..................... <g.soundmaster>
+  [ 13] getparam 1 .............................. <theSound>
+  [ 15] getparam 2 .............................. <theVol>
+  [ 17] pusharglistnoret 3 ...................... <g.soundmaster, theSound, theVol>
+  [ 19] objcall 551 ............................. g.soundmaster.PlaySound(theSound, theVol)
+  [ 22] ret
+end

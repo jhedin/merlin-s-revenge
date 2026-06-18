@@ -1,0 +1,12 @@
+property ancestor
+
+on new me
+  ancestor = new(script("objParams"))
+  i = me.modifyParams(#init)
+  i[#member] = #none
+  return me
+end
+
+on init me, params
+  params.member.scrollTop = 0
+end

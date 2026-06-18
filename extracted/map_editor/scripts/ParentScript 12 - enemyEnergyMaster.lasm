@@ -1,0 +1,314 @@
+property pBarGap, pBarHeight, pEnergyBarAssignments, pEnergyBars, pQueue, pSurroundBorder, pSurroundRect
+global g
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 12 .............................. return me
+  [  6] ret
+end
+
+on init me
+  [  0] pushint8 1 .............................. <1>
+  [  2] setprop 506 ............................. pBarGap = 1
+  [  5] pushint8 2 .............................. <2>
+  [  7] setprop 507 ............................. pBarHeight = 2
+  [ 10] pusharglist 0 ........................... <[]>
+  [ 12] pushlist ................................ <[]>
+  [ 13] setprop 508 ............................. pEnergyBarAssignments = []
+  [ 16] pusharglist 0 ........................... <[]>
+  [ 18] pushlist ................................ <[]>
+  [ 19] setprop 509 ............................. pEnergyBars = []
+  [ 22] pusharglist 0 ........................... <[]>
+  [ 24] pushlist ................................ <[]>
+  [ 25] setprop 510 ............................. pQueue = []
+  [ 28] pushint8 2 .............................. <2>
+  [ 30] setprop 511 ............................. pSurroundBorder = 2
+  [ 33] ret
+end
+
+on initEnergyBars me
+  [  0] getprop 506 ............................. <pBarGap>
+  [  3] getprop 507 ............................. <pBarHeight>
+  [  6] add ..................................... <pBarGap + pBarHeight>
+  [  7] setlocal 0 .............................. totalBarHeight = pBarGap + pBarHeight
+  [  9] getprop 512 ............................. <pSurroundRect>
+  [ 12] getobjprop 181 .......................... <pSurroundRect.height>
+  [ 14] getprop 511 ............................. <pSurroundBorder>
+  [ 17] pushint8 2 .............................. <2>
+  [ 19] mul ..................................... <pSurroundBorder * 2>
+  [ 20] sub ..................................... <pSurroundRect.height - (pSurroundBorder * 2)>
+  [ 21] setlocal 1 .............................. availableHeight = pSurroundRect.height - (pSurroundBorder * 2)
+  [ 23] getlocal 1 .............................. <availableHeight>
+  [ 25] getprop 506 ............................. <pBarGap>
+  [ 28] add ..................................... <availableHeight + pBarGap>
+  [ 29] getlocal 0 .............................. <totalBarHeight>
+  [ 31] div ..................................... <(availableHeight + pBarGap) / totalBarHeight>
+  [ 32] setlocal 2 .............................. numBars = (availableHeight + pBarGap) / totalBarHeight
+  [ 34] getprop 512 ............................. <pSurroundRect>
+  [ 37] setlocal 3 .............................. sr = pSurroundRect
+  [ 39] getprop 511 ............................. <pSurroundBorder>
+  [ 42] setlocal 4 .............................. sb = pSurroundBorder
+  [ 44] getlocal 3 .............................. <sr>
+  [ 46] pushint8 1 .............................. <1>
+  [ 48] pusharglist 2 ........................... <sr, 1>
+  [ 50] objcall 34 .............................. <sr[1]>
+  [ 52] getlocal 4 .............................. <sb>
+  [ 54] add ..................................... <sr[1] + sb>
+  [ 55] getlocal 3 .............................. <sr>
+  [ 57] pushint8 2 .............................. <2>
+  [ 59] pusharglist 2 ........................... <sr, 2>
+  [ 61] objcall 34 .............................. <sr[2]>
+  [ 63] getlocal 4 .............................. <sb>
+  [ 65] add ..................................... <sr[2] + sb>
+  [ 66] getlocal 3 .............................. <sr>
+  [ 68] pushint8 3 .............................. <3>
+  [ 70] pusharglist 2 ........................... <sr, 3>
+  [ 72] objcall 34 .............................. <sr[3]>
+  [ 74] getlocal 4 .............................. <sb>
+  [ 76] sub ..................................... <sr[3] - sb>
+  [ 77] getlocal 3 .............................. <sr>
+  [ 79] pushint8 2 .............................. <2>
+  [ 81] pusharglist 2 ........................... <sr, 2>
+  [ 83] objcall 34 .............................. <sr[2]>
+  [ 85] getlocal 4 .............................. <sb>
+  [ 87] add ..................................... <sr[2] + sb>
+  [ 88] getprop 507 ............................. <pBarHeight>
+  [ 91] add ..................................... <sr[2] + sb + pBarHeight>
+  [ 92] pusharglist 4 ........................... <sr[1] + sb, sr[2] + sb, sr[3] - sb, sr[2] + sb + pBarHeight>
+  [ 94] extcall 513 ............................. <rect(sr[1] + sb, sr[2] + sb, sr[3] - sb, sr[2] + sb + pBarHeight)>
+  [ 97] setlocal 5 .............................. nRect = rect(sr[1] + sb, sr[2] + sb, sr[3] - sb, sr[2] + sb + pBarHeight)
+  [ 99] pushint8 1 .............................. <1>
+  [101] setlocal 6
+  [103] getlocal 6
+  [105] getlocal 2 .............................. <numBars>
+  [107] lteq
+  [108] jmpifz [226] ............................ repeat with i = 1 to numBars
+  [111] getglobal 21 ............................ <g>
+  [113] getchainedprop 213 ...................... <g.objectMaster>
+  [115] pushsymb 514 ............................ <#objEnergyBar>
+  [118] pusharglist 2 ........................... <g.objectMaster, #objEnergyBar>
+  [120] objcall 214 ............................. <g.objectMaster.requestObject(#objEnergyBar)>
+  [122] setlocal 7 .............................. energybar = g.objectMaster.requestObject(#objEnergyBar)
+  [124] getlocal 7 .............................. <energybar>
+  [126] pushsymb 1 .............................. <#init>
+  [128] pusharglist 2 ........................... <energybar, #init>
+  [130] objcall 215 ............................. <energybar.getParams(#init)>
+  [132] setlocal 8 .............................. params = energybar.getParams(#init)
+  [134] getlocal 8 .............................. <params>
+  [136] pushsymb 116 ............................ <#right>
+  [138] setobjprop 515 .......................... params.align = #right
+  [141] getlocal 8 .............................. <params>
+  [143] pushzero ................................ <0>
+  [144] setobjprop 516 .......................... params.barBorder = 0
+  [147] getlocal 8 .............................. <params>
+  [149] pushzero ................................ <0>
+  [150] setobjprop 517 .......................... params.currentEnergy = 0
+  [153] getlocal 8 .............................. <params>
+  [155] pushint8 100 ............................ <100>
+  [157] setobjprop 518 .......................... params.maxEnergy = 100
+  [160] getlocal 8 .............................. <params>
+  [162] getlocal 5 .............................. <nRect>
+  [164] pusharglist 1 ........................... <nRect>
+  [166] objcall 150 ............................. <nRect.duplicate()>
+  [168] setobjprop 519 .......................... params.surroundRect = nRect.duplicate()
+  [171] getlocal 7 .............................. <energybar>
+  [173] getlocal 8 .............................. <params>
+  [175] pusharglistnoret 2 ...................... <energybar, params>
+  [177] objcall 1 ............................... energybar.init(params)
+  [179] getlocal 7 .............................. <energybar>
+  [181] pushzero ................................ <0>
+  [182] pusharglistnoret 2 ...................... <energybar, 0>
+  [184] objcall 520 ............................. energybar.updateEnergy(0)
+  [187] getprop 509 ............................. <pEnergyBars>
+  [190] getlocal 7 .............................. <energybar>
+  [192] pusharglistnoret 2 ...................... <pEnergyBars, energybar>
+  [194] objcall 38 .............................. pEnergyBars.append(energybar)
+  [196] getprop 508 ............................. <pEnergyBarAssignments>
+  [199] pushsymb 15 ............................. <#none>
+  [201] pusharglistnoret 2 ...................... <pEnergyBarAssignments, #none>
+  [203] objcall 38 .............................. pEnergyBarAssignments.append(#none)
+  [205] getlocal 5 .............................. <nRect>
+  [207] pushzero ................................ <0>
+  [208] getlocal 0 .............................. <totalBarHeight>
+  [210] pusharglist 3 ........................... <nRect, 0, totalBarHeight>
+  [212] objcall 521 ............................. <nRect.offset(0, totalBarHeight)>
+  [215] setlocal 5 .............................. nRect = nRect.offset(0, totalBarHeight)
+  [217] pushint8 1
+  [219] getlocal 6
+  [221] add
+  [222] setlocal 6
+  [224] endrepeat [103]
+  [226] ret
+end
+
+on start me
+  [  0] getglobal 21 ............................ <g>
+  [  2] getchainedprop 264 ...................... <g.spriteMaster>
+  [  5] pushcons 0 .............................. <"enemy_energy_surround">
+  [  7] pushcons 1 .............................. <"gfx">
+  [  9] pusharglist 2 ........................... <"enemy_energy_surround", "gfx">
+  [ 11] extcall 28 .............................. <member("enemy_energy_surround", "gfx")>
+  [ 13] pusharglist 2 ........................... <g.spriteMaster, member("enemy_energy_surround", "gfx")>
+  [ 15] objcall 158 ............................. <g.spriteMaster.getSpriteWithMember(member("enemy_energy_surround", "gfx"))>
+  [ 17] setlocal 0 .............................. surroundSprite = g.spriteMaster.getSpriteWithMember(member("enemy_energy_surround", "gfx"))
+  [ 19] getlocal 0 .............................. <surroundSprite>
+  [ 21] getchainedprop 513 ...................... <surroundSprite.rect>
+  [ 24] pusharglist 1 ........................... <surroundSprite.rect>
+  [ 26] objcall 150 ............................. <surroundSprite.rect.duplicate()>
+  [ 28] setprop 512 ............................. pSurroundRect = surroundSprite.rect.duplicate()
+  [ 31] getparam 0 .............................. <me>
+  [ 33] pusharglistnoret 1 ...................... <me>
+  [ 35] objcall 1 ............................... me.init()
+  [ 37] getparam 0 .............................. <me>
+  [ 39] pusharglistnoret 1 ...................... <me>
+  [ 41] objcall 499 ............................. me.initEnergyBars()
+  [ 44] ret
+end
+
+on addToQueue me, requester
+  [  0] getprop 510 ............................. <pQueue>
+  [  3] getparam 1 .............................. <requester>
+  [  5] pusharglistnoret 2 ...................... <pQueue, requester>
+  [  7] objcall 38 .............................. pQueue.append(requester)
+  [  9] ret
+end
+
+on deleteFromQueue me, requester
+  [  0] getprop 510 ............................. <pQueue>
+  [  3] getparam 1 .............................. <requester>
+  [  5] pusharglist 2 ........................... <pQueue, requester>
+  [  7] objcall 227 ............................. <pQueue.getPos(requester)>
+  [  9] setlocal 0 .............................. reqPos = pQueue.getPos(requester)
+  [ 11] getprop 510 ............................. <pQueue>
+  [ 14] getlocal 0 .............................. <reqPos>
+  [ 16] pusharglistnoret 2 ...................... <pQueue, reqPos>
+  [ 18] objcall 489 ............................. pQueue.deleteAt(reqPos)
+  [ 21] ret
+end
+
+on finish me
+  [  0] getprop 509 ............................. <pEnergyBars>
+  [  3] peek 0
+  [  5] pusharglist 1
+  [  7] extcall 33
+  [  9] pushint8 1
+  [ 11] peek 0
+  [ 13] peek 2
+  [ 15] lteq
+  [ 16] jmpifz [ 40] ............................ repeat with energybar in pEnergyBars
+  [ 19] peek 2
+  [ 21] peek 1
+  [ 23] pusharglist 2
+  [ 25] extcall 34
+  [ 27] setlocal 0
+  [ 29] getlocal 0 .............................. <energybar>
+  [ 31] pusharglistnoret 1 ...................... <energybar>
+  [ 33] objcall 2 ............................... energybar.finish()
+  [ 35] pushint8 1
+  [ 37] add
+  [ 38] endrepeat [ 11]
+  [ 40] pop 3
+  [ 42] ret
+end
+
+on freeEnergyBar me, energybar, requester
+  [  0] getparam 1 .............................. <energybar>
+  [  2] pushsymb 15 ............................. <#none>
+  [  4] eq ...................................... <energybar = #none>
+  [  5] jmpifz [ 20] ............................ if energybar = #none then / else
+  [  8] getparam 0 .............................. <me>
+  [ 10] getparam 2 .............................. <requester>
+  [ 12] pusharglistnoret 2 ...................... <me, requester>
+  [ 14] objcall 501 ............................. me.deleteFromQueue(requester)
+  [ 17] jmp [ 49]
+  [ 20] getprop 509 ............................. <pEnergyBars>
+  [ 23] getparam 1 .............................. <energybar>
+  [ 25] pusharglist 2 ........................... <pEnergyBars, energybar>
+  [ 27] objcall 227 ............................. <pEnergyBars.getPos(energybar)>
+  [ 29] setlocal 0 .............................. pos = pEnergyBars.getPos(energybar)
+  [ 31] getprop 508 ............................. <pEnergyBarAssignments>
+  [ 34] getlocal 0 .............................. <pos>
+  [ 36] pushsymb 15 ............................. <#none>
+  [ 38] pusharglistnoret 3 ...................... <pEnergyBarAssignments, pos, #none>
+  [ 40] objcall 83 .............................. pEnergyBarAssignments[pos] = #none
+  [ 42] getparam 0 .............................. <me>
+  [ 44] pusharglistnoret 1 ...................... <me>
+  [ 46] objcall 504 ............................. me.notifyNextInQueue()
+  [ 49] ret
+end
+
+on getAvailableEnergyBar me, requester
+  [  0] getprop 508 ............................. <pEnergyBarAssignments>
+  [  3] pushsymb 15 ............................. <#none>
+  [  5] pusharglist 2 ........................... <pEnergyBarAssignments, #none>
+  [  7] objcall 227 ............................. <pEnergyBarAssignments.getPos(#none)>
+  [  9] setlocal 0 .............................. availablePos = pEnergyBarAssignments.getPos(#none)
+  [ 11] getlocal 0 .............................. <availablePos>
+  [ 13] pushzero ................................ <0>
+  [ 14] gt ...................................... <availablePos > 0>
+  [ 15] jmpifz [ 42] ............................ if availablePos > 0 then
+  [ 18] getprop 508 ............................. <pEnergyBarAssignments>
+  [ 21] getlocal 0 .............................. <availablePos>
+  [ 23] getparam 1 .............................. <requester>
+  [ 25] pusharglistnoret 3 ...................... <pEnergyBarAssignments, availablePos, requester>
+  [ 27] objcall 83 .............................. pEnergyBarAssignments[availablePos] = requester
+  [ 29] getprop 509 ............................. <pEnergyBars>
+  [ 32] getlocal 0 .............................. <availablePos>
+  [ 34] pusharglist 2 ........................... <pEnergyBars, availablePos>
+  [ 36] objcall 34 .............................. <pEnergyBars[availablePos]>
+  [ 38] pusharglistnoret 1 ...................... <pEnergyBars[availablePos]>
+  [ 40] extcall 12 .............................. return pEnergyBars[availablePos]
+  [ 42] pushsymb 15 ............................. <#none>
+  [ 44] pusharglistnoret 1 ...................... <#none>
+  [ 46] extcall 12 .............................. return #none
+  [ 48] ret
+end
+
+on notifyNextInQueue me
+  [  0] getprop 510 ............................. <pQueue>
+  [  3] getobjprop 33 ........................... <pQueue.count>
+  [  5] pushzero ................................ <0>
+  [  6] gt ...................................... <pQueue.count > 0>
+  [  7] jmpifz [ 38] ............................ if pQueue.count > 0 then
+  [ 10] getprop 510 ............................. <pQueue>
+  [ 13] pushint8 1 .............................. <1>
+  [ 15] pusharglist 2 ........................... <pQueue, 1>
+  [ 17] objcall 34 .............................. <pQueue[1]>
+  [ 19] setlocal 0 .............................. nextInQueue = pQueue[1]
+  [ 21] getlocal 0 .............................. <nextInQueue>
+  [ 23] pusharglistnoret 1 ...................... <nextInQueue>
+  [ 25] objcall 533 ............................. nextInQueue.energyBarNowFree()
+  [ 28] getprop 510 ............................. <pQueue>
+  [ 31] pushint8 1 .............................. <1>
+  [ 33] pusharglistnoret 2 ...................... <pQueue, 1>
+  [ 35] objcall 489 ............................. pQueue.deleteAt(1)
+  [ 38] ret
+end
+
+on requestEnergyBar me, requester
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <requester>
+  [  4] pusharglist 2 ........................... <me, requester>
+  [  6] objcall 503 ............................. <me.getAvailableEnergyBar(requester)>
+  [  9] setlocal 0 .............................. energybar = me.getAvailableEnergyBar(requester)
+  [ 11] getlocal 0 .............................. <energybar>
+  [ 13] pushsymb 15 ............................. <#none>
+  [ 15] eq ...................................... <energybar = #none>
+  [ 16] jmpifz [ 28] ............................ if energybar = #none then
+  [ 19] getparam 0 .............................. <me>
+  [ 21] getparam 1 .............................. <requester>
+  [ 23] pusharglistnoret 2 ...................... <me, requester>
+  [ 25] objcall 500 ............................. me.addToQueue(requester)
+  [ 28] getlocal 0 .............................. <energybar>
+  [ 30] pusharglistnoret 1 ...................... <energybar>
+  [ 32] extcall 12 .............................. return energybar
+  [ 34] ret
+end
+
+on stop me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 2 ............................... me.finish()
+  [  6] ret
+end

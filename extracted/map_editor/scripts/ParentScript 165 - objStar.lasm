@@ -1,0 +1,74 @@
+property ancestor, pLifeCount
+
+on new me
+  [  0] pushcons 0 .............................. <"objGameObject">
+  [  2] pusharglist 1 ........................... <"objGameObject">
+  [  4] extcall 27 .............................. <script("objGameObject")>
+  [  6] pusharglist 1 ........................... <script("objGameObject")>
+  [  8] extcall 0 ............................... <new(script("objGameObject"))>
+  [ 10] setprop 77 .............................. ancestor = new(script("objGameObject"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 17 .............................. return me
+  [ 18] ret
+end
+
+on init me, params
+  [  0] getprop 77 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pusharglist 0 ........................... <>
+  [ 10] extcall 120 ............................. <CounterNew()>
+  [ 12] setprop 1307 ............................ pLifeCount = CounterNew()
+  [ 15] getprop 1307 ............................ <pLifeCount>
+  [ 18] pushsymb 123 ............................ <#tim>
+  [ 20] pushint8 2 .............................. <2>
+  [ 22] pushint8 10 ............................. <10>
+  [ 24] pusharglistnoret 4 ...................... <pLifeCount, #tim, 2, 10>
+  [ 26] objcall 124 ............................. pLifeCount.tim[2] = 10
+  [ 28] ret
+end
+
+on checkCollisions me, newLoc, oldloc
+  [  0] getparam 1 .............................. <newLoc>
+  [  2] pusharglistnoret 1 ...................... <newLoc>
+  [  4] extcall 17 .............................. return newLoc
+  [  6] ret
+end
+
+on setLifeCount me, newLifeCount
+  [  0] getprop 1307 ............................ <pLifeCount>
+  [  3] pushsymb 123 ............................ <#tim>
+  [  5] pushint8 2 .............................. <2>
+  [  7] getparam 1 .............................. <newLifeCount>
+  [  9] pusharglistnoret 4 ...................... <pLifeCount, #tim, 2, newLifeCount>
+  [ 11] objcall 124 ............................. pLifeCount.tim[2] = newLifeCount
+  [ 13] ret
+end
+
+on update me
+  [  0] getprop 1307 ............................ <pLifeCount>
+  [  3] getobjprop 130 .......................... <pLifeCount.fin>
+  [  5] jmpifz [ 15] ............................ if pLifeCount.fin then
+  [  8] getparam 0 .............................. <me>
+  [ 10] pushint8 1 .............................. <1>
+  [ 12] setobjprop 782 .......................... me.pDead = 1
+  [ 15] getparam 0 .............................. <me>
+  [ 17] getchainedprop 786 ...................... <me.pMoveXY>
+  [ 20] pusharglist 1 ........................... <me.pMoveXY>
+  [ 22] objcall 223 ............................. <me.pMoveXY.onscreen()>
+  [ 24] pushzero ................................ <0>
+  [ 25] eq ...................................... <me.pMoveXY.onscreen() = 0>
+  [ 26] jmpifz [ 36] ............................ if me.pMoveXY.onscreen() = 0 then
+  [ 29] getparam 0 .............................. <me>
+  [ 31] pushint8 1 .............................. <1>
+  [ 33] setobjprop 782 .......................... me.pDead = 1
+  [ 36] getprop 1307 ............................ <pLifeCount>
+  [ 39] pusharglistnoret 1 ...................... <pLifeCount>
+  [ 41] extcall 132 ............................. counter(pLifeCount)
+  [ 43] getprop 77 .............................. <ancestor>
+  [ 45] pusharglistnoret 1 ...................... <ancestor>
+  [ 47] objcall 332 ............................. ancestor.update()
+  [ 50] ret
+end

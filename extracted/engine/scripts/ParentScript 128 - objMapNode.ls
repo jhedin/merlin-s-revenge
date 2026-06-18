@@ -1,0 +1,44 @@
+property ancestor, pNextNode
+global g
+
+on new me
+  ancestor = new(script("objParams"))
+  i = me.modifyParams(#init)
+  return me
+end
+
+on init me, params
+  ancestor.init(params)
+  pNextNode = #none
+end
+
+on search me, teams, targetList
+  tempNode = pNextNode
+  repeat while tempNode <> #none
+    if (teams.findPos(tempNode.getTeam()) <> VOID) and (tempNode.checkDead() = 0) and (tempNode.getDead() = 0) then
+      targetList.append(tempNode)
+    end if
+    tempNode = tempNode.getNext()
+  end repeat
+end
+
+on getNext me
+  return pNextNode
+end
+
+on getPrev me
+  return #none
+end
+
+on setNext me, node
+  pNextNode = node
+end
+
+on setPrev me, node
+  pNextNode = node
+end
+
+on finish me
+  pNextNode = #none
+  ancestor.finish()
+end

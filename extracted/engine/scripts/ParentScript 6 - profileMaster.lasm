@@ -1,0 +1,223 @@
+property pLastStarted, pMinTime, pMinTimeProfile, pReportTitle, pProfiles
+global g
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 3 ............................... return me
+  [  6] ret
+end
+
+on init me
+  [  0] pushsymb 103 ............................ <#none>
+  [  2] setprop 402 ............................. pLastStarted = #none
+  [  5] pushzero ................................ <0>
+  [  6] setprop 403 ............................. pMinTime = 0
+  [  9] pushint8 1 .............................. <1>
+  [ 11] setprop 404 ............................. pMinTimeProfile = 1
+  [ 14] pushcons 0 .............................. <"Timing Report">
+  [ 16] setprop 405 ............................. pReportTitle = "Timing Report"
+  [ 19] pusharglist 0 ........................... <[:]>
+  [ 21] pushproplist ............................ <[:]>
+  [ 22] setprop 406 ............................. pProfiles = [:]
+  [ 25] ret
+end
+
+on finish me
+  [  0] ret
+end
+
+on f me, profile
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <profile>
+  [  4] pusharglistnoret 2 ...................... <me, profile>
+  [  6] objcall 400 ............................. me.stopProfile(profile)
+  [  9] ret
+end
+
+on t me, newTitle
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <newTitle>
+  [  4] pusharglistnoret 2 ...................... <me, newTitle>
+  [  6] objcall 397 ............................. me.setTitle(newTitle)
+  [  9] ret
+end
+
+on s me, profile
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <profile>
+  [  4] pusharglistnoret 2 ...................... <me, profile>
+  [  6] objcall 399 ............................. me.startProfile(profile)
+  [  9] ret
+end
+
+on w me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 401 ............................. me.writeReport()
+  [  7] ret
+end
+
+on setMinTime me, newTime, profile
+  [  0] getparam 2 .............................. <profile>
+  [  2] pusharglist 0 ........................... <>
+  [  4] extcall 388 ............................. <VOID>
+  [  7] eq ...................................... <profile = VOID>
+  [  8] jmpifz [ 15] ............................ if profile = VOID then
+  [ 11] pushint8 1 .............................. <1>
+  [ 13] setparam 2 .............................. profile = 1
+  [ 15] getparam 1 .............................. <newTime>
+  [ 17] setprop 403 ............................. pMinTime = newTime
+  [ 20] getparam 2 .............................. <profile>
+  [ 22] setprop 404 ............................. pMinTimeProfile = profile
+  [ 25] ret
+end
+
+on setReportTitle me, newVal
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 1 ............................... me.init()
+  [  6] getparam 1 .............................. <newVal>
+  [  8] setprop 405 ............................. pReportTitle = newVal
+  [ 11] ret
+end
+
+on setTitle me, newVal
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <newVal>
+  [  4] pusharglistnoret 2 ...................... <me, newVal>
+  [  6] objcall 396 ............................. me.setReportTitle(newVal)
+  [  9] ret
+end
+
+on start me
+  [  0] ret
+end
+
+on startProfile me, profile
+  [  0] getprop 406 ............................. <pProfiles>
+  [  3] getparam 1 .............................. <profile>
+  [  5] pusharglist 2 ........................... <pProfiles, profile>
+  [  7] objcall 301 ............................. <pProfiles[profile]>
+  [ 10] pusharglist 0 ........................... <>
+  [ 12] extcall 388 ............................. <VOID>
+  [ 15] eq ...................................... <pProfiles[profile] = VOID>
+  [ 16] jmpifz [ 42] ............................ if pProfiles[profile] = VOID then
+  [ 19] getglobal 191 ........................... <g>
+  [ 21] getchainedprop 192 ...................... <g.structMaster>
+  [ 23] pushsymb 94 ............................. <#timerProfile>
+  [ 25] pusharglist 2 ........................... <g.structMaster, #timerProfile>
+  [ 27] objcall 51 .............................. <g.structMaster.getStruct(#timerProfile)>
+  [ 29] setlocal 0 .............................. newProfile = g.structMaster.getStruct(#timerProfile)
+  [ 31] getprop 406 ............................. <pProfiles>
+  [ 34] getparam 1 .............................. <profile>
+  [ 36] getlocal 0 .............................. <newProfile>
+  [ 38] pusharglistnoret 3 ...................... <pProfiles, profile, newProfile>
+  [ 40] objcall 54 .............................. pProfiles[profile] = newProfile
+  [ 42] getprop 406 ............................. <pProfiles>
+  [ 45] getparam 1 .............................. <profile>
+  [ 47] pusharglist 2 ........................... <pProfiles, profile>
+  [ 49] objcall 301 ............................. <pProfiles[profile]>
+  [ 52] getmovieprop 411 ........................ <the milliSeconds>
+  [ 55] setobjprop 290 .......................... pProfiles[profile].stTime = the milliSeconds
+  [ 58] getparam 1 .............................. <profile>
+  [ 60] setprop 402 ............................. pLastStarted = profile
+  [ 63] ret
+end
+
+on stopProfile me, profile
+  [  0] getparam 1 .............................. <profile>
+  [  2] pusharglist 0 ........................... <>
+  [  4] extcall 388 ............................. <VOID>
+  [  7] eq ...................................... <profile = VOID>
+  [  8] jmpifz [ 16] ............................ if profile = VOID then
+  [ 11] getprop 402 ............................. <pLastStarted>
+  [ 14] setparam 1 .............................. profile = pLastStarted
+  [ 16] getprop 406 ............................. <pProfiles>
+  [ 19] getparam 1 .............................. <profile>
+  [ 21] pusharglist 2 ........................... <pProfiles, profile>
+  [ 23] objcall 301 ............................. <pProfiles[profile]>
+  [ 26] setlocal 0 .............................. theP = pProfiles[profile]
+  [ 28] getlocal 0 .............................. <theP>
+  [ 30] getmovieprop 411 ........................ <the milliSeconds>
+  [ 33] setobjprop 291 .......................... theP.finTime = the milliSeconds
+  [ 36] getlocal 0 .............................. <theP>
+  [ 38] getlocal 0 .............................. <theP>
+  [ 40] getobjprop 292 .......................... <theP.totalTime>
+  [ 43] getlocal 0 .............................. <theP>
+  [ 45] getobjprop 291 .......................... <theP.finTime>
+  [ 48] getlocal 0 .............................. <theP>
+  [ 50] getobjprop 290 .......................... <theP.stTime>
+  [ 53] sub ..................................... <theP.finTime - theP.stTime>
+  [ 54] add ..................................... <theP.totalTime + (theP.finTime - theP.stTime)>
+  [ 55] setobjprop 292 .......................... theP.totalTime = theP.totalTime + (theP.finTime - theP.stTime)
+  [ 58] ret
+end
+
+on writeReport me
+  [  0] getprop 406 ............................. <pProfiles>
+  [  3] getprop 404 ............................. <pMinTimeProfile>
+  [  6] pusharglist 2 ........................... <pProfiles, pMinTimeProfile>
+  [  8] objcall 301 ............................. <pProfiles[pMinTimeProfile]>
+  [ 11] getobjprop 292 .......................... <pProfiles[pMinTimeProfile].totalTime>
+  [ 14] getprop 403 ............................. <pMinTime>
+  [ 17] lt ...................................... <pProfiles[pMinTimeProfile].totalTime < pMinTime>
+  [ 18] jmpifz [ 25] ............................ if pProfiles[pMinTimeProfile].totalTime < pMinTime then
+  [ 21] pusharglistnoret 0 ...................... <>
+  [ 23] extcall 3 ............................... return 
+  [ 25] pushcons 1 .............................. <"<">
+  [ 27] getprop 405 ............................. <pReportTitle>
+  [ 30] joinstr ................................. <"<" & pReportTitle>
+  [ 31] pushcons 2 .............................. <">">
+  [ 33] joinstr ................................. <"<" & pReportTitle & ">">
+  [ 34] pusharglistnoret 1 ...................... <"<" & pReportTitle & ">">
+  [ 36] extcall 414 ............................. put "<" & pReportTitle & ">"
+  [ 39] pushint8 1 .............................. <1>
+  [ 41] setlocal 0
+  [ 43] getlocal 0
+  [ 45] getprop 406 ............................. <pProfiles>
+  [ 48] getobjprop 348 .......................... <pProfiles.count>
+  [ 51] lteq
+  [ 52] jmpifz [104] ............................ repeat with i = 1 to pProfiles.count
+  [ 55] getprop 406 ............................. <pProfiles>
+  [ 58] getlocal 0 .............................. <i>
+  [ 60] pusharglist 2 ........................... <pProfiles, i>
+  [ 62] objcall 415 ............................. <pProfiles.getPropAt(i)>
+  [ 65] setlocal 1 .............................. nProfile = pProfiles.getPropAt(i)
+  [ 67] getprop 406 ............................. <pProfiles>
+  [ 70] getlocal 0 .............................. <i>
+  [ 72] pusharglist 2 ........................... <pProfiles, i>
+  [ 74] objcall 301 ............................. <pProfiles[i]>
+  [ 77] getobjprop 292 .......................... <pProfiles[i].totalTime>
+  [ 80] setlocal 2 .............................. nTime = pProfiles[i].totalTime
+  [ 82] getlocal 1 .............................. <nProfile>
+  [ 84] pushcons 3 .............................. <" = ">
+  [ 86] joinstr ................................. <nProfile & " = ">
+  [ 87] getlocal 2 .............................. <nTime>
+  [ 89] joinstr ................................. <nProfile & " = " & nTime>
+  [ 90] pusharglistnoret 1 ...................... <nProfile & " = " & nTime>
+  [ 92] extcall 414 ............................. put nProfile & " = " & nTime
+  [ 95] pushint8 1
+  [ 97] getlocal 0
+  [ 99] add
+  [100] setlocal 0
+  [102] endrepeat [ 43]
+  [104] pushcons 4 .............................. <"</">
+  [106] getprop 405 ............................. <pReportTitle>
+  [109] joinstr ................................. <"</" & pReportTitle>
+  [110] pushcons 2 .............................. <">">
+  [112] joinstr ................................. <"</" & pReportTitle & ">">
+  [113] pusharglistnoret 1 ...................... <"</" & pReportTitle & ">">
+  [115] extcall 414 ............................. put "</" & pReportTitle & ">"
+  [118] pushcons 5 .............................. <EMPTY>
+  [120] pusharglistnoret 1 ...................... <EMPTY>
+  [122] extcall 414 ............................. put EMPTY
+  [125] ret
+end
+
+on stop me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 239 ............................. me.finish()
+  [  6] ret
+end

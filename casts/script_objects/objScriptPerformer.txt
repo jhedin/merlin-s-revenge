@@ -1,0 +1,469 @@
+[#name: "objScriptPerformer", #scriptType: #parent, #type: #script]
+-- in terms of performing scripts, a player is an actor who is involved in the script.
+-- the term player was chosen because the human player is out of the loop while
+-- a script is being performed whereas actors are still in use.
+
+global g
+
+property ancestor
+property pAutoTurn             -- whether the players turn to face whoever is speaking
+property pBasicTimePerLine     -- the amount of time for a line with 0 letters to be displayed for (in frames)
+property pCaller               -- the program which started this script performer, will be informed when it finishes
+property pLightsDownFunction   -- the function to call in the player for lightsDown
+property pLightsUpFunction     -- the function to call in the player for lightsUp
+property pPlayers              -- the players in the script
+property pTheScript            -- the script object
+property pTimeBetweenLines     -- gap in between displaying lines (in frames)
+property pTimePerLetter        -- additional time per letter to add to pBasicTimePerLine to get the amount of time the line is displayed for
+property pWaitingForPlayers    -- the number of players the script performer is waiting for
+property pWingsLoc             -- the location of the wings
+
+on new me
+  ancestor = new(script"objParams")
+  
+  i = me.modifyParams(#init)
+  
+  i[#autoTurn] = true       
+  i[#basicTimePerLine] = 50 
+  i[#caller] = #none
+  i[#theScript] = #none
+  i[#timePerLetter] = 1.4 
+  i[#timeBetweenLines] = 12
+  
+  return me
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  pAutoTurn = params.autoTurn
+  pBasicTimePerLine = params.basicTimePerLine
+  pCaller = params.caller
+  pLightsDownFunction = #startSlowFadeOut
+  pLightsUpFunction = #startSlowFadeIn
+  pTheScript = params.theScript
+  pTimeBetweenLines = params.timeBetweenLines
+  pTimePerLetter = params.timePerLetter
+  pWaitingForPlayers = 0
+  pWingsLoc = point(-100,-100)
+  
+  pPlayers = #none
+end
+
+on acquirePlayers me
+  pPlayers = g.objectMaster.getPlayers(pTheScript.getPlayers())
+  
+  -- start any players that are not on screen
+  me.createMissingPlayers()
+end
+
+on actorToWings me, actorID
+  player = me.getPlayerByActorID(actorID)
+  me.putPlayerIntoWings(player)
+end
+
+on calcDisplayTimeForLine me, theLine
+  if theLine.theCommand <> #speakLine then
+    return 0
+  end if
+  
+  displayTime = pBasicTimePerLine
+  letterTime = theLine.args.chars.count * pTimePerLetter
+  displayTime = displayTime + letterTime
+  
+  return displayTime
+end 
+
+on createMissingPlayers me
+  -- start any missing players in 'wings' offscreen
+  
+  repeat with nPlayer in pPlayers
+    if nPlayer.obj = #none then
+      params = g.actorMaster.getParams(#newActor)
+      params.forceCreate = true
+      params.typ = nPlayer.objCharacter
+      params.startLoc = pWingsLoc
+      params.useOffset = false
+      
+      nPlayer.obj = g.actorMaster.newActor(params)
+      
+      -- note that the player was created for the script
+      -- so it can be finished if the script is cancelled prematurely
+      nPlayer.createdForScript = true
+      
+      -- advance a frame to make sure stage floor calculations are accurate
+      nPlayer.obj.frameAdvance()
+    end if
+  end repeat
+end
+
+on finishAllPlayers me
+  -- finishes all players whether in the wings or on screen
+  repeat with player in pPlayers
+    if player.obj <> #none then
+      player.obj.finish()
+      player.obj = #none
+    end if
+  end repeat
+end
+
+on finishPlayersInWings me
+  -- deletes any actors which in wings at the end of the performance
+  repeat with player in pPlayers
+    if player.obj.getLoc() = pWingsLoc then
+      player.obj.finish()
+      player.obj = #none
+    end if
+  end repeat
+end
+
+on lineFinished me
+  me.performNextLine()
+end
+
+on getLeftOrRightmostPlayerLocX me, typ
+  -- find left or right most playerLoc
+  -- if no players are on screen, return the center of the stage
+  extremePlayerLocX = g.cutSceneMaster.getCenterStage()
+  
+  repeat with player in pPlayers
+    if me.playerIsInWings(player) then
+      next repeat
+    end if
+    
+    playerLocX = player.obj.getLoc().locH
+    
+    case typ of
+      #left:
+        if playerLocX < extremePlayerLocX then
+          extremePlayerLocX = playerLocX
+        end if
+        
+      #right:
+        if playerLocX > extremePlayerLocX then
+          extremePlayerLocX = playerLocX
+        end if
+        
+    end case
+    
+  end repeat
+  
+  return extremePlayerLocX
+end
+
+on getStageLeftOnLoc me
+  return me.getStageEntranceOnLoc(#left)
+end
+
+on getStageRightOnLoc me
+  return me.getStageEntranceOnLoc(#right)
+end
+
+on getStageEntranceOnLoc me, typ
+  -- make entrance halfway between left or right most player loc and edge of stage
+  
+  extremePlayerLocX = me.getLeftOrRightmostPlayerLocX(typ)
+  
+  case typ of
+    #left:
+      stageEdge = g.cutSceneMaster.getStageLeft()
+      
+    #right:
+      stageEdge = g.cutSceneMaster.getStageRight()
+      
+  end case
+  
+  entranceLoc = VarHalfWay(stageEdge, extremePlayerLocX)
+  
+  return entranceLoc
+end
+
+on getPlayer me, thePlayer
+  pos = ListGetPosByProp(pPlayers, #objCharacter, thePlayer)
+  return pPlayers[pos].obj
+end
+
+on getPlayerByActorID me, theActorID
+  player = pPlayers[theActorID]
+  return player
+end
+
+on getWingsLoc me
+  return pWingsLoc
+end
+
+on introduceMeToPlayers me
+  playerID = 1
+  repeat with player in pPlayers
+    nObj = player.obj
+    nObj.setScriptPerformer(me.ID.bigMe)
+    nObj.setScriptPerformerActorID(playerID)
+    
+    if pCaller = g.cutSceneMaster then
+      speechDisplayMode = g.cutSceneMaster.getSpeechDisplayMode()
+      nObj.setSpeechDisplayMode(speechDisplayMode)
+    end if
+    
+    playerID = playerID + 1
+  end repeat
+end
+
+on lightsChange me, dir
+  pWaitingForPlayers = 0
+  
+  repeat with player in pPlayers
+    
+    case dir of
+      #up:
+        function = pLightsUpFunction
+        
+        if player.objCharacter = #ulin then
+          nothing
+        end if
+        
+      #down:
+        function = pLightsDownFunction
+        
+    end case
+    
+    call(function, player.obj)
+    
+    pWaitingForPlayers = pWaitingForPlayers + 1
+  end repeat
+end
+
+on lightsDown me
+  me.lightsChange(#down)
+end
+
+on lightsUp me
+  me.lightsChange(#up)
+end
+
+on makeLinePackage me, theLine
+  -- takes a line, gets the player object, calculates the display time
+  -- and packages it all up neatly
+  
+  linePackage = g.structMaster.getStruct(#linePackage)
+  
+  linePackage.args = theLine.args
+  linePackage.caller = me
+  linePackage.theCommand = theLine.theCommand
+  linePackage.delayTime = pTimeBetweenLines
+  linePackage.displayTime = me.calcDisplayTimeForLine(theLine)
+  linePackage.obj = me.translateObjCharacterToObj(theLine.objCharacter)
+  linePackage.objCharacter = theLine.objCharacter
+  
+  return linePackage
+end
+
+on makePlayersInvisible me
+  repeat with player in pPlayers
+    player.obj.invisible()
+  end repeat
+end
+
+on performNextLine me
+  nextLine = pTheScript.getNextLine()
+  
+  if nextLine = #finished then
+    me.scriptFinished()
+    return
+  end if
+  
+  linePackage = me.makeLinePackage(nextLine)
+  
+  linePackage.obj.performLine(linePackage)
+  
+  if linePackage.theCommand = #speakLine then
+    if pAutoTurn then
+      me.turnPlayersToFace(linePackage.objCharacter)
+    end if
+  end if
+  
+end
+
+on playerFaderFin me
+  pWaitingForPlayers = pWaitingForPlayers - 1
+  
+  if pWaitingForPlayers = 0 then
+    me.lineFinished()
+  end if
+end
+
+on playerIsInWings me, player
+  if player.obj.getLoc() = me.getWingsLoc() then
+    return true
+  end if
+  return false
+end
+
+on playMusic me, args
+  g.soundMaster.playMusic(args.memberToPlay, args.volumeLevel)
+  me.lineFinished()
+end
+
+on playSound me, args
+  g.soundMaster.playSound(args.memberToPlay, args.volumeLevel)
+  me.lineFinished()
+end
+
+on putCreatedPlayersIntoWings me
+  repeat with player in pPlayers
+    if player.createdForScript = true then
+      me.putPlayerIntoWings(player)
+    end if
+  end repeat
+end
+
+on putPlayerIntoWings me, player
+  player.obj.at(pWingsLoc)
+end
+
+on putPlayersIntoCharacter me
+  repeat with player in pPlayers
+    player.obj.goThespianMode()
+  end repeat
+end
+
+on putPlayersOutOfCharacter me
+  repeat with player in pPlayers
+    player.obj.leaveThespianMode()
+  end repeat
+end
+
+on putPlayersIntoWalkMode me, dir
+  case dir of
+    #left:
+      comm = #startWalkScrollLeft
+      
+    #right:
+      comm = #startWalkScrollRight
+      
+    #stop:
+      comm = #stopWalkScroll
+  end case
+  
+  repeat with player in pPlayers
+    if me.playerIsInWings(player) = false then
+      call(comm, player.obj)
+    end if
+  end repeat
+end
+
+on putPlayersIntoWings me
+  repeat with player in pPlayers
+    me.putPlayerIntoWings(player)
+  end repeat
+end
+
+on scriptCancelled me
+  me.scriptFinished()
+end
+
+on scriptFinished me
+  me.putCreatedPlayersIntoWings()
+  me.putPlayersOutOfCharacter()
+  me.finishPlayersInWings()
+  
+  if pCaller <> #none then
+    pCaller.scriptFinished()
+  end if
+  
+  me.finish()
+end
+
+on startPerformance me
+  me.acquirePlayers()
+  
+  me.introduceMeToPlayers()
+  me.putPlayersIntoCharacter()
+  
+  pTheScript.reset()
+  
+  me.performNextLine() 
+end
+
+on translateObjCharacterToObj me, objCharacter
+  repeat with player in pPlayers
+    if player.objCharacter = objCharacter then
+      return player.obj
+    end if
+  end repeat
+  
+  -- if the command is not for a character,
+  -- send it to the cutSceneMaster
+  return g.cutSceneMaster
+end
+
+on turnPlayersToFace me, objCharacter
+  repeat with player in pPlayers
+    nChar = player.objCharacter
+    -- don't send command to the target player
+    if nChar <> objCharacter then
+      player.obj.turnToFace(objCharacter)
+    end if
+  end repeat
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,27 @@
+on RectFloor therect
+  [  0] pushint8 1 .............................. <1>
+  [  2] setlocal 0
+  [  4] getlocal 0
+  [  6] pushint8 4 .............................. <4>
+  [  8] lteq
+  [  9] jmpifz [ 42] ............................ repeat with r = 1 to 4
+  [ 12] getparam 0 .............................. <therect>
+  [ 14] getlocal 0 .............................. <r>
+  [ 16] getparam 0 .............................. <therect>
+  [ 18] getlocal 0 .............................. <r>
+  [ 20] pusharglist 2 ........................... <therect, r>
+  [ 22] objcall 18 .............................. <therect[r]>
+  [ 24] pusharglist 1 ........................... <therect[r]>
+  [ 26] extcall 339 ............................. <VarFloor(therect[r])>
+  [ 29] pusharglistnoret 3 ...................... <therect, r, VarFloor(therect[r])>
+  [ 31] objcall 81 .............................. therect[r] = VarFloor(therect[r])
+  [ 33] pushint8 1
+  [ 35] getlocal 0
+  [ 37] add
+  [ 38] setlocal 0
+  [ 40] endrepeat [  4]
+  [ 42] getparam 0 .............................. <therect>
+  [ 44] pusharglistnoret 1 ...................... <therect>
+  [ 46] extcall 3 ............................... return therect
+  [ 48] ret
+end

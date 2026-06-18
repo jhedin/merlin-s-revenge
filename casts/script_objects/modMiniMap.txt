@@ -1,0 +1,311 @@
+[#name: "modMiniMap", #scriptType: #parent, #type: #script]
+-- for objMap
+
+global g
+global gGameTextLayer
+
+property ancestor
+property pBlendDistances
+property pBlendLevels
+property pBorder
+property pMapData
+property pMember
+property pMyLayer
+property pScale
+property pSprite
+property pStatusImages
+property pShowMiniMap
+
+on new me
+  ancestor = new (script("modModule"))
+  return me
+end
+
+on addModParams me
+  i = me.modifyParams(#init)
+  
+  i[#blendDistances] = [60, 200]
+  i[#blendLevels] = [10,90]
+  i[#border] = rect(1,1,2,2)
+  i[#scale] = 2
+  i[#statusImages] = [:]
+  s = i.statusImages
+  s[#clr] = member("miniClear", "gfx").image 
+  s[#cur] = member("miniCurrent", "gfx").image
+  s[#fre] = member("miniFriendly", "gfx").image
+  s[#inf] = member("miniInfested", "gfx").image
+  s[#spe] = member("miniSpecial", "gfx").image
+  
+  ancestor.addModParams()
+end
+
+on init me, params
+  pBlendLevels = params.blendLevels
+  pBlendDistances = params.blendDistances
+  pBorder = params.border
+  pScale = params.scale
+  pStatusImages = params.statusImages
+  pShowMiniMap = false
+  
+  pMapData = #none
+  pMember = #none
+  pMyLayer = gGameTextLayer
+  pSprite = #none
+  me.ID.bigMe.registerMinimap(me) --might be a better way of doing this... The objMap will then initialize the minimap info when its good and ready
+  ancestor.init(params)
+end
+
+on initMiniMapData me
+  pMapData = g.objectMaster.requestObject(#objDataMap)
+  params = pMapData.getParams(#init)
+  params.mapSize = me.ID.bigMe.getSize()
+  pMapData.init(params)
+  
+  -- loop through all rooms, asking for miniMap status
+  roomCount = me.ID.bigMe.getCount()
+  repeat with i = 1 to roomCount
+    nRoomNum = me.ID.bigMe.peekEntryNo(i)
+    nRoom = me.ID.bigMe.getRoom(nRoomNum)
+    nMiniMapStatus = nRoom.getMiniMapStatus()
+    
+    pokeLoc = point(0,0)
+    pMapData.pokeEntryNo(i, nMiniMapStatus, pokeLoc)
+  end repeat
+  if pShowMiniMap then
+    me.miniMapOffScreen()
+    me.displayMiniMap()
+  end if
+end
+
+on finish me
+  me.miniMapOffScreen()
+  
+  ancestor.finish()
+end
+
+on addSaveData me, sd
+  ancestor.addSaveData(sd)
+  
+  --  sd[#pMapData] = pMapData  causes overflow.
+  sd[#pShowMiniMap] = pShowMiniMap
+  
+end
+
+on displayMiniMap me
+  mapData = me.getMiniMapData()
+  
+  mapImage = me.drawMap(mapData)
+  
+  me.setupSprite(mapImage)
+  
+  -- put the sprite in position
+  currentRoom = me.ID.bigMe.getCurrentRoom()
+  pSprite.loc = currentRoom.getMiniMapLoc()
+  
+  g.updater.addPrg(me.ID.bigMe, #lo)
+  
+  pShowMiniMap = true
+  -- mapData.finish()
+end
+
+on drawMap me, mapData
+  clearImage = pStatusImages.clr
+  
+  imageSize = mapData.getSize() * point(clearImage.width, clearImage.height)
+  imageSize = imageSize + point(pBorder.left + pBorder.right, pBorder.top + pBorder.bottom)
+  
+  mapImage = image(imageSize[1], imageSize[2], 32, 0)
+  mapImage.fill(mapImage.rect, rgb(0,0,0))
+  
+  -- cycle through mapData drawing appropriate images
+  numRooms = mapData.ID.bigMe.getCount()
+  roomLoc = point(0,0)
+  repeat with i = 1 to numRooms
+    nStatus = mapData.peekEntryNo(i, roomLoc)
+    nStartX = pBorder.left + ((roomLoc.loch -1) * clearImage.width)
+    nStartY = pBorder.top + ((roomLoc.locv -1) * clearImage.height)
+    nEndX = nStartX + clearImage.width
+    nEndY = nStartY + clearImage.height
+    
+    mapImage.copyPixels(pStatusImages[nStatus], rect(nStartX, nStartY, nEndX, nEndY), clearImage.rect, [#useFastQuads:true, #ink:0])
+  end repeat
+  
+  return mapImage
+end
+
+on getMiniMapData me
+  -- check above, below, left and right
+  
+  repeat with i in [1,-1]
+    nRoomLoc = me.ID.bigMe.getCurrentRoomLoc()
+    nRoomLoc.LocH = nRoomLoc.LocH + i
+    nRoomNum = me.ID.bigMe.getRoomAt(nRoomLoc)
+    
+    --left and right
+    case nRoomNum of
+      #errorOutsideMap:
+        nothing
+      otherwise:
+        nRoom = me.ID.bigMe.getRoom(nRoomNum)
+        nMiniMapStatus = nRoom.getMiniMapStatus()
+        pMapData.poke(nRoomLoc, nMiniMapStatus)
+    end case
+    --up and down
+    nRoomLoc = me.ID.bigMe.getCurrentRoomLoc()
+    nRoomLoc.LocV = nRoomLoc.LocV + i
+    nRoomNum = me.ID.bigMe.getRoomAt(nRoomLoc)
+    case nRoomNum of
+      #errorOutsideMap:
+        nothing
+        
+      otherwise:
+        nRoom = me.ID.bigMe.getRoom(nRoomNum)
+        nMiniMapStatus = nRoom.getMiniMapStatus()
+        pMapData.poke(nRoomLoc, nMiniMapStatus)
+        
+    end case
+    
+  end repeat  
+  -- change current room status to #cur
+  currentRoomLoc = me.ID.bigMe.getCurrentRoomLoc()
+  pMapData.poke(currentRoomLoc, #cur)
+  
+  return pMapData
+end
+
+
+on goNavMode me
+  me.displayMiniMap()
+end
+
+on leaveNavMode me
+  me.miniMapOffScreen()
+end
+
+on miniMapOffScreen me
+  g.updater.removePrg(me.ID.bigMe)
+  
+  if pSprite <> #none then
+    g.spriteMaster.freeSprite(pSprite)
+    pSprite = #none
+  end if
+  
+  if pMember <> #none then
+    g.memberMaster.freeMember(pMember)
+    pMember = #none
+  end if
+
+  pShowMiniMap = false
+end
+
+on restoreFromSave me, sd
+  ancestor.restoreFromSave(sd)
+  
+  -- will be asked back on if required
+  me.miniMapOffScreen()
+end
+
+on setBlendForMouseOrPlayer me
+  mouLoc = the mouseLoc
+  playerLoc = g.actorMaster.getPlayer().getLoc()
+  
+  myLoc = pSprite.loc
+  
+  mouDist = GeomPixelDist(mouLoc, myLoc)
+  playerDist = GeomPixelDist(playerLoc, myLoc)
+  
+  minDist = min(mouDist, playerDist)
+  
+  theBlend = VarMapRange(minDist, pBlendDistances, pBlendLevels)
+  
+  pSprite.blend = theBlend
+end
+
+on setupSprite me, mapImage
+  -- request a sprite
+  if pSprite = #none then
+    pSprite = g.spriteMaster.requestSprite()
+    pSprite.locz = pMyLayer
+  end if
+  
+  -- request a member/image
+  if pMember = #none then
+    pMember = g.memberMaster.requestMember(#bitmap, "miniMap")
+  end if 
+  pMember.image = mapImage
+  pMember.regPoint = point(pMember.width, pMember.height)
+  
+  -- assign one to the other
+  SpriteSetMember(pSprite, pMember)
+  
+  pSprite.width = pSprite.width * pScale
+  pSprite.height = pSprite.height * pScale
+end
+
+on update me
+  me.setBlendForMouseOrPlayer()
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

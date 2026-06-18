@@ -1,0 +1,715 @@
+property ancestor, pCurrentTransform, pLastFinishingColour, pNextTransform, pTransColor
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getparam 0 .............................. <me>
+  [ 12] pushsymb 442 ............................ <#colourTransform>
+  [ 15] pusharglist 2 ........................... <me, #colourTransform>
+  [ 17] objcall 47 .............................. <me.modifyParams(#colourTransform)>
+  [ 19] setlocal 1 .............................. c = me.modifyParams(#colourTransform)
+  [ 21] getlocal 1 .............................. <c>
+  [ 23] pushsymb 460 ............................ <#startColor>
+  [ 26] pushsymb 461 ............................ <#current>
+  [ 29] pusharglistnoret 3 ...................... <c, #startColor, #current>
+  [ 31] objcall 48 .............................. c[#startColor] = #current
+  [ 33] getlocal 1 .............................. <c>
+  [ 35] pushsymb 462 ............................ <#targetColor>
+  [ 38] pushint16 255 ........................... <255>
+  [ 41] pushint16 255 ........................... <255>
+  [ 44] pushzero ................................ <0>
+  [ 45] pusharglist 3 ........................... <255, 255, 0>
+  [ 47] extcall 436 ............................. <rgb(255, 255, 0)>
+  [ 50] pusharglistnoret 3 ...................... <c, #targetColor, rgb(255, 255, 0)>
+  [ 52] objcall 48 .............................. c[#targetColor] = rgb(255, 255, 0)
+  [ 54] getlocal 1 .............................. <c>
+  [ 56] pushsymb 215 ............................ <#speed>
+  [ 58] pushint8 10 ............................. <10>
+  [ 60] pusharglistnoret 3 ...................... <c, #speed, 10>
+  [ 62] objcall 48 .............................. c[#speed] = 10
+  [ 64] getprop 33 .............................. <ancestor>
+  [ 66] pusharglistnoret 1 ...................... <ancestor>
+  [ 68] objcall 2 ............................... ancestor.addModParams()
+  [ 70] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pushsymb 49 ............................. <#none>
+  [ 10] setprop 464 ............................. pCurrentTransform = #none
+  [ 13] pushsymb 49 ............................. <#none>
+  [ 15] setprop 465 ............................. pNextTransform = #none
+  [ 18] pushsymb 49 ............................. <#none>
+  [ 20] setprop 466 ............................. pTransColor = #none
+  [ 23] ret
+end
+
+on addSaveData me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 4 ............................... ancestor.addSaveData(sd)
+  [  8] getprop 466 ............................. <pTransColor>
+  [ 11] pushsymb 49 ............................. <#none>
+  [ 13] eq ...................................... <pTransColor = #none>
+  [ 14] jmpifz [ 31] ............................ if pTransColor = #none then / else
+  [ 17] getparam 1 .............................. <sd>
+  [ 19] pushsymb 466 ............................ <#pTransColor>
+  [ 22] pushsymb 49 ............................. <#none>
+  [ 24] pusharglistnoret 3 ...................... <sd, #pTransColor, #none>
+  [ 26] objcall 48 .............................. sd[#pTransColor] = #none
+  [ 28] jmp [ 56]
+  [ 31] pusharglist 0 ........................... <[:]>
+  [ 33] pushproplist ............................ <[:]>
+  [ 34] setlocal 0 .............................. saveData = [:]
+  [ 36] getprop 466 ............................. <pTransColor>
+  [ 39] getlocal 0 .............................. <saveData>
+  [ 41] pusharglistnoret 2 ...................... <pTransColor, saveData>
+  [ 43] objcall 4 ............................... pTransColor.addSaveData(saveData)
+  [ 45] getparam 1 .............................. <sd>
+  [ 47] pushsymb 466 ............................ <#pTransColor>
+  [ 50] getlocal 0 .............................. <saveData>
+  [ 52] pusharglistnoret 3 ...................... <sd, #pTransColor, saveData>
+  [ 54] objcall 48 .............................. sd[#pTransColor] = saveData
+  [ 56] getparam 1 .............................. <sd>
+  [ 58] pushsymb 464 ............................ <#pCurrentTransform>
+  [ 61] getprop 464 ............................. <pCurrentTransform>
+  [ 64] pusharglistnoret 3 ...................... <sd, #pCurrentTransform, pCurrentTransform>
+  [ 66] objcall 48 .............................. sd[#pCurrentTransform] = pCurrentTransform
+  [ 68] getparam 1 .............................. <sd>
+  [ 70] pushsymb 465 ............................ <#pNextTransform>
+  [ 73] getprop 465 ............................. <pNextTransform>
+  [ 76] pusharglistnoret 3 ...................... <sd, #pNextTransform, pNextTransform>
+  [ 78] objcall 48 .............................. sd[#pNextTransform] = pNextTransform
+  [ 80] ret
+end
+
+on finish me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 441 ............................. me.cancelTransColor()
+  [  7] getprop 33 .............................. <ancestor>
+  [  9] pusharglistnoret 1 ...................... <ancestor>
+  [ 11] objcall 3 ............................... ancestor.finish()
+  [ 13] ret
+end
+
+on cancelTransColor me
+  [  0] getprop 466 ............................. <pTransColor>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] nteq .................................... <pTransColor <> #none>
+  [  6] jmpifz [ 74] ............................ if pTransColor <> #none then
+  [  9] getprop 466 ............................. <pTransColor>
+  [ 12] pusharglistnoret 1 ...................... <pTransColor>
+  [ 14] objcall 467 ............................. pTransColor.cancel()
+  [ 17] pushsymb 49 ............................. <#none>
+  [ 19] setprop 466 ............................. pTransColor = #none
+  [ 22] getparam 0 .............................. <me>
+  [ 24] getchainedprop 57 ....................... <me.id>
+  [ 26] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 28] pusharglist 1 ........................... <me.id.bigMe>
+  [ 30] objcall 97 .............................. <me.id.bigMe.getSprite()>
+  [ 32] pushsymb 49 ............................. <#none>
+  [ 34] nteq .................................... <me.id.bigMe.getSprite() <> #none>
+  [ 35] jmpifz [ 69] ............................ if me.id.bigMe.getSprite() <> #none then
+  [ 38] getparam 0 .............................. <me>
+  [ 40] getchainedprop 51 ....................... <me.big>
+  [ 42] pusharglist 1 ........................... <me.big>
+  [ 44] objcall 469 ............................. <me.big.getSpriteColor()>
+  [ 47] setprop 468 ............................. pLastFinishingColour = me.big.getSpriteColor()
+  [ 50] getparam 0 .............................. <me>
+  [ 52] getchainedprop 57 ....................... <me.id>
+  [ 54] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 56] pushzero ................................ <0>
+  [ 57] pushzero ................................ <0>
+  [ 58] pushzero ................................ <0>
+  [ 59] pusharglist 3 ........................... <0, 0, 0>
+  [ 61] extcall 436 ............................. <rgb(0, 0, 0)>
+  [ 64] pusharglistnoret 2 ...................... <me.id.bigMe, rgb(0, 0, 0)>
+  [ 66] objcall 470 ............................. me.id.bigMe.setSpriteColour(rgb(0, 0, 0))
+  [ 69] pushsymb 49 ............................. <#none>
+  [ 71] setprop 464 ............................. pCurrentTransform = #none
+  [ 74] ret
+end
+
+on colourTransform me, inParams
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 451 ............................. <me.newTransColor()>
+  [  7] setlocal 0 .............................. params = me.newTransColor()
+  [  9] getlocal 0 .............................. <params>
+  [ 11] getparam 1 .............................. <inParams>
+  [ 13] getobjprop 460 .......................... <inParams.startColor>
+  [ 16] setobjprop 460 .......................... params.startColor = inParams.startColor
+  [ 19] getlocal 0 .............................. <params>
+  [ 21] getparam 1 .............................. <inParams>
+  [ 23] getobjprop 462 .......................... <inParams.targetColor>
+  [ 26] setobjprop 462 .......................... params.targetColor = inParams.targetColor
+  [ 29] getlocal 0 .............................. <params>
+  [ 31] getparam 1 .............................. <inParams>
+  [ 33] getobjprop 215 .......................... <inParams.speed>
+  [ 35] setobjprop 215 .......................... params.speed = inParams.speed
+  [ 37] getprop 466 ............................. <pTransColor>
+  [ 40] getlocal 0 .............................. <params>
+  [ 42] pusharglistnoret 2 ...................... <pTransColor, params>
+  [ 44] objcall 1 ............................... pTransColor.init(params)
+  [ 46] ret
+end
+
+on fadeBlack me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 451 ............................. <me.newTransColor()>
+  [  7] setlocal 0 .............................. params = me.newTransColor()
+  [  9] getlocal 0 .............................. <params>
+  [ 11] getprop 468 ............................. <pLastFinishingColour>
+  [ 14] setobjprop 460 .......................... params.startColor = pLastFinishingColour
+  [ 17] getlocal 0 .............................. <params>
+  [ 19] pushzero ................................ <0>
+  [ 20] pushzero ................................ <0>
+  [ 21] pushzero ................................ <0>
+  [ 22] pusharglist 3 ........................... <0, 0, 0>
+  [ 24] extcall 436 ............................. <rgb(0, 0, 0)>
+  [ 27] setobjprop 462 .......................... params.targetColor = rgb(0, 0, 0)
+  [ 30] getlocal 0 .............................. <params>
+  [ 32] pushint8 10 ............................. <10>
+  [ 34] setobjprop 215 .......................... params.speed = 10
+  [ 36] getprop 466 ............................. <pTransColor>
+  [ 39] getlocal 0 .............................. <params>
+  [ 41] pusharglistnoret 2 ...................... <pTransColor, params>
+  [ 43] objcall 1 ............................... pTransColor.init(params)
+  [ 45] pushsymb 443 ............................ <#fadeBlack>
+  [ 48] setprop 464 ............................. pCurrentTransform = #fadeBlack
+  [ 51] ret
+end
+
+on fadeGoldBlack me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 451 ............................. <me.newTransColor()>
+  [  7] setlocal 0 .............................. params = me.newTransColor()
+  [  9] getlocal 0 .............................. <params>
+  [ 11] pushint16 255 ........................... <255>
+  [ 14] pushint16 201 ........................... <201>
+  [ 17] pushint8 57 ............................. <57>
+  [ 19] pusharglist 3 ........................... <255, 201, 57>
+  [ 21] extcall 436 ............................. <rgb(255, 201, 57)>
+  [ 24] setobjprop 460 .......................... params.startColor = rgb(255, 201, 57)
+  [ 27] getlocal 0 .............................. <params>
+  [ 29] pushzero ................................ <0>
+  [ 30] pushzero ................................ <0>
+  [ 31] pushzero ................................ <0>
+  [ 32] pusharglist 3 ........................... <0, 0, 0>
+  [ 34] extcall 436 ............................. <rgb(0, 0, 0)>
+  [ 37] setobjprop 462 .......................... params.targetColor = rgb(0, 0, 0)
+  [ 40] getlocal 0 .............................. <params>
+  [ 42] pushint8 10 ............................. <10>
+  [ 44] setobjprop 215 .......................... params.speed = 10
+  [ 46] getprop 466 ............................. <pTransColor>
+  [ 49] getlocal 0 .............................. <params>
+  [ 51] pusharglistnoret 2 ...................... <pTransColor, params>
+  [ 53] objcall 1 ............................... pTransColor.init(params)
+  [ 55] pushsymb 444 ............................ <#fadeGoldBlack>
+  [ 58] setprop 464 ............................. pCurrentTransform = #fadeGoldBlack
+  [ 61] ret
+end
+
+on flashWhite me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 451 ............................. <me.newTransColor()>
+  [  7] setlocal 0 .............................. params = me.newTransColor()
+  [  9] getlocal 0 .............................. <params>
+  [ 11] pushint16 255 ........................... <255>
+  [ 14] pushint16 255 ........................... <255>
+  [ 17] pushint16 255 ........................... <255>
+  [ 20] pusharglist 3 ........................... <255, 255, 255>
+  [ 22] extcall 436 ............................. <rgb(255, 255, 255)>
+  [ 25] setobjprop 460 .......................... params.startColor = rgb(255, 255, 255)
+  [ 28] getlocal 0 .............................. <params>
+  [ 30] pushzero ................................ <0>
+  [ 31] pushzero ................................ <0>
+  [ 32] pushzero ................................ <0>
+  [ 33] pusharglist 3 ........................... <0, 0, 0>
+  [ 35] extcall 436 ............................. <rgb(0, 0, 0)>
+  [ 38] setobjprop 462 .......................... params.targetColor = rgb(0, 0, 0)
+  [ 41] getprop 466 ............................. <pTransColor>
+  [ 44] getlocal 0 .............................. <params>
+  [ 46] pusharglistnoret 2 ...................... <pTransColor, params>
+  [ 48] objcall 1 ............................... pTransColor.init(params)
+  [ 50] pushsymb 445 ............................ <#flashWhite>
+  [ 53] setprop 464 ............................. pCurrentTransform = #flashWhite
+  [ 56] ret
+end
+
+on flickWhite me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 451 ............................. <me.newTransColor()>
+  [  7] setlocal 0 .............................. params = me.newTransColor()
+  [  9] getlocal 0 .............................. <params>
+  [ 11] pushint16 255 ........................... <255>
+  [ 14] pushint16 255 ........................... <255>
+  [ 17] pushint16 255 ........................... <255>
+  [ 20] pusharglist 3 ........................... <255, 255, 255>
+  [ 22] extcall 436 ............................. <rgb(255, 255, 255)>
+  [ 25] setobjprop 460 .......................... params.startColor = rgb(255, 255, 255)
+  [ 28] getlocal 0 .............................. <params>
+  [ 30] pushzero ................................ <0>
+  [ 31] pushzero ................................ <0>
+  [ 32] pushzero ................................ <0>
+  [ 33] pusharglist 3 ........................... <0, 0, 0>
+  [ 35] extcall 436 ............................. <rgb(0, 0, 0)>
+  [ 38] setobjprop 462 .......................... params.targetColor = rgb(0, 0, 0)
+  [ 41] getlocal 0 .............................. <params>
+  [ 43] pushint8 33 ............................. <33>
+  [ 45] setobjprop 215 .......................... params.speed = 33
+  [ 47] getprop 466 ............................. <pTransColor>
+  [ 50] getlocal 0 .............................. <params>
+  [ 52] pusharglistnoret 2 ...................... <pTransColor, params>
+  [ 54] objcall 1 ............................... pTransColor.init(params)
+  [ 56] pushsymb 446 ............................ <#flickWhite>
+  [ 59] setprop 464 ............................. pCurrentTransform = #flickWhite
+  [ 62] ret
+end
+
+on glowPink me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 451 ............................. <me.newTransColor()>
+  [  7] setlocal 0 .............................. params = me.newTransColor()
+  [  9] getlocal 0 .............................. <params>
+  [ 11] pushint16 255 ........................... <255>
+  [ 14] pushint16 200 ........................... <200>
+  [ 17] pushint16 200 ........................... <200>
+  [ 20] pusharglist 3 ........................... <255, 200, 200>
+  [ 22] extcall 436 ............................. <rgb(255, 200, 200)>
+  [ 25] setobjprop 462 .......................... params.targetColor = rgb(255, 200, 200)
+  [ 28] getlocal 0 .............................. <params>
+  [ 30] pushint8 10 ............................. <10>
+  [ 32] setobjprop 215 .......................... params.speed = 10
+  [ 34] getprop 466 ............................. <pTransColor>
+  [ 37] getlocal 0 .............................. <params>
+  [ 39] pusharglistnoret 2 ...................... <pTransColor, params>
+  [ 41] objcall 1 ............................... pTransColor.init(params)
+  [ 43] pushsymb 447 ............................ <#glowPink>
+  [ 46] setprop 464 ............................. pCurrentTransform = #glowPink
+  [ 49] pushsymb 443 ............................ <#fadeBlack>
+  [ 52] setprop 465 ............................. pNextTransform = #fadeBlack
+  [ 55] ret
+end
+
+on glowGold me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 451 ............................. <me.newTransColor()>
+  [  7] setlocal 0 .............................. params = me.newTransColor()
+  [  9] getlocal 0 .............................. <params>
+  [ 11] pushint16 255 ........................... <255>
+  [ 14] pushint16 201 ........................... <201>
+  [ 17] pushint8 57 ............................. <57>
+  [ 19] pusharglist 3 ........................... <255, 201, 57>
+  [ 21] extcall 436 ............................. <rgb(255, 201, 57)>
+  [ 24] setobjprop 462 .......................... params.targetColor = rgb(255, 201, 57)
+  [ 27] getlocal 0 .............................. <params>
+  [ 29] pushint8 10 ............................. <10>
+  [ 31] setobjprop 215 .......................... params.speed = 10
+  [ 33] getprop 466 ............................. <pTransColor>
+  [ 36] getlocal 0 .............................. <params>
+  [ 38] pusharglistnoret 2 ...................... <pTransColor, params>
+  [ 40] objcall 1 ............................... pTransColor.init(params)
+  [ 42] pushsymb 448 ............................ <#glowGold>
+  [ 45] setprop 464 ............................. pCurrentTransform = #glowGold
+  [ 48] pushsymb 444 ............................ <#fadeGoldBlack>
+  [ 51] setprop 465 ............................. pNextTransform = #fadeGoldBlack
+  [ 54] ret
+end
+
+on glowRed me
+  [  0] getprop 464 ............................. <pCurrentTransform>
+  [  3] pushsymb 450 ............................ <#glowTeal>
+  [  6] eq ...................................... <pCurrentTransform = #glowTeal>
+  [  7] getprop 464 ............................. <pCurrentTransform>
+  [ 10] pushsymb 4565 ........................... <#glowRedAndTeal>
+  [ 13] eq ...................................... <pCurrentTransform = #glowRedAndTeal>
+  [ 14] or ...................................... <(pCurrentTransform = #glowTeal) or (pCurrentTransform = #glowRedAndTeal)>
+  [ 15] jmpifz [ 28] ............................ if (pCurrentTransform = #glowTeal) or (pCurrentTransform = #glowRedAndTeal) then / else
+  [ 18] getparam 0 .............................. <me>
+  [ 20] pusharglistnoret 1 ...................... <me>
+  [ 22] objcall 4565 ............................ me.glowRedAndTeal()
+  [ 25] jmp [ 80]
+  [ 28] getparam 0 .............................. <me>
+  [ 30] pusharglist 1 ........................... <me>
+  [ 32] objcall 451 ............................. <me.newTransColor()>
+  [ 35] setlocal 0 .............................. params = me.newTransColor()
+  [ 37] getlocal 0 .............................. <params>
+  [ 39] pushint16 255 ........................... <255>
+  [ 42] pushzero ................................ <0>
+  [ 43] pushzero ................................ <0>
+  [ 44] pusharglist 3 ........................... <255, 0, 0>
+  [ 46] extcall 436 ............................. <rgb(255, 0, 0)>
+  [ 49] setobjprop 462 .......................... params.targetColor = rgb(255, 0, 0)
+  [ 52] getlocal 0 .............................. <params>
+  [ 54] pushint8 10 ............................. <10>
+  [ 56] setobjprop 215 .......................... params.speed = 10
+  [ 58] getlocal 0 .............................. <params>
+  [ 60] pushint8 1 .............................. <1>
+  [ 62] setobjprop 472 .......................... params.pingpong = 1
+  [ 65] getprop 466 ............................. <pTransColor>
+  [ 68] getlocal 0 .............................. <params>
+  [ 70] pusharglistnoret 2 ...................... <pTransColor, params>
+  [ 72] objcall 1 ............................... pTransColor.init(params)
+  [ 74] pushsymb 449 ............................ <#glowRed>
+  [ 77] setprop 464 ............................. pCurrentTransform = #glowRed
+  [ 80] ret
+end
+
+on glowTeal me
+  [  0] getprop 464 ............................. <pCurrentTransform>
+  [  3] pushsymb 449 ............................ <#glowRed>
+  [  6] eq ...................................... <pCurrentTransform = #glowRed>
+  [  7] getprop 464 ............................. <pCurrentTransform>
+  [ 10] pushsymb 4565 ........................... <#glowRedAndTeal>
+  [ 13] eq ...................................... <pCurrentTransform = #glowRedAndTeal>
+  [ 14] or ...................................... <(pCurrentTransform = #glowRed) or (pCurrentTransform = #glowRedAndTeal)>
+  [ 15] jmpifz [ 28] ............................ if (pCurrentTransform = #glowRed) or (pCurrentTransform = #glowRedAndTeal) then / else
+  [ 18] getparam 0 .............................. <me>
+  [ 20] pusharglistnoret 1 ...................... <me>
+  [ 22] objcall 4565 ............................ me.glowRedAndTeal()
+  [ 25] jmp [ 81]
+  [ 28] getparam 0 .............................. <me>
+  [ 30] pusharglist 1 ........................... <me>
+  [ 32] objcall 451 ............................. <me.newTransColor()>
+  [ 35] setlocal 0 .............................. params = me.newTransColor()
+  [ 37] getlocal 0 .............................. <params>
+  [ 39] pushzero ................................ <0>
+  [ 40] pushint16 255 ........................... <255>
+  [ 43] pushint16 255 ........................... <255>
+  [ 46] pusharglist 3 ........................... <0, 255, 255>
+  [ 48] extcall 436 ............................. <rgb(0, 255, 255)>
+  [ 51] setobjprop 462 .......................... params.targetColor = rgb(0, 255, 255)
+  [ 54] getlocal 0 .............................. <params>
+  [ 56] pushint8 100 ............................ <100>
+  [ 58] setobjprop 215 .......................... params.speed = 100
+  [ 60] getlocal 0 .............................. <params>
+  [ 62] pushzero ................................ <0>
+  [ 63] setobjprop 472 .......................... params.pingpong = 0
+  [ 66] getprop 466 ............................. <pTransColor>
+  [ 69] getlocal 0 .............................. <params>
+  [ 71] pusharglistnoret 2 ...................... <pTransColor, params>
+  [ 73] objcall 1 ............................... pTransColor.init(params)
+  [ 75] pushsymb 450 ............................ <#glowTeal>
+  [ 78] setprop 464 ............................. pCurrentTransform = #glowTeal
+  [ 81] ret
+end
+
+on glowRedAndTeal me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 451 ............................. <me.newTransColor()>
+  [  7] setlocal 0 .............................. params = me.newTransColor()
+  [  9] getlocal 0 .............................. <params>
+  [ 11] pushzero ................................ <0>
+  [ 12] pushint16 255 ........................... <255>
+  [ 15] pushint16 255 ........................... <255>
+  [ 18] pusharglist 3 ........................... <0, 255, 255>
+  [ 20] extcall 436 ............................. <rgb(0, 255, 255)>
+  [ 23] setobjprop 460 .......................... params.startColor = rgb(0, 255, 255)
+  [ 26] getlocal 0 .............................. <params>
+  [ 28] pushint16 255 ........................... <255>
+  [ 31] pushzero ................................ <0>
+  [ 32] pushzero ................................ <0>
+  [ 33] pusharglist 3 ........................... <255, 0, 0>
+  [ 35] extcall 436 ............................. <rgb(255, 0, 0)>
+  [ 38] setobjprop 462 .......................... params.targetColor = rgb(255, 0, 0)
+  [ 41] getlocal 0 .............................. <params>
+  [ 43] pushint8 10 ............................. <10>
+  [ 45] setobjprop 215 .......................... params.speed = 10
+  [ 47] getlocal 0 .............................. <params>
+  [ 49] pushint8 1 .............................. <1>
+  [ 51] setobjprop 472 .......................... params.pingpong = 1
+  [ 54] getprop 466 ............................. <pTransColor>
+  [ 57] getlocal 0 .............................. <params>
+  [ 59] pusharglistnoret 2 ...................... <pTransColor, params>
+  [ 61] objcall 1 ............................... pTransColor.init(params)
+  [ 63] pushsymb 4565 ........................... <#glowRedAndTeal>
+  [ 66] setprop 464 ............................. pCurrentTransform = #glowRedAndTeal
+  [ 69] ret
+end
+
+on newTransColor me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 441 ............................. me.cancelTransColor()
+  [  7] pushsymb 49 ............................. <#none>
+  [  9] setprop 465 ............................. pNextTransform = #none
+  [ 12] getglobal 40 ............................ <g>
+  [ 14] getchainedprop 41 ....................... <g.objectMaster>
+  [ 16] pushsymb 473 ............................ <#objTransColor>
+  [ 19] pusharglist 2 ........................... <g.objectMaster, #objTransColor>
+  [ 21] objcall 43 .............................. <g.objectMaster.requestObject(#objTransColor)>
+  [ 23] setprop 466 ............................. pTransColor = g.objectMaster.requestObject(#objTransColor)
+  [ 26] getprop 466 ............................. <pTransColor>
+  [ 29] pushsymb 1 .............................. <#init>
+  [ 31] pusharglist 2 ........................... <pTransColor, #init>
+  [ 33] objcall 230 ............................. <pTransColor.getParams(#init)>
+  [ 35] setlocal 0 .............................. params = pTransColor.getParams(#init)
+  [ 37] getlocal 0 .............................. <params>
+  [ 39] getparam 0 .............................. <me>
+  [ 41] setobjprop 474 .......................... params.callingPrg = me
+  [ 44] getlocal 0 .............................. <params>
+  [ 46] getparam 0 .............................. <me>
+  [ 48] getchainedprop 57 ....................... <me.id>
+  [ 50] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 52] pusharglist 1 ........................... <me.id.bigMe>
+  [ 54] objcall 97 .............................. <me.id.bigMe.getSprite()>
+  [ 56] setobjprop 267 .......................... params.spr = me.id.bigMe.getSprite()
+  [ 59] getlocal 0 .............................. <params>
+  [ 61] getparam 0 .............................. <me>
+  [ 63] getchainedprop 57 ....................... <me.id>
+  [ 65] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 67] pusharglist 1 ........................... <me.id.bigMe>
+  [ 69] objcall 475 ............................. <me.id.bigMe.getMemberType()>
+  [ 72] setobjprop 476 .......................... params.transformTarget = me.id.bigMe.getMemberType()
+  [ 75] getlocal 0 .............................. <params>
+  [ 77] pusharglistnoret 1 ...................... <params>
+  [ 79] extcall 35 .............................. return params
+  [ 81] ret
+end
+
+on paws me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 452 ............................. ancestor.paws()
+  [  7] getprop 466 ............................. <pTransColor>
+  [ 10] pushsymb 49 ............................. <#none>
+  [ 12] nteq .................................... <pTransColor <> #none>
+  [ 13] jmpifz [ 24] ............................ if pTransColor <> #none then
+  [ 16] getprop 466 ............................. <pTransColor>
+  [ 19] pusharglistnoret 1 ...................... <pTransColor>
+  [ 21] objcall 452 ............................. pTransColor.paws()
+  [ 24] ret
+end
+
+on pulseWhite me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 451 ............................. <me.newTransColor()>
+  [  7] setlocal 0 .............................. params = me.newTransColor()
+  [  9] getlocal 0 .............................. <params>
+  [ 11] pushint8 1 .............................. <1>
+  [ 13] setobjprop 472 .......................... params.pingpong = 1
+  [ 16] getlocal 0 .............................. <params>
+  [ 18] pushzero ................................ <0>
+  [ 19] pushzero ................................ <0>
+  [ 20] pushzero ................................ <0>
+  [ 21] pusharglist 3 ........................... <0, 0, 0>
+  [ 23] extcall 436 ............................. <rgb(0, 0, 0)>
+  [ 26] setobjprop 462 .......................... params.targetColor = rgb(0, 0, 0)
+  [ 29] getlocal 0 .............................. <params>
+  [ 31] pushint16 255 ........................... <255>
+  [ 34] pushint16 255 ........................... <255>
+  [ 37] pushint16 255 ........................... <255>
+  [ 40] pusharglist 3 ........................... <255, 255, 255>
+  [ 42] extcall 436 ............................. <rgb(255, 255, 255)>
+  [ 45] setobjprop 460 .......................... params.startColor = rgb(255, 255, 255)
+  [ 48] getprop 466 ............................. <pTransColor>
+  [ 51] getlocal 0 .............................. <params>
+  [ 53] pusharglistnoret 2 ...................... <pTransColor, params>
+  [ 55] objcall 1 ............................... pTransColor.init(params)
+  [ 57] pushsymb 453 ............................ <#pulseWhite>
+  [ 60] setprop 464 ............................. pCurrentTransform = #pulseWhite
+  [ 63] ret
+end
+
+on pulseWhiteStop me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 457 ............................. me.stopPulseWhite()
+  [  7] ret
+end
+
+on restoreFromSave me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 26 .............................. ancestor.restoreFromSave(sd)
+  [  8] getparam 0 .............................. <me>
+  [ 10] pusharglistnoret 1 ...................... <me>
+  [ 12] objcall 441 ............................. me.cancelTransColor()
+  [ 15] getparam 1 .............................. <sd>
+  [ 17] getobjprop 466 .......................... <sd.pTransColor>
+  [ 20] pushsymb 49 ............................. <#none>
+  [ 22] nteq .................................... <sd.pTransColor <> #none>
+  [ 23] jmpifz [100] ............................ if sd.pTransColor <> #none then
+  [ 26] getglobal 40 ............................ <g>
+  [ 28] getchainedprop 41 ....................... <g.objectMaster>
+  [ 30] pushsymb 473 ............................ <#objTransColor>
+  [ 33] pusharglist 2 ........................... <g.objectMaster, #objTransColor>
+  [ 35] objcall 43 .............................. <g.objectMaster.requestObject(#objTransColor)>
+  [ 37] setprop 466 ............................. pTransColor = g.objectMaster.requestObject(#objTransColor)
+  [ 40] getprop 466 ............................. <pTransColor>
+  [ 43] pusharglist 1 ........................... <pTransColor>
+  [ 45] objcall 230 ............................. <pTransColor.getParams()>
+  [ 47] setlocal 0 .............................. params = pTransColor.getParams()
+  [ 49] getlocal 0 .............................. <params>
+  [ 51] getparam 0 .............................. <me>
+  [ 53] getobjprop 51 ........................... <me.big>
+  [ 55] setobjprop 474 .......................... params.callingPrg = me.big
+  [ 58] getlocal 0 .............................. <params>
+  [ 60] getparam 0 .............................. <me>
+  [ 62] getchainedprop 51 ....................... <me.big>
+  [ 64] pusharglist 1 ........................... <me.big>
+  [ 66] objcall 97 .............................. <me.big.getSprite()>
+  [ 68] setobjprop 267 .......................... params.spr = me.big.getSprite()
+  [ 71] getlocal 0 .............................. <params>
+  [ 73] pushsymb 477 ............................ <#bitmap>
+  [ 76] setobjprop 476 .......................... params.transformTarget = #bitmap
+  [ 79] getprop 466 ............................. <pTransColor>
+  [ 82] getlocal 0 .............................. <params>
+  [ 84] pusharglistnoret 2 ...................... <pTransColor, params>
+  [ 86] objcall 1 ............................... pTransColor.init(params)
+  [ 88] getprop 466 ............................. <pTransColor>
+  [ 91] getparam 1 .............................. <sd>
+  [ 93] getobjprop 466 .......................... <sd.pTransColor>
+  [ 96] pusharglistnoret 2 ...................... <pTransColor, sd.pTransColor>
+  [ 98] objcall 26 .............................. pTransColor.restoreFromSave(sd.pTransColor)
+  [100] getparam 1 .............................. <sd>
+  [102] getobjprop 464 .......................... <sd.pCurrentTransform>
+  [105] setprop 464 ............................. pCurrentTransform = sd.pCurrentTransform
+  [108] getparam 1 .............................. <sd>
+  [110] getobjprop 465 .......................... <sd.pNextTransform>
+  [113] setprop 465 ............................. pNextTransform = sd.pNextTransform
+  [116] ret
+end
+
+on stopGlowRed me
+  [  0] getprop 464 ............................. <pCurrentTransform>
+  [  3] pushsymb 449 ............................ <#glowRed>
+  [  6] eq ...................................... <pCurrentTransform = #glowRed>
+  [  7] jmpifz [ 20] ............................ if pCurrentTransform = #glowRed then / else
+  [ 10] getparam 0 .............................. <me>
+  [ 12] pusharglistnoret 1 ...................... <me>
+  [ 14] objcall 441 ............................. me.cancelTransColor()
+  [ 17] jmp [ 44]
+  [ 20] getprop 464 ............................. <pCurrentTransform>
+  [ 23] pushsymb 4565 ........................... <#glowRedAndTeal>
+  [ 26] eq ...................................... <pCurrentTransform = #glowRedAndTeal>
+  [ 27] jmpifz [ 44] ............................ if pCurrentTransform = #glowRedAndTeal then
+  [ 30] getparam 0 .............................. <me>
+  [ 32] pusharglistnoret 1 ...................... <me>
+  [ 34] objcall 441 ............................. me.cancelTransColor()
+  [ 37] getparam 0 .............................. <me>
+  [ 39] pusharglistnoret 1 ...................... <me>
+  [ 41] objcall 450 ............................. me.glowTeal()
+  [ 44] ret
+end
+
+on stopGlowTeal me
+  [  0] getprop 464 ............................. <pCurrentTransform>
+  [  3] pushsymb 450 ............................ <#glowTeal>
+  [  6] eq ...................................... <pCurrentTransform = #glowTeal>
+  [  7] jmpifz [ 20] ............................ if pCurrentTransform = #glowTeal then / else
+  [ 10] getparam 0 .............................. <me>
+  [ 12] pusharglistnoret 1 ...................... <me>
+  [ 14] objcall 441 ............................. me.cancelTransColor()
+  [ 17] jmp [ 44]
+  [ 20] getprop 464 ............................. <pCurrentTransform>
+  [ 23] pushsymb 4565 ........................... <#glowRedAndTeal>
+  [ 26] eq ...................................... <pCurrentTransform = #glowRedAndTeal>
+  [ 27] jmpifz [ 44] ............................ if pCurrentTransform = #glowRedAndTeal then
+  [ 30] getparam 0 .............................. <me>
+  [ 32] pusharglistnoret 1 ...................... <me>
+  [ 34] objcall 441 ............................. me.cancelTransColor()
+  [ 37] getparam 0 .............................. <me>
+  [ 39] pusharglistnoret 1 ...................... <me>
+  [ 41] objcall 449 ............................. me.glowRed()
+  [ 44] ret
+end
+
+on stopPulseWhite me
+  [  0] getprop 464 ............................. <pCurrentTransform>
+  [  3] pushsymb 453 ............................ <#pulseWhite>
+  [  6] eq ...................................... <pCurrentTransform = #pulseWhite>
+  [  7] jmpifz [ 32] ............................ if pCurrentTransform = #pulseWhite then
+  [ 10] getparam 0 .............................. <me>
+  [ 12] pusharglistnoret 1 ...................... <me>
+  [ 14] objcall 441 ............................. me.cancelTransColor()
+  [ 17] getparam 0 .............................. <me>
+  [ 19] pushzero ................................ <0>
+  [ 20] pushzero ................................ <0>
+  [ 21] pushzero ................................ <0>
+  [ 22] pusharglist 3 ........................... <0, 0, 0>
+  [ 24] extcall 436 ............................. <rgb(0, 0, 0)>
+  [ 27] pusharglistnoret 2 ...................... <me, rgb(0, 0, 0)>
+  [ 29] objcall 470 ............................. me.setSpriteColour(rgb(0, 0, 0))
+  [ 32] ret
+end
+
+on transColorFin me
+  [  0] getprop 465 ............................. <pNextTransform>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] eq ...................................... <pNextTransform = #none>
+  [  6] jmpifz [ 51] ............................ if pNextTransform = #none then / else
+  [  9] pushsymb 49 ............................. <#none>
+  [ 11] setprop 464 ............................. pCurrentTransform = #none
+  [ 14] pushsymb 49 ............................. <#none>
+  [ 16] setprop 466 ............................. pTransColor = #none
+  [ 19] getparam 0 .............................. <me>
+  [ 21] getchainedprop 57 ....................... <me.id>
+  [ 23] getchainedprop 58 ....................... <me.id.bigMe>
+  [ 25] pusharglistnoret 1 ...................... <me.id.bigMe>
+  [ 27] objcall 478 ............................. me.id.bigMe.colourTransformFin()
+  [ 30] getparam 0 .............................. <me>
+  [ 32] pushsymb 478 ............................ <#colourTransformFin>
+  [ 35] pusharglistnoret 2 ...................... <me, #colourTransformFin>
+  [ 37] objcall 22 .............................. me.internalEvent(#colourTransformFin)
+  [ 39] getparam 0 .............................. <me>
+  [ 41] pushsymb 478 ............................ <#colourTransformFin>
+  [ 44] pusharglistnoret 2 ...................... <me, #colourTransformFin>
+  [ 46] objcall 123 ............................. me.eventNotify(#colourTransformFin)
+  [ 48] jmp [ 70]
+  [ 51] getprop 465 ............................. <pNextTransform>
+  [ 54] setlocal 0 .............................. nextTransform = pNextTransform
+  [ 56] pushsymb 49 ............................. <#none>
+  [ 58] setprop 465 ............................. pNextTransform = #none
+  [ 61] getlocal 0 .............................. <nextTransform>
+  [ 63] getparam 0 .............................. <me>
+  [ 65] pusharglistnoret 2 ...................... <nextTransform, me>
+  [ 67] extcall 479 ............................. call(nextTransform, me)
+  [ 70] ret
+end
+
+on unpaws me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 459 ............................. ancestor.unpaws()
+  [  7] getprop 466 ............................. <pTransColor>
+  [ 10] pushsymb 49 ............................. <#none>
+  [ 12] nteq .................................... <pTransColor <> #none>
+  [ 13] jmpifz [ 24] ............................ if pTransColor <> #none then
+  [ 16] getprop 466 ............................. <pTransColor>
+  [ 19] pusharglistnoret 1 ...................... <pTransColor>
+  [ 21] objcall 459 ............................. pTransColor.unpaws()
+  [ 24] ret
+end

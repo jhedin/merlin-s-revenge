@@ -1,0 +1,71 @@
+property ancestor, player, pLocation
+
+on new me
+  [  0] pushcons 0 .............................. <"objSpriteMember">
+  [  2] pusharglist 1 ........................... <"objSpriteMember">
+  [  4] extcall 27 .............................. <script("objSpriteMember")>
+  [  6] pusharglist 1 ........................... <script("objSpriteMember")>
+  [  8] extcall 0 ............................... <new(script("objSpriteMember"))>
+  [ 10] setprop 77 .............................. ancestor = new(script("objSpriteMember"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 221 ............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 1094 ........................... <#field>
+  [ 27] setobjprop 663 .......................... i.memberType = #field
+  [ 30] getlocal 0 .............................. <i>
+  [ 32] pushsymb 525 ............................ <#location>
+  [ 35] pushint8 10 ............................. <10>
+  [ 37] pushint8 10 ............................. <10>
+  [ 39] pusharglist 2 ........................... <10, 10>
+  [ 41] extcall 215 ............................. <point(10, 10)>
+  [ 43] pusharglistnoret 3 ...................... <i, #location, point(10, 10)>
+  [ 45] objcall 37 .............................. i[#location] = point(10, 10)
+  [ 47] getlocal 0 .............................. <i>
+  [ 49] pushsymb 451 ............................ <#layer>
+  [ 52] pushint8 99 ............................. <99>
+  [ 54] pusharglistnoret 3 ...................... <i, #layer, 99>
+  [ 56] objcall 37 .............................. i[#layer] = 99
+  [ 58] getparam 0 .............................. <me>
+  [ 60] pusharglistnoret 1 ...................... <me>
+  [ 62] extcall 17 .............................. return me
+  [ 64] ret
+end
+
+on init me, params
+  [  0] getparam 1 .............................. <params>
+  [  2] getobjprop 451 .......................... <params.layer>
+  [  5] setprop 355 ............................. player = params.layer
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 525 .......................... <params.location>
+  [ 13] setprop 542 ............................. pLocation = params.location
+  [ 16] getprop 77 .............................. <ancestor>
+  [ 18] getparam 1 .............................. <params>
+  [ 20] pusharglistnoret 2 ...................... <ancestor, params>
+  [ 22] objcall 1 ............................... ancestor.init(params)
+  [ 24] ret
+end
+
+on display me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 593 ............................. me.requestMember()
+  [  7] getparam 0 .............................. <me>
+  [  9] pusharglistnoret 1 ...................... <me>
+  [ 11] objcall 660 ............................. me.setMember()
+  [ 14] getparam 0 .............................. <me>
+  [ 16] pushcons 1 .............................. <"inputBox">
+  [ 18] pusharglistnoret 2 ...................... <me, "inputBox">
+  [ 20] objcall 661 ............................. me.setMemberName("inputBox")
+  [ 23] getparam 0 .............................. <me>
+  [ 25] getprop 355 ............................. <player>
+  [ 28] pusharglistnoret 2 ...................... <me, player>
+  [ 30] objcall 657 ............................. me.setSpriteLayer(player)
+  [ 33] getparam 0 .............................. <me>
+  [ 35] getprop 542 ............................. <pLocation>
+  [ 38] pusharglistnoret 2 ...................... <me, pLocation>
+  [ 40] objcall 662 ............................. me.setSpriteLoc(pLocation)
+  [ 43] ret
+end

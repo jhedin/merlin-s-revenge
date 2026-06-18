@@ -1,0 +1,522 @@
+property pGoScreenAction, pScreenSequencer
+global g, g3DMode, gCopyProtectionRedirectURL, gErrorTrace, gIntroScript, gGameCompleteScript, gGameName, gGameOverScript, gMapLoaded
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 3 ............................... return me
+  [  6] ret
+end
+
+on init me
+  [  0] pushsymb 103 ............................ <#none>
+  [  2] setprop 527 ............................. pScreenSequencer = #none
+  [  5] ret
+end
+
+on start me
+  [  0] getglobal 335 ........................... <g3DMode>
+  [  3] pushint8 1 .............................. <1>
+  [  5] eq ...................................... <g3DMode = 1>
+  [  6] jmpifz [ 19] ............................ if g3DMode = 1 then
+  [  9] getglobal 191 ........................... <g>
+  [ 11] getchainedprop 496 ...................... <g.spriteMaster>
+  [ 14] pusharglistnoret 1 ...................... <g.spriteMaster>
+  [ 16] objcall 304 ............................. g.spriteMaster.init3DWorld()
+  [ 19] getglobal 191 ........................... <g>
+  [ 21] getchainedprop 528 ...................... <g.frameTimer>
+  [ 24] pusharglistnoret 1 ...................... <g.frameTimer>
+  [ 26] objcall 398 ............................. g.frameTimer.start()
+  [ 29] getparam 0 .............................. <me>
+  [ 31] pushsymb 529 ............................ <#titleScreen>
+  [ 34] pusharglistnoret 2 ...................... <me, #titleScreen>
+  [ 36] objcall 461 ............................. me.goScreen(#titleScreen)
+  [ 39] ret
+end
+
+on finish me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 518 ............................. me.finishScreenSequencer()
+  [  7] ret
+end
+
+on finishScreenSequencer me
+  [  0] getprop 527 ............................. <pScreenSequencer>
+  [  3] pusharglist 1 ........................... <pScreenSequencer>
+  [  5] extcall 350 ............................. <ilk(pScreenSequencer)>
+  [  8] pushsymb 388 ............................ <#void>
+  [ 11] nteq .................................... <ilk(pScreenSequencer) <> #void>
+  [ 12] getprop 527 ............................. <pScreenSequencer>
+  [ 15] pushsymb 103 ............................ <#none>
+  [ 17] nteq .................................... <pScreenSequencer <> #none>
+  [ 18] and ..................................... <(ilk(pScreenSequencer) <> #void) and (pScreenSequencer <> #none)>
+  [ 19] jmpifz [ 34] ............................ if (ilk(pScreenSequencer) <> #void) and (pScreenSequencer <> #none) then
+  [ 22] getprop 527 ............................. <pScreenSequencer>
+  [ 25] pusharglistnoret 1 ...................... <pScreenSequencer>
+  [ 27] objcall 239 ............................. pScreenSequencer.finish()
+  [ 29] pushsymb 103 ............................ <#none>
+  [ 31] setprop 527 ............................. pScreenSequencer = #none
+  [ 34] ret
+end
+
+on buttClicked me, theButt
+  [  0] getparam 1 .............................. <theButt>
+  [  2] pusharglist 1 ........................... <theButt>
+  [  4] extcall 530 ............................. <string(theButt)>
+  [  7] pushcons 0 .............................. <"screen">
+  [  9] containsstr ............................. <string(theButt) contains "screen">
+  [ 10] jmpifz [140] ............................ if string(theButt) contains "screen" then / else
+  [ 13] getparam 1 .............................. <theButt>
+  [ 15] peek 0 .................................. case theButt of
+  [ 17] pushsymb 531 ............................ <#butt_animScreen>
+  [ 20] eq
+  [ 21] jmpifz [ 32] ............................ (case) #butt_animScreen:
+  [ 24] pushsymb 532 ............................ <#animScreen>
+  [ 27] setlocal 0 .............................. theScreen = #animScreen
+  [ 29] jmp [124]
+  [ 32] peek 0
+  [ 34] pushsymb 533 ............................ <#butt_creditsScreen>
+  [ 37] eq
+  [ 38] jmpifz [ 58] ............................ (case) #butt_creditsScreen:
+  [ 41] getglobal 191 ........................... <g>
+  [ 43] getchainedprop 534 ...................... <g.cutSceneMaster>
+  [ 46] pusharglistnoret 1 ...................... <g.cutSceneMaster>
+  [ 48] objcall 239 ............................. g.cutSceneMaster.finish()
+  [ 50] pushsymb 535 ............................ <#creditsScreen>
+  [ 53] setlocal 0 .............................. theScreen = #creditsScreen
+  [ 55] jmp [124]
+  [ 58] peek 0
+  [ 60] pushsymb 536 ............................ <#butt_gameScreen>
+  [ 63] eq
+  [ 64] jmpifz [ 84] ............................ (case) #butt_gameScreen:
+  [ 67] getglobal 191 ........................... <g>
+  [ 69] getchainedprop 534 ...................... <g.cutSceneMaster>
+  [ 72] pusharglistnoret 1 ...................... <g.cutSceneMaster>
+  [ 74] objcall 239 ............................. g.cutSceneMaster.finish()
+  [ 76] pushsymb 537 ............................ <#gameScreen>
+  [ 79] setlocal 0 .............................. theScreen = #gameScreen
+  [ 81] jmp [124]
+  [ 84] peek 0
+  [ 86] pushsymb 538 ............................ <#butt_instructionsScreen>
+  [ 89] eq
+  [ 90] jmpifz [101] ............................ (case) #butt_instructionsScreen:
+  [ 93] pushsymb 539 ............................ <#instructionsScreen>
+  [ 96] setlocal 0 .............................. theScreen = #instructionsScreen
+  [ 98] jmp [124]
+  [101] peek 0
+  [103] pushsymb 540 ............................ <#butt_titleScreen>
+  [106] eq
+  [107] jmpifz [124] ............................ (case) #butt_titleScreen:
+  [110] getglobal 191 ........................... <g>
+  [112] getchainedprop 534 ...................... <g.cutSceneMaster>
+  [115] pusharglistnoret 1 ...................... <g.cutSceneMaster>
+  [117] objcall 239 ............................. g.cutSceneMaster.finish()
+  [119] pushsymb 529 ............................ <#titleScreen>
+  [122] setlocal 0 .............................. theScreen = #titleScreen
+  [124] pop 1 ................................... end case
+  [126] getparam 0 .............................. <me>
+  [128] getlocal 0 .............................. <theScreen>
+  [130] pushsymb 103 ............................ <#none>
+  [132] pusharglistnoret 3 ...................... <me, theScreen, #none>
+  [134] objcall 461 ............................. me.goScreen(theScreen, #none)
+  [137] jmp [275]
+  [140] getparam 1 .............................. <theButt>
+  [142] peek 0 .................................. case theButt of
+  [144] pushsymb 541 ............................ <#butt_copyright>
+  [147] eq
+  [148] jmpifz [168] ............................ (case) #butt_copyright:
+  [151] pushcons 1 .............................. <"http://www.themetalbox.com">
+  [153] pusharglistnoret 1 ...................... <"http://www.themetalbox.com">
+  [155] extcall 542 ............................. gotoNetPage("http://www.themetalbox.com")
+  [158] pushcons 2 .............................. <"copyright button pressed">
+  [160] pusharglistnoret 1 ...................... <"copyright button pressed">
+  [162] extcall 414 ............................. put "copyright button pressed"
+  [165] jmp [273]
+  [168] peek 0
+  [170] pushsymb 543 ............................ <#butt_intro>
+  [173] eq
+  [174] jmpifz [190] ............................ (case) #butt_intro:
+  [177] getparam 0 .............................. <me>
+  [179] pushsymb 544 ............................ <#intro>
+  [182] pusharglistnoret 2 ...................... <me, #intro>
+  [184] objcall 523 ............................. me.goSequence(#intro)
+  [187] jmp [273]
+  [190] peek 0
+  [192] pushsymb 545 ............................ <#butt_longHairLink>
+  [195] eq
+  [196] jmpifz [216] ............................ (case) #butt_longHairLink:
+  [199] pushcons 3 .............................. <"http://www.longhairlovers.com">
+  [201] pusharglistnoret 1 ...................... <"http://www.longhairlovers.com">
+  [203] extcall 542 ............................. gotoNetPage("http://www.longhairlovers.com")
+  [206] pushcons 4 .............................. <"longHair button pressed">
+  [208] pusharglistnoret 1 ...................... <"longHair button pressed">
+  [210] extcall 414 ............................. put "longHair button pressed"
+  [213] jmp [273]
+  [216] peek 0
+  [218] pushsymb 546 ............................ <#butt_reloadGame>
+  [221] eq
+  [222] jmpifz [250] ............................ (case) #butt_reloadGame:
+  [225] getglobal 191 ........................... <g>
+  [227] getchainedprop 534 ...................... <g.cutSceneMaster>
+  [230] pusharglistnoret 1 ...................... <g.cutSceneMaster>
+  [232] objcall 239 ............................. g.cutSceneMaster.finish()
+  [234] getparam 0 .............................. <me>
+  [236] pushsymb 537 ............................ <#gameScreen>
+  [239] pushsymb 547 ............................ <#loadGame>
+  [242] pusharglistnoret 3 ...................... <me, #gameScreen, #loadGame>
+  [244] objcall 461 ............................. me.goScreen(#gameScreen, #loadGame)
+  [247] jmp [273]
+  [250] peek 0
+  [252] pushsymb 548 ............................ <#butt_tmbLink>
+  [255] eq
+  [256] jmpifz [273] ............................ (case) #butt_tmbLink:
+  [259] pushcons 1 .............................. <"http://www.themetalbox.com">
+  [261] pusharglistnoret 1 ...................... <"http://www.themetalbox.com">
+  [263] extcall 542 ............................. gotoNetPage("http://www.themetalbox.com")
+  [266] pushcons 5 .............................. <"theMetalBox button pressed">
+  [268] pusharglistnoret 1 ...................... <"theMetalBox button pressed">
+  [270] extcall 414 ............................. put "theMetalBox button pressed"
+  [273] pop 1 ................................... end case
+  [275] ret
+end
+
+on cutSceneFinished me, theScene
+  [  0] getparam 1 .............................. <theScene>
+  [  2] peek 0 .................................. case theScene of
+  [  4] getglobal 550 ........................... <gIntroScript>
+  [  7] eq
+  [  8] jmpifz [ 43] ............................ (case) gIntroScript:
+  [ 11] getglobal 551 ........................... <gMapLoaded>
+  [ 14] jmpifz [ 30] ............................ if gMapLoaded then / else
+  [ 17] getparam 0 .............................. <me>
+  [ 19] pushsymb 537 ............................ <#gameScreen>
+  [ 22] pusharglistnoret 2 ...................... <me, #gameScreen>
+  [ 24] objcall 461 ............................. me.goScreen(#gameScreen)
+  [ 27] jmp [ 40]
+  [ 30] getparam 0 .............................. <me>
+  [ 32] pushsymb 529 ............................ <#titleScreen>
+  [ 35] pusharglistnoret 2 ...................... <me, #titleScreen>
+  [ 37] objcall 461 ............................. me.goScreen(#titleScreen)
+  [ 40] jmp [ 87]
+  [ 43] peek 0
+  [ 45] getglobal 552 ........................... <gGameCompleteScript>
+  [ 48] eq
+  [ 49] jmpifz [ 65] ............................ (case) gGameCompleteScript:
+  [ 52] getparam 0 .............................. <me>
+  [ 54] pushsymb 535 ............................ <#creditsScreen>
+  [ 57] pusharglistnoret 2 ...................... <me, #creditsScreen>
+  [ 59] objcall 461 ............................. me.goScreen(#creditsScreen)
+  [ 62] jmp [ 87]
+  [ 65] peek 0
+  [ 67] getglobal 553 ........................... <gGameOverScript>
+  [ 70] eq
+  [ 71] jmpifz [ 87] ............................ (case) gGameOverScript:
+  [ 74] getparam 0 .............................. <me>
+  [ 76] pushsymb 537 ............................ <#gameScreen>
+  [ 79] pushsymb 547 ............................ <#loadGame>
+  [ 82] pusharglistnoret 3 ...................... <me, #gameScreen, #loadGame>
+  [ 84] objcall 461 ............................. me.goScreen(#gameScreen, #loadGame)
+  [ 87] pop 1 ................................... end case
+  [ 89] ret
+end
+
+on gameComplete me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 555 ............................ <#animScreenEnd>
+  [  5] pushsymb 521 ............................ <#gameComplete>
+  [  8] pusharglistnoret 3 ...................... <me, #animScreenEnd, #gameComplete>
+  [ 10] objcall 461 ............................. me.goScreen(#animScreenEnd, #gameComplete)
+  [ 13] ret
+end
+
+on goScreen me, theScreen, theAction
+  [  0] getparam 2 .............................. <theAction>
+  [  2] setprop 556 ............................. pGoScreenAction = theAction
+  [  5] getglobal 191 ........................... <g>
+  [  7] getchainedprop 557 ...................... <g.screenMaster>
+  [ 10] pushsymb 461 ............................ <#goScreen>
+  [ 13] pusharglist 2 ........................... <g.screenMaster, #goScreen>
+  [ 15] objcall 339 ............................. <g.screenMaster.getParams(#goScreen)>
+  [ 18] setlocal 0 .............................. params = g.screenMaster.getParams(#goScreen)
+  [ 20] getlocal 0 .............................. <params>
+  [ 22] getparam 0 .............................. <me>
+  [ 24] setobjprop 205 .......................... params.caller = me
+  [ 26] getlocal 0 .............................. <params>
+  [ 28] getparam 1 .............................. <theScreen>
+  [ 30] setobjprop 476 .......................... params.screenSym = theScreen
+  [ 33] getlocal 0 .............................. <params>
+  [ 35] pushsymb 558 ............................ <#fade>
+  [ 38] setobjprop 477 .......................... params.transition = #fade
+  [ 41] getglobal 191 ........................... <g>
+  [ 43] getchainedprop 557 ...................... <g.screenMaster>
+  [ 46] getlocal 0 .............................. <params>
+  [ 48] pusharglistnoret 2 ...................... <g.screenMaster, params>
+  [ 50] objcall 461 ............................. g.screenMaster.goScreen(params)
+  [ 53] ret
+end
+
+on goScreenAction me
+  [  0] getprop 556 ............................. <pGoScreenAction>
+  [  3] peek 0 .................................. case pGoScreenAction of
+  [  5] pushsymb 547 ............................ <#loadGame>
+  [  8] eq
+  [  9] jmpifz [ 25] ............................ (case) #loadGame:
+  [ 12] getglobal 191 ........................... <g>
+  [ 14] getchainedprop 560 ...................... <g.saveMaster>
+  [ 17] pusharglistnoret 1 ...................... <g.saveMaster>
+  [ 19] objcall 547 ............................. g.saveMaster.loadGame()
+  [ 22] jmp [122]
+  [ 25] peek 0
+  [ 27] pushsymb 521 ............................ <#gameComplete>
+  [ 30] eq
+  [ 31] jmpifz [ 50] ............................ (case) #gameComplete:
+  [ 34] getglobal 191 ........................... <g>
+  [ 36] getchainedprop 534 ...................... <g.cutSceneMaster>
+  [ 39] getglobal 552 ........................... <gGameCompleteScript>
+  [ 42] pusharglistnoret 2 ...................... <g.cutSceneMaster, gGameCompleteScript>
+  [ 44] objcall 561 ............................. g.cutSceneMaster.playCutScene(gGameCompleteScript)
+  [ 47] jmp [122]
+  [ 50] peek 0
+  [ 52] pushsymb 562 ............................ <#gameOver>
+  [ 55] eq
+  [ 56] jmpifz [ 75] ............................ (case) #gameOver:
+  [ 59] getglobal 191 ........................... <g>
+  [ 61] getchainedprop 534 ...................... <g.cutSceneMaster>
+  [ 64] getglobal 553 ........................... <gGameOverScript>
+  [ 67] pusharglistnoret 2 ...................... <g.cutSceneMaster, gGameOverScript>
+  [ 69] objcall 561 ............................. g.cutSceneMaster.playCutScene(gGameOverScript)
+  [ 72] jmp [122]
+  [ 75] peek 0
+  [ 77] pushsymb 563 ............................ <#playLoadedCutScene>
+  [ 80] eq
+  [ 81] jmpifz [100] ............................ (case) #playLoadedCutScene:
+  [ 84] getglobal 191 ........................... <g>
+  [ 86] getchainedprop 534 ...................... <g.cutSceneMaster>
+  [ 89] getglobal 550 ........................... <gIntroScript>
+  [ 92] pusharglistnoret 2 ...................... <g.cutSceneMaster, gIntroScript>
+  [ 94] objcall 561 ............................. g.cutSceneMaster.playCutScene(gIntroScript)
+  [ 97] jmp [122]
+  [100] peek 0
+  [102] pushsymb 564 ............................ <#startGame>
+  [105] eq
+  [106] jmpifz [122] ............................ (case) #startGame:
+  [109] getglobal 191 ........................... <g>
+  [111] getchainedprop 534 ...................... <g.cutSceneMaster>
+  [114] getglobal 550 ........................... <gIntroScript>
+  [117] pusharglistnoret 2 ...................... <g.cutSceneMaster, gIntroScript>
+  [119] objcall 561 ............................. g.cutSceneMaster.playCutScene(gIntroScript)
+  [122] pop 1 ................................... end case
+  [124] ret
+end
+
+on goScreenFinished me, theScreen
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 522 ............................. me.goScreenAction()
+  [  7] ret
+end
+
+on goSequence me, sequence
+  [  0] getparam 1 .............................. <sequence>
+  [  2] peek 0 .................................. case sequence of
+  [  4] pushsymb 544 ............................ <#intro>
+  [  7] eq
+  [  8] jmpifz [ 28] ............................ (case) #intro:
+  [ 11] getglobal 565 ........................... <gGameName>
+  [ 14] pushsymb 566 ............................ <#rapunzel>
+  [ 17] eq ...................................... <gGameName = #rapunzel>
+  [ 18] jmpifz [ 28] ............................ if gGameName = #rapunzel then
+  [ 21] getparam 0 .............................. <me>
+  [ 23] pusharglistnoret 1 ...................... <me>
+  [ 25] objcall 524 ............................. me.goSequenceRapunzelIntro()
+  [ 28] pop 1
+  [ 30] ret
+end
+
+on goSequenceRapunzelIntro me
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 336 ...................... <g.objectMaster>
+  [  5] pushsymb 568 ............................ <#objScreenSequencer>
+  [  8] pusharglist 2 ........................... <g.objectMaster, #objScreenSequencer>
+  [ 10] objcall 338 ............................. <g.objectMaster.requestObject(#objScreenSequencer)>
+  [ 13] setlocal 0 .............................. screenSeq = g.objectMaster.requestObject(#objScreenSequencer)
+  [ 15] getlocal 0 .............................. <screenSeq>
+  [ 17] pushsymb 1 .............................. <#init>
+  [ 19] pusharglist 2 ........................... <screenSeq, #init>
+  [ 21] objcall 339 ............................. <screenSeq.getParams(#init)>
+  [ 24] setlocal 1 .............................. params = screenSeq.getParams(#init)
+  [ 26] getlocal 1 .............................. <params>
+  [ 28] getobjprop 569 .......................... <params.backButtonTextParams>
+  [ 31] setlocal 2 .............................. b = params.backButtonTextParams
+  [ 33] getlocal 2 .............................. <b>
+  [ 35] pushsymb 170 ............................ <#left>
+  [ 37] setobjprop 377 .......................... b.alignment = #left
+  [ 40] getlocal 2 .............................. <b>
+  [ 42] pushcons 6 .............................. <"Dauphin *">
+  [ 44] setobjprop 379 .......................... b.font = "Dauphin *"
+  [ 47] getlocal 2 .............................. <b>
+  [ 49] pushint8 16 ............................. <16>
+  [ 51] setobjprop 380 .......................... b.fontSize = 16
+  [ 54] getlocal 2 .............................. <b>
+  [ 56] pushint8 50 ............................. <50>
+  [ 58] setobjprop 325 .......................... b.width = 50
+  [ 61] getlocal 1 .............................. <params>
+  [ 63] getobjprop 570 .......................... <params.nextButtonTextParams>
+  [ 66] setlocal 3 .............................. n = params.nextButtonTextParams
+  [ 68] getlocal 3 .............................. <n>
+  [ 70] pushsymb 171 ............................ <#right>
+  [ 72] setobjprop 377 .......................... n.alignment = #right
+  [ 75] getlocal 3 .............................. <n>
+  [ 77] pushcons 6 .............................. <"Dauphin *">
+  [ 79] setobjprop 379 .......................... n.font = "Dauphin *"
+  [ 82] getlocal 3 .............................. <n>
+  [ 84] pushint8 16 ............................. <16>
+  [ 86] setobjprop 380 .......................... n.fontSize = 16
+  [ 89] getlocal 3 .............................. <n>
+  [ 91] pushint8 50 ............................. <50>
+  [ 93] setobjprop 325 .......................... n.width = 50
+  [ 96] getlocal 1 .............................. <params>
+  [ 98] getobjprop 571 .......................... <params.returnButtonTextParams>
+  [101] setlocal 3 .............................. n = params.returnButtonTextParams
+  [103] getlocal 3 .............................. <n>
+  [105] pushsymb 378 ............................ <#center>
+  [108] setobjprop 377 .......................... n.alignment = #center
+  [111] getlocal 3 .............................. <n>
+  [113] pushcons 6 .............................. <"Dauphin *">
+  [115] setobjprop 379 .......................... n.font = "Dauphin *"
+  [118] getlocal 3 .............................. <n>
+  [120] pushint8 16 ............................. <16>
+  [122] setobjprop 380 .......................... n.fontSize = 16
+  [125] getlocal 3 .............................. <n>
+  [127] pushint16 150 ........................... <150>
+  [130] setobjprop 325 .......................... n.width = 150
+  [133] getlocal 1 .............................. <params>
+  [135] getparam 0 .............................. <me>
+  [137] setobjprop 236 .......................... params.callingPrg = me
+  [139] getlocal 1 .............................. <params>
+  [141] pushint16 600 ........................... <600>
+  [144] setobjprop 572 .......................... params.delayCount = 600
+  [147] getlocal 1 .............................. <params>
+  [149] pushsymb 529 ............................ <#titleScreen>
+  [152] setobjprop 573 .......................... params.returnScreen = #titleScreen
+  [155] getlocal 1 .............................. <params>
+  [157] pushcons 7 .............................. <"Back to Title Screen">
+  [159] setobjprop 574 .......................... params.returnButtonText = "Back to Title Screen"
+  [162] getlocal 1 .............................. <params>
+  [164] pushsymb 575 ............................ <#introScreen_01>
+  [167] pushsymb 576 ............................ <#introScreen_02>
+  [170] pushsymb 577 ............................ <#introScreen_03>
+  [173] pushsymb 578 ............................ <#introScreen_04>
+  [176] pushsymb 579 ............................ <#introScreen_05>
+  [179] pusharglist 5 ........................... <[#introScreen_01, #introScreen_02, #introScreen_03, #introScreen_04, #introScreen_05]>
+  [181] pushlist ................................ <[#introScreen_01, #introScreen_02, #introScreen_03, #introScreen_04, #introScreen_05]>
+  [182] setobjprop 484 .......................... params.screenList = [#introScreen_01, #introScreen_02, #introScreen_03, #introScreen_04, #introScreen_05]
+  [185] getlocal 0 .............................. <screenSeq>
+  [187] getlocal 1 .............................. <params>
+  [189] pusharglistnoret 2 ...................... <screenSeq, params>
+  [191] objcall 1 ............................... screenSeq.init(params)
+  [193] getlocal 0 .............................. <screenSeq>
+  [195] pusharglistnoret 1 ...................... <screenSeq>
+  [197] objcall 398 ............................. screenSeq.start()
+  [200] getlocal 0 .............................. <screenSeq>
+  [202] setprop 527 ............................. pScreenSequencer = screenSeq
+  [205] ret
+end
+
+on menuOptionSelected me, theComm, theMenu
+  [  0] getparam 1 .............................. <theComm>
+  [  2] peek 0 .................................. case theComm of
+  [  4] pushsymb 582 ............................ <#back>
+  [  7] eq
+  [  8] jmpifz [ 24] ............................ (case) #back:
+  [ 11] getglobal 191 ........................... <g>
+  [ 13] getchainedprop 557 ...................... <g.screenMaster>
+  [ 16] pusharglistnoret 1 ...................... <g.screenMaster>
+  [ 18] objcall 460 ............................. g.screenMaster.backAScreen()
+  [ 21] jmp [181]
+  [ 24] peek 0
+  [ 26] pushsymb 583 ............................ <#chooseKeys>
+  [ 29] eq
+  [ 30] jmpifz [ 46] ............................ (case) #chooseKeys:
+  [ 33] getparam 0 .............................. <me>
+  [ 35] pushsymb 584 ............................ <#chooseKeysScreen>
+  [ 38] pusharglistnoret 2 ...................... <me, #chooseKeysScreen>
+  [ 40] objcall 461 ............................. me.goScreen(#chooseKeysScreen)
+  [ 43] jmp [181]
+  [ 46] peek 0
+  [ 48] pushsymb 535 ............................ <#creditsScreen>
+  [ 51] eq
+  [ 52] jmpifz [ 68] ............................ (case) #creditsScreen:
+  [ 55] getparam 0 .............................. <me>
+  [ 57] pushsymb 535 ............................ <#creditsScreen>
+  [ 60] pusharglistnoret 2 ...................... <me, #creditsScreen>
+  [ 62] objcall 461 ............................. me.goScreen(#creditsScreen)
+  [ 65] jmp [181]
+  [ 68] peek 0
+  [ 70] pushsymb 547 ............................ <#loadGame>
+  [ 73] eq
+  [ 74] jmpifz [ 93] ............................ (case) #loadGame:
+  [ 77] getparam 0 .............................. <me>
+  [ 79] pushsymb 537 ............................ <#gameScreen>
+  [ 82] pushsymb 547 ............................ <#loadGame>
+  [ 85] pusharglistnoret 3 ...................... <me, #gameScreen, #loadGame>
+  [ 87] objcall 461 ............................. me.goScreen(#gameScreen, #loadGame)
+  [ 90] jmp [181]
+  [ 93] peek 0
+  [ 95] pushsymb 539 ............................ <#instructionsScreen>
+  [ 98] eq
+  [ 99] jmpifz [115] ............................ (case) #instructionsScreen:
+  [102] getparam 0 .............................. <me>
+  [104] pushsymb 585 ............................ <#instructions>
+  [107] pusharglistnoret 2 ...................... <me, #instructions>
+  [109] objcall 461 ............................. me.goScreen(#instructions)
+  [112] jmp [181]
+  [115] peek 0
+  [117] pushsymb 564 ............................ <#startGame>
+  [120] eq
+  [121] jmpifz [181] ............................ (case) #startGame:
+  [124] getglobal 550 ........................... <gIntroScript>
+  [127] pushsymb 103 ............................ <#none>
+  [129] nteq .................................... <gIntroScript <> #none>
+  [130] jmpifz [171] ............................ if gIntroScript <> #none then / else
+  [133] getglobal 551 ........................... <gMapLoaded>
+  [136] jmpifz [155] ............................ if gMapLoaded then / else
+  [139] getparam 0 .............................. <me>
+  [141] pushsymb 532 ............................ <#animScreen>
+  [144] pushsymb 564 ............................ <#startGame>
+  [147] pusharglistnoret 3 ...................... <me, #animScreen, #startGame>
+  [149] objcall 461 ............................. me.goScreen(#animScreen, #startGame)
+  [152] jmp [168]
+  [155] getparam 0 .............................. <me>
+  [157] pushsymb 586 ............................ <#animScreenSingleCutScene>
+  [160] pushsymb 563 ............................ <#playLoadedCutScene>
+  [163] pusharglistnoret 3 ...................... <me, #animScreenSingleCutScene, #playLoadedCutScene>
+  [165] objcall 461 ............................. me.goScreen(#animScreenSingleCutScene, #playLoadedCutScene)
+  [168] jmp [181]
+  [171] getparam 0 .............................. <me>
+  [173] pushsymb 537 ............................ <#gameScreen>
+  [176] pusharglistnoret 2 ...................... <me, #gameScreen>
+  [178] objcall 461 ............................. me.goScreen(#gameScreen)
+  [181] pop 1 ................................... end case
+  [183] ret
+end
+
+on redirectMovie me
+  [  0] getglobal 589 ........................... <gCopyProtectionRedirectURL>
+  [  3] pusharglistnoret 1 ...................... <gCopyProtectionRedirectURL>
+  [  5] extcall 542 ............................. gotoNetPage(gCopyProtectionRedirectURL)
+  [  8] pushcons 8 .............................. <"movieMaster.redirectMovie  going to ">
+  [ 10] getglobal 589 ........................... <gCopyProtectionRedirectURL>
+  [ 13] joinstr ................................. <"movieMaster.redirectMovie  going to " & gCopyProtectionRedirectURL>
+  [ 14] pusharglistnoret 1 ...................... <"movieMaster.redirectMovie  going to " & gCopyProtectionRedirectURL>
+  [ 16] extcall 414 ............................. put "movieMaster.redirectMovie  going to " & gCopyProtectionRedirectURL
+  [ 19] ret
+end
+
+on stop me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 239 ............................. me.finish()
+  [  6] ret
+end

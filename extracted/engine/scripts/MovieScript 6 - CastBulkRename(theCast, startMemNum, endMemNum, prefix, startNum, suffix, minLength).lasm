@@ -1,0 +1,61 @@
+on CastBulkRename theCast, startMemNum, endMemNum, prefix, suffix, startNum, minLength
+  [  0] getparam 5 .............................. <startNum>
+  [  2] pusharglist 1 ........................... <startNum>
+  [  4] extcall 53 .............................. <voidp(startNum)>
+  [  6] jmpifz [ 13] ............................ if voidp(startNum) then
+  [  9] pushint8 1 .............................. <1>
+  [ 11] setparam 5 .............................. startNum = 1
+  [ 13] getparam 4 .............................. <suffix>
+  [ 15] pusharglist 1 ........................... <suffix>
+  [ 17] extcall 53 .............................. <voidp(suffix)>
+  [ 19] jmpifz [ 26] ............................ if voidp(suffix) then
+  [ 22] pushcons 0 .............................. <EMPTY>
+  [ 24] setparam 4 .............................. suffix = EMPTY
+  [ 26] getparam 6 .............................. <minLength>
+  [ 28] pusharglist 1 ........................... <minLength>
+  [ 30] extcall 53 .............................. <voidp(minLength)>
+  [ 32] jmpifz [ 39] ............................ if voidp(minLength) then
+  [ 35] pushint8 2 .............................. <2>
+  [ 37] setparam 6 .............................. minLength = 2
+  [ 39] getparam 5 .............................. <startNum>
+  [ 41] setlocal 0 .............................. currentNum = startNum
+  [ 43] getparam 1 .............................. <startMemNum>
+  [ 45] setlocal 1
+  [ 47] getlocal 1
+  [ 49] getparam 2 .............................. <endMemNum>
+  [ 51] lteq
+  [ 52] jmpifz [115] ............................ repeat with memNum = startMemNum to endMemNum
+  [ 55] getlocal 0 .............................. <currentNum>
+  [ 57] pusharglist 1 ........................... <currentNum>
+  [ 59] extcall 54 .............................. <string(currentNum)>
+  [ 61] setlocal 2 .............................. stringnum = string(currentNum)
+  [ 63] getlocal 2 .............................. <stringnum>
+  [ 65] getparam 6 .............................. <minLength>
+  [ 67] pushint8 1 .............................. <1>
+  [ 69] pushcons 1 .............................. <"0">
+  [ 71] pusharglist 4 ........................... <stringnum, minLength, 1, "0">
+  [ 73] extcall 55 .............................. <StringAddChars(stringnum, minLength, 1, "0")>
+  [ 75] setlocal 2 .............................. stringnum = StringAddChars(stringnum, minLength, 1, "0")
+  [ 77] getparam 3 .............................. <prefix>
+  [ 79] getlocal 2 .............................. <stringnum>
+  [ 81] joinstr ................................. <prefix & stringnum>
+  [ 82] getparam 4 .............................. <suffix>
+  [ 84] joinstr ................................. <prefix & stringnum & suffix>
+  [ 85] setlocal 3 .............................. newName = prefix & stringnum & suffix
+  [ 87] getlocal 1 .............................. <memNum>
+  [ 89] getparam 0 .............................. <theCast>
+  [ 91] pusharglist 2 ........................... <memNum, theCast>
+  [ 93] extcall 34 .............................. <member(memNum, theCast)>
+  [ 95] getlocal 3 .............................. <newName>
+  [ 97] setobjprop 35 ........................... member(memNum, theCast).name = newName
+  [ 99] getlocal 0 .............................. <currentNum>
+  [101] pushint8 1 .............................. <1>
+  [103] add ..................................... <currentNum + 1>
+  [104] setlocal 0 .............................. currentNum = currentNum + 1
+  [106] pushint8 1
+  [108] getlocal 1
+  [110] add
+  [111] setlocal 1
+  [113] endrepeat [ 47]
+  [115] ret
+end

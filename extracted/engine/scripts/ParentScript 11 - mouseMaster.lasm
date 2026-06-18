@@ -1,0 +1,127 @@
+property pMouseArea, pMouseLoc, pMouseState
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 3 ............................... return me
+  [  6] ret
+end
+
+on init me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 690 ............................. me.initMouseArea()
+  [  7] getmovieprop 695 ........................ <the mouseLoc>
+  [ 10] setprop 694 ............................. pMouseLoc = the mouseLoc
+  [ 13] pushsymb 697 ............................ <#notPressed>
+  [ 16] setprop 696 ............................. pMouseState = #notPressed
+  [ 19] ret
+end
+
+on initMouseArea me
+  [  0] pushint8 20 ............................. <20>
+  [  2] setlocal 0 .............................. mouseBorder = 20
+  [  4] pushzero ................................ <0>
+  [  5] pushzero ................................ <0>
+  [  6] pushzero ................................ <0>
+  [  7] pushzero ................................ <0>
+  [  8] pusharglist 4 ........................... <0, 0, 0, 0>
+  [ 10] extcall 200 ............................. <rect(0, 0, 0, 0)>
+  [ 12] setlocal 1 .............................. mouseArea = rect(0, 0, 0, 0)
+  [ 14] getlocal 1 .............................. <mouseArea>
+  [ 16] getmovieprop 324 ........................ <the stage>
+  [ 19] getchainedprop 200 ...................... <(the stage).rect>
+  [ 21] getobjprop 326 .......................... <(the stage).rect.height>
+  [ 24] setobjprop 169 .......................... mouseArea.bottom = (the stage).rect.height
+  [ 26] getlocal 1 .............................. <mouseArea>
+  [ 28] getmovieprop 324 ........................ <the stage>
+  [ 31] getchainedprop 200 ...................... <(the stage).rect>
+  [ 33] getobjprop 325 .......................... <(the stage).rect.width>
+  [ 36] setobjprop 171 .......................... mouseArea.right = (the stage).rect.width
+  [ 38] getlocal 1 .............................. <mouseArea>
+  [ 40] getlocal 0 .............................. <mouseBorder>
+  [ 42] getlocal 0 .............................. <mouseBorder>
+  [ 44] pusharglist 3 ........................... <mouseArea, mouseBorder, mouseBorder>
+  [ 46] objcall 698 ............................. <mouseArea.inflate(mouseBorder, mouseBorder)>
+  [ 49] setlocal 1 .............................. mouseArea = mouseArea.inflate(mouseBorder, mouseBorder)
+  [ 51] getlocal 1 .............................. <mouseArea>
+  [ 53] setprop 699 ............................. pMouseArea = mouseArea
+  [ 56] ret
+end
+
+on finish me
+  [  0] ret
+end
+
+on checkMouse me
+  [  0] getmovieprop 695 ........................ <the mouseLoc>
+  [  3] setprop 694 ............................. pMouseLoc = the mouseLoc
+  [  6] pusharglist 0 ........................... <>
+  [  8] thebuiltin 702 .......................... <the mouseDown>
+  [ 11] setlocal 0 .............................. mousePressed = the mouseDown
+  [ 13] getparam 0 .............................. <me>
+  [ 15] pusharglist 1 ........................... <me>
+  [ 17] objcall 691 ............................. <me.checkMouseInScreen()>
+  [ 20] pushzero ................................ <0>
+  [ 21] eq ...................................... <me.checkMouseInScreen() = 0>
+  [ 22] jmpifz [ 32] ............................ if me.checkMouseInScreen() = 0 then
+  [ 25] pushzero ................................ <0>
+  [ 26] setlocal 0 .............................. mousePressed = 0
+  [ 28] pusharglistnoret 0 ...................... <>
+  [ 30] extcall 3 ............................... return 
+  [ 32] getlocal 0 .............................. <mousePressed>
+  [ 34] jmpifz [ 46] ............................ if mousePressed then / else
+  [ 37] pushsymb 703 ............................ <#pressed>
+  [ 40] setprop 696 ............................. pMouseState = #pressed
+  [ 43] jmp [ 71]
+  [ 46] getprop 696 ............................. <pMouseState>
+  [ 49] pushsymb 703 ............................ <#pressed>
+  [ 52] eq ...................................... <pMouseState = #pressed>
+  [ 53] jmpifz [ 65] ............................ if pMouseState = #pressed then / else
+  [ 56] pushsymb 704 ............................ <#released>
+  [ 59] setprop 696 ............................. pMouseState = #released
+  [ 62] jmp [ 71]
+  [ 65] pushsymb 697 ............................ <#notPressed>
+  [ 68] setprop 696 ............................. pMouseState = #notPressed
+  [ 71] ret
+end
+
+on checkMouseInScreen me
+  [  0] getprop 694 ............................. <pMouseLoc>
+  [  3] getprop 699 ............................. <pMouseArea>
+  [  6] pusharglist 2 ........................... <pMouseLoc, pMouseArea>
+  [  8] objcall 706 ............................. <pMouseLoc.inside(pMouseArea)>
+  [ 11] jmpifz [ 20] ............................ if pMouseLoc.inside(pMouseArea) then
+  [ 14] pushint8 1 .............................. <1>
+  [ 16] pusharglistnoret 1 ...................... <1>
+  [ 18] extcall 3 ............................... return 1
+  [ 20] pushzero ................................ <0>
+  [ 21] pusharglistnoret 1 ...................... <0>
+  [ 23] extcall 3 ............................... return 0
+  [ 25] ret
+end
+
+on getMouseLoc me
+  [  0] getprop 694 ............................. <pMouseLoc>
+  [  3] pusharglistnoret 1 ...................... <pMouseLoc>
+  [  5] extcall 3 ............................... return pMouseLoc
+  [  7] ret
+end
+
+on getMouseState me
+  [  0] getprop 696 ............................. <pMouseState>
+  [  3] pusharglistnoret 1 ...................... <pMouseState>
+  [  5] extcall 3 ............................... return pMouseState
+  [  7] ret
+end
+
+on start me
+  [  0] ret
+end
+
+on stop me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 239 ............................. me.finish()
+  [  6] ret
+end

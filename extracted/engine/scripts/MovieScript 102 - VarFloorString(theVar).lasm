@@ -1,0 +1,28 @@
+on VarFloorString theVar
+  [  0] getparam 0 .............................. <theVar>
+  [  2] pusharglist 1 ........................... <theVar>
+  [  4] extcall 54 .............................. <string(theVar)>
+  [  6] setlocal 0 .............................. theStr = string(theVar)
+  [  8] getlocal 0 .............................. <theStr>
+  [ 10] pushcons 0 .............................. <".">
+  [ 12] pusharglist 2 ........................... <theStr, ".">
+  [ 14] extcall 433 ............................. <StringGetPos(theStr, ".")>
+  [ 17] setlocal 1 .............................. dotPos = StringGetPos(theStr, ".")
+  [ 19] getlocal 1 .............................. <dotPos>
+  [ 21] pushint8 1 .............................. <1>
+  [ 23] sub ..................................... <dotPos - 1>
+  [ 24] setlocal 2 .............................. endPos = dotPos - 1
+  [ 26] getlocal 0 .............................. <theStr>
+  [ 28] pushsymb 284 ............................ <#char>
+  [ 31] pushint8 1 .............................. <1>
+  [ 33] getlocal 2 .............................. <endPos>
+  [ 35] pusharglist 4 ........................... <theStr, #char, 1, endPos>
+  [ 37] objcall 123 ............................. <theStr.char[1..endPos]>
+  [ 39] setlocal 3 .............................. theVal = theStr.char[1..endPos]
+  [ 41] getlocal 3 .............................. <theVal>
+  [ 43] pusharglist 1 ........................... <theVal>
+  [ 45] extcall 346 ............................. <integer(theVal)>
+  [ 48] pusharglistnoret 1 ...................... <integer(theVal)>
+  [ 50] extcall 3 ............................... return integer(theVal)
+  [ 52] ret
+end

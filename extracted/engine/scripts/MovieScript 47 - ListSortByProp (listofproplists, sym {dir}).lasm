@@ -1,0 +1,126 @@
+on ListSortByProp thelist, sym, Dir
+  [  0] getparam 0 .............................. <thelist>
+  [  2] getobjprop 17 ........................... <thelist.count>
+  [  4] setlocal 0 .............................. thelenth = thelist.count
+  [  6] pusharglist 0 ........................... <[]>
+  [  8] pushlist ................................ <[]>
+  [  9] setlocal 1 .............................. vallist = []
+  [ 11] pushint8 1 .............................. <1>
+  [ 13] setlocal 2
+  [ 15] getlocal 2
+  [ 17] getlocal 0 .............................. <thelenth>
+  [ 19] lteq
+  [ 20] jmpifz [ 52] ............................ repeat with en = 1 to thelenth
+  [ 23] getlocal 1 .............................. <vallist>
+  [ 25] getparam 0 .............................. <thelist>
+  [ 27] getlocal 2 .............................. <en>
+  [ 29] pusharglist 2 ........................... <thelist, en>
+  [ 31] objcall 18 .............................. <thelist[en]>
+  [ 33] getparam 1 .............................. <sym>
+  [ 35] pusharglist 2 ........................... <thelist[en], sym>
+  [ 37] objcall 18 .............................. <thelist[en][sym]>
+  [ 39] pusharglistnoret 2 ...................... <vallist, thelist[en][sym]>
+  [ 41] objcall 83 .............................. vallist.append(thelist[en][sym])
+  [ 43] pushint8 1
+  [ 45] getlocal 2
+  [ 47] add
+  [ 48] setlocal 2
+  [ 50] endrepeat [ 15]
+  [ 52] getlocal 1 .............................. <vallist>
+  [ 54] pusharglistnoret 1 ...................... <vallist>
+  [ 56] extcall 270 ............................. sort(vallist)
+  [ 59] getparam 2 .............................. <Dir>
+  [ 61] pushint8 1 .............................. <1>
+  [ 63] inv ..................................... <-1>
+  [ 64] eq ...................................... <Dir = -1>
+  [ 65] jmpifz [ 77] ............................ if Dir = -1 then
+  [ 68] getlocal 1 .............................. <vallist>
+  [ 70] pusharglist 1 ........................... <vallist>
+  [ 72] extcall 271 ............................. <ListReverseList(vallist)>
+  [ 75] setlocal 1 .............................. vallist = ListReverseList(vallist)
+  [ 77] pusharglist 0 ........................... <[]>
+  [ 79] pushlist ................................ <[]>
+  [ 80] setlocal 3 .............................. newlist = []
+  [ 82] pushint8 1 .............................. <1>
+  [ 84] setlocal 2
+  [ 86] getlocal 2
+  [ 88] getlocal 0 .............................. <thelenth>
+  [ 90] lteq
+  [ 91] jmpifz [181] ............................ repeat with en = 1 to thelenth
+  [ 94] getparam 0 .............................. <thelist>
+  [ 96] getlocal 2 .............................. <en>
+  [ 98] pusharglist 2 ........................... <thelist, en>
+  [100] objcall 18 .............................. <thelist[en]>
+  [102] setlocal 4 .............................. nextprop = thelist[en]
+  [104] getlocal 4 .............................. <nextprop>
+  [106] getparam 1 .............................. <sym>
+  [108] pusharglist 2 ........................... <nextprop, sym>
+  [110] objcall 18 .............................. <nextprop[sym]>
+  [112] setlocal 5 .............................. propval = nextprop[sym]
+  [114] getlocal 1 .............................. <vallist>
+  [116] getlocal 5 .............................. <propval>
+  [118] pusharglist 2 ........................... <vallist, propval>
+  [120] objcall 272 ............................. <vallist.getPos(propval)>
+  [123] setlocal 6 .............................. posinindex = vallist.getPos(propval)
+  [125] pushzero ................................ <0>
+  [126] setlocal 7 .............................. available = 0
+  [128] getlocal 7 .............................. <available>
+  [130] pushzero ................................ <0>
+  [131] eq ...................................... <available = 0>
+  [132] jmpifz [162] ............................ repeat while available = 0
+  [135] getlocal 6 .............................. <posinindex>
+  [137] getlocal 3 .............................. <newlist>
+  [139] pusharglist 2 ........................... <posinindex, newlist>
+  [141] localcall 1 ............................. <checkAvailable(posinindex, newlist)>
+  [143] setlocal 7 .............................. available = checkAvailable(posinindex, newlist)
+  [145] getlocal 7 .............................. <available>
+  [147] jmpifz [153] ............................ if available then
+  [150] jmp [162] ............................... exit repeat
+  [153] getlocal 6 .............................. <posinindex>
+  [155] pushint8 1 .............................. <1>
+  [157] add ..................................... <posinindex + 1>
+  [158] setlocal 6 .............................. posinindex = posinindex + 1
+  [160] endrepeat [128]
+  [162] getlocal 3 .............................. <newlist>
+  [164] getlocal 6 .............................. <posinindex>
+  [166] getlocal 4 .............................. <nextprop>
+  [168] pusharglistnoret 3 ...................... <newlist, posinindex, nextprop>
+  [170] objcall 81 .............................. newlist[posinindex] = nextprop
+  [172] pushint8 1
+  [174] getlocal 2
+  [176] add
+  [177] setlocal 2
+  [179] endrepeat [ 86]
+  [181] getlocal 3 .............................. <newlist>
+  [183] pusharglistnoret 1 ...................... <newlist>
+  [185] extcall 3 ............................... return newlist
+  [187] ret
+end
+
+on checkAvailable pos, thelist
+  [  0] getparam 1 .............................. <thelist>
+  [  2] getobjprop 17 ........................... <thelist.count>
+  [  4] setlocal 0 .............................. thelenth = thelist.count
+  [  6] pushzero ................................ <0>
+  [  7] setlocal 1 .............................. av = 0
+  [  9] getparam 0 .............................. <pos>
+  [ 11] getlocal 0 .............................. <thelenth>
+  [ 13] gt ...................................... <pos > thelenth>
+  [ 14] jmpifz [ 24] ............................ if pos > thelenth then / else
+  [ 17] pushint8 1 .............................. <1>
+  [ 19] setlocal 1 .............................. av = 1
+  [ 21] jmp [ 41]
+  [ 24] getparam 1 .............................. <thelist>
+  [ 26] getparam 0 .............................. <pos>
+  [ 28] pusharglist 2 ........................... <thelist, pos>
+  [ 30] objcall 18 .............................. <thelist[pos]>
+  [ 32] pushzero ................................ <0>
+  [ 33] eq ...................................... <thelist[pos] = 0>
+  [ 34] jmpifz [ 41] ............................ if thelist[pos] = 0 then
+  [ 37] pushint8 1 .............................. <1>
+  [ 39] setlocal 1 .............................. av = 1
+  [ 41] getlocal 1 .............................. <av>
+  [ 43] pusharglistnoret 1 ...................... <av>
+  [ 45] extcall 3 ............................... return av
+  [ 47] ret
+end

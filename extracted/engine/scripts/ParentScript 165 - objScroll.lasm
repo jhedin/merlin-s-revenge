@@ -1,0 +1,80 @@
+property ancestor, pAttack
+
+on new me
+  [  0] pushcons 0 .............................. <"objPowerUpWriting">
+  [  2] pusharglist 1 ........................... <"objPowerUpWriting">
+  [  4] extcall 34 .............................. <script("objPowerUpWriting")>
+  [  6] pusharglist 1 ........................... <script("objPowerUpWriting")>
+  [  8] extcall 0 ............................... <new(script("objPowerUpWriting"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objPowerUpWriting"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 145 ............................ <#attack>
+  [ 26] pushsymb 49 ............................. <#none>
+  [ 28] pusharglistnoret 3 ...................... <i, #attack, #none>
+  [ 30] objcall 48 .............................. i[#attack] = #none
+  [ 32] getparam 0 .............................. <me>
+  [ 34] pusharglistnoret 1 ...................... <me>
+  [ 36] extcall 35 .............................. return me
+  [ 38] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 145 .......................... <params.attack>
+  [ 12] setprop 149 ............................. pAttack = params.attack
+  [ 14] ret
+end
+
+on finish me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 3 ............................... ancestor.finish()
+  [  6] ret
+end
+
+on checkDead me
+  [  0] pushzero ................................ <0>
+  [  1] pusharglistnoret 1 ...................... <0>
+  [  3] extcall 35 .............................. return 0
+  [  5] ret
+end
+
+on collected me, collector
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <collector>
+  [  4] pusharglistnoret 2 ...................... <ancestor, collector>
+  [  6] objcall 1790 ............................ ancestor.collected(collector)
+  [  9] getprop 149 ............................. <pAttack>
+  [ 11] pushsymb 49 ............................. <#none>
+  [ 13] nteq .................................... <pAttack <> #none>
+  [ 14] jmpifz [ 42] ............................ if pAttack <> #none then / else
+  [ 17] getparam 1 .............................. <collector>
+  [ 19] getparam 0 .............................. <me>
+  [ 21] getchainedprop 51 ....................... <me.big>
+  [ 23] pusharglist 1 ........................... <me.big>
+  [ 25] objcall 1722 ............................ <me.big.getCharacter()>
+  [ 28] getprop 149 ............................. <pAttack>
+  [ 30] pusharglist 1 ........................... <pAttack>
+  [ 32] objcall 175 ............................. <pAttack.duplicate()>
+  [ 34] pusharglistnoret 3 ...................... <collector, me.big.getCharacter(), pAttack.duplicate()>
+  [ 36] objcall 3486 ............................ collector.newScrollCollected(me.big.getCharacter(), pAttack.duplicate())
+  [ 39] jmp [ 60]
+  [ 42] getparam 1 .............................. <collector>
+  [ 44] getparam 0 .............................. <me>
+  [ 46] getchainedprop 51 ....................... <me.big>
+  [ 48] pusharglist 1 ........................... <me.big>
+  [ 50] objcall 1722 ............................ <me.big.getCharacter()>
+  [ 53] pushsymb 49 ............................. <#none>
+  [ 55] pusharglistnoret 3 ...................... <collector, me.big.getCharacter(), #none>
+  [ 57] objcall 3486 ............................ collector.newScrollCollected(me.big.getCharacter(), #none)
+  [ 60] ret
+end

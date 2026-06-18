@@ -1,0 +1,80 @@
+property ancestor, pColour, player
+global gMenuTextLayer
+
+on new me
+  [  0] pushcons 0 .............................. <"objSpriteMember">
+  [  2] pusharglist 1 ........................... <"objSpriteMember">
+  [  4] extcall 34 .............................. <script("objSpriteMember")>
+  [  6] pusharglist 1 ........................... <script("objSpriteMember")>
+  [  8] extcall 0 ............................... <new(script("objSpriteMember"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objSpriteMember"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 2492 ........................... <#colour>
+  [ 27] pushint16 255 ........................... <255>
+  [ 30] pushint16 255 ........................... <255>
+  [ 33] pushint16 255 ........................... <255>
+  [ 36] pusharglist 3 ........................... <255, 255, 255>
+  [ 38] extcall 436 ............................. <rgb(255, 255, 255)>
+  [ 41] pusharglistnoret 3 ...................... <i, #colour, rgb(255, 255, 255)>
+  [ 43] objcall 48 .............................. i[#colour] = rgb(255, 255, 255)
+  [ 45] getlocal 0 .............................. <i>
+  [ 47] pushsymb 1352 ........................... <#layer>
+  [ 50] getglobal 2946 .......................... <gMenuTextLayer>
+  [ 53] pusharglistnoret 3 ...................... <i, #layer, gMenuTextLayer>
+  [ 55] objcall 48 .............................. i[#layer] = gMenuTextLayer
+  [ 57] getparam 0 .............................. <me>
+  [ 59] pushcons 1 .............................. <"modFader">
+  [ 61] pusharglistnoret 2 ...................... <me, "modFader">
+  [ 63] objcall 1717 ............................ me.addModule("modFader")
+  [ 66] getparam 0 .............................. <me>
+  [ 68] pusharglistnoret 1 ...................... <me>
+  [ 70] extcall 35 .............................. return me
+  [ 72] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 2492 ......................... <params.colour>
+  [ 13] setprop 2494 ............................ pColour = params.colour
+  [ 16] getparam 1 .............................. <params>
+  [ 18] getobjprop 1352 ......................... <params.layer>
+  [ 21] setprop 1478 ............................ player = params.layer
+  [ 24] ret
+end
+
+on displayImageAtLoc me, theImage, theloc
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <theImage>
+  [  4] getparam 2 .............................. <theloc>
+  [  6] pusharglistnoret 3 ...................... <ancestor, theImage, theloc>
+  [  8] objcall 2502 ............................ ancestor.displayImageAtLoc(theImage, theloc)
+  [ 11] getparam 0 .............................. <me>
+  [ 13] getprop 1478 ............................ <player>
+  [ 16] pusharglistnoret 2 ...................... <me, player>
+  [ 18] objcall 2574 ............................ me.setSpriteLayer(player)
+  [ 21] getparam 0 .............................. <me>
+  [ 23] getprop 2494 ............................ <pColour>
+  [ 26] pusharglistnoret 2 ...................... <me, pColour>
+  [ 28] objcall 470 ............................. me.setSpriteColour(pColour)
+  [ 31] ret
+end
+
+on startFadeIn me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushzero ................................ <0>
+  [  3] pusharglistnoret 2 ...................... <me, 0>
+  [  5] objcall 3306 ............................ me.setSpriteBlend(0)
+  [  8] getparam 0 .............................. <me>
+  [ 10] pusharglistnoret 1 ...................... <me>
+  [ 12] objcall 680 ............................. me.startQuickFadeIn()
+  [ 15] ret
+end

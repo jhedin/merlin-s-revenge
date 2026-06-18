@@ -1,0 +1,162 @@
+property ancestor, pNavModeAcceleration, pNavModeActive, pNavModeNormalAcceleration, pPotionAccelerationInc, pWalkAccelerationInc
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on init me, params
+  [  0] getparam 1 .............................. <params>
+  [  2] getobjprop 934 .......................... <params.navModeAcceleration>
+  [  5] setprop 933 ............................. pNavModeAcceleration = params.navModeAcceleration
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 892 .......................... <params.walkAcceleration>
+  [ 13] setprop 935 ............................. pNavModeNormalAcceleration = params.walkAcceleration
+  [ 16] pushcons 1 .............................. <0.05>
+  [ 18] setprop 936 ............................. pWalkAccelerationInc = 0.05
+  [ 21] pushcons 2 .............................. <0.29999999999999999>
+  [ 23] setprop 937 ............................. pPotionAccelerationInc = 0.29999999999999999
+  [ 26] getprop 33 .............................. <ancestor>
+  [ 28] getparam 1 .............................. <params>
+  [ 30] pusharglistnoret 2 ...................... <ancestor, params>
+  [ 32] objcall 1 ............................... ancestor.init(params)
+  [ 34] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getlocal 0 .............................. <i>
+  [ 12] pushsymb 934 ............................ <#navModeAcceleration>
+  [ 15] pushint8 6 .............................. <6>
+  [ 17] pusharglistnoret 3 ...................... <i, #navModeAcceleration, 6>
+  [ 19] objcall 48 .............................. i[#navModeAcceleration] = 6
+  [ 21] getprop 33 .............................. <ancestor>
+  [ 23] pusharglistnoret 1 ...................... <ancestor>
+  [ 25] objcall 2 ............................... ancestor.addModParams()
+  [ 27] ret
+end
+
+on addSaveData me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 4 ............................... ancestor.addSaveData(sd)
+  [  8] getparam 1 .............................. <sd>
+  [ 10] pushsymb 935 ............................ <#pNavModeNormalAcceleration>
+  [ 13] getprop 935 ............................. <pNavModeNormalAcceleration>
+  [ 16] pusharglistnoret 3 ...................... <sd, #pNavModeNormalAcceleration, pNavModeNormalAcceleration>
+  [ 18] objcall 48 .............................. sd[#pNavModeNormalAcceleration] = pNavModeNormalAcceleration
+  [ 20] ret
+end
+
+on getNavModeActive me
+  [  0] getprop 938 ............................. <pNavModeActive>
+  [  3] pusharglistnoret 1 ...................... <pNavModeActive>
+  [  5] extcall 35 .............................. return pNavModeActive
+  [  7] ret
+end
+
+on getAcceleration me
+  [  0] getprop 935 ............................. <pNavModeNormalAcceleration>
+  [  3] pusharglistnoret 1 ...................... <pNavModeNormalAcceleration>
+  [  5] extcall 35 .............................. return pNavModeNormalAcceleration
+  [  7] ret
+end
+
+on goNavMode me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 57 ....................... <me.id>
+  [  4] getchainedprop 58 ....................... <me.id.bigMe>
+  [  6] getprop 933 ............................. <pNavModeAcceleration>
+  [  9] pusharglistnoret 2 ...................... <me.id.bigMe, pNavModeAcceleration>
+  [ 11] objcall 886 ............................. me.id.bigMe.setWalkAcceleration(pNavModeAcceleration)
+  [ 14] pushint8 1 .............................. <1>
+  [ 16] setprop 938 ............................. pNavModeActive = 1
+  [ 19] ret
+end
+
+on leaveNavMode me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 57 ....................... <me.id>
+  [  4] getchainedprop 58 ....................... <me.id.bigMe>
+  [  6] getprop 935 ............................. <pNavModeNormalAcceleration>
+  [  9] pusharglistnoret 2 ...................... <me.id.bigMe, pNavModeNormalAcceleration>
+  [ 11] objcall 886 ............................. me.id.bigMe.setWalkAcceleration(pNavModeNormalAcceleration)
+  [ 14] pushzero ................................ <0>
+  [ 15] setprop 938 ............................. pNavModeActive = 0
+  [ 18] ret
+end
+
+on incWalkAcceleration me, theType
+  [  0] getparam 1 .............................. <theType>
+  [  2] peek 0 .................................. case theType of
+  [  4] pushsymb 939 ............................ <#potion>
+  [  7] eq
+  [  8] jmpifz [ 24] ............................ (case) #potion:
+  [ 11] getprop 935 ............................. <pNavModeNormalAcceleration>
+  [ 14] getprop 937 ............................. <pPotionAccelerationInc>
+  [ 17] add ..................................... <pNavModeNormalAcceleration + pPotionAccelerationInc>
+  [ 18] setprop 935 ............................. pNavModeNormalAcceleration = pNavModeNormalAcceleration + pPotionAccelerationInc
+  [ 21] jmp [ 56]
+  [ 24] peek 0
+  [ 26] pushsymb 310 ............................ <#levelUp>
+  [ 29] eq
+  [ 30] jmpifz [ 46] ............................ (case) #levelUp:
+  [ 33] getprop 935 ............................. <pNavModeNormalAcceleration>
+  [ 36] getprop 936 ............................. <pWalkAccelerationInc>
+  [ 39] add ..................................... <pNavModeNormalAcceleration + pWalkAccelerationInc>
+  [ 40] setprop 935 ............................. pNavModeNormalAcceleration = pNavModeNormalAcceleration + pWalkAccelerationInc
+  [ 43] jmp [ 56] ............................... (case) otherwise:
+  [ 46] getprop 935 ............................. <pNavModeNormalAcceleration>
+  [ 49] getprop 936 ............................. <pWalkAccelerationInc>
+  [ 52] add ..................................... <pNavModeNormalAcceleration + pWalkAccelerationInc>
+  [ 53] setprop 935 ............................. pNavModeNormalAcceleration = pNavModeNormalAcceleration + pWalkAccelerationInc
+  [ 56] pop 1 ................................... end case
+  [ 58] getparam 0 .............................. <me>
+  [ 60] pusharglistnoret 1 ...................... <me>
+  [ 62] objcall 932 ............................. me.implementChanges()
+  [ 65] ret
+end
+
+on implementChanges me
+  [  0] getprop 938 ............................. <pNavModeActive>
+  [  3] pushzero ................................ <0>
+  [  4] eq ...................................... <pNavModeActive = 0>
+  [  5] jmpifz [ 15] ............................ if pNavModeActive = 0 then
+  [  8] getparam 0 .............................. <me>
+  [ 10] pusharglistnoret 1 ...................... <me>
+  [ 12] objcall 790 ............................. me.leaveNavMode()
+  [ 15] ret
+end
+
+on restoreFromSave me, sd
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sd>
+  [  4] pusharglistnoret 2 ...................... <ancestor, sd>
+  [  6] objcall 26 .............................. ancestor.restoreFromSave(sd)
+  [  8] getparam 1 .............................. <sd>
+  [ 10] getobjprop 935 .......................... <sd.pNavModeNormalAcceleration>
+  [ 13] setprop 935 ............................. pNavModeNormalAcceleration = sd.pNavModeNormalAcceleration
+  [ 16] ret
+end
+
+on setAcceleration me, newVal
+  [  0] getparam 1 .............................. <newVal>
+  [  2] setprop 935 ............................. pNavModeNormalAcceleration = newVal
+  [  5] getparam 0 .............................. <me>
+  [  7] pusharglistnoret 1 ...................... <me>
+  [  9] objcall 932 ............................. me.implementChanges()
+  [ 12] ret
+end

@@ -1,0 +1,44 @@
+on CastMakeNameKey theCastNum, memberType
+  [  0] pusharglist 0 ........................... <[:]>
+  [  2] pushproplist ............................ <[:]>
+  [  3] setlocal 0 .............................. theKey = [:]
+  [  5] getparam 0 .............................. <theCastNum>
+  [  7] pushint8 2 .............................. <2>
+  [  9] get 8 ................................... <the number of castMembers of castLib theCastNum>
+  [ 11] setlocal 1 .............................. nummem = the number of castMembers of castLib theCastNum
+  [ 13] pushint8 1 .............................. <1>
+  [ 15] setlocal 2
+  [ 17] getlocal 2
+  [ 19] getlocal 1 .............................. <nummem>
+  [ 21] lteq
+  [ 22] jmpifz [ 74] ............................ repeat with mem = 1 to nummem
+  [ 25] getlocal 2 .............................. <mem>
+  [ 27] getparam 0 .............................. <theCastNum>
+  [ 29] pusharglist 2 ........................... <mem, theCastNum>
+  [ 31] extcall 34 .............................. <member(mem, theCastNum)>
+  [ 33] setlocal 3 .............................. nextMem = member(mem, theCastNum)
+  [ 35] getlocal 3 .............................. <nextMem>
+  [ 37] getobjprop 1 ............................ <nextMem.type>
+  [ 39] getparam 1 .............................. <memberType>
+  [ 41] eq ...................................... <nextMem.type = memberType>
+  [ 42] jmpifz [ 65] ............................ if nextMem.type = memberType then
+  [ 45] getlocal 3 .............................. <nextMem>
+  [ 47] getobjprop 35 ........................... <nextMem.name>
+  [ 49] pusharglist 1 ........................... <nextMem.name>
+  [ 51] extcall 90 .............................. <symbol(nextMem.name)>
+  [ 53] setlocal 4 .............................. memSym = symbol(nextMem.name)
+  [ 55] getlocal 0 .............................. <theKey>
+  [ 57] getlocal 4 .............................. <memSym>
+  [ 59] getlocal 3 .............................. <nextMem>
+  [ 61] pusharglistnoret 3 ...................... <theKey, memSym, nextMem>
+  [ 63] objcall 81 .............................. theKey[memSym] = nextMem
+  [ 65] pushint8 1
+  [ 67] getlocal 2
+  [ 69] add
+  [ 70] setlocal 2
+  [ 72] endrepeat [ 17]
+  [ 74] getlocal 0 .............................. <theKey>
+  [ 76] pusharglistnoret 1 ...................... <theKey>
+  [ 78] extcall 3 ............................... return theKey
+  [ 80] ret
+end

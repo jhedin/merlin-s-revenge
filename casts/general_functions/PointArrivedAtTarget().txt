@@ -1,0 +1,113 @@
+[#name: "PointArrivedAtTarget(theLoc, targetLoc, moveVect)", #scriptType: #movie, #type: #script]
+-- determines whether a point has arrived at it's target
+on PointArrivedAtTarget(theLoc, targetLoc, moveVect)
+  moveDir = PointDir(moveVect)
+  XReached = false
+  YReached = false
+  targetReached = false
+  
+  -- check X
+  if moveDir[1] = -1 then
+    if theLoc[1] <= targetLoc[1] then
+      XReached = true
+    end if
+  else if moveDir[1] = 1 then
+    if theLoc[1] >= targetLoc[1] then
+      XReached = true
+    end if
+  else if moveDir[1] = 0 then
+    XReached = true
+  end if
+  
+  if XReached then
+    -- check Y
+    if moveDir[2] = -1 then
+      if theLoc[2] <= targetLoc[2] then
+        YReached = true
+      end if
+    else if moveDir[2] = 1 then
+      if theLoc[2] >= targetLoc[2] then
+        YReached = true
+      end if
+    else if moveDir[2] = 0 then
+      YReached = true
+    end if
+  end if
+  
+  if YReached then
+    targetReached = true
+  end if
+  
+  -- position object at target to avoid overshoot
+  if XReached then
+    theLoc[1] = targetLoc[1]
+  end if
+  
+  if YReached then
+    theLoc[2] = targetLoc[2]
+  end if
+  
+  return targetReached
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

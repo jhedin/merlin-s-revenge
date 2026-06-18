@@ -1,0 +1,53 @@
+property ancestor, pPlayer
+
+on new me
+  [  0] pushcons 0 .............................. <"objAi">
+  [  2] pusharglist 1 ........................... <"objAi">
+  [  4] extcall 27 .............................. <script("objAi")>
+  [  6] pusharglist 1 ........................... <script("objAi")>
+  [  8] extcall 0 ............................... <new(script("objAi"))>
+  [ 10] setprop 77 .............................. ancestor = new(script("objAi"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 17 .............................. return me
+  [ 18] ret
+end
+
+on init me, player
+  [  0] getparam 1 .............................. <player>
+  [  2] setprop 354 ............................. pPlayer = player
+  [  5] getparam 0 .............................. <me>
+  [  7] pushsymb 326 ............................ <#norm>
+  [ 10] pusharglistnoret 2 ...................... <me, #norm>
+  [ 12] objcall 76 .............................. me.goMode(#norm)
+  [ 14] ret
+end
+
+on update me
+  [  0] getparam 0 .............................. <me>
+  [  2] getobjprop 83 ........................... <me.pmode>
+  [  4] peek 0 .................................. case me.pmode of
+  [  6] pushsymb 326 ............................ <#norm>
+  [  9] eq
+  [ 10] jmpifz [ 54] ............................ (case) #norm:
+  [ 13] getparam 0 .............................. <me>
+  [ 15] getchainedprop 78 ....................... <me.pCharacterPrg>
+  [ 17] pusharglist 1 ........................... <me.pCharacterPrg>
+  [ 19] objcall 428 ............................. <me.pCharacterPrg.checkForCollisionWithPlayer()>
+  [ 22] jmpifz [ 54] ............................ if me.pCharacterPrg.checkForCollisionWithPlayer() then
+  [ 25] getparam 0 .............................. <me>
+  [ 27] getchainedprop 78 ....................... <me.pCharacterPrg>
+  [ 29] pusharglistnoret 1 ...................... <me.pCharacterPrg>
+  [ 31] objcall 429 ............................. me.pCharacterPrg.collected()
+  [ 34] getparam 0 .............................. <me>
+  [ 36] getchainedprop 78 ....................... <me.pCharacterPrg>
+  [ 38] pushint8 1 .............................. <1>
+  [ 40] pusharglistnoret 2 ...................... <me.pCharacterPrg, 1>
+  [ 42] objcall 430 ............................. me.pCharacterPrg.setDead(1)
+  [ 45] getparam 0 .............................. <me>
+  [ 47] pushsymb 361 ............................ <#dead>
+  [ 50] pusharglistnoret 2 ...................... <me, #dead>
+  [ 52] objcall 76 .............................. me.goMode(#dead)
+  [ 54] pop 1
+  [ 56] ret
+end

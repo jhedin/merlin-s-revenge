@@ -1,0 +1,209 @@
+property ancestor
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"objAi">
+  [  2] pusharglist 1 ........................... <"objAi">
+  [  4] extcall 27 .............................. <script("objAi")>
+  [  6] pusharglist 1 ........................... <script("objAi")>
+  [  8] extcall 0 ............................... <new(script("objAi"))>
+  [ 10] setprop 77 .............................. ancestor = new(script("objAi"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 17 .............................. return me
+  [ 18] ret
+end
+
+on init me
+  [  0] ret
+end
+
+on initCharacterInfo me, characterPrg, spr
+  [  0] getprop 77 .............................. <ancestor>
+  [  2] getparam 1 .............................. <characterPrg>
+  [  4] getparam 2 .............................. <spr>
+  [  6] pusharglistnoret 3 ...................... <ancestor, characterPrg, spr>
+  [  8] objcall 71 .............................. ancestor.initCharacterInfo(characterPrg, spr)
+  [ 10] getparam 0 .............................. <me>
+  [ 12] pushsymb 408 ............................ <#playerControl>
+  [ 15] pusharglistnoret 2 ...................... <me, #playerControl>
+  [ 17] objcall 76 .............................. me.goMode(#playerControl)
+  [ 19] ret
+end
+
+on characterModeChanged me, newCharMode
+  [  0] getparam 1 .............................. <newCharMode>
+  [  2] peek 0 .................................. case newCharMode of
+  [  4] pushsymb 409 ............................ <#die>
+  [  7] eq
+  [  8] jmpifz [ 20] ............................ (case) #die:
+  [ 11] getparam 0 .............................. <me>
+  [ 13] pushsymb 367 ............................ <#dazed>
+  [ 16] pusharglistnoret 2 ...................... <me, #dazed>
+  [ 18] objcall 76 .............................. me.goMode(#dazed)
+  [ 20] pop 1
+  [ 22] ret
+end
+
+on finish me
+  [  0] getprop 77 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 39 .............................. ancestor.finish()
+  [  6] ret
+end
+
+on update me
+  [  0] getparam 0 .............................. <me>
+  [  2] getobjprop 83 ........................... <me.pmode>
+  [  4] pushsymb 408 ............................ <#playerControl>
+  [  7] eq ...................................... <me.pmode = #playerControl>
+  [  8] jmpifz [365] ............................ if me.pmode = #playerControl then
+  [ 11] getglobal 101 ........................... <g>
+  [ 13] getchainedprop 410 ...................... <g.keyMaster>
+  [ 16] pusharglist 1 ........................... <g.keyMaster>
+  [ 18] objcall 411 ............................. <g.keyMaster.getMoveVector()>
+  [ 21] setlocal 0 .............................. moveVector = g.keyMaster.getMoveVector()
+  [ 23] getparam 0 .............................. <me>
+  [ 25] getchainedprop 78 ....................... <me.pCharacterPrg>
+  [ 27] getlocal 0 .............................. <moveVector>
+  [ 29] pushint8 1 .............................. <1>
+  [ 31] pusharglist 2 ........................... <moveVector, 1>
+  [ 33] objcall 38 .............................. <moveVector[1]>
+  [ 35] pusharglistnoret 2 ...................... <me.pCharacterPrg, moveVector[1]>
+  [ 37] objcall 396 ............................. me.pCharacterPrg.moveHoriz(moveVector[1])
+  [ 40] getlocal 0 .............................. <moveVector>
+  [ 42] pushint8 2 .............................. <2>
+  [ 44] pusharglist 2 ........................... <moveVector, 2>
+  [ 46] objcall 38 .............................. <moveVector[2]>
+  [ 48] peek 0 .................................. case moveVector[2] of
+  [ 50] pushint8 1 .............................. <1>
+  [ 52] inv ..................................... <-1>
+  [ 53] eq
+  [ 54] jmpifz [ 69] ............................ (case) (-1):
+  [ 57] getparam 0 .............................. <me>
+  [ 59] getchainedprop 78 ....................... <me.pCharacterPrg>
+  [ 61] pusharglistnoret 1 ...................... <me.pCharacterPrg>
+  [ 63] objcall 397 ............................. me.pCharacterPrg.doJump()
+  [ 66] jmp [ 93]
+  [ 69] peek 0
+  [ 71] pushzero ................................ <0>
+  [ 72] nteq
+  [ 73] jmpifz [ 84] ............................ (case) 0, ...
+  [ 76] peek 0
+  [ 78] pushint8 1 .............................. <1>
+  [ 80] eq
+  [ 81] jmpifz [ 93] ............................ (case) ..., 1:
+  [ 84] getparam 0 .............................. <me>
+  [ 86] getchainedprop 78 ....................... <me.pCharacterPrg>
+  [ 88] pusharglistnoret 1 ...................... <me.pCharacterPrg>
+  [ 90] objcall 398 ............................. me.pCharacterPrg.noJump()
+  [ 93] pop 1 ................................... end case
+  [ 95] getglobal 101 ........................... <g>
+  [ 97] getchainedprop 410 ...................... <g.keyMaster>
+  [100] pushsymb 412 ............................ <#growHair>
+  [103] pusharglist 2 ........................... <g.keyMaster, #growHair>
+  [105] objcall 413 ............................. <g.keyMaster.getKeyResult(#growHair)>
+  [108] setlocal 1 .............................. growPressed = g.keyMaster.getKeyResult(#growHair)
+  [110] getlocal 1 .............................. <growPressed>
+  [112] jmpifz [148] ............................ if growPressed then
+  [115] getglobal 101 ........................... <g>
+  [117] getchainedprop 387 ...................... <g.actorMaster>
+  [120] pushsymb 414 ............................ <#hairDrop>
+  [123] pushint16 480 ........................... <480>
+  [126] pusharglist 1 ........................... <480>
+  [128] extcall 415 ............................. <random(480)>
+  [131] pushint16 300 ........................... <300>
+  [134] pusharglist 1 ........................... <300>
+  [136] extcall 415 ............................. <random(300)>
+  [139] pusharglist 2 ........................... <random(480), random(300)>
+  [141] extcall 215 ............................. <point(random(480), random(300))>
+  [143] pusharglistnoret 3 ...................... <g.actorMaster, #hairDrop, point(random(480), random(300))>
+  [145] objcall 388 ............................. g.actorMaster.newActor(#hairDrop, point(random(480), random(300)))
+  [148] getglobal 101 ........................... <g>
+  [150] getchainedprop 410 ...................... <g.keyMaster>
+  [153] pushsymb 402 ............................ <#cutHair>
+  [156] pusharglist 2 ........................... <g.keyMaster, #cutHair>
+  [158] objcall 413 ............................. <g.keyMaster.getKeyResult(#cutHair)>
+  [161] setlocal 2 .............................. cutPressed = g.keyMaster.getKeyResult(#cutHair)
+  [163] getlocal 2 .............................. <cutPressed>
+  [165] jmpifz [177] ............................ if cutPressed then
+  [168] getparam 0 .............................. <me>
+  [170] getchainedprop 78 ....................... <me.pCharacterPrg>
+  [172] pusharglistnoret 1 ...................... <me.pCharacterPrg>
+  [174] objcall 416 ............................. me.pCharacterPrg.trimHair()
+  [177] getglobal 101 ........................... <g>
+  [179] getchainedprop 410 ...................... <g.keyMaster>
+  [182] pushsymb 417 ............................ <#newBat>
+  [185] pusharglist 2 ........................... <g.keyMaster, #newBat>
+  [187] objcall 413 ............................. <g.keyMaster.getKeyResult(#newBat)>
+  [190] jmpifz [214] ............................ if g.keyMaster.getKeyResult(#newBat) then
+  [193] getglobal 101 ........................... <g>
+  [195] getchainedprop 387 ...................... <g.actorMaster>
+  [198] pushsymb 418 ............................ <#bat>
+  [201] pushint8 100 ............................ <100>
+  [203] pushint8 100 ............................ <100>
+  [205] pusharglist 2 ........................... <100, 100>
+  [207] extcall 215 ............................. <point(100, 100)>
+  [209] pusharglistnoret 3 ...................... <g.actorMaster, #bat, point(100, 100)>
+  [211] objcall 388 ............................. g.actorMaster.newActor(#bat, point(100, 100))
+  [214] getglobal 101 ........................... <g>
+  [216] getchainedprop 410 ...................... <g.keyMaster>
+  [219] pushsymb 419 ............................ <#newGoblin>
+  [222] pusharglist 2 ........................... <g.keyMaster, #newGoblin>
+  [224] objcall 413 ............................. <g.keyMaster.getKeyResult(#newGoblin)>
+  [227] setlocal 3 .............................. goblinPressed = g.keyMaster.getKeyResult(#newGoblin)
+  [229] getlocal 3 .............................. <goblinPressed>
+  [231] jmpifz [267] ............................ if goblinPressed then
+  [234] getglobal 101 ........................... <g>
+  [236] getchainedprop 387 ...................... <g.actorMaster>
+  [239] pushsymb 420 ............................ <#littleWitch>
+  [242] pushint16 480 ........................... <480>
+  [245] pusharglist 1 ........................... <480>
+  [247] extcall 415 ............................. <random(480)>
+  [250] pushint16 300 ........................... <300>
+  [253] pusharglist 1 ........................... <300>
+  [255] extcall 415 ............................. <random(300)>
+  [258] pusharglist 2 ........................... <random(480), random(300)>
+  [260] extcall 215 ............................. <point(random(480), random(300))>
+  [262] pusharglistnoret 3 ...................... <g.actorMaster, #littleWitch, point(random(480), random(300))>
+  [264] objcall 388 ............................. g.actorMaster.newActor(#littleWitch, point(random(480), random(300)))
+  [267] getglobal 101 ........................... <g>
+  [269] getchainedprop 410 ...................... <g.keyMaster>
+  [272] pushsymb 421 ............................ <#newGoblinSoldier>
+  [275] pusharglist 2 ........................... <g.keyMaster, #newGoblinSoldier>
+  [277] objcall 413 ............................. <g.keyMaster.getKeyResult(#newGoblinSoldier)>
+  [280] jmpifz [316] ............................ if g.keyMaster.getKeyResult(#newGoblinSoldier) then
+  [283] getglobal 101 ........................... <g>
+  [285] getchainedprop 387 ...................... <g.actorMaster>
+  [288] pushsymb 422 ............................ <#bigWitch>
+  [291] pushint16 480 ........................... <480>
+  [294] pusharglist 1 ........................... <480>
+  [296] extcall 415 ............................. <random(480)>
+  [299] pushint16 300 ........................... <300>
+  [302] pusharglist 1 ........................... <300>
+  [304] extcall 415 ............................. <random(300)>
+  [307] pusharglist 2 ........................... <random(480), random(300)>
+  [309] extcall 215 ............................. <point(random(480), random(300))>
+  [311] pusharglistnoret 3 ...................... <g.actorMaster, #bigWitch, point(random(480), random(300))>
+  [313] objcall 388 ............................. g.actorMaster.newActor(#bigWitch, point(random(480), random(300)))
+  [316] getglobal 101 ........................... <g>
+  [318] getchainedprop 410 ...................... <g.keyMaster>
+  [321] pushsymb 423 ............................ <#newSpider>
+  [324] pusharglist 2 ........................... <g.keyMaster, #newSpider>
+  [326] objcall 413 ............................. <g.keyMaster.getKeyResult(#newSpider)>
+  [329] jmpifz [365] ............................ if g.keyMaster.getKeyResult(#newSpider) then
+  [332] getglobal 101 ........................... <g>
+  [334] getchainedprop 387 ...................... <g.actorMaster>
+  [337] pushsymb 424 ............................ <#hairSpider>
+  [340] pushint16 480 ........................... <480>
+  [343] pusharglist 1 ........................... <480>
+  [345] extcall 415 ............................. <random(480)>
+  [348] pushint16 300 ........................... <300>
+  [351] pusharglist 1 ........................... <300>
+  [353] extcall 415 ............................. <random(300)>
+  [356] pusharglist 2 ........................... <random(480), random(300)>
+  [358] extcall 215 ............................. <point(random(480), random(300))>
+  [360] pusharglistnoret 3 ...................... <g.actorMaster, #hairSpider, point(random(480), random(300))>
+  [362] objcall 388 ............................. g.actorMaster.newActor(#hairSpider, point(random(480), random(300)))
+  [365] ret
+end

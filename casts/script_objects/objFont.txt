@@ -1,0 +1,158 @@
+[#name: "objFont", #scriptType: #parent, #type: #script]
+global g
+
+property ancestor
+property pLetterKey
+property pLetterGap
+property pLetterSize
+property pName
+
+on new me
+  ancestor = new (script"objTileSet")
+  
+  i = me.modifyParams(#init)
+  i[#member] = #none
+  
+  return me
+end
+
+on init me, params
+  
+  me.initLetterProperties(params)
+  
+  me.initParams(params)
+  
+  ancestor.init(params)
+end
+
+on initLetterProperties me, params
+  letterMemName = params.member.name & "_properties"
+  letterMem = member(letterMemName, "data")
+  letterMemText = letterMem.text
+  letterProperties = value(letterMemText)
+  
+  pLetterKey = letterProperties.theKey
+  pLetterSize = letterProperties.charSize
+  pLetterGap = letterProperties.gap
+end
+
+on initParams me, params
+  letterImage = params.member.image
+  params.allTilesImage = letterImage
+  params.tileSize = pLetterSize
+  
+  return params
+end
+
+on getCharWidth me
+  return pLetterSize.locH
+end
+
+on getLetter me, theChar
+  tileNum = me.getLetterNum(theChar)
+  theImage = me.getTileNo(tileNum)
+  return theImage
+end
+
+on getLetterNum me, theChar
+  letterNum = StringGetPos(pLetterKey, theChar)
+  return letterNum
+end
+
+on getString me, theString
+  stringMap = me.getStringMap(theString)
+  stringImage = me.getStringImage(stringMap)
+  
+  return stringImage
+end
+
+on getStringImage me, stringMap
+  return stringMap.getImage()
+end
+
+on getStringMap me, theString
+  strLen = theString.chars.count
+  
+  wordMap = g.objectMaster.requestObject(#objTileMap)
+  params = wordMap.getParams(#init)
+  params.tileSet = me
+  params.mapSize = point(strLen, 1)
+  wordMap.init(params)
+  
+  --plot word into wordMap
+  repeat with i = 1 to strLen
+    nChr = theString.char[i]
+    nNum = me.getLetterNum(nChr)
+    if nNum > 0 then
+      wordMap.poke(point(i,1), nNum)
+    end if
+    
+  end repeat
+  
+  return wordMap
+end 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

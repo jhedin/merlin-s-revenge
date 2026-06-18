@@ -1,0 +1,217 @@
+property ancestor, pcolor, pLocLength, pLocX, pLocY, pThickness
+global gGridSelectorLayer
+
+on new me
+  [  0] pushcons 0 .............................. <"objSpriteMember">
+  [  2] pusharglist 1 ........................... <"objSpriteMember">
+  [  4] extcall 34 .............................. <script("objSpriteMember")>
+  [  6] pusharglist 1 ........................... <script("objSpriteMember")>
+  [  8] extcall 0 ............................... <new(script("objSpriteMember"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objSpriteMember"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 437 ............................ <#color>
+  [ 27] pushint16 255 ........................... <255>
+  [ 30] pushint16 255 ........................... <255>
+  [ 33] pushzero ................................ <0>
+  [ 34] pusharglist 3 ........................... <255, 255, 0>
+  [ 36] extcall 436 ............................. <rgb(255, 255, 0)>
+  [ 39] pusharglistnoret 3 ...................... <i, #color, rgb(255, 255, 0)>
+  [ 41] objcall 48 .............................. i[#color] = rgb(255, 255, 0)
+  [ 43] getlocal 0 .............................. <i>
+  [ 45] pushsymb 2358 ........................... <#locLength>
+  [ 48] pushint8 10 ............................. <10>
+  [ 50] pushint8 20 ............................. <20>
+  [ 52] pusharglist 2 ........................... <[10, 20]>
+  [ 54] pushlist ................................ <[10, 20]>
+  [ 55] pusharglistnoret 3 ...................... <i, #locLength, [10, 20]>
+  [ 57] objcall 48 .............................. i[#locLength] = [10, 20]
+  [ 59] getlocal 0 .............................. <i>
+  [ 61] pushsymb 2359 ........................... <#locx>
+  [ 64] pushsymb 49 ............................. <#none>
+  [ 66] pusharglistnoret 3 ...................... <i, #locx, #none>
+  [ 68] objcall 48 .............................. i[#locx] = #none
+  [ 70] getlocal 0 .............................. <i>
+  [ 72] pushsymb 2357 ........................... <#locy>
+  [ 75] pushsymb 49 ............................. <#none>
+  [ 77] pusharglistnoret 3 ...................... <i, #locy, #none>
+  [ 79] objcall 48 .............................. i[#locy] = #none
+  [ 81] getlocal 0 .............................. <i>
+  [ 83] pushsymb 2952 ........................... <#thickness>
+  [ 86] pushint8 2 .............................. <2>
+  [ 88] pusharglistnoret 3 ...................... <i, #thickness, 2>
+  [ 90] objcall 48 .............................. i[#thickness] = 2
+  [ 92] getparam 0 .............................. <me>
+  [ 94] pusharglistnoret 1 ...................... <me>
+  [ 96] extcall 35 .............................. return me
+  [ 98] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 437 .......................... <params.color>
+  [ 13] setprop 2101 ............................ pcolor = params.color
+  [ 16] getparam 1 .............................. <params>
+  [ 18] getobjprop 2358 ......................... <params.locLength>
+  [ 21] setprop 2953 ............................ pLocLength = params.locLength
+  [ 24] getparam 1 .............................. <params>
+  [ 26] getobjprop 2359 ......................... <params.locx>
+  [ 29] setprop 2954 ............................ pLocX = params.locx
+  [ 32] getparam 1 .............................. <params>
+  [ 34] getobjprop 2357 ......................... <params.locy>
+  [ 37] setprop 2955 ............................ pLocY = params.locy
+  [ 40] getparam 1 .............................. <params>
+  [ 42] getobjprop 2952 ......................... <params.thickness>
+  [ 45] setprop 2956 ............................ pThickness = params.thickness
+  [ 48] ret
+end
+
+on calcDisplayRect me
+  [  0] pushzero ................................ <0>
+  [  1] pushzero ................................ <0>
+  [  2] pushzero ................................ <0>
+  [  3] pushzero ................................ <0>
+  [  4] pusharglist 4 ........................... <0, 0, 0, 0>
+  [  6] extcall 263 ............................. <rect(0, 0, 0, 0)>
+  [  9] setlocal 0 .............................. displayRect = rect(0, 0, 0, 0)
+  [ 11] getparam 0 .............................. <me>
+  [ 13] pusharglist 1 ........................... <me>
+  [ 15] objcall 2950 ............................ <me.calcLocThickness()>
+  [ 18] setlocal 1 .............................. locThickness = me.calcLocThickness()
+  [ 20] getprop 2955 ............................ <pLocY>
+  [ 23] pushsymb 49 ............................. <#none>
+  [ 25] nteq .................................... <pLocY <> #none>
+  [ 26] jmpifz [ 85] ............................ if pLocY <> #none then / else
+  [ 29] getlocal 0 .............................. <displayRect>
+  [ 31] getprop 2953 ............................ <pLocLength>
+  [ 34] pushint8 1 .............................. <1>
+  [ 36] pusharglist 2 ........................... <pLocLength, 1>
+  [ 38] objcall 109 ............................. <pLocLength[1]>
+  [ 40] setobjprop 264 .......................... displayRect.left = pLocLength[1]
+  [ 43] getlocal 0 .............................. <displayRect>
+  [ 45] getprop 2953 ............................ <pLocLength>
+  [ 48] pushint8 2 .............................. <2>
+  [ 50] pusharglist 2 ........................... <pLocLength, 2>
+  [ 52] objcall 109 ............................. <pLocLength[2]>
+  [ 54] setobjprop 266 .......................... displayRect.right = pLocLength[2]
+  [ 57] getlocal 0 .............................. <displayRect>
+  [ 59] getlocal 1 .............................. <locThickness>
+  [ 61] pushint8 1 .............................. <1>
+  [ 63] pusharglist 2 ........................... <locThickness, 1>
+  [ 65] objcall 109 ............................. <locThickness[1]>
+  [ 67] setobjprop 265 .......................... displayRect.top = locThickness[1]
+  [ 70] getlocal 0 .............................. <displayRect>
+  [ 72] getlocal 1 .............................. <locThickness>
+  [ 74] pushint8 2 .............................. <2>
+  [ 76] pusharglist 2 ........................... <locThickness, 2>
+  [ 78] objcall 109 ............................. <locThickness[2]>
+  [ 80] setobjprop 114 .......................... displayRect.bottom = locThickness[2]
+  [ 82] jmp [138]
+  [ 85] getlocal 0 .............................. <displayRect>
+  [ 87] getlocal 1 .............................. <locThickness>
+  [ 89] pushint8 1 .............................. <1>
+  [ 91] pusharglist 2 ........................... <locThickness, 1>
+  [ 93] objcall 109 ............................. <locThickness[1]>
+  [ 95] setobjprop 264 .......................... displayRect.left = locThickness[1]
+  [ 98] getlocal 0 .............................. <displayRect>
+  [100] getlocal 1 .............................. <locThickness>
+  [102] pushint8 2 .............................. <2>
+  [104] pusharglist 2 ........................... <locThickness, 2>
+  [106] objcall 109 ............................. <locThickness[2]>
+  [108] setobjprop 266 .......................... displayRect.right = locThickness[2]
+  [111] getlocal 0 .............................. <displayRect>
+  [113] getprop 2953 ............................ <pLocLength>
+  [116] pushint8 1 .............................. <1>
+  [118] pusharglist 2 ........................... <pLocLength, 1>
+  [120] objcall 109 ............................. <pLocLength[1]>
+  [122] setobjprop 265 .......................... displayRect.top = pLocLength[1]
+  [125] getlocal 0 .............................. <displayRect>
+  [127] getprop 2953 ............................ <pLocLength>
+  [130] pushint8 2 .............................. <2>
+  [132] pusharglist 2 ........................... <pLocLength, 2>
+  [134] objcall 109 ............................. <pLocLength[2]>
+  [136] setobjprop 114 .......................... displayRect.bottom = pLocLength[2]
+  [138] getlocal 0 .............................. <displayRect>
+  [140] pusharglistnoret 1 ...................... <displayRect>
+  [142] extcall 35 .............................. return displayRect
+  [144] ret
+end
+
+on calcLocThickness me
+  [  0] pushzero ................................ <0>
+  [  1] pushzero ................................ <0>
+  [  2] pusharglist 2 ........................... <[0, 0]>
+  [  4] pushlist ................................ <[0, 0]>
+  [  5] setlocal 0 .............................. locThickness = [0, 0]
+  [  7] getprop 2956 ............................ <pThickness>
+  [ 10] pushint8 2 .............................. <2>
+  [ 12] div ..................................... <pThickness / 2>
+  [ 13] setlocal 1 .............................. halfThickness = pThickness / 2
+  [ 15] getparam 0 .............................. <me>
+  [ 17] pusharglist 1 ........................... <me>
+  [ 19] objcall 2951 ............................ <me.calcMidLoc()>
+  [ 22] setlocal 2 .............................. midLoc = me.calcMidLoc()
+  [ 24] getlocal 0 .............................. <locThickness>
+  [ 26] pushint8 1 .............................. <1>
+  [ 28] getlocal 2 .............................. <midLoc>
+  [ 30] getlocal 1 .............................. <halfThickness>
+  [ 32] sub ..................................... <midLoc - halfThickness>
+  [ 33] pusharglistnoret 3 ...................... <locThickness, 1, midLoc - halfThickness>
+  [ 35] objcall 48 .............................. locThickness[1] = midLoc - halfThickness
+  [ 37] getlocal 0 .............................. <locThickness>
+  [ 39] pushint8 2 .............................. <2>
+  [ 41] getlocal 2 .............................. <midLoc>
+  [ 43] getlocal 1 .............................. <halfThickness>
+  [ 45] add ..................................... <midLoc + halfThickness>
+  [ 46] pusharglistnoret 3 ...................... <locThickness, 2, midLoc + halfThickness>
+  [ 48] objcall 48 .............................. locThickness[2] = midLoc + halfThickness
+  [ 50] getlocal 0 .............................. <locThickness>
+  [ 52] pusharglistnoret 1 ...................... <locThickness>
+  [ 54] extcall 35 .............................. return locThickness
+  [ 56] ret
+end
+
+on calcMidLoc me
+  [  0] getprop 2954 ............................ <pLocX>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] nteq .................................... <pLocX <> #none>
+  [  6] jmpifz [ 17] ............................ if pLocX <> #none then / else
+  [  9] getprop 2954 ............................ <pLocX>
+  [ 12] setlocal 0 .............................. midLoc = pLocX
+  [ 14] jmp [ 22]
+  [ 17] getprop 2955 ............................ <pLocY>
+  [ 20] setlocal 0 .............................. midLoc = pLocY
+  [ 22] getlocal 0 .............................. <midLoc>
+  [ 24] pusharglistnoret 1 ...................... <midLoc>
+  [ 26] extcall 35 .............................. return midLoc
+  [ 28] ret
+end
+
+on display me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 255 ............................. me.requestSprite()
+  [  6] getparam 0 .............................. <me>
+  [  8] getprop 2101 ............................ <pcolor>
+  [ 11] pusharglistnoret 2 ...................... <me, pcolor>
+  [ 13] objcall 2503 ............................ me.setSpriteColor(pcolor)
+  [ 16] getparam 0 .............................. <me>
+  [ 18] getglobal 2098 .......................... <gGridSelectorLayer>
+  [ 21] pusharglistnoret 2 ...................... <me, gGridSelectorLayer>
+  [ 23] objcall 2574 ............................ me.setSpriteLayer(gGridSelectorLayer)
+  [ 26] getparam 0 .............................. <me>
+  [ 28] getparam 0 .............................. <me>
+  [ 30] pusharglist 1 ........................... <me>
+  [ 32] objcall 2949 ............................ <me.calcDisplayRect()>
+  [ 35] pusharglistnoret 2 ...................... <me, me.calcDisplayRect()>
+  [ 37] objcall 2960 ............................ me.setSpriteRect(me.calcDisplayRect())
+  [ 40] ret
+end

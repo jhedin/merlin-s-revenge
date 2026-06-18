@@ -1,0 +1,85 @@
+[#name: "PointFrameMove(fromPoint, toPoint, speed)", #scriptType: #movie, #type: #script]
+on PointFrameMove (fromPoint, toPoint, speed)
+  distToTarget = SineDist(fromPoint, toPoint)
+  distSpeedRatio = distToTarget / speed
+  distXY = toPoint - fromPoint
+  
+  -- if we can get there in one frame do that 
+  
+  if speed > distToTarget and speed > -distToTarget then
+    frameMove = distXY
+    
+  else
+    
+    if distSpeedRatio = 0 then
+      frameMove = point(0,0)
+    else
+      frameMove = distXY / point(distSpeedRatio, distSpeedRatio)
+    end if
+    
+  end if
+  return frameMove
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

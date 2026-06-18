@@ -1,0 +1,9 @@
+on PointValRange percent, rng
+  if ilk(percent) <> #point then
+    percent = point(percent, percent)
+  end if
+  aPoint = point(0, 0)
+  aPoint[1] = VarValRange(percent[1], [rng[1][1], rng[2][1]])
+  aPoint[2] = VarValRange(percent[2], [rng[1][2], rng[2][2]])
+  return aPoint
+end

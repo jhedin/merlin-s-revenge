@@ -1,0 +1,654 @@
+property p, pCurrentScreen, pBackToScreen
+global g, gErrorTrace
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 3 ............................... return me
+  [  6] ret
+end
+
+on init me
+  [  0] pusharglist 0 ........................... <[:]>
+  [  2] pushproplist ............................ <[:]>
+  [  3] setprop 245 ............................. p = [:]
+  [  5] getprop 245 ............................. <p>
+  [  7] pushsymb 346 ............................ <#params>
+  [ 10] pusharglist 0 ........................... <[:]>
+  [ 12] pushproplist ............................ <[:]>
+  [ 13] pusharglistnoret 3 ...................... <p, #params, [:]>
+  [ 15] objcall 54 .............................. p[#params] = [:]
+  [ 17] getprop 245 ............................. <p>
+  [ 19] pushsymb 346 ............................ <#params>
+  [ 22] pushsymb 461 ............................ <#goScreen>
+  [ 25] pushsymb 476 ............................ <#screenSym>
+  [ 28] pushsymb 103 ............................ <#none>
+  [ 30] pushsymb 477 ............................ <#transition>
+  [ 33] pushsymb 478 ............................ <#flick>
+  [ 36] pushsymb 205 ............................ <#caller>
+  [ 38] pushsymb 103 ............................ <#none>
+  [ 40] pusharglist 6 ........................... <[#screenSym: #none, #transition: #flick, #caller: #none]>
+  [ 42] pushproplist ............................ <[#screenSym: #none, #transition: #flick, #caller: #none]>
+  [ 43] pusharglistnoret 4 ...................... <p, #params, #goScreen, [#screenSym: #none, #transition: #flick, #caller: #none]>
+  [ 45] objcall 341 ............................. p.params[#goScreen] = [#screenSym: #none, #transition: #flick, #caller: #none]
+  [ 48] getprop 245 ............................. <p>
+  [ 50] pushsymb 479 ............................ <#dontDraw>
+  [ 53] pushcons 0 .............................. <"dd_">
+  [ 55] pushcons 1 .............................. <"prg_">
+  [ 57] pusharglist 2 ........................... <["dd_", "prg_"]>
+  [ 59] pushlist ................................ <["dd_", "prg_"]>
+  [ 60] pusharglistnoret 3 ...................... <p, #dontDraw, ["dd_", "prg_"]>
+  [ 62] objcall 54 .............................. p[#dontDraw] = ["dd_", "prg_"]
+  [ 64] getprop 245 ............................. <p>
+  [ 66] pushsymb 480 ............................ <#mark>
+  [ 69] pushsymb 193 ............................ <#member>
+  [ 71] pushsymb 103 ............................ <#none>
+  [ 73] pushsymb 481 ............................ <#loc>
+  [ 76] pushzero ................................ <0>
+  [ 77] pushzero ................................ <0>
+  [ 78] pusharglist 2 ........................... <0, 0>
+  [ 80] extcall 122 ............................. <point(0, 0)>
+  [ 82] pushsymb 325 ............................ <#width>
+  [ 85] pushzero ................................ <0>
+  [ 86] pushsymb 326 ............................ <#height>
+  [ 89] pushzero ................................ <0>
+  [ 90] pushsymb 361 ............................ <#ink>
+  [ 93] pushzero ................................ <0>
+  [ 94] pushsymb 357 ............................ <#blend>
+  [ 97] pushzero ................................ <0>
+  [ 98] pushsymb 353 ............................ <#flipH>
+  [101] pushzero ................................ <0>
+  [102] pushsymb 482 ............................ <#flipV>
+  [105] pushzero ................................ <0>
+  [106] pushsymb 359 ............................ <#color>
+  [109] pushzero ................................ <0>
+  [110] pushzero ................................ <0>
+  [111] pushzero ................................ <0>
+  [112] pusharglist 3 ........................... <0, 0, 0>
+  [114] extcall 106 ............................. <rgb(0, 0, 0)>
+  [116] pushsymb 360 ............................ <#bgColor>
+  [119] pushint16 255 ........................... <255>
+  [122] pushzero ................................ <0>
+  [123] pushint16 255 ........................... <255>
+  [126] pusharglist 3 ........................... <255, 0, 255>
+  [128] extcall 106 ............................. <rgb(255, 0, 255)>
+  [130] pushsymb 483 ............................ <#draw>
+  [133] pushint8 1 .............................. <1>
+  [135] pusharglist 22 .......................... <[#member: #none, #loc: point(0, 0), #width: 0, #height: 0, #ink: 0, #blend: 0, #flipH: 0, #flipV: 0, #color: rgb(0, 0, 0), #bgColor: rgb(255, 0, 255), #draw: 1]>
+  [137] pushproplist ............................ <[#member: #none, #loc: point(0, 0), #width: 0, #height: 0, #ink: 0, #blend: 0, #flipH: 0, #flipV: 0, #color: rgb(0, 0, 0), #bgColor: rgb(255, 0, 255), #draw: 1]>
+  [138] pusharglistnoret 3 ...................... <p, #mark, [#member: #none, #loc: point(0, 0), #width: 0, #height: 0, #ink: 0, #blend: 0, #flipH: 0, #flipV: 0, #color: rgb(0, 0, 0), #bgColor: rgb(255, 0, 255), #draw: 1]>
+  [140] objcall 54 .............................. p[#mark] = [#member: #none, #loc: point(0, 0), #width: 0, #height: 0, #ink: 0, #blend: 0, #flipH: 0, #flipV: 0, #color: rgb(0, 0, 0), #bgColor: rgb(255, 0, 255), #draw: 1]
+  [142] getprop 245 ............................. <p>
+  [144] pushsymb 484 ............................ <#screenList>
+  [147] pusharglist 0 ........................... <[:]>
+  [149] pushproplist ............................ <[:]>
+  [150] pusharglistnoret 3 ...................... <p, #screenList, [:]>
+  [152] objcall 54 .............................. p[#screenList] = [:]
+  [154] getprop 245 ............................. <p>
+  [156] pushsymb 485 ............................ <#currentTransition>
+  [159] pusharglist 0 ........................... <[:]>
+  [161] pushproplist ............................ <[:]>
+  [162] pusharglistnoret 3 ...................... <p, #currentTransition, [:]>
+  [164] objcall 54 .............................. p[#currentTransition] = [:]
+  [166] getprop 245 ............................. <p>
+  [168] getobjprop 485 .......................... <p.currentTransition>
+  [171] setlocal 0 .............................. ct = p.currentTransition
+  [173] getlocal 0 .............................. <ct>
+  [175] pushsymb 205 ............................ <#caller>
+  [177] pushsymb 103 ............................ <#none>
+  [179] pusharglistnoret 3 ...................... <ct, #caller, #none>
+  [181] objcall 54 .............................. ct[#caller] = #none
+  [183] getlocal 0 .............................. <ct>
+  [185] pushsymb 324 ............................ <#stage>
+  [188] pushsymb 103 ............................ <#none>
+  [190] pusharglistnoret 3 ...................... <ct, #stage, #none>
+  [192] objcall 54 .............................. ct[#stage] = #none
+  [194] getlocal 0 .............................. <ct>
+  [196] pushsymb 486 ............................ <#targetScreenSym>
+  [199] pushsymb 103 ............................ <#none>
+  [201] pusharglistnoret 3 ...................... <ct, #targetScreenSym, #none>
+  [203] objcall 54 .............................. ct[#targetScreenSym] = #none
+  [205] getlocal 0 .............................. <ct>
+  [207] pushsymb 477 ............................ <#transition>
+  [210] pushsymb 103 ............................ <#none>
+  [212] pusharglistnoret 3 ...................... <ct, #transition, #none>
+  [214] objcall 54 .............................. ct[#transition] = #none
+  [216] getlocal 0 .............................. <ct>
+  [218] pushsymb 487 ............................ <#waitingForScreens>
+  [221] pushzero ................................ <0>
+  [222] pusharglistnoret 3 ...................... <ct, #waitingForScreens, 0>
+  [224] objcall 54 .............................. ct[#waitingForScreens] = 0
+  [226] getglobal 191 ........................... <g>
+  [228] getchainedprop 192 ...................... <g.structMaster>
+  [230] pushsymb 82 ............................. <#screenCall>
+  [232] pusharglist 2 ........................... <g.structMaster, #screenCall>
+  [234] objcall 51 .............................. <g.structMaster.getStruct(#screenCall)>
+  [236] setprop 488 ............................. pBackToScreen = g.structMaster.getStruct(#screenCall)
+  [239] getglobal 191 ........................... <g>
+  [241] getchainedprop 192 ...................... <g.structMaster>
+  [243] pushsymb 82 ............................. <#screenCall>
+  [245] pusharglist 2 ........................... <g.structMaster, #screenCall>
+  [247] objcall 51 .............................. <g.structMaster.getStruct(#screenCall)>
+  [249] setprop 489 ............................. pCurrentScreen = g.structMaster.getStruct(#screenCall)
+  [252] getparam 0 .............................. <me>
+  [254] pusharglistnoret 1 ...................... <me>
+  [256] objcall 463 ............................. me.initScreenList()
+  [259] ret
+end
+
+on backAScreen me
+  [  0] getparam 0 .............................. <me>
+  [  2] getprop 489 ............................. <pCurrentScreen>
+  [  5] getobjprop 225 .......................... <pCurrentScreen.sym>
+  [  7] pusharglistnoret 2 ...................... <me, pCurrentScreen.sym>
+  [  9] objcall 470 ............................. me.screenOff(pCurrentScreen.sym)
+  [ 12] getparam 0 .............................. <me>
+  [ 14] getprop 488 ............................. <pBackToScreen>
+  [ 17] getobjprop 225 .......................... <pBackToScreen.sym>
+  [ 19] getprop 488 ............................. <pBackToScreen>
+  [ 22] getobjprop 205 .......................... <pBackToScreen.caller>
+  [ 24] pusharglistnoret 3 ...................... <me, pBackToScreen.sym, pBackToScreen.caller>
+  [ 26] objcall 468 ............................. me.screenOn(pBackToScreen.sym, pBackToScreen.caller)
+  [ 29] ret
+end
+
+on getParams me, functionSym
+  [  0] getprop 245 ............................. <p>
+  [  2] pushsymb 346 ............................ <#params>
+  [  5] getparam 1 .............................. <functionSym>
+  [  7] pusharglist 3 ........................... <p, #params, functionSym>
+  [  9] objcall 352 ............................. <p.params[functionSym]>
+  [ 12] pusharglistnoret 1 ...................... <p.params[functionSym]>
+  [ 14] extcall 3 ............................... return p.params[functionSym]
+  [ 16] ret
+end
+
+on goScreen me, params
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <params>
+  [  4] getobjprop 476 .......................... <params.screenSym>
+  [  7] getparam 1 .............................. <params>
+  [  9] getobjprop 477 .......................... <params.transition>
+  [ 12] getparam 1 .............................. <params>
+  [ 14] getobjprop 205 .......................... <params.caller>
+  [ 16] pusharglistnoret 4 ...................... <me, params.screenSym, params.transition, params.caller>
+  [ 18] objcall 473 ............................. me.startTransition(params.screenSym, params.transition, params.caller)
+  [ 21] getprop 489 ............................. <pCurrentScreen>
+  [ 24] pusharglist 1 ........................... <pCurrentScreen>
+  [ 26] objcall 302 ............................. <pCurrentScreen.duplicate()>
+  [ 29] setprop 488 ............................. pBackToScreen = pCurrentScreen.duplicate()
+  [ 32] getprop 489 ............................. <pCurrentScreen>
+  [ 35] getparam 1 .............................. <params>
+  [ 37] getobjprop 476 .......................... <params.screenSym>
+  [ 40] setobjprop 225 .......................... pCurrentScreen.sym = params.screenSym
+  [ 42] getprop 489 ............................. <pCurrentScreen>
+  [ 45] getparam 1 .............................. <params>
+  [ 47] getobjprop 205 .......................... <params.caller>
+  [ 49] setobjprop 205 .......................... pCurrentScreen.caller = params.caller
+  [ 51] ret
+end
+
+on stop me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 239 ............................. me.finish()
+  [  6] ret
+end
+
+on calcDraw me, memname
+  [  0] getprop 245 ............................. <p>
+  [  2] getobjprop 479 .......................... <p.dontDraw>
+  [  5] peek 0
+  [  7] pusharglist 1
+  [  9] extcall 348
+  [ 12] pushint8 1
+  [ 14] peek 0
+  [ 16] peek 2
+  [ 18] lteq
+  [ 19] jmpifz [ 51] ............................ repeat with dontName in p.dontDraw
+  [ 22] peek 2
+  [ 24] peek 1
+  [ 26] pusharglist 2
+  [ 28] extcall 301
+  [ 31] setlocal 0
+  [ 33] getparam 1 .............................. <memname>
+  [ 35] getlocal 0 .............................. <dontName>
+  [ 37] containsstr ............................. <memname contains dontName>
+  [ 38] jmpifz [ 46] ............................ if memname contains dontName then
+  [ 41] pushzero ................................ <0>
+  [ 42] pusharglistnoret 1 ...................... <0>
+  [ 44] extcall 3 ............................... return 0
+  [ 46] pushint8 1
+  [ 48] add
+  [ 49] endrepeat [ 14]
+  [ 51] pop 3
+  [ 53] pushint8 1 .............................. <1>
+  [ 55] pusharglistnoret 1 ...................... <1>
+  [ 57] extcall 3 ............................... return 1
+  [ 59] ret
+end
+
+on finish me
+  [  0] getprop 245 ............................. <p>
+  [  2] pushsymb 494 ............................ <#list>
+  [  5] pusharglist 2 ........................... <p, #list>
+  [  7] extcall 350 ............................. <ilk(p, #list)>
+  [ 10] jmpifz [ 25] ............................ if ilk(p, #list) then
+  [ 13] pushsymb 239 ............................ <#finish>
+  [ 15] getprop 245 ............................. <p>
+  [ 17] getobjprop 484 .......................... <p.screenList>
+  [ 20] pusharglistnoret 2 ...................... <#finish, p.screenList>
+  [ 22] extcall 495 ............................. call(#finish, p.screenList)
+  [ 25] ret
+end
+
+on initScreenList me
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 496 ...................... <g.spriteMaster>
+  [  5] pusharglistnoret 1 ...................... <g.spriteMaster>
+  [  7] objcall 314 ............................. g.spriteMaster.hideAll2DSprites()
+  [ 10] pusharglist 0 ........................... <>
+  [ 12] thebuiltin 497 .......................... <the labelList>
+  [ 15] pushsymb 498 ............................ <#lines>
+  [ 18] pusharglist 2 ........................... <the labelList, #lines>
+  [ 20] objcall 348 ............................. <(the labelList).lines.count>
+  [ 23] pushint8 1 .............................. <1>
+  [ 25] sub ..................................... <(the labelList).lines.count - 1>
+  [ 26] setlocal 0 .............................. numLabels = (the labelList).lines.count - 1
+  [ 28] pushint8 1 .............................. <1>
+  [ 30] setlocal 1
+  [ 32] getlocal 1
+  [ 34] getlocal 0 .............................. <numLabels>
+  [ 36] lteq
+  [ 37] jmpifz [124] ............................ repeat with i = 1 to numLabels
+  [ 40] pushint8 1 .............................. <1>
+  [ 42] pusharglist 1 ........................... <1>
+  [ 44] extcall 499 ............................. <marker(1)>
+  [ 47] pusharglistnoret 1 ...................... <marker(1)>
+  [ 49] extcall 500 ............................. go(marker(1))
+  [ 52] getmovieprop 501 ........................ <the frameLabel>
+  [ 55] pusharglist 1 ........................... <the frameLabel>
+  [ 57] extcall 442 ............................. <symbol(the frameLabel)>
+  [ 60] setlocal 2 .............................. screenSym = symbol(the frameLabel)
+  [ 62] getglobal 191 ........................... <g>
+  [ 64] getchainedprop 336 ...................... <g.objectMaster>
+  [ 67] pushsymb 502 ............................ <#objScreen>
+  [ 70] pusharglist 2 ........................... <g.objectMaster, #objScreen>
+  [ 72] objcall 338 ............................. <g.objectMaster.requestObject(#objScreen)>
+  [ 75] setlocal 3 .............................. nScreen = g.objectMaster.requestObject(#objScreen)
+  [ 77] getlocal 3 .............................. <nScreen>
+  [ 79] getlocal 2 .............................. <screenSym>
+  [ 81] getparam 0 .............................. <me>
+  [ 83] pusharglistnoret 3 ...................... <nScreen, screenSym, me>
+  [ 85] objcall 1 ............................... nScreen.init(screenSym, me)
+  [ 87] getlocal 3 .............................. <nScreen>
+  [ 89] getparam 0 .............................. <me>
+  [ 91] pusharglist 1 ........................... <me>
+  [ 93] objcall 464 ............................. <me.getMarks()>
+  [ 96] pusharglistnoret 2 ...................... <nScreen, me.getMarks()>
+  [ 98] objcall 503 ............................. nScreen.setMarks(me.getMarks())
+  [101] getprop 245 ............................. <p>
+  [103] pushsymb 484 ............................ <#screenList>
+  [106] getlocal 2 .............................. <screenSym>
+  [108] getlocal 3 .............................. <nScreen>
+  [110] pusharglistnoret 4 ...................... <p, #screenList, screenSym, nScreen>
+  [112] objcall 341 ............................. p.screenList[screenSym] = nScreen
+  [115] pushint8 1
+  [117] getlocal 1
+  [119] add
+  [120] setlocal 1
+  [122] endrepeat [ 32]
+  [124] pushint8 1 .............................. <1>
+  [126] pusharglistnoret 1 ...................... <1>
+  [128] extcall 500 ............................. go(1)
+  [131] getglobal 191 ........................... <g>
+  [133] getchainedprop 496 ...................... <g.spriteMaster>
+  [136] pusharglistnoret 1 ...................... <g.spriteMaster>
+  [138] objcall 316 ............................. g.spriteMaster.showAll2DSprites()
+  [141] ret
+end
+
+on getMarks me
+  [  0] pusharglist 0 ........................... <[]>
+  [  2] pushlist ................................ <[]>
+  [  3] setlocal 0 .............................. thelist = []
+  [  5] pushint8 1 .............................. <1>
+  [  7] setlocal 1
+  [  9] getlocal 1
+  [ 11] getmovieprop 334 ........................ <the lastChannel>
+  [ 14] lteq
+  [ 15] jmpifz [238] ............................ repeat with i = 1 to the lastChannel
+  [ 18] getlocal 1 .............................. <i>
+  [ 20] pusharglist 1 ........................... <i>
+  [ 22] extcall 323 ............................. <sprite(i)>
+  [ 25] getobjprop 193 .......................... <sprite(i).member>
+  [ 27] pushzero ................................ <0>
+  [ 28] pushzero ................................ <0>
+  [ 29] pusharglist 2 ........................... <0, 0>
+  [ 31] extcall 193 ............................. <member(0, 0)>
+  [ 33] nteq .................................... <sprite(i).member <> member(0, 0)>
+  [ 34] jmpifz [229] ............................ if sprite(i).member <> member(0, 0) then
+  [ 37] getparam 0 .............................. <me>
+  [ 39] pushsymb 480 ............................ <#mark>
+  [ 42] pusharglist 2 ........................... <me, #mark>
+  [ 44] objcall 465 ............................. <me.newBlank(#mark)>
+  [ 47] setlocal 2 .............................. nMark = me.newBlank(#mark)
+  [ 49] getlocal 2 .............................. <nMark>
+  [ 51] getlocal 1 .............................. <i>
+  [ 53] pusharglist 1 ........................... <i>
+  [ 55] extcall 323 ............................. <sprite(i)>
+  [ 58] getobjprop 193 .......................... <sprite(i).member>
+  [ 60] setobjprop 193 .......................... nMark.member = sprite(i).member
+  [ 62] getlocal 2 .............................. <nMark>
+  [ 64] getlocal 1 .............................. <i>
+  [ 66] pusharglist 1 ........................... <i>
+  [ 68] extcall 323 ............................. <sprite(i)>
+  [ 71] getchainedprop 481 ...................... <sprite(i).loc>
+  [ 74] pusharglist 1 ........................... <sprite(i).loc>
+  [ 76] objcall 302 ............................. <sprite(i).loc.duplicate()>
+  [ 79] setobjprop 481 .......................... nMark.loc = sprite(i).loc.duplicate()
+  [ 82] getlocal 2 .............................. <nMark>
+  [ 84] getlocal 1 .............................. <i>
+  [ 86] pusharglist 1 ........................... <i>
+  [ 88] extcall 323 ............................. <sprite(i)>
+  [ 91] getobjprop 325 .......................... <sprite(i).width>
+  [ 94] setobjprop 325 .......................... nMark.width = sprite(i).width
+  [ 97] getlocal 2 .............................. <nMark>
+  [ 99] getlocal 1 .............................. <i>
+  [101] pusharglist 1 ........................... <i>
+  [103] extcall 323 ............................. <sprite(i)>
+  [106] getobjprop 326 .......................... <sprite(i).height>
+  [109] setobjprop 326 .......................... nMark.height = sprite(i).height
+  [112] getlocal 2 .............................. <nMark>
+  [114] getlocal 1 .............................. <i>
+  [116] pusharglist 1 ........................... <i>
+  [118] extcall 323 ............................. <sprite(i)>
+  [121] getobjprop 361 .......................... <sprite(i).ink>
+  [124] setobjprop 361 .......................... nMark.ink = sprite(i).ink
+  [127] getlocal 2 .............................. <nMark>
+  [129] getlocal 1 .............................. <i>
+  [131] pusharglist 1 ........................... <i>
+  [133] extcall 323 ............................. <sprite(i)>
+  [136] getobjprop 357 .......................... <sprite(i).blend>
+  [139] setobjprop 357 .......................... nMark.blend = sprite(i).blend
+  [142] getlocal 2 .............................. <nMark>
+  [144] getlocal 1 .............................. <i>
+  [146] pusharglist 1 ........................... <i>
+  [148] extcall 323 ............................. <sprite(i)>
+  [151] getobjprop 353 .......................... <sprite(i).flipH>
+  [154] setobjprop 353 .......................... nMark.flipH = sprite(i).flipH
+  [157] getlocal 2 .............................. <nMark>
+  [159] getlocal 1 .............................. <i>
+  [161] pusharglist 1 ........................... <i>
+  [163] extcall 323 ............................. <sprite(i)>
+  [166] getobjprop 482 .......................... <sprite(i).flipV>
+  [169] setobjprop 482 .......................... nMark.flipV = sprite(i).flipV
+  [172] getlocal 2 .............................. <nMark>
+  [174] getlocal 1 .............................. <i>
+  [176] pusharglist 1 ........................... <i>
+  [178] extcall 323 ............................. <sprite(i)>
+  [181] getobjprop 359 .......................... <sprite(i).color>
+  [184] setobjprop 359 .......................... nMark.color = sprite(i).color
+  [187] getlocal 2 .............................. <nMark>
+  [189] getlocal 1 .............................. <i>
+  [191] pusharglist 1 ........................... <i>
+  [193] extcall 323 ............................. <sprite(i)>
+  [196] getobjprop 360 .......................... <sprite(i).bgColor>
+  [199] setobjprop 360 .......................... nMark.bgColor = sprite(i).bgColor
+  [202] getlocal 2 .............................. <nMark>
+  [204] getparam 0 .............................. <me>
+  [206] getlocal 2 .............................. <nMark>
+  [208] getchainedprop 193 ...................... <nMark.member>
+  [210] getobjprop 138 .......................... <nMark.member.name>
+  [212] pusharglist 2 ........................... <me, nMark.member.name>
+  [214] objcall 462 ............................. <me.calcDraw(nMark.member.name)>
+  [217] setobjprop 483 .......................... nMark.draw = me.calcDraw(nMark.member.name)
+  [220] getlocal 0 .............................. <thelist>
+  [222] getlocal 2 .............................. <nMark>
+  [224] pusharglistnoret 2 ...................... <thelist, nMark>
+  [226] objcall 506 ............................. thelist.append(nMark)
+  [229] pushint8 1
+  [231] getlocal 1
+  [233] add
+  [234] setlocal 1
+  [236] endrepeat [  9]
+  [238] getlocal 0 .............................. <thelist>
+  [240] pusharglistnoret 1 ...................... <thelist>
+  [242] extcall 3 ............................... return thelist
+  [244] ret
+end
+
+on newBlank me, sym
+  [  0] getprop 245 ............................. <p>
+  [  2] getparam 1 .............................. <sym>
+  [  4] pusharglist 2 ........................... <p, sym>
+  [  6] objcall 301 ............................. <p[sym]>
+  [  9] pusharglist 1 ........................... <p[sym]>
+  [ 11] objcall 302 ............................. <p[sym].duplicate()>
+  [ 14] pusharglistnoret 1 ...................... <p[sym].duplicate()>
+  [ 16] extcall 3 ............................... return p[sym].duplicate()
+  [ 18] ret
+end
+
+on sendAllScreens me, function, transition
+  [  0] getprop 245 ............................. <p>
+  [  2] getobjprop 485 .......................... <p.currentTransition>
+  [  5] setlocal 0 .............................. ct = p.currentTransition
+  [  7] getlocal 0 .............................. <ct>
+  [  9] pushzero ................................ <0>
+  [ 10] setobjprop 487 .......................... ct.waitingForScreens = 0
+  [ 13] getprop 245 ............................. <p>
+  [ 15] getobjprop 484 .......................... <p.screenList>
+  [ 18] peek 0
+  [ 20] pusharglist 1
+  [ 22] extcall 348
+  [ 25] pushint8 1
+  [ 27] peek 0
+  [ 29] peek 2
+  [ 31] lteq
+  [ 32] jmpifz [ 65] ............................ repeat with scr in p.screenList
+  [ 35] peek 2
+  [ 37] peek 1
+  [ 39] pusharglist 2
+  [ 41] extcall 301
+  [ 44] setlocal 1
+  [ 46] getparam 1 .............................. <function>
+  [ 48] getlocal 1 .............................. <scr>
+  [ 50] getparam 2 .............................. <transition>
+  [ 52] pushsymb 472 ............................ <#screenResponseWaitForMe>
+  [ 55] pusharglistnoret 4 ...................... <function, scr, transition, #screenResponseWaitForMe>
+  [ 57] extcall 495 ............................. call(function, scr, transition, #screenResponseWaitForMe)
+  [ 60] pushint8 1
+  [ 62] add
+  [ 63] endrepeat [ 27]
+  [ 65] pop 3
+  [ 67] ret
+end
+
+on screenFinished me
+  [  0] getprop 245 ............................. <p>
+  [  2] getobjprop 485 .......................... <p.currentTransition>
+  [  5] setlocal 0 .............................. ct = p.currentTransition
+  [  7] getlocal 0 .............................. <ct>
+  [  9] getlocal 0 .............................. <ct>
+  [ 11] getobjprop 487 .......................... <ct.waitingForScreens>
+  [ 14] pushint8 1 .............................. <1>
+  [ 16] sub ..................................... <ct.waitingForScreens - 1>
+  [ 17] setobjprop 487 .......................... ct.waitingForScreens = ct.waitingForScreens - 1
+  [ 20] getlocal 0 .............................. <ct>
+  [ 22] getobjprop 487 .......................... <ct.waitingForScreens>
+  [ 25] pushzero ................................ <0>
+  [ 26] eq ...................................... <ct.waitingForScreens = 0>
+  [ 27] jmpifz [ 72] ............................ if ct.waitingForScreens = 0 then
+  [ 30] getlocal 0 .............................. <ct>
+  [ 32] getobjprop 324 .......................... <ct.stage>
+  [ 35] peek 0 .................................. case ct.stage of
+  [ 37] pushsymb 398 ............................ <#start>
+  [ 40] eq
+  [ 41] jmpifz [ 54] ............................ (case) #start:
+  [ 44] getparam 0 .............................. <me>
+  [ 46] pusharglistnoret 1 ...................... <me>
+  [ 48] objcall 474 ............................. me.continueTransition()
+  [ 51] jmp [ 70]
+  [ 54] peek 0
+  [ 56] pushsymb 441 ............................ <#continue>
+  [ 59] eq
+  [ 60] jmpifz [ 70] ............................ (case) #continue:
+  [ 63] getparam 0 .............................. <me>
+  [ 65] pusharglistnoret 1 ...................... <me>
+  [ 67] objcall 475 ............................. me.finishTransition()
+  [ 70] pop 1 ................................... end case
+  [ 72] ret
+end
+
+on screenOn me, theScreen, caller
+  [  0] getprop 245 ............................. <p>
+  [  2] pushsymb 484 ............................ <#screenList>
+  [  5] getparam 1 .............................. <theScreen>
+  [  7] pusharglist 3 ........................... <p, #screenList, theScreen>
+  [  9] objcall 352 ............................. <p.screenList[theScreen]>
+  [ 12] setlocal 0 .............................. scr = p.screenList[theScreen]
+  [ 14] getlocal 0 .............................. <scr>
+  [ 16] pushsymb 478 ............................ <#flick>
+  [ 19] pushsymb 469 ............................ <#screenOnCallBack>
+  [ 22] getparam 2 .............................. <caller>
+  [ 24] pusharglistnoret 4 ...................... <scr, #flick, #screenOnCallBack, caller>
+  [ 26] objcall 511 ............................. scr.onscreen(#flick, #screenOnCallBack, caller)
+  [ 29] getprop 489 ............................. <pCurrentScreen>
+  [ 32] pusharglist 1 ........................... <pCurrentScreen>
+  [ 34] objcall 302 ............................. <pCurrentScreen.duplicate()>
+  [ 37] setprop 488 ............................. pBackToScreen = pCurrentScreen.duplicate()
+  [ 40] getprop 489 ............................. <pCurrentScreen>
+  [ 43] getparam 1 .............................. <theScreen>
+  [ 45] setobjprop 225 .......................... pCurrentScreen.sym = theScreen
+  [ 47] getprop 489 ............................. <pCurrentScreen>
+  [ 50] getparam 2 .............................. <caller>
+  [ 52] setobjprop 205 .......................... pCurrentScreen.caller = caller
+  [ 54] ret
+end
+
+on screenOnCallBack me, bDone
+  [  0] pusharglistnoret 0 ...................... <>
+  [  2] extcall 438 ............................. nothing()
+  [  5] ret
+end
+
+on screenOff me, theScreen
+  [  0] getprop 245 ............................. <p>
+  [  2] pushsymb 484 ............................ <#screenList>
+  [  5] getparam 1 .............................. <theScreen>
+  [  7] pusharglist 3 ........................... <p, #screenList, theScreen>
+  [  9] objcall 352 ............................. <p.screenList[theScreen]>
+  [ 12] setlocal 0 .............................. scr = p.screenList[theScreen]
+  [ 14] getlocal 0 .............................. <scr>
+  [ 16] pushsymb 478 ............................ <#flick>
+  [ 19] pushsymb 471 ............................ <#screenOffCallBack>
+  [ 22] pusharglistnoret 3 ...................... <scr, #flick, #screenOffCallBack>
+  [ 24] objcall 514 ............................. scr.offscreen(#flick, #screenOffCallBack)
+  [ 27] ret
+end
+
+on screenOffCallBack me, bDone
+  [  0] pusharglistnoret 0 ...................... <>
+  [  2] extcall 438 ............................. nothing()
+  [  5] ret
+end
+
+on screenResponseWaitForMe me, bDone
+  [  0] getprop 245 ............................. <p>
+  [  2] getobjprop 485 .......................... <p.currentTransition>
+  [  5] setlocal 0 .............................. ct = p.currentTransition
+  [  7] getparam 1 .............................. <bDone>
+  [  9] pushzero ................................ <0>
+  [ 10] eq ...................................... <bDone = 0>
+  [ 11] jmpifz [ 27] ............................ if bDone = 0 then
+  [ 14] getlocal 0 .............................. <ct>
+  [ 16] getlocal 0 .............................. <ct>
+  [ 18] getobjprop 487 .......................... <ct.waitingForScreens>
+  [ 21] pushint8 1 .............................. <1>
+  [ 23] add ..................................... <ct.waitingForScreens + 1>
+  [ 24] setobjprop 487 .......................... ct.waitingForScreens = ct.waitingForScreens + 1
+  [ 27] ret
+end
+
+on startTransition me, targetScreenSym, transition, caller
+  [  0] getprop 245 ............................. <p>
+  [  2] getobjprop 485 .......................... <p.currentTransition>
+  [  5] setlocal 0 .............................. ct = p.currentTransition
+  [  7] getlocal 0 .............................. <ct>
+  [  9] getparam 1 .............................. <targetScreenSym>
+  [ 11] setobjprop 486 .......................... ct.targetScreenSym = targetScreenSym
+  [ 14] getlocal 0 .............................. <ct>
+  [ 16] getparam 2 .............................. <transition>
+  [ 18] setobjprop 477 .......................... ct.transition = transition
+  [ 21] getlocal 0 .............................. <ct>
+  [ 23] getparam 3 .............................. <caller>
+  [ 25] setobjprop 205 .......................... ct.caller = caller
+  [ 27] getlocal 0 .............................. <ct>
+  [ 29] pushsymb 398 ............................ <#start>
+  [ 32] setobjprop 324 .......................... ct.stage = #start
+  [ 35] getparam 0 .............................. <me>
+  [ 37] pushsymb 514 ............................ <#offscreen>
+  [ 40] getlocal 0 .............................. <ct>
+  [ 42] getobjprop 477 .......................... <ct.transition>
+  [ 45] pusharglistnoret 3 ...................... <me, #offscreen, ct.transition>
+  [ 47] objcall 466 ............................. me.sendAllScreens(#offscreen, ct.transition)
+  [ 50] getlocal 0 .............................. <ct>
+  [ 52] getobjprop 487 .......................... <ct.waitingForScreens>
+  [ 55] pushzero ................................ <0>
+  [ 56] eq ...................................... <ct.waitingForScreens = 0>
+  [ 57] jmpifz [ 67] ............................ if ct.waitingForScreens = 0 then
+  [ 60] getparam 0 .............................. <me>
+  [ 62] pusharglistnoret 1 ...................... <me>
+  [ 64] objcall 474 ............................. me.continueTransition()
+  [ 67] ret
+end
+
+on continueTransition me
+  [  0] getprop 245 ............................. <p>
+  [  2] getobjprop 485 .......................... <p.currentTransition>
+  [  5] setlocal 0 .............................. ct = p.currentTransition
+  [  7] getprop 245 ............................. <p>
+  [  9] pushsymb 484 ............................ <#screenList>
+  [ 12] getlocal 0 .............................. <ct>
+  [ 14] getobjprop 486 .......................... <ct.targetScreenSym>
+  [ 17] pusharglist 3 ........................... <p, #screenList, ct.targetScreenSym>
+  [ 19] objcall 352 ............................. <p.screenList[ct.targetScreenSym]>
+  [ 22] setlocal 1 .............................. targetScreen = p.screenList[ct.targetScreenSym]
+  [ 24] getlocal 1 .............................. <targetScreen>
+  [ 26] getlocal 0 .............................. <ct>
+  [ 28] getobjprop 477 .......................... <ct.transition>
+  [ 31] pushsymb 472 ............................ <#screenResponseWaitForMe>
+  [ 34] getlocal 0 .............................. <ct>
+  [ 36] getobjprop 205 .......................... <ct.caller>
+  [ 38] pusharglistnoret 4 ...................... <targetScreen, ct.transition, #screenResponseWaitForMe, ct.caller>
+  [ 40] objcall 511 ............................. targetScreen.onscreen(ct.transition, #screenResponseWaitForMe, ct.caller)
+  [ 43] getlocal 0 .............................. <ct>
+  [ 45] pushsymb 441 ............................ <#continue>
+  [ 48] setobjprop 324 .......................... ct.stage = #continue
+  [ 51] getlocal 0 .............................. <ct>
+  [ 53] getobjprop 487 .......................... <ct.waitingForScreens>
+  [ 56] pushzero ................................ <0>
+  [ 57] eq ...................................... <ct.waitingForScreens = 0>
+  [ 58] jmpifz [ 68] ............................ if ct.waitingForScreens = 0 then
+  [ 61] getparam 0 .............................. <me>
+  [ 63] pusharglistnoret 1 ...................... <me>
+  [ 65] objcall 475 ............................. me.finishTransition()
+  [ 68] ret
+end
+
+on finishTransition me
+  [  0] getprop 245 ............................. <p>
+  [  2] getobjprop 485 .......................... <p.currentTransition>
+  [  5] setlocal 0 .............................. ct = p.currentTransition
+  [  7] getlocal 0 .............................. <ct>
+  [  9] pushsymb 239 ............................ <#finish>
+  [ 11] setobjprop 324 .......................... ct.stage = #finish
+  [ 14] getlocal 0 .............................. <ct>
+  [ 16] getchainedprop 205 ...................... <ct.caller>
+  [ 18] getlocal 0 .............................. <ct>
+  [ 20] getobjprop 486 .......................... <ct.targetScreenSym>
+  [ 23] pusharglistnoret 2 ...................... <ct.caller, ct.targetScreenSym>
+  [ 25] objcall 516 ............................. ct.caller.goScreenFinished(ct.targetScreenSym)
+  [ 28] ret
+end

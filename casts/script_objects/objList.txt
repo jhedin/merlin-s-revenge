@@ -1,0 +1,115 @@
+[#name: "objList", #scriptType: #parent, #type: #script]
+property ancestor
+property p
+
+on new me
+  me.ancestor = new(script "objBasic")
+  
+  return me
+end
+
+on init me, values
+  p = [:]
+  
+  p[#counter] = CounterNew()
+  p[#values] = []
+  
+  pCurrentIndex = 0
+  
+  me.setValues(values)
+end
+
+on atEnd me
+  myIndex = me.getIndex()
+  return myIndex = p.counter.tim[2]
+end
+
+on atStart me
+  myIndex = me.getIndex()
+  return myIndex = p.counter.tim[1]
+end
+
+on getFin me
+  return p.counter.fin
+end
+
+on getLooped me
+  return p.counter.looped
+end
+
+on getIndex me
+  -- the counter is one step ahead of the current index
+  theCount = p.counter.theCount
+  tim = p.counter.tim
+  return VarChangeInRange(theCount, tim[1], tim[2], -1)
+end
+
+on getSumOfValues me
+  sum = 0
+  
+  repeat with val in p.values
+    if ilk(val, #number) then
+      sum = sum + val
+    end if
+  end repeat
+  
+  return sum
+end
+
+on getValueAt me, thePos
+  if p.values.count < thePos or thePos < 1 then
+    --illegal value for thePos!
+    nothing
+  end if 
+  
+  return p.values[thePos]
+end
+
+on gotoValuePos me, thePos
+  p.counter.theCount = thePos
+end
+
+on nextValue me
+  nValue = p.values[p.counter.theCount]
+  Counter(p.counter)
+  return nValue
+end
+
+on prevValue me
+  theCount = p.counter.theCount
+  theCount = VarChangeInRange(theCount, p.counter.tim[1], p.counter.tim[2], -2)
+  CounterSetCount(p.counter, theCount)
+  
+  return me.nextValue()
+end
+
+on reset me
+  CounterReset(p.counter)
+end
+
+on setIndex me, newVal
+  pCurrentIndex = newVal
+  p.counter.theCount = newVal
+end 
+
+on setValues me, values
+  if ilk(values) = #list then
+    p.values = values.duplicate()
+    p.counter.tim[2] = p.values.count
+    CounterReset(p.counter)
+  else
+    put "objList.setValues: values not a list"
+  end if
+end
+
+
+
+
+
+
+
+
+
+
+
+

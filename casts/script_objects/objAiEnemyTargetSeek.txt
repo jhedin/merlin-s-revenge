@@ -1,0 +1,157 @@
+[#name: "objAiEnemyTargetSeek", #scriptType: #parent, #type: #script]
+property ancestor
+property pAction
+property pTargetObj
+property pTargetType
+
+on new me
+  ancestor = new(script"objAiEnemy")
+  
+  return me
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  pAction = #none
+  pTargetType = #none
+  
+end init
+
+on characterModeChanged me, newMode
+  case newMode of
+    #look:
+      me.refreshTarget()
+  end case
+  
+  ancestor.characterModeChanged(newMode)
+end
+
+on goMode me, newMode
+  
+  case newMode of
+    #attack:
+      newMode = me.targetFound()
+      
+  end case
+  
+  ancestor.goMode(newMode)
+end
+
+on refreshTarget me
+  case pTargetType of
+    #playerHair:
+      -- if player isn't activated yet
+      if me.pPlayer = #none then
+        pTargetObj = #none
+        me.refreshPlayer()
+      else
+        pTargetObj = me.pPlayer.getHalfWayHair()
+      end if
+  end case
+end
+
+on setAction me, newVal
+  pAction = newVal
+end
+
+on setTargetType me, newVal
+  pTargetType = newVal
+  
+  me.refreshTarget()
+end
+
+on targetFound me, newMode
+  
+  case pAction of
+    #none, #attack:
+      nothing
+      
+    #attach:
+      me.pCharacterPrg.attachTo(pTargetObj)
+      newMode = #attach
+      
+  end case  
+  
+  return newMode
+end
+
+on updateMoveToAttack me
+  
+  if pTargetObj <> #none then
+    
+    targetRect = pTargetObj.getRect()
+    targetRect = targetRect.inflate(me.pAttack.reach[1], me.pAttack.reach[2])
+    
+    return me.updateMoveToRect(targetRect)
+    
+  else
+    me.refreshTarget()
+    return false
+  end if
+  
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

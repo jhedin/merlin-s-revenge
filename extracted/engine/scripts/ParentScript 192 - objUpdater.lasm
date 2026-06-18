@@ -1,0 +1,188 @@
+property ancestor, pUpdateCats, pUpdateLists
+global q
+
+on new me
+  [  0] pushcons 0 .............................. <"objBasic">
+  [  2] pusharglist 1 ........................... <"objBasic">
+  [  4] extcall 34 .............................. <script("objBasic")>
+  [  6] pusharglist 1 ........................... <script("objBasic")>
+  [  8] extcall 0 ............................... <new(script("objBasic"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objBasic"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on init me, uCats
+  [  0] getparam 1 .............................. <uCats>
+  [  2] pushsymb 218 ............................ <#list>
+  [  4] pusharglist 2 ........................... <uCats, #list>
+  [  6] extcall 206 ............................. <ilk(uCats, #list)>
+  [  8] not ..................................... <not ilk(uCats, #list)>
+  [  9] jmpifz [ 20] ............................ if not ilk(uCats, #list) then
+  [ 12] pushsymb 2014 ........................... <#norm>
+  [ 15] pusharglist 1 ........................... <[#norm]>
+  [ 17] pushlist ................................ <[#norm]>
+  [ 18] setparam 1 .............................. uCats = [#norm]
+  [ 20] getparam 1 .............................. <uCats>
+  [ 22] pusharglist 1 ........................... <uCats>
+  [ 24] objcall 175 ............................. <uCats.duplicate()>
+  [ 26] setprop 4092 ............................ pUpdateCats = uCats.duplicate()
+  [ 29] pusharglist 0 ........................... <[]>
+  [ 31] pushlist ................................ <[]>
+  [ 32] setprop 4093 ............................ pUpdateLists = []
+  [ 35] getparam 0 .............................. <me>
+  [ 37] pusharglistnoret 1 ...................... <me>
+  [ 39] objcall 4090 ............................ me.initCats()
+  [ 42] ret
+end
+
+on initCats me
+  [  0] getprop 4092 ............................ <pUpdateCats>
+  [  3] getobjprop 257 .......................... <pUpdateCats.count>
+  [  6] setlocal 0 .............................. numCats = pUpdateCats.count
+  [  8] pushint8 1 .............................. <1>
+  [ 10] setlocal 1
+  [ 12] getlocal 1
+  [ 14] getlocal 0 .............................. <numCats>
+  [ 16] lteq
+  [ 17] jmpifz [ 41] ............................ repeat with c = 1 to numCats
+  [ 20] getprop 4093 ............................ <pUpdateLists>
+  [ 23] getlocal 1 .............................. <c>
+  [ 25] pusharglist 0 ........................... <[]>
+  [ 27] pushlist ................................ <[]>
+  [ 28] pusharglistnoret 3 ...................... <pUpdateLists, c, []>
+  [ 30] objcall 48 .............................. pUpdateLists[c] = []
+  [ 32] pushint8 1
+  [ 34] getlocal 1
+  [ 36] add
+  [ 37] setlocal 1
+  [ 39] endrepeat [ 12]
+  [ 41] ret
+end
+
+on updatePrgs me, mou
+  [  0] pushint8 1 .............................. <1>
+  [  2] setlocal 0
+  [  4] getlocal 0
+  [  6] getprop 4093 ............................ <pUpdateLists>
+  [  9] getobjprop 257 .......................... <pUpdateLists.count>
+  [ 12] lteq
+  [ 13] jmpifz [ 78] ............................ repeat with ul = 1 to pUpdateLists.count
+  [ 16] getprop 4093 ............................ <pUpdateLists>
+  [ 19] getlocal 0 .............................. <ul>
+  [ 21] pusharglist 2 ........................... <pUpdateLists, ul>
+  [ 23] objcall 109 ............................. <pUpdateLists[ul]>
+  [ 25] setlocal 1 .............................. nUl = pUpdateLists[ul]
+  [ 27] pushint8 1 .............................. <1>
+  [ 29] setlocal 2
+  [ 31] getlocal 2
+  [ 33] getlocal 1 .............................. <nUl>
+  [ 35] getobjprop 257 .......................... <nUl.count>
+  [ 38] lteq
+  [ 39] jmpifz [ 69] ............................ repeat with prg = 1 to nUl.count
+  [ 42] getlocal 1 .............................. <nUl>
+  [ 44] getlocal 2 .............................. <prg>
+  [ 46] pusharglist 2 ........................... <nUl, prg>
+  [ 48] objcall 109 ............................. <nUl[prg]>
+  [ 50] setlocal 3 .............................. nPrg = nUl[prg]
+  [ 52] getlocal 3 .............................. <nPrg>
+  [ 54] getparam 1 .............................. <mou>
+  [ 56] pusharglistnoret 2 ...................... <nPrg, mou>
+  [ 58] extcall 31 .............................. update(nPrg, mou)
+  [ 60] pushint8 1
+  [ 62] getlocal 2
+  [ 64] add
+  [ 65] setlocal 2
+  [ 67] endrepeat [ 31]
+  [ 69] pushint8 1
+  [ 71] getlocal 0
+  [ 73] add
+  [ 74] setlocal 0
+  [ 76] endrepeat [  4]
+  [ 78] ret
+end
+
+on addPrg me, prg, cat
+  [  0] getprop 4092 ............................ <pUpdateCats>
+  [  3] getparam 2 .............................. <cat>
+  [  5] pusharglist 2 ........................... <pUpdateCats, cat>
+  [  7] objcall 219 ............................. <pUpdateCats.getPos(cat)>
+  [  9] setlocal 0 .............................. catPos = pUpdateCats.getPos(cat)
+  [ 11] getlocal 0 .............................. <catPos>
+  [ 13] pushzero ................................ <0>
+  [ 14] eq ...................................... <catPos = 0>
+  [ 15] jmpifz [ 53] ............................ if catPos = 0 then
+  [ 18] pushcons 1 .............................. <"updater: unknown cat(">
+  [ 20] getglobal 4101 .......................... <q>
+  [ 23] joinstr ................................. <"updater: unknown cat(" & q>
+  [ 24] pushcons 2 .............................. <"#">
+  [ 26] joinstr ................................. <"updater: unknown cat(" & q & "#">
+  [ 27] getparam 2 .............................. <cat>
+  [ 29] joinstr ................................. <"updater: unknown cat(" & q & "#" & cat>
+  [ 30] getglobal 4101 .......................... <q>
+  [ 33] joinstr ................................. <"updater: unknown cat(" & q & "#" & cat & q>
+  [ 34] pushcons 3 .............................. <" from prg: ">
+  [ 36] joinstr ................................. <"updater: unknown cat(" & q & "#" & cat & q & " from prg: ">
+  [ 37] getparam 1 .............................. <prg>
+  [ 39] joinstr ................................. <"updater: unknown cat(" & q & "#" & cat & q & " from prg: " & prg>
+  [ 40] pushcons 4 .............................. <")">
+  [ 42] joinstr ................................. <"updater: unknown cat(" & q & "#" & cat & q & " from prg: " & prg & ")">
+  [ 43] pusharglistnoret 1 ...................... <"updater: unknown cat(" & q & "#" & cat & q & " from prg: " & prg & ")">
+  [ 45] extcall 2549 ............................ alert("updater: unknown cat(" & q & "#" & cat & q & " from prg: " & prg & ")")
+  [ 48] pusharglistnoret 0 ...................... <>
+  [ 50] extcall 2683 ............................ halt()
+  [ 53] getprop 4093 ............................ <pUpdateLists>
+  [ 56] getlocal 0 .............................. <catPos>
+  [ 58] pusharglist 2 ........................... <pUpdateLists, catPos>
+  [ 60] objcall 109 ............................. <pUpdateLists[catPos]>
+  [ 62] setlocal 1 .............................. ul = pUpdateLists[catPos]
+  [ 64] getlocal 1 .............................. <ul>
+  [ 66] getparam 1 .............................. <prg>
+  [ 68] pusharglist 2 ........................... <ul, prg>
+  [ 70] objcall 219 ............................. <ul.getPos(prg)>
+  [ 72] pushzero ................................ <0>
+  [ 73] eq ...................................... <ul.getPos(prg) = 0>
+  [ 74] jmpifz [ 86] ............................ if ul.getPos(prg) = 0 then
+  [ 77] getlocal 1 .............................. <ul>
+  [ 79] getparam 1 .............................. <prg>
+  [ 81] pusharglistnoret 2 ...................... <ul, prg>
+  [ 83] objcall 256 ............................. ul.append(prg)
+  [ 86] ret
+end
+
+on removePrg me, prg
+  [  0] getprop 4093 ............................ <pUpdateLists>
+  [  3] peek 0
+  [  5] pusharglist 1
+  [  7] extcall 257
+  [ 10] pushint8 1
+  [ 12] peek 0
+  [ 14] peek 2
+  [ 16] lteq
+  [ 17] jmpifz [ 61] ............................ repeat with ul in pUpdateLists
+  [ 20] peek 2
+  [ 22] peek 1
+  [ 24] pusharglist 2
+  [ 26] extcall 109
+  [ 28] setlocal 0
+  [ 30] getlocal 0 .............................. <ul>
+  [ 32] getparam 1 .............................. <prg>
+  [ 34] pusharglist 2 ........................... <ul, prg>
+  [ 36] objcall 219 ............................. <ul.getPos(prg)>
+  [ 38] setlocal 1 .............................. pos = ul.getPos(prg)
+  [ 40] getlocal 1 .............................. <pos>
+  [ 42] pushzero ................................ <0>
+  [ 43] gt ...................................... <pos > 0>
+  [ 44] jmpifz [ 56] ............................ if pos > 0 then
+  [ 47] getlocal 0 .............................. <ul>
+  [ 49] getlocal 1 .............................. <pos>
+  [ 51] pusharglistnoret 2 ...................... <ul, pos>
+  [ 53] objcall 1087 ............................ ul.deleteAt(pos)
+  [ 56] pushint8 1
+  [ 58] add
+  [ 59] endrepeat [ 12]
+  [ 61] pop 3
+  [ 63] ret
+end

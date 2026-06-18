@@ -1,0 +1,163 @@
+property ancestor, pAction, pTargetObj, pTargetType
+
+on new me
+  [  0] pushcons 0 .............................. <"objAiEnemy">
+  [  2] pusharglist 1 ........................... <"objAiEnemy">
+  [  4] extcall 27 .............................. <script("objAiEnemy")>
+  [  6] pusharglist 1 ........................... <script("objAiEnemy")>
+  [  8] extcall 0 ............................... <new(script("objAiEnemy"))>
+  [ 10] setprop 77 .............................. ancestor = new(script("objAiEnemy"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 17 .............................. return me
+  [ 18] ret
+end
+
+on init me, player
+  [  0] getprop 77 .............................. <ancestor>
+  [  2] getparam 1 .............................. <player>
+  [  4] pusharglistnoret 2 ...................... <ancestor, player>
+  [  6] objcall 1 ............................... ancestor.init(player)
+  [  8] pushsymb 22 ............................. <#none>
+  [ 10] setprop 707 ............................. pAction = #none
+  [ 13] pushsymb 22 ............................. <#none>
+  [ 15] setprop 708 ............................. pTargetType = #none
+  [ 18] ret
+end
+
+on characterModeChanged me, newMode
+  [  0] getparam 1 .............................. <newMode>
+  [  2] peek 0 .................................. case newMode of
+  [  4] pushsymb 362 ............................ <#look>
+  [  7] eq
+  [  8] jmpifz [ 18] ............................ (case) #look:
+  [ 11] getparam 0 .............................. <me>
+  [ 13] pusharglistnoret 1 ...................... <me>
+  [ 15] objcall 703 ............................. me.refreshTarget()
+  [ 18] pop 1
+  [ 20] getprop 77 .............................. <ancestor>
+  [ 22] getparam 1 .............................. <newMode>
+  [ 24] pusharglistnoret 2 ...................... <ancestor, newMode>
+  [ 26] objcall 72 .............................. ancestor.characterModeChanged(newMode)
+  [ 28] ret
+end
+
+on goMode me, newMode
+  [  0] getparam 1 .............................. <newMode>
+  [  2] peek 0 .................................. case newMode of
+  [  4] pushsymb 356 ............................ <#attack>
+  [  7] eq
+  [  8] jmpifz [ 20] ............................ (case) #attack:
+  [ 11] getparam 0 .............................. <me>
+  [ 13] pusharglist 1 ........................... <me>
+  [ 15] objcall 706 ............................. <me.targetFound()>
+  [ 18] setparam 1 .............................. newMode = me.targetFound()
+  [ 20] pop 1
+  [ 22] getprop 77 .............................. <ancestor>
+  [ 24] getparam 1 .............................. <newMode>
+  [ 26] pusharglistnoret 2 ...................... <ancestor, newMode>
+  [ 28] objcall 76 .............................. ancestor.goMode(newMode)
+  [ 30] ret
+end
+
+on refreshTarget me
+  [  0] getprop 708 ............................. <pTargetType>
+  [  3] peek 0 .................................. case pTargetType of
+  [  5] pushsymb 709 ............................ <#playerHair>
+  [  8] eq
+  [  9] jmpifz [ 25] ............................ (case) #playerHair:
+  [ 12] getparam 0 .............................. <me>
+  [ 14] getchainedprop 354 ...................... <me.pPlayer>
+  [ 17] pusharglist 1 ........................... <me.pPlayer>
+  [ 19] objcall 711 ............................. <me.pPlayer.getHalfWayHair()>
+  [ 22] setprop 710 ............................. pTargetObj = me.pPlayer.getHalfWayHair()
+  [ 25] pop 1
+  [ 27] ret
+end
+
+on setAction me, newVal
+  [  0] getparam 1 .............................. <newVal>
+  [  2] setprop 707 ............................. pAction = newVal
+  [  5] ret
+end
+
+on setTargetType me, newVal
+  [  0] getparam 1 .............................. <newVal>
+  [  2] setprop 708 ............................. pTargetType = newVal
+  [  5] getparam 0 .............................. <me>
+  [  7] pusharglistnoret 1 ...................... <me>
+  [  9] objcall 703 ............................. me.refreshTarget()
+  [ 12] ret
+end
+
+on targetFound me, newMode
+  [  0] getprop 707 ............................. <pAction>
+  [  3] peek 0 .................................. case pAction of
+  [  5] pushsymb 22 ............................. <#none>
+  [  7] nteq
+  [  8] jmpifz [ 20] ............................ (case) #none, ...
+  [ 11] peek 0
+  [ 13] pushsymb 356 ............................ <#attack>
+  [ 16] eq
+  [ 17] jmpifz [ 28] ............................ (case) ..., #attack:
+  [ 20] pusharglistnoret 0 ...................... <>
+  [ 22] extcall 404 ............................. nothing()
+  [ 25] jmp [ 54]
+  [ 28] peek 0
+  [ 30] pushsymb 713 ............................ <#attach>
+  [ 33] eq
+  [ 34] jmpifz [ 54] ............................ (case) #attach:
+  [ 37] getparam 0 .............................. <me>
+  [ 39] getchainedprop 78 ....................... <me.pCharacterPrg>
+  [ 41] getprop 710 ............................. <pTargetObj>
+  [ 44] pusharglistnoret 2 ...................... <me.pCharacterPrg, pTargetObj>
+  [ 46] objcall 714 ............................. me.pCharacterPrg.attachTo(pTargetObj)
+  [ 49] pushsymb 713 ............................ <#attach>
+  [ 52] setparam 1 .............................. newMode = #attach
+  [ 54] pop 1 ................................... end case
+  [ 56] getparam 1 .............................. <newMode>
+  [ 58] pusharglistnoret 1 ...................... <newMode>
+  [ 60] extcall 17 .............................. return newMode
+  [ 62] ret
+end
+
+on updateMoveToAttack me
+  [  0] getprop 710 ............................. <pTargetObj>
+  [  3] pushsymb 22 ............................. <#none>
+  [  5] nteq .................................... <pTargetObj <> #none>
+  [  6] jmpifz [ 71] ............................ if pTargetObj <> #none then / else
+  [  9] getprop 710 ............................. <pTargetObj>
+  [ 12] pusharglist 1 ........................... <pTargetObj>
+  [ 14] objcall 383 ............................. <pTargetObj.getRect()>
+  [ 17] setlocal 0 .............................. targetRect = pTargetObj.getRect()
+  [ 19] getlocal 0 .............................. <targetRect>
+  [ 21] getparam 0 .............................. <me>
+  [ 23] getchainedprop 371 ...................... <me.pAttack>
+  [ 26] pushsymb 394 ............................ <#reach>
+  [ 29] pushint8 1 .............................. <1>
+  [ 31] pusharglist 3 ........................... <me.pAttack, #reach, 1>
+  [ 33] objcall 209 ............................. <me.pAttack.reach[1]>
+  [ 35] getparam 0 .............................. <me>
+  [ 37] getchainedprop 371 ...................... <me.pAttack>
+  [ 40] pushsymb 394 ............................ <#reach>
+  [ 43] pushint8 2 .............................. <2>
+  [ 45] pusharglist 3 ........................... <me.pAttack, #reach, 2>
+  [ 47] objcall 209 ............................. <me.pAttack.reach[2]>
+  [ 49] pusharglist 3 ........................... <targetRect, me.pAttack.reach[1], me.pAttack.reach[2]>
+  [ 51] objcall 159 ............................. <targetRect.inflate(me.pAttack.reach[1], me.pAttack.reach[2])>
+  [ 53] setlocal 0 .............................. targetRect = targetRect.inflate(me.pAttack.reach[1], me.pAttack.reach[2])
+  [ 55] getparam 0 .............................. <me>
+  [ 57] getlocal 0 .............................. <targetRect>
+  [ 59] pusharglist 2 ........................... <me, targetRect>
+  [ 61] objcall 352 ............................. <me.updateMoveToRect(targetRect)>
+  [ 64] pusharglistnoret 1 ...................... <me.updateMoveToRect(targetRect)>
+  [ 66] extcall 17 .............................. return me.updateMoveToRect(targetRect)
+  [ 68] jmp [ 83]
+  [ 71] getparam 0 .............................. <me>
+  [ 73] pusharglistnoret 1 ...................... <me>
+  [ 75] objcall 703 ............................. me.refreshTarget()
+  [ 78] pushzero ................................ <0>
+  [ 79] pusharglistnoret 1 ...................... <0>
+  [ 81] extcall 17 .............................. return 0
+  [ 83] ret
+end

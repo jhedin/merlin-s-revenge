@@ -1,0 +1,818 @@
+[#name: "objGameObject", #scriptType: #parent, #type: #script]
+-- any object which appears in the game
+
+global g, gGameObjectLayer
+global gBounceyWalls
+global gGameView
+
+property ancestor
+property pActorType
+property pAllowScreenExit
+property pCreateOnSolid      -- whether it is possible for this object to be created over trees
+property pCharacter
+property pCollisionDetection -- whether or not to detect collisions with the background
+property pCollisionUseMiddle
+property pConstrainToPlayArea -- whether or not to constrain the game object to the play area. It is usually only neccessary to switch this on when collisionDetection is switched off. eg bats and grey ghosts.
+property pDead
+property pFrictionReel       -- set the amount of friction when character is reeling from getting hit
+property pFrictionX
+property pFrictionY
+property pInertia            -- used instead of weight to dampen effect of getting hit
+property pMode
+property pMoveXY
+property pMinCollisionSpeed
+property pParams
+property pPreviousMode       -- the mode we were in before this one
+property pRecordInRoomState  -- when true the object will appear in room when next visited, should be false if object is collected/dying
+property pSpr
+property pTeam
+property pTeamRole           -- #teamBullets or #teamMembers
+property pTransColor
+
+
+on new me
+  ancestor = new(script"objAutoUpdate")
+  
+  --  case gGameView of
+  --    #sideOn:
+  --      friction = point(12.5, 0)
+  --      
+  --    #topDown:
+  friction = point(50, 50)
+  --  end case
+  i = me.modifyParams(#init)
+  
+  -- flag to allow object master to finish all gameObjects
+  i.flags.append(#objGameObject)
+  
+  i[#actorType] = #gameObject
+  i[#allowScreenExit] = false
+  i[#character] = #gameObject
+  i[#collisionDetection] = true
+  i[#collisionUseMiddle] = false -- uses reg point when set to false
+  i[#constrainToPlayArea] = #auto
+  i[#createOnSolid] = false
+  i[#friction] = friction
+  i[#frictionReel] =  point(10,10)
+  i[#inertia] = 0
+  i[#initFaceDir] = 1            -- 1 = face right, -1 = face left
+  i[#initLoc] = point(100,100)
+  i[#initMode] = #stand
+  i[#initVect] = point(0,0)
+  i[#keepVect] = false
+  i[#layerZ] = gGameObjectLayer
+  i[#name] = #none
+  i[#masterPrg] = #none
+  i[#member] = #none -- do not set this for objects with an animSet
+  i[#minCollisionSpeed] = 5
+  i[#recordInRoomState] = true
+  i[#stallSpeed] = 0.2         -- determines how rapidly the character can recover from being hit
+  i[#startOffset] = point(0,0)
+  i[#team] = #none
+  i[#teamRole] = #teamMembers
+  i[#weight] = 0.2
+  i[#wizard] = false
+  
+  me.addModule("modCollisionRect")
+  me.addModule("modColourTransform")
+  me.addModule("modRelationships")
+  me.addModule("modSoundFX")
+  
+  return me
+end
+
+on init me, params
+  pActorType = params.actorType
+  pAllowScreenExit = params.allowScreenExit
+  pCharacter = params.character
+  pCreateOnSolid = params.createOnSolid
+  pCollisionDetection = params.collisionDetection
+  pCollisionUseMiddle = params.collisionUseMiddle
+  pConstrainToPlayArea = params.constrainToPlayArea
+  
+  me.autoConstrainToPlayArea()
+  
+  pDead = false
+  
+  pFrictionReel = params.frictionReel
+  pFrictionX = params.friction[1]
+  pFrictionY = params.friction[2]
+  
+  pInertia = params.inertia
+  
+  pRecordInRoomState = params.recordInRoomState
+  
+  pSpr = g.spriteMaster.requestSprite(me.ID.bigMe)
+  pSpr.loc = params.initLoc.duplicate()
+  pSpr.locZ = params.layerZ
+  
+  pTeam = params.team
+  pTeamRole = params.teamRole
+  
+  pTransColor = #none
+  
+  pMinCollisionSpeed = params.minCollisionSpeed
+  
+  pPreviousMode = #none
+  pMode = params.initMode
+  
+  pMoveXY = g.objectMaster.requestObject(#objMoveXY)
+  moveXYParams = pMoveXY.getParams(#init)
+  moveXYParams.callingPrg = me
+  moveXYParams.spr = pSpr
+  pMoveXY.initGameChar(moveXYParams)
+  
+  pMoveXY.setFriction(params.friction)
+  pMoveXY.setStallSpeed(params.stallSpeed)
+  pMoveXY.setKeepVect(params.keepVect)
+  pMoveXY.setVect(params.initVect)
+  pMoveXY.setWeight(params.weight)
+  
+  if params.member <> #none then
+    SpriteSetMember(me.pSpr, params.member)
+  end if
+  
+  me.setSpriteFlipFromDir(params.initFaceDir)
+  
+  -- flags must be set before team is joined
+  ancestor.init(params)
+  
+  me.joinTeam()
+  if params.wizard = true then
+    g.wizardMaster.newWizardFound(pActorType)
+  end if
+end
+
+on finish me
+  me.eventNotify(#leaveGame)
+  
+  me.leaveTeam()
+  
+  if pMoveXY <> #none then
+    pMoveXY.finish()
+    pMoveXY = #none
+  end if
+  
+  if pSpr <> #none then
+    g.spriteMaster.freeSprite(pSpr)
+    pSpr = #none
+  end if
+  
+  ancestor.finish()
+end
+
+on autoConstrainToPlayArea me
+  if pConstrainToPlayArea = #auto then
+    if pCollisionDetection = true then
+      pConstrainToPlayArea = false
+    else
+      pConstrainToPlayArea = true
+    end if
+  end if
+end
+
+on calcCollisionRegPoint me
+  if pCollisionUseMiddle then
+    reg = point(0,0)
+    reg[1] = me.getSprite().width / 2
+    reg[2] = me.getSprite().height /2
+  else
+    reg = me.getMember().regpoint
+  end if
+  
+  return reg
+end
+
+on addSaveData me, sd
+  ancestor.addSaveData(sd)
+  
+  me.addToSaveData(sd)
+  
+  sd[#pMode] = pMode
+  sd[#pPreviousMode] = pPreviousMode
+  sd[#pRecordInRoomState] = pRecordInRoomState
+  
+  saveData = [:]
+  pMoveXY.addSaveData(saveData)
+  sd[#pMoveXY] = saveData
+end
+
+on addToArmyDetails me
+  ad = me.getArmyDetails()
+  
+  me.addToSaveData(ad)
+end
+
+on addToSaveData me,sd
+  sd[#pActorType] = pActorType
+  sd[#pCollisionDetection] = pCollisionDetection
+  sd[#pTeam] = pTeam
+  sd[#spriteHeight] = pSpr.height
+  sd[#spriteWidth] = pSpr.width
+end
+
+on calcEdgeOffset me
+  edgeOffset = rect(0,0,0,0)
+  
+  reg = me.calcCollisionRegPoint()
+  
+  edgeOffset[1] = reg[1] * -1
+  edgeOffset[2] = reg[2] * -1
+  edgeOffset[3] = reg[1]
+  edgeOffset[4] = reg[2]
+  
+  return edgeOffset
+end
+
+on calcNewRect me, newLoc
+  newRect = rect(0,0,0,0)
+  
+  edgeOffset = me.calcEdgeOffset()
+  
+  newRect[1] = newLoc[1] + edgeOffset[1]
+  newRect[2] = newLoc[2] + edgeOffset[2]
+  newRect[3] = newLoc[1] + edgeOffset[3]
+  newRect[4] = newLoc[2] + edgeOffset[4]
+  
+  -- shave some pixels off the top to allow for hair
+  newRect[2] = newRect[2] + 4
+  
+  rectInfo = g.structMaster.getStruct(#rectInfo)
+  rectInfo.rect = newRect
+  rectInfo.edgeOffset = edgeOffset
+  
+  return rectInfo
+end
+
+on checkCollisions me, newLoc
+  if pCollisionDetection then
+    newLoc = g.collisionMaster.checkCollisions(me.big, newLoc)
+  end if
+  
+  if pConstrainToPlayArea then
+    newLoc = g.collisionMaster.constrainToPlayArea(me.big, newLoc)
+  end if
+  
+  return newLoc
+end
+
+on checkCollisionsWithHair me
+  -- call from updateAI to make object collide with hair
+  player = g.actorMaster.getPlayer()
+  collideVect = player.checkHairCollisions(me.ID.bigMe.getRect(), pMinCollisionSpeed)
+  
+  if collideVect <> false then
+    me.takeHit(collideVect)
+  end if
+end
+
+on checkForCollisionWithPlayer me
+  
+  return CollisionCheck(me.big, g.actorMaster.getPlayer())
+  
+  --  myRect = me.calcCollisionRect(me.getLoc()).rect
+  --  
+  --  --check whether this is the first frame after creation
+  --  if myRect = rect(-1,-1,0,0) then
+  --    return false
+  --  end if
+  --  
+  --  player = g.actorMaster.getPlayer()
+  --  
+  --  playerRect = player.calcCollisionRect(player.getLoc())
+  --  
+  --  --  playerRect = player.getRect()
+  --  
+  --  myRect = myRect + playerRect.edgeOffset
+  --  
+  --  if inside(player.getLoc(), myRect) then
+  --    return true
+  --  end if
+  --  
+  --  return false
+end
+
+on collisionCeiling me
+  pMoveXY.setVectY(0)
+end
+
+on collisionDetectionOff me
+  pCollisionDetection = false
+end
+
+on collisionDetectionOn me
+  pCollisionDetection = true
+end
+
+on collisionPlatform me
+  pMoveXY.setVectY(0)
+end
+
+on collisionNoPlatform me
+end
+
+on collisionWallLeft me
+  case gBounceyWalls of
+    true:
+      pMoveXY.bounceRight()
+      
+    false:
+      pMoveXY.setVectX(0)
+  end case
+end
+
+on collisionWallRight me
+  case gBounceyWalls of
+    true:
+      pMoveXY.bounceLeft()
+      
+    false:
+      pMoveXY.setVectX(0)
+  end case
+end
+
+on collisionWithZone me, zoneType
+  case zoneType of
+    #ceiling:
+      me.ID.bigMe.collisionCeiling()
+      
+    #platform:
+      me.ID.bigMe.collisionPlatform()
+      
+    #wallLeft:
+      me.ID.bigMe.collisionWallLeft()
+      
+    #wallRight:
+      me.ID.bigMe.collisionWallRight()
+      
+  end case
+end
+
+on exitedPlayArea me, newLoc
+  
+  if pAllowScreenExit then
+    g.collisionMaster.notifyOfScreenExit(me.ID.bigMe, newLoc)
+  else
+    newLoc = g.collisionMaster.constrainLocToPlayArea(newLoc)
+  end if
+  
+  return newLoc
+end
+
+on finishConditionMet me
+  return pDead
+end
+
+on frictionXOff me
+  pMoveXY.setFrictionX(5)
+end
+
+on frictionXOn me
+  pMoveXY.setFrictionX(pFrictionX)
+end
+
+on frictionYOff me
+  pMoveXY.setFrictionY(0)
+end
+
+on frictionYOn me
+  pMoveXY.setFrictionY(pFrictionY)
+end
+
+on frictionNormal me
+  me.frictionXOn()
+  me.frictionYOn()
+end
+
+on frictionReel me
+  pMoveXY.setFriction(pFrictionReel.duplicate())
+end
+
+on frictionSet me, newFriction
+  pMoveXY.frictionSet(newFriction)  
+end
+
+on frictionStrong me
+  pMoveXY.setFriction(point(20,20))
+end
+
+on getActorType me
+  return pActorType
+end
+
+on getAIPlatformDrop me
+  -- fake function for non-AI gameObjects
+  return false
+end
+
+on getCharacter me
+  return pCharacter
+end
+
+on getCollisionDetection me
+  return pCollisionDetection
+end
+
+on getCollisionUseMiddle me
+  return pCollisionUseMiddle
+end 
+
+on getDead me
+  return pDead
+end 
+
+on getFlip me
+  return pSpr.flipH
+end
+
+on getFlipAsDir me
+  if pSpr.flipH then
+    return -1
+  else
+    return 1
+  end if
+end
+
+on getLoc me
+  --  return pSpr.loc.duplicate()
+  return PointInteger(pMoveXY.pLoc.duplicate())
+end
+
+on getLocZ me
+  return pSpr.locZ
+end
+
+on getImage me
+  return pSpr.member.image
+end
+
+on getMember me
+  return pSpr.member
+end
+
+on getMemberSize me
+  memSize = point(0,0)
+  memSize.locH = pSpr.member.width
+  memSize.locV = pSpr.member.height
+  return memSize
+end
+
+on getMemberType me
+  return pSpr.member.type
+end
+
+on getMode me
+  return pMode
+end
+
+on getMoveVect me
+  return pMoveXY.getMoveVect()
+end
+
+on getMoveXYFin me
+  return pMoveXY.getFin()
+end
+
+on getMoveXYParams me, function
+  return pMoveXY.getParams(function)
+end
+
+on getNewLoc me
+  return pMoveXY.pLoc.duplicate()
+end
+
+on getOldLoc me
+  return pMoveXY.pOldLoc.duplicate()
+end
+
+on getOldRect me
+  return pMoveXY.getOldRect()
+end
+
+on getPreviousMode me
+  return pPreviousMode
+end
+
+on getRadius me
+  return me.getWidth() / 2
+end
+
+on getRect me
+  -- pSpr.rect gives out of date info
+  
+  return SpriteGetRect(pSpr)
+end
+
+on getRecordInRoomState me
+  return pRecordInRoomState
+end
+
+on getRegPoint me
+  return pSpr.member.regPoint
+end
+
+on getStalled me
+  return pMoveXY.getStalled()
+end
+
+on getSprite me
+  return pSpr
+end
+
+on getSpriteColor me
+  return pSpr.color
+end
+
+on getSpriteHeight me
+  return pSpr.height
+end
+
+on getSpriteSize me
+  return point(pSpr.width, pSpr.height)
+end
+
+on getSpriteRect me
+  return pSpr.rect.duplicate()
+end
+
+on getSpriteWidth me
+  return me.getWidth()
+end
+
+on getTargetDetails me
+  -- returns data that can be used to refind this object as a target
+  -- after the game is reloaded
+  --if object is dead, do nothing
+  if me.getDead() or me.checkDead() then
+    return g.structMaster.getStruct(#targetDetails)
+  end if
+  targetDetails = g.structMaster.getStruct(#targetDetails)
+  targetDetails.team = pTeam
+  targetDetails.teamRole = pTeamRole
+  targetDetails.sprLoc = me.getLoc()
+  
+  return targetDetails
+end
+
+on getTeam me
+  return pTeam
+end
+
+on getTeamRole me
+  return pTeamRole
+end
+
+on getVect me
+  return pMoveXY.getVect()
+end 
+
+on getVectX me
+  return pMoveXY.getVectX()
+end
+
+on getWidth me
+  return pSpr.width
+end
+
+on goMode me, newMode
+  -- for any modules that might need to know
+  ancestor.goMode(newMode)
+  
+  pPreviousMode = pMode
+  pMode = newMode
+end
+
+on incSpriteHeight me, addition
+  newHeight = pSpr.height + addition
+  me.setSpriteHeight(newHeight)
+end
+
+on incStallSpeed me, amount
+  pMoveXY.incStallSpeed(amount)
+end
+
+on informCallingPrg me
+end
+
+on internalEvent me, theEvent
+  ancestor.internalEvent(theEvent)
+  
+  case theEvent of
+    #addToArmyDetails:
+      me.addToArmyDetails()
+      
+    #restoreFromArmyDetails:
+      me.restoreFromArmyDetails()
+      
+  end case
+end
+
+on joinTeam me
+  g.teamMaster.joinTeam(pTeam, pTeamRole, me.ID.bigMe)
+end
+
+on leaveTeam me
+  g.teamMaster.leaveTeam(pTeam, pTeamRole, me.ID.bigMe)
+  me.big.internalEvent(#leftTeam)
+end
+
+on moveLoc me, newLoc
+  pMoveXY.moveLoc(newLoc)  
+end
+
+on moveToTarget me, params
+  pMoveXY.moveToTarget(params)
+end
+
+on outsidePlayArea me, amount
+  -- override this to respond to being outside of the playarea
+  -- only called when g.collisionMaster.pPlayAreaSolid = false
+  -- othersize object will stay inside playArea.
+end
+
+on paws me
+  pMoveXY.paws()
+  if pTransColor <> #none then
+    pTransColor.paws()
+  end if
+  
+  ancestor.paws()
+end
+
+on recordInRoomState me
+  -- set to false if the object should not be recorded in the room state
+  -- (like if it's dying or something)
+  return pRecordInRoomState
+end
+
+on resetStallCounter me
+  me.pMoveXY.resetStallCounter()
+end
+
+on restoreFromArmyDetails me
+  ad = me.getArmyDetails()
+  
+  me.restoreFromSaveData(ad)
+end
+
+on restoreFromSave me, sd
+  ancestor.restoreFromSave(sd)
+  
+  pMode = sd.pMode
+  pPreviousMode = sd.pPreviousMode
+  pRecordInRoomState = sd.pRecordInRoomState
+  
+  pMoveXY.restoreFromSave(sd.pMoveXY)
+  
+  me.restoreFromSaveData(sd)
+end
+
+on restoreFromSaveData me, sd
+  pActorType = sd.pActorType
+  pCollisionDetection = sd.pCollisionDetection
+  pTeam = sd.pTeam
+  
+  me.setSpriteHeight(sd.spriteHeight)
+  me.setSpriteWidth(sd.spriteWidth)
+end
+
+on setCheckStalled me, newVal
+  pMoveXY.setCheckStalled(newVal)
+end
+
+on setDead me, newDead
+  pDead = newDead
+end
+
+on setFlip me, newFlip
+  if pSpr <> #none and pSpr <> #void then
+    pSpr.flipH = newFlip
+  end if
+end
+
+on setFlipFromDir me, dir
+  me.setSpriteFlipFromDir(dir)
+end
+
+on setKeepVect me, newVal
+  pMoveXY.setKeepVect(newVal)
+end
+
+on setLocX me, newX
+  myLoc = me.getLoc()
+  me.setLoc(point(newX, myLoc.locV))
+end
+
+on setLocY me, newY
+  myLoc = me.getLoc()
+  me.setLoc(point(myLoc.locH, newY))
+end
+
+on setLocZ me, newZ
+  pSpr.locZ = newZ
+end
+
+on setLoc me, newLoc
+  pMoveXY.setLoc(newLoc)
+end
+
+on setMember me, newMember
+  SpriteSetMember(me.pSpr, newMember)
+end
+
+on setMode me, newVal
+  pMode = newVal
+end
+
+on setRecordInRoomState me, newVal
+  pRecordInRoomState = newVal
+end
+
+on setSpriteColour me, newColour
+  pSpr.color = newColour
+end
+
+on setSpriteFlipFromDir me, theDir
+  if theDir = 1 then
+    me.setFlip(0)
+  else if theDir = -1 then
+    me.setFlip(1)
+  end if
+end
+
+on setSpriteLayer me, newLayer
+  pSpr.locz = newLayer
+end
+
+on setSpriteHeight me, theHeight
+  pSpr.height = theHeight
+end
+
+on setSpriteRotation me, theAngle
+  pSpr.rotation = theAngle
+end
+
+on setSpriteWidth me, theWidth
+  pSpr.width = theWidth
+end
+
+on setTeam me, newTeam
+  me.leaveTeam()
+  pTeam = newTeam
+  me.joinTeam()
+end
+
+on setVect me, newVect
+  pMoveXY.setVect(newVect)
+end 
+
+on setWeight me, newWeight
+  pMoveXY.setWeight(newWeight)
+end
+
+on start me
+  ancestor.start()
+  
+  pMoveXY.setAutoUpdate(true)
+  pMoveXY.calcStart()
+  pMoveXY.setAutoUpdate(false)
+end 
+
+on takeHit me, collideVect, attackingObj, owner
+  percent = 100 - pInertia
+  collideVect[1] = VarValRange(percent, [0, collideVect[1]])
+  collideVect[2] = VarValRange(percent, [0, collideVect[2]])
+  me.pMoveXY.vectAdd(collideVect)
+  
+  ancestor.takeHit(collideVect, attackingObj, owner)
+end
+
+on unpaws me
+  pMoveXY.unpaws()
+  if pTransColor <> #none then
+    pTransColor.unpaws()
+  end if
+  
+  ancestor.unpaws()
+end
+
+on update me
+  -- to allow mods to get updates
+  ancestor.update()
+  
+  --ancestor.calcFin()
+end
+
+on updateAI me
+-- override in objects with AI
+end
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,41 @@
+on TextGetLineNoWithFirstWord theText, theWord
+  [  0] pushsymb 24 ............................. <#none>
+  [  2] setlocal 0 .............................. lineNo = #none
+  [  4] pushint8 1 .............................. <1>
+  [  6] setlocal 1
+  [  8] getlocal 1
+  [ 10] getparam 0 .............................. <theText>
+  [ 12] pushsymb 447 ............................ <#lines>
+  [ 15] pusharglist 2 ........................... <theText, #lines>
+  [ 17] objcall 17 .............................. <theText.lines.count>
+  [ 19] lteq
+  [ 20] jmpifz [ 73] ............................ repeat with i = 1 to theText.lines.count
+  [ 23] getparam 0 .............................. <theText>
+  [ 25] pushsymb 448 ............................ <#line>
+  [ 28] getlocal 1 .............................. <i>
+  [ 30] pusharglist 3 ........................... <theText, #line, i>
+  [ 32] objcall 123 ............................. <theText.line[i]>
+  [ 34] setlocal 2 .............................. nLine = theText.line[i]
+  [ 36] getlocal 2 .............................. <nLine>
+  [ 38] pushsymb 454 ............................ <#word>
+  [ 41] pushint8 1 .............................. <1>
+  [ 43] pusharglist 3 ........................... <nLine, #word, 1>
+  [ 45] objcall 123 ............................. <nLine.word[1]>
+  [ 47] setlocal 3 .............................. nFirstWord = nLine.word[1]
+  [ 49] getlocal 3 .............................. <nFirstWord>
+  [ 51] getparam 1 .............................. <theWord>
+  [ 53] eq ...................................... <nFirstWord = theWord>
+  [ 54] jmpifz [ 64] ............................ if nFirstWord = theWord then
+  [ 57] getlocal 1 .............................. <i>
+  [ 59] setlocal 0 .............................. lineNo = i
+  [ 61] jmp [ 73] ............................... exit repeat
+  [ 64] pushint8 1
+  [ 66] getlocal 1
+  [ 68] add
+  [ 69] setlocal 1
+  [ 71] endrepeat [  8]
+  [ 73] getlocal 0 .............................. <lineNo>
+  [ 75] pusharglistnoret 1 ...................... <lineNo>
+  [ 77] extcall 3 ............................... return lineNo
+  [ 79] ret
+end

@@ -1,0 +1,957 @@
+property pCast, pCastKey, pFreeList, pObjList, pMaxObjects, pStatusList
+global g
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 35 .............................. return me
+  [  6] ret
+end
+
+on init me
+  [  0] pusharglist 0 ........................... <[:]>
+  [  2] pushproplist ............................ <[:]>
+  [  3] setprop 2528 ............................ pFreeList = [:]
+  [  6] pusharglist 0 ........................... <[:]>
+  [  8] pushproplist ............................ <[:]>
+  [  9] setprop 2529 ............................ pObjList = [:]
+  [ 12] pushint8 100 ............................ <100>
+  [ 14] setprop 2530 ............................ pMaxObjects = 100
+  [ 17] pusharglist 0 ........................... <[:]>
+  [ 19] pushproplist ............................ <[:]>
+  [ 20] setprop 2531 ............................ pStatusList = [:]
+  [ 23] pushcons 0 .............................. <"objectMaster">
+  [ 25] pusharglist 1 ........................... <"objectMaster">
+  [ 27] extcall 99 .............................. <member("objectMaster")>
+  [ 29] getobjprop 2533 ......................... <member("objectMaster").castLibNum>
+  [ 32] setprop 2532 ............................ pCast = member("objectMaster").castLibNum
+  [ 35] getparam 0 .............................. <me>
+  [ 37] pusharglistnoret 1 ...................... <me>
+  [ 39] objcall 2513 ............................ me.analyseCast()
+  [ 42] ret
+end
+
+on analyseCast me, theCastName
+  [  0] getprop 2532 ............................ <pCast>
+  [  3] pushsymb 34 ............................. <#script>
+  [  5] pusharglist 2 ........................... <pCast, #script>
+  [  7] extcall 2535 ............................ <CastMakeNameKey(pCast, #script)>
+  [ 10] setprop 2534 ............................ pCastKey = CastMakeNameKey(pCast, #script)
+  [ 13] pushint8 1 .............................. <1>
+  [ 15] setlocal 0
+  [ 17] getlocal 0
+  [ 19] getprop 2534 ............................ <pCastKey>
+  [ 22] getobjprop 257 .......................... <pCastKey.count>
+  [ 25] lteq
+  [ 26] jmpifz [ 59] ............................ repeat with cas = 1 to pCastKey.count
+  [ 29] getprop 2534 ............................ <pCastKey>
+  [ 32] getlocal 0 .............................. <cas>
+  [ 34] pusharglist 2 ........................... <pCastKey, cas>
+  [ 36] objcall 1092 ............................ <pCastKey.getPropAt(cas)>
+  [ 39] setlocal 1 .............................. catSym = pCastKey.getPropAt(cas)
+  [ 41] getparam 0 .............................. <me>
+  [ 43] getlocal 1 .............................. <catSym>
+  [ 45] pusharglistnoret 2 ...................... <me, catSym>
+  [ 47] objcall 2514 ............................ me.checkCat(catSym)
+  [ 50] pushint8 1
+  [ 52] getlocal 0
+  [ 54] add
+  [ 55] setlocal 0
+  [ 57] endrepeat [ 17]
+  [ 59] ret
+end
+
+on requestObject me, objSym
+  [  0] getparam 1 .............................. <objSym>
+  [  2] pushsymb 2438 ........................... <#objTimer>
+  [  5] eq ...................................... <objSym = #objTimer>
+  [  6] jmpifz [ 13] ............................ if objSym = #objTimer then
+  [  9] pusharglistnoret 0 ...................... <>
+  [ 11] extcall 185 ............................. nothing()
+  [ 13] getparam 0 .............................. <me>
+  [ 15] getparam 1 .............................. <objSym>
+  [ 17] pusharglist 2 ........................... <me, objSym>
+  [ 19] objcall 2517 ............................ <me.getAvailable(objSym)>
+  [ 22] setlocal 0 .............................. freeObj = me.getAvailable(objSym)
+  [ 24] getlocal 0 .............................. <freeObj>
+  [ 26] pushzero ................................ <0>
+  [ 27] eq ...................................... <freeObj = 0>
+  [ 28] jmpifz [ 42] ............................ if freeObj = 0 then
+  [ 31] getparam 0 .............................. <me>
+  [ 33] getparam 1 .............................. <objSym>
+  [ 35] pusharglist 2 ........................... <me, objSym>
+  [ 37] objcall 2445 ............................ <me.createNew(objSym)>
+  [ 40] setlocal 0 .............................. freeObj = me.createNew(objSym)
+  [ 42] getlocal 0 .............................. <freeObj>
+  [ 44] pusharglistnoret 1 ...................... <freeObj>
+  [ 46] extcall 35 .............................. return freeObj
+  [ 48] ret
+end
+
+on checkCat me, objSym
+  [  0] getprop 2531 ............................ <pStatusList>
+  [  3] getparam 1 .............................. <objSym>
+  [  5] pusharglist 2 ........................... <pStatusList, objSym>
+  [  7] extcall 2541 ............................ <getaProp(pStatusList, objSym)>
+  [ 10] pusharglist 0 ........................... <>
+  [ 12] extcall 166 ............................. <VOID>
+  [ 14] eq ...................................... <getaProp(pStatusList, objSym) = VOID>
+  [ 15] jmpifz [ 52] ............................ if getaProp(pStatusList, objSym) = VOID then
+  [ 18] getprop 2528 ............................ <pFreeList>
+  [ 21] getparam 1 .............................. <objSym>
+  [ 23] pushzero ................................ <0>
+  [ 24] pusharglistnoret 3 ...................... <pFreeList, objSym, 0>
+  [ 26] objcall 48 .............................. pFreeList[objSym] = 0
+  [ 28] getprop 2529 ............................ <pObjList>
+  [ 31] getparam 1 .............................. <objSym>
+  [ 33] pusharglist 0 ........................... <[]>
+  [ 35] pushlist ................................ <[]>
+  [ 36] pusharglistnoret 3 ...................... <pObjList, objSym, []>
+  [ 38] objcall 48 .............................. pObjList[objSym] = []
+  [ 40] getprop 2531 ............................ <pStatusList>
+  [ 43] getparam 1 .............................. <objSym>
+  [ 45] pusharglist 0 ........................... <[]>
+  [ 47] pushlist ................................ <[]>
+  [ 48] pusharglistnoret 3 ...................... <pStatusList, objSym, []>
+  [ 50] objcall 48 .............................. pStatusList[objSym] = []
+  [ 52] ret
+end
+
+on finishAllWithFlag me, theFlag
+  [  0] getprop 2531 ............................ <pStatusList>
+  [  3] pusharglist 1 ........................... <pStatusList>
+  [  5] objcall 175 ............................. <pStatusList.duplicate()>
+  [  7] setlocal 0 .............................. statusCopy = pStatusList.duplicate()
+  [  9] getprop 2529 ............................ <pObjList>
+  [ 12] pusharglist 1 ........................... <pObjList>
+  [ 14] objcall 175 ............................. <pObjList.duplicate()>
+  [ 16] setlocal 1 .............................. objectCopy = pObjList.duplicate()
+  [ 18] pushint8 1 .............................. <1>
+  [ 20] setlocal 2 .............................. listIndex = 1
+  [ 22] getlocal 0 .............................. <statusCopy>
+  [ 24] peek 0
+  [ 26] pusharglist 1
+  [ 28] extcall 257
+  [ 31] pushint8 1
+  [ 33] peek 0
+  [ 35] peek 2
+  [ 37] lteq
+  [ 38] jmpifz [154] ............................ repeat with statList in statusCopy
+  [ 41] peek 2
+  [ 43] peek 1
+  [ 45] pusharglist 2
+  [ 47] extcall 109
+  [ 49] setlocal 3
+  [ 51] pushint8 1 .............................. <1>
+  [ 53] setlocal 4 .............................. objIndex = 1
+  [ 55] getlocal 3 .............................. <statList>
+  [ 57] peek 0
+  [ 59] pusharglist 1
+  [ 61] extcall 257
+  [ 64] pushint8 1
+  [ 66] peek 0
+  [ 68] peek 2
+  [ 70] lteq
+  [ 71] jmpifz [140] ............................ repeat with stat in statList
+  [ 74] peek 2
+  [ 76] peek 1
+  [ 78] pusharglist 2
+  [ 80] extcall 109
+  [ 82] setlocal 5
+  [ 84] getlocal 5 .............................. <stat>
+  [ 86] pushint8 1 .............................. <1>
+  [ 88] eq ...................................... <stat = 1>
+  [ 89] jmpifz [128] ............................ if stat = 1 then
+  [ 92] getlocal 1 .............................. <objectCopy>
+  [ 94] getlocal 2 .............................. <listIndex>
+  [ 96] pusharglist 2 ........................... <objectCopy, listIndex>
+  [ 98] objcall 109 ............................. <objectCopy[listIndex]>
+  [100] getlocal 4 .............................. <objIndex>
+  [102] pusharglist 2 ........................... <objectCopy[listIndex], objIndex>
+  [104] objcall 109 ............................. <objectCopy[listIndex][objIndex]>
+  [106] setlocal 6 .............................. obj = objectCopy[listIndex][objIndex]
+  [108] getparam 0 .............................. <me>
+  [110] getlocal 6 .............................. <obj>
+  [112] getparam 1 .............................. <theFlag>
+  [114] pusharglist 3 ........................... <me, obj, theFlag>
+  [116] objcall 2527 ............................ <me.objHasFlag(obj, theFlag)>
+  [119] jmpifz [128] ............................ if me.objHasFlag(obj, theFlag) then
+  [122] getlocal 6 .............................. <obj>
+  [124] pusharglistnoret 1 ...................... <obj>
+  [126] objcall 3 ............................... obj.finish()
+  [128] getlocal 4 .............................. <objIndex>
+  [130] pushint8 1 .............................. <1>
+  [132] add ..................................... <objIndex + 1>
+  [133] setlocal 4 .............................. objIndex = objIndex + 1
+  [135] pushint8 1
+  [137] add
+  [138] endrepeat [ 66]
+  [140] pop 3
+  [142] getlocal 2 .............................. <listIndex>
+  [144] pushint8 1 .............................. <1>
+  [146] add ..................................... <listIndex + 1>
+  [147] setlocal 2 .............................. listIndex = listIndex + 1
+  [149] pushint8 1
+  [151] add
+  [152] endrepeat [ 33]
+  [154] pop 3
+  [156] ret
+end
+
+on finishAllOfType me, objSym
+  [  0] getprop 2529 ............................ <pObjList>
+  [  3] getparam 1 .............................. <objSym>
+  [  5] pusharglist 2 ........................... <pObjList, objSym>
+  [  7] objcall 109 ............................. <pObjList[objSym]>
+  [  9] setlocal 0 .............................. statusList = pObjList[objSym]
+  [ 11] pushint8 1 .............................. <1>
+  [ 13] setlocal 1 .............................. index = 1
+  [ 15] getprop 2531 ............................ <pStatusList>
+  [ 18] getparam 1 .............................. <objSym>
+  [ 20] pusharglist 2 ........................... <pStatusList, objSym>
+  [ 22] objcall 109 ............................. <pStatusList[objSym]>
+  [ 24] peek 0
+  [ 26] pusharglist 1
+  [ 28] extcall 257
+  [ 31] pushint8 1
+  [ 33] peek 0
+  [ 35] peek 2
+  [ 37] lteq
+  [ 38] jmpifz [ 94] ............................ repeat with stat in pStatusList[objSym]
+  [ 41] peek 2
+  [ 43] peek 1
+  [ 45] pusharglist 2
+  [ 47] extcall 109
+  [ 49] setlocal 2
+  [ 51] getlocal 2 .............................. <stat>
+  [ 53] pushint8 1 .............................. <1>
+  [ 55] eq ...................................... <stat = 1>
+  [ 56] jmpifz [ 82] ............................ if stat = 1 then
+  [ 59] getprop 2529 ............................ <pObjList>
+  [ 62] getparam 1 .............................. <objSym>
+  [ 64] pusharglist 2 ........................... <pObjList, objSym>
+  [ 66] objcall 109 ............................. <pObjList[objSym]>
+  [ 68] getlocal 1 .............................. <index>
+  [ 70] pusharglist 2 ........................... <pObjList[objSym], index>
+  [ 72] objcall 109 ............................. <pObjList[objSym][index]>
+  [ 74] setlocal 3 .............................. obj = pObjList[objSym][index]
+  [ 76] getlocal 3 .............................. <obj>
+  [ 78] pusharglistnoret 1 ...................... <obj>
+  [ 80] objcall 3 ............................... obj.finish()
+  [ 82] getlocal 1 .............................. <index>
+  [ 84] pushint8 1 .............................. <1>
+  [ 86] add ..................................... <index + 1>
+  [ 87] setlocal 1 .............................. index = index + 1
+  [ 89] pushint8 1
+  [ 91] add
+  [ 92] endrepeat [ 33]
+  [ 94] pop 3
+  [ 96] ret
+end
+
+on finishObjects me, objlist
+  [  0] getparam 1 .............................. <objlist>
+  [  2] pusharglist 1 ........................... <objlist>
+  [  4] objcall 175 ............................. <objlist.duplicate()>
+  [  6] setparam 1 .............................. objlist = objlist.duplicate()
+  [  8] getparam 1 .............................. <objlist>
+  [ 10] peek 0
+  [ 12] pusharglist 1
+  [ 14] extcall 257
+  [ 17] pushint8 1
+  [ 19] peek 0
+  [ 21] peek 2
+  [ 23] lteq
+  [ 24] jmpifz [ 56] ............................ repeat with obj in objlist
+  [ 27] peek 2
+  [ 29] peek 1
+  [ 31] pusharglist 2
+  [ 33] extcall 109
+  [ 35] setlocal 0
+  [ 37] getlocal 0 .............................. <obj>
+  [ 39] pushsymb 49 ............................. <#none>
+  [ 41] nteq .................................... <obj <> #none>
+  [ 42] jmpifz [ 51] ............................ if obj <> #none then
+  [ 45] getlocal 0 .............................. <obj>
+  [ 47] pusharglistnoret 1 ...................... <obj>
+  [ 49] objcall 3 ............................... obj.finish()
+  [ 51] pushint8 1
+  [ 53] add
+  [ 54] endrepeat [ 19]
+  [ 56] pop 3
+  [ 58] ret
+end
+
+on getAvailable me, objSym
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. freeObj = 0
+  [  3] getprop 2528 ............................ <pFreeList>
+  [  6] getparam 1 .............................. <objSym>
+  [  8] pusharglist 2 ........................... <pFreeList, objSym>
+  [ 10] objcall 109 ............................. <pFreeList[objSym]>
+  [ 12] setlocal 1 .............................. objectsFree = pFreeList[objSym]
+  [ 14] getlocal 1 .............................. <objectsFree>
+  [ 16] pushzero ................................ <0>
+  [ 17] eq ...................................... <objectsFree = 0>
+  [ 18] jmpifz [ 29] ............................ if objectsFree = 0 then / else
+  [ 21] pushzero ................................ <0>
+  [ 22] pusharglistnoret 1 ...................... <0>
+  [ 24] extcall 35 .............................. return 0
+  [ 26] jmp [ 43]
+  [ 29] getprop 2528 ............................ <pFreeList>
+  [ 32] getparam 1 .............................. <objSym>
+  [ 34] getlocal 1 .............................. <objectsFree>
+  [ 36] pushint8 1 .............................. <1>
+  [ 38] sub ..................................... <objectsFree - 1>
+  [ 39] pusharglistnoret 3 ...................... <pFreeList, objSym, objectsFree - 1>
+  [ 41] objcall 48 .............................. pFreeList[objSym] = objectsFree - 1
+  [ 43] getprop 2531 ............................ <pStatusList>
+  [ 46] getparam 1 .............................. <objSym>
+  [ 48] pusharglist 2 ........................... <pStatusList, objSym>
+  [ 50] objcall 109 ............................. <pStatusList[objSym]>
+  [ 52] setlocal 2 .............................. objStatus = pStatusList[objSym]
+  [ 54] getlocal 2 .............................. <objStatus>
+  [ 56] pusharglist 0 ........................... <>
+  [ 58] extcall 166 ............................. <VOID>
+  [ 60] eq ...................................... <objStatus = VOID>
+  [ 61] jmpifz [ 90] ............................ if objStatus = VOID then
+  [ 64] pushcons 1 .............................. <"objectMaster.getAvailable()">
+  [ 66] pushcons 2 .............................. <RETURN>
+  [ 68] joinstr ................................. <"objectMaster.getAvailable()" & RETURN>
+  [ 69] pushcons 3 .............................. <"object doesn't exist:">
+  [ 71] joinstr ................................. <"objectMaster.getAvailable()" & RETURN & "object doesn't exist:">
+  [ 72] pushcons 2 .............................. <RETURN>
+  [ 74] joinstr ................................. <"objectMaster.getAvailable()" & RETURN & "object doesn't exist:" & RETURN>
+  [ 75] pushcons 2 .............................. <RETURN>
+  [ 77] joinstr ................................. <"objectMaster.getAvailable()" & RETURN & "object doesn't exist:" & RETURN & RETURN>
+  [ 78] getparam 1 .............................. <objSym>
+  [ 80] joinstr ................................. <"objectMaster.getAvailable()" & RETURN & "object doesn't exist:" & RETURN & RETURN & objSym>
+  [ 81] pusharglistnoret 1 ...................... <"objectMaster.getAvailable()" & RETURN & "object doesn't exist:" & RETURN & RETURN & objSym>
+  [ 83] extcall 2549 ............................ alert("objectMaster.getAvailable()" & RETURN & "object doesn't exist:" & RETURN & RETURN & objSym)
+  [ 86] pusharglistnoret 0 ...................... <>
+  [ 88] extcall 185 ............................. nothing()
+  [ 90] getlocal 2 .............................. <objStatus>
+  [ 92] pushzero ................................ <0>
+  [ 93] pusharglist 2 ........................... <objStatus, 0>
+  [ 95] objcall 219 ............................. <objStatus.getPos(0)>
+  [ 97] setlocal 3 .............................. ob = objStatus.getPos(0)
+  [ 99] getlocal 3 .............................. <ob>
+  [101] pushzero ................................ <0>
+  [102] gt ...................................... <ob > 0>
+  [103] jmpifz [144] ............................ if ob > 0 then
+  [106] getprop 2529 ............................ <pObjList>
+  [109] getparam 1 .............................. <objSym>
+  [111] pusharglist 2 ........................... <pObjList, objSym>
+  [113] objcall 109 ............................. <pObjList[objSym]>
+  [115] setlocal 4 .............................. obList = pObjList[objSym]
+  [117] getlocal 4 .............................. <obList>
+  [119] getlocal 3 .............................. <ob>
+  [121] pusharglist 2 ........................... <obList, ob>
+  [123] objcall 109 ............................. <obList[ob]>
+  [125] setlocal 0 .............................. freeObj = obList[ob]
+  [127] getprop 2531 ............................ <pStatusList>
+  [130] getparam 1 .............................. <objSym>
+  [132] pusharglist 2 ........................... <pStatusList, objSym>
+  [134] objcall 109 ............................. <pStatusList[objSym]>
+  [136] getlocal 3 .............................. <ob>
+  [138] pushint8 1 .............................. <1>
+  [140] pusharglistnoret 3 ...................... <pStatusList[objSym], ob, 1>
+  [142] objcall 48 .............................. pStatusList[objSym][ob] = 1
+  [144] getlocal 0 .............................. <freeObj>
+  [146] pusharglistnoret 1 ...................... <freeObj>
+  [148] extcall 35 .............................. return freeObj
+  [150] ret
+end
+
+on getActiveObjectsWithFlag me, theFlag
+  [  0] pusharglist 0 ........................... <[]>
+  [  2] pushlist ................................ <[]>
+  [  3] setlocal 0 .............................. objlist = []
+  [  5] pushint8 1 .............................. <1>
+  [  7] setlocal 1 .............................. listIndex = 1
+  [  9] getprop 2531 ............................ <pStatusList>
+  [ 12] peek 0
+  [ 14] pusharglist 1
+  [ 16] extcall 257
+  [ 19] pushint8 1
+  [ 21] peek 0
+  [ 23] peek 2
+  [ 25] lteq
+  [ 26] jmpifz [144] ............................ repeat with statList in pStatusList
+  [ 29] peek 2
+  [ 31] peek 1
+  [ 33] pusharglist 2
+  [ 35] extcall 109
+  [ 37] setlocal 2
+  [ 39] pushint8 1 .............................. <1>
+  [ 41] setlocal 3 .............................. objIndex = 1
+  [ 43] getlocal 2 .............................. <statList>
+  [ 45] peek 0
+  [ 47] pusharglist 1
+  [ 49] extcall 257
+  [ 52] pushint8 1
+  [ 54] peek 0
+  [ 56] peek 2
+  [ 58] lteq
+  [ 59] jmpifz [130] ............................ repeat with stat in statList
+  [ 62] peek 2
+  [ 64] peek 1
+  [ 66] pusharglist 2
+  [ 68] extcall 109
+  [ 70] setlocal 4
+  [ 72] getlocal 4 .............................. <stat>
+  [ 74] pushint8 1 .............................. <1>
+  [ 76] eq ...................................... <stat = 1>
+  [ 77] jmpifz [118] ............................ if stat = 1 then
+  [ 80] getprop 2529 ............................ <pObjList>
+  [ 83] getlocal 1 .............................. <listIndex>
+  [ 85] pusharglist 2 ........................... <pObjList, listIndex>
+  [ 87] objcall 109 ............................. <pObjList[listIndex]>
+  [ 89] getlocal 3 .............................. <objIndex>
+  [ 91] pusharglist 2 ........................... <pObjList[listIndex], objIndex>
+  [ 93] objcall 109 ............................. <pObjList[listIndex][objIndex]>
+  [ 95] setlocal 5 .............................. obj = pObjList[listIndex][objIndex]
+  [ 97] getlocal 5 .............................. <obj>
+  [ 99] getparam 1 .............................. <theFlag>
+  [101] pusharglist 2 ........................... <obj, theFlag>
+  [103] objcall 2086 ............................ <obj.hasFlag(theFlag)>
+  [106] jmpifz [118] ............................ if obj.hasFlag(theFlag) then
+  [109] getlocal 0 .............................. <objlist>
+  [111] getlocal 5 .............................. <obj>
+  [113] pusharglistnoret 2 ...................... <objlist, obj>
+  [115] objcall 256 ............................. objlist.append(obj)
+  [118] getlocal 3 .............................. <objIndex>
+  [120] pushint8 1 .............................. <1>
+  [122] add ..................................... <objIndex + 1>
+  [123] setlocal 3 .............................. objIndex = objIndex + 1
+  [125] pushint8 1
+  [127] add
+  [128] endrepeat [ 54]
+  [130] pop 3
+  [132] getlocal 1 .............................. <listIndex>
+  [134] pushint8 1 .............................. <1>
+  [136] add ..................................... <listIndex + 1>
+  [137] setlocal 1 .............................. listIndex = listIndex + 1
+  [139] pushint8 1
+  [141] add
+  [142] endrepeat [ 21]
+  [144] pop 3
+  [146] getlocal 0 .............................. <objlist>
+  [148] pusharglistnoret 1 ...................... <objlist>
+  [150] extcall 35 .............................. return objlist
+  [152] ret
+end
+
+on getFirstOfType me, objSym
+  [  0] getprop 2529 ............................ <pObjList>
+  [  3] getparam 1 .............................. <objSym>
+  [  5] pusharglist 2 ........................... <pObjList, objSym>
+  [  7] objcall 109 ............................. <pObjList[objSym]>
+  [  9] getobjprop 257 .......................... <pObjList[objSym].count>
+  [ 12] pushzero ................................ <0>
+  [ 13] gt ...................................... <pObjList[objSym].count > 0>
+  [ 14] jmpifz [ 36] ............................ if pObjList[objSym].count > 0 then
+  [ 17] getprop 2529 ............................ <pObjList>
+  [ 20] getparam 1 .............................. <objSym>
+  [ 22] pusharglist 2 ........................... <pObjList, objSym>
+  [ 24] objcall 109 ............................. <pObjList[objSym]>
+  [ 26] pushint8 1 .............................. <1>
+  [ 28] pusharglist 2 ........................... <pObjList[objSym], 1>
+  [ 30] objcall 109 ............................. <pObjList[objSym][1]>
+  [ 32] pusharglistnoret 1 ...................... <pObjList[objSym][1]>
+  [ 34] extcall 35 .............................. return pObjList[objSym][1]
+  [ 36] ret
+end
+
+on getFlagActive me, theFlag
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 2554 ............................ <me.getActive()>
+  [  7] setlocal 0 .............................. objs = me.getActive()
+  [  9] getlocal 0 .............................. <objs>
+  [ 11] peek 0
+  [ 13] pusharglist 1
+  [ 15] extcall 257
+  [ 18] pushint8 1
+  [ 20] peek 0
+  [ 22] peek 2
+  [ 24] lteq
+  [ 25] jmpifz [ 63] ............................ repeat with obj in objs
+  [ 28] peek 2
+  [ 30] peek 1
+  [ 32] pusharglist 2
+  [ 34] extcall 109
+  [ 36] setlocal 1
+  [ 38] getparam 0 .............................. <me>
+  [ 40] getlocal 1 .............................. <obj>
+  [ 42] getparam 1 .............................. <theFlag>
+  [ 44] pusharglist 3 ........................... <me, obj, theFlag>
+  [ 46] objcall 2527 ............................ <me.objHasFlag(obj, theFlag)>
+  [ 49] jmpifz [ 58] ............................ if me.objHasFlag(obj, theFlag) then
+  [ 52] pushint8 1 .............................. <1>
+  [ 54] pusharglistnoret 1 ...................... <1>
+  [ 56] extcall 35 .............................. return 1
+  [ 58] pushint8 1
+  [ 60] add
+  [ 61] endrepeat [ 20]
+  [ 63] pop 3
+  [ 65] pushzero ................................ <0>
+  [ 66] pusharglistnoret 1 ...................... <0>
+  [ 68] extcall 35 .............................. return 0
+  [ 70] ret
+end
+
+on getPlayers me, thePlayers
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1478 ........................... <#player>
+  [  5] pusharglist 2 ........................... <me, #player>
+  [  7] objcall 2518 ............................ <me.getActiveObjectsWithFlag(#player)>
+  [ 10] setlocal 0 .............................. potentialObjects = me.getActiveObjectsWithFlag(#player)
+  [ 12] getparam 1 .............................. <thePlayers>
+  [ 14] peek 0
+  [ 16] pusharglist 1
+  [ 18] extcall 257
+  [ 21] pushint8 1
+  [ 23] peek 0
+  [ 25] peek 2
+  [ 27] lteq
+  [ 28] jmpifz [112] ............................ repeat with nPlayer in thePlayers
+  [ 31] peek 2
+  [ 33] peek 1
+  [ 35] pusharglist 2
+  [ 37] extcall 109
+  [ 39] setlocal 1
+  [ 41] getlocal 1 .............................. <nPlayer>
+  [ 43] getobjprop 1580 ......................... <nPlayer.objCharacter>
+  [ 46] setlocal 2 .............................. nCharacter = nPlayer.objCharacter
+  [ 48] getlocal 0 .............................. <potentialObjects>
+  [ 50] peek 0
+  [ 52] pusharglist 1
+  [ 54] extcall 257
+  [ 57] pushint8 1
+  [ 59] peek 0
+  [ 61] peek 2
+  [ 63] lteq
+  [ 64] jmpifz [105] ............................ repeat with nPotObj in potentialObjects
+  [ 67] peek 2
+  [ 69] peek 1
+  [ 71] pusharglist 2
+  [ 73] extcall 109
+  [ 75] setlocal 3
+  [ 77] getlocal 3 .............................. <nPotObj>
+  [ 79] pusharglist 1 ........................... <nPotObj>
+  [ 81] objcall 1722 ............................ <nPotObj.getCharacter()>
+  [ 84] getlocal 2 .............................. <nCharacter>
+  [ 86] eq ...................................... <nPotObj.getCharacter() = nCharacter>
+  [ 87] jmpifz [100] ............................ if nPotObj.getCharacter() = nCharacter then
+  [ 90] getlocal 1 .............................. <nPlayer>
+  [ 92] getlocal 3 .............................. <nPotObj>
+  [ 94] setobjprop 1088 ......................... nPlayer.obj = nPotObj
+  [ 97] jmp [105] ............................... exit repeat
+  [100] pushint8 1
+  [102] add
+  [103] endrepeat [ 59]
+  [105] pop 3
+  [107] pushint8 1
+  [109] add
+  [110] endrepeat [ 23]
+  [112] pop 3
+  [114] getparam 1 .............................. <thePlayers>
+  [116] pusharglistnoret 1 ...................... <thePlayers>
+  [118] extcall 35 .............................. return thePlayers
+  [120] ret
+end
+
+on getTotal me
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. total = 0
+  [  3] getprop 2529 ............................ <pObjList>
+  [  6] peek 0
+  [  8] pusharglist 1
+  [ 10] extcall 257
+  [ 13] pushint8 1
+  [ 15] peek 0
+  [ 17] peek 2
+  [ 19] lteq
+  [ 20] jmpifz [ 48] ............................ repeat with obList in pObjList
+  [ 23] peek 2
+  [ 25] peek 1
+  [ 27] pusharglist 2
+  [ 29] extcall 109
+  [ 31] setlocal 1
+  [ 33] getlocal 0 .............................. <total>
+  [ 35] getlocal 1 .............................. <obList>
+  [ 37] getobjprop 257 .......................... <obList.count>
+  [ 40] add ..................................... <total + obList.count>
+  [ 41] setlocal 0 .............................. total = total + obList.count
+  [ 43] pushint8 1
+  [ 45] add
+  [ 46] endrepeat [ 15]
+  [ 48] pop 3
+  [ 50] getlocal 0 .............................. <total>
+  [ 52] pusharglistnoret 1 ...................... <total>
+  [ 54] extcall 35 .............................. return total
+  [ 56] ret
+end
+
+on getTotalInUse me
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. inUseObj = 0
+  [  3] getprop 2531 ............................ <pStatusList>
+  [  6] peek 0
+  [  8] pusharglist 1
+  [ 10] extcall 257
+  [ 13] pushint8 1
+  [ 15] peek 0
+  [ 17] peek 2
+  [ 19] lteq
+  [ 20] jmpifz [ 81] ............................ repeat with statList in pStatusList
+  [ 23] peek 2
+  [ 25] peek 1
+  [ 27] pusharglist 2
+  [ 29] extcall 109
+  [ 31] setlocal 1
+  [ 33] getlocal 1 .............................. <statList>
+  [ 35] peek 0
+  [ 37] pusharglist 1
+  [ 39] extcall 257
+  [ 42] pushint8 1
+  [ 44] peek 0
+  [ 46] peek 2
+  [ 48] lteq
+  [ 49] jmpifz [ 74] ............................ repeat with statu in statList
+  [ 52] peek 2
+  [ 54] peek 1
+  [ 56] pusharglist 2
+  [ 58] extcall 109
+  [ 60] setlocal 2
+  [ 62] getlocal 0 .............................. <inUseObj>
+  [ 64] getlocal 2 .............................. <statu>
+  [ 66] add ..................................... <inUseObj + statu>
+  [ 67] setlocal 0 .............................. inUseObj = inUseObj + statu
+  [ 69] pushint8 1
+  [ 71] add
+  [ 72] endrepeat [ 44]
+  [ 74] pop 3
+  [ 76] pushint8 1
+  [ 78] add
+  [ 79] endrepeat [ 15]
+  [ 81] pop 3
+  [ 83] getlocal 0 .............................. <inUseObj>
+  [ 85] pusharglistnoret 1 ...................... <inUseObj>
+  [ 87] extcall 35 .............................. return inUseObj
+  [ 89] ret
+end
+
+on putInUse me
+  [  0] pushcons 4 .............................. <"objectMaster : in Use report">
+  [  2] pusharglistnoret 1 ...................... <"objectMaster : in Use report">
+  [  4] extcall 167 ............................. put "objectMaster : in Use report"
+  [  6] pushint8 1 .............................. <1>
+  [  8] setlocal 0
+  [ 10] getlocal 0
+  [ 12] getprop 2531 ............................ <pStatusList>
+  [ 15] getobjprop 257 .......................... <pStatusList.count>
+  [ 18] lteq
+  [ 19] jmpifz [119] ............................ repeat with i = 1 to pStatusList.count
+  [ 22] getprop 2531 ............................ <pStatusList>
+  [ 25] getlocal 0 .............................. <i>
+  [ 27] pusharglist 2 ........................... <pStatusList, i>
+  [ 29] objcall 109 ............................. <pStatusList[i]>
+  [ 31] setlocal 1 .............................. statList = pStatusList[i]
+  [ 33] getprop 2531 ............................ <pStatusList>
+  [ 36] getlocal 0 .............................. <i>
+  [ 38] pusharglist 2 ........................... <pStatusList, i>
+  [ 40] extcall 1092 ............................ <getPropAt(pStatusList, i)>
+  [ 43] setlocal 2 .............................. statProp = getPropAt(pStatusList, i)
+  [ 45] pushzero ................................ <0>
+  [ 46] setlocal 3 .............................. typeTotal = 0
+  [ 48] getlocal 1 .............................. <statList>
+  [ 50] peek 0
+  [ 52] pusharglist 1
+  [ 54] extcall 257
+  [ 57] pushint8 1
+  [ 59] peek 0
+  [ 61] peek 2
+  [ 63] lteq
+  [ 64] jmpifz [ 89] ............................ repeat with statu in statList
+  [ 67] peek 2
+  [ 69] peek 1
+  [ 71] pusharglist 2
+  [ 73] extcall 109
+  [ 75] setlocal 4
+  [ 77] getlocal 3 .............................. <typeTotal>
+  [ 79] getlocal 4 .............................. <statu>
+  [ 81] add ..................................... <typeTotal + statu>
+  [ 82] setlocal 3 .............................. typeTotal = typeTotal + statu
+  [ 84] pushint8 1
+  [ 86] add
+  [ 87] endrepeat [ 59]
+  [ 89] pop 3
+  [ 91] getlocal 3 .............................. <typeTotal>
+  [ 93] pushzero ................................ <0>
+  [ 94] gt ...................................... <typeTotal > 0>
+  [ 95] jmpifz [110] ............................ if typeTotal > 0 then
+  [ 98] getlocal 2 .............................. <statProp>
+  [100] pushcons 5 .............................. <" = ">
+  [102] joinstr ................................. <statProp & " = ">
+  [103] getlocal 3 .............................. <typeTotal>
+  [105] joinstr ................................. <statProp & " = " & typeTotal>
+  [106] pusharglistnoret 1 ...................... <statProp & " = " & typeTotal>
+  [108] extcall 167 ............................. put statProp & " = " & typeTotal
+  [110] pushint8 1
+  [112] getlocal 0
+  [114] add
+  [115] setlocal 0
+  [117] endrepeat [ 10]
+  [119] ret
+end
+
+on removeObjectsWithFlagFromList me, objlist, theFlag
+  [  0] pusharglist 0 ........................... <[]>
+  [  2] pushlist ................................ <[]>
+  [  3] setlocal 0 .............................. indexesToDelete = []
+  [  5] pushint8 1 .............................. <1>
+  [  7] setlocal 1 .............................. objIndex = 1
+  [  9] getparam 1 .............................. <objlist>
+  [ 11] peek 0
+  [ 13] pusharglist 1
+  [ 15] extcall 257
+  [ 18] pushint8 1
+  [ 20] peek 0
+  [ 22] peek 2
+  [ 24] lteq
+  [ 25] jmpifz [ 71] ............................ repeat with obj in objlist
+  [ 28] peek 2
+  [ 30] peek 1
+  [ 32] pusharglist 2
+  [ 34] extcall 109
+  [ 36] setlocal 2
+  [ 38] getlocal 2 .............................. <obj>
+  [ 40] getparam 2 .............................. <theFlag>
+  [ 42] pusharglist 2 ........................... <obj, theFlag>
+  [ 44] objcall 2086 ............................ <obj.hasFlag(theFlag)>
+  [ 47] jmpifz [ 59] ............................ if obj.hasFlag(theFlag) then
+  [ 50] getlocal 0 .............................. <indexesToDelete>
+  [ 52] getlocal 1 .............................. <objIndex>
+  [ 54] pusharglistnoret 2 ...................... <indexesToDelete, objIndex>
+  [ 56] objcall 256 ............................. indexesToDelete.append(objIndex)
+  [ 59] getlocal 1 .............................. <objIndex>
+  [ 61] pushint8 1 .............................. <1>
+  [ 63] add ..................................... <objIndex + 1>
+  [ 64] setlocal 1 .............................. objIndex = objIndex + 1
+  [ 66] pushint8 1
+  [ 68] add
+  [ 69] endrepeat [ 20]
+  [ 71] pop 3
+  [ 73] getlocal 0 .............................. <indexesToDelete>
+  [ 75] getobjprop 257 .......................... <indexesToDelete.count>
+  [ 78] setlocal 3 .............................. numToDelete = indexesToDelete.count
+  [ 80] getlocal 3 .............................. <numToDelete>
+  [ 82] setlocal 4
+  [ 84] getlocal 4
+  [ 86] pushint8 1 .............................. <1>
+  [ 88] gteq
+  [ 89] jmpifz [116] ............................ repeat with i = numToDelete down to 1
+  [ 92] getparam 1 .............................. <objlist>
+  [ 94] getlocal 0 .............................. <indexesToDelete>
+  [ 96] getlocal 4 .............................. <i>
+  [ 98] pusharglist 2 ........................... <indexesToDelete, i>
+  [100] objcall 109 ............................. <indexesToDelete[i]>
+  [102] pusharglistnoret 2 ...................... <objlist, indexesToDelete[i]>
+  [104] objcall 1087 ............................ objlist.deleteAt(indexesToDelete[i])
+  [107] pushint8 -1
+  [109] getlocal 4
+  [111] add
+  [112] setlocal 4
+  [114] endrepeat [ 84]
+  [116] getparam 1 .............................. <objlist>
+  [118] pusharglistnoret 1 ...................... <objlist>
+  [120] extcall 35 .............................. return objlist
+  [122] ret
+end
+
+on createNew me, objSym
+  [  0] getparam 1 .............................. <objSym>
+  [  2] pusharglist 1 ........................... <objSym>
+  [  4] extcall 667 ............................. <string(objSym)>
+  [  7] pusharglist 1 ........................... <string(objSym)>
+  [  9] extcall 34 .............................. <script(string(objSym))>
+  [ 11] pusharglist 1 ........................... <script(string(objSym))>
+  [ 13] extcall 0 ............................... <new(script(string(objSym)))>
+  [ 15] setlocal 0 .............................. newObj = new(script(string(objSym)))
+  [ 17] getprop 2531 ............................ <pStatusList>
+  [ 20] getparam 1 .............................. <objSym>
+  [ 22] pusharglist 2 ........................... <pStatusList, objSym>
+  [ 24] objcall 109 ............................. <pStatusList[objSym]>
+  [ 26] pushint8 1 .............................. <1>
+  [ 28] pusharglistnoret 2 ...................... <pStatusList[objSym], 1>
+  [ 30] objcall 2568 ............................ pStatusList[objSym].add(1)
+  [ 33] getprop 2529 ............................ <pObjList>
+  [ 36] getparam 1 .............................. <objSym>
+  [ 38] pusharglist 2 ........................... <pObjList, objSym>
+  [ 40] objcall 109 ............................. <pObjList[objSym]>
+  [ 42] getlocal 0 .............................. <newObj>
+  [ 44] pusharglistnoret 2 ...................... <pObjList[objSym], newObj>
+  [ 46] objcall 2568 ............................ pObjList[objSym].add(newObj)
+  [ 49] getprop 2529 ............................ <pObjList>
+  [ 52] getparam 1 .............................. <objSym>
+  [ 54] pusharglist 2 ........................... <pObjList, objSym>
+  [ 56] objcall 109 ............................. <pObjList[objSym]>
+  [ 58] getobjprop 257 .......................... <pObjList[objSym].count>
+  [ 61] setlocal 1 .............................. indx = pObjList[objSym].count
+  [ 63] getlocal 0 .............................. <newObj>
+  [ 65] pushsymb 232 ............................ <#typ>
+  [ 67] getparam 1 .............................. <objSym>
+  [ 69] pushsymb 2569 ........................... <#indx>
+  [ 72] getlocal 1 .............................. <indx>
+  [ 74] pushsymb 2090 ........................... <#master>
+  [ 77] getparam 0 .............................. <me>
+  [ 79] pushsymb 58 ............................. <#bigMe>
+  [ 81] getlocal 0 .............................. <newObj>
+  [ 83] pusharglist 8 ........................... <[#typ: objSym, #indx: indx, #master: me, #bigMe: newObj]>
+  [ 85] pushproplist ............................ <[#typ: objSym, #indx: indx, #master: me, #bigMe: newObj]>
+  [ 86] setobjprop 57 ........................... newObj.id = [#typ: objSym, #indx: indx, #master: me, #bigMe: newObj]
+  [ 88] getlocal 0 .............................. <newObj>
+  [ 90] getlocal 0 .............................. <newObj>
+  [ 92] setobjprop 51 ........................... newObj.big = newObj
+  [ 94] getlocal 0 .............................. <newObj>
+  [ 96] pusharglistnoret 1 ...................... <newObj>
+  [ 98] extcall 35 .............................. return newObj
+  [100] ret
+end
+
+on objAllDelete me
+  [  0] getprop 2529 ............................ <pObjList>
+  [  3] peek 0
+  [  5] pusharglist 1
+  [  7] extcall 257
+  [ 10] pushint8 1
+  [ 12] peek 0
+  [ 14] peek 2
+  [ 16] lteq
+  [ 17] jmpifz [ 80] ............................ repeat with obList in pObjList
+  [ 20] peek 2
+  [ 22] peek 1
+  [ 24] pusharglist 2
+  [ 26] extcall 109
+  [ 28] setlocal 0
+  [ 30] pushint8 1 .............................. <1>
+  [ 32] setlocal 1
+  [ 34] getlocal 1
+  [ 36] getlocal 0 .............................. <obList>
+  [ 38] getobjprop 257 .......................... <obList.count>
+  [ 41] lteq
+  [ 42] jmpifz [ 75] ............................ repeat with ob = 1 to obList.count
+  [ 45] getlocal 0 .............................. <obList>
+  [ 47] getlocal 1 .............................. <ob>
+  [ 49] pusharglist 2 ........................... <obList, ob>
+  [ 51] objcall 109 ............................. <obList[ob]>
+  [ 53] pusharglistnoret 1 ...................... <obList[ob]>
+  [ 55] objcall 3 ............................... obList[ob].finish()
+  [ 57] getlocal 0 .............................. <obList>
+  [ 59] getlocal 1 .............................. <ob>
+  [ 61] pushzero ................................ <0>
+  [ 62] pusharglistnoret 3 ...................... <obList, ob, 0>
+  [ 64] objcall 48 .............................. obList[ob] = 0
+  [ 66] pushint8 1
+  [ 68] getlocal 1
+  [ 70] add
+  [ 71] setlocal 1
+  [ 73] endrepeat [ 34]
+  [ 75] pushint8 1
+  [ 77] add
+  [ 78] endrepeat [ 12]
+  [ 80] pop 3
+  [ 82] ret
+end
+
+on objFree me, obj
+  [  0] getparam 1 .............................. <obj>
+  [  2] getobjprop 57 ........................... <obj.id>
+  [  4] setlocal 0 .............................. id = obj.id
+  [  6] getlocal 0 .............................. <id>
+  [  8] getobjprop 232 .......................... <id.typ>
+  [ 10] setlocal 1 .............................. objSym = id.typ
+  [ 12] getlocal 0 .............................. <id>
+  [ 14] getobjprop 2569 ......................... <id.indx>
+  [ 17] setlocal 2 .............................. indx = id.indx
+  [ 19] getlocal 2 .............................. <indx>
+  [ 21] getprop 2530 ............................ <pMaxObjects>
+  [ 24] gt ...................................... <indx > pMaxObjects>
+  [ 25] jmpifz [ 87] ............................ if indx > pMaxObjects then / else
+  [ 28] getprop 2529 ............................ <pObjList>
+  [ 31] getlocal 1 .............................. <objSym>
+  [ 33] pusharglist 2 ........................... <pObjList, objSym>
+  [ 35] objcall 109 ............................. <pObjList[objSym]>
+  [ 37] getparam 1 .............................. <obj>
+  [ 39] pusharglist 2 ........................... <pObjList[objSym], obj>
+  [ 41] objcall 219 ............................. <pObjList[objSym].getPos(obj)>
+  [ 43] setlocal 3 .............................. pos = pObjList[objSym].getPos(obj)
+  [ 45] getlocal 3 .............................. <pos>
+  [ 47] pushzero ................................ <0>
+  [ 48] gt ...................................... <pos > 0>
+  [ 49] jmpifz [ 84] ............................ if pos > 0 then
+  [ 52] getprop 2529 ............................ <pObjList>
+  [ 55] getlocal 1 .............................. <objSym>
+  [ 57] pusharglist 2 ........................... <pObjList, objSym>
+  [ 59] objcall 109 ............................. <pObjList[objSym]>
+  [ 61] getlocal 3 .............................. <pos>
+  [ 63] pusharglistnoret 2 ...................... <pObjList[objSym], pos>
+  [ 65] objcall 1087 ............................ pObjList[objSym].deleteAt(pos)
+  [ 68] getprop 2531 ............................ <pStatusList>
+  [ 71] getlocal 1 .............................. <objSym>
+  [ 73] pusharglist 2 ........................... <pStatusList, objSym>
+  [ 75] objcall 109 ............................. <pStatusList[objSym]>
+  [ 77] getlocal 3 .............................. <pos>
+  [ 79] pusharglistnoret 2 ...................... <pStatusList[objSym], pos>
+  [ 81] objcall 1087 ............................ pStatusList[objSym].deleteAt(pos)
+  [ 84] jmp [144]
+  [ 87] getprop 2531 ............................ <pStatusList>
+  [ 90] getlocal 1 .............................. <objSym>
+  [ 92] pusharglist 2 ........................... <pStatusList, objSym>
+  [ 94] objcall 109 ............................. <pStatusList[objSym]>
+  [ 96] getlocal 2 .............................. <indx>
+  [ 98] pusharglist 2 ........................... <pStatusList[objSym], indx>
+  [100] objcall 109 ............................. <pStatusList[objSym][indx]>
+  [102] pushzero ................................ <0>
+  [103] nteq .................................... <pStatusList[objSym][indx] <> 0>
+  [104] jmpifz [144] ............................ if pStatusList[objSym][indx] <> 0 then
+  [107] getprop 2531 ............................ <pStatusList>
+  [110] getlocal 1 .............................. <objSym>
+  [112] pusharglist 2 ........................... <pStatusList, objSym>
+  [114] objcall 109 ............................. <pStatusList[objSym]>
+  [116] getlocal 2 .............................. <indx>
+  [118] pushzero ................................ <0>
+  [119] pusharglistnoret 3 ...................... <pStatusList[objSym], indx, 0>
+  [121] objcall 48 .............................. pStatusList[objSym][indx] = 0
+  [123] getprop 2528 ............................ <pFreeList>
+  [126] getlocal 1 .............................. <objSym>
+  [128] getprop 2528 ............................ <pFreeList>
+  [131] getlocal 1 .............................. <objSym>
+  [133] pusharglist 2 ........................... <pFreeList, objSym>
+  [135] objcall 109 ............................. <pFreeList[objSym]>
+  [137] pushint8 1 .............................. <1>
+  [139] add ..................................... <pFreeList[objSym] + 1>
+  [140] pusharglistnoret 3 ...................... <pFreeList, objSym, pFreeList[objSym] + 1>
+  [142] objcall 48 .............................. pFreeList[objSym] = pFreeList[objSym] + 1
+  [144] ret
+end
+
+on objHasFlag me, theObj, theFlag
+  [  0] getparam 1 .............................. <theObj>
+  [  2] getchainedprop 2089 ..................... <theObj.pFlags>
+  [  5] getparam 2 .............................. <theFlag>
+  [  7] pusharglist 2 ........................... <theObj.pFlags, theFlag>
+  [  9] objcall 219 ............................. <theObj.pFlags.getPos(theFlag)>
+  [ 11] pushzero ................................ <0>
+  [ 12] gt ...................................... <theObj.pFlags.getPos(theFlag) > 0>
+  [ 13] jmpifz [ 22] ............................ if theObj.pFlags.getPos(theFlag) > 0 then
+  [ 16] pushint8 1 .............................. <1>
+  [ 18] pusharglistnoret 1 ...................... <1>
+  [ 20] extcall 35 .............................. return 1
+  [ 22] pushzero ................................ <0>
+  [ 23] pusharglistnoret 1 ...................... <0>
+  [ 25] extcall 35 .............................. return 0
+  [ 27] ret
+end

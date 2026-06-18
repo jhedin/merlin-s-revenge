@@ -1,0 +1,353 @@
+[#name: "objZone", #scriptType: #parent, #type: #script]
+global g
+
+property ancestor
+property pBox
+property pEndLoc
+property pMarkedForDeletion
+property pRect
+property pStartLoc
+property pSym
+
+on new me
+  ancestor = new(script"objParams")
+  
+  i = me.modifyParams(#init)
+  
+  i[#rect] = rect(0,0,1,1)
+  i[#startLoc] = point(0,0)
+  i[#endLoc] = point(1,1)
+  i[#sym] = #none
+  
+  return me
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  pBox = #none
+  pMarkedForDeletion = false
+  pSym = params.sym
+  
+  pEndLoc = params.endLoc
+  pRect = params.rect
+  pStartLoc = params.startLoc
+  
+  if params.rect <> rect(0,0,1,1) then
+    me.setRect(params.rect)
+  else
+    me.setStartLoc(params.startLoc)
+    me.setEndLoc(params.endLoc)
+  end if
+end
+
+on finish me
+  if pBox <> #none then
+    pBox.finish()
+  end if
+  ancestor.finish()
+end
+
+on attemptMerge me, mergeZone
+  mySym = me.getSym()
+  mergeSym = mergeZone.getSym()
+  
+  if mySym <> mergeSym then
+    return false
+  end if
+  
+  myRect = me.getRect()
+  mergeRect = mergeZone.getRect()
+  
+  potentialMerge = #none
+  
+  if myRect[1] = mergeRect[1] and myRect[3] = mergeRect[3] then
+    potentialMerge = #vert
+  end if
+  
+  if myRect[2] = mergeRect[2] and myRect[4] = mergeRect[4] then
+    potentialMerge = #horiz
+  end if
+  
+  -- don't allow platforms to merge vertically
+  if potentialMerge = #vert and mySym = #platform then
+    return false
+  end if
+  
+  case potentialMerge of
+    #vert:
+      if myRect[2] = mergeRect[4] or myRect[4] = mergeRect[2] then
+        potentialMerge = #success
+      end if
+      
+    #horiz:
+      if myRect[1] = mergeRect[3] or myRect[3] = mergeRect[1] then
+        potentialMerge = #success
+      end if
+      
+  end case
+  
+  if potentialMerge = #success then
+    me.mergeRect(mergeRect)
+    mergeZone.markForDeletion()
+    
+    return true
+  end if
+  
+  return false
+end
+
+on calcLocs me
+  pStartLoc = point(pRect[1], pRect[2])
+  pEndLoc = point(pRect[3], pRect[4])
+end
+
+on calcRect me
+  pRect = rect(pStartLoc[1], pStartLoc[2], pEndLoc[1], pEndLoc[2])
+end
+
+on checkCollision me, gameObject, zoneType, newLoc, axesToUse
+  
+  
+  zoneRect = me.getRect(zoneType)
+  rectInfo = gameObject.calcCollisionRect(newLoc)
+  newObjectRect = rectInfo.rect
+  a = axesToUse
+  
+  if RectCollideRect(newObjectRect, zoneRect) then
+    
+    if me.zoneTypeIs(#collisionZone, zoneType, gameObject) then
+      
+      oldLoc = gameObject.getLoc()
+      oldRectInfo = gameObject.calcCollisionRect(oldLoc)
+      oldObjectRect = oldRectInfo.rect
+      
+      newObjectEdge = newObjectRect[a.objectRectSide]
+      oldObjectEdge = oldObjectRect[a.objectRectSide]
+      zoneEdge = zoneRect[a.zoneRectSide]
+      
+      if a.zoneRectSide = 1 or a.zoneRectSide = 2 then
+        check = #moreThan
+      else
+        check = #lessThan
+      end if
+      
+      collided = false
+      case check of
+        #lessThan:
+          
+          if newObjectEdge <= zoneEdge and oldObjectEdge >= zoneEdge then
+            collided = true
+          end if
+          
+          
+        #moreThan:
+          
+          if newObjectEdge >= zoneEdge and oldObjectEdge <= zoneEdge then
+            collided = true
+          end if
+          
+      end case
+      
+      if collided then
+        newLoc[a.objectAxis] = zoneEdge - rectInfo.edgeOffset[a.objectRectSide]
+        gameObject.collisionWithZone(zoneType)
+        
+        if zoneType = #platform then
+          g.collisionMaster.setCollisionWithPlatform(true)
+        end if
+      end if
+      
+    else
+      
+      --gameObject.collisionWithZone(zoneType)
+      
+    end if
+    
+  end if
+  
+  return newLoc
+  
+end
+
+on display me
+  case pSym of
+      
+    #ceiling:
+      boxCol = rgb(255,0,255)
+      
+    #solid:
+      boxCol = rgb(255,255,0)
+      
+    #platform:
+      boxCol = rgb(0,255,0)
+      
+    otherwise:
+      boxCol = rgb(255,0,0)
+  end case
+  
+  pBox = g.objectMaster.requestObject(#objBox)
+  params = pBox.getParams(#init)
+  params.color = boxCol
+  params.initialRect = me.getRect()
+  
+  
+  pBox.init(params)
+  pBox.display()
+end
+
+on getMarkedForDeletion me
+  return pMarkedForDeletion
+end
+
+on getRect me, zoneType
+  
+  myRect = pRect.duplicate()
+  
+  -- shave a pixel off the height of walls to allow rapunzel to walk from 
+  -- platforms onto solids
+  if zoneType = #wallLeft or zoneType = #wallRight then
+    myRect[2] = myRect[2] + 1
+  end if
+  
+  return myRect
+end
+
+on getSym me
+  return pSym
+end
+
+on markForDeletion me
+  me.setMarkedForDeletion(true)
+end
+
+on mergeRect me, theRect
+  newRect = me.getRect().union(theRect)
+  me.setRect(newRect)
+end
+
+on setEndLoc me, theLoc
+  pEndLoc = theLoc.duplicate()
+  me.calcRect()
+end
+
+on setMarkedForDeletion me, newVal
+  pMarkedForDeletion = newVal
+end
+
+on setRect me, theRect
+  pRect = theRect.duplicate()
+  me.calcLocs()
+end 
+
+on setStartLoc me, theLoc
+  pStartLoc = theLoc.duplicate()
+  me.calcRect()
+end
+
+
+on typeEquals me, theType
+  if theType = me.getSym() then
+    return true
+  end if
+  
+  if me.getSym() = #solid then
+    case theType of
+      #platform, #wallLeft, #wallRight, #ceiling:
+        return true
+        
+    end case
+  end if
+end
+
+on zoneTypeIs me, theType, zoneType, gameObject
+  case theType of
+      
+    #collisionZone:
+      
+      case zoneType of
+        #ceiling, #wallLeft, #wallRight:
+          return true
+          
+          -- let characters drop through platforms by pressing "down"
+        #platform:
+          if me.getSym() = #solid then
+            return true
+          else
+            return not gameObject.getAIPlatformDrop()
+          end if
+          
+        otherwise
+          return false
+          
+      end case
+      
+    otherwise
+      put "objZone.zoneTypeIs: collisionZone type not found"
+      
+  end case
+  
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

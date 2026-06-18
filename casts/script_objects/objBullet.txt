@@ -1,0 +1,359 @@
+[#name: "objBullet", #scriptType: #parent, #type: #script]
+global g
+global gBulletsCollideWithBackground
+global gGameBulletLayer
+
+property ancestor
+property pCollideWithTarget  -- some bullets will not wish to collide with their target eg. splash damage ones
+property pLastDistXY     -- to judge whether we have got as near to our target loc as we are going to get.
+property pPlayer
+property pRestoreMode    -- the mode to return to after a target is restored
+property pStallSpeed
+property pTargetLoc      -- the loc that we are heading for (not necessarily where the target object was when we were fired because of eyestrain)
+property pRandomTarget
+property pHScale             --for beams setting scale before the object is initialized
+--property pSpins
+
+on new me
+  ancestor = new(script"objGameObject")
+  
+  i = me.modifyParams(#init)
+  
+  i[#attack] = g.structMaster.getStruct(#attack)
+  i[#collideWithTarget] = true
+  i[#stallSpeed] = point(2,2)
+  pHScale = 0
+  
+  me.addModule("modAnimSet")
+  me.addModule("modAttack")
+  me.addModule("modExploder")
+  me.addModule("modGrave")
+  me.addModule("modRotational")
+  me.addModule("modSplashDamage")
+  me.addModule("modReincarnate")
+  me.addModule("modRotator")
+  me.addModule("modListNode")
+  --me.addModule("modScale")
+  
+  return me
+end
+
+on addModParams me
+  ancestor.addModParams()
+  
+  i = me.modifyParams(#init)
+  
+  i.collisionRectType = #dynamic
+  i.layerZ = gGameBulletLayer
+  i[#rotational] = #once
+  --  i[#spins] = false
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  me.setAttack(params.attack)
+  
+  pCollideWithTarget = params.collideWithTarget
+  
+  pLastDistXY = point(99999,99999)
+  
+  pPlayer = g.actorMaster.getPlayer()
+  
+  pStallSpeed = params.stallSpeed
+  
+  pTargetLoc = #none
+  
+  pRandomTarget = #none
+  
+  --  pSpins = params.spins
+  
+  me.goMode(#fly)
+end
+
+on finish me
+  pPlayer = #none
+  
+  ancestor.finish()
+end
+
+on addSaveData me, sd
+  ancestor.addSaveData(sd)
+  
+  sd[#bulletTargetLoc] = pTargetLoc
+end
+
+
+on checkCollisionWithTarget me
+  myTarget = me.getRelation(#target)
+  
+  if myTarget = #none and pRandomTarget <> #none then
+    if pRandomTarget.checkDead() = false and pRandomTarget.getDead() = false then 
+      myTarget = pRandomTarget
+    end if
+  end if
+  
+  if pCollideWithTarget = false then
+    return false
+  end if
+  
+  if myTarget = #none then
+    -- if we don't have a target get closest one
+    myTarget = g.teamMaster.findTarget(me.big).obj
+    pRandomTarget = myTarget
+  end if
+  
+  if myTarget <> #none then
+    collided = CollisionCheck(me.big, myTarget)
+  end if
+  
+  return collided
+  
+end
+
+on checkCollisions me, newLoc, oldLoc
+  -- object only wants to know if it's hit something
+  -- doesn't want loc updated.
+  theLoc = newLoc.duplicate()
+  
+  if gBulletsCollideWithBackground then
+    
+    updatedLoc = ancestor.checkCollisions(newLoc, oldLoc)
+    
+  end if
+  
+  return theLoc
+end
+
+on checkDead me
+  -- bullets don't have energy
+  -- if they ever do, this function may cause problems
+  
+  if me.getMode() = #land then
+    return true
+  end if
+  
+  return false
+end
+
+on checkStalled me
+  moveVect = me.getMoveVect()
+  
+  if moveVect = #none then -- if it's the first frame
+    return false
+  end if
+  
+  moveVect = PointPositive(moveVect)
+  if moveVect[1] < pStallSpeed[1] and moveVect[2] < pStallSpeed[2] then
+    return true
+  end if
+  
+  return false
+end
+
+on collisionPlatform me
+  me.goMode(#land)
+end
+
+on collisionCeiling me
+  me.goMode(#land)
+end
+
+on collisionWallLeft me
+  me.goMode(#land)
+end
+
+on collisionWallRight me
+  me.goMode(#land)
+end
+
+on die me
+  me.setDead(true)
+end
+
+on eventNotification me, theEvent, theObj
+  ancestor.eventNotification(theEvent, theObj)
+  
+  case theEvent of
+    #outOfEnergy, #leaveGame:
+      myTarget = me.getRelation(#target)
+      
+      if theObj = myTarget then
+        me.breakRelationship(theObj, #target)
+      end if
+      
+  end case
+  
+end
+
+on getAnimSym me, sym
+  sym = me.getMode()
+  
+  case sym of
+    #stand:
+      sym = #fly
+      
+  end case
+  
+  return sym
+end
+
+on goMode me, newMode
+  case newMode of   
+    #explode:
+      me.setVect(point(0,0))
+      me.resetAnim(#explode)
+      
+    #land:
+      me.setVect(point(0,0))
+      me.big.internalEvent(#land)
+  end case
+  
+  ancestor.goMode(newMode)
+end
+
+on internalEvent me, theEvent
+  ancestor.internalEvent(theEvent)
+  
+  case theEvent of
+    #bulletLanded, #bulletArrivedAtTargetLoc:
+      -- check to make sure we are not
+      -- exploding rather than landing
+      if me.getMode() = #fly then
+        me.big.goMode(#land)        
+      end if
+      
+    #explodeFin:
+      me.setDead(true)
+      
+  end case
+end
+
+on restoreFromSave me, sd
+  ancestor.restoreFromSave(sd)
+  
+  pTargetLoc = sd.bulletTargetLoc
+  
+end
+
+on setBeam me, dist, distXY
+  pHScale = dist + 1
+  me.setSpriteWidth(pHScale)
+  me.setAnimKeepSize(true)
+  
+  rot = GeomAngle(distXY) 
+  me.ID.bigME.setSpriteRotation(rot)
+end
+
+on setTarget me, theTarget  
+  if theTarget = #none then
+    return
+  end if
+  
+  me.formRelationship(theTarget, #target, #exclusive)
+  me.keepMePosted(theTarget, #leaveGame, #once)
+  me.keepMePosted(theTarget, #outOfEnergy, #once)
+  
+  -- if the target is a ghost don't bother checking collisions with it
+  if theTarget.isGhost() then
+    pCollideWithTarget = false
+  end if
+end
+
+on setTargetLoc me, theLoc
+  pTargetLoc = theLoc
+end
+
+on takeHit me, collisionVect
+  if me.getMode() = #land then
+    return
+  else
+    ancestor.takeHit(collisionVect)
+  end if
+end
+
+on update me  
+  case me.getMode() of
+      
+    #land:
+      fin = me.updateLand()
+      if fin then 
+        me.setDead(true)
+        me.big.reincarnate()
+      end if
+    #fly:
+      stat = me.updateFly()
+      if stat = #stalled then me.big.internalEvent(#bulletLanded)
+      if stat = #hitCharacter then me.big.internalEvent(#bulletCollidedWithTarget)
+      if stat = #arrived then me.big.internalEvent(#bulletArrivedAtTargetLoc)
+      
+  end case
+  
+  --me.ID.bigMe.updateAnim()
+  
+  ancestor.update()
+end
+
+on updateLand me
+  fin = me.getAnimLooped(#land)
+  return fin
+end
+
+on updateFly me
+  stat = #continu
+  
+  if me.checkStalled() then
+    stat = #stalled
+  end if
+  
+  if me.checkCollisionWithTarget() then
+    myTarget = me.getRelation(#target)
+    
+    if myTarget = #none then
+      --must've been random target we collided with
+      myTarget = pRandomTarget
+    end if
+    
+    collisionVect = me.calcCollisionVect(myTarget)    
+    myTarget.takeHit(collisionVect, me.big, me.getOwner())
+    payloadFunctions = me.big.getAttack().payloadFunction
+    CallPayloadFunction(payloadFunctions, myTarget, collisionVect, me.big, me.getOwner())
+    stat = #hitCharacter
+  end if
+  
+  -- bullets no longer detect when they arrive at target
+  -- caused too many problems.
+  -- set landing point by adjusting friction of bullet in data.
+  
+  -- generate an event if we have arrived at the point where
+  -- the target was when we were fired.
+  
+  --*** old check ***
+  --  distToTarget = GeomDist(me.big.getLoc(), pTargetLoc)
+  --  if distToTarget <= 4 then
+  
+  --  if PointOvershotTarget(me.big.getLoc(), pTargetLoc, me.big.getVect()) then
+  --    me.big.setLoc(pTargetLoc)
+  --    me.big.setVect(point(0,0))
+  --    stat = #arrived
+  --  end if
+  
+  return stat
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

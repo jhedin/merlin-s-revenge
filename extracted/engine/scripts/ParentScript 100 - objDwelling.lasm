@@ -1,0 +1,343 @@
+property ancestor, pDieSound
+
+on new me
+  [  0] pushcons 0 .............................. <"objGameObject">
+  [  2] pusharglist 1 ........................... <"objGameObject">
+  [  4] extcall 34 .............................. <script("objGameObject")>
+  [  6] pusharglist 1 ........................... <script("objGameObject")>
+  [  8] extcall 0 ............................... <new(script("objGameObject"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objGameObject"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] getchainedprop 1477 ..................... <i.flags>
+  [ 27] pushsymb 2512 ........................... <#objDwelling>
+  [ 30] pusharglistnoret 2 ...................... <i.flags, #objDwelling>
+  [ 32] objcall 256 ............................. i.flags.append(#objDwelling)
+  [ 35] getparam 0 .............................. <me>
+  [ 37] pushcons 1 .............................. <"modAnimSet">
+  [ 39] pusharglistnoret 2 ...................... <me, "modAnimSet">
+  [ 41] objcall 1717 ............................ me.addModule("modAnimSet")
+  [ 44] getparam 0 .............................. <me>
+  [ 46] pushcons 2 .............................. <"modConstruction">
+  [ 48] pusharglistnoret 2 ...................... <me, "modConstruction">
+  [ 50] objcall 1717 ............................ me.addModule("modConstruction")
+  [ 53] getparam 0 .............................. <me>
+  [ 55] pushcons 3 .............................. <"modEnergy">
+  [ 57] pusharglistnoret 2 ...................... <me, "modEnergy">
+  [ 59] objcall 1717 ............................ me.addModule("modEnergy")
+  [ 62] getparam 0 .............................. <me>
+  [ 64] pushcons 4 .............................. <"modExperience">
+  [ 66] pusharglistnoret 2 ...................... <me, "modExperience">
+  [ 68] objcall 1717 ............................ me.addModule("modExperience")
+  [ 71] getparam 0 .............................. <me>
+  [ 73] pushcons 5 .............................. <"modFlasher">
+  [ 75] pusharglistnoret 2 ...................... <me, "modFlasher">
+  [ 77] objcall 1717 ............................ me.addModule("modFlasher")
+  [ 80] getparam 0 .............................. <me>
+  [ 82] pushcons 6 .............................. <"modGhost">
+  [ 84] pusharglistnoret 2 ...................... <me, "modGhost">
+  [ 86] objcall 1717 ............................ me.addModule("modGhost")
+  [ 89] getparam 0 .............................. <me>
+  [ 91] pushcons 7 .............................. <"modGrave">
+  [ 93] pusharglistnoret 2 ...................... <me, "modGrave">
+  [ 95] objcall 1717 ............................ me.addModule("modGrave")
+  [ 98] getparam 0 .............................. <me>
+  [100] pushcons 8 .............................. <"modListNode">
+  [102] pusharglistnoret 2 ...................... <me, "modListNode">
+  [104] objcall 1717 ............................ me.addModule("modListNode")
+  [107] getparam 0 .............................. <me>
+  [109] pushcons 9 .............................. <"modReel">
+  [111] pusharglistnoret 2 ...................... <me, "modReel">
+  [113] objcall 1717 ............................ me.addModule("modReel")
+  [116] getparam 0 .............................. <me>
+  [118] pushcons 10 ............................. <"modRelationships">
+  [120] pusharglistnoret 2 ...................... <me, "modRelationships">
+  [122] objcall 1717 ............................ me.addModule("modRelationships")
+  [125] getparam 0 .............................. <me>
+  [127] pushcons 11 ............................. <"modResidents">
+  [129] pusharglistnoret 2 ...................... <me, "modResidents">
+  [131] objcall 1717 ............................ me.addModule("modResidents")
+  [134] getparam 0 .............................. <me>
+  [136] pushcons 12 ............................. <"modScale">
+  [138] pusharglistnoret 2 ...................... <me, "modScale">
+  [140] objcall 1717 ............................ me.addModule("modScale")
+  [143] getparam 0 .............................. <me>
+  [145] pushcons 13 ............................. <"modStarReleaser">
+  [147] pusharglistnoret 2 ...................... <me, "modStarReleaser">
+  [149] objcall 1717 ............................ me.addModule("modStarReleaser")
+  [152] getlocal 0 .............................. <i>
+  [154] pushsymb 2207 ........................... <#dieSound>
+  [157] pushsymb 49 ............................. <#none>
+  [159] pusharglistnoret 3 ...................... <i, #dieSound, #none>
+  [161] objcall 48 .............................. i[#dieSound] = #none
+  [163] getparam 0 .............................. <me>
+  [165] pusharglistnoret 1 ...................... <me>
+  [167] extcall 35 .............................. return me
+  [169] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 2207 ......................... <params.dieSound>
+  [ 13] setprop 2214 ............................ pDieSound = params.dieSound
+  [ 16] ret
+end
+
+on finish me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 3 ............................... ancestor.finish()
+  [  6] ret
+end
+
+on die me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 501 ............................. ancestor.die()
+  [  7] getparam 0 .............................. <me>
+  [  9] pusharglistnoret 1 ...................... <me>
+  [ 11] objcall 2511 ............................ me.startDeath()
+  [ 14] ret
+end
+
+on flasherFinished me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 3 .............................. <#finish>
+  [  4] pusharglistnoret 2 ...................... <me, #finish>
+  [  6] objcall 278 ............................. me.goMode(#finish)
+  [  9] getparam 0 .............................. <me>
+  [ 11] pushint8 1 .............................. <1>
+  [ 13] pusharglistnoret 2 ...................... <me, 1>
+  [ 15] objcall 707 ............................. me.setDead(1)
+  [ 18] getparam 0 .............................. <me>
+  [ 20] pusharglistnoret 1 ...................... <me>
+  [ 22] objcall 748 ............................. me.drawGrave()
+  [ 25] getprop 33 .............................. <ancestor>
+  [ 27] pusharglistnoret 1 ...................... <ancestor>
+  [ 29] objcall 710 ............................. ancestor.flasherFinished()
+  [ 32] ret
+end
+
+on getAnimSym me, sym
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <sym>
+  [  4] pusharglist 2 ........................... <ancestor, sym>
+  [  6] objcall 10 .............................. <ancestor.getAnimSym(sym)>
+  [  8] setparam 1 .............................. sym = ancestor.getAnimSym(sym)
+  [ 10] getparam 0 .............................. <me>
+  [ 12] pusharglist 1 ........................... <me>
+  [ 14] objcall 4590 ............................ <me.getResidentMode()>
+  [ 17] setlocal 0 .............................. residentMode = me.getResidentMode()
+  [ 19] getlocal 0 .............................. <residentMode>
+  [ 21] pushsymb 1150 ........................... <#produceGroup>
+  [ 24] eq ...................................... <residentMode = #produceGroup>
+  [ 25] jmpifz [ 36] ............................ if residentMode = #produceGroup then / else
+  [ 28] pushsymb 1150 ........................... <#produceGroup>
+  [ 31] setparam 1 .............................. sym = #produceGroup
+  [ 33] jmp [ 53]
+  [ 36] getparam 1 .............................. <sym>
+  [ 38] peek 0 .................................. case sym of
+  [ 40] pushsymb 1056 ........................... <#reel>
+  [ 43] eq
+  [ 44] jmpifz [ 51] ............................ (case) #reel:
+  [ 47] pushsymb 69 ............................. <#stand>
+  [ 49] setparam 1 .............................. sym = #stand
+  [ 51] pop 1
+  [ 53] getparam 1 .............................. <sym>
+  [ 55] pusharglistnoret 1 ...................... <sym>
+  [ 57] extcall 35 .............................. return sym
+  [ 59] ret
+end
+
+on getAttack me
+  [  0] pusharglist 0 ........................... <[:]>
+  [  2] pushproplist ............................ <[:]>
+  [  3] setlocal 0 .............................. attack = [:]
+  [  5] getlocal 0 .............................. <attack>
+  [  7] pushsymb 178 ............................ <#type>
+  [  9] pushsymb 179 ............................ <#melee>
+  [ 11] pusharglistnoret 3 ...................... <attack, #type, #melee>
+  [ 13] objcall 48 .............................. attack[#type] = #melee
+  [ 15] getlocal 0 .............................. <attack>
+  [ 17] pusharglistnoret 1 ...................... <attack>
+  [ 19] extcall 35 .............................. return attack
+  [ 21] ret
+end
+
+on goMode me, newMode
+  [  0] getparam 1 .............................. <newMode>
+  [  2] peek 0 .................................. case newMode of
+  [  4] pushsymb 70 ............................. <#dead>
+  [  6] eq
+  [  7] jmpifz [ 23] ............................ (case) #dead:
+  [ 10] getparam 0 .............................. <me>
+  [ 12] getprop 2214 ............................ <pDieSound>
+  [ 15] pusharglistnoret 2 ...................... <me, pDieSound>
+  [ 17] objcall 551 ............................. me.PlaySound(pDieSound)
+  [ 20] jmp [ 47]
+  [ 23] peek 0
+  [ 25] pushsymb 3 .............................. <#finish>
+  [ 27] eq
+  [ 28] jmpifz [ 47] ............................ (case) #finish:
+  [ 31] getparam 0 .............................. <me>
+  [ 33] pushint8 1 .............................. <1>
+  [ 35] pusharglistnoret 2 ...................... <me, 1>
+  [ 37] objcall 707 ............................. me.setDead(1)
+  [ 40] getparam 0 .............................. <me>
+  [ 42] pusharglistnoret 1 ...................... <me>
+  [ 44] objcall 748 ............................. me.drawGrave()
+  [ 47] pop 1 ................................... end case
+  [ 49] getprop 33 .............................. <ancestor>
+  [ 51] getparam 1 .............................. <newMode>
+  [ 53] pusharglistnoret 2 ...................... <ancestor, newMode>
+  [ 55] objcall 278 ............................. ancestor.goMode(newMode)
+  [ 58] ret
+end
+
+on internalEvent me, theEvent
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <theEvent>
+  [  4] pusharglistnoret 2 ...................... <ancestor, theEvent>
+  [  6] objcall 22 .............................. ancestor.internalEvent(theEvent)
+  [  8] getparam 1 .............................. <theEvent>
+  [ 10] peek 0 .................................. case theEvent of
+  [ 12] pushsymb 482 ............................ <#buildingFinished>
+  [ 15] eq
+  [ 16] jmpifz [ 29] ............................ (case) #buildingFinished:
+  [ 19] getparam 0 .............................. <me>
+  [ 21] pusharglistnoret 1 ...................... <me>
+  [ 23] objcall 1115 ............................ me.startProduction()
+  [ 26] jmp [ 64]
+  [ 29] peek 0
+  [ 31] pushsymb 1061 ........................... <#reelFinished>
+  [ 34] nteq
+  [ 35] jmpifz [ 47] ............................ (case) #reelFinished, ...
+  [ 38] peek 0
+  [ 40] pushsymb 484 ............................ <#outOfEnergy>
+  [ 43] eq
+  [ 44] jmpifz [ 64] ............................ (case) ..., #outOfEnergy:
+  [ 47] getparam 0 .............................. <me>
+  [ 49] pusharglist 1 ........................... <me>
+  [ 51] objcall 499 ............................. <me.checkDead()>
+  [ 54] jmpifz [ 64] ............................ if me.checkDead() then
+  [ 57] getparam 0 .............................. <me>
+  [ 59] pusharglistnoret 1 ...................... <me>
+  [ 61] objcall 2511 ............................ me.startDeath()
+  [ 64] pop 1 ................................... end case
+  [ 66] ret
+end
+
+on noMoreResidents me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 2511 ............................ me.startDeath()
+  [  7] ret
+end
+
+on reelFinished me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 499 ............................. <me.checkDead()>
+  [  7] jmpifz [ 17] ............................ if me.checkDead() then
+  [ 10] getparam 0 .............................. <me>
+  [ 12] pusharglistnoret 1 ...................... <me>
+  [ 14] objcall 2511 ............................ me.startDeath()
+  [ 17] ret
+end
+
+on start me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 1590 ............................ ancestor.start()
+  [  7] getparam 0 .............................. <me>
+  [  9] pusharglistnoret 1 ...................... <me>
+  [ 11] objcall 486 ............................. me.startBuilding()
+  [ 14] ret
+end
+
+on startDeath me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 499 ............................. <me.checkDead()>
+  [  7] pushzero ................................ <0>
+  [  8] eq ...................................... <me.checkDead() = 0>
+  [  9] jmpifz [ 19] ............................ if me.checkDead() = 0 then
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] objcall 510 ............................. me.loseAllEnergy()
+  [ 19] getparam 0 .............................. <me>
+  [ 21] pushsymb 70 ............................. <#dead>
+  [ 23] pusharglistnoret 2 ...................... <me, #dead>
+  [ 25] objcall 278 ............................. me.goMode(#dead)
+  [ 28] ret
+end
+
+on takeHit me, collisionVect, attackingObj, owner
+  [  0] getparam 0 .............................. <me>
+  [  2] getobjprop 312 .......................... <me.pmode>
+  [  5] pushsymb 70 ............................. <#dead>
+  [  7] nteq .................................... <me.pmode <> #dead>
+  [  8] jmpifz [ 36] ............................ if me.pmode <> #dead then
+  [ 11] getparam 0 .............................. <me>
+  [ 13] pusharglist 1 ........................... <me>
+  [ 15] objcall 499 ............................. <me.checkDead()>
+  [ 18] pushzero ................................ <0>
+  [ 19] eq ...................................... <me.checkDead() = 0>
+  [ 20] jmpifz [ 36] ............................ if me.checkDead() = 0 then
+  [ 23] getprop 33 .............................. <ancestor>
+  [ 25] getparam 1 .............................. <collisionVect>
+  [ 27] getparam 2 .............................. <attackingObj>
+  [ 29] getparam 3 .............................. <owner>
+  [ 31] pusharglistnoret 4 ...................... <ancestor, collisionVect, attackingObj, owner>
+  [ 33] objcall 516 ............................. ancestor.takeHit(collisionVect, attackingObj, owner)
+  [ 36] ret
+end
+
+on update me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 31 .............................. ancestor.update()
+  [  6] getparam 0 .............................. <me>
+  [  8] getobjprop 312 .......................... <me.pmode>
+  [ 11] peek 0 .................................. case me.pmode of
+  [ 13] pushsymb 70 ............................. <#dead>
+  [ 15] eq
+  [ 16] jmpifz [ 42] ............................ (case) #dead:
+  [ 19] getparam 0 .............................. <me>
+  [ 21] pusharglist 1 ........................... <me>
+  [ 23] objcall 2394 ............................ <me.updateDead()>
+  [ 26] setlocal 0 .............................. fin = me.updateDead()
+  [ 28] getlocal 0 .............................. <fin>
+  [ 30] jmpifz [ 42] ............................ if fin then
+  [ 33] getparam 0 .............................. <me>
+  [ 35] pushsymb 3 .............................. <#finish>
+  [ 37] pusharglistnoret 2 ...................... <me, #finish>
+  [ 39] objcall 278 ............................. me.goMode(#finish)
+  [ 42] pop 1
+  [ 44] ret
+end
+
+on updateDead me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 16 .............................. <me.getAnimLooped()>
+  [  6] setlocal 0 .............................. fin = me.getAnimLooped()
+  [  8] getlocal 0 .............................. <fin>
+  [ 10] pushint8 1 .............................. <1>
+  [ 12] eq ...................................... <fin = 1>
+  [ 13] jmpifz [ 20] ............................ if fin = 1 then
+  [ 16] pusharglistnoret 0 ...................... <>
+  [ 18] extcall 185 ............................. nothing()
+  [ 20] getlocal 0 .............................. <fin>
+  [ 22] pusharglistnoret 1 ...................... <fin>
+  [ 24] extcall 35 .............................. return fin
+  [ 26] ret
+end

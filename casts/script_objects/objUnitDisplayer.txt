@@ -1,0 +1,163 @@
+[#name: "objUnitDisplayer", #scriptType: #parent, #type: #script]
+-- displays a unit and it's experience level from the reserve army
+
+global g
+global gGlobalDisplayLayer
+
+
+property ancestor
+property pBoundingRect  -- a rect that surrounds everything we are displaying
+property pLayer         -- which layer to display on
+property pStarsImage    -- the image of the experience stars
+property pStarsRect     -- the rect surrounding the stars image
+property pUnitRect      -- the rect surrounding the unit image
+property pUnitToDisplay -- the unit to display
+property pYGap          -- the vertical gap between rows of units
+
+on new me
+  ancestor = new (script "objModules")
+  
+  i = me.modifyParams(#init)
+  i[#layer] = gGlobalDisplayLayer
+  
+  me.addModule("modSpriteMembers")
+  
+  return me
+end
+
+on init me, params
+  ancestor.init(params)
+  pBoundingRect = #none
+  pLayer = params.layer
+  pStarsImage = #none
+  pUnitRect = #none
+  pUnitToDisplay = #none
+  pYGap = 4
+end
+
+on calcBoundingRect me, theUnit, theLoc
+  pUnitToDisplay = theUnit
+  
+  -- get a level bar to create the stars image
+  levelBar = g.armyMaster.getLevelBar()
+  
+  -- generate the stars image
+  unitLevel = theUnit.pExperienceLevel
+  pStarsImage = levelBar.drawStarsImage(unitLevel)
+  pStarsRect = rect(0,0,0,0)
+  pStarsRect.right = pStarsImage.width
+  pStarsRect.bottom = pStarsImage.height + levelBar.getYGap()
+  
+  -- work out the unit rect
+  pUnitRect = rect(0,0,0,0)
+  pUnitRect.top = pStarsRect.bottom
+  pUnitRect.right = theUnit.width
+  pUnitRect.bottom = pUnitRect.top + theUnit.height + pYGap
+  
+  -- work out the bounding rect
+  pBoundingRect = rect(0,0,0,0)
+  pBoundingRect.right = max(pStarsRect.width, pUnitRect.width)
+  pBoundingRect.bottom = pStarsRect.height + pUnitRect.height
+  
+  -- offset bounding rect with theLoc
+  boundingRectOffset = pBoundingRect + rect(theLoc, theLoc)
+  
+  
+  return boundingRectOffset
+  
+end
+
+on displayUnit me, theLoc
+  -- reposition bounding rect so that theLoc.locV = pBoundingRect.bottom
+  theLoc.locV = theLoc.locV - pBoundingRect.height
+  boundingRectOffset = pBoundingRect + rect(theLoc, theLoc)  
+  
+  -- horizontally center both images in the bounding rect
+  -- display stars image
+  newSprMem = me.newSpriteMember()
+  newSprMem.displayImageAtLoc(pStarsImage, point(boundingRectOffset.left, boundingRectOffset.top))
+  newSprMem.centerAlign(boundingRectOffset.left, boundingRectOffset.right)
+  
+  -- display unit image
+  unitImage = pUnitToDisplay.member.image
+  newSprMem = me.newSpriteMember()
+  newSprMem.displayImageAtLoc(unitImage, point(boundingRectOffset.left, boundingRectOffset.top + pUnitRect.top))
+  newSprMem.setSpriteFlipFromDir(-1)
+  newSprMem.setSpriteHeight(pUnitToDisplay.height)
+  newSprMem.setSpriteWidth(pUnitToDisplay.width)
+  newSprMem.centerAlign(boundingRectOffset.left, boundingRectOffset.right)
+  
+  
+end
+
+on getBoundingRect me
+  return pBoundingRect
+end
+
+on getLayer me
+  return pLayer
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

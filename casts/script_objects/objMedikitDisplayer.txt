@@ -1,0 +1,219 @@
+[#name: "objMedikitDisplayer", #scriptType: #parent, #type: #script]
+-- displays information about medikits in the global display
+-- how many remaining
+-- how many hitpoints remaining in the current one
+-- whether the current medikit is currently active (healing)
+
+global g
+global gGlobalDisplayLayer
+
+property ancestor
+property pDisplayCounter   -- an object for displaying the number of medikits
+property pDisplayLoc       -- the top left corner of the medikit display
+property pEnergyBar        -- energy bar displaying the number of hitpoints left in the current medikit
+property pEnergyBarRect    -- a record of the energy bar rect for use when positioning the display counter
+property pEnergyBarWidth   -- the width of the energy bar (height will be matched to the medikit icon)
+property pLastActive       -- the active state last time the display was updated
+property pLastEnergy       -- the amount of hitpoints remaining last time the display was updated
+property pOffMember        -- the member to use when medikit is inactive
+property pOnMember         -- the member to use when medikit is active
+property pSpacer           -- the number of pixel in between elements
+property pVerticalSpacerForDisplayCounter  -- the number of pixels to lower displayCounter by
+
+
+on new me
+  ancestor = new (script "objSpriteMember")
+  
+  i = me.modifyParams(#init)
+  
+  i.layer = gGlobalDisplayLayer
+  
+  i[#displayLoc] = point(0,0)
+  i[#onMember] = #none
+  i[#offMember] = #none
+  
+  return me
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  pDisplayLoc = params.displayLoc
+  pEnergyBarWidth = 6
+  pLastActive = #none
+  pOffMember = params.offMember
+  pOnMember = params.onMember
+  pSpacer = 1
+  pVerticalSpacerForDisplayCounter = 3
+  
+  me.initEnergyBar()
+  me.initDisplayCounter()
+end
+
+on initDisplayCounter me
+  displayLoc = me.calcDisplayCounterLoc()
+  
+  pDisplayCounter = g.objectMaster.requestObject(#objDisplayCounter)
+  params = pDisplayCounter.getParams(#init)
+  params.displayLoc = displayLoc
+  pDisplayCounter.init(params)
+end
+
+on initEnergyBar me
+  energyBarRect = me.calcEnergyBarRect()
+  
+  pEnergyBar = g.objectMaster.requestObject(#objEnergyBar)
+  params = pEnergyBar.getParams()
+  params.barBorder = 1
+  params.surroundRect = energyBarRect
+  params.colour = rgb(0,200,0)
+  params.currentEnergy = 0
+  params.layer = gGlobalDisplayLayer
+  params.maxEnergy = 100
+  params.orientation = #vertical
+  
+  pEnergyBar.init(params)
+  
+  -- keep a record of the rect for use in me.calcDisplayCounterLoc()
+  pEnergyBarRect = energyBarRect
+end
+
+on finish me
+  ancestor.finish()
+  
+  if pDisplayCounter <> #none then
+    pDisplayCounter.finish()
+    pDisplayCounter = #none
+  end if
+  
+  if pEnergyBar <> #none then
+    pEnergyBar.finish()
+    pEnergyBar = #none
+  end if
+end
+
+on calcDisplayCounterLoc me
+  dcLoc = point(0,0)
+  
+  dcLoc.locv = pDisplayLoc.locv + pVerticalSpacerForDisplayCounter
+  dcLoc.loch = pEnergyBarRect.right + pSpacer
+  
+  return dcLoc
+end
+
+on calcEnergyBarRect me
+  ebRect = rect (0,0,0,0)
+  
+  ebRect.left = pDisplayLoc.loch + pOnMember.width + pSpacer
+  ebRect.right = ebRect.left + pEnergyBarWidth
+  ebRect.top = pDisplayLoc.locv
+  ebRect.bottom = ebRect.top + pOnMember.height
+  
+  return ebRect
+end
+
+on updateDisplayFromObj me, theObj
+  -- show whether the medikit is active (healing)
+  -- and how many medikits the player has.
+  
+  active = theObj.getMedikitActive()
+  energy = theObj.getMedikitRemainingHitpoints()
+  numOfMedikits = theObj.getNumOfMedikits()
+  
+  if active <> pLastActive then
+    me.updateActive(active)
+    pLastActive = active
+  end if
+  
+  if energy <> pLastEnergy then
+    me.updateEnergy(energy, theObj)
+    pLastEnergy = energy
+  end if
+  
+  me.updateDisplayCounter(numOfMedikits)
+end
+
+on updateActive me, active
+  if active then
+    currentMember = pOnMember
+  else
+    currentMember = pOffMember
+  end if
+  
+  me.displayImageAtLoc(currentMember.image, pDisplayLoc)
+end
+
+on updateEnergy me, energy, theObj
+  maxEnergy = theObj.getMedikitMaxHitpoints()
+  
+  pEnergyBar.setMaxEnergy(maxEnergy)
+  pEnergyBar.updateEnergy(energy)
+end 
+
+on updateDisplayCounter me, numOfMedikits
+  pDisplayCounter.updateValue(numOfMedikits)
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

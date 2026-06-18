@@ -1,0 +1,133 @@
+[#name: "objBasic", #scriptType: #parent, #type: #script]
+global gErrorTrace
+
+property big
+property ID
+property pFlags
+
+on new me
+  pFlags = []
+  ID = [#bigMe: #none]
+  
+  return me
+end new
+
+on finish me
+  --gErrorTrace.append(#objBasicFinish)
+  --stringID = string(ID)
+  --gErrorTrace.append(stringID)
+  if ID[#master] <> void then
+    ID.master.objFree(me.ID.bigMe)
+  end if
+  --gErrorTrace.deleteOne(stringID)
+  --gErrorTrace.deleteOne(#objBasicFinish)
+end finish
+
+on addSaveData me, sd
+  -- catch any unneeded addSaveData calls
+  return sd
+end
+
+on getType me
+  return ID.typ
+end
+
+on hasFlag me, theFlag
+  flagPos = pFlags.getPos(theFlag)
+  
+  if flagPos > 0 then
+    return true
+  else
+    return false
+  end if
+end
+
+on removeFlag me, theFlag
+  flagPos = pFlags.getPos(theFlag)
+  
+  if flagPos > 0 then
+    pFlags.deleteAt(flagPos)
+    return true
+  end if
+  
+  return false
+  
+end
+
+on restoreFromSave me, saveData
+  -- catch any unneeded calls
+end
+
+on testBasic me
+  put "hello"
+end
+
+
+on update me
+  -- catch any unneeded update calls
+  nothing
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

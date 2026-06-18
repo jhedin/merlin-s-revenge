@@ -1,0 +1,206 @@
+property ancestor, pExplodeCharge, pExplodeEvents, pExplodeSound, pExplodeVolume
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getlocal 0 .............................. <i>
+  [ 12] pushsymb 634 ............................ <#explodeEvents>
+  [ 15] pusharglist 0 ........................... <[]>
+  [ 17] pushlist ................................ <[]>
+  [ 18] pusharglistnoret 3 ...................... <i, #explodeEvents, []>
+  [ 20] objcall 48 .............................. i[#explodeEvents] = []
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 635 ............................ <#explodeSound>
+  [ 27] pushsymb 49 ............................. <#none>
+  [ 29] pusharglistnoret 3 ...................... <i, #explodeSound, #none>
+  [ 31] objcall 48 .............................. i[#explodeSound] = #none
+  [ 33] getlocal 0 .............................. <i>
+  [ 35] pushsymb 636 ............................ <#explodeVolume>
+  [ 38] pushint8 50 ............................. <50>
+  [ 40] pusharglistnoret 3 ...................... <i, #explodeVolume, 50>
+  [ 42] objcall 48 .............................. i[#explodeVolume] = 50
+  [ 44] getprop 33 .............................. <ancestor>
+  [ 46] pusharglistnoret 1 ...................... <ancestor>
+  [ 48] objcall 2 ............................... ancestor.addModParams()
+  [ 50] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pushsymb 49 ............................. <#none>
+  [ 10] setprop 637 ............................. pExplodeCharge = #none
+  [ 13] getparam 1 .............................. <params>
+  [ 15] getobjprop 634 .......................... <params.explodeEvents>
+  [ 18] setprop 638 ............................. pExplodeEvents = params.explodeEvents
+  [ 21] getparam 1 .............................. <params>
+  [ 23] getobjprop 635 .......................... <params.explodeSound>
+  [ 26] setprop 639 ............................. pExplodeSound = params.explodeSound
+  [ 29] getparam 1 .............................. <params>
+  [ 31] getobjprop 636 .......................... <params.explodeVolume>
+  [ 34] setprop 640 ............................. pExplodeVolume = params.explodeVolume
+  [ 37] ret
+end
+
+on initExplodeCharge me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 141 ............................. <me.getAttack()>
+  [  6] getobjprop 641 .......................... <me.getAttack().explodeCharge>
+  [  9] setprop 637 ............................. pExplodeCharge = me.getAttack().explodeCharge
+  [ 12] ret
+end
+
+on explode me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 51 ....................... <me.big>
+  [  4] getprop 639 ............................. <pExplodeSound>
+  [  7] getprop 640 ............................. <pExplodeVolume>
+  [ 10] pusharglistnoret 3 ...................... <me.big, pExplodeSound, pExplodeVolume>
+  [ 12] objcall 551 ............................. me.big.PlaySound(pExplodeSound, pExplodeVolume)
+  [ 15] getglobal 40 ............................ <g>
+  [ 17] getchainedprop 642 ...................... <g.teamMaster>
+  [ 20] getparam 0 .............................. <me>
+  [ 22] getobjprop 51 ........................... <me.big>
+  [ 24] pusharglistnoret 2 ...................... <g.teamMaster, me.big>
+  [ 26] objcall 643 ............................. g.teamMaster.impactAttack(me.big)
+  [ 29] getparam 0 .............................. <me>
+  [ 31] getchainedprop 51 ....................... <me.big>
+  [ 33] pushsymb 180 ............................ <#explode>
+  [ 35] pusharglistnoret 2 ...................... <me.big, #explode>
+  [ 37] objcall 278 ............................. me.big.goMode(#explode)
+  [ 40] ret
+end
+
+on getCurrentCharge me
+  [  0] getprop 637 ............................. <pExplodeCharge>
+  [  3] pusharglistnoret 1 ...................... <pExplodeCharge>
+  [  5] extcall 35 .............................. return pExplodeCharge
+  [  7] ret
+end
+
+on goMode me, newMode
+  [  0] getparam 1 .............................. <newMode>
+  [  2] pushsymb 180 ............................ <#explode>
+  [  4] eq ...................................... <newMode = #explode>
+  [  5] jmpifz [ 25] ............................ if newMode = #explode then
+  [  8] getparam 0 .............................. <me>
+  [ 10] pushzero ................................ <0>
+  [ 11] pusharglistnoret 2 ...................... <me, 0>
+  [ 13] objcall 29 .............................. me.setAnimKeepSize(0)
+  [ 15] getparam 0 .............................. <me>
+  [ 17] getchainedprop 51 ....................... <me.big>
+  [ 19] pushsymb 180 ............................ <#explode>
+  [ 21] pusharglistnoret 2 ...................... <me.big, #explode>
+  [ 23] objcall 24 .............................. me.big.resetAnim(#explode)
+  [ 25] getprop 33 .............................. <ancestor>
+  [ 27] getparam 1 .............................. <newMode>
+  [ 29] pusharglistnoret 2 ...................... <ancestor, newMode>
+  [ 31] objcall 278 ............................. ancestor.goMode(newMode)
+  [ 34] ret
+end
+
+on internalEvent me, theEvent
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <theEvent>
+  [  4] pusharglistnoret 2 ...................... <ancestor, theEvent>
+  [  6] objcall 22 .............................. ancestor.internalEvent(theEvent)
+  [  8] getprop 638 ............................. <pExplodeEvents>
+  [ 11] getparam 1 .............................. <theEvent>
+  [ 13] pusharglist 2 ........................... <pExplodeEvents, theEvent>
+  [ 15] objcall 219 ............................. <pExplodeEvents.getPos(theEvent)>
+  [ 17] jmpifz [ 29] ............................ if pExplodeEvents.getPos(theEvent) then / else
+  [ 20] getparam 0 .............................. <me>
+  [ 22] pusharglistnoret 1 ...................... <me>
+  [ 24] objcall 180 ............................. me.explode()
+  [ 26] jmp [ 75]
+  [ 29] getparam 1 .............................. <theEvent>
+  [ 31] peek 0 .................................. case theEvent of
+  [ 33] pushsymb 644 ............................ <#bulletCollidedWithTarget>
+  [ 36] eq
+  [ 37] jmpifz [ 52] ............................ (case) #bulletCollidedWithTarget:
+  [ 40] getparam 0 .............................. <me>
+  [ 42] getchainedprop 51 ....................... <me.big>
+  [ 44] pusharglistnoret 1 ...................... <me.big>
+  [ 46] objcall 501 ............................. me.big.die()
+  [ 49] jmp [ 73]
+  [ 52] peek 0
+  [ 54] pushsymb 645 ............................ <#bulletLanded>
+  [ 57] eq
+  [ 58] jmpifz [ 73] ............................ (case) #bulletLanded:
+  [ 61] getparam 0 .............................. <me>
+  [ 63] getchainedprop 51 ....................... <me.big>
+  [ 65] pushsymb 646 ............................ <#land>
+  [ 68] pusharglistnoret 2 ...................... <me.big, #land>
+  [ 70] objcall 278 ............................. me.big.goMode(#land)
+  [ 73] pop 1 ................................... end case
+  [ 75] getparam 1 .............................. <theEvent>
+  [ 77] peek 0 .................................. case theEvent of
+  [ 79] pushsymb 249 ............................ <#attackSet>
+  [ 81] eq
+  [ 82] jmpifz [ 92] ............................ (case) #attackSet:
+  [ 85] getparam 0 .............................. <me>
+  [ 87] pusharglistnoret 1 ...................... <me>
+  [ 89] objcall 632 ............................. me.initExplodeCharge()
+  [ 92] pop 1
+  [ 94] ret
+end
+
+on update me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 31 .............................. ancestor.update()
+  [  6] getparam 0 .............................. <me>
+  [  8] getchainedprop 51 ....................... <me.big>
+  [ 10] pusharglist 1 ........................... <me.big>
+  [ 12] objcall 52 .............................. <me.big.getMode()>
+  [ 14] peek 0 .................................. case me.big.getMode() of
+  [ 16] pushsymb 180 ............................ <#explode>
+  [ 18] eq
+  [ 19] jmpifz [ 47] ............................ (case) #explode:
+  [ 22] getparam 0 .............................. <me>
+  [ 24] pusharglist 1 ........................... <me>
+  [ 26] objcall 633 ............................. <me.updateExplode()>
+  [ 29] setlocal 0 .............................. fin = me.updateExplode()
+  [ 31] getlocal 0 .............................. <fin>
+  [ 33] jmpifz [ 47] ............................ if fin then
+  [ 36] getparam 0 .............................. <me>
+  [ 38] getchainedprop 51 ....................... <me.big>
+  [ 40] pushsymb 647 ............................ <#explodeFin>
+  [ 43] pusharglistnoret 2 ...................... <me.big, #explodeFin>
+  [ 45] objcall 22 .............................. me.big.internalEvent(#explodeFin)
+  [ 47] pop 1
+  [ 49] ret
+end
+
+on updateExplode me
+  [  0] getparam 0 .............................. <me>
+  [  2] getchainedprop 51 ....................... <me.big>
+  [  4] pushsymb 180 ............................ <#explode>
+  [  6] pusharglist 2 ........................... <me.big, #explode>
+  [  8] objcall 16 .............................. <me.big.getAnimLooped(#explode)>
+  [ 10] setlocal 0 .............................. fin = me.big.getAnimLooped(#explode)
+  [ 12] getlocal 0 .............................. <fin>
+  [ 14] pusharglistnoret 1 ...................... <fin>
+  [ 16] extcall 35 .............................. return fin
+  [ 18] ret
+end

@@ -1,0 +1,134 @@
+property ancestor, pBrushTiles
+
+on new me
+  [  0] pushcons 0 .............................. <"objTool">
+  [  2] pusharglist 1 ........................... <"objTool">
+  [  4] extcall 34 .............................. <script("objTool")>
+  [  6] pusharglist 1 ........................... <script("objTool")>
+  [  8] extcall 0 ............................... <new(script("objTool"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objTool"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pushsymb 49 ............................. <#none>
+  [ 10] setprop 2113 ............................ pBrushTiles = #none
+  [ 13] ret
+end
+
+on adjustGridSelectors me, theGridSelectors
+  [  0] getparam 1 .............................. <theGridSelectors>
+  [  2] getobjprop 384 .......................... <theGridSelectors.room>
+  [  5] setlocal 0 .............................. room = theGridSelectors.room
+  [  7] getlocal 0 .............................. <room>
+  [  9] pushzero ................................ <0>
+  [ 10] pusharglistnoret 2 ...................... <room, 0>
+  [ 12] objcall 2114 ............................ room.setAllowRangeSelections(0)
+  [ 15] getlocal 0 .............................. <room>
+  [ 17] pushint8 1 .............................. <1>
+  [ 19] pusharglistnoret 2 ...................... <room, 1>
+  [ 21] objcall 2115 ............................ room.setSelectOnPress(1)
+  [ 24] getparam 0 .............................. <me>
+  [ 26] getprop 2113 ............................ <pBrushTiles>
+  [ 29] pusharglistnoret 2 ...................... <me, pBrushTiles>
+  [ 31] objcall 2112 ............................ me.setBrushTiles(pBrushTiles)
+  [ 34] ret
+end
+
+on roomSelected me, theSel
+  [  0] getprop 2113 ............................ <pBrushTiles>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] eq ...................................... <pBrushTiles = #none>
+  [  6] jmpifz [ 13] ............................ if pBrushTiles = #none then
+  [  9] pusharglistnoret 0 ...................... <>
+  [ 11] extcall 35 .............................. return 
+  [ 13] getparam 0 .............................. <me>
+  [ 15] pusharglist 1 ........................... <me>
+  [ 17] objcall 2117 ............................ <me.getToolPalette()>
+  [ 20] setlocal 0 .............................. toolPal = me.getToolPalette()
+  [ 22] getlocal 0 .............................. <toolPal>
+  [ 24] pusharglist 1 ........................... <toolPal>
+  [ 26] objcall 755 ............................. <toolPal.getCurrentRoom()>
+  [ 29] setlocal 1 .............................. room = toolPal.getCurrentRoom()
+  [ 31] getlocal 0 .............................. <toolPal>
+  [ 33] pusharglist 1 ........................... <toolPal>
+  [ 35] objcall 1821 ............................ <toolPal.getCurrentMap()>
+  [ 38] setlocal 2 .............................. themap = toolPal.getCurrentMap()
+  [ 40] getlocal 1 .............................. <room>
+  [ 42] getparam 1 .............................. <theSel>
+  [ 44] getprop 2113 ............................ <pBrushTiles>
+  [ 47] pusharglistnoret 3 ...................... <room, theSel, pBrushTiles>
+  [ 49] objcall 2118 ............................ room.setTilesBrush(theSel, pBrushTiles)
+  [ 52] getlocal 1 .............................. <room>
+  [ 54] pusharglistnoret 1 ...................... <room>
+  [ 56] objcall 2119 ............................ room.refreshImage()
+  [ 59] getlocal 2 .............................. <themap>
+  [ 61] getlocal 1 .............................. <room>
+  [ 63] pusharglistnoret 2 ...................... <themap, room>
+  [ 65] objcall 2120 ............................ themap.refreshRoomMapImage(room)
+  [ 68] ret
+end
+
+on tileSetSelected me, theSel
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 2117 ............................ <me.getToolPalette()>
+  [  7] setlocal 0 .............................. toolPal = me.getToolPalette()
+  [  9] getlocal 0 .............................. <toolPal>
+  [ 11] pusharglist 1 ........................... <toolPal>
+  [ 13] objcall 2124 ............................ <toolPal.getCurrentTileSet()>
+  [ 16] setlocal 1 .............................. tileSet = toolPal.getCurrentTileSet()
+  [ 18] getlocal 1 .............................. <tileSet>
+  [ 20] getparam 1 .............................. <theSel>
+  [ 22] pusharglist 2 ........................... <tileSet, theSel>
+  [ 24] objcall 2125 ............................ <tileSet.calcTileNums(theSel)>
+  [ 27] setlocal 2 .............................. theTiles = tileSet.calcTileNums(theSel)
+  [ 29] getparam 0 .............................. <me>
+  [ 31] getlocal 2 .............................. <theTiles>
+  [ 33] pusharglistnoret 2 ...................... <me, theTiles>
+  [ 35] objcall 2112 ............................ me.setBrushTiles(theTiles)
+  [ 38] ret
+end
+
+on setBrushTiles me, theTiles
+  [  0] getparam 1 .............................. <theTiles>
+  [  2] setprop 2113 ............................ pBrushTiles = theTiles
+  [  5] pushint8 1 .............................. <1>
+  [  7] pushint8 1 .............................. <1>
+  [  9] pusharglist 2 ........................... <1, 1>
+  [ 11] extcall 197 ............................. <point(1, 1)>
+  [ 13] setlocal 0 .............................. brushSize = point(1, 1)
+  [ 15] getprop 2113 ............................ <pBrushTiles>
+  [ 18] pushsymb 49 ............................. <#none>
+  [ 20] nteq .................................... <pBrushTiles <> #none>
+  [ 21] jmpifz [ 48] ............................ if pBrushTiles <> #none then
+  [ 24] getprop 2113 ............................ <pBrushTiles>
+  [ 27] pushint8 1 .............................. <1>
+  [ 29] pusharglist 2 ........................... <pBrushTiles, 1>
+  [ 31] objcall 109 ............................. <pBrushTiles[1]>
+  [ 33] getobjprop 257 .......................... <pBrushTiles[1].count>
+  [ 36] getprop 2113 ............................ <pBrushTiles>
+  [ 39] getobjprop 257 .......................... <pBrushTiles.count>
+  [ 42] pusharglist 2 ........................... <pBrushTiles[1].count, pBrushTiles.count>
+  [ 44] extcall 197 ............................. <point(pBrushTiles[1].count, pBrushTiles.count)>
+  [ 46] setlocal 0 .............................. brushSize = point(pBrushTiles[1].count, pBrushTiles.count)
+  [ 48] getparam 0 .............................. <me>
+  [ 50] pusharglist 1 ........................... <me>
+  [ 52] objcall 2117 ............................ <me.getToolPalette()>
+  [ 55] pusharglist 1 ........................... <me.getToolPalette()>
+  [ 57] objcall 2128 ............................ <me.getToolPalette().getGridSelectors()>
+  [ 60] setlocal 1 .............................. gridSels = me.getToolPalette().getGridSelectors()
+  [ 62] getlocal 1 .............................. <gridSels>
+  [ 64] getchainedprop 384 ...................... <gridSels.room>
+  [ 67] getlocal 0 .............................. <brushSize>
+  [ 69] pusharglistnoret 2 ...................... <gridSels.room, brushSize>
+  [ 71] objcall 2129 ............................ gridSels.room.setBoxSize(brushSize)
+  [ 74] ret
+end

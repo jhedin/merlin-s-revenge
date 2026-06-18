@@ -1,0 +1,167 @@
+property ancestor, pCollected, pNonWritingMember, pWritingMember
+
+on new me
+  [  0] pushcons 0 .............................. <"objPowerUp">
+  [  2] pusharglist 1 ........................... <"objPowerUp">
+  [  4] extcall 34 .............................. <script("objPowerUp")>
+  [  6] pusharglist 1 ........................... <script("objPowerUp")>
+  [  8] extcall 0 ............................... <new(script("objPowerUp"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objPowerUp"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 3525 ........................... <#writingMember>
+  [ 27] pushsymb 3526 ........................... <#nameBased>
+  [ 30] pusharglistnoret 3 ...................... <i, #writingMember, #nameBased>
+  [ 32] objcall 48 .............................. i[#writingMember] = #nameBased
+  [ 34] getparam 0 .............................. <me>
+  [ 36] pushcons 1 .............................. <"modFader">
+  [ 38] pusharglistnoret 2 ...................... <me, "modFader">
+  [ 40] objcall 1717 ............................ me.addModule("modFader")
+  [ 43] getparam 0 .............................. <me>
+  [ 45] pushcons 2 .............................. <"modReel">
+  [ 47] pusharglistnoret 2 ...................... <me, "modReel">
+  [ 49] objcall 1717 ............................ me.addModule("modReel")
+  [ 52] getparam 0 .............................. <me>
+  [ 54] pusharglistnoret 1 ...................... <me>
+  [ 56] extcall 35 .............................. return me
+  [ 58] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pushzero ................................ <0>
+  [  9] setprop 3527 ............................ pCollected = 0
+  [ 12] getparam 1 .............................. <params>
+  [ 14] getobjprop 99 ........................... <params.member>
+  [ 16] setprop 3528 ............................ pNonWritingMember = params.member
+  [ 19] getparam 0 .............................. <me>
+  [ 21] getparam 1 .............................. <params>
+  [ 23] getobjprop 3525 ......................... <params.writingMember>
+  [ 26] pusharglistnoret 2 ...................... <me, params.writingMember>
+  [ 28] objcall 3524 ............................ me.setWritingMember(params.writingMember)
+  [ 31] ret
+end
+
+on addSaveData me, sd
+  [  0] getparam 1 .............................. <sd>
+  [  2] pushsymb 3527 ........................... <#pCollected>
+  [  5] getprop 3527 ............................ <pCollected>
+  [  8] pusharglistnoret 3 ...................... <sd, #pCollected, pCollected>
+  [ 10] objcall 48 .............................. sd[#pCollected] = pCollected
+  [ 12] getprop 33 .............................. <ancestor>
+  [ 14] getparam 1 .............................. <sd>
+  [ 16] pusharglistnoret 2 ...................... <ancestor, sd>
+  [ 18] objcall 4 ............................... ancestor.addSaveData(sd)
+  [ 20] ret
+end
+
+on collected me, collector
+  [  0] pushint8 1 .............................. <1>
+  [  2] setprop 3527 ............................ pCollected = 1
+  [  5] getparam 0 .............................. <me>
+  [  7] pusharglistnoret 1 ...................... <me>
+  [  9] objcall 3523 ............................ me.displayWriting()
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushzero ................................ <0>
+  [ 15] pusharglistnoret 2 ...................... <me, 0>
+  [ 17] objcall 2741 ............................ me.setRecordInRoomState(0)
+  [ 20] getparam 0 .............................. <me>
+  [ 22] getparam 0 .............................. <me>
+  [ 24] getobjprop 3513 ......................... <me.pCollectSound>
+  [ 27] pusharglistnoret 2 ...................... <me, me.pCollectSound>
+  [ 29] objcall 551 ............................. me.PlaySound(me.pCollectSound)
+  [ 32] ret
+end
+
+on displayWriting me
+  [  0] getparam 0 .............................. <me>
+  [  2] getprop 3529 ............................ <pWritingMember>
+  [  5] pusharglistnoret 2 ...................... <me, pWritingMember>
+  [  7] objcall 2237 ............................ me.setMember(pWritingMember)
+  [ 10] getparam 0 .............................. <me>
+  [ 12] pushsymb 3530 ........................... <#writing>
+  [ 15] pusharglistnoret 2 ...................... <me, #writing>
+  [ 17] objcall 278 ............................. me.goMode(#writing)
+  [ 20] getparam 0 .............................. <me>
+  [ 22] pusharglistnoret 1 ...................... <me>
+  [ 24] objcall 674 ............................. me.startFade()
+  [ 27] ret
+end
+
+on faderFin me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushint8 1 .............................. <1>
+  [  4] pusharglistnoret 2 ...................... <me, 1>
+  [  6] objcall 707 ............................. me.setDead(1)
+  [  9] ret
+end
+
+on getNonWritingMember me
+  [  0] getprop 3528 ............................ <pNonWritingMember>
+  [  3] pusharglistnoret 1 ...................... <pNonWritingMember>
+  [  5] extcall 35 .............................. return pNonWritingMember
+  [  7] ret
+end
+
+on restoreFromSave me, sd
+  [  0] getparam 1 .............................. <sd>
+  [  2] getobjprop 3527 ......................... <sd.pCollected>
+  [  5] setprop 3527 ............................ pCollected = sd.pCollected
+  [  8] getprop 3527 ............................ <pCollected>
+  [ 11] pushint8 1 .............................. <1>
+  [ 13] eq ...................................... <pCollected = 1>
+  [ 14] jmpifz [ 27] ............................ if pCollected = 1 then
+  [ 17] getparam 0 .............................. <me>
+  [ 19] getprop 3529 ............................ <pWritingMember>
+  [ 22] pusharglistnoret 2 ...................... <me, pWritingMember>
+  [ 24] objcall 2237 ............................ me.setMember(pWritingMember)
+  [ 27] getprop 33 .............................. <ancestor>
+  [ 29] getparam 1 .............................. <sd>
+  [ 31] pusharglistnoret 2 ...................... <ancestor, sd>
+  [ 33] objcall 26 .............................. ancestor.restoreFromSave(sd)
+  [ 35] ret
+end
+
+on setWritingMember me, newMem
+  [  0] getparam 1 .............................. <newMem>
+  [  2] pushsymb 3526 ........................... <#nameBased>
+  [  5] eq ...................................... <newMem = #nameBased>
+  [  6] jmpifz [ 31] ............................ if newMem = #nameBased then
+  [  9] getparam 0 .............................. <me>
+  [ 11] pusharglist 1 ........................... <me>
+  [ 13] objcall 1722 ............................ <me.getCharacter()>
+  [ 16] pushcons 3 .............................. <"_writing">
+  [ 18] joinstr ................................. <me.getCharacter() & "_writing">
+  [ 19] setlocal 0 .............................. memname = me.getCharacter() & "_writing"
+  [ 21] getlocal 0 .............................. <memname>
+  [ 23] pushcons 4 .............................. <"gfx">
+  [ 25] pusharglist 2 ........................... <memname, "gfx">
+  [ 27] extcall 99 .............................. <member(memname, "gfx")>
+  [ 29] setparam 1 .............................. newMem = member(memname, "gfx")
+  [ 31] getparam 1 .............................. <newMem>
+  [ 33] setprop 3529 ............................ pWritingMember = newMem
+  [ 36] ret
+end
+
+on takeHit me, collisionVect
+  [  0] getprop 3527 ............................ <pCollected>
+  [  3] jmpifz [ 10] ............................ if pCollected then
+  [  6] pusharglistnoret 0 ...................... <>
+  [  8] extcall 35 .............................. return 
+  [ 10] getparam 0 .............................. <me>
+  [ 12] pushsymb 1056 ........................... <#reel>
+  [ 15] pusharglistnoret 2 ...................... <me, #reel>
+  [ 17] objcall 278 ............................. me.goMode(#reel)
+  [ 20] getprop 33 .............................. <ancestor>
+  [ 22] getparam 1 .............................. <collisionVect>
+  [ 24] pusharglistnoret 2 ...................... <ancestor, collisionVect>
+  [ 26] objcall 516 ............................. ancestor.takeHit(collisionVect)
+  [ 29] ret
+end

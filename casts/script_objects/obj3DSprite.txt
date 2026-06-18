@@ -1,0 +1,132 @@
+[#name: "obj3DSprite", #scriptType: #parent, #type: #script]
+global g
+
+
+property ancestor
+
+-- fake sprite properties
+property blend
+property bgColor
+property color
+property flipH
+property flipV
+property loc
+property locH
+property locV
+property locZ
+property height
+property ink
+property member
+property rect
+property rotation
+property spriteNum
+property visible
+property width
+
+property pModel         -- the plane upon which this sprite draws itself
+property pModelName     -- the name of our model
+
+on new me
+  ancestor = new (script"objParams")
+  
+  i = me.modifyParams(#init)
+  
+  i[#spriteNum] = 0
+  
+  return me
+end
+
+on init me, params
+  spriteNum = params.spriteNum
+  member = member("dot", "gfx")
+  rect = rect(-1,-1,0,0)
+end
+
+on init3DPresence me
+  w = g.spriteMaster.get3DWorld()
+  
+  pModelName = "sprite_" & spriteNum
+  
+  mr = w.newModelResource(pModelName, #plane, #front)
+  
+  mr.length = member.height
+  mr.width = member.width
+  
+  mr.LengthVertices = 2
+  mr.WidthVertices = 2
+  
+  
+  m = w.newModel(pModelName,mr)
+  -- rotate the plane -45 degress on the X axis
+  m.rotate(-180,0,180)  
+  
+  pModel = m
+end
+
+on update me
+  
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,163 @@
+[#name: "objTransColor", #scriptType: #parent, #type: #script]
+property ancestor
+property pSpr
+property pStartColor
+property pTargetColor
+property pTransformTarget
+
+
+on new me
+  me.ancestor = new (script "objTransformer")
+  
+  i = me.modifyParams(#init)
+  i[#spr] = #none
+  i[#transformTarget] = #text
+  i[#targetColor] = rgb(255,255,0)
+  i[#startColor] = #current
+  i[#speed] = 10
+  
+  return me
+end
+
+on init me, params
+  params.initialValue = 0
+  
+  me.ancestor.init(params)
+  me.setTarget(100)
+  
+  pTargetColor = params.targetColor.duplicate()
+  pTransformTarget = params.transformTarget
+  pSpr = params.spr
+  
+  if params.startColor = #current then
+    me.initCurrentColor(params)
+  else
+    pStartColor = params.startColor.duplicate()
+  end if
+  
+  me.setSpeed(params.speed)
+  
+  -- skip if start and end colours match
+  if pTargetColor = pStartColor then
+    me.setTarget(1)
+  end if
+  
+  me.updateAttribute()
+end
+
+on initCurrentColor me
+  case pTransformTarget of
+    #text:
+      pStartColor = pSpr.member.color.duplicate()
+      
+    #bitmap:
+      pStartColor = pSpr.color
+      
+  end case
+end
+
+on addSaveData me, sd
+  ancestor.addSaveData(sd)
+  
+  sd[#pStartColor] = pStartColor
+  sd[#pTargetColor] = pTargetColor
+  sd[#pTransformTarget] = pTransformTarget
+  
+end
+
+on informCallingPrg me
+  me.getCallingPrg().transColorFin(me.ID.bigMe)
+end
+
+on restoreFromSave me, sd
+  ancestor.restoreFromSave(sd)
+  
+  pStartColor = sd.pStartColor
+  pTargetColor = sd.pTargetColor
+  pTransformTarget = sd.pTransformTarget
+  
+  me.updateAttribute()
+end
+
+on setSprite me, theSpr
+  pSpr = theSpr
+end
+
+on updateAttribute me
+  newColor = VarColRange(me.pCurr, pStartColor, pTargetColor)
+  
+  case pTransformTarget of
+    #text:
+      pSpr.member.color = newColor
+      
+    #bitmap:
+      pSpr.color = newColor
+      
+  end case
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

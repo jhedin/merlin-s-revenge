@@ -1,0 +1,41 @@
+property ancestor, pSpr
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"objBasic">
+  [  2] pusharglist 1 ........................... <"objBasic">
+  [  4] extcall 27 .............................. <script("objBasic")>
+  [  6] pusharglist 1 ........................... <script("objBasic")>
+  [  8] extcall 0 ............................... <new(script("objBasic"))>
+  [ 10] setprop 77 .............................. ancestor = new(script("objBasic"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] objcall 1 ............................... me.init()
+  [ 18] getparam 0 .............................. <me>
+  [ 20] pusharglistnoret 1 ...................... <me>
+  [ 22] extcall 17 .............................. return me
+  [ 24] ret
+end
+
+on init me
+  [  0] getglobal 101 ........................... <g>
+  [  2] getchainedprop 155 ...................... <g.spriteMaster>
+  [  4] pusharglist 1 ........................... <g.spriteMaster>
+  [  6] objcall 156 ............................. <g.spriteMaster.requestSprite()>
+  [  8] setprop 79 .............................. pSpr = g.spriteMaster.requestSprite()
+  [ 10] getprop 79 .............................. <pSpr>
+  [ 12] pushcons 1 .............................. <"markerBoundary">
+  [ 14] pushcons 2 .............................. <"gfx">
+  [ 16] pusharglist 2 ........................... <"markerBoundary", "gfx">
+  [ 18] extcall 158 ............................. <member("markerBoundary", "gfx")>
+  [ 20] pusharglistnoret 2 ...................... <pSpr, member("markerBoundary", "gfx")>
+  [ 22] extcall 212 ............................. SpriteSetMember(pSpr, member("markerBoundary", "gfx"))
+  [ 24] ret
+end
+
+on setRect me, therect
+  [  0] getprop 79 .............................. <pSpr>
+  [  2] getparam 1 .............................. <therect>
+  [  4] setobjprop 160 .......................... pSpr.rect = therect
+  [  6] ret
+end

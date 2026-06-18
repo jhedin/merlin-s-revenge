@@ -1,0 +1,36 @@
+global g
+
+on CastAdjustRegpoints offsetPoint, memname, castname
+  [  0] getparam 2 .............................. <castname>
+  [  2] pushint8 2 .............................. <2>
+  [  4] get 8 ................................... <the number of castMembers of castLib castname>
+  [  6] setlocal 0 .............................. nummem = the number of castMembers of castLib castname
+  [  8] pushint8 1 .............................. <1>
+  [ 10] setlocal 1
+  [ 12] getlocal 1
+  [ 14] getlocal 0 .............................. <nummem>
+  [ 16] lteq
+  [ 17] jmpifz [ 60] ............................ repeat with mem = 1 to nummem
+  [ 20] getlocal 1 .............................. <mem>
+  [ 22] getparam 2 .............................. <castname>
+  [ 24] pusharglist 2 ........................... <mem, castname>
+  [ 26] extcall 34 .............................. <member(mem, castname)>
+  [ 28] setlocal 2 .............................. nextMem = member(mem, castname)
+  [ 30] getlocal 2 .............................. <nextMem>
+  [ 32] getobjprop 35 ........................... <nextMem.name>
+  [ 34] getparam 1 .............................. <memname>
+  [ 36] containsstr ............................. <nextMem.name contains memname>
+  [ 37] jmpifz [ 51] ............................ if nextMem.name contains memname then
+  [ 40] getlocal 2 .............................. <nextMem>
+  [ 42] getlocal 2 .............................. <nextMem>
+  [ 44] getobjprop 36 ........................... <nextMem.regPoint>
+  [ 46] getparam 0 .............................. <offsetPoint>
+  [ 48] add ..................................... <nextMem.regPoint + offsetPoint>
+  [ 49] setobjprop 36 ........................... nextMem.regPoint = nextMem.regPoint + offsetPoint
+  [ 51] pushint8 1
+  [ 53] getlocal 1
+  [ 55] add
+  [ 56] setlocal 1
+  [ 58] endrepeat [ 12]
+  [ 60] ret
+end

@@ -1,0 +1,207 @@
+[#name: "objEventNotify", #scriptType: #parent, #type: #script]
+-- allows objects to register with an object to be told when a particular event happens
+
+global g
+global gErrorTrace
+
+-- informs other objects of events happening here
+-- keeps track of requests for notification made of other objects
+-- and cancels them on me.finish()
+
+
+property ancestor
+property pEventsElsewhere    -- events in other objects that this object wants to be informed o
+property pEventsHere         -- events in this object that other objects want to be informed of
+
+on new me
+  ancestor = new(script"objBasic")
+  
+  return me
+end
+
+on init me
+  pEventsElsewhere = [:]
+  pEventsHere = [:]
+end
+
+on finish me
+--  gErrorTrace.append(#objEventNotifyFinish)
+--  gErrorTrace.append(#ancestorFinish)
+  ancestor.finish()
+--  gErrorTrace.deleteOne(#ancestorFinish)
+  
+--  gErrorTrace.append(#cancelRequestsIMade)
+  me.cancelRequestsIMade()
+-- gErrorTrace.deleteOne(#cancelRequestsIMade)
+  
+  pEventsElsewhere = [:]
+  pEventsHere = [:]
+  
+--  gErrorTrace.deleteOne(#objEventNotifyFinish)
+end
+
+on appendEventNotify me, theList, theObj, theEvent, frequency
+  -- create the event if it doesn't exist
+  if theList[theEvent] = void then
+    theList[theEvent] = []
+  end if
+  
+  -- make sure the object hasn't already signed up
+  pos = ListGetPosByProp(theList[theEvent], #obj, theObj)
+  if pos > 0 then
+    return
+  end if
+  
+  eventNotify = g.structMaster.getStruct(#eventNotify)
+  eventNotify.obj = theObj
+  eventNotify.frequency = frequency
+  
+  theList[theEvent].append(eventNotify)
+end
+
+on cancelEventNotification me, theObj, theEvent
+  -- another object is finished and is cancelling a request it made from this one
+  eventList = pEventsHere[theEvent]
+  
+  if eventList = void then
+    return 
+  end if
+  
+  pos = ListGetPosByProp(eventList, #obj, theObj)
+  if pos > 0 then
+    eventList.deleteAt(pos)
+  end if
+end
+
+on cancelRequestsIMade me
+  if ilk(pEventsElsewhere) <> #void then
+    repeat with i = 1 to pEventsElsewhere.count
+      theEvent = pEventsElsewhere.getPropAt(i)
+      eventList = pEventsElsewhere[i]
+      
+      repeat with eventNotify in eventList
+        eventNotify.obj.cancelEventNotification(me.big, theEvent)
+      end repeat
+      
+    end repeat
+  end if
+end
+
+on eventNotification me, theEvent, theObj
+  -- delete requests from list if we've heard enough about them
+  eventList = pEventsElsewhere[theEvent]
+  
+  repeat with i = eventList.count down to 1
+    eventNotify = eventList[i]
+    if eventNotify.obj = theObj then
+      if eventNotify.frequency = #once then
+        eventList.deleteAt(i)
+      end if
+    end if
+  end repeat
+end
+
+-- send out the event to all the subscribers
+on eventNotify me, theEvent
+  eventList = pEventsHere[theEvent]
+  
+  -- if no-one has signed up
+  if eventList = void then
+    return
+  end if
+  
+  numInList = eventList.count
+  
+  repeat with i = numInList down to 1
+    eventNotify = eventList[i]
+    eventNotify.obj.eventNotification(theEvent, me.big)
+    
+    if eventNotify.frequency = #once then
+      eventList.deleteAt(i)
+    end if
+  end repeat
+end
+
+on internalEvent me, theEvent
+  -- catch internalEvent calls
+end
+
+on keepMePosted me, theObj, theEvent, frequency
+  -- this object is requesting notification from another
+  -- the notification request is logged so it can be cancelled upon finish()
+  
+  me.appendEventNotify(pEventsElsewhere, theObj, theEvent, frequency)
+  
+  theObj.requestNotification(me.big, theEvent, frequency)
+end
+
+on requestNotification me, theObj, theEvent, frequency
+  -- another object is requesting notification from this one
+  
+  me.appendEventNotify(pEventsHere, theObj, theEvent, frequency)
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

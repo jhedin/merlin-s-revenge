@@ -1,0 +1,213 @@
+[#name: "objAutoUpdate", #scriptType: #parent, #type: #script]
+-- objects that extend this must implement the following functions:
+-- finishConditionMet()
+
+-- objects can set their own callingPrgMessage
+-- callingPrg can also modify that
+
+global gGameSpeed, g
+
+property ancestor
+property pAutoUpdate
+property pAutoUpdatePrg
+property pAutoUpdatePrior
+property pCallingPrg
+property pCallingPrgMessage
+property pFin
+property pLastFin               -- recording of last frame's result
+
+
+on new me
+  --    me.ancestor = new(script"objParams")
+  ancestor = new(script"objModules")
+  
+  i = me.modifyParams(#init)
+  i[#autoUpdate] = true
+  i[#autoUpdatePrior] = #lo
+  i[#callingPrg] = #none
+  i[#callingPrgMessage] = #autoUpdateFinished
+  
+  return me
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  pAutoUpdate = params.autoUpdate
+  pAutoUpdatePrg = g.updater
+  pAutoUpdatePrior = params.autoUpdatePrior
+  pCallingPrg = params.callingPrg
+  pCallingPrgMessage = params.callingPrgMessage
+  pLastFin = false
+  
+  pFin = false
+end
+
+on addSaveData me, sd
+  sd[#pAutoUpdate] =  pAutoUpdate
+  sd[#pAutoUpdatePrior] = pAutoUpdatePrior
+  sd[#pCallingPrgMessage] = pCallingPrgMessage
+  sd[#pFin] = pFin
+  sd[#pLastFin] = pLastFin
+  
+  ancestor.addSaveData(sd)
+end
+
+on cancel me
+  me.ID.bigMe.finish()
+end
+
+on calcFin me
+  if me.ID.bigMe.finishConditionMet() then
+    pFin = true
+    
+    me.eventNotify(pCallingPrgMessage)
+    
+    if pAutoUpdate then
+      me.ID.bigMe.finished()
+    end if
+    
+    --only inform callingPrg once
+    if pLastFin = false then
+      me.ID.bigMe.informCallingPrg()
+    end if
+    
+  else
+    pFin = false
+  end if
+  
+  pLastFin = pFin
+end
+
+on calcStart me
+  if pAutoUpdate and not pFin then
+    pAutoUpdatePrg.addPrg(me.ID.bigMe, pAutoUpdatePrior)
+  end if
+end
+
+on deactivate me
+  pAutoUpdatePrg.removePrg(me.ID.bigMe)
+end
+
+on activate me
+  me.calcStart()
+end
+
+on finished me
+  me.ID.bigMe.finish()
+end
+
+on finish me
+  me.deactivate()
+  ancestor.finish() 
+end
+
+on informCallingPrg me
+  if pCallingPrg <> #none then
+    call(pCallingPrgMessage, pCallingPrg)
+  end if
+end
+
+on paws me
+  pAutoUpdatePrg.removePrg(me.ID.bigMe)
+  ancestor.paws() -- for any modules
+end
+
+on restoreFromSave me, sd
+  ancestor.restoreFromSave(sd)
+  
+  -- callingPrg should be re-set by callingPrg
+  pAutoUpdate = sd.pAutoUpdate
+  pAutoUpdatePrg = g.updater
+  pAutoUpdatePrior = sd.pAutoUpdatePrior
+  pCallingPrgMessage = sd.pCallingPrgMessage
+  pFin = sd.pFin
+  pLastFin = sd.pLastFin
+  
+  me.calcStart()
+  
+end
+
+on setAutoUpdate me, which
+  pAutoUpdate = which
+end setAutoUpdate
+
+on start me
+  me.calcStart()
+  ancestor.start()
+end
+
+on update me
+  ancestor.update()
+  me.calcFin()
+end
+
+on unpaws me
+  pAutoUpdatePrg.addPrg(me.ID.bigMe, pAutoUpdatePrior)
+  ancestor.unpaws() -- for any modules
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

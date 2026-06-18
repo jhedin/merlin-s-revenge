@@ -1,0 +1,79 @@
+property ancestor, pCounterColour
+
+on new me
+  [  0] pushcons 0 .............................. <"objPowerUpWriting">
+  [  2] pusharglist 1 ........................... <"objPowerUpWriting">
+  [  4] extcall 34 .............................. <script("objPowerUpWriting")>
+  [  6] pusharglist 1 ........................... <script("objPowerUpWriting")>
+  [  8] extcall 0 ............................... <new(script("objPowerUpWriting"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objPowerUpWriting"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 3507 ........................... <#counterColour>
+  [ 27] pushint16 255 ........................... <255>
+  [ 30] pushint16 255 ........................... <255>
+  [ 33] pushint16 255 ........................... <255>
+  [ 36] pusharglist 3 ........................... <255, 255, 255>
+  [ 38] extcall 436 ............................. <rgb(255, 255, 255)>
+  [ 41] pusharglistnoret 3 ...................... <i, #counterColour, rgb(255, 255, 255)>
+  [ 43] objcall 48 .............................. i[#counterColour] = rgb(255, 255, 255)
+  [ 45] getparam 0 .............................. <me>
+  [ 47] pusharglistnoret 1 ...................... <me>
+  [ 49] extcall 35 .............................. return me
+  [ 51] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 3507 ......................... <params.counterColour>
+  [ 13] setprop 3508 ............................ pCounterColour = params.counterColour
+  [ 16] ret
+end
+
+on checkDead me
+  [  0] pushzero ................................ <0>
+  [  1] pusharglistnoret 1 ...................... <0>
+  [  3] extcall 35 .............................. return 0
+  [  5] ret
+end
+
+on collected me, collector
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <collector>
+  [  4] pusharglistnoret 2 ...................... <ancestor, collector>
+  [  6] objcall 1790 ............................ ancestor.collected(collector)
+  [  9] getparam 1 .............................. <collector>
+  [ 11] getparam 0 .............................. <me>
+  [ 13] pusharglist 1 ........................... <me>
+  [ 15] objcall 1722 ............................ <me.getCharacter()>
+  [ 18] getparam 0 .............................. <me>
+  [ 20] getchainedprop 57 ....................... <me.id>
+  [ 22] getobjprop 58 ........................... <me.id.bigMe>
+  [ 24] pusharglistnoret 3 ...................... <collector, me.getCharacter(), me.id.bigMe>
+  [ 26] objcall 3487 ............................ collector.potionCollected(me.getCharacter(), me.id.bigMe)
+  [ 29] ret
+end
+
+on getCounterColour me
+  [  0] getprop 3508 ............................ <pCounterColour>
+  [  3] pusharglistnoret 1 ...................... <pCounterColour>
+  [  5] extcall 35 .............................. return pCounterColour
+  [  7] ret
+end
+
+on getCounterMember me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 3509 ............................ <me.getNonWritingMember()>
+  [  7] pusharglistnoret 1 ...................... <me.getNonWritingMember()>
+  [  9] extcall 35 .............................. return me.getNonWritingMember()
+  [ 11] ret
+end

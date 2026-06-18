@@ -1,0 +1,290 @@
+property ancestor, pFont, pRequester, pTileSet
+global g, gMenuLayer, gMenuTextLayer, r
+
+on new me
+  [  0] pushcons 0 .............................. <"objController">
+  [  2] pusharglist 1 ........................... <"objController">
+  [  4] extcall 34 .............................. <script("objController")>
+  [  6] pusharglist 1 ........................... <script("objController")>
+  [  8] extcall 0 ............................... <new(script("objController"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objController"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 3192 ........................... <#fontObj>
+  [ 27] getglobal 40 ............................ <g>
+  [ 29] getchainedprop 2508 ..................... <g.collectionsMaster>
+  [ 32] pushsymb 2509 ........................... <#objFont>
+  [ 35] pushsymb 3215 ........................... <#menu>
+  [ 38] pusharglist 3 ........................... <g.collectionsMaster, #objFont, #menu>
+  [ 40] objcall 3070 ............................ <g.collectionsMaster.getObj(#objFont, #menu)>
+  [ 43] pusharglistnoret 3 ...................... <i, #fontObj, g.collectionsMaster.getObj(#objFont, #menu)>
+  [ 45] objcall 48 .............................. i[#fontObj] = g.collectionsMaster.getObj(#objFont, #menu)
+  [ 47] getlocal 0 .............................. <i>
+  [ 49] pushsymb 2838 ........................... <#requester>
+  [ 52] pushsymb 49 ............................. <#none>
+  [ 54] pusharglistnoret 3 ...................... <i, #requester, #none>
+  [ 56] objcall 48 .............................. i[#requester] = #none
+  [ 58] getlocal 0 .............................. <i>
+  [ 60] pushsymb 2127 ........................... <#tileSet>
+  [ 63] getglobal 40 ............................ <g>
+  [ 65] getchainedprop 2508 ..................... <g.collectionsMaster>
+  [ 68] pushsymb 3069 ........................... <#objTileSetKey>
+  [ 71] pushsymb 3215 ........................... <#menu>
+  [ 74] pusharglist 3 ........................... <g.collectionsMaster, #objTileSetKey, #menu>
+  [ 76] objcall 3070 ............................ <g.collectionsMaster.getObj(#objTileSetKey, #menu)>
+  [ 79] pusharglistnoret 3 ...................... <i, #tileSet, g.collectionsMaster.getObj(#objTileSetKey, #menu)>
+  [ 81] objcall 48 .............................. i[#tileSet] = g.collectionsMaster.getObj(#objTileSetKey, #menu)
+  [ 83] getparam 0 .............................. <me>
+  [ 85] pusharglistnoret 1 ...................... <me>
+  [ 87] extcall 35 .............................. return me
+  [ 89] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 3192 ......................... <params.fontObj>
+  [ 13] setprop 2496 ............................ pFont = params.fontObj
+  [ 16] getparam 1 .............................. <params>
+  [ 18] getobjprop 2838 ......................... <params.requester>
+  [ 21] setprop 2844 ............................ pRequester = params.requester
+  [ 24] getparam 1 .............................. <params>
+  [ 26] getobjprop 2127 ......................... <params.tileSet>
+  [ 29] setprop 1238 ............................ pTileSet = params.tileSet
+  [ 32] ret
+end
+
+on menuClosed me, theMenu
+  [  0] getprop 2844 ............................ <pRequester>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] nteq .................................... <pRequester <> #none>
+  [  6] jmpifz [ 19] ............................ if pRequester <> #none then
+  [  9] getprop 2844 ............................ <pRequester>
+  [ 12] getparam 1 .............................. <theMenu>
+  [ 14] pusharglistnoret 2 ...................... <pRequester, theMenu>
+  [ 16] objcall 2999 ............................ pRequester.menuClosed(theMenu)
+  [ 19] ret
+end
+
+on newDialogue me, theTitle, thelist, theLocation
+  [  0] pushcons 1 .............................. <EMPTY>
+  [  2] setlocal 0 .............................. def = EMPTY
+  [  4] getlocal 0 .............................. <def>
+  [  6] getparam 1 .............................. <theTitle>
+  [  8] joinstr ................................. <def & theTitle>
+  [  9] getglobal 2464 .......................... <r>
+  [ 12] joinstr ................................. <def & theTitle & r>
+  [ 13] setlocal 0 .............................. def = def & theTitle & r
+  [ 15] getparam 2 .............................. <thelist>
+  [ 17] peek 0
+  [ 19] pusharglist 1
+  [ 21] extcall 257
+  [ 24] pushint8 1
+  [ 26] peek 0
+  [ 28] peek 2
+  [ 30] lteq
+  [ 31] jmpifz [ 66] ............................ repeat with itm in thelist
+  [ 34] peek 2
+  [ 36] peek 1
+  [ 38] pusharglist 2
+  [ 40] extcall 109
+  [ 42] setlocal 1
+  [ 44] getlocal 0 .............................. <def>
+  [ 46] getlocal 1 .............................. <itm>
+  [ 48] joinstr ................................. <def & itm>
+  [ 49] pushcons 2 .............................. <" | #">
+  [ 51] joinstr ................................. <def & itm & " | #">
+  [ 52] getlocal 1 .............................. <itm>
+  [ 54] joinstr ................................. <def & itm & " | #" & itm>
+  [ 55] getglobal 2464 .......................... <r>
+  [ 58] joinstr ................................. <def & itm & " | #" & itm & r>
+  [ 59] setlocal 0 .............................. def = def & itm & " | #" & itm & r
+  [ 61] pushint8 1
+  [ 63] add
+  [ 64] endrepeat [ 26]
+  [ 66] pop 3
+  [ 68] getparam 2 .............................. <thelist>
+  [ 70] getobjprop 257 .......................... <thelist.count>
+  [ 73] pushzero ................................ <0>
+  [ 74] gt ...................................... <thelist.count > 0>
+  [ 75] jmpifz [ 89] ............................ if thelist.count > 0 then
+  [ 78] getlocal 0 .............................. <def>
+  [ 80] pushcons 3 .............................. <"-">
+  [ 82] joinstr ................................. <def & "-">
+  [ 83] getglobal 2464 .......................... <r>
+  [ 86] joinstr ................................. <def & "-" & r>
+  [ 87] setlocal 0 .............................. def = def & "-" & r
+  [ 89] getlocal 0 .............................. <def>
+  [ 91] pushcons 4 .............................. <"exit | #exit">
+  [ 93] joinstr ................................. <def & "exit | #exit">
+  [ 94] setlocal 0 .............................. def = def & "exit | #exit"
+  [ 96] getparam 0 .............................. <me>
+  [ 98] getlocal 0 .............................. <def>
+  [100] getparam 3 .............................. <theLocation>
+  [102] pusharglistnoret 3 ...................... <me, def, theLocation>
+  [104] objcall 2381 ............................ me.newObject(def, theLocation)
+  [107] ret
+end
+
+on newObject me, definition, location, caller
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 2385 ........................... <#pObjects>
+  [  5] pusharglist 2 ........................... <me, #pObjects>
+  [  7] objcall 257 ............................. <me.pObjects.count>
+  [ 10] setlocal 0 .............................. numMenus = me.pObjects.count
+  [ 12] getparam 1 .............................. <definition>
+  [ 14] pushsymb 99 ............................. <#member>
+  [ 16] pusharglist 2 ........................... <definition, #member>
+  [ 18] extcall 206 ............................. <ilk(definition, #member)>
+  [ 20] jmpifz [ 30] ............................ if ilk(definition, #member) then
+  [ 23] getparam 1 .............................. <definition>
+  [ 25] getobjprop 670 .......................... <definition.text>
+  [ 28] setparam 1 .............................. definition = definition.text
+  [ 30] getparam 3 .............................. <caller>
+  [ 32] pusharglist 0 ........................... <>
+  [ 34] extcall 166 ............................. <VOID>
+  [ 36] eq ...................................... <caller = VOID>
+  [ 37] jmpifz [ 47] ............................ if caller = VOID then / else
+  [ 40] getparam 0 .............................. <me>
+  [ 42] setlocal 1 .............................. requester = me
+  [ 44] jmp [ 51]
+  [ 47] getparam 3 .............................. <caller>
+  [ 49] setlocal 1 .............................. requester = caller
+  [ 51] getglobal 40 ............................ <g>
+  [ 53] getchainedprop 41 ....................... <g.objectMaster>
+  [ 55] pushsymb 3300 ........................... <#objMenu>
+  [ 58] pusharglist 2 ........................... <g.objectMaster, #objMenu>
+  [ 60] objcall 43 .............................. <g.objectMaster.requestObject(#objMenu)>
+  [ 62] setlocal 2 .............................. nMenu = g.objectMaster.requestObject(#objMenu)
+  [ 64] getlocal 2 .............................. <nMenu>
+  [ 66] pushsymb 1 .............................. <#init>
+  [ 68] pusharglist 2 ........................... <nMenu, #init>
+  [ 70] objcall 230 ............................. <nMenu.getParams(#init)>
+  [ 72] setlocal 3 .............................. params = nMenu.getParams(#init)
+  [ 74] getlocal 3 .............................. <params>
+  [ 76] getprop 2496 ............................ <pFont>
+  [ 79] setobjprop 3192 ......................... params.fontObj = pFont
+  [ 82] getlocal 3 .............................. <params>
+  [ 84] getglobal 3194 .......................... <gMenuLayer>
+  [ 87] getlocal 0 .............................. <numMenus>
+  [ 89] add ..................................... <gMenuLayer + numMenus>
+  [ 90] setobjprop 1352 ......................... params.layer = gMenuLayer + numMenus
+  [ 93] getlocal 3 .............................. <params>
+  [ 95] getparam 2 .............................. <location>
+  [ 97] setobjprop 1662 ......................... params.location = location
+  [100] getlocal 3 .............................. <params>
+  [102] getparam 1 .............................. <definition>
+  [104] setobjprop 3015 ......................... params.definitionTxt = definition
+  [107] getlocal 3 .............................. <params>
+  [109] getlocal 1 .............................. <requester>
+  [111] setobjprop 2838 ......................... params.requester = requester
+  [114] getlocal 3 .............................. <params>
+  [116] getglobal 2946 .......................... <gMenuTextLayer>
+  [119] getlocal 0 .............................. <numMenus>
+  [121] add ..................................... <gMenuTextLayer + numMenus>
+  [122] setobjprop 3200 ......................... params.textLayer = gMenuTextLayer + numMenus
+  [125] getlocal 3 .............................. <params>
+  [127] getprop 1238 ............................ <pTileSet>
+  [130] setobjprop 2127 ......................... params.tileSet = pTileSet
+  [133] getprop 33 .............................. <ancestor>
+  [135] getlocal 3 .............................. <params>
+  [137] pusharglist 2 ........................... <ancestor, params>
+  [139] objcall 2381 ............................ <ancestor.newObject(params)>
+  [142] setlocal 3 .............................. params = ancestor.newObject(params)
+  [144] getlocal 2 .............................. <nMenu>
+  [146] getlocal 3 .............................. <params>
+  [148] pusharglistnoret 2 ...................... <nMenu, params>
+  [150] objcall 1 ............................... nMenu.init(params)
+  [152] getlocal 2 .............................. <nMenu>
+  [154] pusharglistnoret 1 ...................... <nMenu>
+  [156] objcall 1665 ............................ nMenu.display()
+  [159] getparam 0 .............................. <me>
+  [161] getchainedprop 2385 ..................... <me.pObjects>
+  [164] getlocal 2 .............................. <nMenu>
+  [166] pusharglistnoret 2 ...................... <me.pObjects, nMenu>
+  [168] objcall 256 ............................. me.pObjects.append(nMenu)
+  [171] getlocal 2 .............................. <nMenu>
+  [173] pusharglistnoret 1 ...................... <nMenu>
+  [175] extcall 35 .............................. return nMenu
+  [177] ret
+end
+
+on newPropertyDialogue me, theTitle, thePropList, theLocation
+  [  0] pushcons 1 .............................. <EMPTY>
+  [  2] setlocal 0 .............................. def = EMPTY
+  [  4] getlocal 0 .............................. <def>
+  [  6] getparam 1 .............................. <theTitle>
+  [  8] joinstr ................................. <def & theTitle>
+  [  9] getglobal 2464 .......................... <r>
+  [ 12] joinstr ................................. <def & theTitle & r>
+  [ 13] setlocal 0 .............................. def = def & theTitle & r
+  [ 15] pushint8 1 .............................. <1>
+  [ 17] setlocal 1
+  [ 19] getlocal 1
+  [ 21] getparam 2 .............................. <thePropList>
+  [ 23] getobjprop 257 .......................... <thePropList.count>
+  [ 26] lteq
+  [ 27] jmpifz [ 77] ............................ repeat with i = 1 to thePropList.count
+  [ 30] getparam 2 .............................. <thePropList>
+  [ 32] getlocal 1 .............................. <i>
+  [ 34] pusharglist 2 ........................... <thePropList, i>
+  [ 36] objcall 109 ............................. <thePropList[i]>
+  [ 38] setlocal 2 .............................. nVal = thePropList[i]
+  [ 40] getparam 2 .............................. <thePropList>
+  [ 42] getlocal 1 .............................. <i>
+  [ 44] pusharglist 2 ........................... <thePropList, i>
+  [ 46] objcall 1092 ............................ <thePropList.getPropAt(i)>
+  [ 49] setlocal 3 .............................. nProp = thePropList.getPropAt(i)
+  [ 51] getlocal 0 .............................. <def>
+  [ 53] getlocal 3 .............................. <nProp>
+  [ 55] joinstr ................................. <def & nProp>
+  [ 56] pushcons 5 .............................. <" > ">
+  [ 58] joinstr ................................. <def & nProp & " > ">
+  [ 59] getlocal 2 .............................. <nVal>
+  [ 61] joinstr ................................. <def & nProp & " > " & nVal>
+  [ 62] getglobal 2464 .......................... <r>
+  [ 65] joinstr ................................. <def & nProp & " > " & nVal & r>
+  [ 66] setlocal 0 .............................. def = def & nProp & " > " & nVal & r
+  [ 68] pushint8 1
+  [ 70] getlocal 1
+  [ 72] add
+  [ 73] setlocal 1
+  [ 75] endrepeat [ 19]
+  [ 77] getparam 2 .............................. <thePropList>
+  [ 79] getobjprop 257 .......................... <thePropList.count>
+  [ 82] pushzero ................................ <0>
+  [ 83] gt ...................................... <thePropList.count > 0>
+  [ 84] jmpifz [ 98] ............................ if thePropList.count > 0 then
+  [ 87] getlocal 0 .............................. <def>
+  [ 89] pushcons 3 .............................. <"-">
+  [ 91] joinstr ................................. <def & "-">
+  [ 92] getglobal 2464 .......................... <r>
+  [ 95] joinstr ................................. <def & "-" & r>
+  [ 96] setlocal 0 .............................. def = def & "-" & r
+  [ 98] getlocal 0 .............................. <def>
+  [100] pushcons 4 .............................. <"exit | #exit">
+  [102] joinstr ................................. <def & "exit | #exit">
+  [103] setlocal 0 .............................. def = def & "exit | #exit"
+  [105] getparam 0 .............................. <me>
+  [107] getlocal 0 .............................. <def>
+  [109] getparam 3 .............................. <theLocation>
+  [111] pusharglistnoret 3 ...................... <me, def, theLocation>
+  [113] objcall 2381 ............................ me.newObject(def, theLocation)
+  [116] ret
+end
+
+on optionNotFound me, theComm, menuSym
+  [  0] getprop 2844 ............................ <pRequester>
+  [  3] getparam 1 .............................. <theComm>
+  [  5] getparam 2 .............................. <menuSym>
+  [  7] pusharglistnoret 3 ...................... <pRequester, theComm, menuSym>
+  [  9] objcall 3000 ............................ pRequester.menuSelection(theComm, menuSym)
+  [ 12] ret
+end

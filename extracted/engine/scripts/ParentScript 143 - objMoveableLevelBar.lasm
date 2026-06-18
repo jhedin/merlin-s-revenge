@@ -1,0 +1,500 @@
+property ancestor, pGapY, pSizes, pStarImages, pTarget
+global gGameEnergyBarLayer
+
+on new me
+  [  0] pushcons 0 .............................. <"objSpriteMember">
+  [  2] pusharglist 1 ........................... <"objSpriteMember">
+  [  4] extcall 34 .............................. <script("objSpriteMember")>
+  [  6] pusharglist 1 ........................... <script("objSpriteMember")>
+  [  8] extcall 0 ............................... <new(script("objSpriteMember"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objSpriteMember"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pusharglistnoret 1 ...................... <me>
+  [ 16] extcall 35 .............................. return me
+  [ 18] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pushint8 4 .............................. <4>
+  [ 10] setprop 3365 ............................ pGapY = 4
+  [ 13] pushsymb 3367 ........................... <#large>
+  [ 16] pushsymb 3368 ........................... <#medium>
+  [ 19] pushsymb 3369 ........................... <#tiny>
+  [ 22] pusharglist 3 ........................... <[#large, #medium, #tiny]>
+  [ 24] pushlist ................................ <[#large, #medium, #tiny]>
+  [ 25] setprop 3366 ............................ pSizes = [#large, #medium, #tiny]
+  [ 28] pusharglist 0 ........................... <[:]>
+  [ 30] pushproplist ............................ <[:]>
+  [ 31] setprop 3370 ............................ pStarImages = [:]
+  [ 34] getprop 3370 ............................ <pStarImages>
+  [ 37] setlocal 0 .............................. si = pStarImages
+  [ 39] getlocal 0 .............................. <si>
+  [ 41] pushsymb 3369 ........................... <#tiny>
+  [ 44] pushcons 1 .............................. <"star_tiny">
+  [ 46] pushcons 2 .............................. <"gfx">
+  [ 48] pusharglist 2 ........................... <"star_tiny", "gfx">
+  [ 50] extcall 99 .............................. <member("star_tiny", "gfx")>
+  [ 52] getobjprop 800 .......................... <member("star_tiny", "gfx").image>
+  [ 55] pusharglistnoret 3 ...................... <si, #tiny, member("star_tiny", "gfx").image>
+  [ 57] objcall 48 .............................. si[#tiny] = member("star_tiny", "gfx").image
+  [ 59] getlocal 0 .............................. <si>
+  [ 61] pushsymb 3368 ........................... <#medium>
+  [ 64] pushcons 3 .............................. <"star_medium">
+  [ 66] pushcons 2 .............................. <"gfx">
+  [ 68] pusharglist 2 ........................... <"star_medium", "gfx">
+  [ 70] extcall 99 .............................. <member("star_medium", "gfx")>
+  [ 72] getobjprop 800 .......................... <member("star_medium", "gfx").image>
+  [ 75] pusharglistnoret 3 ...................... <si, #medium, member("star_medium", "gfx").image>
+  [ 77] objcall 48 .............................. si[#medium] = member("star_medium", "gfx").image
+  [ 79] getlocal 0 .............................. <si>
+  [ 81] pushsymb 3367 ........................... <#large>
+  [ 84] pushcons 4 .............................. <"star_large">
+  [ 86] pushcons 2 .............................. <"gfx">
+  [ 88] pusharglist 2 ........................... <"star_large", "gfx">
+  [ 90] extcall 99 .............................. <member("star_large", "gfx")>
+  [ 92] getobjprop 800 .......................... <member("star_large", "gfx").image>
+  [ 95] pusharglistnoret 3 ...................... <si, #large, member("star_large", "gfx").image>
+  [ 97] objcall 48 .............................. si[#large] = member("star_large", "gfx").image
+  [ 99] pushsymb 49 ............................. <#none>
+  [101] setprop 2847 ............................ pTarget = #none
+  [104] ret
+end
+
+on calcImageHeight me, numOfStars
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. imageHeight = 0
+  [  3] getprop 3366 ............................ <pSizes>
+  [  6] setlocal 1 .............................. sizes = pSizes
+  [  8] getlocal 1 .............................. <sizes>
+  [ 10] peek 0
+  [ 12] pusharglist 1
+  [ 14] extcall 257
+  [ 17] pushint8 1
+  [ 19] peek 0
+  [ 21] peek 2
+  [ 23] lteq
+  [ 24] jmpifz [ 72] ............................ repeat with size in sizes
+  [ 27] peek 2
+  [ 29] peek 1
+  [ 31] pusharglist 2
+  [ 33] extcall 109
+  [ 35] setlocal 2
+  [ 37] getparam 1 .............................. <numOfStars>
+  [ 39] getlocal 2 .............................. <size>
+  [ 41] pusharglist 2 ........................... <numOfStars, size>
+  [ 43] objcall 109 ............................. <numOfStars[size]>
+  [ 45] pushzero ................................ <0>
+  [ 46] gt ...................................... <numOfStars[size] > 0>
+  [ 47] jmpifz [ 67] ............................ if numOfStars[size] > 0 then
+  [ 50] getprop 3370 ............................ <pStarImages>
+  [ 53] getlocal 2 .............................. <size>
+  [ 55] pusharglist 2 ........................... <pStarImages, size>
+  [ 57] objcall 109 ............................. <pStarImages[size]>
+  [ 59] getobjprop 423 .......................... <pStarImages[size].height>
+  [ 62] setlocal 0 .............................. imageHeight = pStarImages[size].height
+  [ 64] jmp [ 72] ............................... exit repeat
+  [ 67] pushint8 1
+  [ 69] add
+  [ 70] endrepeat [ 19]
+  [ 72] pop 3
+  [ 74] getlocal 0 .............................. <imageHeight>
+  [ 76] pusharglistnoret 1 ...................... <imageHeight>
+  [ 78] extcall 35 .............................. return imageHeight
+  [ 80] ret
+end
+
+on calcImageWidth me, numOfStars
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. totalWidth = 0
+  [  3] getprop 3366 ............................ <pSizes>
+  [  6] peek 0
+  [  8] pusharglist 1
+  [ 10] extcall 257
+  [ 13] pushint8 1
+  [ 15] peek 0
+  [ 17] peek 2
+  [ 19] lteq
+  [ 20] jmpifz [ 72] ............................ repeat with size in pSizes
+  [ 23] peek 2
+  [ 25] peek 1
+  [ 27] pusharglist 2
+  [ 29] extcall 109
+  [ 31] setlocal 1
+  [ 33] getprop 3370 ............................ <pStarImages>
+  [ 36] getlocal 1 .............................. <size>
+  [ 38] pusharglist 2 ........................... <pStarImages, size>
+  [ 40] objcall 109 ............................. <pStarImages[size]>
+  [ 42] getobjprop 424 .......................... <pStarImages[size].width>
+  [ 45] setlocal 2 .............................. imageWidth = pStarImages[size].width
+  [ 47] getlocal 2 .............................. <imageWidth>
+  [ 49] getparam 1 .............................. <numOfStars>
+  [ 51] getlocal 1 .............................. <size>
+  [ 53] pusharglist 2 ........................... <numOfStars, size>
+  [ 55] objcall 109 ............................. <numOfStars[size]>
+  [ 57] mul ..................................... <imageWidth * numOfStars[size]>
+  [ 58] setlocal 3 .............................. widthForSize = imageWidth * numOfStars[size]
+  [ 60] getlocal 0 .............................. <totalWidth>
+  [ 62] getlocal 3 .............................. <widthForSize>
+  [ 64] add ..................................... <totalWidth + widthForSize>
+  [ 65] setlocal 0 .............................. totalWidth = totalWidth + widthForSize
+  [ 67] pushint8 1
+  [ 69] add
+  [ 70] endrepeat [ 15]
+  [ 72] pop 3
+  [ 74] getlocal 0 .............................. <totalWidth>
+  [ 76] pusharglistnoret 1 ...................... <totalWidth>
+  [ 78] extcall 35 .............................. return totalWidth
+  [ 80] ret
+end
+
+on calcNumbersOfStars me, targetLevel
+  [  0] getparam 1 .............................. <targetLevel>
+  [  2] pushint8 10 ............................. <10>
+  [  4] div ..................................... <targetLevel / 10>
+  [  5] setlocal 0 .............................. numLarge = targetLevel / 10
+  [  7] getparam 1 .............................. <targetLevel>
+  [  9] getlocal 0 .............................. <numLarge>
+  [ 11] pushint8 10 ............................. <10>
+  [ 13] mul ..................................... <numLarge * 10>
+  [ 14] sub ..................................... <targetLevel - (numLarge * 10)>
+  [ 15] setlocal 1 .............................. leftover = targetLevel - (numLarge * 10)
+  [ 17] getlocal 1 .............................. <leftover>
+  [ 19] pushint8 5 .............................. <5>
+  [ 21] div ..................................... <leftover / 5>
+  [ 22] setlocal 2 .............................. numMedium = leftover / 5
+  [ 24] getlocal 1 .............................. <leftover>
+  [ 26] getlocal 2 .............................. <numMedium>
+  [ 28] pushint8 5 .............................. <5>
+  [ 30] mul ..................................... <numMedium * 5>
+  [ 31] sub ..................................... <leftover - (numMedium * 5)>
+  [ 32] setlocal 1 .............................. leftover = leftover - (numMedium * 5)
+  [ 34] getlocal 1 .............................. <leftover>
+  [ 36] setlocal 3 .............................. numTiny = leftover
+  [ 38] pushsymb 3369 ........................... <#tiny>
+  [ 41] getlocal 3 .............................. <numTiny>
+  [ 43] pushsymb 3368 ........................... <#medium>
+  [ 46] getlocal 2 .............................. <numMedium>
+  [ 48] pushsymb 3367 ........................... <#large>
+  [ 51] getlocal 0 .............................. <numLarge>
+  [ 53] pusharglist 6 ........................... <[#tiny: numTiny, #medium: numMedium, #large: numLarge]>
+  [ 55] pushproplist ............................ <[#tiny: numTiny, #medium: numMedium, #large: numLarge]>
+  [ 56] setlocal 4 .............................. nums = [#tiny: numTiny, #medium: numMedium, #large: numLarge]
+  [ 58] getlocal 4 .............................. <nums>
+  [ 60] pusharglistnoret 1 ...................... <nums>
+  [ 62] extcall 35 .............................. return nums
+  [ 64] ret
+end
+
+on clearTarget me
+  [  0] pushsymb 49 ............................. <#none>
+  [  2] setprop 2847 ............................ pTarget = #none
+  [  5] getparam 0 .............................. <me>
+  [  7] pusharglistnoret 1 ...................... <me>
+  [  9] objcall 375 ............................. me.offscreen()
+  [ 12] ret
+end
+
+on constructStarsImage me
+  [  0] getprop 2847 ............................ <pTarget>
+  [  3] pusharglist 1 ........................... <pTarget>
+  [  5] objcall 573 ............................. <pTarget.getExperienceLevel()>
+  [  8] setlocal 0 .............................. targetLevel = pTarget.getExperienceLevel()
+  [ 10] getparam 0 .............................. <me>
+  [ 12] getlocal 0 .............................. <targetLevel>
+  [ 14] pusharglist 2 ........................... <me, targetLevel>
+  [ 16] objcall 3362 ............................ <me.drawStarsImage(targetLevel)>
+  [ 19] setlocal 1 .............................. myImage = me.drawStarsImage(targetLevel)
+  [ 21] getparam 0 .............................. <me>
+  [ 23] getlocal 1 .............................. <myImage>
+  [ 25] pusharglistnoret 2 ...................... <me, myImage>
+  [ 27] objcall 3122 ............................ me.setImage(myImage)
+  [ 30] ret
+end
+
+on displayAboveTarget me
+  [  0] getprop 2847 ............................ <pTarget>
+  [  3] pusharglist 1 ........................... <pTarget>
+  [  5] objcall 111 ............................. <pTarget.getLoc()>
+  [  7] setlocal 0 .............................. targetloc = pTarget.getLoc()
+  [  9] getprop 2847 ............................ <pTarget>
+  [ 12] pushsymb 69 ............................. <#stand>
+  [ 14] pusharglist 2 ........................... <pTarget, #stand>
+  [ 16] objcall 18 .............................. <pTarget.getAnimMemberFromStrip(#stand)>
+  [ 18] getobjprop 422 .......................... <pTarget.getAnimMemberFromStrip(#stand).regPoint>
+  [ 21] setlocal 1 .............................. targetReg = pTarget.getAnimMemberFromStrip(#stand).regPoint
+  [ 23] getparam 0 .............................. <me>
+  [ 25] pusharglist 1 ........................... <me>
+  [ 27] objcall 97 .............................. <me.getSprite()>
+  [ 29] setlocal 2 .............................. spr = me.getSprite()
+  [ 31] getlocal 2 .............................. <spr>
+  [ 33] getobjprop 259 .......................... <spr.locZ>
+  [ 36] getglobal 3383 .......................... <gGameEnergyBarLayer>
+  [ 39] nteq .................................... <spr.locZ <> gGameEnergyBarLayer>
+  [ 40] jmpifz [ 51] ............................ if spr.locZ <> gGameEnergyBarLayer then
+  [ 43] getlocal 2 .............................. <spr>
+  [ 45] getglobal 3383 .......................... <gGameEnergyBarLayer>
+  [ 48] setobjprop 259 .......................... spr.locZ = gGameEnergyBarLayer
+  [ 51] pushzero ................................ <0>
+  [ 52] pushzero ................................ <0>
+  [ 53] pusharglist 2 ........................... <0, 0>
+  [ 55] extcall 197 ............................. <point(0, 0)>
+  [ 57] setlocal 3 .............................. ourLoc = point(0, 0)
+  [ 59] getlocal 3 .............................. <ourLoc>
+  [ 61] getlocal 0 .............................. <targetloc>
+  [ 63] getobjprop 539 .......................... <targetloc.locH>
+  [ 66] setobjprop 539 .......................... ourLoc.locH = targetloc.locH
+  [ 69] getlocal 3 .............................. <ourLoc>
+  [ 71] getlocal 0 .............................. <targetloc>
+  [ 73] getobjprop 540 .......................... <targetloc.locV>
+  [ 76] getlocal 1 .............................. <targetReg>
+  [ 78] getobjprop 540 .......................... <targetReg.locV>
+  [ 81] sub ..................................... <targetloc.locV - targetReg.locV>
+  [ 82] getlocal 2 .............................. <spr>
+  [ 84] getobjprop 423 .......................... <spr.height>
+  [ 87] sub ..................................... <targetloc.locV - targetReg.locV - spr.height>
+  [ 88] getlocal 2 .............................. <spr>
+  [ 90] getchainedprop 99 ....................... <spr.member>
+  [ 92] getchainedprop 422 ...................... <spr.member.regPoint>
+  [ 95] getobjprop 540 .......................... <spr.member.regPoint.locV>
+  [ 98] add ..................................... <targetloc.locV - targetReg.locV - spr.height + spr.member.regPoint.locV>
+  [ 99] setobjprop 540 .......................... ourLoc.locV = targetloc.locV - targetReg.locV - spr.height + spr.member.regPoint.locV
+  [102] getlocal 3 .............................. <ourLoc>
+  [104] getlocal 3 .............................. <ourLoc>
+  [106] getobjprop 540 .......................... <ourLoc.locV>
+  [109] getprop 3365 ............................ <pGapY>
+  [112] sub ..................................... <ourLoc.locV - pGapY>
+  [113] setobjprop 540 .......................... ourLoc.locV = ourLoc.locV - pGapY
+  [116] getparam 0 .............................. <me>
+  [118] getlocal 3 .............................. <ourLoc>
+  [120] pusharglistnoret 2 ...................... <me, ourLoc>
+  [122] objcall 2510 ............................ me.setSpriteLoc(ourLoc)
+  [125] ret
+end
+
+on drawStarsImage me, targetLevel
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <targetLevel>
+  [  4] pusharglist 2 ........................... <me, targetLevel>
+  [  6] objcall 3359 ............................ <me.calcNumbersOfStars(targetLevel)>
+  [  9] setlocal 0 .............................. numOfStars = me.calcNumbersOfStars(targetLevel)
+  [ 11] getparam 0 .............................. <me>
+  [ 13] getlocal 0 .............................. <numOfStars>
+  [ 15] pusharglist 2 ........................... <me, numOfStars>
+  [ 17] objcall 3357 ............................ <me.calcImageHeight(numOfStars)>
+  [ 20] setlocal 1 .............................. imageHeight = me.calcImageHeight(numOfStars)
+  [ 22] getparam 0 .............................. <me>
+  [ 24] getlocal 0 .............................. <numOfStars>
+  [ 26] pusharglist 2 ........................... <me, numOfStars>
+  [ 28] objcall 3358 ............................ <me.calcImageWidth(numOfStars)>
+  [ 31] setlocal 2 .............................. imageWidth = me.calcImageWidth(numOfStars)
+  [ 33] getlocal 2 .............................. <imageWidth>
+  [ 35] getlocal 1 .............................. <imageHeight>
+  [ 37] pushint8 32 ............................. <32>
+  [ 39] pusharglist 3 ........................... <imageWidth, imageHeight, 32>
+  [ 41] extcall 800 ............................. <image(imageWidth, imageHeight, 32)>
+  [ 44] setlocal 3 .............................. myImage = image(imageWidth, imageHeight, 32)
+  [ 46] getparam 0 .............................. <me>
+  [ 48] getlocal 3 .............................. <myImage>
+  [ 50] getlocal 0 .............................. <numOfStars>
+  [ 52] pusharglistnoret 3 ...................... <me, myImage, numOfStars>
+  [ 54] objcall 3363 ............................ me.drawStarsInImage(myImage, numOfStars)
+  [ 57] getlocal 3 .............................. <myImage>
+  [ 59] pusharglistnoret 1 ...................... <myImage>
+  [ 61] extcall 35 .............................. return myImage
+  [ 63] ret
+end
+
+on drawStarsInImage me, myImage, numOfStars
+  [  0] pushzero ................................ <0>
+  [  1] setlocal 0 .............................. destX1 = 0
+  [  3] getprop 3366 ............................ <pSizes>
+  [  6] peek 0
+  [  8] pusharglist 1
+  [ 10] extcall 257
+  [ 13] pushint8 1
+  [ 15] peek 0
+  [ 17] peek 2
+  [ 19] lteq
+  [ 20] jmpifz [185] ............................ repeat with size in pSizes
+  [ 23] peek 2
+  [ 25] peek 1
+  [ 27] pusharglist 2
+  [ 29] extcall 109
+  [ 31] setlocal 1
+  [ 33] getparam 2 .............................. <numOfStars>
+  [ 35] getlocal 1 .............................. <size>
+  [ 37] pusharglist 2 ........................... <numOfStars, size>
+  [ 39] objcall 109 ............................. <numOfStars[size]>
+  [ 41] setlocal 2 .............................. numStars = numOfStars[size]
+  [ 43] getprop 3370 ............................ <pStarImages>
+  [ 46] getlocal 1 .............................. <size>
+  [ 48] pusharglist 2 ........................... <pStarImages, size>
+  [ 50] objcall 109 ............................. <pStarImages[size]>
+  [ 52] setlocal 3 .............................. starImage = pStarImages[size]
+  [ 54] pushint8 1 .............................. <1>
+  [ 56] setlocal 4
+  [ 58] getlocal 4
+  [ 60] getlocal 2 .............................. <numStars>
+  [ 62] lteq
+  [ 63] jmpifz [180] ............................ repeat with i = 1 to numStars
+  [ 66] getlocal 3 .............................. <starImage>
+  [ 68] getobjprop 263 .......................... <starImage.rect>
+  [ 71] setlocal 5 .............................. srcRect = starImage.rect
+  [ 73] getlocal 0 .............................. <destX1>
+  [ 75] getlocal 3 .............................. <starImage>
+  [ 77] getobjprop 424 .......................... <starImage.width>
+  [ 80] add ..................................... <destX1 + starImage.width>
+  [ 81] setlocal 6 .............................. destX2 = destX1 + starImage.width
+  [ 83] getlocal 3 .............................. <starImage>
+  [ 85] getobjprop 423 .......................... <starImage.height>
+  [ 88] setlocal 7 .............................. starHeight = starImage.height
+  [ 90] getparam 1 .............................. <myImage>
+  [ 92] getobjprop 423 .......................... <myImage.height>
+  [ 95] setlocal 8 .............................. imageHeight = myImage.height
+  [ 97] getlocal 8 .............................. <imageHeight>
+  [ 99] getlocal 7 .............................. <starHeight>
+  [101] sub ..................................... <imageHeight - starHeight>
+  [102] setlocal 9 .............................. difference = imageHeight - starHeight
+  [104] pushzero ................................ <0>
+  [105] getlocal 9 .............................. <difference>
+  [107] pushint8 2 .............................. <2>
+  [109] div ..................................... <difference / 2>
+  [110] add ..................................... <0 + (difference / 2)>
+  [111] setlocal 10 ............................. destY1 = 0 + (difference / 2)
+  [113] getlocal 10 ............................. <destY1>
+  [115] getlocal 7 .............................. <starHeight>
+  [117] add ..................................... <destY1 + starHeight>
+  [118] setlocal 11 ............................. destY2 = destY1 + starHeight
+  [120] getlocal 0 .............................. <destX1>
+  [122] getlocal 10 ............................. <destY1>
+  [124] getlocal 6 .............................. <destX2>
+  [126] getlocal 11 ............................. <destY2>
+  [128] pusharglist 4 ........................... <destX1, destY1, destX2, destY2>
+  [130] extcall 263 ............................. <rect(destX1, destY1, destX2, destY2)>
+  [133] setlocal 12 ............................. destRect = rect(destX1, destY1, destX2, destY2)
+  [135] getparam 1 .............................. <myImage>
+  [137] getlocal 3 .............................. <starImage>
+  [139] getlocal 12 ............................. <destRect>
+  [141] getlocal 5 .............................. <srcRect>
+  [143] pushsymb 840 ............................ <#ink>
+  [146] pushint8 36 ............................. <36>
+  [148] pushsymb 839 ............................ <#useFastQuads>
+  [151] pushint8 1 .............................. <1>
+  [153] pusharglist 4 ........................... <[#ink: 36, #useFastQuads: 1]>
+  [155] pushproplist ............................ <[#ink: 36, #useFastQuads: 1]>
+  [156] pusharglistnoret 5 ...................... <myImage, starImage, destRect, srcRect, [#ink: 36, #useFastQuads: 1]>
+  [158] objcall 841 ............................. myImage.copyPixels(starImage, destRect, srcRect, [#ink: 36, #useFastQuads: 1])
+  [161] getlocal 0 .............................. <destX1>
+  [163] getlocal 3 .............................. <starImage>
+  [165] getobjprop 424 .......................... <starImage.width>
+  [168] add ..................................... <destX1 + starImage.width>
+  [169] setlocal 0 .............................. destX1 = destX1 + starImage.width
+  [171] pushint8 1
+  [173] getlocal 4
+  [175] add
+  [176] setlocal 4
+  [178] endrepeat [ 58]
+  [180] pushint8 1
+  [182] add
+  [183] endrepeat [ 15]
+  [185] pop 3
+  [187] ret
+end
+
+on eventNotification me, theEvent, theObj
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <theEvent>
+  [  4] getparam 2 .............................. <theObj>
+  [  6] pusharglistnoret 3 ...................... <ancestor, theEvent, theObj>
+  [  8] objcall 568 ............................. ancestor.eventNotification(theEvent, theObj)
+  [ 11] getparam 1 .............................. <theEvent>
+  [ 13] peek 0 .................................. case theEvent of
+  [ 15] pushsymb 122 ............................ <#leaveGame>
+  [ 17] nteq
+  [ 18] jmpifz [ 30] ............................ (case) #leaveGame, ...
+  [ 21] peek 0
+  [ 23] pushsymb 484 ............................ <#outOfEnergy>
+  [ 26] eq
+  [ 27] jmpifz [ 54] ............................ (case) ..., #outOfEnergy:
+  [ 30] getparam 2 .............................. <theObj>
+  [ 32] getprop 2847 ............................ <pTarget>
+  [ 35] eq ...................................... <theObj = pTarget>
+  [ 36] jmpifz [ 51] ............................ if theObj = pTarget then
+  [ 39] getparam 0 .............................. <me>
+  [ 41] pusharglistnoret 1 ...................... <me>
+  [ 43] objcall 375 ............................. me.offscreen()
+  [ 46] pushsymb 49 ............................. <#none>
+  [ 48] setprop 2847 ............................ pTarget = #none
+  [ 51] jmp [ 79]
+  [ 54] peek 0
+  [ 56] pushsymb 310 ............................ <#levelUp>
+  [ 59] eq
+  [ 60] jmpifz [ 79] ............................ (case) #levelUp:
+  [ 63] getparam 2 .............................. <theObj>
+  [ 65] getprop 2847 ............................ <pTarget>
+  [ 68] eq ...................................... <theObj = pTarget>
+  [ 69] jmpifz [ 79] ............................ if theObj = pTarget then
+  [ 72] getparam 0 .............................. <me>
+  [ 74] pusharglistnoret 1 ...................... <me>
+  [ 76] objcall 3360 ............................ me.constructStarsImage()
+  [ 79] pop 1 ................................... end case
+  [ 81] ret
+end
+
+on getYGap me
+  [  0] getprop 3365 ............................ <pGapY>
+  [  3] pusharglistnoret 1 ...................... <pGapY>
+  [  5] extcall 35 .............................. return pGapY
+  [  7] ret
+end
+
+on setTarget me, theTarget
+  [  0] getprop 2847 ............................ <pTarget>
+  [  3] getparam 1 .............................. <theTarget>
+  [  5] eq ...................................... <pTarget = theTarget>
+  [  6] jmpifz [ 13] ............................ if pTarget = theTarget then
+  [  9] pusharglistnoret 0 ...................... <>
+  [ 11] extcall 35 .............................. return 
+  [ 13] getparam 1 .............................. <theTarget>
+  [ 15] setprop 2847 ............................ pTarget = theTarget
+  [ 18] getparam 0 .............................. <me>
+  [ 20] pusharglistnoret 1 ...................... <me>
+  [ 22] objcall 3360 ............................ me.constructStarsImage()
+  [ 25] getparam 0 .............................. <me>
+  [ 27] getparam 1 .............................. <theTarget>
+  [ 29] pushsymb 484 ............................ <#outOfEnergy>
+  [ 32] pushsymb 628 ............................ <#once>
+  [ 35] pusharglistnoret 4 ...................... <me, theTarget, #outOfEnergy, #once>
+  [ 37] objcall 629 ............................. me.keepMePosted(theTarget, #outOfEnergy, #once)
+  [ 40] getparam 0 .............................. <me>
+  [ 42] getparam 1 .............................. <theTarget>
+  [ 44] pushsymb 122 ............................ <#leaveGame>
+  [ 46] pushsymb 628 ............................ <#once>
+  [ 49] pusharglistnoret 4 ...................... <me, theTarget, #leaveGame, #once>
+  [ 51] objcall 629 ............................. me.keepMePosted(theTarget, #leaveGame, #once)
+  [ 54] getparam 0 .............................. <me>
+  [ 56] getparam 1 .............................. <theTarget>
+  [ 58] pushsymb 310 ............................ <#levelUp>
+  [ 61] pushsymb 908 ............................ <#always>
+  [ 64] pusharglistnoret 4 ...................... <me, theTarget, #levelUp, #always>
+  [ 66] objcall 629 ............................. me.keepMePosted(theTarget, #levelUp, #always)
+  [ 69] ret
+end
+
+on update me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 31 .............................. ancestor.update()
+  [  6] getprop 2847 ............................ <pTarget>
+  [  9] pushsymb 49 ............................. <#none>
+  [ 11] nteq .................................... <pTarget <> #none>
+  [ 12] jmpifz [ 22] ............................ if pTarget <> #none then
+  [ 15] getparam 0 .............................. <me>
+  [ 17] pusharglistnoret 1 ...................... <me>
+  [ 19] objcall 3361 ............................ me.displayAboveTarget()
+  [ 22] ret
+end

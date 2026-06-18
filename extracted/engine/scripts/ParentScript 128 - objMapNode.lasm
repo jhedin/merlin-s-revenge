@@ -1,0 +1,106 @@
+property ancestor, pNextNode
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"objParams">
+  [  2] pusharglist 1 ........................... <"objParams">
+  [  4] extcall 34 .............................. <script("objParams")>
+  [  6] pusharglist 1 ........................... <script("objParams")>
+  [  8] extcall 0 ............................... <new(script("objParams"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objParams"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getparam 0 .............................. <me>
+  [ 24] pusharglistnoret 1 ...................... <me>
+  [ 26] extcall 35 .............................. return me
+  [ 28] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] pushsymb 49 ............................. <#none>
+  [ 10] setprop 4637 ............................ pNextNode = #none
+  [ 13] ret
+end
+
+on search me, teams, targetList
+  [  0] getprop 4637 ............................ <pNextNode>
+  [  3] setlocal 0 .............................. tempNode = pNextNode
+  [  5] getlocal 0 .............................. <tempNode>
+  [  7] pushsymb 49 ............................. <#none>
+  [  9] nteq .................................... <tempNode <> #none>
+  [ 10] jmpifz [ 74] ............................ repeat while tempNode <> #none
+  [ 13] getparam 1 .............................. <teams>
+  [ 15] getlocal 0 .............................. <tempNode>
+  [ 17] pusharglist 1 ........................... <tempNode>
+  [ 19] objcall 238 ............................. <tempNode.getTeam()>
+  [ 21] pusharglist 2 ........................... <teams, tempNode.getTeam()>
+  [ 23] objcall 4639 ............................ <teams.findPos(tempNode.getTeam())>
+  [ 26] pusharglist 0 ........................... <>
+  [ 28] extcall 166 ............................. <VOID>
+  [ 30] nteq .................................... <teams.findPos(tempNode.getTeam()) <> VOID>
+  [ 31] getlocal 0 .............................. <tempNode>
+  [ 33] pusharglist 1 ........................... <tempNode>
+  [ 35] objcall 499 ............................. <tempNode.checkDead()>
+  [ 38] pushzero ................................ <0>
+  [ 39] eq ...................................... <tempNode.checkDead() = 0>
+  [ 40] and ..................................... <(teams.findPos(tempNode.getTeam()) <> VOID) and (tempNode.checkDead() = 0)>
+  [ 41] getlocal 0 .............................. <tempNode>
+  [ 43] pusharglist 1 ........................... <tempNode>
+  [ 45] objcall 1828 ............................ <tempNode.getDead()>
+  [ 48] pushzero ................................ <0>
+  [ 49] eq ...................................... <tempNode.getDead() = 0>
+  [ 50] and ..................................... <(teams.findPos(tempNode.getTeam()) <> VOID) and (tempNode.checkDead() = 0) and (tempNode.getDead() = 0)>
+  [ 51] jmpifz [ 63] ............................ if (teams.findPos(tempNode.getTeam()) <> VOID) and (tempNode.checkDead() = 0) and (tempNode.getDead() = 0) then
+  [ 54] getparam 2 .............................. <targetList>
+  [ 56] getlocal 0 .............................. <tempNode>
+  [ 58] pusharglistnoret 2 ...................... <targetList, tempNode>
+  [ 60] objcall 256 ............................. targetList.append(tempNode)
+  [ 63] getlocal 0 .............................. <tempNode>
+  [ 65] pusharglist 1 ........................... <tempNode>
+  [ 67] objcall 4628 ............................ <tempNode.getNext()>
+  [ 70] setlocal 0 .............................. tempNode = tempNode.getNext()
+  [ 72] endrepeat [  5]
+  [ 74] ret
+end
+
+on getNext me
+  [  0] getprop 4637 ............................ <pNextNode>
+  [  3] pusharglistnoret 1 ...................... <pNextNode>
+  [  5] extcall 35 .............................. return pNextNode
+  [  7] ret
+end
+
+on getPrev me
+  [  0] pushsymb 49 ............................. <#none>
+  [  2] pusharglistnoret 1 ...................... <#none>
+  [  4] extcall 35 .............................. return #none
+  [  6] ret
+end
+
+on setNext me, node
+  [  0] getparam 1 .............................. <node>
+  [  2] setprop 4637 ............................ pNextNode = node
+  [  5] ret
+end
+
+on setPrev me, node
+  [  0] getparam 1 .............................. <node>
+  [  2] setprop 4637 ............................ pNextNode = node
+  [  5] ret
+end
+
+on finish me
+  [  0] pushsymb 49 ............................. <#none>
+  [  2] setprop 4637 ............................ pNextNode = #none
+  [  5] getprop 33 .............................. <ancestor>
+  [  7] pusharglistnoret 1 ...................... <ancestor>
+  [  9] objcall 3 ............................... ancestor.finish()
+  [ 11] ret
+end

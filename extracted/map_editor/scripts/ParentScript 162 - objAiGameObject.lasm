@@ -1,0 +1,60 @@
+property ancestor, pAI
+
+on new me
+  [  0] pushcons 0 .............................. <"objGameObject">
+  [  2] pusharglist 1 ........................... <"objGameObject">
+  [  4] extcall 27 .............................. <script("objGameObject")>
+  [  6] pusharglist 1 ........................... <script("objGameObject")>
+  [  8] extcall 0 ............................... <new(script("objGameObject"))>
+  [ 10] setprop 77 .............................. ancestor = new(script("objGameObject"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] getchainedprop 140 ...................... <me.pParams>
+  [ 16] getobjprop 1 ............................ <me.pParams.init>
+  [ 18] setlocal 0 .............................. i = me.pParams.init
+  [ 20] getlocal 0 .............................. <i>
+  [ 22] pushsymb 1251 ........................... <#AI>
+  [ 25] pushsymb 22 ............................. <#none>
+  [ 27] pusharglistnoret 3 ...................... <i, #AI, #none>
+  [ 29] objcall 37 .............................. i[#AI] = #none
+  [ 31] getparam 0 .............................. <me>
+  [ 33] pusharglistnoret 1 ...................... <me>
+  [ 35] extcall 17 .............................. return me
+  [ 37] ret
+end
+
+on init me, params
+  [  0] getprop 77 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 1251 ......................... <params.AI>
+  [ 13] setprop 1252 ............................ pAI = params.AI
+  [ 16] getprop 1252 ............................ <pAI>
+  [ 19] getparam 0 .............................. <me>
+  [ 21] getchainedprop 67 ....................... <me.id>
+  [ 23] getobjprop 66 ........................... <me.id.bigMe>
+  [ 25] getparam 0 .............................. <me>
+  [ 27] getobjprop 79 ........................... <me.pSpr>
+  [ 29] getparam 1 .............................. <params>
+  [ 31] pusharglistnoret 4 ...................... <pAI, me.id.bigMe, me.pSpr, params>
+  [ 33] objcall 71 .............................. pAI.initCharacterInfo(me.id.bigMe, me.pSpr, params)
+  [ 35] ret
+end
+
+on finish me
+  [  0] getprop 1252 ............................ <pAI>
+  [  3] pusharglistnoret 1 ...................... <pAI>
+  [  5] objcall 39 .............................. pAI.finish()
+  [  7] getprop 77 .............................. <ancestor>
+  [  9] pusharglistnoret 1 ...................... <ancestor>
+  [ 11] objcall 39 .............................. ancestor.finish()
+  [ 13] ret
+end
+
+on updateAI me
+  [  0] getprop 1252 ............................ <pAI>
+  [  3] pusharglistnoret 1 ...................... <pAI>
+  [  5] objcall 332 ............................. pAI.update()
+  [  8] ret
+end

@@ -1,0 +1,130 @@
+property pControllerTypes, pControllers
+global g
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 12 .............................. return me
+  [  6] ret
+end
+
+on init me
+  [  0] pushsymb 26 ............................. <#menu>
+  [  2] pushsymb 23 ............................. <#map>
+  [  4] pusharglist 2 ........................... <[#menu, #map]>
+  [  6] pushlist ................................ <[#menu, #map]>
+  [  7] setprop 677 ............................. pControllerTypes = [#menu, #map]
+  [ 10] pusharglist 0 ........................... <[:]>
+  [ 12] pushproplist ............................ <[:]>
+  [ 13] setprop 678 ............................. pControllers = [:]
+  [ 16] getparam 0 .............................. <me>
+  [ 18] pusharglistnoret 1 ...................... <me>
+  [ 20] objcall 675 ............................. me.initControllers()
+  [ 23] ret
+end
+
+on initControllers me
+  [  0] getprop 677 ............................. <pControllerTypes>
+  [  3] peek 0
+  [  5] pusharglist 1
+  [  7] extcall 33
+  [  9] pushint8 1
+  [ 11] peek 0
+  [ 13] peek 2
+  [ 15] lteq
+  [ 16] jmpifz [ 86] ............................ repeat with nType in pControllerTypes
+  [ 19] peek 2
+  [ 21] peek 1
+  [ 23] pusharglist 2
+  [ 25] extcall 34
+  [ 27] setlocal 0
+  [ 29] getparam 0 .............................. <me>
+  [ 31] getlocal 0 .............................. <nType>
+  [ 33] pusharglist 2 ........................... <me, nType>
+  [ 35] objcall 676 ............................. <me.convertTypeToObjectSym(nType)>
+  [ 38] setlocal 1 .............................. objSym = me.convertTypeToObjectSym(nType)
+  [ 40] getglobal 21 ............................ <g>
+  [ 42] getchainedprop 213 ...................... <g.objectMaster>
+  [ 44] getlocal 1 .............................. <objSym>
+  [ 46] pusharglist 2 ........................... <g.objectMaster, objSym>
+  [ 48] objcall 214 ............................. <g.objectMaster.requestObject(objSym)>
+  [ 50] setlocal 2 .............................. nController = g.objectMaster.requestObject(objSym)
+  [ 52] getlocal 2 .............................. <nController>
+  [ 54] pushsymb 1 .............................. <#init>
+  [ 56] pusharglist 2 ........................... <nController, #init>
+  [ 58] objcall 215 ............................. <nController.getParams(#init)>
+  [ 60] setlocal 3 .............................. params = nController.getParams(#init)
+  [ 62] getlocal 2 .............................. <nController>
+  [ 64] getlocal 3 .............................. <params>
+  [ 66] pusharglistnoret 2 ...................... <nController, params>
+  [ 68] objcall 1 ............................... nController.init(params)
+  [ 70] getprop 678 ............................. <pControllers>
+  [ 73] getlocal 0 .............................. <nType>
+  [ 75] getlocal 2 .............................. <nController>
+  [ 77] pusharglistnoret 3 ...................... <pControllers, nType, nController>
+  [ 79] objcall 83 .............................. pControllers[nType] = nController
+  [ 81] pushint8 1
+  [ 83] add
+  [ 84] endrepeat [ 11]
+  [ 86] pop 3
+  [ 88] ret
+end
+
+on finish me
+  [  0] getglobal 21 ............................ <g>
+  [  2] getchainedprop 213 ...................... <g.objectMaster>
+  [  4] getprop 678 ............................. <pControllers>
+  [  7] pusharglistnoret 2 ...................... <g.objectMaster, pControllers>
+  [  9] objcall 225 ............................. g.objectMaster.finishObjects(pControllers)
+  [ 11] ret
+end
+
+on convertTypeToObjectSym me, nType
+  [  0] getparam 1 .............................. <nType>
+  [  2] pusharglist 1 ........................... <nType>
+  [  4] extcall 49 .............................. <string(nType)>
+  [  6] setlocal 0 .............................. theStr = string(nType)
+  [  8] pushcons 0 .............................. <"obj">
+  [ 10] getlocal 0 .............................. <theStr>
+  [ 12] joinstr ................................. <"obj" & theStr>
+  [ 13] pushcons 1 .............................. <"Controller">
+  [ 15] joinstr ................................. <"obj" & theStr & "Controller">
+  [ 16] setlocal 1 .............................. stringSym = "obj" & theStr & "Controller"
+  [ 18] getlocal 1 .............................. <stringSym>
+  [ 20] pusharglist 1 ........................... <stringSym>
+  [ 22] extcall 216 ............................. <symbol(stringSym)>
+  [ 24] setlocal 2 .............................. theSym = symbol(stringSym)
+  [ 26] getlocal 2 .............................. <theSym>
+  [ 28] pusharglistnoret 1 ...................... <theSym>
+  [ 30] extcall 12 .............................. return theSym
+  [ 32] ret
+end
+
+on getController me, theType
+  [  0] getprop 678 ............................. <pControllers>
+  [  3] getparam 1 .............................. <theType>
+  [  5] pusharglist 2 ........................... <pControllers, theType>
+  [  7] objcall 34 .............................. <pControllers[theType]>
+  [  9] pusharglistnoret 1 ...................... <pControllers[theType]>
+  [ 11] extcall 12 .............................. return pControllers[theType]
+  [ 13] ret
+end
+
+on newObject me, theType, defMember, location
+  [  0] getprop 678 ............................. <pControllers>
+  [  3] getparam 1 .............................. <theType>
+  [  5] pusharglist 2 ........................... <pControllers, theType>
+  [  7] objcall 34 .............................. <pControllers[theType]>
+  [  9] getparam 2 .............................. <defMember>
+  [ 11] getparam 3 .............................. <location>
+  [ 13] pusharglistnoret 3 ...................... <pControllers[theType], defMember, location>
+  [ 15] objcall 29 .............................. pControllers[theType].newObject(defMember, location)
+  [ 17] ret
+end
+
+on stop me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 2 ............................... me.finish()
+  [  6] ret
+end

@@ -1,0 +1,650 @@
+property ancestor, pAllowRangeSelections, pAllTilesImage, pCopyPixelsParams, pDisplayScale, pDisplayTileMap, pGridSelector, pTiles, pTileSize, pSizeInTiles, pSprites
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"objSpriteMember">
+  [  2] pusharglist 1 ........................... <"objSpriteMember">
+  [  4] extcall 27 .............................. <script("objSpriteMember")>
+  [  6] pusharglist 1 ........................... <script("objSpriteMember")>
+  [  8] extcall 0 ............................... <new(script("objSpriteMember"))>
+  [ 10] setprop 77 .............................. ancestor = new(script("objSpriteMember"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 221 ............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 827 ............................ <#allowRangeSelections>
+  [ 27] pushint8 1 .............................. <1>
+  [ 29] pusharglistnoret 3 ...................... <i, #allowRangeSelections, 1>
+  [ 31] objcall 37 .............................. i[#allowRangeSelections] = 1
+  [ 33] getlocal 0 .............................. <i>
+  [ 35] pushsymb 1103 ........................... <#allTilesImage>
+  [ 38] pushsymb 22 ............................. <#none>
+  [ 40] pusharglistnoret 3 ...................... <i, #allTilesImage, #none>
+  [ 42] objcall 37 .............................. i[#allTilesImage] = #none
+  [ 44] getlocal 0 .............................. <i>
+  [ 46] pushsymb 1036 ........................... <#copyPixelsParams>
+  [ 49] pushsymb 1031 ........................... <#useFastQuads>
+  [ 52] pushint8 1 .............................. <1>
+  [ 54] pushsymb 307 ............................ <#ink>
+  [ 57] pushzero ................................ <0>
+  [ 58] pusharglist 4 ........................... <[#useFastQuads: 1, #ink: 0]>
+  [ 60] pushproplist ............................ <[#useFastQuads: 1, #ink: 0]>
+  [ 61] pusharglistnoret 3 ...................... <i, #copyPixelsParams, [#useFastQuads: 1, #ink: 0]>
+  [ 63] objcall 37 .............................. i[#copyPixelsParams] = [#useFastQuads: 1, #ink: 0]
+  [ 65] getlocal 0 .............................. <i>
+  [ 67] pushsymb 1104 ........................... <#displayScale>
+  [ 70] pushint8 1 .............................. <1>
+  [ 72] pusharglistnoret 3 ...................... <i, #displayScale, 1>
+  [ 74] objcall 37 .............................. i[#displayScale] = 1
+  [ 76] getlocal 0 .............................. <i>
+  [ 78] pushsymb 1093 ........................... <#maxNum>
+  [ 81] pushsymb 22 ............................. <#none>
+  [ 83] pusharglistnoret 3 ...................... <i, #maxNum, #none>
+  [ 85] objcall 37 .............................. i[#maxNum] = #none
+  [ 87] getlocal 0 .............................. <i>
+  [ 89] pushsymb 602 ............................ <#tilesize>
+  [ 92] pushint8 16 ............................. <16>
+  [ 94] pushint8 16 ............................. <16>
+  [ 96] pusharglist 2 ........................... <16, 16>
+  [ 98] extcall 215 ............................. <point(16, 16)>
+  [100] pusharglistnoret 3 ...................... <i, #tilesize, point(16, 16)>
+  [102] objcall 37 .............................. i[#tilesize] = point(16, 16)
+  [104] getparam 0 .............................. <me>
+  [106] pusharglistnoret 1 ...................... <me>
+  [108] extcall 17 .............................. return me
+  [110] ret
+end
+
+on init me, params
+  [  0] getprop 77 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 827 .......................... <params.allowRangeSelections>
+  [ 13] setprop 830 ............................. pAllowRangeSelections = params.allowRangeSelections
+  [ 16] getparam 1 .............................. <params>
+  [ 18] getobjprop 1103 ......................... <params.allTilesImage>
+  [ 21] setprop 1105 ............................ pAllTilesImage = params.allTilesImage
+  [ 24] getparam 1 .............................. <params>
+  [ 26] getobjprop 1036 ......................... <params.copyPixelsParams>
+  [ 29] setprop 1106 ............................ pCopyPixelsParams = params.copyPixelsParams
+  [ 32] pushsymb 22 ............................. <#none>
+  [ 34] setprop 1107 ............................ pDisplayTileMap = #none
+  [ 37] getparam 1 .............................. <params>
+  [ 39] getobjprop 1104 ......................... <params.displayScale>
+  [ 42] setprop 1108 ............................ pDisplayScale = params.displayScale
+  [ 45] pushsymb 22 ............................. <#none>
+  [ 47] setprop 1109 ............................ pGridSelector = #none
+  [ 50] pushsymb 22 ............................. <#none>
+  [ 52] setprop 1110 ............................ pSizeInTiles = #none
+  [ 55] pusharglist 0 ........................... <[]>
+  [ 57] pushlist ................................ <[]>
+  [ 58] setprop 457 ............................. pSprites = []
+  [ 61] getparam 1 .............................. <params>
+  [ 63] getobjprop 602 .......................... <params.tilesize>
+  [ 66] setprop 1111 ............................ pTileSize = params.tilesize
+  [ 69] getparam 0 .............................. <me>
+  [ 71] getparam 1 .............................. <params>
+  [ 73] getobjprop 1103 ......................... <params.allTilesImage>
+  [ 76] getparam 1 .............................. <params>
+  [ 78] getobjprop 602 .......................... <params.tilesize>
+  [ 81] getparam 1 .............................. <params>
+  [ 83] getobjprop 1093 ......................... <params.maxNum>
+  [ 86] pusharglist 4 ........................... <me, params.allTilesImage, params.tilesize, params.maxNum>
+  [ 88] objcall 1102 ............................ <me.makeTiles(params.allTilesImage, params.tilesize, params.maxNum)>
+  [ 91] setprop 1112 ............................ pTiles = me.makeTiles(params.allTilesImage, params.tilesize, params.maxNum)
+  [ 94] ret
+end
+
+on finish me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 448 ............................. me.freeSprites()
+  [  7] getparam 0 .............................. <me>
+  [  9] pusharglistnoret 1 ...................... <me>
+  [ 11] objcall 1098 ............................ me.freeGridSelector()
+  [ 14] getprop 77 .............................. <ancestor>
+  [ 16] pusharglistnoret 1 ...................... <ancestor>
+  [ 18] objcall 39 .............................. ancestor.finish()
+  [ 20] ret
+end
+
+on calcTileNum me, theloc
+  [  0] getprop 1112 ............................ <pTiles>
+  [  3] getparam 1 .............................. <theloc>
+  [  5] pusharglist 2 ........................... <pTiles, theloc>
+  [  7] objcall 1063 ............................ <pTiles.calcEntryNum(theloc)>
+  [ 10] pusharglistnoret 1 ...................... <pTiles.calcEntryNum(theloc)>
+  [ 12] extcall 17 .............................. return pTiles.calcEntryNum(theloc)
+  [ 14] ret
+end
+
+on calcTileNums me, theSelection
+  [  0] getparam 1 .............................. <theSelection>
+  [  2] pushint8 1 .............................. <1>
+  [  4] pusharglist 2 ........................... <theSelection, 1>
+  [  6] objcall 38 .............................. <theSelection[1]>
+  [  8] pushint8 1 .............................. <1>
+  [ 10] pusharglist 2 ........................... <theSelection[1], 1>
+  [ 12] objcall 38 .............................. <theSelection[1][1]>
+  [ 14] setlocal 0 .............................. startX = theSelection[1][1]
+  [ 16] getparam 1 .............................. <theSelection>
+  [ 18] pushint8 1 .............................. <1>
+  [ 20] pusharglist 2 ........................... <theSelection, 1>
+  [ 22] objcall 38 .............................. <theSelection[1]>
+  [ 24] pushint8 2 .............................. <2>
+  [ 26] pusharglist 2 ........................... <theSelection[1], 2>
+  [ 28] objcall 38 .............................. <theSelection[1][2]>
+  [ 30] setlocal 1 .............................. startY = theSelection[1][2]
+  [ 32] getparam 1 .............................. <theSelection>
+  [ 34] pushint8 2 .............................. <2>
+  [ 36] pusharglist 2 ........................... <theSelection, 2>
+  [ 38] objcall 38 .............................. <theSelection[2]>
+  [ 40] pushint8 1 .............................. <1>
+  [ 42] pusharglist 2 ........................... <theSelection[2], 1>
+  [ 44] objcall 38 .............................. <theSelection[2][1]>
+  [ 46] setlocal 2 .............................. endX = theSelection[2][1]
+  [ 48] getparam 1 .............................. <theSelection>
+  [ 50] pushint8 2 .............................. <2>
+  [ 52] pusharglist 2 ........................... <theSelection, 2>
+  [ 54] objcall 38 .............................. <theSelection[2]>
+  [ 56] pushint8 2 .............................. <2>
+  [ 58] pusharglist 2 ........................... <theSelection[2], 2>
+  [ 60] objcall 38 .............................. <theSelection[2][2]>
+  [ 62] setlocal 3 .............................. endY = theSelection[2][2]
+  [ 64] pusharglist 0 ........................... <[]>
+  [ 66] pushlist ................................ <[]>
+  [ 67] setlocal 4 .............................. tileNums = []
+  [ 69] getlocal 1 .............................. <startY>
+  [ 71] setlocal 5
+  [ 73] getlocal 5
+  [ 75] getlocal 3 .............................. <endY>
+  [ 77] lteq
+  [ 78] jmpifz [145] ............................ repeat with y = startY to endY
+  [ 81] pusharglist 0 ........................... <[]>
+  [ 83] pushlist ................................ <[]>
+  [ 84] setlocal 6 .............................. nRow = []
+  [ 86] getlocal 0 .............................. <startX>
+  [ 88] setlocal 7
+  [ 90] getlocal 7
+  [ 92] getlocal 2 .............................. <endX>
+  [ 94] lteq
+  [ 95] jmpifz [128] ............................ repeat with x = startX to endX
+  [ 98] getlocal 6 .............................. <nRow>
+  [100] getparam 0 .............................. <me>
+  [102] getlocal 7 .............................. <x>
+  [104] getlocal 5 .............................. <y>
+  [106] pusharglist 2 ........................... <x, y>
+  [108] extcall 215 ............................. <point(x, y)>
+  [110] pusharglist 2 ........................... <me, point(x, y)>
+  [112] objcall 1095 ............................ <me.calcTileNum(point(x, y))>
+  [115] pusharglistnoret 2 ...................... <nRow, me.calcTileNum(point(x, y))>
+  [117] objcall 111 ............................. nRow.append(me.calcTileNum(point(x, y)))
+  [119] pushint8 1
+  [121] getlocal 7
+  [123] add
+  [124] setlocal 7
+  [126] endrepeat [ 90]
+  [128] getlocal 4 .............................. <tileNums>
+  [130] getlocal 6 .............................. <nRow>
+  [132] pusharglistnoret 2 ...................... <tileNums, nRow>
+  [134] objcall 111 ............................. tileNums.append(nRow)
+  [136] pushint8 1
+  [138] getlocal 5
+  [140] add
+  [141] setlocal 5
+  [143] endrepeat [ 73]
+  [145] getlocal 4 .............................. <tileNums>
+  [147] pusharglistnoret 1 ...................... <tileNums>
+  [149] extcall 17 .............................. return tileNums
+  [151] ret
+end
+
+on displayImage me, theloc
+  [  0] getglobal 101 ........................... <g>
+  [  2] getchainedprop 102 ...................... <g.objectMaster>
+  [  4] pushsymb 600 ............................ <#objTileMap>
+  [  7] pusharglist 2 ........................... <g.objectMaster, #objTileMap>
+  [  9] objcall 3 ............................... <g.objectMaster.requestObject(#objTileMap)>
+  [ 11] setlocal 0 .............................. displayTileMap = g.objectMaster.requestObject(#objTileMap)
+  [ 13] getlocal 0 .............................. <displayTileMap>
+  [ 15] pushsymb 1 .............................. <#init>
+  [ 17] pusharglist 2 ........................... <displayTileMap, #init>
+  [ 19] objcall 136 ............................. <displayTileMap.getParams(#init)>
+  [ 21] setlocal 1 .............................. params = displayTileMap.getParams(#init)
+  [ 23] getlocal 1 .............................. <params>
+  [ 25] pushsymb 1073 ........................... <#incremental>
+  [ 28] setobjprop 254 .......................... params.map = #incremental
+  [ 30] getlocal 1 .............................. <params>
+  [ 32] getprop 1110 ............................ <pSizeInTiles>
+  [ 35] setobjprop 601 .......................... params.mapSize = pSizeInTiles
+  [ 38] getlocal 1 .............................. <params>
+  [ 40] getparam 0 .............................. <me>
+  [ 42] setobjprop 532 .......................... params.tileSet = me
+  [ 45] getlocal 0 .............................. <displayTileMap>
+  [ 47] getlocal 1 .............................. <params>
+  [ 49] pusharglistnoret 2 ...................... <displayTileMap, params>
+  [ 51] objcall 1 ............................... displayTileMap.init(params)
+  [ 53] getlocal 0 .............................. <displayTileMap>
+  [ 55] getprop 1108 ............................ <pDisplayScale>
+  [ 58] pusharglist 2 ........................... <displayTileMap, pDisplayScale>
+  [ 60] objcall 983 ............................. <displayTileMap.getScaleImage(pDisplayScale)>
+  [ 63] setlocal 2 .............................. myImage = displayTileMap.getScaleImage(pDisplayScale)
+  [ 65] getparam 0 .............................. <me>
+  [ 67] getlocal 2 .............................. <myImage>
+  [ 69] getparam 1 .............................. <theloc>
+  [ 71] pusharglistnoret 3 ...................... <me, myImage, theloc>
+  [ 73] objcall 652 ............................. me.displayImageAtLoc(myImage, theloc)
+  [ 76] getlocal 0 .............................. <displayTileMap>
+  [ 78] pusharglistnoret 1 ...................... <displayTileMap>
+  [ 80] objcall 39 .............................. displayTileMap.finish()
+  [ 82] ret
+end
+
+on displayInSprites me
+  [  0] pushint8 100 ............................ <100>
+  [  2] pushint8 100 ............................ <100>
+  [  4] pusharglist 2 ........................... <100, 100>
+  [  6] extcall 215 ............................. <point(100, 100)>
+  [  8] setlocal 0 .............................. startLoc = point(100, 100)
+  [ 10] pushint8 2 .............................. <2>
+  [ 12] setlocal 1 .............................. gap = 2
+  [ 14] getparam 0 .............................. <me>
+  [ 16] pusharglistnoret 1 ...................... <me>
+  [ 18] objcall 448 ............................. me.freeSprites()
+  [ 21] getprop 1112 ............................ <pTiles>
+  [ 24] pusharglist 1 ........................... <pTiles>
+  [ 26] objcall 1064 ............................ <pTiles.getNumEntries()>
+  [ 29] setlocal 2 .............................. totalTiles = pTiles.getNumEntries()
+  [ 31] pushint8 1 .............................. <1>
+  [ 33] setlocal 3
+  [ 35] getlocal 3
+  [ 37] getlocal 2 .............................. <totalTiles>
+  [ 39] lteq
+  [ 40] jmpifz [170] ............................ repeat with i = 1 to totalTiles
+  [ 43] pushzero ................................ <0>
+  [ 44] pushzero ................................ <0>
+  [ 45] pusharglist 2 ........................... <0, 0>
+  [ 47] extcall 215 ............................. <point(0, 0)>
+  [ 49] setlocal 4 .............................. nLoc = point(0, 0)
+  [ 51] getprop 1112 ............................ <pTiles>
+  [ 54] getlocal 3 .............................. <i>
+  [ 56] getlocal 4 .............................. <nLoc>
+  [ 58] pusharglist 3 ........................... <pTiles, i, nLoc>
+  [ 60] objcall 1067 ............................ <pTiles.peekEntryNo(i, nLoc)>
+  [ 63] setlocal 5 .............................. nVal = pTiles.peekEntryNo(i, nLoc)
+  [ 65] getglobal 101 ........................... <g>
+  [ 67] getchainedprop 1120 ..................... <g.imageMaster>
+  [ 70] pushcons 1 .............................. <"tile_">
+  [ 72] getlocal 3 .............................. <i>
+  [ 74] joinstr ................................. <"tile_" & i>
+  [ 75] pusharglist 2 ........................... <g.imageMaster, "tile_" & i>
+  [ 77] objcall 1121 ............................ <g.imageMaster.newImage("tile_" & i)>
+  [ 80] setlocal 6 .............................. nImageMem = g.imageMaster.newImage("tile_" & i)
+  [ 82] getlocal 6 .............................. <nImageMem>
+  [ 84] getlocal 5 .............................. <nVal>
+  [ 86] setobjprop 594 .......................... nImageMem.image = nVal
+  [ 89] getglobal 101 ........................... <g>
+  [ 91] getchainedprop 155 ...................... <g.spriteMaster>
+  [ 93] pusharglist 1 ........................... <g.spriteMaster>
+  [ 95] objcall 156 ............................. <g.spriteMaster.requestSprite()>
+  [ 97] setlocal 7 .............................. nSpr = g.spriteMaster.requestSprite()
+  [ 99] getlocal 7 .............................. <nSpr>
+  [101] getlocal 6 .............................. <nImageMem>
+  [103] pusharglistnoret 2 ...................... <nSpr, nImageMem>
+  [105] extcall 212 ............................. SpriteSetMember(nSpr, nImageMem)
+  [107] getlocal 0 .............................. <startLoc>
+  [109] pusharglist 1 ........................... <startLoc>
+  [111] objcall 48 .............................. <startLoc.duplicate()>
+  [113] setlocal 8 .............................. nSprLoc = startLoc.duplicate()
+  [115] getlocal 6 .............................. <nImageMem>
+  [117] getobjprop 162 .......................... <nImageMem.width>
+  [119] getlocal 1 .............................. <gap>
+  [121] add ..................................... <nImageMem.width + gap>
+  [122] getlocal 6 .............................. <nImageMem>
+  [124] getobjprop 310 .......................... <nImageMem.height>
+  [127] getlocal 1 .............................. <gap>
+  [129] add ..................................... <nImageMem.height + gap>
+  [130] pusharglist 2 ........................... <nImageMem.width + gap, nImageMem.height + gap>
+  [132] extcall 215 ............................. <point(nImageMem.width + gap, nImageMem.height + gap)>
+  [134] getlocal 4 .............................. <nLoc>
+  [136] mul ..................................... <point(nImageMem.width + gap, nImageMem.height + gap) * nLoc>
+  [137] setlocal 9 .............................. nOffsetLoc = point(nImageMem.width + gap, nImageMem.height + gap) * nLoc
+  [139] getlocal 8 .............................. <nSprLoc>
+  [141] getlocal 9 .............................. <nOffsetLoc>
+  [143] add ..................................... <nSprLoc + nOffsetLoc>
+  [144] setlocal 8 .............................. nSprLoc = nSprLoc + nOffsetLoc
+  [146] getlocal 7 .............................. <nSpr>
+  [148] getlocal 8 .............................. <nSprLoc>
+  [150] setobjprop 216 .......................... nSpr.loc = nSprLoc
+  [152] getprop 457 ............................. <pSprites>
+  [155] getlocal 7 .............................. <nSpr>
+  [157] pusharglistnoret 2 ...................... <pSprites, nSpr>
+  [159] objcall 111 ............................. pSprites.append(nSpr)
+  [161] pushint8 1
+  [163] getlocal 3
+  [165] add
+  [166] setlocal 3
+  [168] endrepeat [ 35]
+  [170] ret
+end
+
+on displayAsSelection me, theloc
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <theloc>
+  [  4] pusharglistnoret 2 ...................... <me, theloc>
+  [  6] objcall 584 ............................. me.displayImage(theloc)
+  [  9] getglobal 101 ........................... <g>
+  [ 11] getchainedprop 102 ...................... <g.objectMaster>
+  [ 13] pushsymb 1130 ........................... <#objGridSelector>
+  [ 16] pusharglist 2 ........................... <g.objectMaster, #objGridSelector>
+  [ 18] objcall 3 ............................... <g.objectMaster.requestObject(#objGridSelector)>
+  [ 20] setprop 1109 ............................ pGridSelector = g.objectMaster.requestObject(#objGridSelector)
+  [ 23] getprop 1109 ............................ <pGridSelector>
+  [ 26] pusharglist 1 ........................... <pGridSelector>
+  [ 28] objcall 136 ............................. <pGridSelector.getParams()>
+  [ 30] setlocal 0 .............................. params = pGridSelector.getParams()
+  [ 32] getlocal 0 .............................. <params>
+  [ 34] getprop 830 ............................. <pAllowRangeSelections>
+  [ 37] setobjprop 827 .......................... params.allowRangeSelections = pAllowRangeSelections
+  [ 40] getlocal 0 .............................. <params>
+  [ 42] getparam 0 .............................. <me>
+  [ 44] getchainedprop 67 ....................... <me.id>
+  [ 46] getobjprop 66 ........................... <me.id.bigMe>
+  [ 48] setobjprop 829 .......................... params.targetObject = me.id.bigMe
+  [ 51] getprop 1109 ............................ <pGridSelector>
+  [ 54] getlocal 0 .............................. <params>
+  [ 56] pusharglistnoret 2 ...................... <pGridSelector, params>
+  [ 58] objcall 1 ............................... pGridSelector.init(params)
+  [ 60] ret
+end
+
+on freeGridSelector me
+  [  0] getprop 1109 ............................ <pGridSelector>
+  [  3] pushsymb 22 ............................. <#none>
+  [  5] nteq .................................... <pGridSelector <> #none>
+  [  6] jmpifz [ 16] ............................ if pGridSelector <> #none then
+  [  9] getprop 1109 ............................ <pGridSelector>
+  [ 12] pusharglistnoret 1 ...................... <pGridSelector>
+  [ 14] objcall 39 .............................. pGridSelector.finish()
+  [ 16] ret
+end
+
+on freeSprites me
+  [  0] getprop 457 ............................. <pSprites>
+  [  3] peek 0
+  [  5] pusharglist 1
+  [  7] extcall 28
+  [  9] pushint8 1
+  [ 11] peek 0
+  [ 13] peek 2
+  [ 15] lteq
+  [ 16] jmpifz [ 44] ............................ repeat with spr in pSprites
+  [ 19] peek 2
+  [ 21] peek 1
+  [ 23] pusharglist 2
+  [ 25] extcall 38
+  [ 27] setlocal 0
+  [ 29] getglobal 101 ........................... <g>
+  [ 31] getchainedprop 155 ...................... <g.spriteMaster>
+  [ 33] getlocal 0 .............................. <spr>
+  [ 35] pusharglistnoret 2 ...................... <g.spriteMaster, spr>
+  [ 37] objcall 165 ............................. g.spriteMaster.freeSprite(spr)
+  [ 39] pushint8 1
+  [ 41] add
+  [ 42] endrepeat [ 11]
+  [ 44] pop 3
+  [ 46] ret
+end
+
+on getDisplayScale me
+  [  0] getprop 1108 ............................ <pDisplayScale>
+  [  3] pusharglistnoret 1 ...................... <pDisplayScale>
+  [  5] extcall 17 .............................. return pDisplayScale
+  [  7] ret
+end
+
+on getGridRect me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 654 ............................. <me.getSpriteRect()>
+  [  7] pusharglistnoret 1 ...................... <me.getSpriteRect()>
+  [  9] extcall 17 .............................. return me.getSpriteRect()
+  [ 11] ret
+end
+
+on getGridSize me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglist 1 ........................... <me>
+  [  4] objcall 576 ............................. <me.getTileSize()>
+  [  7] getprop 1108 ............................ <pDisplayScale>
+  [ 10] mul ..................................... <me.getTileSize() * pDisplayScale>
+  [ 11] pusharglistnoret 1 ...................... <me.getTileSize() * pDisplayScale>
+  [ 13] extcall 17 .............................. return me.getTileSize() * pDisplayScale
+  [ 15] ret
+end
+
+on getImage me
+  [  0] getprop 1105 ............................ <pAllTilesImage>
+  [  3] pusharglistnoret 1 ...................... <pAllTilesImage>
+  [  5] extcall 17 .............................. return pAllTilesImage
+  [  7] ret
+end
+
+on getInitialGridSelection me
+  [  0] pushsymb 22 ............................. <#none>
+  [  2] pusharglistnoret 1 ...................... <#none>
+  [  4] extcall 17 .............................. return #none
+  [  6] ret
+end
+
+on getTile me, theloc
+  [  0] getprop 1112 ............................ <pTiles>
+  [  3] getparam 1 .............................. <theloc>
+  [  5] pusharglist 2 ........................... <pTiles, theloc>
+  [  7] objcall 1066 ............................ <pTiles.peek(theloc)>
+  [ 10] pusharglistnoret 1 ...................... <pTiles.peek(theloc)>
+  [ 12] extcall 17 .............................. return pTiles.peek(theloc)
+  [ 14] ret
+end
+
+on getTileNo me, i
+  [  0] pushzero ................................ <0>
+  [  1] pushzero ................................ <0>
+  [  2] pusharglist 2 ........................... <0, 0>
+  [  4] extcall 215 ............................. <point(0, 0)>
+  [  6] setlocal 0 .............................. theloc = point(0, 0)
+  [  8] getprop 1112 ............................ <pTiles>
+  [ 11] getparam 1 .............................. <i>
+  [ 13] getlocal 0 .............................. <theloc>
+  [ 15] pusharglist 3 ........................... <pTiles, i, theloc>
+  [ 17] objcall 1067 ............................ <pTiles.peekEntryNo(i, theloc)>
+  [ 20] pusharglistnoret 1 ...................... <pTiles.peekEntryNo(i, theloc)>
+  [ 22] extcall 17 .............................. return pTiles.peekEntryNo(i, theloc)
+  [ 24] ret
+end
+
+on getTileSize me
+  [  0] getprop 1111 ............................ <pTileSize>
+  [  3] pusharglistnoret 1 ...................... <pTileSize>
+  [  5] extcall 17 .............................. return pTileSize
+  [  7] ret
+end
+
+on makeTiles me, allTilesImage, tilesize, maxNum
+  [  0] pushzero ................................ <0>
+  [  1] pushzero ................................ <0>
+  [  2] pusharglist 2 ........................... <0, 0>
+  [  4] extcall 215 ............................. <point(0, 0)>
+  [  6] setlocal 0 .............................. mapSize = point(0, 0)
+  [  8] getlocal 0 .............................. <mapSize>
+  [ 10] pushint8 1 .............................. <1>
+  [ 12] getparam 1 .............................. <allTilesImage>
+  [ 14] getobjprop 162 .......................... <allTilesImage.width>
+  [ 16] getparam 2 .............................. <tilesize>
+  [ 18] pushint8 1 .............................. <1>
+  [ 20] pusharglist 2 ........................... <tilesize, 1>
+  [ 22] objcall 38 .............................. <tilesize[1]>
+  [ 24] div ..................................... <allTilesImage.width / tilesize[1]>
+  [ 25] pusharglistnoret 3 ...................... <mapSize, 1, allTilesImage.width / tilesize[1]>
+  [ 27] objcall 37 .............................. mapSize[1] = allTilesImage.width / tilesize[1]
+  [ 29] getlocal 0 .............................. <mapSize>
+  [ 31] pushint8 2 .............................. <2>
+  [ 33] getparam 1 .............................. <allTilesImage>
+  [ 35] getobjprop 310 .......................... <allTilesImage.height>
+  [ 38] getparam 2 .............................. <tilesize>
+  [ 40] pushint8 2 .............................. <2>
+  [ 42] pusharglist 2 ........................... <tilesize, 2>
+  [ 44] objcall 38 .............................. <tilesize[2]>
+  [ 46] div ..................................... <allTilesImage.height / tilesize[2]>
+  [ 47] pusharglistnoret 3 ...................... <mapSize, 2, allTilesImage.height / tilesize[2]>
+  [ 49] objcall 37 .............................. mapSize[2] = allTilesImage.height / tilesize[2]
+  [ 51] getlocal 0 .............................. <mapSize>
+  [ 53] setprop 1110 ............................ pSizeInTiles = mapSize
+  [ 56] getglobal 101 ........................... <g>
+  [ 58] getchainedprop 102 ...................... <g.objectMaster>
+  [ 60] pushsymb 1131 ........................... <#objDataMap>
+  [ 63] pusharglist 2 ........................... <g.objectMaster, #objDataMap>
+  [ 65] objcall 3 ............................... <g.objectMaster.requestObject(#objDataMap)>
+  [ 67] setlocal 1 .............................. tileMap = g.objectMaster.requestObject(#objDataMap)
+  [ 69] getlocal 1 .............................. <tileMap>
+  [ 71] pushsymb 1 .............................. <#init>
+  [ 73] pusharglist 2 ........................... <tileMap, #init>
+  [ 75] objcall 136 ............................. <tileMap.getParams(#init)>
+  [ 77] setlocal 2 .............................. params = tileMap.getParams(#init)
+  [ 79] getlocal 2 .............................. <params>
+  [ 81] getlocal 0 .............................. <mapSize>
+  [ 83] setobjprop 601 .......................... params.mapSize = mapSize
+  [ 86] getlocal 1 .............................. <tileMap>
+  [ 88] getlocal 2 .............................. <params>
+  [ 90] pusharglistnoret 2 ...................... <tileMap, params>
+  [ 92] objcall 1 ............................... tileMap.init(params)
+  [ 94] pushzero ................................ <0>
+  [ 95] setlocal 3
+  [ 97] getlocal 3
+  [ 99] getlocal 0 .............................. <mapSize>
+  [101] pushint8 2 .............................. <2>
+  [103] pusharglist 2 ........................... <mapSize, 2>
+  [105] objcall 38 .............................. <mapSize[2]>
+  [107] pushint8 1 .............................. <1>
+  [109] sub ..................................... <mapSize[2] - 1>
+  [110] lteq
+  [111] jmpifz [288] ............................ repeat with yNum = 0 to mapSize[2] - 1
+  [114] pushzero ................................ <0>
+  [115] setlocal 4
+  [117] getlocal 4
+  [119] getlocal 0 .............................. <mapSize>
+  [121] pushint8 1 .............................. <1>
+  [123] pusharglist 2 ........................... <mapSize, 1>
+  [125] objcall 38 .............................. <mapSize[1]>
+  [127] pushint8 1 .............................. <1>
+  [129] sub ..................................... <mapSize[1] - 1>
+  [130] lteq
+  [131] jmpifz [279] ............................ repeat with xNum = 0 to mapSize[1] - 1
+  [134] getlocal 4 .............................. <xNum>
+  [136] getparam 2 .............................. <tilesize>
+  [138] pushint8 1 .............................. <1>
+  [140] pusharglist 2 ........................... <tilesize, 1>
+  [142] objcall 38 .............................. <tilesize[1]>
+  [144] mul ..................................... <xNum * tilesize[1]>
+  [145] setlocal 5 .............................. xStart = xNum * tilesize[1]
+  [147] getlocal 3 .............................. <yNum>
+  [149] getparam 2 .............................. <tilesize>
+  [151] pushint8 2 .............................. <2>
+  [153] pusharglist 2 ........................... <tilesize, 2>
+  [155] objcall 38 .............................. <tilesize[2]>
+  [157] mul ..................................... <yNum * tilesize[2]>
+  [158] setlocal 6 .............................. yStart = yNum * tilesize[2]
+  [160] getlocal 5 .............................. <xStart>
+  [162] getparam 2 .............................. <tilesize>
+  [164] pushint8 1 .............................. <1>
+  [166] pusharglist 2 ........................... <tilesize, 1>
+  [168] objcall 38 .............................. <tilesize[1]>
+  [170] add ..................................... <xStart + tilesize[1]>
+  [171] setlocal 7 .............................. xFin = xStart + tilesize[1]
+  [173] getlocal 6 .............................. <yStart>
+  [175] getparam 2 .............................. <tilesize>
+  [177] pushint8 2 .............................. <2>
+  [179] pusharglist 2 ........................... <tilesize, 2>
+  [181] objcall 38 .............................. <tilesize[2]>
+  [183] add ..................................... <yStart + tilesize[2]>
+  [184] setlocal 8 .............................. yFin = yStart + tilesize[2]
+  [186] getparam 2 .............................. <tilesize>
+  [188] pushint8 1 .............................. <1>
+  [190] pusharglist 2 ........................... <tilesize, 1>
+  [192] objcall 38 .............................. <tilesize[1]>
+  [194] getparam 2 .............................. <tilesize>
+  [196] pushint8 2 .............................. <2>
+  [198] pusharglist 2 ........................... <tilesize, 2>
+  [200] objcall 38 .............................. <tilesize[2]>
+  [202] pushint8 32 ............................. <32>
+  [204] pusharglist 3 ........................... <tilesize[1], tilesize[2], 32>
+  [206] extcall 594 ............................. <image(tilesize[1], tilesize[2], 32)>
+  [209] setlocal 9 .............................. nImage = image(tilesize[1], tilesize[2], 32)
+  [211] getlocal 9 .............................. <nImage>
+  [213] getparam 1 .............................. <allTilesImage>
+  [215] getlocal 9 .............................. <nImage>
+  [217] getobjprop 160 .......................... <nImage.rect>
+  [219] getlocal 5 .............................. <xStart>
+  [221] getlocal 6 .............................. <yStart>
+  [223] getlocal 7 .............................. <xFin>
+  [225] getlocal 8 .............................. <yFin>
+  [227] pusharglist 4 ........................... <xStart, yStart, xFin, yFin>
+  [229] extcall 160 ............................. <rect(xStart, yStart, xFin, yFin)>
+  [231] getprop 1106 ............................ <pCopyPixelsParams>
+  [234] pusharglistnoret 5 ...................... <nImage, allTilesImage, nImage.rect, rect(xStart, yStart, xFin, yFin), pCopyPixelsParams>
+  [236] objcall 1033 ............................ nImage.copyPixels(allTilesImage, nImage.rect, rect(xStart, yStart, xFin, yFin), pCopyPixelsParams)
+  [239] getlocal 4 .............................. <xNum>
+  [241] pushint8 1 .............................. <1>
+  [243] add ..................................... <xNum + 1>
+  [244] setlocal 10 ............................. xLoc = xNum + 1
+  [246] getlocal 3 .............................. <yNum>
+  [248] pushint8 1 .............................. <1>
+  [250] add ..................................... <yNum + 1>
+  [251] setlocal 11 ............................. yLoc = yNum + 1
+  [253] getlocal 1 .............................. <tileMap>
+  [255] getlocal 10 ............................. <xLoc>
+  [257] getlocal 11 ............................. <yLoc>
+  [259] pusharglist 2 ........................... <xLoc, yLoc>
+  [261] extcall 215 ............................. <point(xLoc, yLoc)>
+  [263] getlocal 9 .............................. <nImage>
+  [265] pusharglistnoret 3 ...................... <tileMap, point(xLoc, yLoc), nImage>
+  [267] objcall 628 ............................. tileMap.poke(point(xLoc, yLoc), nImage)
+  [270] pushint8 1
+  [272] getlocal 4
+  [274] add
+  [275] setlocal 4
+  [277] endrepeat [117]
+  [279] pushint8 1
+  [281] getlocal 3
+  [283] add
+  [284] setlocal 3
+  [286] endrepeat [ 97]
+  [288] getlocal 1 .............................. <tileMap>
+  [290] pusharglistnoret 1 ...................... <tileMap>
+  [292] extcall 17 .............................. return tileMap
+  [294] ret
+end
+
+on setDisplayScale me, theScale
+  [  0] getparam 1 .............................. <theScale>
+  [  2] setprop 1108 ............................ pDisplayScale = theScale
+  [  5] ret
+end
+
+on show me, theMode, theloc
+  [  0] getparam 1 .............................. <theMode>
+  [  2] peek 0 .................................. case theMode of
+  [  4] pushsymb 1020 ........................... <#edit>
+  [  7] eq
+  [  8] jmpifz [ 20] ............................ (case) #edit:
+  [ 11] getparam 0 .............................. <me>
+  [ 13] getparam 2 .............................. <theloc>
+  [ 15] pusharglistnoret 2 ...................... <me, theloc>
+  [ 17] objcall 1097 ............................ me.displayAsSelection(theloc)
+  [ 20] pop 1
+  [ 22] ret
+end

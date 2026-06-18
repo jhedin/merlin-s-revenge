@@ -1,0 +1,853 @@
+property pDisplayRect, pLevelBar, pReserveArmy, pSpriteMembers, pTeamToDisplay, pTitle, pTitleText, pYGap, pRestoreList
+global g, gGlobalDisplayLayer
+
+on new me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] extcall 3 ............................... return me
+  [  6] ret
+end
+
+on init me
+  [  0] pushsymb 103 ............................ <#none>
+  [  2] setprop 1175 ............................ pDisplayRect = #none
+  [  5] pushsymb 103 ............................ <#none>
+  [  7] setprop 1100 ............................ pLevelBar = #none
+  [ 10] pusharglist 0 ........................... <[:]>
+  [ 12] pushproplist ............................ <[:]>
+  [ 13] setprop 1624 ............................ pReserveArmy = [:]
+  [ 16] pusharglist 0 ........................... <[]>
+  [ 18] pushlist ................................ <[]>
+  [ 19] setprop 1625 ............................ pSpriteMembers = []
+  [ 22] pushsymb 246 ............................ <#aldevar>
+  [ 24] setprop 1626 ............................ pTeamToDisplay = #aldevar
+  [ 27] pushsymb 103 ............................ <#none>
+  [ 29] setprop 1178 ............................ pTitle = #none
+  [ 32] pushcons 0 .............................. <"NEXT">
+  [ 34] setprop 1182 ............................ pTitleText = "NEXT"
+  [ 37] pushint8 4 .............................. <4>
+  [ 39] setprop 1371 ............................ pYGap = 4
+  [ 42] ret
+end
+
+on finish me
+  [  0] getprop 1100 ............................ <pLevelBar>
+  [  3] pusharglist 1 ........................... <pLevelBar>
+  [  5] extcall 350 ............................. <ilk(pLevelBar)>
+  [  8] pushsymb 388 ............................ <#void>
+  [ 11] nteq .................................... <ilk(pLevelBar) <> #void>
+  [ 12] getprop 1100 ............................ <pLevelBar>
+  [ 15] pushsymb 103 ............................ <#none>
+  [ 17] nteq .................................... <pLevelBar <> #none>
+  [ 18] and ..................................... <(ilk(pLevelBar) <> #void) and (pLevelBar <> #none)>
+  [ 19] jmpifz [ 34] ............................ if (ilk(pLevelBar) <> #void) and (pLevelBar <> #none) then
+  [ 22] getprop 1100 ............................ <pLevelBar>
+  [ 25] pusharglistnoret 1 ...................... <pLevelBar>
+  [ 27] objcall 239 ............................. pLevelBar.finish()
+  [ 29] pushsymb 103 ............................ <#none>
+  [ 31] setprop 1100 ............................ pLevelBar = #none
+  [ 34] getprop 1178 ............................ <pTitle>
+  [ 37] pusharglist 1 ........................... <pTitle>
+  [ 39] extcall 350 ............................. <ilk(pTitle)>
+  [ 42] pushsymb 388 ............................ <#void>
+  [ 45] nteq .................................... <ilk(pTitle) <> #void>
+  [ 46] getprop 1178 ............................ <pTitle>
+  [ 49] pushsymb 103 ............................ <#none>
+  [ 51] nteq .................................... <pTitle <> #none>
+  [ 52] and ..................................... <(ilk(pTitle) <> #void) and (pTitle <> #none)>
+  [ 53] jmpifz [ 68] ............................ if (ilk(pTitle) <> #void) and (pTitle <> #none) then
+  [ 56] getprop 1178 ............................ <pTitle>
+  [ 59] pusharglistnoret 1 ...................... <pTitle>
+  [ 61] objcall 239 ............................. pTitle.finish()
+  [ 63] pushsymb 103 ............................ <#none>
+  [ 65] setprop 1178 ............................ pTitle = #none
+  [ 68] getparam 0 .............................. <me>
+  [ 70] pusharglistnoret 1 ...................... <me>
+  [ 72] objcall 1611 ............................ me.finishSpriteMembers()
+  [ 75] ret
+end
+
+on finishSpriteMembers me
+  [  0] getprop 1625 ............................ <pSpriteMembers>
+  [  3] pusharglist 1 ........................... <pSpriteMembers>
+  [  5] extcall 350 ............................. <ilk(pSpriteMembers)>
+  [  8] pushsymb 388 ............................ <#void>
+  [ 11] nteq .................................... <ilk(pSpriteMembers) <> #void>
+  [ 12] jmpifz [ 59] ............................ if ilk(pSpriteMembers) <> #void then
+  [ 15] getprop 1625 ............................ <pSpriteMembers>
+  [ 18] peek 0
+  [ 20] pusharglist 1
+  [ 22] extcall 348
+  [ 25] pushint8 1
+  [ 27] peek 0
+  [ 29] peek 2
+  [ 31] lteq
+  [ 32] jmpifz [ 57] ............................ repeat with sprMem in pSpriteMembers
+  [ 35] peek 2
+  [ 37] peek 1
+  [ 39] pusharglist 2
+  [ 41] extcall 301
+  [ 44] setlocal 0
+  [ 46] getlocal 0 .............................. <sprMem>
+  [ 48] pusharglistnoret 1 ...................... <sprMem>
+  [ 50] objcall 239 ............................. sprMem.finish()
+  [ 52] pushint8 1
+  [ 54] add
+  [ 55] endrepeat [ 27]
+  [ 57] pop 3
+  [ 59] pusharglist 0 ........................... <[]>
+  [ 61] pushlist ................................ <[]>
+  [ 62] setprop 1625 ............................ pSpriteMembers = []
+  [ 65] ret
+end
+
+on addSaveData me, sd
+  [  0] getparam 1 .............................. <sd>
+  [  2] pushsymb 1624 ........................... <#pReserveArmy>
+  [  5] getprop 1624 ............................ <pReserveArmy>
+  [  8] pusharglistnoret 3 ...................... <sd, #pReserveArmy, pReserveArmy>
+  [ 10] objcall 54 .............................. sd[#pReserveArmy] = pReserveArmy
+  [ 12] ret
+end
+
+on clearArmy me
+  [  0] pusharglist 0 ........................... <[:]>
+  [  2] pushproplist ............................ <[:]>
+  [  3] setprop 1624 ............................ pReserveArmy = [:]
+  [  6] ret
+end
+
+on checkUnitAvailability me, summonSpell
+  [  0] pushint8 1 .............................. <1>
+  [  2] setlocal 0 .............................. unitAvailable = 1
+  [  4] getparam 1 .............................. <summonSpell>
+  [  6] getchainedprop 1628 ..................... <summonSpell.pSpellProperties>
+  [  9] getchainedprop 53 ....................... <summonSpell.pSpellProperties.attack>
+  [ 11] getobjprop 138 .......................... <summonSpell.pSpellProperties.attack.name>
+  [ 13] pushsymb 1629 ........................... <#armySummon>
+  [ 16] eq ...................................... <summonSpell.pSpellProperties.attack.name = #armySummon>
+  [ 17] jmpifz [ 62] ............................ if summonSpell.pSpellProperties.attack.name = #armySummon then
+  [ 20] getparam 1 .............................. <summonSpell>
+  [ 22] pusharglist 1 ........................... <summonSpell>
+  [ 24] objcall 1097 ............................ <summonSpell.getTeam()>
+  [ 27] setlocal 1 .............................. team = summonSpell.getTeam()
+  [ 29] getparam 1 .............................. <summonSpell>
+  [ 31] pusharglist 1 ........................... <summonSpell>
+  [ 33] objcall 1630 ............................ <summonSpell.getPayload()>
+  [ 36] setlocal 2 .............................. typ = summonSpell.getPayload()
+  [ 38] getparam 0 .............................. <me>
+  [ 40] getlocal 1 .............................. <team>
+  [ 42] getlocal 2 .............................. <typ>
+  [ 44] pusharglist 3 ........................... <me, team, typ>
+  [ 46] objcall 1619 ............................ <me.lookupArmyDetails(team, typ)>
+  [ 49] setlocal 3 .............................. armyDetails = me.lookupArmyDetails(team, typ)
+  [ 51] getlocal 3 .............................. <armyDetails>
+  [ 53] pushsymb 103 ............................ <#none>
+  [ 55] eq ...................................... <armyDetails = #none>
+  [ 56] jmpifz [ 62] ............................ if armyDetails = #none then
+  [ 59] pushzero ................................ <0>
+  [ 60] setlocal 0 .............................. unitAvailable = 0
+  [ 62] getlocal 0 .............................. <unitAvailable>
+  [ 64] pusharglistnoret 1 ...................... <unitAvailable>
+  [ 66] extcall 3 ............................... return unitAvailable
+  [ 68] ret
+end
+
+on createUnit me, team, typ, startLoc, spellName
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <team>
+  [  4] getparam 2 .............................. <typ>
+  [  6] pusharglist 3 ........................... <me, team, typ>
+  [  8] objcall 1619 ............................ <me.lookupArmyDetails(team, typ)>
+  [ 11] setlocal 0 .............................. armyDetails = me.lookupArmyDetails(team, typ)
+  [ 13] getparam 4 .............................. <spellName>
+  [ 15] pushsymb 1629 ........................... <#armySummon>
+  [ 18] eq ...................................... <spellName = #armySummon>
+  [ 19] getlocal 0 .............................. <armyDetails>
+  [ 21] pushsymb 103 ............................ <#none>
+  [ 23] eq ...................................... <armyDetails = #none>
+  [ 24] and ..................................... <(spellName = #armySummon) and (armyDetails = #none)>
+  [ 25] jmpifz [ 34] ............................ if (spellName = #armySummon) and (armyDetails = #none) then
+  [ 28] pushsymb 103 ............................ <#none>
+  [ 30] pusharglistnoret 1 ...................... <#none>
+  [ 32] extcall 3 ............................... return #none
+  [ 34] getglobal 191 ........................... <g>
+  [ 36] getchainedprop 619 ...................... <g.actorMaster>
+  [ 39] pushsymb 894 ............................ <#newActor>
+  [ 42] pusharglist 2 ........................... <g.actorMaster, #newActor>
+  [ 44] objcall 339 ............................. <g.actorMaster.getParams(#newActor)>
+  [ 47] setlocal 1 .............................. params = g.actorMaster.getParams(#newActor)
+  [ 49] getlocal 1 .............................. <params>
+  [ 51] getparam 2 .............................. <typ>
+  [ 53] setobjprop 260 .......................... params.typ = typ
+  [ 56] getlocal 1 .............................. <params>
+  [ 58] getparam 3 .............................. <startLoc>
+  [ 60] setobjprop 908 .......................... params.startLoc = startLoc
+  [ 63] getlocal 1 .............................. <params>
+  [ 65] pushzero ................................ <0>
+  [ 66] setobjprop 909 .......................... params.useOffset = 0
+  [ 69] getglobal 191 ........................... <g>
+  [ 71] getchainedprop 619 ...................... <g.actorMaster>
+  [ 74] getlocal 1 .............................. <params>
+  [ 76] pusharglist 2 ........................... <g.actorMaster, params>
+  [ 78] objcall 894 ............................. <g.actorMaster.newActor(params)>
+  [ 81] setlocal 2 .............................. newActor = g.actorMaster.newActor(params)
+  [ 83] getlocal 2 .............................. <newActor>
+  [ 85] pushsymb 103 ............................ <#none>
+  [ 87] nteq .................................... <newActor <> #none>
+  [ 88] jmpifz [135] ............................ if newActor <> #none then
+  [ 91] getlocal 0 .............................. <armyDetails>
+  [ 93] pushsymb 103 ............................ <#none>
+  [ 95] nteq .................................... <armyDetails <> #none>
+  [ 96] jmpifz [135] ............................ if armyDetails <> #none then
+  [ 99] getlocal 2 .............................. <newActor>
+  [101] getlocal 0 .............................. <armyDetails>
+  [103] pusharglistnoret 2 ...................... <newActor, armyDetails>
+  [105] objcall 1634 ............................ newActor.restoreArmyDetails(armyDetails)
+  [108] getlocal 2 .............................. <newActor>
+  [110] pusharglistnoret 1 ...................... <newActor>
+  [112] objcall 1635 ............................ newActor.armyTeleportIn()
+  [115] getparam 0 .............................. <me>
+  [117] getparam 1 .............................. <team>
+  [119] getparam 2 .............................. <typ>
+  [121] pusharglist 3 ........................... <me, team, typ>
+  [123] objcall 1622 ............................ <me.restoreUnitToCombat(team, typ)>
+  [126] setlocal 0 .............................. armyDetails = me.restoreUnitToCombat(team, typ)
+  [128] getparam 0 .............................. <me>
+  [130] pusharglistnoret 1 ...................... <me>
+  [132] objcall 1615 ............................ me.displayNextSummons()
+  [135] getlocal 2 .............................. <newActor>
+  [137] pusharglistnoret 1 ...................... <newActor>
+  [139] extcall 3 ............................... return newActor
+  [141] ret
+end
+
+on createUnitNum me, team, typ, startLoc, num
+  [  0] getprop 1624 ............................ <pReserveArmy>
+  [  3] getparam 1 .............................. <team>
+  [  5] pusharglist 2 ........................... <pReserveArmy, team>
+  [  7] objcall 301 ............................. <pReserveArmy[team]>
+  [ 10] getparam 2 .............................. <typ>
+  [ 12] pusharglist 2 ........................... <pReserveArmy[team], typ>
+  [ 14] objcall 301 ............................. <pReserveArmy[team][typ]>
+  [ 17] getparam 4 .............................. <num>
+  [ 19] pusharglist 2 ........................... <pReserveArmy[team][typ], num>
+  [ 21] objcall 301 ............................. <pReserveArmy[team][typ][num]>
+  [ 24] setlocal 0 .............................. armyDetails = pReserveArmy[team][typ][num]
+  [ 26] getglobal 191 ........................... <g>
+  [ 28] getchainedprop 619 ...................... <g.actorMaster>
+  [ 31] pushsymb 894 ............................ <#newActor>
+  [ 34] pusharglist 2 ........................... <g.actorMaster, #newActor>
+  [ 36] objcall 339 ............................. <g.actorMaster.getParams(#newActor)>
+  [ 39] setlocal 1 .............................. params = g.actorMaster.getParams(#newActor)
+  [ 41] getlocal 1 .............................. <params>
+  [ 43] getparam 2 .............................. <typ>
+  [ 45] setobjprop 260 .......................... params.typ = typ
+  [ 48] getlocal 1 .............................. <params>
+  [ 50] getparam 3 .............................. <startLoc>
+  [ 52] setobjprop 908 .......................... params.startLoc = startLoc
+  [ 55] getlocal 1 .............................. <params>
+  [ 57] pushzero ................................ <0>
+  [ 58] setobjprop 909 .......................... params.useOffset = 0
+  [ 61] getglobal 191 ........................... <g>
+  [ 63] getchainedprop 619 ...................... <g.actorMaster>
+  [ 66] getlocal 1 .............................. <params>
+  [ 68] pusharglist 2 ........................... <g.actorMaster, params>
+  [ 70] objcall 894 ............................. <g.actorMaster.newActor(params)>
+  [ 73] setlocal 2 .............................. newActor = g.actorMaster.newActor(params)
+  [ 75] getlocal 2 .............................. <newActor>
+  [ 77] pushsymb 103 ............................ <#none>
+  [ 79] nteq .................................... <newActor <> #none>
+  [ 80] jmpifz [122] ............................ if newActor <> #none then
+  [ 83] getlocal 0 .............................. <armyDetails>
+  [ 85] pushsymb 103 ............................ <#none>
+  [ 87] nteq .................................... <armyDetails <> #none>
+  [ 88] jmpifz [122] ............................ if armyDetails <> #none then
+  [ 91] getlocal 2 .............................. <newActor>
+  [ 93] getlocal 0 .............................. <armyDetails>
+  [ 95] pusharglistnoret 2 ...................... <newActor, armyDetails>
+  [ 97] objcall 1634 ............................ newActor.restoreArmyDetails(armyDetails)
+  [100] getlocal 2 .............................. <newActor>
+  [102] pusharglistnoret 1 ...................... <newActor>
+  [104] objcall 1635 ............................ newActor.armyTeleportIn()
+  [107] getparam 0 .............................. <me>
+  [109] getparam 1 .............................. <team>
+  [111] getparam 2 .............................. <typ>
+  [113] getparam 4 .............................. <num>
+  [115] pusharglist 4 ........................... <me, team, typ, num>
+  [117] objcall 1943 ............................ <me.restoreUnitToCombatNum(team, typ, num)>
+  [120] setlocal 0 .............................. armyDetails = me.restoreUnitToCombatNum(team, typ, num)
+  [122] getlocal 2 .............................. <newActor>
+  [124] pusharglistnoret 1 ...................... <newActor>
+  [126] extcall 3 ............................... return newActor
+  [128] ret
+end
+
+on createUnitFromSummonSpell me, summonSpell
+  [  0] getparam 1 .............................. <summonSpell>
+  [  2] pusharglist 1 ........................... <summonSpell>
+  [  4] objcall 1097 ............................ <summonSpell.getTeam()>
+  [  7] setlocal 0 .............................. team = summonSpell.getTeam()
+  [  9] getparam 1 .............................. <summonSpell>
+  [ 11] pusharglist 1 ........................... <summonSpell>
+  [ 13] objcall 1630 ............................ <summonSpell.getPayload()>
+  [ 16] setlocal 1 .............................. typ = summonSpell.getPayload()
+  [ 18] getparam 1 .............................. <summonSpell>
+  [ 20] pusharglist 1 ........................... <summonSpell>
+  [ 22] objcall 745 ............................. <summonSpell.getLoc()>
+  [ 25] setlocal 2 .............................. startLoc = summonSpell.getLoc()
+  [ 27] getparam 1 .............................. <summonSpell>
+  [ 29] getchainedprop 1628 ..................... <summonSpell.pSpellProperties>
+  [ 32] getchainedprop 53 ....................... <summonSpell.pSpellProperties.attack>
+  [ 34] getobjprop 138 .......................... <summonSpell.pSpellProperties.attack.name>
+  [ 36] setlocal 3 .............................. spellName = summonSpell.pSpellProperties.attack.name
+  [ 38] getparam 0 .............................. <me>
+  [ 40] getlocal 0 .............................. <team>
+  [ 42] getlocal 1 .............................. <typ>
+  [ 44] getlocal 2 .............................. <startLoc>
+  [ 46] getlocal 3 .............................. <spellName>
+  [ 48] pusharglistnoret 5 ...................... <me, team, typ, startLoc, spellName>
+  [ 50] objcall 1613 ............................ me.createUnit(team, typ, startLoc, spellName)
+  [ 53] ret
+end
+
+on displayNextSummons me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 1611 ............................ me.finishSpriteMembers()
+  [  7] getprop 1175 ............................ <pDisplayRect>
+  [ 10] getobjprop 168 .......................... <pDisplayRect.top>
+  [ 12] setlocal 0 .............................. yLoc = pDisplayRect.top
+  [ 14] getparam 0 .............................. <me>
+  [ 16] getlocal 0 .............................. <yLoc>
+  [ 18] pusharglistnoret 2 ...................... <me, yLoc>
+  [ 20] objcall 1616 ............................ me.displayTitle(yLoc)
+  [ 23] getlocal 0 .............................. <yLoc>
+  [ 25] getprop 1178 ............................ <pTitle>
+  [ 28] pusharglist 1 ........................... <pTitle>
+  [ 30] objcall 1637 ............................ <pTitle.getImageHeight()>
+  [ 33] add ..................................... <yLoc + pTitle.getImageHeight()>
+  [ 34] getprop 1371 ............................ <pYGap>
+  [ 37] add ..................................... <yLoc + pTitle.getImageHeight() + pYGap>
+  [ 38] setlocal 0 .............................. yLoc = yLoc + pTitle.getImageHeight() + pYGap
+  [ 40] getprop 1624 ............................ <pReserveArmy>
+  [ 43] getprop 1626 ............................ <pTeamToDisplay>
+  [ 46] pusharglist 2 ........................... <pReserveArmy, pTeamToDisplay>
+  [ 48] objcall 301 ............................. <pReserveArmy[pTeamToDisplay]>
+  [ 51] setlocal 1 .............................. army = pReserveArmy[pTeamToDisplay]
+  [ 53] getlocal 1 .............................. <army>
+  [ 55] pusharglist 0 ........................... <>
+  [ 57] extcall 388 ............................. <VOID>
+  [ 60] eq ...................................... <army = VOID>
+  [ 61] jmpifz [ 68] ............................ if army = VOID then
+  [ 64] pusharglistnoret 0 ...................... <>
+  [ 66] extcall 3 ............................... return 
+  [ 68] getlocal 1 .............................. <army>
+  [ 70] peek 0
+  [ 72] pusharglist 1
+  [ 74] extcall 348
+  [ 77] pushint8 1
+  [ 79] peek 0
+  [ 81] peek 2
+  [ 83] lteq
+  [ 84] jmpifz [345] ............................ repeat with unitList in army
+  [ 87] peek 2
+  [ 89] peek 1
+  [ 91] pusharglist 2
+  [ 93] extcall 301
+  [ 96] setlocal 2
+  [ 98] getlocal 2 .............................. <unitList>
+  [100] pushsymb 1638 ........................... <#pExperienceLevel>
+  [103] pusharglist 2 ........................... <unitList, #pExperienceLevel>
+  [105] extcall 1507 ............................ <ListGetPosOfMaxByProp(unitList, #pExperienceLevel)>
+  [108] setlocal 3 .............................. pos = ListGetPosOfMaxByProp(unitList, #pExperienceLevel)
+  [110] getlocal 3 .............................. <pos>
+  [112] pushsymb 103 ............................ <#none>
+  [114] eq ...................................... <pos = #none>
+  [115] jmpifz [121] ............................ if pos = #none then
+  [118] jmp [339] ............................... next repeat
+  [121] getlocal 2 .............................. <unitList>
+  [123] getlocal 3 .............................. <pos>
+  [125] pusharglist 2 ........................... <unitList, pos>
+  [127] objcall 301 ............................. <unitList[pos]>
+  [130] setlocal 4 .............................. unitToDisplay = unitList[pos]
+  [132] getparam 0 .............................. <me>
+  [134] pusharglist 1 ........................... <me>
+  [136] objcall 1620 ............................ <me.newSprMem()>
+  [139] setlocal 5 .............................. newSprMem = me.newSprMem()
+  [141] getlocal 4 .............................. <unitToDisplay>
+  [143] getobjprop 1638 ......................... <unitToDisplay.pExperienceLevel>
+  [146] setlocal 6 .............................. unitLevel = unitToDisplay.pExperienceLevel
+  [148] getprop 1100 ............................ <pLevelBar>
+  [151] getlocal 6 .............................. <unitLevel>
+  [153] pusharglist 2 ........................... <pLevelBar, unitLevel>
+  [155] objcall 1639 ............................ <pLevelBar.drawStarsImage(unitLevel)>
+  [158] setlocal 7 .............................. starsImage = pLevelBar.drawStarsImage(unitLevel)
+  [160] getlocal 5 .............................. <newSprMem>
+  [162] getlocal 7 .............................. <starsImage>
+  [164] getprop 1175 ............................ <pDisplayRect>
+  [167] getobjprop 170 .......................... <pDisplayRect.left>
+  [169] getlocal 0 .............................. <yLoc>
+  [171] pusharglist 2 ........................... <pDisplayRect.left, yLoc>
+  [173] extcall 122 ............................. <point(pDisplayRect.left, yLoc)>
+  [175] pusharglistnoret 3 ...................... <newSprMem, starsImage, point(pDisplayRect.left, yLoc)>
+  [177] objcall 1199 ............................ newSprMem.displayImageAtLoc(starsImage, point(pDisplayRect.left, yLoc))
+  [180] getlocal 5 .............................. <newSprMem>
+  [182] getprop 1175 ............................ <pDisplayRect>
+  [185] getobjprop 170 .......................... <pDisplayRect.left>
+  [187] getprop 1175 ............................ <pDisplayRect>
+  [190] getobjprop 171 .......................... <pDisplayRect.right>
+  [192] pusharglistnoret 3 ...................... <newSprMem, pDisplayRect.left, pDisplayRect.right>
+  [194] objcall 1640 ............................ newSprMem.centerAlign(pDisplayRect.left, pDisplayRect.right)
+  [197] getprop 1625 ............................ <pSpriteMembers>
+  [200] getlocal 5 .............................. <newSprMem>
+  [202] pusharglistnoret 2 ...................... <pSpriteMembers, newSprMem>
+  [204] objcall 506 ............................. pSpriteMembers.append(newSprMem)
+  [207] getlocal 0 .............................. <yLoc>
+  [209] getlocal 7 .............................. <starsImage>
+  [211] getobjprop 326 .......................... <starsImage.height>
+  [214] add ..................................... <yLoc + starsImage.height>
+  [215] getprop 1100 ............................ <pLevelBar>
+  [218] pusharglist 1 ........................... <pLevelBar>
+  [220] objcall 1641 ............................ <pLevelBar.getYGap()>
+  [223] add ..................................... <yLoc + starsImage.height + pLevelBar.getYGap()>
+  [224] setlocal 0 .............................. yLoc = yLoc + starsImage.height + pLevelBar.getYGap()
+  [226] getparam 0 .............................. <me>
+  [228] pusharglist 1 ........................... <me>
+  [230] objcall 1620 ............................ <me.newSprMem()>
+  [233] setlocal 5 .............................. newSprMem = me.newSprMem()
+  [235] getlocal 4 .............................. <unitToDisplay>
+  [237] getchainedprop 193 ...................... <unitToDisplay.member>
+  [239] getobjprop 1198 ......................... <unitToDisplay.member.image>
+  [242] setlocal 8 .............................. unitImage = unitToDisplay.member.image
+  [244] getlocal 5 .............................. <newSprMem>
+  [246] getlocal 8 .............................. <unitImage>
+  [248] getprop 1175 ............................ <pDisplayRect>
+  [251] getobjprop 170 .......................... <pDisplayRect.left>
+  [253] getlocal 0 .............................. <yLoc>
+  [255] pusharglist 2 ........................... <pDisplayRect.left, yLoc>
+  [257] extcall 122 ............................. <point(pDisplayRect.left, yLoc)>
+  [259] pusharglistnoret 3 ...................... <newSprMem, unitImage, point(pDisplayRect.left, yLoc)>
+  [261] objcall 1199 ............................ newSprMem.displayImageAtLoc(unitImage, point(pDisplayRect.left, yLoc))
+  [264] getlocal 5 .............................. <newSprMem>
+  [266] pushint8 1 .............................. <1>
+  [268] inv ..................................... <-1>
+  [269] pusharglistnoret 2 ...................... <newSprMem, -1>
+  [271] objcall 1642 ............................ newSprMem.setSpriteFlipFromDir(-1)
+  [274] getlocal 5 .............................. <newSprMem>
+  [276] getlocal 4 .............................. <unitToDisplay>
+  [278] getobjprop 326 .......................... <unitToDisplay.height>
+  [281] pusharglistnoret 2 ...................... <newSprMem, unitToDisplay.height>
+  [283] objcall 1643 ............................ newSprMem.setSpriteHeight(unitToDisplay.height)
+  [286] getlocal 5 .............................. <newSprMem>
+  [288] getlocal 4 .............................. <unitToDisplay>
+  [290] getobjprop 325 .......................... <unitToDisplay.width>
+  [293] pusharglistnoret 2 ...................... <newSprMem, unitToDisplay.width>
+  [295] objcall 1644 ............................ newSprMem.setSpriteWidth(unitToDisplay.width)
+  [298] getlocal 5 .............................. <newSprMem>
+  [300] getprop 1175 ............................ <pDisplayRect>
+  [303] getobjprop 170 .......................... <pDisplayRect.left>
+  [305] getprop 1175 ............................ <pDisplayRect>
+  [308] getobjprop 171 .......................... <pDisplayRect.right>
+  [310] pusharglistnoret 3 ...................... <newSprMem, pDisplayRect.left, pDisplayRect.right>
+  [312] objcall 1640 ............................ newSprMem.centerAlign(pDisplayRect.left, pDisplayRect.right)
+  [315] getprop 1625 ............................ <pSpriteMembers>
+  [318] getlocal 5 .............................. <newSprMem>
+  [320] pusharglistnoret 2 ...................... <pSpriteMembers, newSprMem>
+  [322] objcall 506 ............................. pSpriteMembers.append(newSprMem)
+  [325] getlocal 0 .............................. <yLoc>
+  [327] getlocal 4 .............................. <unitToDisplay>
+  [329] getobjprop 326 .......................... <unitToDisplay.height>
+  [332] add ..................................... <yLoc + unitToDisplay.height>
+  [333] getprop 1371 ............................ <pYGap>
+  [336] add ..................................... <yLoc + unitToDisplay.height + pYGap>
+  [337] setlocal 0 .............................. yLoc = yLoc + unitToDisplay.height + pYGap
+  [339] pushint8 1
+  [341] add
+  [342] endrepeat [ 79]
+  [345] pop 3
+  [347] ret
+end
+
+on displayTitle me, yLoc
+  [  0] getprop 1175 ............................ <pDisplayRect>
+  [  3] getobjprop 170 .......................... <pDisplayRect.left>
+  [  5] setlocal 0 .............................. x1 = pDisplayRect.left
+  [  7] getprop 1175 ............................ <pDisplayRect>
+  [ 10] getobjprop 171 .......................... <pDisplayRect.right>
+  [ 12] setlocal 1 .............................. x2 = pDisplayRect.right
+  [ 14] getprop 1178 ............................ <pTitle>
+  [ 17] getlocal 0 .............................. <x1>
+  [ 19] getlocal 1 .............................. <x2>
+  [ 21] getparam 1 .............................. <yLoc>
+  [ 23] pusharglistnoret 4 ...................... <pTitle, x1, x2, yLoc>
+  [ 25] objcall 1649 ............................ pTitle.displayCentered(x1, x2, yLoc)
+  [ 28] ret
+end
+
+on ensureLists me, team, typ
+  [  0] getprop 1624 ............................ <pReserveArmy>
+  [  3] getparam 1 .............................. <team>
+  [  5] pusharglist 2 ........................... <pReserveArmy, team>
+  [  7] objcall 301 ............................. <pReserveArmy[team]>
+  [ 10] pusharglist 0 ........................... <>
+  [ 12] extcall 388 ............................. <VOID>
+  [ 15] eq ...................................... <pReserveArmy[team] = VOID>
+  [ 16] jmpifz [ 31] ............................ if pReserveArmy[team] = VOID then
+  [ 19] getprop 1624 ............................ <pReserveArmy>
+  [ 22] getparam 1 .............................. <team>
+  [ 24] pusharglist 0 ........................... <[:]>
+  [ 26] pushproplist ............................ <[:]>
+  [ 27] pusharglistnoret 3 ...................... <pReserveArmy, team, [:]>
+  [ 29] objcall 54 .............................. pReserveArmy[team] = [:]
+  [ 31] getprop 1624 ............................ <pReserveArmy>
+  [ 34] getparam 1 .............................. <team>
+  [ 36] pusharglist 2 ........................... <pReserveArmy, team>
+  [ 38] objcall 301 ............................. <pReserveArmy[team]>
+  [ 41] setlocal 0 .............................. teamList = pReserveArmy[team]
+  [ 43] getlocal 0 .............................. <teamList>
+  [ 45] getparam 2 .............................. <typ>
+  [ 47] pusharglist 2 ........................... <teamList, typ>
+  [ 49] objcall 301 ............................. <teamList[typ]>
+  [ 52] pusharglist 0 ........................... <>
+  [ 54] extcall 388 ............................. <VOID>
+  [ 57] eq ...................................... <teamList[typ] = VOID>
+  [ 58] jmpifz [ 72] ............................ if teamList[typ] = VOID then
+  [ 61] getlocal 0 .............................. <teamList>
+  [ 63] getparam 2 .............................. <typ>
+  [ 65] pusharglist 0 ........................... <[]>
+  [ 67] pushlist ................................ <[]>
+  [ 68] pusharglistnoret 3 ...................... <teamList, typ, []>
+  [ 70] objcall 54 .............................. teamList[typ] = []
+  [ 72] ret
+end
+
+on getLevelBar me
+  [  0] getprop 1100 ............................ <pLevelBar>
+  [  3] pusharglistnoret 1 ...................... <pLevelBar>
+  [  5] extcall 3 ............................... return pLevelBar
+  [  7] ret
+end
+
+on getReserveArmy me
+  [  0] getprop 1624 ............................ <pReserveArmy>
+  [  3] pusharglistnoret 1 ...................... <pReserveArmy>
+  [  5] extcall 3 ............................... return pReserveArmy
+  [  7] ret
+end
+
+on getReserveArmyTeam me, team
+  [  0] getprop 1624 ............................ <pReserveArmy>
+  [  3] getparam 1 .............................. <team>
+  [  5] pusharglist 2 ........................... <pReserveArmy, team>
+  [  7] objcall 301 ............................. <pReserveArmy[team]>
+  [ 10] pusharglistnoret 1 ...................... <pReserveArmy[team]>
+  [ 12] extcall 3 ............................... return pReserveArmy[team]
+  [ 14] ret
+end
+
+on getTeamToDisplay me
+  [  0] getprop 1626 ............................ <pTeamToDisplay>
+  [  3] pusharglistnoret 1 ...................... <pTeamToDisplay>
+  [  5] extcall 3 ............................... return pTeamToDisplay
+  [  7] ret
+end
+
+on isMenuItemShadowed me, theComm
+  [  0] getparam 1 .............................. <theComm>
+  [  2] peek 0 .................................. case theComm of
+  [  4] pushsymb 649 ............................ <#showArmy>
+  [  7] eq
+  [  8] jmpifz [ 24] ............................ (case) #showArmy:
+  [ 11] pop 1
+  [ 13] getprop 1624 ............................ <pReserveArmy>
+  [ 16] pusharglist 0 ........................... <[:]>
+  [ 18] pushproplist ............................ <[:]>
+  [ 19] eq ...................................... <pReserveArmy = [:]>
+  [ 20] pusharglistnoret 1 ...................... <pReserveArmy = [:]>
+  [ 22] extcall 3 ............................... return pReserveArmy = [:]
+  [ 24] pop 1
+  [ 26] ret
+end
+
+on lookupArmyDetails me, team, typ
+  [  0] pushsymb 103 ............................ <#none>
+  [  2] setlocal 0 .............................. armyDetails = #none
+  [  4] getparam 0 .............................. <me>
+  [  6] getparam 1 .............................. <team>
+  [  8] getparam 2 .............................. <typ>
+  [ 10] pusharglistnoret 3 ...................... <me, team, typ>
+  [ 12] objcall 1617 ............................ me.ensureLists(team, typ)
+  [ 15] getprop 1624 ............................ <pReserveArmy>
+  [ 18] getparam 1 .............................. <team>
+  [ 20] pusharglist 2 ........................... <pReserveArmy, team>
+  [ 22] objcall 301 ............................. <pReserveArmy[team]>
+  [ 25] getparam 2 .............................. <typ>
+  [ 27] pusharglist 2 ........................... <pReserveArmy[team], typ>
+  [ 29] objcall 301 ............................. <pReserveArmy[team][typ]>
+  [ 32] setlocal 1 .............................. unitList = pReserveArmy[team][typ]
+  [ 34] getlocal 1 .............................. <unitList>
+  [ 36] pushsymb 1638 ........................... <#pExperienceLevel>
+  [ 39] pusharglist 2 ........................... <unitList, #pExperienceLevel>
+  [ 41] extcall 1507 ............................ <ListGetPosOfMaxByProp(unitList, #pExperienceLevel)>
+  [ 44] setlocal 2 .............................. pos = ListGetPosOfMaxByProp(unitList, #pExperienceLevel)
+  [ 46] getlocal 2 .............................. <pos>
+  [ 48] pushsymb 103 ............................ <#none>
+  [ 50] nteq .................................... <pos <> #none>
+  [ 51] jmpifz [ 65] ............................ if pos <> #none then
+  [ 54] getlocal 1 .............................. <unitList>
+  [ 56] getlocal 2 .............................. <pos>
+  [ 58] pusharglist 2 ........................... <unitList, pos>
+  [ 60] objcall 301 ............................. <unitList[pos]>
+  [ 63] setlocal 0 .............................. armyDetails = unitList[pos]
+  [ 65] getlocal 0 .............................. <armyDetails>
+  [ 67] pusharglistnoret 1 ...................... <armyDetails>
+  [ 69] extcall 3 ............................... return armyDetails
+  [ 71] ret
+end
+
+on newSprMem me
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 336 ...................... <g.objectMaster>
+  [  5] pushsymb 1217 ........................... <#objSpriteMember>
+  [  8] pusharglist 2 ........................... <g.objectMaster, #objSpriteMember>
+  [ 10] objcall 338 ............................. <g.objectMaster.requestObject(#objSpriteMember)>
+  [ 13] setlocal 0 .............................. newSprMem = g.objectMaster.requestObject(#objSpriteMember)
+  [ 15] getlocal 0 .............................. <newSprMem>
+  [ 17] pushsymb 1 .............................. <#init>
+  [ 19] pusharglist 2 ........................... <newSprMem, #init>
+  [ 21] objcall 339 ............................. <newSprMem.getParams(#init)>
+  [ 24] setlocal 1 .............................. params = newSprMem.getParams(#init)
+  [ 26] getlocal 1 .............................. <params>
+  [ 28] getglobal 1218 .......................... <gGlobalDisplayLayer>
+  [ 31] setobjprop 1106 ......................... params.layer = gGlobalDisplayLayer
+  [ 34] getlocal 0 .............................. <newSprMem>
+  [ 36] getlocal 1 .............................. <params>
+  [ 38] pusharglistnoret 2 ...................... <newSprMem, params>
+  [ 40] objcall 1 ............................... newSprMem.init(params)
+  [ 42] getlocal 0 .............................. <newSprMem>
+  [ 44] pusharglistnoret 1 ...................... <newSprMem>
+  [ 46] extcall 3 ............................... return newSprMem
+  [ 48] ret
+end
+
+on recordUnitDetails me, obj
+  [  0] getparam 1 .............................. <obj>
+  [  2] pusharglist 1 ........................... <obj>
+  [  4] objcall 1651 ............................ <obj.generateArmyDetails()>
+  [  7] setlocal 0 .............................. armyDetails = obj.generateArmyDetails()
+  [  9] getparam 1 .............................. <obj>
+  [ 11] pushsymb 1652 ........................... <#stand>
+  [ 14] pusharglist 2 ........................... <obj, #stand>
+  [ 16] objcall 1653 ............................ <obj.getAnimMemberFromStrip(#stand)>
+  [ 19] setlocal 1 .............................. standMember = obj.getAnimMemberFromStrip(#stand)
+  [ 21] getlocal 0 .............................. <armyDetails>
+  [ 23] pushsymb 326 ............................ <#height>
+  [ 26] getlocal 1 .............................. <standMember>
+  [ 28] getobjprop 326 .......................... <standMember.height>
+  [ 31] pusharglistnoret 3 ...................... <armyDetails, #height, standMember.height>
+  [ 33] objcall 54 .............................. armyDetails[#height] = standMember.height
+  [ 35] getlocal 0 .............................. <armyDetails>
+  [ 37] pushsymb 193 ............................ <#member>
+  [ 39] getlocal 1 .............................. <standMember>
+  [ 41] pusharglistnoret 3 ...................... <armyDetails, #member, standMember>
+  [ 43] objcall 54 .............................. armyDetails[#member] = standMember
+  [ 45] getlocal 0 .............................. <armyDetails>
+  [ 47] pushsymb 325 ............................ <#width>
+  [ 50] getlocal 1 .............................. <standMember>
+  [ 52] getobjprop 325 .......................... <standMember.width>
+  [ 55] pusharglistnoret 3 ...................... <armyDetails, #width, standMember.width>
+  [ 57] objcall 54 .............................. armyDetails[#width] = standMember.width
+  [ 59] getparam 0 .............................. <me>
+  [ 61] getlocal 0 .............................. <armyDetails>
+  [ 63] getobjprop 1102 ......................... <armyDetails.pTeam>
+  [ 66] getlocal 0 .............................. <armyDetails>
+  [ 68] getobjprop 1654 ......................... <armyDetails.pActorType>
+  [ 71] pusharglistnoret 3 ...................... <me, armyDetails.pTeam, armyDetails.pActorType>
+  [ 73] objcall 1617 ............................ me.ensureLists(armyDetails.pTeam, armyDetails.pActorType)
+  [ 76] getprop 1624 ............................ <pReserveArmy>
+  [ 79] getlocal 0 .............................. <armyDetails>
+  [ 81] getobjprop 1102 ......................... <armyDetails.pTeam>
+  [ 84] pusharglist 2 ........................... <pReserveArmy, armyDetails.pTeam>
+  [ 86] objcall 301 ............................. <pReserveArmy[armyDetails.pTeam]>
+  [ 89] setlocal 2 .............................. teamList = pReserveArmy[armyDetails.pTeam]
+  [ 91] getlocal 2 .............................. <teamList>
+  [ 93] getlocal 0 .............................. <armyDetails>
+  [ 95] getobjprop 1654 ......................... <armyDetails.pActorType>
+  [ 98] pusharglist 2 ........................... <teamList, armyDetails.pActorType>
+  [100] objcall 301 ............................. <teamList[armyDetails.pActorType]>
+  [103] getlocal 0 .............................. <armyDetails>
+  [105] pusharglistnoret 2 ...................... <teamList[armyDetails.pActorType], armyDetails>
+  [107] objcall 506 ............................. teamList[armyDetails.pActorType].append(armyDetails)
+  [110] getparam 0 .............................. <me>
+  [112] pusharglistnoret 1 ...................... <me>
+  [114] objcall 1615 ............................ me.displayNextSummons()
+  [117] ret
+end
+
+on restoreFromSave me, sd
+  [  0] getparam 1 .............................. <sd>
+  [  2] getobjprop 1624 ......................... <sd.pReserveArmy>
+  [  5] setprop 1624 ............................ pReserveArmy = sd.pReserveArmy
+  [  8] getparam 0 .............................. <me>
+  [ 10] pusharglistnoret 1 ...................... <me>
+  [ 12] objcall 1615 ............................ me.displayNextSummons()
+  [ 15] ret
+end
+
+on restoreUnitToCombat me, team, typ
+  [  0] pushsymb 103 ............................ <#none>
+  [  2] setlocal 0 .............................. armyDetails = #none
+  [  4] getparam 0 .............................. <me>
+  [  6] getparam 1 .............................. <team>
+  [  8] getparam 2 .............................. <typ>
+  [ 10] pusharglistnoret 3 ...................... <me, team, typ>
+  [ 12] objcall 1617 ............................ me.ensureLists(team, typ)
+  [ 15] getprop 1624 ............................ <pReserveArmy>
+  [ 18] getparam 1 .............................. <team>
+  [ 20] pusharglist 2 ........................... <pReserveArmy, team>
+  [ 22] objcall 301 ............................. <pReserveArmy[team]>
+  [ 25] getparam 2 .............................. <typ>
+  [ 27] pusharglist 2 ........................... <pReserveArmy[team], typ>
+  [ 29] objcall 301 ............................. <pReserveArmy[team][typ]>
+  [ 32] setlocal 1 .............................. unitList = pReserveArmy[team][typ]
+  [ 34] getlocal 1 .............................. <unitList>
+  [ 36] pushsymb 1638 ........................... <#pExperienceLevel>
+  [ 39] pusharglist 2 ........................... <unitList, #pExperienceLevel>
+  [ 41] extcall 1507 ............................ <ListGetPosOfMaxByProp(unitList, #pExperienceLevel)>
+  [ 44] setlocal 2 .............................. pos = ListGetPosOfMaxByProp(unitList, #pExperienceLevel)
+  [ 46] getlocal 2 .............................. <pos>
+  [ 48] pushsymb 103 ............................ <#none>
+  [ 50] nteq .................................... <pos <> #none>
+  [ 51] jmpifz [ 74] ............................ if pos <> #none then
+  [ 54] getlocal 1 .............................. <unitList>
+  [ 56] getlocal 2 .............................. <pos>
+  [ 58] pusharglist 2 ........................... <unitList, pos>
+  [ 60] objcall 301 ............................. <unitList[pos]>
+  [ 63] setlocal 0 .............................. armyDetails = unitList[pos]
+  [ 65] getlocal 1 .............................. <unitList>
+  [ 67] getlocal 2 .............................. <pos>
+  [ 69] pusharglistnoret 2 ...................... <unitList, pos>
+  [ 71] objcall 784 ............................. unitList.deleteAt(pos)
+  [ 74] getlocal 0 .............................. <armyDetails>
+  [ 76] pusharglistnoret 1 ...................... <armyDetails>
+  [ 78] extcall 3 ............................... return armyDetails
+  [ 80] ret
+end
+
+on restoreUnitToCombatNum me, team, typ, num
+  [  0] pushsymb 103 ............................ <#none>
+  [  2] setlocal 0 .............................. armyDetails = #none
+  [  4] getparam 0 .............................. <me>
+  [  6] getparam 1 .............................. <team>
+  [  8] getparam 2 .............................. <typ>
+  [ 10] pusharglistnoret 3 ...................... <me, team, typ>
+  [ 12] objcall 1617 ............................ me.ensureLists(team, typ)
+  [ 15] getprop 1624 ............................ <pReserveArmy>
+  [ 18] getparam 1 .............................. <team>
+  [ 20] pusharglist 2 ........................... <pReserveArmy, team>
+  [ 22] objcall 301 ............................. <pReserveArmy[team]>
+  [ 25] getparam 2 .............................. <typ>
+  [ 27] pusharglist 2 ........................... <pReserveArmy[team], typ>
+  [ 29] objcall 301 ............................. <pReserveArmy[team][typ]>
+  [ 32] setlocal 1 .............................. unitList = pReserveArmy[team][typ]
+  [ 34] getlocal 1 .............................. <unitList>
+  [ 36] getparam 3 .............................. <num>
+  [ 38] pusharglist 2 ........................... <unitList, num>
+  [ 40] objcall 301 ............................. <unitList[num]>
+  [ 43] pushsymb 103 ............................ <#none>
+  [ 45] nteq .................................... <unitList[num] <> #none>
+  [ 46] getlocal 1 .............................. <unitList>
+  [ 48] getparam 3 .............................. <num>
+  [ 50] pusharglist 2 ........................... <unitList, num>
+  [ 52] objcall 301 ............................. <unitList[num]>
+  [ 55] pushsymb 388 ............................ <#void>
+  [ 58] nteq .................................... <unitList[num] <> #void>
+  [ 59] and ..................................... <(unitList[num] <> #none) and (unitList[num] <> #void)>
+  [ 60] jmpifz [ 83] ............................ if (unitList[num] <> #none) and (unitList[num] <> #void) then
+  [ 63] getlocal 1 .............................. <unitList>
+  [ 65] getparam 3 .............................. <num>
+  [ 67] pusharglist 2 ........................... <unitList, num>
+  [ 69] objcall 301 ............................. <unitList[num]>
+  [ 72] setlocal 0 .............................. armyDetails = unitList[num]
+  [ 74] getlocal 1 .............................. <unitList>
+  [ 76] getparam 3 .............................. <num>
+  [ 78] pusharglistnoret 2 ...................... <unitList, num>
+  [ 80] objcall 784 ............................. unitList.deleteAt(num)
+  [ 83] getlocal 0 .............................. <armyDetails>
+  [ 85] pusharglistnoret 1 ...................... <armyDetails>
+  [ 87] extcall 3 ............................... return armyDetails
+  [ 89] ret
+end
+
+on start me, theloc, theMark
+  [  0] getparam 2 .............................. <theMark>
+  [  2] pusharglist 1 ........................... <theMark>
+  [  4] extcall 1400 ............................ <RectCalcFromMark(theMark)>
+  [  7] setprop 1175 ............................ pDisplayRect = RectCalcFromMark(theMark)
+  [ 10] getparam 0 .............................. <me>
+  [ 12] pusharglistnoret 1 ...................... <me>
+  [ 14] objcall 1623 ............................ me.startLevelBar()
+  [ 17] getparam 0 .............................. <me>
+  [ 19] pusharglistnoret 1 ...................... <me>
+  [ 21] objcall 1173 ............................ me.startTitle()
+  [ 24] ret
+end
+
+on startLevelBar me
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 336 ...................... <g.objectMaster>
+  [  5] pushsymb 1108 ........................... <#objMoveableLevelBar>
+  [  8] pusharglist 2 ........................... <g.objectMaster, #objMoveableLevelBar>
+  [ 10] objcall 338 ............................. <g.objectMaster.requestObject(#objMoveableLevelBar)>
+  [ 13] setprop 1100 ............................ pLevelBar = g.objectMaster.requestObject(#objMoveableLevelBar)
+  [ 16] getprop 1100 ............................ <pLevelBar>
+  [ 19] pushsymb 1 .............................. <#init>
+  [ 21] pusharglist 2 ........................... <pLevelBar, #init>
+  [ 23] objcall 339 ............................. <pLevelBar.getParams(#init)>
+  [ 26] setlocal 0 .............................. params = pLevelBar.getParams(#init)
+  [ 28] getprop 1100 ............................ <pLevelBar>
+  [ 31] getlocal 0 .............................. <params>
+  [ 33] pusharglistnoret 2 ...................... <pLevelBar, params>
+  [ 35] objcall 1 ............................... pLevelBar.init(params)
+  [ 37] ret
+end
+
+on startTitle me
+  [  0] getglobal 191 ........................... <g>
+  [  2] getchainedprop 336 ...................... <g.objectMaster>
+  [  5] pushsymb 1219 ........................... <#objTextImage>
+  [  8] pusharglist 2 ........................... <g.objectMaster, #objTextImage>
+  [ 10] objcall 338 ............................. <g.objectMaster.requestObject(#objTextImage)>
+  [ 13] setprop 1178 ............................ pTitle = g.objectMaster.requestObject(#objTextImage)
+  [ 16] getprop 1178 ............................ <pTitle>
+  [ 19] pushsymb 1 .............................. <#init>
+  [ 21] pusharglist 2 ........................... <pTitle, #init>
+  [ 23] objcall 339 ............................. <pTitle.getParams(#init)>
+  [ 26] setlocal 0 .............................. params = pTitle.getParams(#init)
+  [ 28] getlocal 0 .............................. <params>
+  [ 30] pushzero ................................ <0>
+  [ 31] pushzero ................................ <0>
+  [ 32] pushzero ................................ <0>
+  [ 33] pusharglist 3 ........................... <0, 0, 0>
+  [ 35] extcall 106 ............................. <rgb(0, 0, 0)>
+  [ 37] setobjprop 254 .......................... params.colour = rgb(0, 0, 0)
+  [ 39] getlocal 0 .............................. <params>
+  [ 41] pushsymb 1181 ........................... <#smallgrey>
+  [ 44] setobjprop 379 .......................... params.font = #smallgrey
+  [ 47] getlocal 0 .............................. <params>
+  [ 49] getprop 1182 ............................ <pTitleText>
+  [ 52] setobjprop 392 .......................... params.text = pTitleText
+  [ 55] getprop 1178 ............................ <pTitle>
+  [ 58] getlocal 0 .............................. <params>
+  [ 60] pusharglistnoret 2 ...................... <pTitle, params>
+  [ 62] objcall 1 ............................... pTitle.init(params)
+  [ 64] ret
+end
+
+on stop me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 239 ............................. me.finish()
+  [  6] ret
+end

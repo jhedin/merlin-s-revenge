@@ -1,0 +1,29 @@
+on PointDistXY fromLoc, toLoc
+  [  0] pushzero ................................ <0>
+  [  1] pushzero ................................ <0>
+  [  2] pusharglist 2 ........................... <0, 0>
+  [  4] extcall 97 .............................. <point(0, 0)>
+  [  6] setlocal 0 .............................. distxy = point(0, 0)
+  [  8] getlocal 0 .............................. <distxy>
+  [ 10] getparam 0 .............................. <fromLoc>
+  [ 12] getobjprop 158 .......................... <fromLoc.locH>
+  [ 14] getparam 1 .............................. <toLoc>
+  [ 16] getobjprop 158 .......................... <toLoc.locH>
+  [ 18] sub ..................................... <fromLoc.locH - toLoc.locH>
+  [ 19] pusharglist 1 ........................... <fromLoc.locH - toLoc.locH>
+  [ 21] extcall 553 ............................. <abs(fromLoc.locH - toLoc.locH)>
+  [ 24] setobjprop 158 .......................... distxy.locH = abs(fromLoc.locH - toLoc.locH)
+  [ 26] getlocal 0 .............................. <distxy>
+  [ 28] getparam 0 .............................. <fromLoc>
+  [ 30] getobjprop 159 .......................... <fromLoc.locV>
+  [ 32] getparam 1 .............................. <toLoc>
+  [ 34] getobjprop 159 .......................... <toLoc.locV>
+  [ 36] sub ..................................... <fromLoc.locV - toLoc.locV>
+  [ 37] pusharglist 1 ........................... <fromLoc.locV - toLoc.locV>
+  [ 39] extcall 553 ............................. <abs(fromLoc.locV - toLoc.locV)>
+  [ 42] setobjprop 159 .......................... distxy.locV = abs(fromLoc.locV - toLoc.locV)
+  [ 44] getlocal 0 .............................. <distxy>
+  [ 46] pusharglistnoret 1 ...................... <distxy>
+  [ 48] extcall 3 ............................... return distxy
+  [ 50] ret
+end

@@ -1,0 +1,97 @@
+[#name: "ListPosCoincide(list1, list2)", #scriptType: #movie, #type: #script]
+on ListPosCoincide(list1, list2, comparison)
+  posList = []
+  
+  count1 = list1.count
+  count2 = list2.count
+  
+  countMin = min(count1, count2)
+  
+  repeat with i = 1 to countMin
+    nItem1 = list1[i]
+    nItem2 = list2[i]
+    
+    match = false
+    case comparison of
+      #notSolid:
+        if nItem1 <> #solid and nItem2 <> #solid then
+          match = true
+        end if
+        
+      otherwise:
+        if nItem1 = comparison and nItem2 = comparison then
+          match = true
+        end if
+        
+    end case
+    
+    if match = true then
+      posList.append(i)
+    end if
+    
+  end repeat
+  
+  return posList
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

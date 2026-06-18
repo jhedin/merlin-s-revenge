@@ -1,0 +1,215 @@
+[#name: "modReel", #scriptType: #parent, #type: #script]
+-- *** recoil may need some work ***
+-- *** sideOn type reel may need some work ***
+
+-- requires modEnergy for some features.
+
+-- used by a game object that needs to respond to being hit by attacks
+-- object will reel when hit
+-- object will die at end of last reel
+-- object may recoil (which prevents further damage)
+-- object may be reel proof (which prevents interuption to the attack)
+
+global gGameView
+
+property ancestor
+property pRecoil          -- whether the character recoils on getting hit. recoil prevents taking further damage until the recoil is ended
+property pRecoilCounter   -- counts the length of the recoil
+property pReelFinishSpeed  -- the speed at which the landed character starts sitting (#sideOn mode only)
+property pReelProof       -- when true, the object does not reel
+property pSitCounter      -- the length of time the character sits for
+
+on new me
+  ancestor = new (script("modModule"))
+  
+  return me
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  pRecoil = params.recoil
+  pRecoilCounter = CounterNew()
+  pRecoilCounter.tim[2] = params.recoilDuration
+  pReelProof = params.reelProof
+end
+
+on addModParams me
+  i = me.modifyParams(#init)
+  
+  i[#recoil] = false
+  i[#recoilDuration] = 0
+  i[#reelFinishSpeed] = 0.3
+  i[#reelProof] = false
+  i[#rotationSpeed] = 10  -- left for reference only, delete once we are using modRotator
+  i[#sitTime] = 30
+  
+  ancestor.addModParams()
+end
+
+on goDamageMode me
+  if me.big.checkDead() then
+    me.goReelMode()
+    return
+  end if
+  
+  if pRecoil then
+    me.big.goMode(#recoil)
+  else
+    me.goReelMode()
+  end if
+end
+
+on goReelMode me
+--  if gGameView = #sideOn then
+--    me.big.goMode(#reelFly)
+--  else if gGameView = #topDown then
+    me.big.goMode(#reel)
+--  end if
+--end
+
+on goMode me, newMode
+  case newMode of
+      
+    #recoil:
+      me.frictionStrong()
+      CounterReset(pRecoilCounter)
+      
+    #reel:
+      me.big.frictionReel()
+      me.big.resetStallCounter()
+      
+      
+    #reelFly:
+      -- start rotating (use modRotator)
+      me.big.frictionXOff()
+      
+    #reelSit:
+      CounterReset(pSitCounter)
+      
+  end case
+  
+  ancestor.goMode(newMode)
+end
+
+on internalEvent me, theEvent
+  ancestor.internalEvent(theEvent)
+  
+  case theEvent of
+    #reelFinished:
+      if me.checkDead() = false then
+        me.big.goMode(#walk)
+      end if
+      
+  end case
+end
+
+
+on takeHit me, collisionVect, attackingObj, owner
+  ancestor.takeHit(collisionVect, attackingObj, owner)
+  
+  if pReelProof = false then
+    me.goDamageMode()
+  end if
+end
+
+on update me
+  case me.ID.bigMe.getMode() of
+    #reel:
+      fin = me.updateReel()
+      if fin then 
+        me.big.internalEvent(#reelFinished)
+      end if
+      
+    #recoil:
+      fin = me.updateRecoil()
+      if fin then me.goMode(#stand)
+      
+    #reelFly:
+      -- will fin on me.collisionPlatform()
+      me.updateReelFly()
+      
+    #reelLanded:
+      fin = me.updateReelLanded()
+      if fin then 
+        if me.checkDead() then
+          me.goMode(#dead)
+        else
+          me.goMode(#reelSit)
+        end if
+      end if
+      
+    #reelSit:
+      fin = me.updateReelSit()
+      if fin then me.goMode(#look)
+      
+  end case
+  
+  ancestor.update()
+end
+
+on updateRecoil me
+  fin = false
+  if pRecoilCounter.fin then
+    fin = true
+  end if
+  
+  Counter(pRecoilCounter)
+  return fin
+end
+
+on updateReel me
+  fin = me.big.getStalled()
+  
+  -- bring any spells we are charging with us
+  me.big.internalEvent(#updateReel)
+  
+  return fin
+end
+
+on updateReelFly me
+  -- this manual rotation should no longer be necessary
+  -- once we are using modRotator
+  
+  --  me.pSpr.rotation = pRotationCounter.theCount
+  --  Counter(pRotationCounter)  
+end
+
+on updateReelLanded me
+  vectX = me.getVectX()
+  speedX = VarPositive(vectX)
+  if speedX < pReelFinishSpeed then
+    return true
+  end if
+  
+  return false
+end
+
+on updateReelSit me, callingPrg
+  if pSitCounter.fin then
+    return true
+  end if
+  
+  Counter(pSitCounter)
+  
+  return false
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

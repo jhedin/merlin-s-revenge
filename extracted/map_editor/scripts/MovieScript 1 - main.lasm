@@ -1,0 +1,247 @@
+global g, q, r, gGameSpeed, gFrameNum, gStageSize, gMapLayer, gGameObjectLayer, gPlayerLayer, gMenuLayer, gMenuTextLayer, gGridSelectorLayer
+
+on startMovie
+  [  0] pusharglist 0 ........................... <[:]>
+  [  2] pushproplist ............................ <[:]>
+  [  3] setglobal 7 ............................. g = [:]
+  [  5] pushcons 0 .............................. <QUOTE>
+  [  7] setglobal 8 ............................. q = QUOTE
+  [  9] pushcons 1 .............................. <RETURN>
+  [ 11] setglobal 9 ............................. r = RETURN
+  [ 13] getglobal 9 ............................. <r>
+  [ 15] pushcons 2 .............................. <"-- < start new movie > ">
+  [ 17] joinstr ................................. <r & "-- < start new movie > ">
+  [ 18] getglobal 9 ............................. <r>
+  [ 20] joinstr ................................. <r & "-- < start new movie > " & r>
+  [ 21] pusharglistnoret 1 ...................... <r & "-- < start new movie > " & r>
+  [ 23] extcall 10 .............................. put r & "-- < start new movie > " & r
+  [ 25] pushint8 1 .............................. <1>
+  [ 27] pusharglistnoret 1 ...................... <1>
+  [ 29] extcall 11 .............................. go(1)
+  [ 31] pushzero ................................ <0>
+  [ 32] setglobal 12 ............................ gFrameNum = 0
+  [ 34] pushint8 1 .............................. <1>
+  [ 36] setglobal 13 ............................ gGameSpeed = 1
+  [ 38] pushint8 1 .............................. <1>
+  [ 40] setglobal 14 ............................ gMapLayer = 1
+  [ 42] pushint8 50 ............................. <50>
+  [ 44] setglobal 15 ............................ gGameObjectLayer = 50
+  [ 46] pushint8 99 ............................. <99>
+  [ 48] setglobal 16 ............................ gPlayerLayer = 99
+  [ 50] pushint16 150 ........................... <150>
+  [ 53] setglobal 17 ............................ gMenuLayer = 150
+  [ 55] pushint16 151 ........................... <151>
+  [ 58] setglobal 18 ............................ gMenuTextLayer = 151
+  [ 60] pushint16 200 ........................... <200>
+  [ 63] setglobal 19 ............................ gGridSelectorLayer = 200
+  [ 65] getmovieprop 22 ......................... <the stage>
+  [ 67] getchainedprop 23 ....................... <(the stage).rect>
+  [ 69] getobjprop 24 ........................... <(the stage).rect.width>
+  [ 71] getmovieprop 22 ......................... <the stage>
+  [ 73] getchainedprop 23 ....................... <(the stage).rect>
+  [ 75] getobjprop 25 ........................... <(the stage).rect.height>
+  [ 77] pusharglist 2 ........................... <(the stage).rect.width, (the stage).rect.height>
+  [ 79] extcall 21 .............................. <point((the stage).rect.width, (the stage).rect.height)>
+  [ 81] setglobal 20 ............................ gStageSize = point((the stage).rect.width, (the stage).rect.height)
+  [ 83] pusharglistnoret 0 ...................... <>
+  [ 85] localcall 3 ............................. createObjects()
+  [ 87] pusharglistnoret 0 ...................... <>
+  [ 89] localcall 4 ............................. createMainObjects()
+  [ 91] pusharglistnoret 0 ...................... <>
+  [ 93] localcall 5 ............................. initMainObjects()
+  [ 95] getglobal 7 ............................. <g>
+  [ 97] getchainedprop 26 ....................... <g.movieMaster>
+  [ 99] pusharglistnoret 1 ...................... <g.movieMaster>
+  [101] objcall 27 .............................. g.movieMaster.start()
+  [103] ret
+end
+
+on nextframe
+  [  0] getglobal 12 ............................ <gFrameNum>
+  [  2] pushint8 1 .............................. <1>
+  [  4] add ..................................... <gFrameNum + 1>
+  [  5] setglobal 12 ............................ gFrameNum = gFrameNum + 1
+  [  7] getglobal 7 ............................. <g>
+  [  9] getchainedprop 28 ....................... <g.updater>
+  [ 11] pusharglistnoret 1 ...................... <g.updater>
+  [ 13] objcall 29 .............................. g.updater.updatePrgs()
+  [ 15] pusharglistnoret 0 ...................... <>
+  [ 17] extcall 30 .............................. updateStage()
+  [ 19] ret
+end
+
+on stopMovie
+  [  0] pusharglistnoret 0 ...................... <>
+  [  2] localcall 6 ............................. stopMainObjects()
+  [  4] getglobal 9 ............................. <r>
+  [  6] pushcons 3 .............................. <"-- < end of movie > ">
+  [  8] joinstr ................................. <r & "-- < end of movie > ">
+  [  9] getglobal 9 ............................. <r>
+  [ 11] joinstr ................................. <r & "-- < end of movie > " & r>
+  [ 12] pusharglistnoret 1 ...................... <r & "-- < end of movie > " & r>
+  [ 14] extcall 10 .............................. put r & "-- < end of movie > " & r
+  [ 16] ret
+end
+
+on createObjects
+  [  0] getglobal 7 ............................. <g>
+  [  2] pushsymb 31 ............................. <#objectMaster>
+  [  4] pushcons 4 .............................. <"objectMaster">
+  [  6] pusharglist 1 ........................... <"objectMaster">
+  [  8] extcall 33 .............................. <script("objectMaster")>
+  [ 10] pusharglist 1 ........................... <script("objectMaster")>
+  [ 12] extcall 32 .............................. <new(script("objectMaster"))>
+  [ 14] pusharglistnoret 3 ...................... <g, #objectMaster, new(script("objectMaster"))>
+  [ 16] objcall 34 .............................. g[#objectMaster] = new(script("objectMaster"))
+  [ 18] getglobal 7 ............................. <g>
+  [ 20] getchainedprop 31 ....................... <g.objectMaster>
+  [ 22] pusharglistnoret 1 ...................... <g.objectMaster>
+  [ 24] objcall 35 .............................. g.objectMaster.init()
+  [ 26] getglobal 7 ............................. <g>
+  [ 28] pushsymb 28 ............................. <#updater>
+  [ 30] getglobal 7 ............................. <g>
+  [ 32] getchainedprop 31 ....................... <g.objectMaster>
+  [ 34] pushsymb 36 ............................. <#objUpdater>
+  [ 36] pusharglist 2 ........................... <g.objectMaster, #objUpdater>
+  [ 38] objcall 37 .............................. <g.objectMaster.requestObject(#objUpdater)>
+  [ 40] pusharglistnoret 3 ...................... <g, #updater, g.objectMaster.requestObject(#objUpdater)>
+  [ 42] objcall 34 .............................. g[#updater] = g.objectMaster.requestObject(#objUpdater)
+  [ 44] getglobal 7 ............................. <g>
+  [ 46] getchainedprop 28 ....................... <g.updater>
+  [ 48] pushsymb 38 ............................. <#hi>
+  [ 50] pushsymb 39 ............................. <#med>
+  [ 52] pushsymb 40 ............................. <#lo>
+  [ 54] pusharglist 3 ........................... <[#hi, #med, #lo]>
+  [ 56] pushlist ................................ <[#hi, #med, #lo]>
+  [ 57] pusharglistnoret 2 ...................... <g.updater, [#hi, #med, #lo]>
+  [ 59] objcall 35 .............................. g.updater.init([#hi, #med, #lo])
+  [ 61] ret
+end
+
+on createMainObjects
+  [  0] pushcons 5 .............................. <"master_objects">
+  [  2] pusharglist 1 ........................... <"master_objects">
+  [  4] extcall 41 .............................. <CastGetListNames("master_objects")>
+  [  6] setlocal 0 .............................. objects = CastGetListNames("master_objects")
+  [  8] getlocal 0 .............................. <objects>
+  [ 10] peek 0
+  [ 12] pusharglist 1
+  [ 14] extcall 42
+  [ 16] pushint8 1
+  [ 18] peek 0
+  [ 20] peek 2
+  [ 22] lteq
+  [ 23] jmpifz [ 94] ............................ repeat with obj in objects
+  [ 26] peek 2
+  [ 28] peek 1
+  [ 30] pusharglist 2
+  [ 32] extcall 43
+  [ 34] setlocal 1
+  [ 36] pushcons 6 .............................. <"g[#">
+  [ 38] getlocal 1 .............................. <obj>
+  [ 40] joinstr ................................. <"g[#" & obj>
+  [ 41] pushcons 7 .............................. <"] = new (script ">
+  [ 43] joinstr ................................. <"g[#" & obj & "] = new (script ">
+  [ 44] getglobal 8 ............................. <q>
+  [ 46] joinstr ................................. <"g[#" & obj & "] = new (script " & q>
+  [ 47] getlocal 1 .............................. <obj>
+  [ 49] joinstr ................................. <"g[#" & obj & "] = new (script " & q & obj>
+  [ 50] getglobal 8 ............................. <q>
+  [ 52] joinstr ................................. <"g[#" & obj & "] = new (script " & q & obj & q>
+  [ 53] pushcons 8 .............................. <")">
+  [ 55] joinstr ................................. <"g[#" & obj & "] = new (script " & q & obj & q & ")">
+  [ 56] setlocal 2 .............................. comm = "g[#" & obj & "] = new (script " & q & obj & q & ")"
+  [ 58] getlocal 2 .............................. <comm>
+  [ 60] pusharglistnoret 1 ...................... <comm>
+  [ 62] extcall 44 .............................. do(comm)
+  [ 64] pushcons 9 .............................. <"put g.">
+  [ 66] getlocal 1 .............................. <obj>
+  [ 68] joinstr ................................. <"put g." & obj>
+  [ 69] pushcons 10 ............................. <"&&">
+  [ 71] joinstr ................................. <"put g." & obj & "&&">
+  [ 72] getglobal 8 ............................. <q>
+  [ 74] joinstr ................................. <"put g." & obj & "&&" & q>
+  [ 75] pushcons 11 ............................. <"created">
+  [ 77] joinstr ................................. <"put g." & obj & "&&" & q & "created">
+  [ 78] getglobal 8 ............................. <q>
+  [ 80] joinstr ................................. <"put g." & obj & "&&" & q & "created" & q>
+  [ 81] setlocal 2 .............................. comm = "put g." & obj & "&&" & q & "created" & q
+  [ 83] getlocal 2 .............................. <comm>
+  [ 85] pusharglistnoret 1 ...................... <comm>
+  [ 87] extcall 44 .............................. do(comm)
+  [ 89] pushint8 1
+  [ 91] add
+  [ 92] endrepeat [ 18]
+  [ 94] pop 3
+  [ 96] ret
+end
+
+on initMainObjects
+  [  0] pushcons 5 .............................. <"master_objects">
+  [  2] pusharglist 1 ........................... <"master_objects">
+  [  4] extcall 41 .............................. <CastGetListNames("master_objects")>
+  [  6] setlocal 0 .............................. objects = CastGetListNames("master_objects")
+  [  8] getlocal 0 .............................. <objects>
+  [ 10] peek 0
+  [ 12] pusharglist 1
+  [ 14] extcall 42
+  [ 16] pushint8 1
+  [ 18] peek 0
+  [ 20] peek 2
+  [ 22] lteq
+  [ 23] jmpifz [ 57] ............................ repeat with obj in objects
+  [ 26] peek 2
+  [ 28] peek 1
+  [ 30] pusharglist 2
+  [ 32] extcall 43
+  [ 34] setlocal 1
+  [ 36] pushcons 12 ............................. <"g.">
+  [ 38] getlocal 1 .............................. <obj>
+  [ 40] joinstr ................................. <"g." & obj>
+  [ 41] pushcons 13 ............................. <".init()">
+  [ 43] joinstr ................................. <"g." & obj & ".init()">
+  [ 44] setlocal 2 .............................. comm = "g." & obj & ".init()"
+  [ 46] getlocal 2 .............................. <comm>
+  [ 48] pusharglistnoret 1 ...................... <comm>
+  [ 50] extcall 44 .............................. do(comm)
+  [ 52] pushint8 1
+  [ 54] add
+  [ 55] endrepeat [ 18]
+  [ 57] pop 3
+  [ 59] ret
+end
+
+on stopMainObjects
+  [  0] pushcons 5 .............................. <"master_objects">
+  [  2] pusharglist 1 ........................... <"master_objects">
+  [  4] extcall 41 .............................. <CastGetListNames("master_objects")>
+  [  6] setlocal 0 .............................. objects = CastGetListNames("master_objects")
+  [  8] getlocal 0 .............................. <objects>
+  [ 10] peek 0
+  [ 12] pusharglist 1
+  [ 14] extcall 42
+  [ 16] pushint8 1
+  [ 18] peek 0
+  [ 20] peek 2
+  [ 22] lteq
+  [ 23] jmpifz [ 57] ............................ repeat with obj in objects
+  [ 26] peek 2
+  [ 28] peek 1
+  [ 30] pusharglist 2
+  [ 32] extcall 43
+  [ 34] setlocal 1
+  [ 36] pushcons 12 ............................. <"g.">
+  [ 38] getlocal 1 .............................. <obj>
+  [ 40] joinstr ................................. <"g." & obj>
+  [ 41] pushcons 14 ............................. <".stop()">
+  [ 43] joinstr ................................. <"g." & obj & ".stop()">
+  [ 44] setlocal 2 .............................. comm = "g." & obj & ".stop()"
+  [ 46] getlocal 2 .............................. <comm>
+  [ 48] pusharglistnoret 1 ...................... <comm>
+  [ 50] extcall 44 .............................. do(comm)
+  [ 52] pushint8 1
+  [ 54] add
+  [ 55] endrepeat [ 18]
+  [ 57] pop 3
+  [ 59] ret
+end

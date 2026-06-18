@@ -1,0 +1,48 @@
+on PointFrameMove fromPoint, toPoint, speed
+  [  0] getparam 0 .............................. <fromPoint>
+  [  2] getparam 1 .............................. <toPoint>
+  [  4] pusharglist 2 ........................... <fromPoint, toPoint>
+  [  6] extcall 96 .............................. <SineDist(fromPoint, toPoint)>
+  [  8] setlocal 0 .............................. disttotarget = SineDist(fromPoint, toPoint)
+  [ 10] getlocal 0 .............................. <disttotarget>
+  [ 12] getparam 2 .............................. <speed>
+  [ 14] div ..................................... <disttotarget / speed>
+  [ 15] setlocal 1 .............................. distSpeedRatio = disttotarget / speed
+  [ 17] getparam 1 .............................. <toPoint>
+  [ 19] getparam 0 .............................. <fromPoint>
+  [ 21] sub ..................................... <toPoint - fromPoint>
+  [ 22] setlocal 2 .............................. distxy = toPoint - fromPoint
+  [ 24] getparam 2 .............................. <speed>
+  [ 26] getlocal 0 .............................. <disttotarget>
+  [ 28] gt ...................................... <speed > disttotarget>
+  [ 29] getparam 2 .............................. <speed>
+  [ 31] getlocal 0 .............................. <disttotarget>
+  [ 33] inv ..................................... <-disttotarget>
+  [ 34] gt ...................................... <speed > -disttotarget>
+  [ 35] and ..................................... <(speed > disttotarget) and (speed > -disttotarget)>
+  [ 36] jmpifz [ 46] ............................ if (speed > disttotarget) and (speed > -disttotarget) then / else
+  [ 39] getlocal 2 .............................. <distxy>
+  [ 41] setlocal 3 .............................. framemove = distxy
+  [ 43] jmp [ 77]
+  [ 46] getlocal 1 .............................. <distSpeedRatio>
+  [ 48] pushzero ................................ <0>
+  [ 49] eq ...................................... <distSpeedRatio = 0>
+  [ 50] jmpifz [ 64] ............................ if distSpeedRatio = 0 then / else
+  [ 53] pushzero ................................ <0>
+  [ 54] pushzero ................................ <0>
+  [ 55] pusharglist 2 ........................... <0, 0>
+  [ 57] extcall 97 .............................. <point(0, 0)>
+  [ 59] setlocal 3 .............................. framemove = point(0, 0)
+  [ 61] jmp [ 77]
+  [ 64] getlocal 2 .............................. <distxy>
+  [ 66] getlocal 1 .............................. <distSpeedRatio>
+  [ 68] getlocal 1 .............................. <distSpeedRatio>
+  [ 70] pusharglist 2 ........................... <distSpeedRatio, distSpeedRatio>
+  [ 72] extcall 97 .............................. <point(distSpeedRatio, distSpeedRatio)>
+  [ 74] div ..................................... <distxy / point(distSpeedRatio, distSpeedRatio)>
+  [ 75] setlocal 3 .............................. framemove = distxy / point(distSpeedRatio, distSpeedRatio)
+  [ 77] getlocal 3 .............................. <framemove>
+  [ 79] pusharglistnoret 1 ...................... <framemove>
+  [ 81] extcall 3 ............................... return framemove
+  [ 83] ret
+end

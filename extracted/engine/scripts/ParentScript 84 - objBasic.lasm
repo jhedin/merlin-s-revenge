@@ -1,0 +1,111 @@
+property big, id, pFlags
+global gErrorTrace
+
+on new me
+  [  0] pusharglist 0 ........................... <[]>
+  [  2] pushlist ................................ <[]>
+  [  3] setprop 2089 ............................ pFlags = []
+  [  6] pushsymb 58 ............................. <#bigMe>
+  [  8] pushsymb 49 ............................. <#none>
+  [ 10] pusharglist 2 ........................... <[#bigMe: #none]>
+  [ 12] pushproplist ............................ <[#bigMe: #none]>
+  [ 13] setprop 57 .............................. id = [#bigMe: #none]
+  [ 15] getparam 0 .............................. <me>
+  [ 17] pusharglistnoret 1 ...................... <me>
+  [ 19] extcall 35 .............................. return me
+  [ 21] ret
+end
+
+on finish me
+  [  0] getprop 57 .............................. <id>
+  [  2] pushsymb 2090 ........................... <#master>
+  [  5] pusharglist 2 ........................... <id, #master>
+  [  7] objcall 109 ............................. <id[#master]>
+  [  9] pusharglist 0 ........................... <>
+  [ 11] extcall 166 ............................. <VOID>
+  [ 13] nteq .................................... <id[#master] <> VOID>
+  [ 14] jmpifz [ 33] ............................ if id[#master] <> VOID then
+  [ 17] getprop 57 .............................. <id>
+  [ 19] getchainedprop 2090 ..................... <id.master>
+  [ 22] getparam 0 .............................. <me>
+  [ 24] getchainedprop 57 ....................... <me.id>
+  [ 26] getobjprop 58 ........................... <me.id.bigMe>
+  [ 28] pusharglistnoret 2 ...................... <id.master, me.id.bigMe>
+  [ 30] objcall 2091 ............................ id.master.objFree(me.id.bigMe)
+  [ 33] ret
+end
+
+on addSaveData me, sd
+  [  0] getparam 1 .............................. <sd>
+  [  2] pusharglistnoret 1 ...................... <sd>
+  [  4] extcall 35 .............................. return sd
+  [  6] ret
+end
+
+on getType me
+  [  0] getprop 57 .............................. <id>
+  [  2] getobjprop 232 .......................... <id.typ>
+  [  4] pusharglistnoret 1 ...................... <id.typ>
+  [  6] extcall 35 .............................. return id.typ
+  [  8] ret
+end
+
+on hasFlag me, theFlag
+  [  0] getprop 2089 ............................ <pFlags>
+  [  3] getparam 1 .............................. <theFlag>
+  [  5] pusharglist 2 ........................... <pFlags, theFlag>
+  [  7] objcall 219 ............................. <pFlags.getPos(theFlag)>
+  [  9] setlocal 0 .............................. flagPos = pFlags.getPos(theFlag)
+  [ 11] getlocal 0 .............................. <flagPos>
+  [ 13] pushzero ................................ <0>
+  [ 14] gt ...................................... <flagPos > 0>
+  [ 15] jmpifz [ 27] ............................ if flagPos > 0 then / else
+  [ 18] pushint8 1 .............................. <1>
+  [ 20] pusharglistnoret 1 ...................... <1>
+  [ 22] extcall 35 .............................. return 1
+  [ 24] jmp [ 32]
+  [ 27] pushzero ................................ <0>
+  [ 28] pusharglistnoret 1 ...................... <0>
+  [ 30] extcall 35 .............................. return 0
+  [ 32] ret
+end
+
+on removeFlag me, theFlag
+  [  0] getprop 2089 ............................ <pFlags>
+  [  3] getparam 1 .............................. <theFlag>
+  [  5] pusharglist 2 ........................... <pFlags, theFlag>
+  [  7] objcall 219 ............................. <pFlags.getPos(theFlag)>
+  [  9] setlocal 0 .............................. flagPos = pFlags.getPos(theFlag)
+  [ 11] getlocal 0 .............................. <flagPos>
+  [ 13] pushzero ................................ <0>
+  [ 14] gt ...................................... <flagPos > 0>
+  [ 15] jmpifz [ 34] ............................ if flagPos > 0 then
+  [ 18] getprop 2089 ............................ <pFlags>
+  [ 21] getlocal 0 .............................. <flagPos>
+  [ 23] pusharglistnoret 2 ...................... <pFlags, flagPos>
+  [ 25] objcall 1087 ............................ pFlags.deleteAt(flagPos)
+  [ 28] pushint8 1 .............................. <1>
+  [ 30] pusharglistnoret 1 ...................... <1>
+  [ 32] extcall 35 .............................. return 1
+  [ 34] pushzero ................................ <0>
+  [ 35] pusharglistnoret 1 ...................... <0>
+  [ 37] extcall 35 .............................. return 0
+  [ 39] ret
+end
+
+on restoreFromSave me, saveData
+  [  0] ret
+end
+
+on testBasic me
+  [  0] pushcons 0 .............................. <"hello">
+  [  2] pusharglistnoret 1 ...................... <"hello">
+  [  4] extcall 167 ............................. put "hello"
+  [  6] ret
+end
+
+on update me
+  [  0] pusharglistnoret 0 ...................... <>
+  [  2] extcall 185 ............................. nothing()
+  [  4] ret
+end

@@ -1,0 +1,691 @@
+property ancestor, pAllowRangeSelections, pBoxes, pBoxSize, pGreenBoxMember, pNewSelection, pTarget, pTargetRect, pTargetGridSize, pRequester, pselection, pSelectOnPress, pYellowBoxMember
+global g, gGridSelectorLayer
+
+on new me
+  [  0] pushcons 0 .............................. <"objAutoUpdate">
+  [  2] pusharglist 1 ........................... <"objAutoUpdate">
+  [  4] extcall 34 .............................. <script("objAutoUpdate")>
+  [  6] pusharglist 1 ........................... <script("objAutoUpdate")>
+  [  8] extcall 0 ............................... <new(script("objAutoUpdate"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("objAutoUpdate"))
+  [ 12] getparam 0 .............................. <me>
+  [ 14] pushsymb 1 .............................. <#init>
+  [ 16] pusharglist 2 ........................... <me, #init>
+  [ 18] objcall 47 .............................. <me.modifyParams(#init)>
+  [ 20] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 22] getlocal 0 .............................. <i>
+  [ 24] pushsymb 2837 ........................... <#allowRangeSelections>
+  [ 27] pushzero ................................ <0>
+  [ 28] pusharglistnoret 3 ...................... <i, #allowRangeSelections, 0>
+  [ 30] objcall 48 .............................. i[#allowRangeSelections] = 0
+  [ 32] getlocal 0 .............................. <i>
+  [ 34] pushsymb 1661 ........................... <#greenBoxMember>
+  [ 37] pushsymb 49 ............................. <#none>
+  [ 39] pusharglistnoret 3 ...................... <i, #greenBoxMember, #none>
+  [ 41] objcall 48 .............................. i[#greenBoxMember] = #none
+  [ 43] getlocal 0 .............................. <i>
+  [ 45] pushsymb 2838 ........................... <#requester>
+  [ 48] pushsymb 49 ............................. <#none>
+  [ 50] pusharglistnoret 3 ...................... <i, #requester, #none>
+  [ 52] objcall 48 .............................. i[#requester] = #none
+  [ 54] getlocal 0 .............................. <i>
+  [ 56] pushsymb 2839 ........................... <#selectOnPress>
+  [ 59] pushzero ................................ <0>
+  [ 60] pusharglistnoret 3 ...................... <i, #selectOnPress, 0>
+  [ 62] objcall 48 .............................. i[#selectOnPress] = 0
+  [ 64] getlocal 0 .............................. <i>
+  [ 66] pushsymb 1663 ........................... <#targetObject>
+  [ 69] pushsymb 49 ............................. <#none>
+  [ 71] pusharglistnoret 3 ...................... <i, #targetObject, #none>
+  [ 73] objcall 48 .............................. i[#targetObject] = #none
+  [ 75] getlocal 0 .............................. <i>
+  [ 77] pushsymb 1664 ........................... <#yellowBoxMember>
+  [ 80] pushsymb 49 ............................. <#none>
+  [ 82] pusharglistnoret 3 ...................... <i, #yellowBoxMember, #none>
+  [ 84] objcall 48 .............................. i[#yellowBoxMember] = #none
+  [ 86] getparam 0 .............................. <me>
+  [ 88] pusharglistnoret 1 ...................... <me>
+  [ 90] extcall 35 .............................. return me
+  [ 92] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 2837 ......................... <params.allowRangeSelections>
+  [ 13] setprop 2840 ............................ pAllowRangeSelections = params.allowRangeSelections
+  [ 16] pushsymb 49 ............................. <#none>
+  [ 18] setprop 2841 ............................ pBoxes = #none
+  [ 21] pushint8 1 .............................. <1>
+  [ 23] pushint8 1 .............................. <1>
+  [ 25] pusharglist 2 ........................... <1, 1>
+  [ 27] extcall 197 ............................. <point(1, 1)>
+  [ 29] setprop 2842 ............................ pBoxSize = point(1, 1)
+  [ 32] getparam 1 .............................. <params>
+  [ 34] getobjprop 1661 ......................... <params.greenBoxMember>
+  [ 37] setprop 1637 ............................ pGreenBoxMember = params.greenBoxMember
+  [ 40] pushsymb 49 ............................. <#none>
+  [ 42] setprop 2843 ............................ pNewSelection = #none
+  [ 45] getparam 1 .............................. <params>
+  [ 47] getobjprop 2838 ......................... <params.requester>
+  [ 50] setprop 2844 ............................ pRequester = params.requester
+  [ 53] pushsymb 49 ............................. <#none>
+  [ 55] setprop 2845 ............................ pselection = #none
+  [ 58] getparam 1 .............................. <params>
+  [ 60] getobjprop 2839 ......................... <params.selectOnPress>
+  [ 63] setprop 2846 ............................ pSelectOnPress = params.selectOnPress
+  [ 66] pushsymb 49 ............................. <#none>
+  [ 68] setprop 2847 ............................ pTarget = #none
+  [ 71] getparam 1 .............................. <params>
+  [ 73] getobjprop 1664 ......................... <params.yellowBoxMember>
+  [ 76] setprop 1647 ............................ pYellowBoxMember = params.yellowBoxMember
+  [ 79] getparam 1 .............................. <params>
+  [ 81] getobjprop 1663 ......................... <params.targetObject>
+  [ 84] pushsymb 49 ............................. <#none>
+  [ 86] nteq .................................... <params.targetObject <> #none>
+  [ 87] jmpifz [101] ............................ if params.targetObject <> #none then
+  [ 90] getparam 0 .............................. <me>
+  [ 92] getparam 1 .............................. <params>
+  [ 94] getobjprop 1663 ......................... <params.targetObject>
+  [ 97] pusharglistnoret 2 ...................... <me, params.targetObject>
+  [ 99] objcall 236 ............................. me.setTarget(params.targetObject)
+  [101] getprop 2844 ............................ <pRequester>
+  [104] pushsymb 49 ............................. <#none>
+  [106] eq ...................................... <pRequester = #none>
+  [107] jmpifz [116] ............................ if pRequester = #none then
+  [110] getprop 2847 ............................ <pTarget>
+  [113] setprop 2844 ............................ pRequester = pTarget
+  [116] ret
+end
+
+on finish me
+  [  0] getparam 0 .............................. <me>
+  [  2] pusharglistnoret 1 ...................... <me>
+  [  4] objcall 2826 ............................ me.freeBoxes()
+  [  7] getprop 33 .............................. <ancestor>
+  [  9] pusharglistnoret 1 ...................... <ancestor>
+  [ 11] objcall 3 ............................... ancestor.finish()
+  [ 13] ret
+end
+
+on calcGridLoc me, mousePos
+  [  0] getparam 1 .............................. <mousePos>
+  [  2] getprop 2848 ............................ <pTargetRect>
+  [  5] pushint8 1 .............................. <1>
+  [  7] pusharglist 2 ........................... <pTargetRect, 1>
+  [  9] objcall 109 ............................. <pTargetRect[1]>
+  [ 11] getprop 2848 ............................ <pTargetRect>
+  [ 14] pushint8 2 .............................. <2>
+  [ 16] pusharglist 2 ........................... <pTargetRect, 2>
+  [ 18] objcall 109 ............................. <pTargetRect[2]>
+  [ 20] pusharglist 2 ........................... <pTargetRect[1], pTargetRect[2]>
+  [ 22] extcall 197 ............................. <point(pTargetRect[1], pTargetRect[2])>
+  [ 24] sub ..................................... <mousePos - point(pTargetRect[1], pTargetRect[2])>
+  [ 25] setlocal 0 .............................. posOnTarget = mousePos - point(pTargetRect[1], pTargetRect[2])
+  [ 27] getlocal 0 .............................. <posOnTarget>
+  [ 29] getprop 2849 ............................ <pTargetGridSize>
+  [ 32] div ..................................... <posOnTarget / pTargetGridSize>
+  [ 33] setlocal 1 .............................. posAsGridLoc = posOnTarget / pTargetGridSize
+  [ 35] getlocal 1 .............................. <posAsGridLoc>
+  [ 37] pusharglist 1 ........................... <posAsGridLoc>
+  [ 39] extcall 2850 ............................ <PointFloor(posAsGridLoc)>
+  [ 42] setlocal 2 .............................. gridLoc = PointFloor(posAsGridLoc)
+  [ 44] getlocal 2 .............................. <gridLoc>
+  [ 46] pushint8 1 .............................. <1>
+  [ 48] pushint8 1 .............................. <1>
+  [ 50] pusharglist 2 ........................... <1, 1>
+  [ 52] extcall 197 ............................. <point(1, 1)>
+  [ 54] add ..................................... <gridLoc + point(1, 1)>
+  [ 55] setlocal 2 .............................. gridLoc = gridLoc + point(1, 1)
+  [ 57] getlocal 2 .............................. <gridLoc>
+  [ 59] pusharglistnoret 1 ...................... <gridLoc>
+  [ 61] extcall 35 .............................. return gridLoc
+  [ 63] ret
+end
+
+on calcGridRect me, gridLoc
+  [  0] getparam 1 .............................. <gridLoc>
+  [  2] pushint8 1 .............................. <1>
+  [  4] pushint8 1 .............................. <1>
+  [  6] pusharglist 2 ........................... <1, 1>
+  [  8] extcall 197 ............................. <point(1, 1)>
+  [ 10] sub ..................................... <gridLoc - point(1, 1)>
+  [ 11] getprop 2849 ............................ <pTargetGridSize>
+  [ 14] mul ..................................... <(gridLoc - point(1, 1)) * pTargetGridSize>
+  [ 15] setlocal 0 .............................. startPoint = (gridLoc - point(1, 1)) * pTargetGridSize
+  [ 17] getparam 1 .............................. <gridLoc>
+  [ 19] getprop 2849 ............................ <pTargetGridSize>
+  [ 22] mul ..................................... <gridLoc * pTargetGridSize>
+  [ 23] setlocal 1 .............................. endPoint = gridLoc * pTargetGridSize
+  [ 25] getprop 2848 ............................ <pTargetRect>
+  [ 28] pushint8 1 .............................. <1>
+  [ 30] pusharglist 2 ........................... <pTargetRect, 1>
+  [ 32] objcall 109 ............................. <pTargetRect[1]>
+  [ 34] getprop 2848 ............................ <pTargetRect>
+  [ 37] pushint8 2 .............................. <2>
+  [ 39] pusharglist 2 ........................... <pTargetRect, 2>
+  [ 41] objcall 109 ............................. <pTargetRect[2]>
+  [ 43] pusharglist 2 ........................... <pTargetRect[1], pTargetRect[2]>
+  [ 45] extcall 197 ............................. <point(pTargetRect[1], pTargetRect[2])>
+  [ 47] setlocal 2 .............................. targetOffset = point(pTargetRect[1], pTargetRect[2])
+  [ 49] getlocal 0 .............................. <startPoint>
+  [ 51] getlocal 2 .............................. <targetOffset>
+  [ 53] add ..................................... <startPoint + targetOffset>
+  [ 54] setlocal 0 .............................. startPoint = startPoint + targetOffset
+  [ 56] getlocal 1 .............................. <endPoint>
+  [ 58] getlocal 2 .............................. <targetOffset>
+  [ 60] add ..................................... <endPoint + targetOffset>
+  [ 61] setlocal 1 .............................. endPoint = endPoint + targetOffset
+  [ 63] getlocal 0 .............................. <startPoint>
+  [ 65] getlocal 1 .............................. <endPoint>
+  [ 67] pusharglist 2 ........................... <startPoint, endPoint>
+  [ 69] extcall 263 ............................. <rect(startPoint, endPoint)>
+  [ 72] setlocal 3 .............................. therect = rect(startPoint, endPoint)
+  [ 74] getlocal 3 .............................. <therect>
+  [ 76] pusharglistnoret 1 ...................... <therect>
+  [ 78] extcall 35 .............................. return therect
+  [ 80] ret
+end
+
+on calcSelectionRect me, theSelection
+  [  0] getparam 0 .............................. <me>
+  [  2] getparam 1 .............................. <theSelection>
+  [  4] pushint8 1 .............................. <1>
+  [  6] pusharglist 2 ........................... <theSelection, 1>
+  [  8] objcall 109 ............................. <theSelection[1]>
+  [ 10] pusharglist 2 ........................... <me, theSelection[1]>
+  [ 12] objcall 2823 ............................ <me.calcGridRect(theSelection[1])>
+  [ 15] setlocal 0 .............................. startRect = me.calcGridRect(theSelection[1])
+  [ 17] getprop 2840 ............................ <pAllowRangeSelections>
+  [ 20] jmpifz [ 36] ............................ if pAllowRangeSelections then / else
+  [ 23] getparam 1 .............................. <theSelection>
+  [ 25] pushint8 2 .............................. <2>
+  [ 27] pusharglist 2 ........................... <theSelection, 2>
+  [ 29] objcall 109 ............................. <theSelection[2]>
+  [ 31] setlocal 1 .............................. endPoint = theSelection[2]
+  [ 33] jmp [ 59]
+  [ 36] getparam 1 .............................. <theSelection>
+  [ 38] pushint8 1 .............................. <1>
+  [ 40] pusharglist 2 ........................... <theSelection, 1>
+  [ 42] objcall 109 ............................. <theSelection[1]>
+  [ 44] getprop 2842 ............................ <pBoxSize>
+  [ 47] add ..................................... <theSelection[1] + pBoxSize>
+  [ 48] pushint8 1 .............................. <1>
+  [ 50] pushint8 1 .............................. <1>
+  [ 52] pusharglist 2 ........................... <1, 1>
+  [ 54] extcall 197 ............................. <point(1, 1)>
+  [ 56] sub ..................................... <theSelection[1] + pBoxSize - point(1, 1)>
+  [ 57] setlocal 1 .............................. endPoint = theSelection[1] + pBoxSize - point(1, 1)
+  [ 59] getparam 0 .............................. <me>
+  [ 61] getlocal 1 .............................. <endPoint>
+  [ 63] pusharglist 2 ........................... <me, endPoint>
+  [ 65] objcall 2823 ............................ <me.calcGridRect(endPoint)>
+  [ 68] setlocal 2 .............................. endRect = me.calcGridRect(endPoint)
+  [ 70] getlocal 0 .............................. <startRect>
+  [ 72] pushint8 1 .............................. <1>
+  [ 74] pusharglist 2 ........................... <startRect, 1>
+  [ 76] objcall 109 ............................. <startRect[1]>
+  [ 78] getlocal 2 .............................. <endRect>
+  [ 80] pushint8 1 .............................. <1>
+  [ 82] pusharglist 2 ........................... <endRect, 1>
+  [ 84] objcall 109 ............................. <endRect[1]>
+  [ 86] pusharglist 2 ........................... <startRect[1], endRect[1]>
+  [ 88] extcall 152 ............................. <min(startRect[1], endRect[1])>
+  [ 90] setlocal 3 .............................. x1 = min(startRect[1], endRect[1])
+  [ 92] getlocal 0 .............................. <startRect>
+  [ 94] pushint8 2 .............................. <2>
+  [ 96] pusharglist 2 ........................... <startRect, 2>
+  [ 98] objcall 109 ............................. <startRect[2]>
+  [100] getlocal 2 .............................. <endRect>
+  [102] pushint8 2 .............................. <2>
+  [104] pusharglist 2 ........................... <endRect, 2>
+  [106] objcall 109 ............................. <endRect[2]>
+  [108] pusharglist 2 ........................... <startRect[2], endRect[2]>
+  [110] extcall 152 ............................. <min(startRect[2], endRect[2])>
+  [112] setlocal 4 .............................. y1 = min(startRect[2], endRect[2])
+  [114] getlocal 0 .............................. <startRect>
+  [116] pushint8 3 .............................. <3>
+  [118] pusharglist 2 ........................... <startRect, 3>
+  [120] objcall 109 ............................. <startRect[3]>
+  [122] getlocal 2 .............................. <endRect>
+  [124] pushint8 3 .............................. <3>
+  [126] pusharglist 2 ........................... <endRect, 3>
+  [128] objcall 109 ............................. <endRect[3]>
+  [130] pusharglist 2 ........................... <startRect[3], endRect[3]>
+  [132] extcall 425 ............................. <max(startRect[3], endRect[3])>
+  [135] setlocal 5 .............................. x2 = max(startRect[3], endRect[3])
+  [137] getlocal 0 .............................. <startRect>
+  [139] pushint8 4 .............................. <4>
+  [141] pusharglist 2 ........................... <startRect, 4>
+  [143] objcall 109 ............................. <startRect[4]>
+  [145] getlocal 2 .............................. <endRect>
+  [147] pushint8 4 .............................. <4>
+  [149] pusharglist 2 ........................... <endRect, 4>
+  [151] objcall 109 ............................. <endRect[4]>
+  [153] pusharglist 2 ........................... <startRect[4], endRect[4]>
+  [155] extcall 425 ............................. <max(startRect[4], endRect[4])>
+  [158] setlocal 6 .............................. y2 = max(startRect[4], endRect[4])
+  [160] getlocal 3 .............................. <x1>
+  [162] getlocal 4 .............................. <y1>
+  [164] getlocal 5 .............................. <x2>
+  [166] getlocal 6 .............................. <y2>
+  [168] pusharglist 4 ........................... <x1, y1, x2, y2>
+  [170] extcall 263 ............................. <rect(x1, y1, x2, y2)>
+  [173] setlocal 7 .............................. selRect = rect(x1, y1, x2, y2)
+  [175] getlocal 7 .............................. <selRect>
+  [177] pusharglistnoret 1 ...................... <selRect>
+  [179] extcall 35 .............................. return selRect
+  [181] ret
+end
+
+on drawSelection me, which
+  [  0] getparam 1 .............................. <which>
+  [  2] peek 0 .................................. case which of
+  [  4] pushsymb 2863 ........................... <#newSelection>
+  [  7] eq
+  [  8] jmpifz [ 24] ............................ (case) #newSelection:
+  [ 11] getprop 2843 ............................ <pNewSelection>
+  [ 14] setlocal 0 .............................. theSel = pNewSelection
+  [ 16] pushsymb 2864 ........................... <#yellow>
+  [ 19] setlocal 1 .............................. boxCol = #yellow
+  [ 21] jmp [ 43]
+  [ 24] peek 0
+  [ 26] pushsymb 2865 ........................... <#selection>
+  [ 29] eq
+  [ 30] jmpifz [ 43] ............................ (case) #selection:
+  [ 33] getprop 2845 ............................ <pselection>
+  [ 36] setlocal 0 .............................. theSel = pselection
+  [ 38] pushsymb 2866 ........................... <#green>
+  [ 41] setlocal 1 .............................. boxCol = #green
+  [ 43] pop 1 ................................... end case
+  [ 45] getprop 2846 ............................ <pSelectOnPress>
+  [ 48] pushzero ................................ <0>
+  [ 49] eq ...................................... <pSelectOnPress = 0>
+  [ 50] jmpifz [ 83] ............................ if pSelectOnPress = 0 then / else
+  [ 53] getparam 0 .............................. <me>
+  [ 55] getlocal 0 .............................. <theSel>
+  [ 57] pusharglist 2 ........................... <me, theSel>
+  [ 59] objcall 2824 ............................ <me.calcSelectionRect(theSel)>
+  [ 62] setlocal 2 .............................. selRect = me.calcSelectionRect(theSel)
+  [ 64] getprop 2841 ............................ <pBoxes>
+  [ 67] getlocal 1 .............................. <boxCol>
+  [ 69] pusharglist 2 ........................... <pBoxes, boxCol>
+  [ 71] objcall 109 ............................. <pBoxes[boxCol]>
+  [ 73] getlocal 2 .............................. <selRect>
+  [ 75] pusharglistnoret 2 ...................... <pBoxes[boxCol], selRect>
+  [ 77] objcall 1344 ............................ pBoxes[boxCol].setRect(selRect)
+  [ 80] jmp [ 95]
+  [ 83] getparam 0 .............................. <me>
+  [ 85] pushsymb 2866 ........................... <#green>
+  [ 88] pushsymb 49 ............................. <#none>
+  [ 90] pusharglistnoret 3 ...................... <me, #green, #none>
+  [ 92] objcall 2832 ............................ me.moveBox(#green, #none)
+  [ 95] ret
+end
+
+on freeBoxes me
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 41 ....................... <g.objectMaster>
+  [  4] getprop 2841 ............................ <pBoxes>
+  [  7] pusharglistnoret 2 ...................... <g.objectMaster, pBoxes>
+  [  9] objcall 2379 ............................ g.objectMaster.finishObjects(pBoxes)
+  [ 12] ret
+end
+
+on hoverStart me, gridLoc
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 2864 ........................... <#yellow>
+  [  5] getparam 1 .............................. <gridLoc>
+  [  7] pusharglistnoret 3 ...................... <me, #yellow, gridLoc>
+  [  9] objcall 2832 ............................ me.moveBox(#yellow, gridLoc)
+  [ 12] ret
+end
+
+on makeNewSelectionCurrent me
+  [  0] getprop 2843 ............................ <pNewSelection>
+  [  3] setprop 2845 ............................ pselection = pNewSelection
+  [  6] pushsymb 49 ............................. <#none>
+  [  8] setprop 2843 ............................ pNewSelection = #none
+  [ 11] getparam 0 .............................. <me>
+  [ 13] pushsymb 2865 ........................... <#selection>
+  [ 16] pusharglistnoret 2 ...................... <me, #selection>
+  [ 18] objcall 2825 ............................ me.drawSelection(#selection)
+  [ 21] getparam 0 .............................. <me>
+  [ 23] pushsymb 2864 ........................... <#yellow>
+  [ 26] pushsymb 49 ............................. <#none>
+  [ 28] pusharglistnoret 3 ...................... <me, #yellow, #none>
+  [ 30] objcall 2832 ............................ me.moveBox(#yellow, #none)
+  [ 33] getparam 0 .............................. <me>
+  [ 35] pusharglistnoret 1 ...................... <me>
+  [ 37] objcall 2836 ............................ me.sendSelectionToRequester()
+  [ 40] ret
+end
+
+on mouseRelease me, gridLoc
+  [  0] getprop 2843 ............................ <pNewSelection>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] nteq .................................... <pNewSelection <> #none>
+  [  6] jmpifz [ 21] ............................ if pNewSelection <> #none then / else
+  [  9] getparam 0 .............................. <me>
+  [ 11] getparam 1 .............................. <gridLoc>
+  [ 13] pusharglistnoret 2 ...................... <me, gridLoc>
+  [ 15] objcall 2835 ............................ me.selectEnd(gridLoc)
+  [ 18] jmp [ 30]
+  [ 21] getparam 0 .............................. <me>
+  [ 23] getparam 1 .............................. <gridLoc>
+  [ 25] pusharglistnoret 2 ...................... <me, gridLoc>
+  [ 27] objcall 2827 ............................ me.hoverStart(gridLoc)
+  [ 30] ret
+end
+
+on mousePress me, gridLoc
+  [  0] getprop 2843 ............................ <pNewSelection>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] eq ...................................... <pNewSelection = #none>
+  [  6] jmpifz [ 21] ............................ if pNewSelection = #none then / else
+  [  9] getparam 0 .............................. <me>
+  [ 11] getparam 1 .............................. <gridLoc>
+  [ 13] pusharglistnoret 2 ...................... <me, gridLoc>
+  [ 15] objcall 2834 ............................ me.selectStart(gridLoc)
+  [ 18] jmp [ 30]
+  [ 21] getparam 0 .............................. <me>
+  [ 23] getparam 1 .............................. <gridLoc>
+  [ 25] pusharglistnoret 2 ...................... <me, gridLoc>
+  [ 27] objcall 2831 ............................ me.hoverEnd(gridLoc)
+  [ 30] ret
+end
+
+on hoverEnd me, gridLoc
+  [  0] getprop 2843 ............................ <pNewSelection>
+  [  3] pushint8 2 .............................. <2>
+  [  5] getparam 1 .............................. <gridLoc>
+  [  7] pusharglistnoret 3 ...................... <pNewSelection, 2, gridLoc>
+  [  9] objcall 48 .............................. pNewSelection[2] = gridLoc
+  [ 11] getprop 2840 ............................ <pAllowRangeSelections>
+  [ 14] pushzero ................................ <0>
+  [ 15] eq ...................................... <pAllowRangeSelections = 0>
+  [ 16] jmpifz [ 30] ............................ if pAllowRangeSelections = 0 then
+  [ 19] getprop 2843 ............................ <pNewSelection>
+  [ 22] pushint8 1 .............................. <1>
+  [ 24] getparam 1 .............................. <gridLoc>
+  [ 26] pusharglistnoret 3 ...................... <pNewSelection, 1, gridLoc>
+  [ 28] objcall 48 .............................. pNewSelection[1] = gridLoc
+  [ 30] getparam 0 .............................. <me>
+  [ 32] pushsymb 2863 ........................... <#newSelection>
+  [ 35] pusharglistnoret 2 ...................... <me, #newSelection>
+  [ 37] objcall 2825 ............................ me.drawSelection(#newSelection)
+  [ 40] ret
+end
+
+on moveBox me, whichBox, gridLoc
+  [  0] getparam 2 .............................. <gridLoc>
+  [  2] pushsymb 49 ............................. <#none>
+  [  4] eq ...................................... <gridLoc = #none>
+  [  5] jmpifz [ 26] ............................ if gridLoc = #none then / else
+  [  8] pushint8 1 .............................. <1>
+  [ 10] inv ..................................... <-1>
+  [ 11] pushint8 1 .............................. <1>
+  [ 13] inv ..................................... <-1>
+  [ 14] pushzero ................................ <0>
+  [ 15] pushzero ................................ <0>
+  [ 16] pusharglist 4 ........................... <-1, -1, 0, 0>
+  [ 18] extcall 263 ............................. <rect(-1, -1, 0, 0)>
+  [ 21] setlocal 0 .............................. therect = rect(-1, -1, 0, 0)
+  [ 23] jmp [ 42]
+  [ 26] getparam 0 .............................. <me>
+  [ 28] getparam 2 .............................. <gridLoc>
+  [ 30] getparam 2 .............................. <gridLoc>
+  [ 32] pusharglist 2 ........................... <[gridLoc, gridLoc]>
+  [ 34] pushlist ................................ <[gridLoc, gridLoc]>
+  [ 35] pusharglist 2 ........................... <me, [gridLoc, gridLoc]>
+  [ 37] objcall 2824 ............................ <me.calcSelectionRect([gridLoc, gridLoc])>
+  [ 40] setlocal 0 .............................. therect = me.calcSelectionRect([gridLoc, gridLoc])
+  [ 42] getprop 2841 ............................ <pBoxes>
+  [ 45] getparam 1 .............................. <whichBox>
+  [ 47] pusharglist 2 ........................... <pBoxes, whichBox>
+  [ 49] objcall 109 ............................. <pBoxes[whichBox]>
+  [ 51] getlocal 0 .............................. <therect>
+  [ 53] pusharglistnoret 2 ...................... <pBoxes[whichBox], therect>
+  [ 55] objcall 1344 ............................ pBoxes[whichBox].setRect(therect)
+  [ 58] ret
+end
+
+on requestBoxes me
+  [  0] getprop 2841 ............................ <pBoxes>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] eq ...................................... <pBoxes = #none>
+  [  6] jmpifz [175] ............................ if pBoxes = #none then
+  [  9] getglobal 40 ............................ <g>
+  [ 11] getchainedprop 1168 ..................... <g.structMaster>
+  [ 14] pushsymb 2869 ........................... <#GridSelectorBoxes>
+  [ 17] pusharglist 2 ........................... <g.structMaster, #GridSelectorBoxes>
+  [ 19] objcall 1170 ............................ <g.structMaster.getStruct(#GridSelectorBoxes)>
+  [ 22] setprop 2841 ............................ pBoxes = g.structMaster.getStruct(#GridSelectorBoxes)
+  [ 25] getglobal 40 ............................ <g>
+  [ 27] getchainedprop 41 ....................... <g.objectMaster>
+  [ 29] pushsymb 435 ............................ <#objBox>
+  [ 32] pusharglist 2 ........................... <g.objectMaster, #objBox>
+  [ 34] objcall 43 .............................. <g.objectMaster.requestObject(#objBox)>
+  [ 36] setlocal 0 .............................. greenBox = g.objectMaster.requestObject(#objBox)
+  [ 38] getlocal 0 .............................. <greenBox>
+  [ 40] pushsymb 1 .............................. <#init>
+  [ 42] pusharglist 2 ........................... <greenBox, #init>
+  [ 44] objcall 230 ............................. <greenBox.getParams(#init)>
+  [ 46] setlocal 1 .............................. params = greenBox.getParams(#init)
+  [ 48] getlocal 1 .............................. <params>
+  [ 50] pushint8 100 ............................ <100>
+  [ 52] pushint16 255 ........................... <255>
+  [ 55] pushint8 100 ............................ <100>
+  [ 57] pusharglist 3 ........................... <100, 255, 100>
+  [ 59] extcall 436 ............................. <rgb(100, 255, 100)>
+  [ 62] setobjprop 437 .......................... params.color = rgb(100, 255, 100)
+  [ 65] getlocal 1 .............................. <params>
+  [ 67] getglobal 2098 .......................... <gGridSelectorLayer>
+  [ 70] setobjprop 1352 ......................... params.layer = gGridSelectorLayer
+  [ 73] getlocal 1 .............................. <params>
+  [ 75] getprop 1637 ............................ <pGreenBoxMember>
+  [ 78] setobjprop 99 ........................... params.member = pGreenBoxMember
+  [ 80] getlocal 0 .............................. <greenBox>
+  [ 82] getlocal 1 .............................. <params>
+  [ 84] pusharglistnoret 2 ...................... <greenBox, params>
+  [ 86] objcall 1 ............................... greenBox.init(params)
+  [ 88] getglobal 40 ............................ <g>
+  [ 90] getchainedprop 41 ....................... <g.objectMaster>
+  [ 92] pushsymb 435 ............................ <#objBox>
+  [ 95] pusharglist 2 ........................... <g.objectMaster, #objBox>
+  [ 97] objcall 43 .............................. <g.objectMaster.requestObject(#objBox)>
+  [ 99] setlocal 2 .............................. yellowBox = g.objectMaster.requestObject(#objBox)
+  [101] getlocal 2 .............................. <yellowBox>
+  [103] pushsymb 1 .............................. <#init>
+  [105] pusharglist 2 ........................... <yellowBox, #init>
+  [107] objcall 230 ............................. <yellowBox.getParams(#init)>
+  [109] setlocal 1 .............................. params = yellowBox.getParams(#init)
+  [111] getlocal 1 .............................. <params>
+  [113] pushint16 255 ........................... <255>
+  [116] pushint16 255 ........................... <255>
+  [119] pushzero ................................ <0>
+  [120] pusharglist 3 ........................... <255, 255, 0>
+  [122] extcall 436 ............................. <rgb(255, 255, 0)>
+  [125] setobjprop 437 .......................... params.color = rgb(255, 255, 0)
+  [128] getlocal 1 .............................. <params>
+  [130] getglobal 2098 .......................... <gGridSelectorLayer>
+  [133] setobjprop 1352 ......................... params.layer = gGridSelectorLayer
+  [136] getlocal 1 .............................. <params>
+  [138] getprop 1647 ............................ <pYellowBoxMember>
+  [141] setobjprop 99 ........................... params.member = pYellowBoxMember
+  [143] getlocal 2 .............................. <yellowBox>
+  [145] getlocal 1 .............................. <params>
+  [147] pusharglistnoret 2 ...................... <yellowBox, params>
+  [149] objcall 1 ............................... yellowBox.init(params)
+  [151] getprop 2841 ............................ <pBoxes>
+  [154] pushsymb 2866 ........................... <#green>
+  [157] getlocal 0 .............................. <greenBox>
+  [159] pusharglistnoret 3 ...................... <pBoxes, #green, greenBox>
+  [161] objcall 48 .............................. pBoxes[#green] = greenBox
+  [163] getprop 2841 ............................ <pBoxes>
+  [166] pushsymb 2864 ........................... <#yellow>
+  [169] getlocal 2 .............................. <yellowBox>
+  [171] pusharglistnoret 3 ...................... <pBoxes, #yellow, yellowBox>
+  [173] objcall 48 .............................. pBoxes[#yellow] = yellowBox
+  [175] ret
+end
+
+on selectStart me, gridLoc
+  [  0] getparam 1 .............................. <gridLoc>
+  [  2] getparam 1 .............................. <gridLoc>
+  [  4] pusharglist 2 ........................... <[gridLoc, gridLoc]>
+  [  6] pushlist ................................ <[gridLoc, gridLoc]>
+  [  7] setprop 2843 ............................ pNewSelection = [gridLoc, gridLoc]
+  [ 10] getprop 2846 ............................ <pSelectOnPress>
+  [ 13] jmpifz [ 26] ............................ if pSelectOnPress then / else
+  [ 16] getparam 0 .............................. <me>
+  [ 18] pusharglistnoret 1 ...................... <me>
+  [ 20] objcall 2828 ............................ me.makeNewSelectionCurrent()
+  [ 23] jmp [ 38]
+  [ 26] getparam 0 .............................. <me>
+  [ 28] pushsymb 2864 ........................... <#yellow>
+  [ 31] getparam 1 .............................. <gridLoc>
+  [ 33] pusharglistnoret 3 ...................... <me, #yellow, gridLoc>
+  [ 35] objcall 2832 ............................ me.moveBox(#yellow, gridLoc)
+  [ 38] ret
+end
+
+on selectEnd me, gridLoc
+  [  0] getprop 2840 ............................ <pAllowRangeSelections>
+  [  3] pushzero ................................ <0>
+  [  4] eq ...................................... <pAllowRangeSelections = 0>
+  [  5] jmpifz [ 19] ............................ if pAllowRangeSelections = 0 then
+  [  8] getprop 2843 ............................ <pNewSelection>
+  [ 11] pushint8 1 .............................. <1>
+  [ 13] getparam 1 .............................. <gridLoc>
+  [ 15] pusharglistnoret 3 ...................... <pNewSelection, 1, gridLoc>
+  [ 17] objcall 48 .............................. pNewSelection[1] = gridLoc
+  [ 19] getprop 2843 ............................ <pNewSelection>
+  [ 22] pushint8 2 .............................. <2>
+  [ 24] getparam 1 .............................. <gridLoc>
+  [ 26] pusharglistnoret 3 ...................... <pNewSelection, 2, gridLoc>
+  [ 28] objcall 48 .............................. pNewSelection[2] = gridLoc
+  [ 30] getparam 0 .............................. <me>
+  [ 32] pusharglistnoret 1 ...................... <me>
+  [ 34] objcall 2828 ............................ me.makeNewSelectionCurrent()
+  [ 37] ret
+end
+
+on sendSelectionToRequester me
+  [  0] getprop 2840 ............................ <pAllowRangeSelections>
+  [  3] jmpifz [ 14] ............................ if pAllowRangeSelections then / else
+  [  6] getprop 2845 ............................ <pselection>
+  [  9] setlocal 0 .............................. theSel = pselection
+  [ 11] jmp [ 25]
+  [ 14] getprop 2845 ............................ <pselection>
+  [ 17] pushint8 1 .............................. <1>
+  [ 19] pusharglist 2 ........................... <pselection, 1>
+  [ 21] objcall 109 ............................. <pselection[1]>
+  [ 23] setlocal 0 .............................. theSel = pselection[1]
+  [ 25] getprop 2844 ............................ <pRequester>
+  [ 28] getlocal 0 .............................. <theSel>
+  [ 30] getprop 2847 ............................ <pTarget>
+  [ 33] pusharglistnoret 3 ...................... <pRequester, theSel, pTarget>
+  [ 35] objcall 2872 ............................ pRequester.selectionMade(theSel, pTarget)
+  [ 38] ret
+end
+
+on setAllowRangeSelections me, theVal
+  [  0] getparam 1 .............................. <theVal>
+  [  2] setprop 2840 ............................ pAllowRangeSelections = theVal
+  [  5] ret
+end
+
+on setBoxSize me, theSize
+  [  0] getparam 1 .............................. <theSize>
+  [  2] setprop 2842 ............................ pBoxSize = theSize
+  [  5] ret
+end
+
+on setSelectOnPress me, theVal
+  [  0] getparam 1 .............................. <theVal>
+  [  2] setprop 2846 ............................ pSelectOnPress = theVal
+  [  5] ret
+end
+
+on setTarget me, theObj
+  [  0] getparam 1 .............................. <theObj>
+  [  2] setprop 2847 ............................ pTarget = theObj
+  [  5] getparam 1 .............................. <theObj>
+  [  7] pusharglist 1 ........................... <theObj>
+  [  9] objcall 2874 ............................ <theObj.getGridRect()>
+  [ 12] setprop 2848 ............................ pTargetRect = theObj.getGridRect()
+  [ 15] getparam 1 .............................. <theObj>
+  [ 17] pusharglist 1 ........................... <theObj>
+  [ 19] objcall 2875 ............................ <theObj.getGridSize()>
+  [ 22] setprop 2849 ............................ pTargetGridSize = theObj.getGridSize()
+  [ 25] getparam 0 .............................. <me>
+  [ 27] pusharglistnoret 1 ...................... <me>
+  [ 29] objcall 2833 ............................ me.requestBoxes()
+  [ 32] getparam 0 .............................. <me>
+  [ 34] pusharglistnoret 1 ...................... <me>
+  [ 36] objcall 692 ............................. me.calcStart()
+  [ 39] getprop 2847 ............................ <pTarget>
+  [ 42] pusharglist 1 ........................... <pTarget>
+  [ 44] objcall 1630 ............................ <pTarget.getInitialGridSelection()>
+  [ 47] setlocal 0 .............................. initialGridSelection = pTarget.getInitialGridSelection()
+  [ 49] getparam 0 .............................. <me>
+  [ 51] pushsymb 2866 ........................... <#green>
+  [ 54] getlocal 0 .............................. <initialGridSelection>
+  [ 56] pusharglistnoret 3 ...................... <me, #green, initialGridSelection>
+  [ 58] objcall 2832 ............................ me.moveBox(#green, initialGridSelection)
+  [ 61] ret
+end
+
+on update me
+  [  0] getmovieprop 860 ........................ <the mouseLoc>
+  [  3] setlocal 0 .............................. mousePos = the mouseLoc
+  [  5] pusharglist 0 ........................... <>
+  [  7] thebuiltin 2196 ......................... <the mouseDown>
+  [ 10] setlocal 1 .............................. mousePress = the mouseDown
+  [ 12] pusharglist 0 ........................... <>
+  [ 14] thebuiltin 2195 ......................... <the mouseUp>
+  [ 17] setlocal 2 .............................. mouseRelease = the mouseUp
+  [ 19] getlocal 0 .............................. <mousePos>
+  [ 21] getprop 2848 ............................ <pTargetRect>
+  [ 24] pusharglist 2 ........................... <mousePos, pTargetRect>
+  [ 26] extcall 195 ............................. <inside(mousePos, pTargetRect)>
+  [ 28] jmpifz [ 76] ............................ if inside(mousePos, pTargetRect) then / else
+  [ 31] getparam 0 .............................. <me>
+  [ 33] getlocal 0 .............................. <mousePos>
+  [ 35] pusharglist 2 ........................... <me, mousePos>
+  [ 37] objcall 2822 ............................ <me.calcGridLoc(mousePos)>
+  [ 40] setlocal 3 .............................. gridLoc = me.calcGridLoc(mousePos)
+  [ 42] getlocal 2 .............................. <mouseRelease>
+  [ 44] jmpifz [ 59] ............................ if mouseRelease then / else
+  [ 47] getparam 0 .............................. <me>
+  [ 49] getlocal 3 .............................. <gridLoc>
+  [ 51] pusharglistnoret 2 ...................... <me, gridLoc>
+  [ 53] objcall 2829 ............................ me.mouseRelease(gridLoc)
+  [ 56] jmp [ 73]
+  [ 59] getlocal 1 .............................. <mousePress>
+  [ 61] jmpifz [ 73] ............................ if mousePress then
+  [ 64] getparam 0 .............................. <me>
+  [ 66] getlocal 3 .............................. <gridLoc>
+  [ 68] pusharglistnoret 2 ...................... <me, gridLoc>
+  [ 70] objcall 2830 ............................ me.mousePress(gridLoc)
+  [ 73] jmp [ 91]
+  [ 76] getprop 2841 ............................ <pBoxes>
+  [ 79] pushsymb 2864 ........................... <#yellow>
+  [ 82] pusharglist 2 ........................... <pBoxes, #yellow>
+  [ 84] objcall 109 ............................. <pBoxes[#yellow]>
+  [ 86] pusharglistnoret 1 ...................... <pBoxes[#yellow]>
+  [ 88] objcall 375 ............................. pBoxes[#yellow].offscreen()
+  [ 91] ret
+end
+
+on updateLocation me
+  [  0] getprop 2847 ............................ <pTarget>
+  [  3] pusharglist 1 ........................... <pTarget>
+  [  5] objcall 2874 ............................ <pTarget.getGridRect()>
+  [  8] setprop 2848 ............................ pTargetRect = pTarget.getGridRect()
+  [ 11] ret
+end

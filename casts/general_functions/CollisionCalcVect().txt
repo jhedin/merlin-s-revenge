@@ -1,0 +1,83 @@
+[#name: "CollisionCalcVect(attackLoc, targetLoc, attackPower)", #scriptType: #movie, #type: #script]
+on CollisionCalcVect attackLoc, targetLoc, attackPower
+  
+  dist = SineDist(attackLoc, targetLoc)
+  distXY = targetLoc - attackLoc
+  if dist=0 then
+    dist=1.000
+    distXY = point(0,1)
+  end if
+  outputPower = attackPower - dist
+  if outputPower <= 0 then
+    collisionVect = point(0,0)
+  else
+    numOfFrames = dist/outputPower
+    initialFrameMove = distXY / point(numOfFrames,numOfFrames)
+    collisionVect = initialFrameMove
+  end if
+  
+  return collisionVect
+  
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

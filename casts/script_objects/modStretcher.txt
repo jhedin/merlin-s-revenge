@@ -1,0 +1,194 @@
+[#name: "modStretcher", #scriptType: #parent, #type: #script]
+-- changes a sprites width and height over time
+
+global g
+
+property ancestor
+property pStretchTransHeight          -- the obj that changes the height
+property pStretchTransWidth           -- the obj that changes the width
+
+on new me
+  ancestor = new (script("modModule"))
+  return me
+end
+
+on addModParams me
+  i = me.modifyParams(#init)
+  
+  ancestor.addModParams()
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  pStretchTransHeight = #none
+  pStretchTransWidth = #none
+end
+
+on finish me
+  ancestor.finish()
+  
+  me.cancelStretch()
+end
+
+on cancelStretch me
+  me.cancelStretchHeight()
+  me.cancelStretchWidth()
+end
+
+on cancelStretchHeight me
+  if pStretchTransHeight <> #none then
+    pStretchTransHeight.finish()
+    pStretchTransHeight = #none
+  end if
+end
+
+on cancelStretchWidth me
+  if pStretchTransWidth <> #none then
+    pStretchTransWidth.finish()
+    pStretchTransWidth = #none
+  end if
+end
+
+on eventNotification me, theEvent, theObj
+  ancestor.eventNotification(theEvent, theObj)
+  
+  case theEvent of
+    #stretchHeightFinished:
+      if theObj = pStretchTransHeight then
+        pStretchTransHeight = #none
+        me.big.internalEvent(#transHeightFin)
+      end if
+      
+    #strecthWidthFinished:
+      if theObj = pStretchTransWidth then
+        pStretchTransWidth = #none
+        me.big.internalEvent(#transWidthFin)
+      end if
+      
+  end case
+end
+
+on notifyIfFinished me
+  if pStretchTransHeight = #none and pStretchTransWidth = #none then
+    me.big.internalEvent(#stretchFinished)
+  end if
+end
+
+on startStretch me, newWidth, newHeight, speed
+  me.startStretchHeight(newHeight, speed)
+  me.startStretchWidth(newWidth, speed)
+end
+
+on startStretchHeight me, newHeight, speed
+  me.cancelStretchHeight()  
+  
+  bigMe = me.ID.bigMe
+  
+  pStretchTransHeight = g.objectMaster.requestObject(#objTransHeight)
+  params = pStretchTransHeight.getParams(#init)
+  params.callingPrg = bigMe
+  params.callingPrgMessage = #stretchHeightFinished
+  params.initialValue = bigMe.getSpriteHeight()
+  params.speed = speed
+  params.targetValue = newHeight
+  params.spr = bigMe.getSprite()
+  pStretchTransHeight.init(params)
+  pStretchTransHeight.calcStart()
+  
+  me.keepMePosted(pStretchTransHeight, #stretchHeightFinished, #once)
+end
+
+on startStretchWidth me, newWidth, speed
+  me.cancelStretchWidth()
+  
+  bigMe = me.ID.bigMe
+  
+  pStretchTransWidth = g.objectMaster.requestObject(#objTransWidth)
+  params = pStretchTransHeight.getParams(#init)
+  params.callingPrg = bigMe
+  params.callingPrgMessage = #stretchWidthFinished
+  params.initialValue = bigMe.getSpriteWidth()
+  params.speed = speed
+  params.targetValue = newWidth
+  params.spr = bigMe.getSprite()
+  pStretchTransWidth.init(params)
+  pStretchTransWidth.calcStart()
+  
+  me.keepMePosted(pStretchTransWidth, #stretchWidthFinished, #once)
+end
+
+
+on stretchHeightFinished me
+  pStretchTransHeight = #none
+  me.notifyIfFinished()
+end
+
+on stretchWidthFinished me
+  pStretchTransWidth = #none
+  me.notifyIfFinished()
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

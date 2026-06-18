@@ -1,0 +1,175 @@
+[#name: "modConstruction", #scriptType: #parent, #type: #script]
+-- allows the building or character to be constructed before use
+-- will increase the building's energy in proportion to the progress through the beBuilt anim
+
+property ancestor
+property pIsBuilt               -- whether the unit is fully constructed
+property pPercentToAddPerFrame  -- the percentage of energy to increase by per frame
+property pPreBuilt              -- whether the unit is starting off built (if it is on the map)
+
+
+on new me
+  ancestor = new (script("modModule"))
+  return me
+end
+
+on addModParams me
+  i = me.modifyParams(#init)
+  
+  i[#preBuilt] = true
+  
+  ancestor.addModParams()
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  pIsBuilt = false
+  pPercentToAddPerFrame = 0
+  pPreBuilt = params.preBuilt
+end
+
+on addSaveData me, sd
+  ancestor.addSaveData(sd)
+  
+  sd[#pIsBuilt] = pIsBuilt
+  sd[#pPercentToAddPerFrame] = pPercentToAddPerFrame
+  
+end
+
+on advanceBuildFrame me
+  me.big.frameAdvance()
+  
+  me.big.increaseEnergyByPercentage(pPercentToAddPerFrame)
+  
+  if me.big.getAnimLooped() then
+    me.buildingFinished()
+  end if
+end
+
+on buildingFinished me
+  pIsBuilt = true
+   me.big.setMode(#stand)
+  
+  me.big.unpauseAnim()
+  
+  me.big.internalEvent(#buildingFinished)
+  me.eventNotify(#buildingFinished)
+end
+
+on isUnfinishedBuilding me
+  if pIsBuilt = true then
+    return false
+  else
+    return true
+  end if
+end
+
+on outOfEnergy me
+  ancestor.outOfEnergy()
+  
+  me.big.unpauseAnim()
+end
+
+on goMode me, newMode
+  case newMode of
+    #beBuilt:
+      me.startBeBuilt()
+      
+  end case
+  
+  ancestor.goMode(newMode)
+end
+
+on restoreFromSave me,sd
+  ancestor.restoreFromSave(sd)
+  
+  pIsBuilt = sd.pIsBuilt
+  pPercentToAddPerFrame = sd.pPercentToAddPerFrame
+end
+
+on startBeBuilt me
+  me.big.pauseAnim()
+
+  
+  -- this is to work out how much energy the building has while it is 
+  -- being built
+  me.big.setEnergy(1)
+  lengthOfBuildAnim = me.big.getNoOfFramesInStrip(#beBuilt)
+  pPercentToAddPerFrame = VarPercent(1, [0,lengthOfBuildAnim])
+end
+
+
+on startBuilding me
+  if pPreBuilt then
+    me.buildingFinished()
+  else
+    me.big.goMode(#beBuilt)
+  end if
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

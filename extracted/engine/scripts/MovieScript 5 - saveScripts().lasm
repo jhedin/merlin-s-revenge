@@ -1,0 +1,37 @@
+on saveScripts me
+  [  0] pushcons 0 .............................. <"Extractor">
+  [  2] pusharglist 1 ........................... <"Extractor">
+  [  4] extcall 11 .............................. <script("Extractor")>
+  [  6] pusharglist 1 ........................... <script("Extractor")>
+  [  8] extcall 16 .............................. <new(script("Extractor"))>
+  [ 10] setlocal 0 .............................. extractor = new(script("Extractor"))
+  [ 12] getlocal 0 .............................. <extractor>
+  [ 14] getmovieprop 205 ........................ <the moviePath>
+  [ 16] pushcons 1 .............................. <"casts/">
+  [ 18] joinstr ................................. <the moviePath & "casts/">
+  [ 19] pusharglistnoret 2 ...................... <extractor, the moviePath & "casts/">
+  [ 21] objcall 283 ............................. extractor.setExFolder(the moviePath & "casts/")
+  [ 24] getlocal 0 .............................. <extractor>
+  [ 26] pushcons 2 .............................. <"data">
+  [ 28] pushcons 3 .............................. <"master_objects">
+  [ 30] pushcons 4 .............................. <"script_objects">
+  [ 32] pushcons 5 .............................. <"general_functions">
+  [ 34] pusharglist 4 ........................... <["data", "master_objects", "script_objects", "general_functions"]>
+  [ 36] pushlist ................................ <["data", "master_objects", "script_objects", "general_functions"]>
+  [ 37] pusharglistnoret 2 ...................... <extractor, ["data", "master_objects", "script_objects", "general_functions"]>
+  [ 39] objcall 145 ............................. extractor.setCasts(["data", "master_objects", "script_objects", "general_functions"])
+  [ 41] getlocal 0 .............................. <extractor>
+  [ 43] pushsymb 221 ............................ <#field>
+  [ 45] pushsymb 11 ............................. <#script>
+  [ 47] pusharglist 2 ........................... <[#field, #script]>
+  [ 49] pushlist ................................ <[#field, #script]>
+  [ 50] pusharglistnoret 2 ...................... <extractor, [#field, #script]>
+  [ 52] objcall 284 ............................. extractor.setTypesToExtract([#field, #script])
+  [ 55] getlocal 0 .............................. <extractor>
+  [ 57] pusharglistnoret 1 ...................... <extractor>
+  [ 59] objcall 51 .............................. extractor.start()
+  [ 61] pushcons 6 .............................. <"Done">
+  [ 63] pusharglistnoret 1 ...................... <"Done">
+  [ 65] extcall 21 .............................. put "Done"
+  [ 67] ret
+end

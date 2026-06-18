@@ -1,0 +1,207 @@
+property ancestor, pNextNode, pPrevNode, pOldLoc, pType
+global g
+
+on new me
+  [  0] pushcons 0 .............................. <"modModule">
+  [  2] pusharglist 1 ........................... <"modModule">
+  [  4] extcall 34 .............................. <script("modModule")>
+  [  6] pusharglist 1 ........................... <script("modModule")>
+  [  8] extcall 0 ............................... <new(script("modModule"))>
+  [ 10] setprop 33 .............................. ancestor = new(script("modModule"))
+  [ 12] pushsymb 49 ............................. <#none>
+  [ 14] setprop 4637 ............................ pNextNode = #none
+  [ 17] pushsymb 49 ............................. <#none>
+  [ 19] setprop 4643 ............................ pPrevNode = #none
+  [ 22] getparam 0 .............................. <me>
+  [ 24] pusharglistnoret 1 ...................... <me>
+  [ 26] extcall 35 .............................. return me
+  [ 28] ret
+end
+
+on addModParams me
+  [  0] getparam 0 .............................. <me>
+  [  2] pushsymb 1 .............................. <#init>
+  [  4] pusharglist 2 ........................... <me, #init>
+  [  6] objcall 47 .............................. <me.modifyParams(#init)>
+  [  8] setlocal 0 .............................. i = me.modifyParams(#init)
+  [ 10] getprop 33 .............................. <ancestor>
+  [ 12] pusharglistnoret 1 ...................... <ancestor>
+  [ 14] objcall 2 ............................... ancestor.addModParams()
+  [ 16] ret
+end
+
+on init me, params
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <params>
+  [  4] pusharglistnoret 2 ...................... <ancestor, params>
+  [  6] objcall 1 ............................... ancestor.init(params)
+  [  8] getparam 1 .............................. <params>
+  [ 10] getobjprop 45 ........................... <params.character>
+  [ 12] setprop 3939 ............................ pType = params.character
+  [ 15] getprop 3939 ............................ <pType>
+  [ 18] pushsymb 182 ............................ <#bullet>
+  [ 20] nteq .................................... <pType <> #bullet>
+  [ 21] jmpifz [ 30] ............................ if pType <> #bullet then
+  [ 24] pushsymb 4599 ........................... <#unit>
+  [ 27] setprop 3939 ............................ pType = #unit
+  [ 30] pushzero ................................ <0>
+  [ 31] pushzero ................................ <0>
+  [ 32] pusharglist 2 ........................... <0, 0>
+  [ 34] extcall 197 ............................. <point(0, 0)>
+  [ 36] setprop 2797 ............................ pOldLoc = point(0, 0)
+  [ 39] ret
+end
+
+on linkIn me
+  [  0] pushsymb 49 ............................. <#none>
+  [  2] setprop 4637 ............................ pNextNode = #none
+  [  5] pushsymb 49 ............................. <#none>
+  [  7] setprop 4643 ............................ pPrevNode = #none
+  [ 10] getglobal 40 ............................ <g>
+  [ 12] getchainedprop 642 ...................... <g.teamMaster>
+  [ 15] getparam 0 .............................. <me>
+  [ 17] getchainedprop 51 ....................... <me.big>
+  [ 19] pusharglist 1 ........................... <me.big>
+  [ 21] objcall 111 ............................. <me.big.getLoc()>
+  [ 23] pusharglist 2 ........................... <g.teamMaster, me.big.getLoc()>
+  [ 25] objcall 4635 ............................ <g.teamMaster.getTileLoc(me.big.getLoc())>
+  [ 28] setlocal 0 .............................. tileLoc = g.teamMaster.getTileLoc(me.big.getLoc())
+  [ 30] getglobal 40 ............................ <g>
+  [ 32] getchainedprop 642 ...................... <g.teamMaster>
+  [ 35] getlocal 0 .............................. <tileLoc>
+  [ 37] getprop 3939 ............................ <pType>
+  [ 40] pusharglist 3 ........................... <g.teamMaster, tileLoc, pType>
+  [ 42] objcall 4636 ............................ <g.teamMaster.getFrontNode(tileLoc, pType)>
+  [ 45] setprop 4643 ............................ pPrevNode = g.teamMaster.getFrontNode(tileLoc, pType)
+  [ 48] getprop 4643 ............................ <pPrevNode>
+  [ 51] pusharglist 1 ........................... <pPrevNode>
+  [ 53] objcall 4628 ............................ <pPrevNode.getNext()>
+  [ 56] setprop 4637 ............................ pNextNode = pPrevNode.getNext()
+  [ 59] getprop 4643 ............................ <pPrevNode>
+  [ 62] getparam 0 .............................. <me>
+  [ 64] getobjprop 51 ........................... <me.big>
+  [ 66] pusharglistnoret 2 ...................... <pPrevNode, me.big>
+  [ 68] objcall 4630 ............................ pPrevNode.setNext(me.big)
+  [ 71] getprop 4637 ............................ <pNextNode>
+  [ 74] pushsymb 49 ............................. <#none>
+  [ 76] nteq .................................... <pNextNode <> #none>
+  [ 77] jmpifz [ 92] ............................ if pNextNode <> #none then
+  [ 80] getprop 4637 ............................ <pNextNode>
+  [ 83] getparam 0 .............................. <me>
+  [ 85] getobjprop 51 ........................... <me.big>
+  [ 87] pusharglistnoret 2 ...................... <pNextNode, me.big>
+  [ 89] objcall 4631 ............................ pNextNode.setPrev(me.big)
+  [ 92] ret
+end
+
+on linkToTileLoc me, tileLoc
+  [  0] getglobal 40 ............................ <g>
+  [  2] getchainedprop 642 ...................... <g.teamMaster>
+  [  5] getparam 1 .............................. <tileLoc>
+  [  7] getprop 3939 ............................ <pType>
+  [ 10] pusharglist 3 ........................... <g.teamMaster, tileLoc, pType>
+  [ 12] objcall 4636 ............................ <g.teamMaster.getFrontNode(tileLoc, pType)>
+  [ 15] setprop 4643 ............................ pPrevNode = g.teamMaster.getFrontNode(tileLoc, pType)
+  [ 18] getprop 4643 ............................ <pPrevNode>
+  [ 21] pusharglist 1 ........................... <pPrevNode>
+  [ 23] objcall 4628 ............................ <pPrevNode.getNext()>
+  [ 26] setprop 4637 ............................ pNextNode = pPrevNode.getNext()
+  [ 29] getprop 4643 ............................ <pPrevNode>
+  [ 32] getparam 0 .............................. <me>
+  [ 34] getobjprop 51 ........................... <me.big>
+  [ 36] pusharglistnoret 2 ...................... <pPrevNode, me.big>
+  [ 38] objcall 4630 ............................ pPrevNode.setNext(me.big)
+  [ 41] getprop 4637 ............................ <pNextNode>
+  [ 44] pushsymb 49 ............................. <#none>
+  [ 46] nteq .................................... <pNextNode <> #none>
+  [ 47] jmpifz [ 62] ............................ if pNextNode <> #none then
+  [ 50] getprop 4637 ............................ <pNextNode>
+  [ 53] getparam 0 .............................. <me>
+  [ 55] getobjprop 51 ........................... <me.big>
+  [ 57] pusharglistnoret 2 ...................... <pNextNode, me.big>
+  [ 59] objcall 4631 ............................ pNextNode.setPrev(me.big)
+  [ 62] ret
+end
+
+on linkOut me
+  [  0] getprop 4637 ............................ <pNextNode>
+  [  3] pushsymb 49 ............................. <#none>
+  [  5] nteq .................................... <pNextNode <> #none>
+  [  6] jmpifz [ 20] ............................ if pNextNode <> #none then
+  [  9] getprop 4637 ............................ <pNextNode>
+  [ 12] getprop 4643 ............................ <pPrevNode>
+  [ 15] pusharglistnoret 2 ...................... <pNextNode, pPrevNode>
+  [ 17] objcall 4631 ............................ pNextNode.setPrev(pPrevNode)
+  [ 20] getprop 4643 ............................ <pPrevNode>
+  [ 23] getprop 4637 ............................ <pNextNode>
+  [ 26] pusharglistnoret 2 ...................... <pPrevNode, pNextNode>
+  [ 28] objcall 4630 ............................ pPrevNode.setNext(pNextNode)
+  [ 31] pushsymb 49 ............................. <#none>
+  [ 33] setprop 4637 ............................ pNextNode = #none
+  [ 36] pushsymb 49 ............................. <#none>
+  [ 38] setprop 4643 ............................ pPrevNode = #none
+  [ 41] ret
+end
+
+on getNext me
+  [  0] getprop 4637 ............................ <pNextNode>
+  [  3] pusharglistnoret 1 ...................... <pNextNode>
+  [  5] extcall 35 .............................. return pNextNode
+  [  7] ret
+end
+
+on getPrev me
+  [  0] getprop 4643 ............................ <pPrevNode>
+  [  3] pusharglistnoret 1 ...................... <pPrevNode>
+  [  5] extcall 35 .............................. return pPrevNode
+  [  7] ret
+end
+
+on setNext me, node
+  [  0] getparam 1 .............................. <node>
+  [  2] setprop 4637 ............................ pNextNode = node
+  [  5] ret
+end
+
+on setPrev me, node
+  [  0] getparam 1 .............................. <node>
+  [  2] setprop 4643 ............................ pPrevNode = node
+  [  5] ret
+end
+
+on update me
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] pusharglistnoret 1 ...................... <ancestor>
+  [  4] objcall 31 .............................. ancestor.update()
+  [  6] getglobal 40 ............................ <g>
+  [  8] getchainedprop 642 ...................... <g.teamMaster>
+  [ 11] getparam 0 .............................. <me>
+  [ 13] getchainedprop 51 ....................... <me.big>
+  [ 15] pusharglist 1 ........................... <me.big>
+  [ 17] objcall 111 ............................. <me.big.getLoc()>
+  [ 19] pusharglist 2 ........................... <g.teamMaster, me.big.getLoc()>
+  [ 21] objcall 4635 ............................ <g.teamMaster.getTileLoc(me.big.getLoc())>
+  [ 24] setlocal 0 .............................. tileLoc = g.teamMaster.getTileLoc(me.big.getLoc())
+  [ 26] getlocal 0 .............................. <tileLoc>
+  [ 28] getprop 2797 ............................ <pOldLoc>
+  [ 31] nteq .................................... <tileLoc <> pOldLoc>
+  [ 32] jmpifz [ 56] ............................ if tileLoc <> pOldLoc then
+  [ 35] getlocal 0 .............................. <tileLoc>
+  [ 37] setprop 2797 ............................ pOldLoc = tileLoc
+  [ 40] getparam 0 .............................. <me>
+  [ 42] pusharglistnoret 1 ...................... <me>
+  [ 44] objcall 4627 ............................ me.linkOut()
+  [ 47] getparam 0 .............................. <me>
+  [ 49] getlocal 0 .............................. <tileLoc>
+  [ 51] pusharglistnoret 2 ...................... <me, tileLoc>
+  [ 53] objcall 4646 ............................ me.linkToTileLoc(tileLoc)
+  [ 56] ret
+end
+
+on internalEvent me, theEvent
+  [  0] getprop 33 .............................. <ancestor>
+  [  2] getparam 1 .............................. <theEvent>
+  [  4] pusharglistnoret 2 ...................... <ancestor, theEvent>
+  [  6] objcall 22 .............................. ancestor.internalEvent(theEvent)
+  [  8] ret
+end

@@ -1,0 +1,101 @@
+[#name: "objScroll", #scriptType: #parent, #type: #script]
+property ancestor
+property pAttack
+
+
+on new me
+  ancestor = new(script "objPowerUpWriting")
+  
+  i = me.modifyParams(#init)
+  
+  i[#attack] = #none
+  
+  
+  return me
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  pAttack = params.attack
+end
+
+on finish me
+  ancestor.finish()
+end
+
+-- for getting hit with energy blast
+on checkDead me
+  return false
+end
+
+on collected me, collector
+  ancestor.collected(collector)
+  if pAttack <> #none then
+    collector.newScrollCollected(me.big.getCharacter(), pAttack.duplicate())
+  else
+    collector.newScrollCollected(me.big.getCharacter(), #none)
+  end if
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

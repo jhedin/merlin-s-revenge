@@ -1,0 +1,22 @@
+property ancestor
+global g
+
+on new me
+  ancestor = new(script("objGameObject"))
+  me.addModule("modAnimSet")
+  return me
+end
+
+on init me, params
+  ancestor.init(params)
+  g.magicLimitMaster.setMagicLimit(params.magicLimit)
+end
+
+on finish me
+  g.magicLimitMaster.setMagicLimitToDefault()
+  ancestor.finish()
+end
+
+on update me
+  me.ancestor.update()
+end

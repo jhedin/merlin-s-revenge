@@ -1,0 +1,361 @@
+[#name: "objScript", #scriptType: #parent, #type: #script]
+global g
+
+property ancestor
+property pLineCounter
+property pTheScript
+
+on new me
+  ancestor = new(script"objParams")
+  
+  i = me.modifyParams(#init)
+  
+  i[#member] = #none
+  
+  return me
+end
+
+on init me, params
+  me.interpretScript(params.member.text)
+  
+  pLineCounter = CounterNew()
+  pLineCounter.tim[2] = pTheScript.theLines.count
+  
+  ancestor.init(params)
+end
+
+on calcFirstLine me, theText, firstWord
+  firstLine = TextGetLineNoWithFirstWord(theText, firstWord)
+  
+  if firstLine <> #none then
+    firstLine = firstLine +1
+  end if
+  
+  return firstLine
+end
+
+on correctLineEndings me, theText
+  originalDelimiter = the itemDelimiter
+  set the itemDelimiter = numToChar(10)
+  
+  numItems = theText.items.count  -- the number of lines ending with newline
+  numLines = theText.lines.count  -- the number of lines ending wiht return
+  
+  --put "numLines before conversion = " & numLines
+  -- if numItems is more than 0 some lines may have only newLine, and not RETURN
+  if numItems > 0 then
+    -- use the item delimeter to recognise lines and add a return
+    -- to the end of them
+    
+    --put "numItems = " & theText.items.count
+    newText = ""
+    repeat with i = 1 to theText.items.count
+      nItem = theText.item[i]
+      nItem = nItem & RETURN
+      newText = newText & nItem
+    end repeat
+    theText = newText
+    
+  end if
+  
+  numLines = theText.lines.count
+  --put "numLines = " & numLines
+  
+  set the itemDelimiter = originalDelimiter
+  
+  --halt
+  
+  return theText
+end
+
+on getNextLine me
+  if pLineCounter.looped then
+    return #finished
+  end if
+  
+  nextLine = pTheScript.theLines[pLineCounter.theCount]
+  
+  Counter(pLineCounter)
+  
+  return nextLine
+end
+
+on getPlayers me
+  return pTheScript.players.duplicate()
+end
+
+on interpretScript me, theText
+  --  put "objScript.interpretScript()"
+  --  put "theText = " & theText
+  --  put "numLines = " & theText.lines.count
+  --  put "line[2].word[1] = " & theText.line[2].word[1]
+  --  halt
+  
+  theText = me.correctLineEndings(theText)
+  
+  pTheScript = g.structMaster.getStruct(#plotScript)
+  
+  me.interpretPlayers(theText)
+  me.interpretLines(theText)
+  
+  --  put pTheScript
+  --  halt
+  
+end
+
+on interpretPlayers me, theText
+  firstLine = me.calcFirstLine(theText, "characters")
+  
+  repeat with i = firstLine to theText.lines.count
+    nLine = theText.line[i]
+    -- skip any blank lines
+    if nLine.word[1] = "" then
+      next repeat
+    end if
+    
+    -- finish when we come to the word "lines"
+    if nLine.word[1] = "lines" then
+      exit repeat
+    end if
+    
+    nScriptPlayer = g.structMaster.getStruct(#scriptPlayer)
+    nScriptPlayer.objCharacter = value(nLine.word[1])
+    nScriptPlayer.scriptName = nLine.word[3]
+    
+    pTheScript.players.append(nScriptPlayer.duplicate())
+  end repeat
+  
+end
+
+
+on interpretLines me, theText
+  firstLine = me.calcFirstLine(theText, "lines")
+  
+  repeat with i = firstLine to theText.lines.count
+    nLine = theText.line[i]
+    -- skip any blank lines
+    if nLine.word[1] = "" then
+      next repeat
+    end if
+    
+    nScriptLine = g.structMaster.getStruct(#scriptLine)
+    nScriptLine.objCharacter = me.translateScriptNameToObjCharacter(nLine.word[1])
+    nScriptLine.theCommand = me.interpretLineCommand(nLine.word[1], nLine.word[2])
+    nScriptLine.args = me.interpretLineArgs(nScriptLine.theCommand, nLine)
+    
+    pTheScript.theLines.append(nScriptLine)
+    
+  end repeat
+  
+end
+
+on interpretLineArgs me, theCommand, theLine
+  
+  case theCommand of
+    #at:
+      return value(theLine.word[3 .. theLine.words.count])
+      
+    #atPlayer:
+      return me.translateScriptNameToObjCharacter(theLine.word[3])
+      
+    #backgroundColour, #backgroundColourTo:
+      return value(theLine.word[2 .. theLine.words.count])
+      
+    #backgroundColourRandomFlash:
+      return value(theLine.word[2])
+      
+    #fadeDown:
+      return value(theLine.word[3])
+      
+    #goMode:
+      return value(theLine.word[3])
+      
+    #playMusic:
+      return me.interpretLineArgsPlayMusic(theLine)
+      
+    #playSound:
+      return me.interpretLineArgsPlaySound(theLine)
+      
+    #produceProp:
+      return me.translateScriptNameToObjCharacter(theLine.word[3])
+      
+    #propAt:
+      return value(theLine.word[3 .. theLine.words.count])
+      
+    #showTitle:
+      return theLine.word[2 .. theLine.words.count]
+      
+    #teleportInAt:
+      return value(theLine.word[3 .. theLine.words.count])
+      
+    #turnToFace:
+      return me.translateScriptNameToObjCharacter(theLine.word[3])
+      
+    #speakLine:
+      return theLine.word[2 .. theLine.words.count]
+      
+    #walkTo:
+      return value(theLine.word[3 .. theLine.words.count])
+      
+    #walkToPlayer:
+      return me.translateScriptNameToObjCharacter(theLine.word[3])
+      
+    #walkScroll:
+      return me.interpretLineArgsWalkScroll(theLine)
+      
+    #wait:
+      return value(theLine.word[2 .. theLine.words.count])
+      
+  end case
+  
+end
+
+on interpretLineArgsPlayMusic me, theLine
+  return me.interpretLineArgsPlaySound(theLine)
+end
+
+on interpretLineArgsPlaySound me, theLine
+  
+  memberToPlay = theLine.word[2]
+  volumeLevel = value(theLine.word[3])
+  -- if volume is not set, set it to max
+  if volumeLevel = void then 
+    volumeLevel = 255
+  end if
+  
+  args = g.structMaster.getStruct(#playSoundArgs)
+  args.memberToPlay = memberToPlay
+  args.volumeLevel = volumeLevel
+  
+  return args
+  
+end
+
+on interpretLineArgsWalkScroll me, theLine
+  
+  dir = symbol(theLine.word[2])
+  speed = value(theLine.word[3])
+  characters = me.translateScriptNamesToCharacterList(theLine.word[4 .. theLine.words.count])
+  
+  args = g.structMaster.getStruct(#walkScrollArgs)
+  args.dir = dir
+  args.speed = speed
+  args.characters = characters
+  
+  return args
+end
+
+on interpretLineCommand me, lineWord1, lineWord2
+  -- check for dialogue
+  if lineWord1.char[lineWord1.chars.count] = ":" then
+    return #speakLine
+  end if
+  
+  -- check for second-word command
+  if me.translateScriptNameToObjCharacter(lineWord1) <> #none then
+    
+    return symbol(lineWord2)
+    
+  end if
+  
+  -- the command must be the first word
+  return symbol(lineWord1)
+end
+
+
+on reset me
+  pLineCounter = CounterReset(pLineCounter)
+end
+
+on translateScriptNamesToCharacterList me, nameString
+  numOfWords = nameString.words.count
+  characterList = []
+  
+  repeat with i = 1 to numOfWords
+    nScriptName = nameString.word[i]
+    nCharacterName = me.translateScriptNameToObjCharacter(nScriptName)
+    
+    characterList.append(nCharacterName)
+  end repeat
+  
+  return characterList
+end
+
+on translateScriptNameToObjCharacter me, scriptName
+  thePlayers = pTheScript.players
+  
+  -- remove ":" if it's there
+  if scriptName.char[scriptName.chars.count] = ":" then
+    scriptName = scriptName.char[1..scriptName.chars.count-1]
+  end if
+  
+  pos = ListGetPosByProp(thePlayers, #scriptName, scriptName)
+  
+  if pos = 0 then
+    return #none
+  else
+    return thePlayers[pos].objCharacter
+  end if
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
