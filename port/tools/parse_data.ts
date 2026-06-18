@@ -4,6 +4,7 @@ import { readFileSync, writeFileSync, readdirSync, mkdirSync, existsSync } from 
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseDataFile, type Lingo } from "../src/data/lingo.ts";
+import { Registry } from "../src/data/registry.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = join(here, "../../casts/data");
@@ -56,3 +57,18 @@ if (fails.length) {
   for (const { file, err } of fails.slice(0, 20)) console.log(`  ${file}: ${err}`);
   process.exit(1);
 }
+
+// Integration: build the registry and resolve every actor (#inherit + #attack).
+const reg = new Registry(out);
+const actors = reg.names("actor");
+let resolved = 0, withAttack = 0, brokenInherit = 0;
+for (const a of actors) {
+  const r = reg.resolveActor(a);
+  if (!r) continue;
+  resolved++;
+  if (r["attack"] && typeof r["attack"] === "object") withAttack++;
+  // an inherit that didn't resolve leaves the raw symbol reachable; check chain integrity
+  const inh = r["inherit"];
+  if (typeof inh === "string" && !reg.raw("actor", inh)) brokenInherit++;
+}
+console.log(`registry: resolved ${resolved}/${actors.length} actors; ${withAttack} have #attack; ${brokenInherit} reference a missing #inherit parent`);
