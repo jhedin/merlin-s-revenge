@@ -62,8 +62,11 @@ def bmp_info(data, ents, owner):
     u16 = lambda o: struct.unpack('>H', sp[o:o+2])[0]
     pitch = u16(0) & 0x7fff
     top, left, bottom, right = s16(2), s16(4), s16(6), s16(8)
+    regY = s16(18) if specLen >= 20 else 0   # registration point (sprite anchor),
+    regX = s16(20) if specLen >= 22 else 0   # big-endian s16 in the BITD specific data
     depth = sp[23] if specLen >= 24 else 1
-    return dict(w=right-left, h=bottom-top, pitch=pitch, depth=depth, specLen=specLen)
+    return dict(w=right-left, h=bottom-top, pitch=pitch, depth=depth,
+                regX=regX, regY=regY, specLen=specLen)
 
 def unpackbits(src, expected):
     """Director BITD PackBits RLE -> exactly `expected` bytes."""
@@ -173,19 +176,29 @@ def extract_sounds(data, ents, owner_to, outdir):
 
 def extract_bitmaps(data, ents, owner_to, outdir):
     os.makedirs(outdir, exist_ok=True)
-    n = 0; fail = 0
+    n = 0; fail = 0; meta = []
     for owner, ch in owner_to.items():
         if 'BITD' not in ch: continue
         if ents.get(owner, ('',))[0] != 'CASt': continue
         try:
+            info = bmp_info(data, ents, owner)
             img = decode_bitmap(data, ents, owner_to, owner)
             if img is None: continue
             nm = safe(cast_name(data, ents, owner), "")
             base = ("%05d_%s" % (owner, nm)).rstrip("_")
-            img.save(os.path.join(outdir, base + ".png"))
+            fn = base + ".png"
+            img.save(os.path.join(outdir, fn))
+            # registration point = sprite anchor; ESSENTIAL for correct draw/spawn alignment.
+            meta.append({"file": "bitmaps/" + fn, "id": owner, "name": nm,
+                         "w": info["w"], "h": info["h"], "depth": info["depth"],
+                         "reg": [info["regX"], info["regY"]]})
             n += 1
         except Exception:
             fail += 1
+    # sidecar metadata so the animation baker / renderer has reg points + dims
+    import json
+    with open(os.path.join(os.path.dirname(outdir), "bitmaps.meta.json"), "w") as f:
+        json.dump(meta, f, indent=0)
     return n, fail
 
 if __name__ == "__main__":
