@@ -13,6 +13,7 @@ import { game, initContext } from "./game/context";
 import { spawnPlayer, spawnEnemy } from "./entities/archetypes";
 import { Anim } from "./components/anim";
 import { Energy } from "./components/combat";
+import { Experience } from "./components/experience";
 import { Movement } from "./components/movement";
 import { Projectile } from "./components/projectile";
 import { sweepBullets, bulletPoolStats } from "./systems/bullets";
@@ -45,9 +46,9 @@ async function main() {
 
   const player = spawnPlayer(viewW / 2, viewH / 2);
   const enemies = [
-    spawnEnemy("blackOrc", 80, 80),                          // real data: energy 1200, walkSpeed 6
+    spawnEnemy("dwarf", 80, 80),                             // real data: energy 250
     spawnEnemy("dwarf", viewW - 80, 80, { ranged: true }),  // real data: energy 250, ranged
-    spawnEnemy("blackOrc", viewW - 80, viewH - 80),
+    spawnEnemy("blackOrc", viewW - 80, viewH - 80),         // real data: energy 1200 (the tank)
   ];
   game.player = player;
   game.entities = [player, ...enemies];
@@ -82,10 +83,14 @@ async function main() {
 
 function drawHud(renderer: Renderer, player: import("./engine/dispatch").Entity) {
   const ctx = renderer.ctx;
-  const frac = player.get(Energy).energyFrac();
-  ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(6, 6, 104, 12);
-  ctx.fillStyle = frac > 0.3 ? "#3c9" : "#e44"; ctx.fillRect(8, 8, 100 * frac, 8);
-  ctx.fillStyle = "#fff"; ctx.font = "8px monospace"; ctx.fillText("HP", 114, 15);
+  const hp = player.get(Energy).energyFrac();
+  ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(6, 6, 104, 20);
+  ctx.fillStyle = hp > 0.3 ? "#3c9" : "#e44"; ctx.fillRect(8, 8, 100 * hp, 7);
+  const xp = player.get(Experience);
+  ctx.fillStyle = "#fc4"; ctx.fillRect(8, 17, 100 * Math.min(1, xp.frac()), 5);
+  ctx.fillStyle = "#fff"; ctx.font = "8px monospace";
+  ctx.fillText("HP", 114, 14);
+  ctx.fillText("Lv " + xp.level, 114, 23);
 }
 
 function drawBullets(renderer: Renderer) {

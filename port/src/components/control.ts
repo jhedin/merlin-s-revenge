@@ -32,8 +32,8 @@ export class PlayerControl extends Component {
         const target = nearestEnemy(m.x, m.y);
         const dir = target ? target.send("getPos") as { x: number; y: number }
           : { x: m.x + (m.facingLeft ? -1 : 1) * 100, y: m.y };
-        fireBullet(this.entity.id, m.x, m.y - 6, dir.x - m.x, dir.y - m.y, 6, 25, this.entity.send("getTeam"));
-        this.cooldown = 8;
+        fireBullet(this.entity.id, m.x, m.y - 6, dir.x - m.x, dir.y - m.y, 6.5, 80, this.entity.send("getTeam"));
+        this.cooldown = 5;
       }
     }
     next();
@@ -74,7 +74,7 @@ export class EnemyAI extends Component {
         if (this.ranged) {
           fireBullet(this.entity.id, m.x, m.y - 6, dx, dy, 4.5, this.power * 2, this.entity.send("getTeam"));
         } else {
-          target.send("takeHit", this.power);
+          target.send("takeHit", this.power, this.entity.id);
         }
         this.cooldown = this.cooldownMax;
       }

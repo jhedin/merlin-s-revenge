@@ -5,13 +5,15 @@ import { Archetype, type Entity, makeEntityId } from "../engine/dispatch";
 import { Movement } from "../components/movement";
 import { Anim } from "../components/anim";
 import { Energy, Team } from "../components/combat";
+import { Experience } from "../components/experience";
 import { PlayerControl, EnemyAI } from "../components/control";
 import { registry } from "../game/data";
 
-const DEFAULTS = { isDead: false, getTeam: "", energyFrac: 1 };
+const DEFAULTS = { isDead: false, getTeam: "", energyFrac: 1, getLevel: 1 };
 
-export const PlayerArchetype = new Archetype("player", [PlayerControl, Movement, Anim, Energy, Team], { defaults: DEFAULTS });
-export const EnemyArchetype = new Archetype("enemy", [EnemyAI, Movement, Anim, Energy, Team], { defaults: DEFAULTS });
+// Experience is ordered BEFORE Energy so it records the attacker before energy applies death.
+export const PlayerArchetype = new Archetype("player", [PlayerControl, Movement, Anim, Experience, Energy, Team], { defaults: DEFAULTS });
+export const EnemyArchetype = new Archetype("enemy", [EnemyAI, Movement, Anim, Experience, Energy, Team], { defaults: DEFAULTS });
 
 export function spawnPlayer(x: number, y: number): Entity {
   const e = PlayerArchetype.create(makeEntityId());

@@ -25,7 +25,7 @@ export class Projectile extends Component {
       if (e.send("isDead") || e.send("getTeam") === this.team) continue;
       const p = e.send("getPos") as { x: number; y: number };
       if (Math.abs(p.x - m.x) < 12 && Math.abs(p.y - m.y) < 12) {
-        e.send("takeHit", this.power);
+        e.send("takeHit", this.power, this.ownerId);
         this.done = true;
         break;
       }
