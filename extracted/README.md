@@ -22,6 +22,25 @@ nothing here is hand-edited, so it can be regenerated at any time.
 | `engine/scripts/*.lasm` | 348 | Lingo bytecode | assembly listing for each script (verification / fallback) |
 | `map_editor/bitmaps/*.png` | 43 | `BITD` | editor UI bitmaps |
 | `map_editor/scripts/*` | 118 | decompiled Lingo | editor logic |
+| `engine/scenes.json` | 16 | Score `VWLB` labels + `movieMaster`/`screenMaster` | the movie's screens/scenes + flow wiring |
+| `manifest.json` | — | derived | name→file index of every extracted asset |
+
+## Scenes / screens (`engine/scenes.json`)
+
+The Director movie defines 16 frame-marker "screens" (title, key config, the four
+`animScreen*` cutscene hosts, `gameScreen`, pause menu, credits, etc.). Crucially the
+**Score is not a runtime timeline** — the playhead is pinned on frame 1 (the `loop frame`
+behavior) and `screenMaster.initScreenList` snapshots each marker's static sprite layout at
+boot, compositing them on demand via `movieMaster.goScreen(sym, #fade)`. So scenes port to a
+small `Scene`/state machine, not Score playback. Only `gameScreen` is gameplay; 3 markers are
+dead/unused/transient (`3DMode`, `New Marker`, `initMap`).
+
+**Known gap — per-screen pixel layout (`screen_layout_extraction: DEFERRED`).** The `VWSC`
+Score uses a pooled/pointer-encoded sprite format (dedup data pool + 3773-entry frame offset
+table + per-frame pointer records); field-accurate decode is high-effort/low-value. Screens
+are instead reconstructed from `objMenu` text-definitions + the extracted background bitmaps,
+refined visually during the port. The original `.dir` remains in the repo if a full decode is
+ever wanted.
 
 Filenames are `<resourceID>_<castMemberName>.png` / `<index>_<name>.wav`,
 with names recovered from each cast member's info block where present.

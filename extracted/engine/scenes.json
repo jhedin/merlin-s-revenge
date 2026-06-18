@@ -1,0 +1,134 @@
+{
+  "_note": "Director Score frame markers captured by screenMaster.initScreenList at boot. The Score is NOT a runtime timeline: the playhead is pinned on frame 1 (loop frame behavior); each marker's static sprite layout is snapshotted into an objScreen and composited on demand via movieMaster.goScreen(sym, #fade). Port these as Scene/state classes.",
+  "stageSize_note": "play area = the Director stage rect (gStageSize); rooms are 18x9 tiles @32px = 576x288.",
+  "screens": [
+    {
+      "frame": 30,
+      "label": "titleScreen",
+      "role": "frontend",
+      "kind": "menu",
+      "wiring": "boot lands here (movieMaster.start -> goScreen(#titleScreen)). Buttons: intro->goSequence(#intro), gameScreen, reloadGame->goScreen(#gameScreen,#loadGame), instructions, credits, copyright/links->URL"
+    },
+    {
+      "frame": 60,
+      "label": "chooseKeysScreen",
+      "role": "frontend",
+      "kind": "menu",
+      "wiring": "key-scheme selection (arrow/wasd/zqsd/mac); writes Prefs/MerlinsRevengeKeys.txt"
+    },
+    {
+      "frame": 79,
+      "label": "New Marker",
+      "role": "unused",
+      "kind": "placeholder",
+      "wiring": "empty author placeholder; ignore"
+    },
+    {
+      "frame": 90,
+      "label": "chooseKeysMenu",
+      "role": "frontend",
+      "kind": "menu",
+      "wiring": "key-config submenu"
+    },
+    {
+      "frame": 120,
+      "label": "animScreen",
+      "role": "cutscene_host",
+      "kind": "cutscene",
+      "wiring": "intro cutscene surface; goScreenAction #startGame/#playLoadedCutScene -> cutSceneMaster.playCutScene(gIntroScript)"
+    },
+    {
+      "frame": 150,
+      "label": "animScreenSingleCutScene",
+      "role": "cutscene_host",
+      "kind": "cutscene",
+      "wiring": "plays a single selected cut scene (file moved into cut_scene_to_play/)"
+    },
+    {
+      "frame": 180,
+      "label": "animScreenEnd",
+      "role": "cutscene_host",
+      "kind": "cutscene",
+      "wiring": "victory; goScreenAction #gameComplete -> playCutScene(gGameCompleteScript)"
+    },
+    {
+      "frame": 210,
+      "label": "animScreenGameOver",
+      "role": "cutscene_host",
+      "kind": "cutscene",
+      "wiring": "death; goScreenAction #gameOver -> playCutScene(gGameOverScript)"
+    },
+    {
+      "frame": 240,
+      "label": "gameScreen",
+      "role": "gameplay",
+      "kind": "game",
+      "wiring": "THE gameplay screen. Enters via cutSceneMaster.finish then game loop; <-> ingameMenu"
+    },
+    {
+      "frame": 270,
+      "label": "initMap",
+      "role": "transient",
+      "kind": "setup",
+      "wiring": "map initialization marker (not a user-facing screen)"
+    },
+    {
+      "frame": 300,
+      "label": "ingameMenu",
+      "role": "frontend",
+      "kind": "menu",
+      "wiring": "in-game pause menu (gameMaster owns pause/save/quit)"
+    },
+    {
+      "frame": 330,
+      "label": "instructions",
+      "role": "frontend",
+      "kind": "menu",
+      "wiring": "static instructions screen"
+    },
+    {
+      "frame": 360,
+      "label": "creditsScreen",
+      "role": "frontend",
+      "kind": "menu",
+      "wiring": "credits"
+    },
+    {
+      "frame": 390,
+      "label": "showArmy",
+      "role": "frontend",
+      "kind": "menu",
+      "wiring": "army roster viewer (armyMaster reserve)"
+    },
+    {
+      "frame": 420,
+      "label": "3DMode",
+      "role": "dead",
+      "kind": "experimental",
+      "wiring": "g3DMode=false everywhere; dead branch, do not port"
+    },
+    {
+      "frame": 450,
+      "label": "licence",
+      "role": "frontend",
+      "kind": "menu",
+      "wiring": "licence text"
+    }
+  ],
+  "goScreenActions": {
+    "loadGame": "saveMaster.loadGame()",
+    "startGame": "cutSceneMaster.playCutScene(gIntroScript)",
+    "playLoadedCutScene": "cutSceneMaster.playCutScene(gIntroScript)",
+    "gameComplete": "cutSceneMaster.playCutScene(gGameCompleteScript)",
+    "gameOver": "cutSceneMaster.playCutScene(gGameOverScript)"
+  },
+  "transitions": {
+    "default": "#fade",
+    "screenMaster_default": "#flick"
+  },
+  "screen_layout_extraction": {
+    "status": "DEFERRED",
+    "reason": "VWSC Score uses a pooled/pointer-encoded sprite format (data pool [15120,96192], 3773-entry frame offset table, per-frame pointer-reference records). Field-accurate decode is high-effort, low-value vs reconstructing screens from menu data + extracted background bitmaps.",
+    "fallback": "Reconstruct each screen from objMenu text-definitions + extracted/engine/bitmaps backgrounds; refine positions visually during port."
+  }
+}
