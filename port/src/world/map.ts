@@ -1,0 +1,74 @@
+// Map / Room / Layer model (objMap -> objRoom -> objTileLayer -> objDataMap). Maps are a
+// single-line Lingo proplist `[#map: [...]]`; parse with the Lingo parser, then shape it.
+// Room/map sizes are read PER-MAP (they vary 16x9..64x64 — PLAN_REVIEW §3), never hard-coded.
+
+import { parseLingo, type Lingo } from "../data/lingo";
+
+export interface Vec2i { x: number; y: number; }
+
+export interface Layer {
+  name: string;          // "#backgroundPassive" | "#backgroundActive" | "#objects"
+  tileSet: string;       // tileset symbol, e.g. "#merlin4Passive"
+  grid: number[][];      // grid[row][col], row-major; 0 = empty
+}
+
+export interface Room {
+  num: number;
+  layers: Layer[];
+  layer(name: string): Layer | undefined;
+}
+
+export interface GameMap {
+  mapSize: Vec2i;        // rooms across/down
+  roomSize: Vec2i;       // tiles across/down (e.g. 18x9)
+  tilePx: number;        // 32 in shipped data
+  startRoom: Vec2i;
+  layerDefs: { name: string; tileSet: string }[];
+  rooms: Map<number, Room>;
+  roomAt(loc: Vec2i): Room | undefined;
+}
+
+type L = Lingo | undefined;
+const asObj = (v: L): Record<string, Lingo> =>
+  (v && typeof v === "object" && !Array.isArray(v)) ? v as Record<string, Lingo> : {};
+const asArr = (v: L): Lingo[] => Array.isArray(v) ? v : [];
+const asNum = (v: L, d = 0): number => typeof v === "number" ? v : d;
+const asStr = (v: L, d = ""): string => typeof v === "string" ? v : d;
+const asPoint = (v: L): Vec2i => {
+  const o = asObj(v); return { x: asNum(o["x"], 1), y: asNum(o["y"], 1) };
+};
+
+export function parseMap(src: string): GameMap {
+  const root = asObj(parseLingo(src));
+  const m = asObj(root["map"]);
+  const roomSize = asPoint(m["roomSize"]);
+  const layerDefs = asArr(m["layerDefinitions"]).map((d) => {
+    const o = asObj(d);
+    return { name: asStr(o["name"]), tileSet: asStr(o["tileSet"]) };
+  });
+  const tileSetFor = (name: string) => layerDefs.find((d) => d.name === name)?.tileSet ?? "";
+
+  const rooms = new Map<number, Room>();
+  for (const rv of asArr(m["rooms"])) {
+    const ro = asObj(rv);
+    const num = asNum(ro["num"]);
+    const layers: Layer[] = asArr(ro["layers"]).map((lv) => {
+      const lo = asObj(lv);
+      const name = asStr(lo["name"]);
+      const grid = asArr(lo["map"]).map((rowv) => asArr(rowv).map((c) => asNum(c)));
+      return { name, tileSet: tileSetFor(name), grid };
+    });
+    rooms.set(num, { num, layers, layer(n) { return this.layers.find((l) => l.name === n); } });
+  }
+
+  const mapSize = asPoint(m["mapSize"]);
+  return {
+    mapSize, roomSize, tilePx: 32, startRoom: asPoint(m["startRoom"]),
+    layerDefs, rooms,
+    roomAt(loc) {
+      // rooms are stored by 1-based incremental num, row-major across mapSize
+      const idx = (loc.y - 1) * mapSize.x + loc.x;
+      return rooms.get(idx);
+    },
+  };
+}

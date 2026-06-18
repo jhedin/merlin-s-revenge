@@ -1,0 +1,32 @@
+// Shared game context (the Lingo `g` globals): the collision grid, input, asset store, RNG,
+// and the live entity list. Components read this for cross-cutting needs (target lookup, grid).
+
+import type { CollisionGrid } from "../world/collision";
+import type { Input } from "../systems/input";
+import type { Assets } from "../render/assets";
+import type { Entity } from "../engine/dispatch";
+import { Rng } from "../engine/math";
+
+export interface GameContext {
+  grid: CollisionGrid;
+  input: Input;
+  assets: Assets;
+  rng: Rng;
+  tilePx: number;
+  entities: Entity[];
+  player: Entity | null;
+  tick: number;
+}
+
+export const game: GameContext = {
+  grid: null as unknown as CollisionGrid,
+  input: null as unknown as Input,
+  assets: null as unknown as Assets,
+  rng: new Rng(12345),
+  tilePx: 32,
+  entities: [],
+  player: null,
+  tick: 0,
+};
+
+export function initContext(c: Partial<GameContext>): void { Object.assign(game, c); }
