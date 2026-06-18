@@ -1,0 +1,160 @@
+[#name: "objExplodingBullet", #scriptType: #parent, #type: #script]
+global g
+
+property ancestor
+property pExplodeSound
+
+on new me
+  ancestor = new(script"objBullet")
+  
+  i = me.modifyParams(#init)
+  
+  i[#explodeSound] = #none
+  
+  return me
+end
+
+on init me, params
+  pExplodeSound = params.explodeSound
+  
+  ancestor.init(params)
+end
+
+on collisionPlatform me
+  me.goMode(#explode)
+end
+
+on collisionCeiling me
+  me.goMode(#explode)
+end
+
+on collisionWallLeft me
+  me.goMode(#explode)
+end
+
+on collisionWallRight me
+  me.goMode(#explode)
+end
+
+on goMode me, newMode
+  
+  case me.pMode of
+    #explode:
+      -- if already in explode mode do nothing
+      if newMode = #explode then
+        return
+      end if
+  end case
+  
+  case newMode of
+    #explode:
+      me.setVect(point(0,0))
+      me.setWeight(0)
+      me.pAnimSet.resetAnim(#explode)
+      
+      me.playSound(pExplodeSound)
+  end case
+  
+  
+  ancestor.goMode(newMode)
+end
+
+on update me  
+  case me.pMode of
+    #explode:
+      fin = me.updateExplode()
+      if fin then me.setDead(true)
+      
+    #fly:
+      stat = me.updateFly()
+      if stat <> #continu then me.goMode(#explode)
+      
+  end case
+  
+  ancestor.update()
+end
+
+on updateExplode me
+  
+  animFrame = me.pAnimSet.getFrame(#explode)
+  if animFrame = me.pAttack.animFrame then
+    if me.checkForCollisionWithPlayer() then
+      attackPower = me.getAttackPower()
+      
+      me.pPlayer.takeHit(attackPower)
+    end if
+  end if
+  
+  
+  fin = me.pAnimSet.getLooped(#explode)
+  if fin = true then
+    nothing
+  end if
+  
+  return fin
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

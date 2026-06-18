@@ -1,0 +1,208 @@
+[#name: "creditsMaster", #scriptType: #parent, #type: #script]
+-- retrieves and displays the credits for the given game
+global g
+global gCreditsPage
+
+property pCreditsMember -- the member which will display the credits
+property pCreditsText   -- the text of the credits to be displayed
+property pCreditsURL    -- the URL of the credits page
+property pLoadingMember -- the member which contains the "Loading..." message
+property pLoadingTransBlend -- the transblend object associated with the "Loading..." message
+property pNetRequest    -- the object which will retrieve the text from the server
+property pTextScroller  -- the object that scrolls the credits text
+property pTextCreditsDefaultMember -- the cast member containing the credits - if it doesn't exist or is set to "#none" then credits are loaded from the server
+
+
+on new me
+  return me
+end
+
+on init me
+  pCreditsMember = member("CreditsFull", "gfx")
+  pCreditsMember.text = ""
+  pCreditsText = #none
+  pCreditsURL = URLOfPage(gCreditsPage)
+  pLoadingMember = member("CreditsLoading", "gfx")
+  pLoadingTransBlend = #none
+  pNetRequest = #none
+  pTextScroller = #none
+  pTextCreditsDefaultMember = member("txt_credits", "gfx")
+end
+
+on finish me
+  me.cancelLoadingTransBlend()
+  
+  if ilk(pNetRequest) <> #void and pNetRequest <> #none then
+    pNetRequest.finish()
+    pNetRequest = #none
+  end if
+  
+  if ilk(pTextScroller) <> #void and pTextScroller <> #none then
+    pTextScroller.cancel()
+    pTextScroller = #none
+  end if
+  
+  if ilk(pCreditsMember) <> #void then
+    pCreditsMember.text = ""
+  end if
+end
+
+on cancelLoadingTransBlend me
+  if ilk(pLoadingTransBlend) <> #void and pLoadingTransBlend <> #none then
+    pLoadingTransBlend.cancel()
+    pLoadingTransBlend = #none
+  end if
+end
+
+on displayCreditsText me
+  -- display text in member
+  pCreditsMember.text = pCreditsText
+  
+  -- reset scrollTop so that text is offscreen
+  pCreditsMember.scrollTop = 0
+  
+  pTextScroller = g.objectMaster.requestObject(#objTransTextScroll)
+  params = pTextScroller.getParams(#init)
+  params.callingPrg = me
+  params.speed = 1
+  params.spr = g.spriteMaster.getSpriteWithMember(pCreditsMember)
+  params.targetValue = pCreditsMember.height
+  pTextScroller.init(params)
+  pTextScroller.calcStart()
+end
+
+on fadeLoadingText me, targetValue
+  me.cancelLoadingTransBlend()
+  
+  loadingSprite = g.spriteMaster.getSpriteWithMember(pLoadingMember)
+  
+  pLoadingTransBlend = g.objectMaster.requestObject(#objTransBlend)
+  params = pLoadingTransBlend.getParams(#init)
+  params.callingPrg = me
+  params.spr = loadingSprite
+  params.targetValue = targetValue
+  pLoadingTransBlend.init(params)
+  pLoadingTransBlend.calcStart()
+end
+
+on fadeDownLoadingText me
+  me.fadeLoadingText(1)
+end
+
+on fadeUpLoadingText me
+  me.fadeLoadingText(100)
+end
+
+on netRequestFinished me, theObj, theText
+  if theObj = pNetRequest then
+    pCreditsText = theText
+    
+    me.displayCreditsText()
+    me.fadeDownLoadingText()
+  end if
+end
+
+on requestCreditsText me
+  -- check if pTextCreditsDefaultMember exists
+  -- if not load from file on the server
+  
+  if pTextCreditsDefaultMember <> member(-1, 1)  and pTextCreditsDefaultMember <> #none then
+    pCreditsText = pTextCreditsDefaultMember.text
+    me.displayCreditsText()
+    return
+  end if
+  
+  if pNetRequest = #none then
+    pNetRequest = g.objectMaster.requestObject(#objNetRequest)
+    params = pNetRequest.getParams(#init)
+    params.callingPrg = me
+    params.requestURL = pCreditsURL
+    pNetRequest.init(params)
+    
+    me.fadeUpLoadingText()
+  end if
+end
+
+on start me
+  if pCreditsText <> #none then
+    me.displayCreditsText()
+  else
+    me.requestCreditsText()
+  end if
+end
+
+on stop me
+  me.finish()
+end
+
+on transBlendFin me
+  pLoadingTransBlend = #none
+end
+
+on transTextScrollFin me
+  pTextScroller = #none
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

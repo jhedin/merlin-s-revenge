@@ -1,0 +1,105 @@
+[#name: "PointDirRectProportional (fromPoint, toRect)", #scriptType: #movie, #type: #script]
+on PointDirRectProportional (fromPoint, toRect)
+  dir = point(0,0)
+  
+  dir1 = PointDirPoint(fromPoint, point(toRect[1],toRect[2]))
+  dir2 = PointDirPoint(fromPoint, point(toRect[3],toRect[4]))
+  
+  dir = dir1 + dir2
+  dir[1] = VarKeepInRange(dir[1], -1, 1)
+  dir[2] = VarKeepInRange(dir[2], -1, 1)
+  
+  rectX = (toRect.left + toRect.right) /2
+  rectY = (toRect.top + toRect.bottom) /2
+  
+  distX = fromPoint.loch - rectX
+  distY = fromPoint.locv - rectY
+  
+  if distY = 0 then
+    ratio = 22 -- magic number don't know why
+  else
+    ratio = 1.000 * VarPositive(distX) / VarPositive(distY)
+  end if
+  
+  
+  total = ratio + 1.000
+  
+  dir[1] = dir[1] * (ratio / total)
+  dir[2] = dir[2] * (1 / total)
+  
+  
+  
+  -- ** alternative method ** 
+  -- ** more like the one used in MR2 (from what I can make out) **
+  --  totalDist = VarPositive(distX) + VarPositive(distY)
+  --  xPercent = VarPercent(VarPositive(distX), [0, totalDist])
+  --  yPercent = VarPercent(VarPositive(distY), [0, totalDist])
+  --  
+  --  dir[1] = dir[1] * xPercent /100
+  --  dir[2] = dir[2] * yPercent /100
+  
+  
+  return dir
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

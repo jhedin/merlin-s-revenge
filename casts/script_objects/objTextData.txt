@@ -1,0 +1,96 @@
+[#name: "objTextData", #scriptType: #parent, #type: #script]
+-- this object stores data derived from a field cast member in property list format
+global g
+
+property ancestor
+property pData
+property pTextData
+
+on new me
+  ancestor = new(script"objParams")
+  
+  i = me.modifyParams(#init)
+  
+  i[#member] = #none
+  
+  return me
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  pTextData = params.member.text
+  pTextData = StringEliminateChars(pTextData, return)
+  
+  pData = value(pTextData)
+end
+
+on getData me
+  return pData
+end
+
+on getTextData me
+  return pTextData
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

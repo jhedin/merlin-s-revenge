@@ -1,0 +1,174 @@
+[#name: "collisionMaster", #scriptType: #parent, #type: #script]
+-- collisionMaster prevents gameObjects moving onto solid tiles
+-- and notifies them when they leave the screen
+
+global g
+global gStageSize
+
+property pCollisionMap                -- collisionMap is provided by modCollisionDetection. No need to finish it here
+property pCollisionWithPlatform       -- this is used in me.checkCollisionsWithPlatforms() instead of a pointer
+property pPlayAreaRect                -- a rect describing where the playArea is on screen
+property pPlayAreaRectToFindLeaveDir  -- one pixel smaller than playArea to avoid slight bug in finding LeaveDir
+property pExitsOpen                   -- when the exits are open, collisionMaster will notify any objects that leave the screen
+
+
+on new me
+  return me
+end
+
+on init me
+  pCollisionMap = #none
+  pCollisionWithPlatform = false 
+  pExitsOpen = false             
+  
+  me.initPlayArea()
+end
+
+on initPlayArea me
+  -- init playArea from map if there is one, if not then from the stage
+  currentMap = g.gameMaster.getCurrentMap()
+  if currentMap = #none then
+    pPlayAreaRect = rect(0,0,gStageSize[1], 288)
+  else
+    pPlayAreaRect = currentMap.getSpriteRect()
+  end if
+  
+  pPlayAreaRectToFindLeaveDir = pPlayAreaRect.inflate(-1,-1)
+end
+
+on checkCollisions me, callingPrg, newLoc
+  
+  vect = callingPrg.getVect()
+  
+  dir = PointDirPoint(point(0,0), vect)
+  
+  --  r = 100
+  --  timeS = the milliseconds
+  --  repeat with rep = 1 to r
+  
+  newLoc = pCollisionMap.checkCollisions(callingPrg, newLoc, dir)  
+  
+  if pExitsOpen then
+    newLoc = me.checkLeaveScreen(callingPrg, newLoc)
+  end if
+  
+  --  end repeat
+  --  
+  --  timeTaken = the milliseconds - timeS
+  --  put "collision detection - " & timeTaken
+  
+  
+  return newLoc
+end
+
+on checkCollisionsNewObject me, theObj
+  collisionsOk = true
+  
+  if theObj.getCollisionDetection() = false then
+    return collisionsOk
+  end if
+  
+  objLoc = theObj.getLoc()
+  
+  -- only check if we are inside the play area
+  if objLoc.inside(pPlayAreaRect) then
+    -- make note of the object's original vect
+    objVect = theObj.getVect()
+    
+    -- send through fake vects to check collisions in all directions
+    --fakeVects = [point(1,1), point(-1,-1)]
+    --repeat with fakeVect in fakeVects
+    theObj.setVect(point(1,1))
+    newLoc = me.checkCollisions(theObj, objLoc.duplicate())
+    if newLoc <> objLoc then
+      collisionsOk = false
+      --exit repeat
+    end if
+    theObj.setVect(point(-1,-1))
+    newLoc = me.checkCollisions(theObj, objLoc.duplicate())
+    if newLoc <> objLoc then
+      collisionsOk = false
+      --exit repeat
+    end if
+    -- if the newLoc is different, it means the object is in collision
+    -- with some background
+    --if newLoc <> objLoc then
+    --  collisionsOk = false
+    --  exit repeat
+    --end if
+    
+    --end repeat  
+    
+    -- restore original vect
+    theObj.setVect(objVect)
+    end if
+  
+  return collisionsOk
+end
+
+on checkLeaveScreen me, callingPrg, newLoc
+  if inside(newLoc, pPlayAreaRect) then
+    nothing
+  else
+    newLoc = callingPrg.exitedPlayArea(newLoc)
+  end if
+  
+  return newLoc
+end
+
+on constrainToPlayArea me, theObj, newLoc
+  
+  collisionRect = theObj.calcCollisionRect(theObj.getLoc())
+  edgeOffset = collisionRect.edgeOffset  
+  
+  modifiedPlayArea = pPlayAreaRect.duplicate()
+  modifiedPlayArea.left = modifiedPlayArea.left - edgeOffset.left
+  modifiedPlayArea.top = modifiedPlayArea.top - edgeOffset.top
+  modifiedPlayArea.right = modifiedPlayArea.right - edgeOffset.right
+  modifiedPlayArea.bottom = modifiedPlayArea.bottom - edgeOffset.bottom
+  
+  return PointConstrainToRect(newLoc, modifiedPlayArea)
+end
+
+on constrainLocToPlayArea me, newLoc
+  return PointConstrainToRect(newLoc, pPlayAreaRect)
+end
+
+on getPlayArea me
+  return pPlayAreaRect.duplicate()
+end
+
+on notifyOfScreenExit me, callingPrg, newLoc
+  exitDir = PointDirRect(newLoc, pPlayAreaRectToFindLeaveDir)
+  exitDir = exitDir * -1
+  
+  callingPrg.outsidePlayArea(exitDir)
+end
+
+on setCollisionMap me, theMap
+  pCollisionMap = theMap
+end
+
+on setCollisionWithPlatform me, newVal
+  pCollisionWithPlatform = newVal
+end
+
+on setExitsOpen me, newVal
+  pExitsOpen = newVal
+end
+
+--on getTileLoc me, objLoc
+--  tileSize = pCollisionMap.pTileSize
+--  tileLoc = point((objLoc.loch - pPlayAreaRect.left)/tileSize + 1,(objLoc.locv - pPlayAreaRect.top)/tileSize + 1)
+--  tileLoc = PointConstrainToRect(tileLoc, Rect(1,1,pCollisionMap.pRoom.pMap.pRoomSize.loch, pCollisionMap.pRoom.pMap.pRoomSize.locv))
+--  return tileLoc
+--end
+
+on stop me
+end
+
+
+
+
+
+

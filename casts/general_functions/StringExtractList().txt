@@ -1,0 +1,87 @@
+[#name: "StringExtractList(theString, theDelimiter)", #scriptType: #movie, #type: #script]
+on StringExtractList(theString, theDelimiter)
+  theList = []
+  
+  firstChar = 1
+  
+  repeat with i = 1 to theString.chars.count
+    nChar = theString.char[i]
+    if nChar = theDelimiter or i = theString.chars.count then
+      lastChar = i -1
+      
+      -- don't record a data if the first char is delimiter
+      if lastChar < firstChar then
+        next repeat
+      else
+        nData = theString.char[firstChar .. lastChar]
+        theList.append(nData)
+        firstChar = i +1
+      end if
+      
+    end if
+  end repeat
+  
+  return theList
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,139 @@
+[#name: "modRoomGraves", #scriptType: #parent, #type: #script]
+-- draws dying objects graves in room
+-- records graves and redraws them when rooms is entered
+global g
+
+property ancestor
+property pGraves
+
+on new me
+  ancestor = new (script("modModule"))
+  return me
+end
+
+on addModParams me
+  i = me.modifyParams(#init)
+  
+  ancestor.addModParams()
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  pGraves = []
+end
+
+on addSaveData me, sd
+  sd[#pGraves] = pGraves.duplicate()
+  
+  ancestor.addSaveData(sd)
+end
+
+on drawAndRecordGrave me, theObj
+  graveMember = theObj.getGraveMember()
+  
+  graveImage = graveMember.image
+  graveRect = RectOfMemberDrawnAtLoc(graveMember, theObj.getLoc())
+  
+  me.drawGrave(graveImage, graveRect)
+  me.recordGrave(graveMember, graveRect, theObj)
+end
+
+on drawGrave me, theImage, theRect
+  roomImage = me.getMember().image
+  
+  roomLocOnScreen = me.ID.bigMe.getLoc()
+  
+  theRect = theRect - rect(roomLocOnScreen, roomLocOnScreen)
+  
+  drawParams = [#useFastQuads: true, #ink: 36]
+  
+  roomImage.copyPixels(theImage, theRect, theImage.rect, drawParams)
+end
+
+on recordGrave me, theMember, theRect, theObj
+  newGrave = g.structMaster.getStruct(#graveRecord)
+  
+  newGrave.actorType = theObj.getActorType()
+  newGrave.member = theMember
+  newGrave.rect = theRect
+  
+  pGraves.append(newGrave)
+end
+
+on reDrawGraves me
+  repeat with grave in pGraves
+    me.drawGrave(grave.member.image, grave.rect)
+  end repeat
+end
+
+on restoreFromSave me, sd
+  ancestor.restoreFromSave(sd)
+  
+  pGraves = sd.pGraves
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

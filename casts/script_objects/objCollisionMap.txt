@@ -1,0 +1,468 @@
+[#name: "objCollisionMap", #scriptType: #parent, #type: #script]
+-- a map used for detecting collisions between game objects and backgrounds
+
+global g
+global gFrameNum
+
+property ancestor
+
+-- the thickness of the solid border around each room. 
+-- first border will be replaced by edges of surrounding screens
+-- making second border neccessary
+property pBorderThickness   
+
+property pBorderOffset        -- pBorderThickness stored as point fo rquicker access
+property pCollisionTiles      -- a list of the collisionTiles for easy iteration
+property pMagicRect           -- adjustment rect for the collision area. I don't fully understand how it works, but it has a relationship with the roomLoc
+property pObjTileMap          -- the tileMap from which the collisionMap is made
+property pTileSize            -- the size of the tiles (buffered for speed)
+property pTileLocs            -- recording of tileLocs to help with debugging
+property pRoom                -- the room which spawned this collisionMap
+property pRoomLocation        -- the location of the room on the screen
+
+on new me
+  ancestor = new(script "objDataMap")
+  
+  i = me.modifyParams(#init)
+  
+  i[#borderThickness] = 2
+  i[#objTileMap] = #none
+  i[#room] = #none
+  
+  i.blankEntry = #solid
+  
+  return me
+end
+
+on init me, params
+  
+  pBorderThickness = params.borderThickness
+  pCollisionTiles = []
+  pObjTileMap = params.objTileMap
+  pRoom = params.room
+  pRoomLocation = pRoom.getLocation()
+  pTileSize = pRoom.getTileSize() --* 1.000
+  
+  params.mapSize = pObjTileMap.getSize() + (pBorderThickness *2)
+  params.errorLocOutsideMapSymbol = #none
+  
+  ancestor.init(params)
+  
+  me.initTileSize()  
+  me.initMap()
+  me.initMagicRect()
+end
+
+on initMap me
+  
+  keyMap = pObjTileMap.convertToKey()
+  
+  
+  startLoc = point(pBorderThickness, pBorderThickness) +1
+  me.pokeMap(startLoc, keyMap)
+  
+  
+  me.initTiles()
+  
+  
+  me.activateTiles()
+  
+  --  me.displayEdges()
+  
+end
+
+on initTileSize me
+  if pTileSize[1] = pTileSize[2] then
+    pTileSize = pTileSize[1]
+  else
+    -- if tile width and height are not equal then the calculation
+    -- that changes screen loc into tile loc will need changing.
+    -- dividing a list of points by a point doesn't give intended result
+    nothing
+  end if
+end
+
+on initMagicRect me
+  magicPoint = pTileSize - pRoomLocation 
+  pMagicRect = rect(magicPoint[1], magicPoint[2], magicPoint[1], magicPoint[2])
+  --pMagicRect = rect(0,0,0,0)
+end
+
+on initTiles me
+  pCollisionTiles = []
+  
+  mapCount = me.getCount()
+  
+  tileLoc = point(0,0)
+  
+  repeat with t = 1 to mapCount
+    
+    nTileType = me.peekEntryNo(t, tileLoc)
+    
+    objCollisionTile = g.objectMaster.requestObject(#objCollisionTile)
+    
+    params = objCollisionTile.getParams(#init)
+    params.collisionMap = me
+    params.locInMap = tileLoc.duplicate()
+    params.tileType = nTileType
+    
+    objCollisionTile.init(params)
+    
+    me.poke(tileLoc, objCollisionTile)
+    
+    pCollisionTiles.append(objCollisionTile)
+    
+  end repeat
+end
+
+on finish me
+  me.finishCollisionTiles()
+  ancestor.finish()
+end
+
+on finishCollisionTiles me
+  if pCollisionTiles = [] then
+    return 
+  end if
+  
+  numTiles = me.getCount()
+  
+  -- save spawning loads of points
+  pokePoint = point(0,0)
+  
+  repeat with t = 1 to numTiles
+    nTile = me.peekEntryNo(t)
+    nTile.finish()
+    me.pokeEntryNo(t, #none, pokePoint)
+  end repeat
+  
+  pCollisionTiles = []
+end
+
+on activateTiles me
+  me.setTilesNeighbours()
+  me.mergeTilesEdges()
+  me.identifyCornerTiles()
+end
+
+on calcExitTileEdgeAxis me, theEdge
+  case theEdge of
+    #left, #right:
+      return 2
+      
+    #top, #bottom:
+      return 1
+      
+  end case
+end
+
+on calcExitTileEdgeStartLoc me, theEdge
+  borderAdj = pBorderThickness -1
+  
+  case theEdge of
+    #left, #top:
+      return point(1+borderAdj, 1+borderAdj)
+      
+    #right:
+      return point(me.getSize()[1] - borderAdj, 1+borderAdj)
+      
+    #bottom:
+      return point(1+borderAdj, me.getSize()[2] - borderAdj)
+      
+  end case
+end
+
+on checkCollisions me, callingPrg, newLoc, dir
+  
+  
+  -- don't detect for non-moving objects
+  if dir = point(0,0) then
+    return newLoc
+  end if
+  
+  
+  
+  collisionRect = callingPrg.calcCollisionRect(newLoc)
+  
+  tiles = me.selectTilesFromCollisionRect(collisionRect, dir)
+  
+  --  printOverlap = false
+  --  if  callingPrg.hasFlag(#objEnemyCharacter) then
+  --    put "collisionMap.checkCollisions() frame " & gFrameNum
+  --    put "collisionRect: " & collisionRect
+  --    put "tileLocs: "
+  --    ListPrint(pTileLocs)
+  --    printOverlap = true
+  --  end if
+  
+  --  call(#undisplay, pCollisionTiles)
+  
+  collisionPlatform = false
+  
+  repeat with tile in tiles
+    --    tile.display()
+    
+    -- may happen on rapunzel's death
+    if tile = #none then
+      next repeat
+    end if
+    
+    nType = tile.getTileType()
+    
+    --    if VarInRange(gFrameNum, 85, 88) and callingPrg.hasFlag(#objPlayerCharacter) then
+    --          put "nType " & nType
+    --    end if
+    
+    if nType = #none then
+      next repeat
+      --    else if nType = #platform then  --I don't think that this engine is still being used for rapunzel's escape.
+      --      overlap = tile.calcOverlapPlatform(collisionRect.rect, dir, callingPrg)
+    else
+      overlap = tile.calcOverlap(collisionRect.rect, dir)
+    end if
+    
+    
+    
+    if overlap[1] <> #none or overlap[2]<> #none then
+      
+      
+      --      if callingPrg.hasFlag(#objEnemyCharacter) then
+      --        put "overlap: " & overlap
+      --      end if
+      
+      
+      -- decide which axis to change
+      if overlap[3] = true then
+        axisToChange = #both
+      else
+        
+        if overlap[1] = #none then
+          axisToChange = 2
+        else if overlap[2] = #none then
+          axisToChange = 1
+        else
+          
+          overlapPositive = PointPositive(overlap.duplicate())
+          
+          axisToChange = 1
+          if overlapPositive[1] > overlapPositive[2] then
+            axisToChange = 2
+          end if
+          
+        end if
+      end if
+      
+      if axisToChange = #both then
+        newLoc[1] = newLoc[1] + (overlap[1] *-1)
+        newLoc[2] = newLoc[2] + (overlap[2] *-1)
+      else
+        newLoc[axisToChange] = newLoc[axisToChange] + (overlap[axisToChange] * -1)
+      end if
+      
+      -- recalculate collisionRect
+      collisionRect = callingPrg.calcCollisionRect(newLoc)
+      
+      -- send event to callingPrg
+      if axisToChange = 2 then
+        if overlap[2] < 0 then
+          callingPrg.collisionCeiling() -- up
+        else
+          if dir[2] = 1 then
+            callingPrg.collisionPlatform() -- down
+            collisionPlatform = true
+          end if
+        end if
+        
+      else
+        if overlap[1] < 0 then
+          callingPrg.collisionWallLeft() -- left
+        else
+          if dir[1] = 1 then
+            callingPrg.collisionWallRight() --right
+          end if
+        end if
+        
+        
+      end if
+      
+    end if
+    
+  end repeat
+  
+  if dir[2] = 1 and collisionPlatform = false then
+    callingPrg.collisionNoPlatform()
+  end if
+  
+  return newLoc
+end
+
+on clearDisplayEdges me
+  call(#clearDisplayCollisionEdges, pCollisionTiles)
+end
+
+on closeExits me
+  me.initMap()
+end
+
+on displayEdges me
+  me.clearDisplayEdges()
+  
+  call(#displayCollisionEdges, pCollisionTiles)
+end
+
+on getBorderThickness me
+  return pBorderThickness
+end
+
+on getFirstTileLoc me
+  spriteOffset = me.getLocation()
+  tileSize = me.getTileSize()
+  firstTile = spriteOffset - (tileSize * me.getBorderThickness())
+  
+  return firstTile
+end
+
+on getLocation me
+  return pRoom.getLocation()
+end
+
+on getTileSize me
+  return pRoom.getTileSize()
+end
+
+on identifyCornerTiles me
+  call(#identifyAsCornerTile, pCollisionTiles)
+end
+
+on insertExitTiles me, exitTiles
+  repeat with i = 1 to exitTiles.count
+    nEdge = exitTiles.getPropAt(i)
+    
+    me.insertExitTileEdge(nEdge, exitTiles[i])
+  end repeat
+  
+  --me.displayEdges()
+end
+
+on insertExitTileEdge me, edge, tileTypes
+  startLoc = me.calcExitTileEdgeStartLoc(edge)
+  axis = me.calcExitTileEdgeAxis(edge)
+  
+  basePoint = point(0,0)
+  peekPoint = point(0,0)
+  repeat with i = 1 to tileTypes.count
+    nType = tileTypes[i]
+    
+    basePoint[axis] = i
+    peekPoint = startLoc + basePoint
+    
+    nTile = me.peek(peekPoint)
+    
+    nTile.setTileType(nType)
+    
+  end repeat
+  
+  
+end
+
+on mergeTilesEdges me
+  call(#mergeEdges, pCollisionTiles)
+end
+
+on reInitTilesEdges me
+  call(#initCollisionEdges, pCollisionTiles)
+end
+
+on setTilesNeighbours me
+  numTiles = me.getCount()
+  
+  -- save spawning loads of points
+  peekPoint = point(0,0)
+  
+  bottomDir = point(0,1)
+  rightDir = point(1,0)
+  
+  repeat with t = 1 to numTiles
+    nTile = me.peekEntryNo(t, peekPoint)
+    
+    bottomTile = me.peek(peekPoint + bottomDir)
+    rightTile = me.peek(peekPoint + rightDir)
+    
+    nTile.setTile(#bottom, bottomTile)
+    nTile.setTile(#right, rightTile)
+    
+    if bottomTile <> #none then
+      bottomTile.setTile(#top, nTile)
+    end if
+    
+    if rightTile <> #none then
+      rightTile.setTile(#left, nTile)
+    end if
+    
+  end repeat
+end
+
+on selectTilesFromCollisionRect me, collisionRect, dir
+  -- selecting only the tiles in the right direction is *slower* than just selecting all four tiles
+  
+  tiles = []
+  
+  tileScreenRect = collisionRect.rect + pMagicRect -- magic rect! I don't get why this is required
+  
+  tileRect = tileScreenRect / pTileSize
+  
+  --  tileRect = RectFloor(tileRect)
+  
+  tileRect = tileRect + pBorderThickness
+  
+  tileLocs = []
+  
+  
+  point1 = point(tileRect.left, tileRect.top)
+  tileLocs.append(point1)
+  point2 = point(tileRect.right, tileRect.top)
+  if point1 <> point2 then
+    tileLocs.append(point2)
+  end if
+  point1 = point(tileRect.right, tileRect.bottom)
+  if tileLocs.getPos(point1) = 0 then
+    tileLocs.append(point1)
+  end if
+  point1 = point(tileRect.left, tileRect.bottom)
+  if tileLocs.getPos(point1) = 0 then
+    tileLocs.append(point1)
+  end if
+  
+  --    if VarInRange(nLoc[1], [4, 16]) = false then
+  --      nothing
+  --    end if
+  --    
+  --    if VarInRange(nLoc[2], [4, 10]) = false then
+  --      nothing
+  --    end if
+  
+  --if tileLocs.getPos(nLoc) = 0 then
+  --  tileLocs.append(nLoc)
+  --end if
+  
+  
+  
+  pTileLocs = tileLocs -- for debugging
+  
+  repeat with tLoc in tileLocs
+    nTile = me.peek(tLoc)
+    tiles.append(nTile)
+  end repeat
+  
+  return tiles
+  
+end
+
+on undisplayTilesEdges me
+  call(#undisplayCollisionEdges, pCollisionTiles)
+end
+
+
+
+
+

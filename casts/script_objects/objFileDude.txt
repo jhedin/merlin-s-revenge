@@ -1,0 +1,127 @@
+[#name: "objFileDude", #scriptType: #parent, #type: #script]
+on new me
+  me.ancestor = new(script"objBasic")
+  Return me
+end new
+
+global g
+
+property ancestor
+property pFX
+property pDialogFilter
+property pLoadDialogTitle
+property pSaveDialogTitle
+property pSaveFolder
+property pSaveOverwritePrompt
+property pSaveType
+
+
+on init me
+  pFX = new(xtra"fileXtra3")
+  pDialogFilter = "Text Files/*.txt"
+  pLoadDialogTitle = "Load a recipe"
+  pSaveDialogTitle = "Save your recipe"
+  pSaveFolder = "recipes\"
+  pSaveOverwritePrompt = true
+  pSaveType = ".txt"
+end init
+
+on finish me
+  pFObj = 0
+  me.ancestor.finish()
+end finish
+
+on folderConfirm me, thePath
+  if not pFX.fx_folderExists(thePath) then
+    pFX.fx_folderCreate(thePath)
+  end if
+end folderConfirm
+
+on saveFile me, content, fileNam
+  folderPath = the moviePath & pSaveFolder
+  
+  me.folderConfirm(folderPath)
+  
+  saveName = fileNam & pSaveType
+  
+  savePath = pFX.fx_FileSaveAsDialog(folderPath, saveName, pSaveDialogTitle, pSaveOverwritePrompt)
+  
+  FileSave(savePath, content)
+end saveFile
+
+
+on loadFil me
+  folderPath = the moviePath & pSaveFolder
+  
+  me.folderConfirm(folderPath)
+  
+  loadPath = pFX.fx_fileOpenDialog(folderPath, pDialogFilter, pLoadDialogTitle, false, true)
+  
+  content = FileLoad(loadPath)
+  
+  Return content
+end loadFil
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

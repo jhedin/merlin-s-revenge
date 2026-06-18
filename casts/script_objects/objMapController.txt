@@ -1,0 +1,118 @@
+[#name: "objMapController", #scriptType: #parent, #type: #script]
+global g, gMapLayer
+
+property ancestor
+property pTileSets
+
+on new me
+  ancestor = new(script "objController")
+  
+  return me
+end
+
+on init me, params
+  ancestor.init(params)
+end
+
+on deactivateObjects me
+  -- there should only be one map running at a time
+  -- other maps should be ended not simply "paused"
+  me.finishObjects()
+end
+
+on newObject me, defMember, location
+  
+  theName = defMember.name
+  
+  newMap = me.makeNewObject(defMember, location, theName)
+  
+  newMap.goActivateMode()
+  newMap.onScreen()
+  
+  return newMap
+end
+
+on makeNewObject me, defMember, location, theName
+  
+  numMaps = me.pObjects.count
+  
+  nMap = g.objectMaster.requestObject(#objMap)
+  params = nMap.getParams(#init)
+  params.name = theName
+  params.definitionTxt = defMember.text
+  params.layer = me.pObjects.count + gMapLayer
+  params.location = location
+  
+  params = ancestor.newObject(params)
+  
+  nMap.init(params)
+  
+  me.pObjects.append(nMap)
+  
+  return nMap
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

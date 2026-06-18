@@ -1,0 +1,96 @@
+[#name: "objParams", #scriptType: #parent, #type: #script]
+property ancestor
+property pParams
+
+on new me
+  ancestor = new(script("objEventNotify"))
+  pParams = [:]
+  pParams[#init] = [:]
+  
+  i = pParams.init
+  
+  i[#flags] = []
+  
+  return me
+end
+
+on init me, params
+  ancestor.init()
+  me.pFlags = params.flags
+end
+
+on getParams me, function
+  if function = void then function = #init
+  return pParams[function].duplicate()
+end
+
+on modifyParams me, function
+  if pParams[function] = void then
+    pParams[function] = [:]
+  end if
+  
+  return pParams[function]
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

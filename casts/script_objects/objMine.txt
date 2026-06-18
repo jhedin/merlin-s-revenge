@@ -1,0 +1,148 @@
+[#name: "objMine", #scriptType: #parent, #type: #script]
+global g, gMineLayer
+
+property ancestor
+property pDieOnExplode       -- whether the mine dies when it explodes (energy mine), or simply re-primes itself (pit monster)
+property pPrimeCounter       -- the amount of time (frames) it takes for the mine to prime itself
+property pTriggerRadius      -- the max distance away that an enemy can be to trigger the mine
+property pDieOnExplodeNumber -- number of times the mine can explode before it dies
+property pExplosions         -- counts the number of times that the mine has exploded
+property pCheckCounter       -- the amount of time(frames) between mine checks
+property pTriggerRadiusTile
+
+
+on new me
+  ancestor = new(script "objGameObject")
+  
+  i = me.modifyParams(#init)
+  i[#dieOnExplode] = true
+  i[#dieOnExplodeNumber] = 0
+  i[#timeToPrime] = 30
+  i[#triggerRadius] = 20
+  i[#timeToCheck] = 3
+  
+  me.addModule("modAnimSet")
+  me.addModule("modAttack")
+  me.addModule("modExploder")
+  
+  return me
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  pDieOnExplode = params.dieOnExplode
+  pPrimeCounter = CounterNew()
+  pPrimeCounter.tim[2] = params.timeToPrime
+  pTriggerRadius = params.triggerRadius
+  pDieOnExplodeNumber = params.dieOnExplodeNumber
+  pExplosions = 0
+  pCheckCounter = CounterNew()
+  pCheckCounter.tim[2] = params.timeToCheck
+  pTriggerRadiusTile = integer(pTriggerRadius/g.teamMaster.getTileSize())+1
+  me.setLocZ(gMineLayer)
+end
+
+on gainExperienceFromTransfer me, Xp
+  return 0
+end  
+on internalEvent me, theEvent
+  ancestor.internalEvent(theEvent)
+  
+  case theEvent of
+    #explodeFin:
+      if pDieOnExplode then
+        me.big.setDead(true)
+      else
+        me.resetMine()
+        pExplosions = pExplosions +1
+        if pDieOnExplodeNumber <= pExplosions and pDieOnExplodeNumber <> 0 then
+          me.big.setDead(true)
+        end if
+      end if
+  end case
+end
+
+on gainExperience me, theExperience
+  owner = me.getOwner()
+  if owner <> #none then
+    owner.gainExperience(theExperience)
+  end if
+end
+
+on recordKill me, theObj
+  owner = me.getOwner()
+  if owner <> #none then
+    owner.recordKill(theObj)
+  end if
+end
+
+on resetMine me
+  CounterReset(pPrimeCounter)
+  CounterReset(pCheckCounter)
+  me.goMode(#stand)
+end
+
+on start me
+  ancestor.start()
+  
+  me.resetMine()
+  --me.setOwner(g.actorMaster.getPlayer())
+end
+
+on update me
+  ancestor.update()
+  
+  case me.getMode() of
+    #stand:
+      fin = me.updatePrime()
+      if fin then me.goMode(#primed)
+      
+    #primed:
+      fin = me.updateCheck()
+      if fin then       
+        fin = me.updateCheckCollisions()
+        if fin then
+          me.big.internalEvent(#mineTriggered)
+        end if
+      end if
+  end case
+end
+
+on updateCheckCollisions me
+  fin = false
+  dist = g.teamMaster.findTargetWithin(me.big,pTriggerRadiusTile).dist
+  --if targetToCheck <> #none then
+  --dist = GeomDistSqr(me.getLoc(), targetToCheck.getLoc())
+  if dist < pTriggerRadius*pTriggerRadius then
+    fin = true
+  end if
+  --end if
+  return fin
+end
+
+on updateCheck me
+  fin = pCheckCounter.fin
+  
+  if fin = false then
+    Counter(pCheckCounter)
+  end if
+  if fin then
+    CounterReset(pCheckCounter)
+  end if
+  return fin
+end
+
+on updatePrime me
+  fin = pPrimeCounter.fin
+  
+  if fin = false then
+    Counter(pPrimeCounter)
+  end if
+  
+  return fin
+end
+
+
+
+

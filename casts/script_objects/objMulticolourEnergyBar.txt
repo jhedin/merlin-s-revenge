@@ -1,0 +1,111 @@
+[#name: "objMulticolourEnergyBar", #scriptType: #parent, #type: #script]
+-- energy bar that changes colour according to how much energy there is
+
+property ancestor
+property pColourRange
+property pNumRanges
+property pRangePercent
+
+on new me
+  ancestor = new (script "objEnergyBar")
+  
+  i = me.modifyParams(#init)
+  
+  i[#colourRange] = [rgb(255,0,0), rgb(255,255,0), rgb(0,200,0)] -- 0% - 100%
+  
+  return me
+end
+
+on init me, params
+  me.setColourRange(params.colourRange)
+  
+  ancestor.init(params)
+end
+
+on setColourRange me, colourRange
+  pColourRange = colourRange
+  pNumRanges = pColourRange.count - 1
+  pRangePercent = 100 / pNumRanges
+end
+
+on updateEnergy me, newEnergy
+  ancestor.updateEnergy(newEnergy)
+  
+  energyPercent = me.getCurrentEnergyPercent() * 1.000
+  
+  colRange = VarFloor(energyPercent / pRangePercent) + 1
+  
+  colPercent = (VarFloor(energyPercent) mod pRangePercent) * pNumRanges
+  
+  if colRange = 3 then
+    newColour = pColourRange[colRange]
+  else
+    newColour = VarColRange(colPercent, pColourRange[colRange], pColourRange[colRange+1])
+  end if
+  
+  me.setColour(newColour)
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

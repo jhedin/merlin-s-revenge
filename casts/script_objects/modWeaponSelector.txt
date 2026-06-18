@@ -1,0 +1,298 @@
+[#name: "modWeaponSelector", #scriptType: #parent, #type: #script]
+-- displays a selector for the player to select a weapon from
+-- requires modWeaponManager
+
+global g
+
+property ancestor
+property pDisplaying               -- boolean - whether or not the weapon selector is currently displaying
+property pGreenBoxMember           -- the member for the green box
+property pPaletteDefinitionMembers -- property list of members holding the definitions of the palettes
+property pPaletteDefinitionStart   -- the start of the palette definition
+property pPaletteImageMembers      -- property list of members holding the images of the palettes
+property pPaletteObjects           -- property list of palette objects
+property pPaletteOffsets           -- property list of palette offsets relative to the player
+property pPaletteTypes             -- the types of weapons in each palette
+property pTimer                    -- the amount of time the selector has been idle
+property pWeapons                  -- cache of the weapons displayed
+property pYellowBoxMember          -- the member for the yellow box
+
+
+on new me
+  ancestor = new (script("modModule"))
+  return me
+end
+
+on init me, params
+  pDisplaying = false
+  pGreenBoxMember = member("greenBox_ws", "gfx")
+  pPaletteDefinitionMembers = [:]
+  pPaletteDefinitionStart = "tileSize | point(18,16)" & return
+  pPaletteImageMembers = [:]
+  pPaletteObjects = [:]
+  pPaletteOffsets = g.structMaster.getStruct(#weaponSelectorPaletteOffsets)
+  pPaletteTypes = g.structMaster.getStruct(#weaponSelectorPaletteTypes)
+  pTimer = CounterNew()
+  pTimer.tim[2] = 60                                -- selector will display for 2 secs
+  pYellowBoxMember = member("yellowBox_ws", "gfx")
+  pWeapons = [:]
+  
+  ancestor.init(params)
+end
+
+on addModParams me
+  i = me.modifyParams(#init)
+  
+  ancestor.addModParams()
+end
+
+on finish me
+  me.finishMembers()
+  
+  ancestor.finish()
+end
+
+on finishMembers me
+  if pPaletteDefinitionMembers <> [:] then
+    repeat with nMember in pPaletteDefinitionMembers
+      g.memberMaster.freeMember(nMember)
+    end repeat
+    pPaletteDefinitionMembers = [:]
+  end if
+  
+  if pPaletteImageMembers <> [:] then
+    repeat with nMember in pPaletteImageMembers
+      g.memberMaster.freeMember(nMember)
+    end repeat
+    pPaletteImageMembers = [:]
+  end if
+  
+  if pPaletteObjects <> [:] then
+    call(#finish, pPaletteObjects)
+    pPaletteObjects = [:]
+  end if
+end
+
+on commandIssued me, theWeapon
+  -- comes from a weapon being selected
+  
+  me.ID.bigMe.setCurrentWeapon(theWeapon)
+  me.offScreen()
+end
+
+on constructImage me, weapons
+  -- weapon icons are assumed to be the same size
+  if weapons.count = 0 then
+    return #none
+  end if
+  
+  firstIcon = me.getWeaponIcon(weapons[1])
+  iconHeight = firstIcon.height
+  iconWidth = firstIcon.width
+  
+  imageHeight = iconHeight
+  imageWidth = iconWidth * weapons.count
+  
+  -- make a new image
+  newImage = image(imageWidth, imageHeight, 32)
+  
+  -- loop through weapons drawing their icons onto image
+  repeat with i = 1 to weapons.count
+    nWeapon = weapons[i]
+    nIcon = me.getWeaponIcon(nWeapon)
+    srcRect = nIcon.rect
+    
+    x1 = (i-1) * iconWidth
+    x2 = i * iconWidth
+    destRect = rect(x1, 0, x2, imageHeight)
+    
+    newImage.copyPixels(nIcon, destRect, srcRect, [#useFastQuads:true])
+    
+  end repeat
+  
+  return newImage
+end
+
+on displayWeaponSelector me
+  if pDisplaying = true then
+    return
+  end if
+  
+  repeat with nType in pPaletteTypes
+    -- discover what weapons the player has
+    weapons = me.ID.bigMe.getWeapons(nType)
+    
+    -- cache the weapons displayed
+    pWeapons[nType] = weapons.duplicate()
+    
+    -- write the palette definition
+    paletteDefinition = me.writePaletteDefinition(weapons)
+    
+    -- construct the palette images
+    paletteImage = me.constructImage(weapons)
+    
+    if paletteImage <> #none then
+      -- output descriptions and images to members
+      memberName = string(nType) & "Palette_key"
+      pPaletteDefinitionMembers[nType] = g.memberMaster.requestMember(#field, memberName)
+      pPaletteDefinitionMembers[nType].text = paletteDefinition
+      
+      memberName = string(nType) & "Palette"
+      pPaletteImageMembers[nType] = g.memberMaster.requestMember(#bitmap, memberName)
+      pPaletteImageMembers[nType].image = paletteImage
+      
+      -- start the palette objects
+      nObject = g.objectMaster.requestObject(#objPalette)
+      params = nObject.getParams(#init)
+      params.allTilesImage = paletteImage
+      params.displayScale = 1
+      params.greenBoxMember = pGreenBoxMember
+      params.member = pPaletteImageMembers[nType]
+      params.sym = nType
+      params.location = g.mouseMaster.getMouseLoc() + me.getPaletteOffset(nType)
+      params.targetObject = me.ID.bigMe
+      params.yellowBoxMember = pYellowBoxMember
+      nObject.init(params)
+      nObject.display()
+      pPaletteObjects[nType] = nObject
+    end if
+    
+    
+  end repeat
+  
+  CounterReset(pTimer)
+  pDisplaying = true
+end
+
+on getInitialGridSelection me, paletteType
+  currentWeapon = me.ID.bigMe.getCurrentWeapon()
+  weaponPos = pWeapons[paletteType].getPos(currentWeapon)
+  if weaponPos = 0 then
+    return #none
+  else
+    gridLoc = point(weaponPos, 1)
+    return gridLoc
+  end if
+end
+
+on getPaletteOffset me, theType
+  imageWidth = pPaletteImageMembers[theType].width
+  
+  yOffset = pPaletteOffsets[theType]
+  xOffset = (imageWidth / 2) * -1
+  
+  return point(xOffset, yOffset)
+end
+
+on getWeaponIcon me, weaponSym
+  memName = string(weaponSym) & "_ws"
+  return member(memName, "gfx").image
+end
+
+on offScreen me
+  me.finishMembers()
+  pDisplaying = false
+end
+
+on update me
+  ancestor.update()
+  
+  if pDisplaying then
+    me.updateTimer()
+  end if
+end
+
+on updateLocation me
+  -- cycles through pPaletteImageMembers rather than pPaletteTypes
+  -- so that we only get types which are being displayed
+  repeat with i = 1 to pPaletteImageMembers.count
+    nType = pPaletteImageMembers.getPropAt(i)
+    nObject = pPaletteObjects[nType]
+    nObject.updateLocation(me.ID.bigMe.getLoc() + me.getPaletteOffset(nType))
+  end repeat
+end
+
+on updateTimer me
+  Counter(pTimer)
+  
+  if pTimer.fin then
+    me.offscreen()
+  end if
+end
+
+on writePaletteDefinition me, weaponsList
+  if weaponsList.count = 0 then
+    return #none
+  end if
+  
+  newDefinition = pPaletteDefinitionStart
+  repeat with nWeapon in weaponsList
+    newDefinition = newDefinition & "#"& nWeapon & return
+  end repeat
+  
+  return newDefinition
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

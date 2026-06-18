@@ -1,0 +1,115 @@
+[#name: "UtilTestFloor()", #scriptType: #movie, #type: #script]
+-- test the speed of the three VarFloor functions
+
+-- #VarFloor ":  173"
+-- #VarFloorStr ":  251"
+-- #VarFloorMod ":  23"
+
+-- VarFloorMod renamed to VarFloor
+-- VarFloor renamed to VarFloorFlash
+
+on UtilTestFloor 
+  reps = 10000
+  times = [:]
+  
+  --first
+  stTime = the milliseconds
+  
+  repeat with i = 1 to reps
+    var = VarFloor(3.5)
+  end repeat
+  
+  fiTime = the milliseconds
+  
+  times[#varFloor] = fiTime - stTime
+  
+  --second
+  stTime = the milliseconds
+  
+  repeat with i = 1 to reps
+    var = VarFloorStr(3.5)
+  end repeat
+  
+  fiTime = the milliseconds
+  
+  times[#varFloorStr] = fiTime - stTime
+  
+  --third
+  stTime = the milliseconds
+  
+  repeat with i = 1 to reps
+    var = VarFloorMod(3.5)
+  end repeat
+  
+  fiTime = the milliseconds
+  
+  times[#varFloorMod] = fiTime - stTime
+  
+  
+  repeat with i = 1 to times.count
+    put times.getPropAt(i) ": " && times[i]
+  end repeat
+  
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

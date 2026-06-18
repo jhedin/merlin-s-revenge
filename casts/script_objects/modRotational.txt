@@ -1,0 +1,124 @@
+[#name: "modRotational", #scriptType: #parent, #type: #script]
+-- allows an object to face the way it's travelling
+
+property ancestor
+property pRotational -- can be false, true or #once. #once means the rotation is set from the intial vector, and not updated again.
+
+on new me
+  ancestor = new (script("modModule"))
+  return me
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  pRotational = params.rotational
+  
+  me.initRotational()
+end
+
+on initRotational me
+  if pRotational <> false then
+    me.updateRotational()
+  end if
+end
+
+on addModParams me
+  i = me.modifyParams(#init)
+  
+  i[#rotational] = true
+  
+  ancestor.addModParams()
+end
+
+on addSaveData me, sd
+  sd[#pRotational] = pRotational
+  
+  ancestor.addSaveData(sd)
+end
+
+on restoreFromSave me, sd
+  pRotational = sd.pRotational
+  
+  me.initRotational()
+  
+  ancestor.restoreFromSave(sd)
+end
+
+on update me
+  if pRotational = true then
+    me.updateRotational()
+  end if
+  
+  ancestor.update()
+end
+
+on updateRotational me
+  vect = me.ID.bigMe.getVect()
+  rot = GeomAngle(vect)
+  me.ID.bigMe.setSpriteRotation(rot)
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

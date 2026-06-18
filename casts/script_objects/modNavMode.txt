@@ -1,0 +1,105 @@
+[#name: "modNavMode", #scriptType: #parent, #type: #script]
+-- responsible for looking after the walk speed of objects which have Nav Mode
+-- at time of writing this is only Merlin.
+
+property ancestor
+property pNavModeAcceleration
+property pNavModeActive            -- records whether navMode is currently switched on
+property pNavModeNormalAcceleration
+property pPotionAccelerationInc    -- amount to increase normalMode walk acceleration by when a potion is collected
+property pWalkAccelerationInc      --on leveled
+
+on new me
+  ancestor = new (script("modModule"))
+  return me
+end
+
+on init me, params
+  pNavModeAcceleration = params.navModeAcceleration
+  pNavModeNormalAcceleration = params.walkAcceleration
+  pWalkAccelerationInc = 0.05
+  pPotionAccelerationInc = 0.3
+  
+  ancestor.init(params)
+end
+
+on addModParams me
+  i = me.modifyParams(#init)
+  
+  i[#navModeAcceleration] = 6
+  
+  ancestor.addModParams()
+end
+
+on addSaveData me, sd
+  ancestor.addSaveData(sd)
+  
+  sd[#pNavModeNormalAcceleration] = pNavModeNormalAcceleration
+end
+
+on getNavModeActive me
+  return pNavModeActive
+end
+
+on getAcceleration me
+  return pNavModeNormalAcceleration
+end
+
+on goNavMode me
+  me.ID.bigMe.setWalkAcceleration(pNavModeAcceleration)
+  pNavModeActive = true
+end
+
+on leaveNavMode me
+  me.ID.bigMe.setWalkAcceleration(pNavModeNormalAcceleration)
+  pNavModeActive = false
+end
+
+on incWalkAcceleration me, theType
+  case theType of
+    #potion:
+      pNavModeNormalAcceleration = pNavModeNormalAcceleration + pPotionAccelerationInc
+    #levelUp:
+      pNavModeNormalAcceleration = pNavModeNormalAcceleration + pWalkAccelerationInc
+    otherwise:
+      pNavModeNormalAcceleration = pNavModeNormalAcceleration + pWalkAccelerationInc
+  end case
+  
+  me.implementChanges()
+end
+
+
+on implementChanges me
+  -- if navMode is not active, implement changes imeadiately
+  if pNavModeActive = false then
+    me.leaveNavMode()
+  end if
+end
+
+on restoreFromSave me, sd
+  ancestor.restoreFromSave(sd)
+  
+  pNavModeNormalAcceleration = sd.pNavModeNormalAcceleration
+end
+
+on setAcceleration me, newVal
+  pNavModeNormalAcceleration = newVal
+  me.implementChanges()
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

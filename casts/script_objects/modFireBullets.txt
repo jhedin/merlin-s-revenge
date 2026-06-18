@@ -1,0 +1,123 @@
+[#name: "modFireBullets", #scriptType: #parent, #type: #script]
+-- used by spell eg. Energy Pulse to fire bullets according to charge.
+
+global g
+
+property ancestor
+property pFireDelayCounter  -- the time between firing bullets
+
+on new me
+  ancestor = new (script("modModule"))
+  return me
+end
+
+on addModParams me
+  i = me.modifyParams(#init)
+  ancestor.addModParams()
+end
+
+on init me, params
+  ancestor.init(params)
+  pFireDelayCounter = CounterNew()
+end
+
+on addSaveData me, sd
+  ancestor.addSaveData(sd)
+  
+  sd[#pFireDelayCounter] = pFireDelayCounter
+end
+
+on fireBullet me
+  fin = false
+  
+  -- reduce charge
+  charge = me.big.getCharge()
+  chargePerUnit = me.big.getAttack().chargePerUnit
+  charge = charge - chargePerUnit
+  
+  -- check whether we have finished
+  if charge < 0 then
+    fin = true
+  else
+    me.big.setCurrentCharge(charge)
+  end if
+  beam = me.big.getAttack().beam
+  if beam then
+    me.big.performBeamAttack()
+  else
+    me.big.performRangedAttack()
+  end if
+  return fin
+end
+
+on getTargetLoc me
+  owner = me.big.getOwner()
+  return owner.getTargetLoc()
+end
+
+on internalEvent me, theEvent
+  ancestor.internalEvent(theEvent)
+  
+  case theEvent of
+    #spellReleased:
+      if me.big.getAttack().releaseFunction = #fireBullets then
+        me.setFireDelay(me.big.getAttack().fireDelay)
+        me.resetFireDelay()
+        me.big.goMode(#fireBullets)
+      end if
+      
+  end case
+  
+end
+
+on resetFireDelay me
+  CounterReset(pFireDelayCounter)
+end
+
+on restoreFromSave me, sd
+  ancestor.restoreFromSave(sd)
+  
+  pFireDelayCounter = sd.pFireDelayCounter
+end
+
+on setFireDelay me, theAmount
+  pFireDelayCounter.tim[2] = theAmount
+end
+
+on update me
+  ancestor.update()
+  
+  if me.big.getMode() = #fireBullets then
+    fin = me.updateFireBullets()
+    if fin then me.big.setDead(true)
+  end if
+end
+
+on updateFireBullets me
+  fin = false
+  
+  if pFireDelayCounter.fin then
+    fin = me.fireBullet()
+    me.resetFireDelay()
+  else
+    Counter(pFireDelayCounter)
+  end if
+  
+  return fin
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

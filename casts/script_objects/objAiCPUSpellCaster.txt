@@ -1,0 +1,302 @@
+[#name: "objAiCPUSpellCaster", #scriptType: #parent, #type: #script]
+-- because spells are not limited by range, spell casters can spend their time
+-- trying to find safety
+
+global g
+
+property ancestor
+property pBulletSafeDistance          -- the min distance away that an enemy bullet is considered safe
+property pEnemySafeDistance           -- the min distance away that an enemy is considered safe
+property pEnemyGoodShootingDistance          -- the max distance away that an enemy is considered "good shooting"
+property pRefreshDestinationCounter   -- a counter to determine how frequently to find a new location to run to
+property pSpellCasterMode             -- the mode of this section of AI
+property pBufferDistance              --distance away from my target(past pEnemySafeDistance) when I should stop moving
+
+on new me
+  ancestor = new (script "objAiCPU")
+  
+  i = me.modifyParams(#init)
+  
+  i[#enemyGoodShootingDistance] = 150
+  
+  return me
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  pBulletSafeDistance = 100
+  pEnemySafeDistance = 100
+  pBufferDistance = 20
+  pEnemyGoodShootingDistance = params.enemyGoodShootingDistance
+  pRefreshDestinationCounter = CounterNew()
+  pRefreshDestinationCounter.tim[2] = 1
+  pSpellCasterMode = #moveToOptimumPosition
+  
+end
+
+on attackFin me
+  -- update target after each attack
+  -- set to #none to force a refresh
+  me.setTarget(#none)
+  
+  ancestor.attackFin()
+end
+
+on characterModeChanged me, newMode
+  ancestor.characterModeChanged(newMode)
+  
+  case newMode of
+    #dead, #reel:
+      pSpellCasterMode = #none
+      me.pCharacterPrg.cancelMoveToLoc()
+      
+    #walk:
+      me.goSpellCasterMode(#moveToOptimumPosition)
+      
+  end case
+end
+
+on eventNotification me, theEvent, theObj
+  ancestor.eventNotification(theEvent, theObj)
+  
+  currentSpell = me.getCurrentSpell()
+  
+  if theObj = currentSpell then
+    
+    case theEvent of
+      #chargeLimited:
+        me.internalEvent(#spellCharged)
+        
+    end case
+    
+  end if
+end
+
+on goSpellCasterMode me, newMode
+  pSpellCasterMode = newMode
+end
+
+on runFromObjects me, objectsToRunFrom, safeDistance
+  runStatus = me.runToFromObjects(objectsToRunFrom, safeDistance, #away)
+  return runStatus
+end
+
+on runTowardObjects me, objectsToRunTowards, safeDistance
+  runStatus = me.runToFromObjects(objectsToRunTowards, safeDistance, #towards)
+  return runStatus
+end
+
+on runToFromObjects me, objectsToRunToFrom, safeDistance, runDir
+  runStatus = #notRunning
+  
+  if objectsToRunToFrom <> #none then
+    -- if nearest bullet is too close,
+    
+    closestPos = objectsToRunToFrom.closestPos
+    closestList = objectsToRunToFrom.closestList
+    
+    closestObject = closestList[closestPos]
+    weaponDist = closestObject.obj.getAttack()
+    if weaponDist.reach <> void and weaponDist.reach <> 9999 and weaponDist.reach > safeDistance then
+      safeDistance = weaponDist.reach + 25
+    end if
+    
+    -- find out whether we need to run anywhere
+    runRequired = false
+    case runDir of
+      #away:
+        if closestObject.dist < safeDistance then
+          runRequired = true
+        end if
+        
+      #towards:
+        if closestObject.dist > safeDistance then
+          runRequired = true
+        end if
+        
+    end case
+    
+    
+    if runRequired then
+      -- necessary to do this in case of equidistant but differently located bullets
+      if closestPos = 1 then furthestPos = 2
+      if closestPos = 2 then furthestPos = 1
+      
+      furthestObject = closestList[furthestPos]
+      
+      objLoc1 = closestObject.obj.getLoc()
+      -- check that there isn't just one bullet
+      if furthestObject.obj <> #none then
+        objLoc2 = furthestObject.obj.getLoc()
+      else
+        objLoc2 = objLoc1.duplicate()
+      end if
+      
+      -- run away from average position of the two
+      averageLoc = PointValRange(50, [objLoc1, objLoc2])
+      
+      case runDir of
+        #away:
+          runDestination = GeomMirrorPoint(averageLoc, me.getLoc(), safeDistance)
+          
+        #towards:
+          runDestination = averageLoc
+          
+      end case
+      
+      me.pCharacterPrg.moveToLoc(runDestination)
+      
+      runStatus = #running
+    end if
+    
+  end if
+  
+  return runStatus  
+end
+
+on runTowardsObject me, theObj
+  runStatus = #notRunning
+  if theObj <> #none then
+    runDestination = theObj.getLoc()
+    dist = geomDistSqr(me.getLoc(),runDestination)
+    if dist - pEnemySafeDistance*pEnemySafeDistance > pBufferDistance*pBufferDistance then
+      me.pCharacterPrg.moveToLoc(runDestination)
+      runStatus = #running
+    end if
+  end if
+  return runStatus
+end
+
+on runTangentToObjects me, objectsToRunToFrom, safeDistance
+  runStatus = #notRunning
+  
+  if objectsToRunToFrom = #none then
+    return runStatus
+  end if
+  -- if nearest bullet is too close,
+  
+  closestPos = objectsToRunToFrom.closestPos
+  closestList = objectsToRunToFrom.closestList
+  
+  closestObject = closestList[closestPos]
+  
+  -- find out whether we need to run anywhere
+  runRequired = false
+  
+  if closestObject.dist < safeDistance then
+    runRequired = true
+  end if
+  
+  if runRequired then
+    -- necessary to do this in case of equidistant but differently located bullets
+    if closestPos = 1 then furthestPos = 2
+    if closestPos = 2 then furthestPos = 1
+    
+    furthestObject = closestList[furthestPos]
+    
+    objLoc1 = closestObject.obj.getLoc()
+    refVect = objLoc1 - me.getLoc()
+    -- check that there isn't just one bullet
+    if furthestObject.obj <> #none then
+      objLoc2 = furthestObject.obj.getLoc()
+      -- run away from average position of the two
+      averageLoc = PointValRange(50, [objLoc1, objLoc2])
+      
+      refDir = point(0,0)
+      locVect = objLoc2 - objLoc1
+      
+      --set a reference frame, origin: objLoc1
+      -- if the vector from me to the objLoc1 is horizontal, we only care about locVect's vertical component, viceversa for vertical
+      --zero vector will not happen.
+      if refVect.loch = 0 then
+        --flip x and y so it only needs one treatment later on
+        temp = locVect.loch
+        locVect.loch = locVect.locv
+        locVect.locv = temp        
+      else if refVect.loch > 0 then
+        refDir.loch = 1        
+      else        
+        refDir.loch = -1        
+      end if
+      
+      if refVect.locv >= 0 then
+        refDir.locv = 1    
+      else
+        refDir.locv = -1
+      end if
+      
+      locVect = locVect * refVect          
+      
+      --determine which direction to run in
+      if  locVect.locv * locVect.loch > 0 then
+        -- divy up positive quandrant
+        locDiff = locVect.loch - locVect.locv
+        if locDiff > 0 then
+          dir = 1
+        else 
+          dif = -1
+        end if        
+      else 
+        if locVect.locv > 0 then
+          dir = 1
+        else
+          dir = -1
+        end if
+      end if      
+      runDestination = GeomTangentPoint(objLoc1, me.getLoc(), dir, safeDistance)
+      runDest = GeomMirrorPoint(averageLoc, me.getLoc(), safeDistance)
+      runDestination = PointValRange(25+ random(50), [runDestination, runDest])
+    else           
+      runDestination = GeomTangentPoint(objLoc1, me.getLoc(), 1, safeDistance)
+    end if
+    me.pCharacterPrg.moveToLoc(runDestination)
+    
+    runStatus = #running
+  end if
+  
+  return runStatus  
+end
+
+on update me
+  ancestor.update()
+  
+  if pSpellCasterMode = #moveToOptimumPosition then
+    -- make sure we have a spell loaded
+    if me.getAttack().reach = 9999 then
+      -- moveToAttack won't interfere with this because
+      -- it will fin immeadiately since range is 9999
+      me.updateMoveToOptimumPosition()
+      
+    end if
+  end if
+end
+
+on updateMoveToOptimumPosition me
+  -- find nearest bullets
+  nearestBullets = g.teamMaster.findNearestEnemyBullets(me.pCharacterPrg)
+  --runStatus = me.runFromObjects(nearestBullets, pBulletSafeDistance)
+  runStatus = me.runTangentToObjects(nearestBullets, pBulletSafeDistance)
+  -- if nearest bullet is not too close,
+  -- find nearest enemies
+  if runStatus = #notRunning then
+    nearestEnemies = g.teamMaster.findNearestEnemies(me.pCharacterPrg)
+    runStatus = me.runFromObjects(nearestEnemies, pEnemySafeDistance)
+  end if
+  
+  -- if nearest enemy is not too close
+  -- find nearest target
+  if runStatus = #notRunning then
+    myTarget = me.getRelation(#target)
+    runStatus = me.runTowardsObject(myTarget)
+  end if
+  
+  if runStatus = #notRunning then
+    me.pCharacterPrg.stopMoving()
+  end if
+end
+
+
+
+
+

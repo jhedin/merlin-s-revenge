@@ -1,0 +1,1569 @@
+[#name: "teamMaster", #scriptType: #parent, #type: #script]
+-- this program keeps track of the characters on each team 
+-- and can find targets for characters based on thier location and team
+
+global g
+
+property pRequestingObj   -- DEBUG this variable records an obj that has requested a search in findTarget()
+property pTeams
+property pTeamThatDied    -- when a team dies, me waits until next frame to inform g.gameMaster. This is the team that died.
+property pRoomClear       -- when a member of aldevar cannot find an ennemy, the room is deemed clear and the doors can open
+property pTeamOverride    -- describes the team to be ganged up on. If team override is off, this will be #none
+property pUnitMap         -- datamap of mapNodes
+property pBulletMap
+property pRoomSize
+property pTileSize
+property pPlayAreaRect
+property pUnitMapLoaded   -- if there is no map loaded, use basic values to calc stuff.
+
+on new me
+  return me
+end
+
+on init me
+  pTeamThatDied = #none
+  pRoomClear = false
+  me.initTeams()
+  pTeamOverride = #none
+  pUnitMap = #none
+  pBulletMap = #none
+  pRoomSize = #none
+  pTileSize = #none
+  pPlayAreaRect = #none
+  pUnitMapLoaded = false
+end
+
+on initTeams me
+  pTeams = [:]
+  
+  -- find out team information from data
+  teamDatas = g.collectionsMaster.getCollection(#objTeamData)
+  
+  -- if there isn't any don't bother
+  if teamDatas = #none then
+    return
+  end if
+  
+  repeat with nDataObj in teamDatas
+    nTeam = g.structMaster.getStruct(#teamData)
+    ListsMerge(nTeam, nDataObj.getData())
+    pTeams[nTeam.teamName] = nTeam
+  end repeat
+end
+--------------------------------------unit map stuff---------------------
+on getFrontNode me, locXY, typ
+  case typ of
+    #unit:
+      mapNode = pUnitMap.peek(locXY)
+      if mapNode = #none then
+        mapNode = g.objectMaster.requestObject(#objMapNode)
+        params = mapNode.getParams(#init)
+        mapNode.init(params)
+        pUnitMap.poke(locXY, mapNode)
+      end if
+    #bullet:
+      mapNode = pBulletMap.peek(locXY)
+      if mapNode = #none then
+        mapNode = g.objectMaster.requestObject(#objMapNode)
+        params = mapNode.getParams(#init)
+        mapNode.init(params)
+        pBulletMap.poke(locXY, mapNode)
+      end if
+    otherwise:
+      nothing
+  end case
+  return mapNode
+end
+
+on getTileLoc me, objLoc  
+  if pUnitMapLoaded = false then
+    currentMap = g.gameMaster.getCurrentMap()
+    if currentMap <> #none then
+      pUnitMapLoaded = true
+      pRoomSize = currentMap.pRoomSize.duplicate()
+      pTileSize = currentMap.pTileSets[1].getTileSize()
+      pPlayAreaRect = currentMap.getSpriteRect()
+    else
+      pRoomSize = point(18,9)
+      pTileSize = point(32,32)
+      pPlayAreaRect = Rect(0,0,0,0)
+    end if
+    pUnitMap = g.objectMaster.requestObject(#objDataMap)
+    params = pUnitMap.getParams(#init)
+    params.mapSize = pRoomSize.duplicate()
+    params.blankEntry = #none
+    pUnitMap.init(params)
+    pBulletMap = g.objectMaster.requestObject(#objDataMap)
+    pBulletMap.init(params)
+  end if
+  tileLoc = point((objLoc.loch - pPlayAreaRect.left)/pTileSize[1] + 1,(objLoc.locv - pPlayAreaRect.top)/pTileSize[2] + 1)
+  tileLoc = PointConstrainToRect(tileLoc, Rect(1,1,pRoomSize.loch, pRoomSize.locv))
+  return tileLoc
+end
+
+-----------------------------------------/unit map stuff---------------
+on addObjectToCurrentRoom me, obj
+  currentRoom = g.gameMaster.getCurrentRoom()
+  if currentRoom <> #none then
+    currentRoom.addRoomObject(obj)
+  end if
+  --obj.linkIn()
+end
+
+on calcIgnoreTeamsByAllegiance me, obj
+  targetAllegiance = obj.getAttack().targetAllegiance
+  teamSym = obj.getTeam()
+  team = pTeams[teamSym]
+  
+  case targetAllegiance of 
+    #enemy:
+      if team[#friends] <> #void and team[#friends] <> #none then
+        temp = team.friends.duplicate()
+        temp.add(teamSym)
+        ignoreTeams = [temp]
+      else
+        ignoreTeams = [[teamSym]]
+      end if
+      
+    #friendly:
+      ignoreTeams = team.hates.duplicate()
+      
+  end case
+  
+  return ignoreTeams
+end
+
+on calcTargetTeamsByAllegiance me, obj
+  targetAllegiance = obj.getAttack().targetAllegiance
+  teamSym = obj.getTeam()
+  team = pTeams[teamSym]
+  
+  case targetAllegiance of 
+    #enemy:
+      targetTeams = team.hates.duplicate()
+      
+    #friendly:
+      if team.friends <> #void and team.friends <> #none then
+        temp = team.friends.duplicate()
+        temp.add(teamSym)
+        targetTeams = [temp]
+      else
+        targetTeams = [[teamSym]]
+      end if
+      
+  end case
+  
+  return targetTeams
+end
+
+on calcTargetTeamsOverride me, obj
+  targetAllegiance = obj.getAttack().targetAllegiance
+  teamSym = obj.getTeam()
+  team = pTeams[teamSym]
+  if teamSym <> pTeamOverride and targetAllegiance = #enemy and team.friends.getPos(pTeamOverride)=0 then
+    temp = pTeams[pTeamOverride].friends.duplicate()
+    temp.add(pTeamOverride)
+    targetTeams = [temp]
+    return targetTeams
+  else
+    return me.calcTargetTeamsByAllegiance(obj)
+  end if
+end
+
+on cullTeamList me, teamList
+  runningCount = 0
+  teams = []
+  repeat with teamName in teamList
+    addToList = false
+    team = pTeams[teamName]
+    sum = team.teamBuildings.count + team.getaprop(#currentMembers)
+    if sum > 0 then
+      runningCount = runningCount + sum
+      addToList = true
+    end if
+    
+    if addToList then
+      teams.append(teamName)
+    end if
+    
+  end repeat
+  if count(teams) = 0 or runningCount < 5 then
+    teams.addat(1,#none)
+  end if
+  return teams
+end
+
+on findNearestEnemyBullets me, obj
+  return me.findNearest(obj, #enemy, #teamBullets, 2, pBulletMap)
+end
+
+on findNearestEnemies me, obj
+  return me.findNearest(obj, #enemy, #teamMembers, 2, pUnitMap)
+end
+
+on findNearestFriends me, obj
+  return me.findNearest(obj, #friendly, #teamMembers, 2, pUnitMAp)
+end
+
+on findANearest me, obj, allegiance, role, num, targetTeams
+  
+  -- finds the nearest <num> of <role> in the <allegiance> teams
+  -- this is slower than find target, which only finds the *one* nearest
+  teamSym = obj.getTeam()
+  team = pTeams[teamSym]
+  
+  location = obj.getLoc()
+  -- decide whether to override teams
+  --  character = obj.getActorType()
+  --  if character = #characterEnergyRollOverMaster then
+  --    override = #none
+  --  else
+  --  override = pTeamOverride
+  --  --  end if
+  --  
+  --  if override <> #none then
+  --    
+  --    if teamSym <> pTeamOverride and allegiance = #enemy and team.friends.getPos(pTeamOverride)=0 then
+  --      temp = pTeams[pTeamOverride].friends.duplicate()
+  --      temp.add(pTeamOverride)
+  --      targetTeams = [temp]
+  --    else
+  --      case allegiance of 
+  --        #enemy:
+  --          targetTeams = team.hates.duplicate()
+  --          
+  --        #friendly:
+  --          if team.friends <> #void and team.friends <> #none then
+  --            temp = team.friends.duplicate()
+  --            temp.add(teamSym)
+  --            targetTeams = [temp]
+  --          else
+  --            targetTeams = [[teamSym]]
+  --          end if
+  --          
+  --      end case
+  --    end if
+  --  else 
+  --    case allegiance of 
+  --      #enemy:
+  --        targetTeams = team.hates.duplicate()
+  --        
+  --      #friendly:
+  --        if team.friends <> #void and team.friends <> #none then
+  --          temp = team.friends.duplicate()
+  --          temp.add(teamSym)
+  --          targetTeams = [temp]
+  --        else
+  --          targethatedTeams = [[teamSym]]
+  --        end if
+  --        
+  --    end case
+  --    
+  --  end if
+  
+  
+  -- look through teamsToSearch
+  currentClosest = #none
+  
+  repeat with priorityTeams in targetTeams
+    priorityTeams.deleteOne(#collectables)
+    repeat with teamToSearch in priorityTeams
+      closestInfo = me.findNearestInTeam(teamToSearch, role, num, location, obj)
+      if currentClosest = #none then
+        currentClosest = closestInfo
+      else
+        
+        if closestInfo <> #none then
+          -- replace previous closest with any closer ones
+          -- from this team
+          
+          repeat with closestInfoItem in closestInfo.closestList
+            -- find the distance of the furthest item in the
+            -- currentClosest list
+            currentClosestList = currentClosest.closestList
+            furthestPos = currentClosest.furthestPos
+            
+            currentFurthestDist = currentClosestList[furthestPos].dist
+            
+            -- compare this distance to the distance of
+            -- an item in the new list
+            if closestInfoItem.dist < currentFurthestDist then
+              -- if the new item is closer, then replace the old item
+              currentClosestList[furthestPos] = closestInfoItem
+              
+              -- find new values for closestPos and furthestPos
+              closestPos = ListGetPosOfMinByProp(currentClosestList, #dist)
+              furthestPos = ListGetPosOfMaxByProp(currentClosestList, #dist)
+              
+              -- add those values to the info
+              currentClosest.closestPos = closestPos
+              currentClosest.furthestPos = furthestPos
+            end if
+            
+          end repeat
+          
+        end if
+        
+      end if
+      
+    end repeat
+    -- only search lower priority teams if have found nothing
+    if currentClosest <> #none then
+      exit repeat
+    end if
+  end repeat
+  
+  return currentClosest
+end
+
+on findNearestInTeam me, team, role, num, location, obj
+  
+  noneFound = true
+  
+  closestList = []
+  repeat with i = 1 to num
+    closestList.append(g.structMaster.getStruct(#teamTarget))
+  end repeat  
+  posOfFurthest = ListGetPosOfMaxByProp(closestList, #dist)
+  furthestDist = closestList[posOfFurthest].dist
+  
+  teamToSearch = pTeams[team]
+  objectsToSearch = teamToSearch[role]
+  
+  repeat with objectToCompare in objectsToSearch
+    --make sure object isn't dead
+    if objectToCompare.getDead() or objectToCompare.checkDead() then
+      next repeat
+    end if
+    
+    objLoc = objectToCompare.getLoc()
+    --objDist = GeomDistSqr(location, objLoc)
+    objDist = AddDist(location, objLoc)
+    -- if the object is closer than the furthest of the
+    -- current closest objects (and is not the object itself)
+    -- then replace the furthest one
+    -- with this one
+    if objDist < furthestDist and objectToCompare <> obj then
+      closeObj = g.structMaster.getStruct(#teamTarget)
+      closeObj.dist = objDist
+      closeObj.obj = objectToCompare
+      
+      closestList[posOfFurthest] = closeObj
+      
+      -- update which object is now the furthest, and how far away it is
+      posOfFurthest = ListGetPosOfMaxByProp(closestList, #dist)
+      furthestDist = closestList[posOfFurthest].dist
+      
+      noneFound = false
+    end if
+    
+  end repeat
+  
+  if noneFound then
+    return #none
+  end if
+  
+  closestInfo = g.structMaster.getStruct(#teamClosestInfo)
+  closestInfo.closestPos = ListGetPosOfMinByProp(closestList, #dist)
+  closestInfo.furthestPos = ListGetPosOfMaxByProp(closestList, #dist)
+  closestInfo.closestList = closestList
+  
+  return closestInfo
+end
+
+on findNearest me, obj, allegiance, role, num, objMap
+  -- finds the nearest <num> of <role> in the <allegiance> teams
+  -- this is slower than find target, which only finds the *one* nearest
+  teamSym = obj.getTeam()
+  team = pTeams[teamSym]
+  
+  location = obj.getLoc()
+  -- decide whether to override teams
+  character = obj.getActorType()
+  override = pTeamOverride
+  
+  if override <> #none then
+    
+    if teamSym <> pTeamOverride and allegiance = #enemy and team.friends.getPos(pTeamOverride)=0 then
+      temp = pTeams[pTeamOverride].friends.duplicate()
+      temp.add(pTeamOverride)
+      hatedTeams = [temp]
+    else
+      case allegiance of 
+        #enemy:
+          hatedTeams = team.hates.duplicate()
+          
+        #friendly:
+          if team.friends <> #void and team.friends <> #none then
+            temp = team.friends.duplicate()
+            temp.add(teamSym)
+            hatedTeams= [temp]
+          else
+            hatedTeams = [[teamSym]]
+          end if
+          
+      end case
+    end if
+  else 
+    case allegiance of 
+      #enemy:
+        hatedTeams = team.hates.duplicate()
+        
+      #friendly:
+        if team.friends <> #void and team.friends <> #none then
+          temp = team.friends.duplicate()
+          temp.add(teamSym)
+          hatedTeams = [temp]
+        else
+          hatedTeams = [[teamSym]]
+        end if
+        
+    end case
+    
+  end if
+  
+  targetTeams = me.cullTeamList(hatedTeams[1])
+  if targetTeams[1] = #none then
+    if targetTeams.count() = 1 then
+      return #none
+    else
+      targetTeams.deleteAt(1)
+      --      hatedTeams[1] = targetTeams
+      --      return me.findANearest(obj, allegiance, role, num, hatedTeams)
+    end if
+  end if
+  tileLoc = me.getTileLoc(location)
+  targetList = me.searchObjMap(tileLoc, targetTeams, 0, 3, objMap)
+  if targetList.count = 0 then
+    return #none
+  end if
+  targetCriteria = obj.getAttack().targetCriteria
+  -- if targetCriteria = #lowestHealth then
+  -- dist is used to hold the health value
+  found = false
+  closestList = []
+  repeat with i = 1 to num
+    closestList.append(g.structMaster.getStruct(#teamTarget))
+  end repeat  
+  posOfFurthest = ListGetPosOfMaxByProp(closestList, #dist)
+  furthestDist = closestList[posOfFurthest].dist
+  found = false
+  repeat with nObj in targetList
+    if nObj.getTeamRole() <> role then
+      next repeat
+    end if
+    
+    if nObj = obj then
+      next repeat
+    end if
+    
+    objLoc = nObj.getLoc()
+    objDist = AddDist(location, objLoc)
+    
+    if objDist < furthestDist then
+      objDist = SineDist(location,objLoc)
+      if objDist < furthestDist then
+        found = true
+        closeObj = g.structMaster.getStruct(#teamTarget)
+        closeObj.dist = objDist
+        closeObj.obj = nObj
+        
+        closestList[posOfFurthest] = closeObj
+        found = true
+        -- update which object is now the furthest, and how far away it is
+        posOfFurthest = ListGetPosOfMaxByProp(closestList, #dist)
+        furthestDist = closestList[posOfFurthest].dist
+      end if
+    end if
+    
+  end repeat 
+  
+  closestInfo = g.structMaster.getStruct(#teamClosestInfo)
+  closestInfo.closestPos = ListGetPosOfMinByProp(closestList, #dist)
+  closestInfo.furthestPos = ListGetPosOfMaxByProp(closestList, #dist)
+  closestInfo.closestList = closestList
+  if found then
+    return closestInfo
+  else 
+    return #none
+  end if
+  
+end
+
+on findNearestTarget me, obj, allegiance, role, num
+  -- finds the nearest <num> of <role> in the <allegiance> teams
+  -- this is slower than find target, which only finds the *one* nearest
+  teamSym = obj.getTeam()
+  team = pTeams[teamSym]
+  
+  location = obj.getLoc()
+  -- decide whether to override teams
+  character = obj.getActorType()
+  override = pTeamOverride
+  
+  if override <> #none then
+    
+    if teamSym <> pTeamOverride and allegiance = #enemy and team.friends.getPos(pTeamOverride)=0 then
+      temp = pTeams[pTeamOverride].friends.duplicate()
+      temp.add(pTeamOverride)
+      hatedTeams = [temp]
+    else
+      case allegiance of 
+        #enemy:
+          hatedTeams = team.hates.duplicate()
+          
+        #friendly:
+          if team.friends <> #void and team.friends <> #none then
+            temp = team.friends.duplicate()
+            temp.add(teamSym)
+            hatedTeams= [temp]
+          else
+            hatedTeams = [[teamSym]]
+          end if
+          
+      end case
+    end if
+  else 
+    case allegiance of 
+      #enemy:
+        hatedTeams = team.hates.duplicate()
+        
+      #friendly:
+        if team.friends <> #void and team.friends <> #none then
+          temp = team.friends.duplicate()
+          temp.add(teamSym)
+          hatedTeams = [temp]
+        else
+          hatedTeams = [[teamSym]]
+        end if
+        
+    end case
+    
+  end if
+  
+  targetTeams = me.cullTeamList(hatedTeams[1])
+  if targetTeams[1] = #none then
+    if targetTeams.count() = 1 then
+      return #none
+    else
+      targetTeams.deleteAt(1)
+      hatedTeams[1] = targetTeams
+      return me.findANearest(obj, allegiance, role, num, hatedTeams)
+    end if
+  end if
+  tileLoc = me.getTileLoc(location)
+  targetList = me.searchUnitMap(tileLoc, targetTeams, 1, 7)
+  if targetList.count = 0 then
+    hatedTeams[1] = targetTeams
+    return me.findANearest(obj, allegiance, role, num, hatedTeams)
+  end if
+  targetCriteria = obj.getAttack().targetCriteria
+  -- if targetCriteria = #lowestHealth then
+  -- dist is used to hold the health value
+  found = false
+  closestList = []
+  repeat with i = 1 to num
+    closestList.append(g.structMaster.getStruct(#teamTarget))
+  end repeat  
+  posOfFurthest = ListGetPosOfMaxByProp(closestList, #dist)
+  furthestDist = closestList[posOfFurthest].dist
+  
+  repeat with nObj in targetList
+    if nObj.getTeamRole() <> role then
+      next repeat
+    end if
+    
+    if nObj = obj then
+      next repeat
+    end if
+    
+    objLoc = nObj.getLoc()
+    objDist = AddDist(location, objLoc)
+    
+    if objDist < furthestDist then
+      found = true
+      closeObj = g.structMaster.getStruct(#teamTarget)
+      closeObj.dist = objDist
+      closeObj.obj = nObj
+      
+      closestList[posOfFurthest] = closeObj
+      
+      -- update which object is now the furthest, and how far away it is
+      posOfFurthest = ListGetPosOfMaxByProp(closestList, #dist)
+      furthestDist = closestList[posOfFurthest].dist
+    end if
+    
+  end repeat 
+  
+  closestInfo = g.structMaster.getStruct(#teamClosestInfo)
+  closestInfo.closestPos = ListGetPosOfMinByProp(closestList, #dist)
+  closestInfo.furthestPos = ListGetPosOfMaxByProp(closestList, #dist)
+  closestInfo.closestList = closestList
+  return closestInfo
+  
+end
+
+on findRandomInTeam me, theTeam
+  -- returns a random member of a team
+  teamToCheck = pTeams[theTeam]
+  isMembers = teamToCheck[#teamMembers].count > 0
+  isBuildings = teamToCheck[#teamBuildings].count > 0
+  if isBuildings and isMembers  then
+    lookInMembers = random(2) - 1
+  else if isBuildings then
+    lookInMembers = 0
+  else
+    lookInMember = 1
+  end if
+  
+  if lookInMembers then
+    targetList = teamToCheck[#teamMembers]
+  else
+    targetList = teamToCheck[#teamBuildings]
+  end if
+  
+  numTargets = targetList.count
+  theTarget = targetList[random(numTargets)]
+  return theTarget
+end
+
+
+
+
+on findRandomTarget me, theObj
+  -- returns a random enemy
+  randomTarget = #none
+  
+  teamSym = theObj.getTeam()
+  team = pTeams[teamSym]
+  
+  -- find out the roles we are targeting
+  attack = theObj.getAttack()
+  roles = attack.hits
+  
+  -- decide whether to override teams
+  if team = #healthRollover then
+    override = #none
+  else
+    override = pTeamOverride
+  end if
+  
+  -- make a list of potential targets
+  if override <> #none then
+    hatedTeams = me.calcTargetTeamsOverride(theObj)
+  else
+    hatedTeams = me.calcTargetTeamsByAllegiance(theObj)
+  end if
+  potentialTargets = []
+  repeat with priorityTeams in hatedTeams
+    priorityTeams.deleteOne(#collectables)
+    repeat with team in priorityTeams
+      
+      teamToCheck = pTeams[team]
+      repeat with role in roles
+        targets = teamToCheck[role]
+        if targets.count > 0 then
+          repeat with targit in targets
+            potentialTargets.append(targit)
+          end repeat
+        end if
+      end repeat
+      
+    end repeat
+    
+    -- do not add lower priority teams if we have found something
+    if potentialTargets.count > 0 then
+      exit repeat
+    end if
+    
+  end repeat
+  
+  -- choose a random enemy (if we have found anything)
+  if potentialTargets.count > 0 then
+    pos = random(potentialTargets.count)
+    randomTarget = potentialTargets[pos]
+  end if
+  
+  return randomTarget
+end
+
+
+on findATarget me, theObj, hatedTeams
+  objLoc = theObj.getLoc()
+  
+  pRequestingObj = theObj -- to help with debugging
+  
+  character = theObj.getActorType()
+  --  if character <> #characterEnergyRollOverMaster then
+  --    nothing
+  --  end if
+  
+  -- decide whether to override teams
+  
+  --  if character <> #characterEnergyRollOverMaster  and pTeamOverride <> #none then
+  --    hatedTeams = me.calcTargetTeamsOverride(theObj)
+  --  else
+  --    hatedTeams = me.calcTargetTeamsByAllegiance(theObj)
+  --  end if
+  --hatedTeams = me.cullTeamList(hatedTeams[1])
+  
+  
+  --hatedTeams = [hatedTeams]
+  closestTarget = g.structMaster.getStruct(#teamTarget)
+  
+  
+  targetCriteria = theObj.getAttack().targetCriteria
+  -- if targetCriteria = #lowestHealth then
+  -- dist is used to hold the health value
+  
+  targetRoles = theObj.getAttack().targetRoles
+  
+  
+  repeat with priorityTeams in hatedTeams
+    priorityTeams.deleteOne(#collectables)
+    repeat with nTeam in priorityTeams
+      closestInTeam = me.findTargetInTeam(nTeam, objLoc, targetCriteria, targetRoles)
+      if closestInTeam.dist < closestTarget.dist then
+        if closestInTeam.priorityRank <= closestTarget.priorityRank then
+          closestTarget = closestInTeam
+        end if
+      end if
+    end repeat
+    if closestTarget.obj <> #none then
+      exit repeat
+    end if
+    
+  end repeat
+  --unsquare it
+  if  targetCriteria<>#lowestHealth then
+    closestTarget.dist = sqrt(closestTarget.dist)
+  end if
+  return closestTarget
+end
+
+on findTargetInTeam me, teamSym, theLoc, targetCriteria, targetRoles
+  if teamSym = #none then
+    -- look through no teams
+    
+    closestTarget = g.structMaster.getStruct(#teamTarget)
+    
+    return closestTarget
+    
+  else
+    -- look through the team members of a single team
+    
+    
+    closestTarget = g.structMaster.getStruct(#teamTarget)
+    teamToSearch = pTeams[teamSym]
+    
+    priorityRank = 0
+    repeat with priorityRoles in targetRoles
+      priorityRank = priorityRank + 1
+      
+      repeat with roleSym in priorityRoles
+        objs = teamToSearch[roleSym]
+        
+        repeat with nObj in objs
+          --make sure object isn't dead
+          if nObj.getDead() or nObj.checkDead() then
+            next repeat
+          end if
+          
+          -- really dodgy programming here
+          -- the lowest health system piggy backs on the 
+          -- closest distance system
+          -- *** health pretends to be distance ***
+          
+          case targetCriteria of
+            #closestDistance:
+              nLoc = nObj.getLoc()
+              nDist = GeomDistSqr(theLoc, nLoc)
+              
+            #lowestHealth:
+              nDist = nObj.getHealth()
+          end case
+          
+          -- end of dodgy programming
+          
+          
+          if nDist < closestTarget.dist then
+            closestTarget.dist = nDist
+            closestTarget.obj = nObj
+            closestTarget.priorityRank = priorityRank
+          end if
+        end repeat
+      end repeat
+      
+      -- exit if we find a member of the priority role
+      -- only look for other role if there are no suitable targets
+      
+      if closestTarget.obj <> #none then
+        exit repeat
+      end if
+      
+    end repeat
+    
+    return closestTarget
+    
+  end if  
+end
+
+on findRandomTargetInTeam me, teamSym, theLoc, targetCriteria, targetRoles
+  closestTarget = g.structMaster.getStruct(#teamTarget)
+  teamToCheck = pTeams[teamSym]
+  --can probably be done nicer/cleaner, using a repeat.
+  isMembers = teamToCheck[#teamMembers].count > 0
+  if targetRoles[1].getPos(#teamMembers) = 0 then
+    isMembers = 0
+  end if
+  isBuildings = teamToCheck[#teamBuildings].count > 0
+  if targetRoles[1].getPos(#teamBuildings) = 0 then
+    isBuildings = 0
+  end if
+  if isBuildings and isMembers  then
+    lookInMembers = random(2) - 1
+  else if isBuildings then
+    lookInMembers = 0
+  else if isMembers then
+    lookInMembers = 1
+  else 
+    return closestTarget
+  end if
+  
+  if lookInMembers then
+    targetList = teamToCheck[#teamMembers]
+  else
+    targetList = teamToCheck[#teamBuildings]
+  end if
+  
+  numTargets = targetList.count
+  nObj = targetList[random(numTargets)]
+  randCount = 0
+  repeat while nObj.getDead() or nObj.checkDead() --make sure object isn't dead
+    nObj = targetList[random(numTargets)]
+    randCount = randCount + 1
+    if randCount > numTargets then
+      exit repeat
+    end if
+  end repeat
+  
+  case targetCriteria of
+    #closestDistance:
+      nLoc = nObj.getLoc()
+      nDist = AddDist(theLoc, nLoc)
+      
+    #lowestHealth:
+      nDist = nObj.getHealth()
+  end case
+  
+  closestTarget.dist = nDist
+  closestTarget.obj = nObj
+  closestTarget.priorityRank = random(2)
+  
+  return closestTarget
+  
+end
+
+on findTarget me, theObj
+  closestTarget = g.structMaster.getStruct(#teamTarget)
+  objLoc = theObj.getLoc()
+  pRequestingObj = theObj -- to help with debugging
+  
+  character = theObj.getActorType()
+  
+  if character <> #characterEnergyRollOverMaster  and pTeamOverride <> #none then
+    hatedTeams = me.calcTargetTeamsOverride(theObj)
+  else
+    hatedTeams = me.calcTargetTeamsByAllegiance(theObj)
+  end if
+  targetTeams = me.cullTeamList(hatedTeams[1])
+  if targetTeams[1] = #none then
+    if targetTeams.count() = 1 then
+      return closestTarget
+    else
+      targetTeams.deleteAt(1)
+      hatedTeams[1] = targetTeams
+      return me.findATarget(theObj,hatedTeams)
+    end if
+  end if
+  targetCriteria = theObj.getAttack().targetCriteria
+  if targetCriteria = #lowestHealth then
+    hatedTeams[1] = targetTeams
+    return me.findATarget(theObj,hatedTeams)
+  end if
+  tileLoc = me.getTileLoc(objLoc)
+  if character = #characterEnergyRollOverMaster then
+    targetList = me.searchUnitMap(tileLoc, targetTeams, 0, 1)
+  else
+    targetList = me.searchUnitMap(tileLoc, targetTeams, 0, 20)
+  end if
+  targetRoles = theObj.getAttack().targetRoles
+  targetRole = #none
+  if targetRoles[1].count = 1 then
+    targetRole = targetRoles[1][1]
+  end if
+  repeat with nObj in targetList
+    if targetRole <> #none then
+      if nObj.getTeamRole() <> targetRole then
+        next repeat
+      end if
+    end if   
+    nLoc = nObj.getLoc()
+    nDist = GeomDistSqr(objLoc, nLoc)
+    if nDist < closestTarget.dist then
+      closestTarget.dist = nDist
+      closestTarget.obj = nObj
+    end if
+  end repeat 
+  return closestTarget
+end
+
+on findTargetWithin me, theObj, maxDist
+  closestTarget = g.structMaster.getStruct(#teamTarget)
+  objLoc = theObj.getLoc()  
+  if pTeamOverride <> #none then
+    hatedTeams = me.calcTargetTeamsOverride(theObj)
+  else
+    hatedTeams = me.calcTargetTeamsByAllegiance(theObj)
+  end if
+  targetTeams = me.cullTeamList(hatedTeams[1])
+  if targetTeams[1] = #none then
+    if targetTeams.count() = 1 then
+      return closestTarget
+    else
+      targetTeams.deleteAt(1)
+    end if
+  end if
+  tileLoc = me.getTileLoc(objLoc)
+  targetList = me.searchUnitMap(tileLoc, targetTeams, 0, maxDist)
+  targetRoles = theObj.getAttack().targetRoles
+  targetRole = #none
+  if targetRoles[1].count = 1 then
+    targetRole = targetRoles[1][1]
+  end if
+  repeat with nObj in targetList
+    if targetRole <> #none then
+      if nObj.getTeamRole() <> targetRole then
+        next repeat
+      end if
+    end if    
+    nLoc = nObj.getLoc()
+    nDist = GeomDistSqr(objLoc, nLoc)    
+    if nDist < closestTarget.dist then
+      closestTarget.dist = nDist
+      closestTarget.obj = nObj
+    end if
+  end repeat 
+  return closestTarget
+end
+
+on findUnitOfType me, theUnitType, theTeam
+  unitOfType = #none
+  
+  team = pTeams[theTeam]
+  roles = [#teamMembers, #teamBuildings]
+  
+  repeat with role in roles
+    unitList = team[role]
+    repeat with unit in unitList
+      actorType = unit.getActorType()
+      if actorType = theUnitType then
+        unitOfType = unit
+        exit repeat
+      end if
+    end repeat
+    
+    if unitOfType <> #none then
+      exit repeat
+    end if
+    
+  end repeat
+  
+  return unitOfType
+end
+
+on getBuildingOfType me, obj, theType
+  -- returns the first building of type <theType> that
+  -- is on <obj>'s team
+  -- if there isn't one, it returns #none
+  
+  building = #none 
+  
+  teamSym = obj.getTeam()
+  team = pTeams[teamSym]
+  
+  teamBuildings = team.teamBuildings
+  repeat with teamBuilding in teamBuildings
+    buildingType = teamBuilding.getActorType()
+    if buildingType = theType then
+      building = teamBuilding
+      exit repeat
+    end if
+  end repeat
+  
+  return building
+  
+end
+
+on getStandingOnUnfinishedBuilding me, obj
+  -- determines whether the object is standing on an unfinished
+  -- building that is on it's team.
+  -- if so, it returns the building.
+  -- if not, it return #none
+  
+  unfinishedBuilding = #none
+  
+  teamSym = obj.getTeam()
+  team = pTeams[teamSym]
+  
+  teamBuildings = team.teamBuildings
+  
+  repeat with teamBuilding in teamBuildings
+    if teamBuilding.isUnfinishedBuilding() then
+      -- check whether object is in contact
+      if CollisionCheck(obj, teamBuilding) then
+        unfinishedBuilding = teamBuilding
+      end if
+    end if
+  end repeat
+  
+  return unfinishedBuilding
+end
+
+on getTileSize me
+  return pTileSize
+end
+
+on impactAttack me, obj
+  me.impactMeleeAttack(obj)
+end
+
+on impactMeleeAttack me, obj
+  teamSym = obj.getTeam()
+  team = pTeams[teamSym]
+  
+  if pTeamOverride <> #none then
+    hatedTeams = me.calcTargetTeamsOverride(obj)
+  else
+    hatedTeams = me.calcTargetTeamsByAllegiance(obj)
+  end if
+  
+  -- ***this will need modifying if #all is used***
+  if hatedTeams.getPos(#all) > 0 then
+    nothing
+  end if
+  --    ignoreTeams = me.calcIgnoreTeamsByAllegiance(obj)
+  --    
+  --    -- do all teams except object's own team
+  --    repeat with i = 1 to pTeams.count
+  --      nTeam = pTeams.getPropAt(i)
+  --      
+  --      if pTeams[nTeam].immuneToAttack = true then
+  --        next repeat
+  --      end if
+  --      
+  --      if ignoreTeams.getPos(nTeam) > 0 then
+  --        next repeat
+  --      end if
+  --      
+  --      me.impactMeleeAttackOnTeam(nTeam, obj)
+  --    end repeat
+  --    
+  --  else
+  --  end if
+  targetTeams = me.cullTeamList(hatedTeams[1])
+  hatedTeams[1] = targetTeams
+  --do just the target teams
+  --  repeat with priorityTeams in hatedTeams
+  --    repeat with nTeam in priorityTeams
+  --      me.impactMeleeAttackOnTeam(nTeam, obj)
+  --    end repeat
+  --  end repeat
+  objLoc = obj.getLoc() 
+  if targetTeams[1] = #none then
+    if targetTeams.count() = 1 then
+      return
+    else
+      targetTeams.deleteAt(1)
+      hatedTeams[1] = targetTeams
+      repeat with priorityTeams in hatedTeams
+        repeat with nTeam in priorityTeams
+          me.impactMeleeAttackOnTeam(nTeam, obj)
+        end repeat
+      end repeat
+      return
+    end if
+  end if
+  tileLoc = me.getTileLoc(objLoc)
+  attackRad = obj.calcAttackDist(pTileSize)
+  targetList = me.searchUnitMap(tileLoc, targetTeams, attackRad + 1, attackRad + 1)
+  
+  targetRoles = obj.getAttack().hits
+  targetRole = #none
+  if targetRoles.count = 1 then
+    targetRole = targetRoles[1]
+  end if
+  
+  repeat with nObj in targetList
+    if targetRole <> #none then
+      if nObj.getTeamRole() <> targetRole then
+        next repeat
+      end if
+    end if
+    if obj.calcAttackHit(nObj) then
+      collisionVect = obj.calcCollisionVect(nObj)
+      
+      payloadFunctions = obj.getAttack().payloadFunction
+      -- find out owner for spells
+      owner = obj.getOwner()
+      if owner = #none then owner = obj
+      CallPayloadFunction(payloadFunctions, nObj, collisionVect, obj, owner)
+    end if
+  end repeat 
+end
+
+on impactMeleeAttackOnTeam me, teamSym, attackingObj
+  if teamSym = #none then
+    return
+  end if
+  
+  team = pTeams[teamSym]
+  
+  hits = attackingObj.getAttack().hits
+  
+  repeat with teamObjectType in hits
+    
+    objs = team[teamObjectType]
+    
+    repeat with nObj in objs
+      if attackingObj.calcAttackHit(nObj) then
+        collisionVect = attackingObj.calcCollisionVect(nObj)
+        
+        payloadFunctions = attackingObj.getAttack().payloadFunction
+        -- find out owner for spells
+        owner = attackingObj.getOwner()
+        if owner = #none then owner = attackingObj
+        CallPayloadFunction(payloadFunctions, nObj, collisionVect, attackingObj, owner)
+      end if
+      
+    end repeat 
+    
+  end repeat
+end
+
+on isTargetsDead me, obj
+  objTeam = obj.getTeam()
+  
+  targetTeams = me.calcTargetTeamsByAllegiance(obj)
+  
+  repeat with nPriority in targetTeams
+    repeat with nTeam in nPriority
+      if me.isTeamDead(nTeam) = false then
+        return false
+      end if
+    end repeat
+  end repeat
+  
+  return true
+end
+
+on isTeamDead me, teamName
+  team = pTeams[teamName]
+  roles = [#teamMembers, #teamBuildings]
+  totalAlive = 0
+  repeat with role in roles
+    totalAlive = totalAlive + team[role].count
+  end repeat
+  
+  if totalAlive = 0 then
+    return true
+  end if
+  
+  return false
+end
+
+on isPlayerEnemiesDead me
+  obj = g.actorMaster.getPlayer()
+  -- if we are in self play mode
+  if obj = #none then
+    return false
+  end if
+  
+  objTeam = obj.getTeam()
+  
+  repeat with nTeam in pTeams
+    if nTeam.teamName <> objTeam then
+      if nTeam.hates = [] then
+        next repeat
+      end if
+      
+      nHates = nTeam.hates[1]  -- if team does not hate aldevar at top prority, we can run away
+      if nHates.getPos(objTeam) or nHates.getPos(#all) then
+        if me.isTeamDead(nTeam.teamName) = false then
+          return false
+        end if
+      end if
+    end if    
+  end repeat
+  
+  return true
+  
+end
+
+on joinTeam me, teamName, teamRole, obj
+  if teamName = #none then
+    return
+  end if
+  
+  mems = pTeams[teamName][teamRole]
+  if mems.getPos(obj) = 0 then
+    mems.append(obj)
+    
+    g.reservationsMaster.objectJoined(pTeams[teamName], teamRole, obj)
+  end if
+  
+  me.addObjectToCurrentRoom(obj)
+  obj.linkIn()
+end
+
+on leaveTeam me, teamName, teamRole, obj
+  if teamName = #none then
+    return
+  end if
+  
+  mems = pTeams[teamName][teamRole]
+  pos = mems.getPos(obj)
+  if pos > 0 then
+    mems.deleteAt(pos)
+    
+    g.reservationsMaster.objectLeft(pTeams[teamName], teamRole, obj)
+  end if
+  
+  me.removeObjectFromCurrentRoom(obj)
+  
+  -- if this was the last member of his team then attemptToOpen the exits
+  if me.isTeamDead(teamName) then
+    -- make sure object died, wasn't cleared
+    if obj.getDead() then
+      pTeamThatDied = teamName
+      me.tellTeamDied()
+    end if
+  end if
+  obj.linkOut()
+end
+
+on getTeamColour me, theTeam
+  return pTeams[theTeam].colour.duplicate()
+end
+
+on killEnemyTeams me, theTeam
+  -- kills all teams that are enemies of theTeam
+  team = pTeams[theTeam]
+  hates = team.hates
+  
+  repeat with priorityTeams in hates
+    repeat with hatedTeam in priorityTeams
+      me.killTeam(hatedTeam)
+    end repeat
+  end repeat
+  
+end
+
+on killTeam me, theTeam
+  -- kills team theTeam
+  
+  team = pTeams[theTeam]
+  
+  roles = [#teamMembers, #teamBuildings]
+  
+  -- go through team, telling members and dwellings to die
+  repeat with role in roles
+    teamMembers = team[role]
+    repeat with teamMember in teamMembers
+      teamMember.die()
+    end repeat
+  end repeat
+  
+end
+
+on removeObjectFromCurrentRoom me, obj
+  currentRoom = g.gameMaster.getCurrentRoom()
+  if currentRoom <> #none then
+    currentRoom.removeRoomObject(obj)
+  end if
+  --obj.linkOut()
+end
+
+on restoreTarget me, targetDetails
+  team = targetDetails.team
+  theLoc = targetDetails.sprLoc
+  teamRole = targetDetails.teamRole
+  targetRoles = [[teamRole]]
+  
+  restoredTarget = me.findTargetInTeam(team, theLoc, #closestDistance, targetRoles)
+  
+  return restoredTarget.obj
+end
+
+
+on tellTeamDied me
+  -- does it next frame to allow objects to finish finishing
+  g.updater.addPrg(me, #hi)
+end
+on searchObjMap me, locXY, targetTeams, minShell, maxShell, objMap
+  targetList = []
+  shell = 1
+  if maxShell > 50 then
+    maxShell = 50
+  end if
+  mapSize = objMap.pMapSize
+  mapNode = objMap.peek(locXY)
+  if mapNode <> #none then
+    if mapNode.getNext() = #none then
+      mapNode.finish()
+      objMap.poke(locXY,#none)
+    else
+      mapNode.search(targetTeams, targetList)
+    end if
+  end if
+  --put(minShell)
+  repeat while true
+    if (shell > minShell and count(targetList) > 0) or shell > maxshell then
+      exit repeat
+    end if
+    j = locXY.locv - shell
+    if j >= 1 then
+      repeat with i = locXY.loch - shell to locXY.loch + shell
+        if i < 1 then
+          next repeat
+        end if
+        if i > mapSize.loch then
+          exit repeat
+        end if
+        mapNode = objMap.peek(point(i,j))
+        if mapNode <> #none then
+          if mapNode.getNext() = #none then
+            mapNode.finish()
+            objMap.poke(point(i,j),#none)
+          else
+            mapNode.search(targetTeams, targetList)
+          end if
+        end if
+      end repeat
+    end if
+    j = locXY.locv + shell
+    if j <= mapSize.locv then
+      repeat with i = locXY.loch - shell to locXY.loch + shell
+        if i < 1 then
+          next repeat
+        end if
+        if i > mapSize.loch then
+          exit repeat
+        end if
+        mapNode = objMap.peek(point(i,j))
+        if mapNode <> #none then
+          if mapNode.getNext() = #none then
+            mapNode.finish()
+            objMap.poke(point(i,j),#none)
+          else
+            mapNode.search(targetTeams, targetList)
+          end if
+        end if
+      end repeat
+    end if
+    
+    i = locXY.loch - shell
+    if i >= 1 then
+      repeat with j = locXY.locv - shell + 1 to locXY.locv + shell - 1
+        if j < 1 then
+          next repeat
+        end if
+        if j > mapSize.locv then
+          exit repeat
+        end if
+        mapNode = objMap.peek(point(i,j))
+        if mapNode <> #none then
+          if mapNode.getNext() = #none then
+            mapNode.finish()
+            objMap.poke(point(i,j),#none)
+          else
+            mapNode.search(targetTeams, targetList)
+          end if
+        end if
+      end repeat
+    end if
+    i = locXY.loch + shell
+    if i <= mapSize.loch then
+      repeat with j = locXY.locv - shell + 1 to locXY.locv + shell - 1
+        if j < 1 then
+          next repeat
+        end if
+        if j > mapSize.locv then
+          exit repeat
+        end if
+        mapNode = objMap.peek(point(i,j))
+        if mapNode <> #none then
+          if mapNode.getNext() = #none then
+            mapNode.finish()
+            objMap.poke(point(i,j),#none)
+          else
+            mapNode.search(targetTeams, targetList)
+          end if
+        end if
+      end repeat
+    end if  
+    shell = shell + 1
+  end repeat
+  
+  return targetList
+end
+
+on searchUnitMap me, locXY, targetTeams, minShell, maxShell
+  targetList = []
+  shell = 1
+  if maxShell > 50 then
+    maxShell = 50
+  end if
+  mapSize = pUnitMap.pMapSize
+  mapNode = pUnitMap.peek(locXY)
+  if mapNode <> #none then
+    if mapNode.getNext() = #none then
+      mapNode.finish()
+      pUnitMap.poke(locXY,#none)
+    else
+      mapNode.search(targetTeams, targetList)
+    end if
+  end if
+  --put(minShell)
+  repeat while true
+    if (shell > minShell and count(targetList) > 0) or shell > maxshell then
+      exit repeat
+    end if
+    j = locXY.locv - shell
+    if j >= 1 then
+      repeat with i = locXY.loch - shell to locXY.loch + shell
+        if i < 1 then
+          next repeat
+        end if
+        if i > mapSize.loch then
+          exit repeat
+        end if
+        mapNode = pUnitMap.peek(point(i,j))
+        if mapNode <> #none then
+          if mapNode.getNext() = #none then
+            mapNode.finish()
+            pUnitMap.poke(point(i,j),#none)
+          else
+            mapNode.search(targetTeams, targetList)
+          end if
+        end if
+      end repeat
+    end if
+    j = locXY.locv + shell
+    if j <= mapSize.locv then
+      repeat with i = locXY.loch - shell to locXY.loch + shell
+        if i < 1 then
+          next repeat
+        end if
+        if i > mapSize.loch then
+          exit repeat
+        end if
+        mapNode = pUnitMap.peek(point(i,j))
+        if mapNode <> #none then
+          if mapNode.getNext() = #none then
+            mapNode.finish()
+            pUnitMap.poke(point(i,j),#none)
+          else
+            mapNode.search(targetTeams, targetList)
+          end if
+        end if
+      end repeat
+    end if
+    
+    i = locXY.loch - shell
+    if i >= 1 then
+      repeat with j = locXY.locv - shell + 1 to locXY.locv + shell - 1
+        if j < 1 then
+          next repeat
+        end if
+        if j > mapSize.locv then
+          exit repeat
+        end if
+        mapNode = pUnitMap.peek(point(i,j))
+        if mapNode <> #none then
+          if mapNode.getNext() = #none then
+            mapNode.finish()
+            pUnitMap.poke(point(i,j),#none)
+          else
+            mapNode.search(targetTeams, targetList)
+          end if
+        end if
+      end repeat
+    end if
+    i = locXY.loch + shell
+    if i <= mapSize.loch then
+      repeat with j = locXY.locv - shell + 1 to locXY.locv + shell - 1
+        if j < 1 then
+          next repeat
+        end if
+        if j > mapSize.locv then
+          exit repeat
+        end if
+        mapNode = pUnitMap.peek(point(i,j))
+        if mapNode <> #none then
+          if mapNode.getNext() = #none then
+            mapNode.finish()
+            pUnitMap.poke(point(i,j),#none)
+          else
+            mapNode.search(targetTeams, targetList)
+          end if
+        end if
+      end repeat
+    end if  
+    shell = shell + 1
+  end repeat
+  
+  return targetList
+end
+
+on getRoomClear me
+  return pRoomClear
+end
+
+on setRoomClear me, cleared
+  pRoomClear = cleared
+end
+
+on setTeamOverride me, theTeam
+  pTeamOverride = theTeam
+  if pTeamOverride <> #none then
+    override = true
+  else
+    override = false
+  end if
+  g.reservationsMaster.setTeamOverride(override)
+end
+
+on finish me
+end
+
+on stop me
+  me.finish()
+end
+
+on update me
+  g.gameMaster.teamDied(pTeamThatDied)
+  pTeamThatDied = #none
+  g.updater.removePrg(me)
+end
+
+
+
+
+
+
+
+
+
+
+

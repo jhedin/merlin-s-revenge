@@ -1,0 +1,183 @@
+[#name: "objCutSceneTitle", #scriptType: #parent, #type: #script]
+global g
+
+property ancestor
+property pBackgroundColour -- the colour of the stage background
+property pDisplayTime   -- the time to display the title for (frames)
+property pDisplayTimer  -- the object handling the timing of the display
+property pMode          -- the mode we are in
+property pTitleColour   -- the colour of the title text
+property pTitleMember   -- a record of the title member -- screenMaster gets rid of connection through sprite before we are done with it
+property pTitleToShow   -- the text to show in the title
+
+on new me
+  ancestor = new(script"objSpriteMember")
+  
+  me.addModule("modColourTransform")
+  
+  return me
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  pBackgroundColour = rgb(0,0,0)
+  pDisplayTime = 150
+  pDisplayTimer = #none
+  pMode = #none
+  pTitleColour = rgb(204,204,0)
+  pTitleMember = params.spr.member
+  
+  -- make sure title is ready to go
+  pTitleMember.color = pBackgroundColour
+end
+
+on finish me
+  -- reset title to prevent the last title appearing next time
+  me.setTitle("")
+  
+  me.cancelDisplayTimer()
+  
+  if pTitleMember <> #none then
+    pTitleMember = #none
+  end if
+  
+  ancestor.finish()
+end
+
+on cancelDisplayTimer me
+  if pDisplayTimer <> #none then
+    pDisplayTimer.finish()
+    pDisplayTimer = #none
+  end if
+end
+
+on colourTransformFin me
+  ancestor.colourTransformFin()
+  
+  case pMode of
+    #fadeDown:
+      me.setTitle(pTitleToShow)
+      me.startDisplayTimer()
+      me.revealTitle()
+      
+  end case
+end
+
+on displayTimerFinished me
+  pDisplayTimer = #none
+  
+  me.hideTitle()
+end
+
+on hideTitle me
+  -- fourth, hide the title after a certain time
+  me.startColourChange(pBackgroundColour)
+  
+  pMode = #none
+end
+
+on revealTitle me
+  -- third, reveal the new title
+  me.startColourChange(pTitleColour)
+  
+  pMode = #none
+end
+
+on setTitle me, theText
+  -- second, set the title
+  pTitleMember.text = theText
+end
+
+on showTitle me, theText
+  -- first fade the current text down
+  
+  pTitleToShow = theText
+  
+  me.startColourChange(pBackgroundColour)
+  
+  pMode = #fadeDown
+end
+
+on startColourChange me, newColour
+  params = me.getParams(#colourTransform)
+  params.targetColor = newColour
+  params.speed = 4
+  me.colourTransform(params)
+end
+
+on startDisplayTimer me
+  me.cancelDisplayTimer()
+  
+  pDisplayTimer = g.objectMaster.requestObject(#objTimer)
+  params = pDisplayTimer.getParams(#init)
+  params.callingPrg = me
+  params.callingPrgMessage = #displayTimerFinished
+  params.framesTime = pDisplayTime
+  pDisplayTimer.init(params)
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

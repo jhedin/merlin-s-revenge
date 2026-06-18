@@ -1,0 +1,172 @@
+[#name: "animStripMaster", #scriptType: #parent, #type: #script]
+-- this object collects data from gfx members
+-- and forms them into animStrip data in the form
+-- characters->actions->frames
+
+property pAnimData
+
+on new me
+  return me
+end
+
+on init me  
+  pAnimData = [:]
+  
+  animMembers = me.collectMembers()
+  animMembers = me.seperateMembers(animMembers)
+  me.extractData(animMembers)
+end
+
+on finish me
+end
+
+on addFrame me, theData, theMem
+  -- data come through in the following format
+  -- format "anm_<chr>_<animName>_<d>_<fr>"
+  --      [1] "anm"
+  --      [2] chr = character name eg. "rap"
+  --      [3] animName = name of the anim eg. "firewalk"
+  --      [4] d = delay eg. 1 or 125
+  --          fr = frameNo eg. "01"
+  
+  if pAnimData[theData[2]] = void then
+    pAnimData[theData[2]] = [:]
+  end if
+  
+  if pAnimData[theData[2]][theData[3]] = void then
+    pAnimData[theData[2]][theData[3]] = []
+  end if
+  
+  pAnimData[theData[2]][theData[3]].append([#mem: theMem, #dela: theData[4]])
+end
+
+on collectMembers me
+  
+  animMembers = []
+  
+  numMem = the number of members of castLib("gfx")
+  
+  repeat with i = 1 to numMem
+    nMem = member (i, "gfx")
+    nName = nMem.name
+    
+    if nName contains "anm_" then
+      animMembers.append([#nam: nName, #mem: nMem])
+    end if
+    
+  end repeat
+  
+  return animMembers
+  
+end
+
+on extractData me, animMembers
+  -- extracts the data from the members and sorts it meaningfully
+  repeat with memData in animMembers
+    data = StringExtractList(memData.nam, "_")
+    -- data[1] = "anm"
+    
+    -- convert chr and action to symbol
+    data[2] = symbol(data[2])
+    data[3] = symbol(data[3])
+    
+    -- convert delay to integer
+    data[4] = value(data[4])
+    
+    me.addFrame(data, memData.mem)
+  end repeat
+end
+
+on getStripDefs me, charName
+  charName = symbol(charName)
+  return pAnimData[charName]
+end
+
+on seperateMembers me, animMembers
+  -- this function will add new entries for members
+  -- that are part of many anims
+  i = 1
+  repeat with animMember in animMembers
+    nName = animMember.nam
+    namList = StringExtractList(nName, " ")
+    if namList.count > 1 then
+      nMem = animMember.mem
+      repeat with i = 2 to namList.count
+        animMembers.append([#nam: namList[i], #mem: nMem])
+      end repeat
+    end if
+    i = i + 1
+  end repeat
+  
+  return animMembers
+end
+
+on stop me
+  me.finish()
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

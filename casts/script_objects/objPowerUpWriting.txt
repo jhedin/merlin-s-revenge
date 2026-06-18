@@ -1,0 +1,147 @@
+[#name: "objPowerUpWriting", #scriptType: #parent, #type: #script]
+-- adds writing to the powerup which is displayed when collected
+
+property ancestor
+property pCollected      -- whether or not the object has been collected (stops it from taking a hit)
+property pNonWritingMember -- the inital member. stored for purposes of telling the potion master what to display
+property pWritingMember  -- if #nameBased member will be <#character>_writing
+
+on new me
+  ancestor = new (script "objPowerUp")
+  
+  i = me.modifyParams(#init)
+  
+  i[#writingMember] = #nameBased
+  
+  me.addModule("modFader")
+  me.addModule("modReel")
+  
+  return me
+end 
+
+on init me, params
+  ancestor.init(params)
+  
+  pCollected = false
+  pNonWritingMember = params.member
+  
+  me.setWritingMember(params.writingMember)
+end
+
+on addSaveData me, sd
+  sd[#pCollected] = pCollected
+  
+  ancestor.addSaveData(sd)
+end
+
+on collected me, collector
+  -- don't pass to ancestor: powerup will dissappear immeadiately
+  pCollected = true
+  me.displayWriting()
+  me.setRecordInRoomState(false) -- make sure the powerup doesn't reappear if player exits before writing fully fades.
+  me.playSound(me.pCollectSound)
+end
+
+on displayWriting me
+  me.setMember(pWritingMember)
+  me.goMode(#writing)
+  me.startFade()
+end
+
+on faderFin me
+  me.setDead(true)
+end
+
+on getNonWritingMember me
+  return pNonWritingMember
+end
+
+on restoreFromSave me, sd
+  pCollected = sd.pCollected
+  if pCollected = true then
+    me.setMember(pWritingMember)
+  end if
+  
+  ancestor.restoreFromSave(sd)
+end
+
+on setWritingMember me, newMem
+  if newMem = #nameBased then
+    memName = me.getCharacter() & "_writing"
+    newMem = member(memName, "gfx")
+  end if
+  
+  pWritingMember = newMem
+end
+
+on takeHit me, collisionVect
+  if pCollected then
+    return
+  end if
+  
+  me.goMode(#reel)
+  
+  ancestor.takeHit(collisionVect)
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

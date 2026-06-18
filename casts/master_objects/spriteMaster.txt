@@ -1,0 +1,245 @@
+[#name: "spriteMaster", #scriptType: #parent, #type: #script]
+global g
+global g3DMode
+
+property p
+property p3DWorld -- the window which displays the 3D view
+property pShader  -- a basic shader used to display the sprites
+
+on new me
+  return me
+end
+
+on init me
+  p = [:]
+  
+  p[#spriteList] = []
+  p[#spriteInfo] = []
+  
+  me.initSpriteLists()
+end
+
+on init3DWorld me
+  p3DWorld = member("3DWorld", "gfx")
+  
+  sprite(1).member = p3DWorld
+  sprite(1).rect = rect(0,0, (the stage).rect.width, (the stage).rect.height)
+  
+  if voidP( p3DWorld.shader("aShader")) then  
+    pShader = p3DWorld.newShader("aShader", #standard) 
+    pShader.blendFunction = #replace
+  end if
+end
+
+on initSpriteLists me
+  lastChan = the lastChannel
+  repeat with i = 1 to lastChan
+    
+    if g3DMode = false then
+      spr = sprite(i)
+    else
+      spr = g.objectMaster.requestObject(#obj3DSprite)
+      params = spr.getParams(#init)
+      params.spriteNum = i
+      spr.init(params)
+    end if
+    
+    
+    if spr.member = member("dot", "gfx") then
+      p.spriteList[i] = spr
+      p.spriteInfo[i] = [#inuse: false, #lastUser: #none]
+      me.freeSprite(i)
+    end if
+  end repeat
+end
+
+on checkFreeSprite me
+  --checks whether there is a sprite free
+  repeat with sprInfo in p.spriteInfo
+    if sprInfo.inUse = false then
+      return true
+    end if
+  end repeat
+  
+end
+
+on freeSprite (me, sprNum)
+  
+  if ilk(sprNum) <> #integer then
+    sprNum = sprNum.spriteNum
+  end if
+  
+  spr = p.spriteList[sprNum]
+  spr.fliph = false
+  spr.locH = -1
+  spr.locV = -1
+  spr.locz = spr.spriteNum
+  spr.member = member("dot", "gfx")
+  spr.blend = 100
+  spr.visible = true
+  spr.color = rgb(0,0,0)
+  spr.bgColor = rgb(255,255,255)
+  spr.width = 1
+  spr.height = 1
+  spr.ink = 36
+  spr.rotation = 0
+  
+  p.spriteInfo[sprNum].inuse = false
+end
+
+on freeSprites me, sprList
+  repeat with spr in sprList
+    me.freeSprite(spr)
+  end repeat
+end
+
+on findFreeSprite me
+  repeat with i = 1 to p.spriteInfo.count
+    spr = p.spriteInfo[i]
+    if spr.inuse = false then
+      return p.spriteList[i]
+    end if
+  end repeat
+end 
+
+on get3DWorld me
+  return p3DWorld
+end
+
+on getShader me
+  return pShader
+end
+
+on getSpritesInUse me
+  numInUse = 0
+  repeat with spr in p.spriteInfo
+    if spr.inuse = true then
+      numInUse = numInUse + 1
+    end if
+  end repeat
+  return numInUse
+end
+
+on getSpriteWithMember me, member
+  repeat with spr in p.spriteList
+    if spr.member = member then
+      return spr
+    end if
+  end repeat
+  return #none
+end
+
+on hideAll2DSprites me
+  -- called by screen master to prevent screen layouts
+  -- from showing
+  me.setAll2DProperty(#visible, false)
+end
+
+on setAll2DProperty me, theProperty, theValue
+  repeat with i = 1 to the lastChannel
+    spr = sprite(i)
+    case theProperty of
+      #visible:
+        spr.visible = theValue
+    end case
+    
+  end repeat 
+end
+
+on showAll2DSprites me
+  -- called by screen master to show sprites after screen layouts are recorded
+  me.setAll2DProperty(#visible, true)
+end
+
+on visibleAll me, bVisible
+  repeat with spr in p.spriteList
+    spr.visible = bVisible
+  end repeat
+end
+
+on requestSprite me, requester
+  spr = me.findFreeSprite()
+  
+  p.spriteInfo[spr.spriteNum].inuse = true
+  p.spriteInfo[spr.spriteNum].lastUser = requester
+  
+  return spr
+end
+
+on stop me
+end
+
+on updateSprites me
+  -- only happens in 3DMode
+  
+  repeat with spr in p.spriteList
+    spr.update()
+  end repeat
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,182 @@
+[#name: "modPositioning", #scriptType: #parent, #type: #script]
+-- helps an object to to be positioned such that it's edge is in such and such a place
+
+property ancestor
+
+on new me
+  ancestor = new (script("modModule"))
+  return me
+end
+
+on addModParams me
+  i = me.modifyParams(#init)
+  
+  ancestor.addModParams()
+end
+
+on init me, params
+  
+  ancestor.init(params)
+end
+
+on getMemberHeight me
+  spr = me.ID.bigMe.getSprite()
+  
+  return spr.member.height
+  
+end
+
+on getReverseSpriteRegPoint me
+  sprRect = me.getSpriteDimensionRect()
+  reg = me.getSpriteRegPoint()
+  
+  revReg = point(0,0)
+  revReg.locV = sprRect.height - reg.locV
+  revReg.locH = sprRect.width - reg.locH
+  
+  return revReg
+  
+end
+
+on getSpriteDimensionRect me
+  -- returns the spriteRect as if it were positioned in the top corner
+  spr = me.ID.bigMe.getSprite()
+  dimensionRect = rect(0,0, spr.width, spr.height)
+  
+  return dimensionRect
+end
+
+on getSpriteRegPoint me
+  -- returns the regpoint for the sprite when scaled or stretched
+  
+  spr = me.ID.bigMe.getSprite()
+  sprDimensionRect = me.getSpriteDimensionRect()
+  
+  -- if sprite is not scaled, return member regpoint
+  if spr.rect = sprDimensionRect then
+    return spr.member.regPoint
+  end if
+  
+  sprRegPoint = map(spr.member.regPoint, spr.member.rect, sprDimensionRect)
+  
+  return sprRegPoint
+end
+
+on positionEdge me, theEdge, thePos
+  case theEdge of
+    #left:
+      pos = me.positionLeftEdge(thePos)
+      
+    #top:
+      pos = me.positionTopEdge(thePos)
+      
+    #right:
+      pos = me.positionRightEdge(thePos)
+      
+    #bottom:
+      pos = me.positionBottomEdge(thePos)
+      
+  end case
+  
+  return pos
+end
+
+on positionLeftEdge me, thePos
+  reg = me.getSpriteRegPoint()
+  
+  sprLocX = thePos + reg.locH
+  
+  return sprLocX
+  
+end
+
+on positionTopEdge me, thePos
+  reg = me.getSpriteRegPoint()
+  
+  sprLocY = thePos + reg.locV
+  
+  return sprLocY
+end
+
+on positionRightEdge me, thePos
+  reg = me.getReverseSpriteRegPoint()
+  
+  sprLocX = thePos - reg.locH
+  
+  return sprLocX
+end
+
+
+on positionBottomEdge me, thePos
+  reg = me.getReverseSpriteRegPoint()
+  
+  sprLocY = thePos - reg.locV
+  
+  return sprLocY
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

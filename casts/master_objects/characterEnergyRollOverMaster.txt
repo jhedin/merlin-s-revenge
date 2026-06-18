@@ -1,0 +1,336 @@
+[#name: "characterEnergyRollOverMaster", #scriptType: #parent, #type: #script]
+
+-- displays a character's health when the mouse rolls over him/her
+
+
+
+global g
+
+global gGameEnergyBarLayer
+
+
+
+property pEnergyBar
+
+property pFakeAttack       -- a fake attack with just enough parameters in it to keep the team master happy
+
+property pLevelBar         -- shows the unit's level in stars
+
+property pExperienceBar    -- shows the unit's experience
+
+property pSurroundHeight
+
+property pTeam
+
+
+
+on new me
+  
+  return me
+  
+end
+
+
+
+on init me
+  
+  pEnergyBar = #none
+  
+  pFakeAttack = g.structMaster.getStruct(#attack)
+  
+  pLevelBar = #none
+  
+  pSurroundHeight = 4
+  
+  pTeam = #healthRollover
+  
+  
+  
+  me.initEnergyBar()
+  
+  me.initFakeAttack()
+  
+  me.initLevelBar()
+  
+  me.initExperienceBar()
+  
+end
+
+
+
+on initEnergyBar me
+  
+  pEnergyBar = g.objectMaster.requestObject(#objMoveableEnergyBar)
+  
+  params = pEnergyBar.getParams()
+  
+  params.layer = gGameEnergyBarLayer
+  
+  params.surroundHeight = 4
+  
+  pEnergyBar.init(params)
+  
+end
+
+
+
+on initFakeAttack me
+  
+  a = pFakeAttack
+  
+  
+  
+  a.targetAllegiance = #enemy
+  
+  a.targetCriteria = #closestDistance
+  
+  a.targetRoles = [[#teamMembers, #teamBuildings]]
+  
+end
+
+
+
+on initLevelBar me
+  
+  pLevelBar = g.objectMaster.requestObject(#objMoveableLevelBar)
+  
+  params = pLevelBar.getParams()
+  
+  params.layer = gGameEnergyBarLayer
+  
+  pLevelBar.init(params)
+  
+end
+
+
+
+on initExperienceBar me
+  
+  pExperienceBar = g.objectMaster.requestObject(#objMoveableExperienceBar)
+  
+  params = pExperienceBar.getParams()
+  
+  params.layer = gGameEnergyBarLayer
+  
+  params.surroundHeight = 4
+  
+  pExperienceBar.init(params)
+  
+end
+
+
+
+on finish me
+  
+  if ilk(pEnergyBar) <> #void then
+    
+    pEnergyBar.finish()
+    
+  end if
+  
+  
+  
+  if ilk(pLevelBar) <> #void then
+    
+    pLevelBar.finish()
+    
+  end if
+  
+  
+  
+  if ilk(pExperienceBar) <> #void then
+    
+    pExperienceBar.finish()
+    
+  end if
+  
+  g.updater.removePrg(me)
+  
+end
+
+
+
+on checkMouseOverObj me, theObj
+  
+  mLoc = g.mouseMaster.getMouseLoc()
+  
+  objRect = theObj.getSpriteRect()
+  
+  
+  
+  if mLoc.inside(objRect) then
+    
+    return true
+    
+  end if
+  
+  return false
+  
+end
+
+
+
+on getAttack me
+  
+  return pFakeAttack
+  
+end
+
+
+
+on getActorType me
+  
+  -- for debugging purposes on g.teammaster
+  
+  return #characterEnergyRollOverMaster
+  
+end
+
+
+
+on getLoc me
+  
+  return g.mouseMaster.getMouseLoc()
+  
+end
+
+
+
+on getTeam me
+  
+  return pTeam
+  
+end
+
+
+
+on leaveNavMode me
+  
+  -- means we are enetering a new room
+  
+  pEnergyBar.clearTarget()
+  
+  pExperienceBar.clearTarget()
+  
+end
+
+
+
+on restoreFromSave me
+  
+  pEnergyBar.clearTarget()
+  
+end
+
+
+
+on start me
+  
+  g.updater.addPrg(me, #hi)
+  
+end
+
+
+
+on stop me
+  
+  me.finish()
+  
+end
+
+
+
+on update me
+  
+  -- find closest char
+  
+  closestChar = g.teamMaster.findTarget(me)
+  
+  obj = closestChar.obj
+  
+  
+  
+  if obj = #none then
+    
+    pEnergyBar.clearTarget()
+    
+    pExperienceBar.clearTarget()
+    
+    pLevelBar.clearTarget()
+    
+  else if me.checkMouseOverObj(obj) then
+    
+    pEnergyBar.setTarget(obj)
+    
+    pExperienceBar.setTarget(obj)
+    
+    pLevelBar.setTarget(obj)
+    
+  end if
+  
+  pEnergyBar.update()
+  
+  pLevelBar.update()
+  
+  pExperienceBar.update()
+  
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

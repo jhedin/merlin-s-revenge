@@ -1,0 +1,192 @@
+[#name: "objPowerUp", #scriptType: #parent, #type: #script]
+global g
+
+property ancestor
+property pCharacter
+property pCollectSound
+property pFlasher
+property pMode
+property pTimeAlive
+property pTimeAliveCounter
+
+
+on new me
+  ancestor = new(script "objAiGameObject")
+  
+  i = me.modifyParams(#init)
+  i[#timeAlive] = 0
+  i[#collectSound] = #none
+  
+  return me
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  pCharacter = params.character
+  pCollectSound = params.collectSound
+  pFlasher = #none
+  pTimeAlive = params.timeAlive
+  
+  if pTimeAlive > 0 then
+    pTimeAliveCounter = CounterNew()
+    pTimeAliveCounter.tim[2] = pTimeAlive
+    
+    me.goMode(#timed)
+  else
+    me.goMode(#norm)
+  end if
+end 
+
+on finish me
+  me.finishFlasher()
+  
+  ancestor.finish()
+end
+
+on finishFlasher me
+  if pFlasher <> #none then
+    pFlasher.cancel()
+    pFlasher = #none
+  end if
+end
+
+on collected me
+  player = g.actormaster.getPlayer()
+  
+  me.playSound(pCollectSound)
+  
+  case pCharacter of
+    #hairConditioner:
+      player.hairConditionerCollected()
+      
+    #hairDrop:
+      player.hairDropCollected()
+      
+    #hairGem:
+      player.lifePowerUpCollected()
+      player.increaseEnergy(2)
+      
+    #hairPowerUp:
+      player.hairPotionCollected()
+      --player.growHair()
+      
+    #hairPotion:
+      player.hairPotionCollected()
+      
+    #superHairConditioner:
+      g.gameMaster.gameComplete()
+      
+  end case
+  
+  me.finishFlasher()
+  me.setDead(true)
+end
+
+on flasherFinished me
+  me.setDead(true)
+  pFlasher = #none
+end
+
+on getAnimMember me
+  -- these items don't use the modAnimset
+  return me.getMember()
+end
+
+on goMode me, newMode
+  
+  case newMode of
+    #dead:
+      pFlasher = g.objectMaster.requestObject(#objFlasher)
+      params = pFlasher.getParams(#init)
+      params.callingPrg = me
+      params.spr = me.pSpr
+      params.time = 30
+      pFlasher.init(params)
+      
+  end case
+  
+  ancestor.goMode(newMode)
+  
+  pMode = newMode
+end
+
+on update me
+  ancestor.update()
+  
+  case me.pMode of
+    #timed:
+      fin = me.updateTimed()
+      if fin then me.goMode(#dead)
+  end case
+end
+
+on updateTimed me
+  if pTimeAliveCounter.fin then
+    return true
+  end if
+  
+  Counter(pTimeAliveCounter)
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

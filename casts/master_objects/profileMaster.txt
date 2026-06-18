@@ -1,0 +1,169 @@
+[#name: "profileMaster", #scriptType: #parent, #type: #script]
+-- for profiling the performance of different parts of the program
+global g
+
+property pLastStarted  -- the last profile to be started - used as default for stopProfile()
+property pMinTime      -- if the time of the first profile is less than this, the report won't be written
+property pMinTimeProfile -- the profile to which the pMinTime should be compared, defualt is 1, can be any profile symbol
+property pReportTitle  -- the printed at the beginning and end of the report
+property pProfiles     -- a list of the profiles
+
+on new me
+  return me
+end
+
+on init me
+  pLastStarted = #none
+  pMinTime = 0
+  pMinTimeProfile = 1
+  pReportTitle = "Timing Report"
+  pProfiles = [:]
+end
+
+on finish me
+end
+
+---
+-- SHORTCUT functions
+on f me, profile
+  me.stopProfile(profile)
+end
+
+on t me, newTitle
+  me.setTitle(newTitle)
+end
+
+on s me, profile
+  me.startProfile(profile)
+end
+
+on w me
+  me.writeReport()
+end
+---
+
+on setMinTime me, newTime, profile
+  if profile = void then profile = 1
+  
+  pMinTime = newTime
+  pMinTimeProfile = profile  
+end
+
+on setReportTitle me, newVal
+  me.init()
+  pReportTitle = newVal
+end
+
+on setTitle me, newVal
+  me.setReportTitle(newVal)
+end
+
+on start me
+end
+
+on startProfile me, profile
+  if pProfiles[profile] = void then  
+    newProfile = g.structMaster.getStruct(#timerProfile)
+    pProfiles[profile] = newProfile
+  end if
+  
+  pProfiles[profile].stTime = the milliseconds
+  pLastStarted = profile
+end
+
+on stopProfile me, profile
+  if profile = void then
+    profile = pLastStarted
+  end if
+  
+  theP = pProfiles[profile]
+  
+  theP.finTime = the milliseconds
+  theP.totalTime = theP.totalTime + (theP.finTime - theP.stTime)
+end
+
+
+
+on writeReport me
+  -- don't write if the totaltime is less than pMinTime
+  if pProfiles[pMinTimeProfile].totalTime < pMinTime then
+    return
+  end if
+  
+  put "<" & pReportTitle & ">"
+  repeat with i = 1 to pProfiles.count
+    nProfile = pProfiles.getPropAt(i)
+    nTime = pProfiles[i].totalTime
+    put nProfile & " = " & nTime
+  end repeat
+  put "</" & pReportTitle & ">"
+  put ""
+end
+
+on stop me
+  me.finish()
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

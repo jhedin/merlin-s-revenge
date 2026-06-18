@@ -1,0 +1,156 @@
+[#name: "objLine", #scriptType: #parent, #type: #script]
+-- displays a horizonal or vertical line 
+
+global gGridSelectorLayer
+
+property ancestor
+property pColor     -- the color of the line
+property pLocLength -- the locations of the ends of the line. Can be x or y locs.
+property pLocX      -- the x loc of the line. Only set if line is Vertical
+property pLocY      -- the y loc of the line. Only set if line is Horizontal
+property pThickness -- the thickness of the line
+
+on new me
+  ancestor = new (script "objSpriteMember")
+  
+  i = me.modifyParams(#init)
+  
+  i[#color] = rgb(255,255,0)
+  i[#locLength] = [10,20]
+  i[#locX] = #none
+  i[#locY] = #none
+  i[#thickness] = 2
+  
+  return me
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  pColor = params.color
+  pLocLength = params.locLength
+  pLocX = params.locX
+  pLocY = params.locY
+  pThickness = params.thickness
+  
+end
+
+on calcDisplayRect me
+  displayRect = rect(0,0,0,0)
+  
+  locThickness = me.calcLocThickness()
+  
+  if pLocY <> #none then
+    displayRect.left = pLocLength[1]
+    displayRect.right = pLocLength[2]
+    
+    displayRect.top = locThickness[1]
+    displayRect.bottom = locThickness[2]
+  else
+    -- assume locX <> #none
+    displayRect.left = locThickness[1]
+    displayRect.right = locThickness[2]
+    
+    displayRect.top = pLocLength[1]
+    displayRect.bottom = pLocLength[2]    
+  end if
+  
+  return displayRect
+end
+
+on calcLocThickness me
+  locThickness = [0,0]
+  
+  halfThickness = pThickness / 2
+  
+  midLoc = me.calcMidLoc()
+  
+  locThickness[1] = midLoc - halfThickness
+  locThickness[2] = midLoc + halfThickness
+  
+  return locThickness
+end
+
+on calcMidLoc me
+  if pLocX <> #none then 
+    midLoc = pLocX
+  else
+    midLoc = pLocY
+  end if
+  
+  return midLoc
+end
+
+on display me
+  
+  me.requestSprite()
+  me.setSpriteColor(pColor)
+  me.setSpriteLayer(gGridSelectorLayer)
+  me.setSpriteRect(me.calcDisplayRect())
+  
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,102 @@
+[#name: "objStar", #scriptType: #parent, #type: #script]
+property ancestor
+property pLifeCount
+
+on new me
+  ancestor = new(script"objGameObject")
+  
+  me.addModule("modAnimSet")
+  
+  return me
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  pLifeCount = CounterNew()
+  pLifeCount.tim[2] = params.lifeCount
+end
+
+on checkCollisions me, newLoc, oldLoc
+  return newLoc
+end
+
+on setLifeCount me, newLifeCount
+  pLifeCount.tim[2] = newLifeCount
+end
+
+on update me
+  if pLifeCount.fin then
+    me.pDead = true
+  end if
+  
+  if me.pMoveXY.onscreen() = false then
+    me.pDead = true
+  end if
+  
+  Counter(pLifeCount)
+  
+  ancestor.update()
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

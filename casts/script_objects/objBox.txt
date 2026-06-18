@@ -1,0 +1,173 @@
+[#name: "objBox", #scriptType: #parent, #type: #script]
+global g, gGridSelectorLayer
+
+property ancestor
+property pColor
+property pLayer
+property pLineWidth
+property pMember           -- a bitmap member showing the box. if #none, box will be drawn from lines
+property pMode             -- the mode in which the box is operating in. can be #drawLines or #drawBitmap is a bitmap member was passed in the params
+property pOffscreenRect
+property pRect
+property pSprites
+
+on new me
+  ancestor = new (script "objParams")
+  
+  i = me.modifyParams(#init)
+  i[#color] = rgb(255,255,0)
+  i[#initialRect] = #none
+  i[#layer] = gGridSelectorLayer
+  i[#lineWidth] = 1
+  i[#member] = #none
+  
+  return me
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  pOffscreenRect = rect(-1,-1,0,0)
+  
+  pColor = params.color
+  pLayer = gGridSelectorLayer
+  pLineWidth = params.lineWidth
+  pMember = params.member
+  pSprites = #none
+  
+  if pMember = #none then
+    pMode = #drawLines
+  else
+    pMode = #drawBitmap
+  end if
+  
+  me.requestSprites()
+  
+  if params.initialRect <> #none then
+    me.setRect(params.initialRect)
+  end if
+end
+
+on display me
+  case pMode of
+    #drawLines:
+      pSprites[#top].rect = rect(pRect[1], pRect[2], pRect[3], (pRect[2] + pLineWidth))
+      pSprites[#bottom].rect = rect(pRect[1], (pRect[4] - pLineWidth), pRect[3], pRect[4])
+      pSprites[#left].rect = rect(pRect[1], pRect[2], pRect[1] + pLineWidth, pRect[4])
+      pSprites[#right].rect = rect(pRect[3] - pLineWidth, pRect[2], pRect[3], pRect[4])
+      
+    #drawBitmap:
+      pSprites[1].rect = pRect.duplicate()
+      
+  end case
+end
+
+on finish me
+  me.freeSprites()
+  ancestor.finish()
+end
+
+on freeSprites me
+  g.spriteMaster.freeSprites(pSprites)
+end
+
+on offscreen me
+  me.setRect(pOffscreenRect)
+end
+
+on requestSprites me
+  case pMode of 
+    #drawLines:
+      
+      pSprites = g.structMaster.getStruct(#boxSprites)
+      repeat with i = 1 to pSprites.count
+        pSprites[i] = g.spriteMaster.requestSprite()
+        pSprites[i].color = pColor
+        pSprites[i].locz = pLayer
+      end repeat
+      
+    #drawBitmap:
+      
+      pSprites = []
+      pSprites.append(g.spriteMaster.requestSprite())
+      SpriteSetMember(pSprites[1], pMember)
+      pSprites[1].locz = pLayer
+      
+  end case
+end
+
+on setColor me, theColor
+  pColor = theColor
+  repeat with i = 1 to pSprites.count
+    pSprites[i].color = pColor
+  end repeat
+end
+
+on setRect me, theRect
+  pRect = theRect.duplicate()
+  me.display()
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

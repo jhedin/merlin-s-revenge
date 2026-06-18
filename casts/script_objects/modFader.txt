@@ -1,0 +1,209 @@
+[#name: "modFader", #scriptType: #parent, #type: #script]
+-- used by objScroll for writing to fade away
+-- used by objSpell for explosion fade
+
+global g
+
+property ancestor
+property pTransBlend   -- a transBlend object
+
+on new me
+  ancestor = new (script("modModule"))
+  return me
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  pTransBlend = #none
+end
+
+on addModParams me
+  i = me.modifyParams(#init)
+  
+  ancestor.addModParams()
+end
+
+on finish me
+  me.cancelTransBlend()
+  
+  ancestor.finish()
+end
+
+on addSaveData me, sd
+  if pTransBlend <> #none then
+    
+    saveData = [:]
+    pTransBlend.addSaveData(saveData)
+    sd[#pTransBlend] = saveData
+    
+  else
+    sd[#pTransBlend] = #none    
+  end if
+  
+  ancestor.addSaveData(sd)  
+end
+
+on cancelTransblend me
+  if pTransBlend <> #none then
+    pTransBlend.finish()
+    pTransBlend = #none
+  end if
+end
+
+on invisible me
+  me.cancelTransBlend()
+  me.ID.bigMe.setBlend(0)
+end
+
+on paws me
+  ancestor.paws()
+  
+  if pTransBlend <> #none then
+    pTransBlend.paws()
+  end if
+end 
+
+on restoreFromSave me, sd
+  me.cancelTransBlend()
+  
+  if sd.pTransBlend <> #none then
+    pTransBlend = g.objectMaster.requestObject(#objTransBlend)
+    pTransBlend.setCallingPrg(me.big)
+    pTransBlend.setSprite(me.big.getSprite())
+    pTransBlend.restoreFromSave(sd.pTransBlend)
+  end if
+  
+  ancestor.restoreFromSave(sd)
+end
+
+on setBlend me, val
+  spr = me.ID.bigMe.getSprite()
+  spr.blend = val
+end
+
+on startFade me
+  me.startTransBlend(2, #out)
+end
+
+on startSlowFadeIn me
+  me.startTransBlend(2, #in)
+end
+
+on startSlowFadeOut me
+  me.startTransBlend(2, #out)
+end
+
+on startMediumFadeIn me
+  me.startTransBlend(4, #in)
+end
+
+on startMediumFadeOut me
+  me.startTransBlend(4, #out)
+end
+
+on startQuickFade me
+  me.startTransBlend(10, #out)
+end
+
+on startQuickFadeIn me
+  me.startTransBlend(10, #in)
+end
+
+on startTransBlend me, speed, dir
+  me.cancelTransBlend()
+  
+  case dir of
+    #in:
+      targetValue = 100
+    #out:
+      targetValue = 0
+  end case
+  
+  pTransBlend = g.objectMaster.requestObject(#objTransBlend)
+  params = pTransBlend.getParams(#init)
+  params.callingPrg = me.ID.bigMe
+  params.targetValue = targetValue
+  params.speed = speed
+  params.spr = me.getSprite()
+  pTransBlend.init(params)
+  pTransBlend.calcStart()
+end
+
+on transBlendFin me
+  me.ID.bigMe.faderFin()
+  me.big.internalEvent(#transBlendFin)
+  pTransBlend = #none
+end
+
+on unpaws me
+  ancestor.unpaws()
+  
+  if pTransBlend <> #none then
+    pTransBlend.unpaws()
+  end if
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,89 @@
+[#name: "GeomTangentPoint(thepoint,mirrorpoint, dir,safeDist)", #scriptType: #movie, #type: #script]
+on GeomTangentPoint (thepoint,mirrorpoint, dir, safeDist)
+  destPoint = point(0,0)
+  dir1 = 1
+  dir2 = 1
+  if dir > 0 then
+    dir1 = -1
+  else
+    dir2 = -1
+  end if
+  
+  mirvect  = thepoint - mirrorpoint
+  --  mirvect  = mirvect * 2 --replacing with unit vector scaling.
+  destVect = vector(mirvect.loch,mirvect.locv,0)
+  destVect.normalize()
+  
+  mirVect.loch = (destVect.y)*safeDist*2*dir1
+  mirVect.locv = (destVect.x)*safeDist*2*dir2
+  
+  mirvect.loch = mirvect.loch + destVect.x*safeDist/5
+  mirVect.locv = mirVect.locv + destVect.y*safeDist/5
+  
+  destPoint = thepoint - mirvect
+  
+  return destPoint
+end GeomTangentPoint
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

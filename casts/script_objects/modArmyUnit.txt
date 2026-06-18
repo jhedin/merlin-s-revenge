@@ -1,0 +1,196 @@
+[#name: "modArmyUnit", #scriptType: #parent, #type: #script]
+global g
+
+property ancestor
+property pArmyDetails     -- stored here while other object add to them
+property pTeleportable    -- whether or not the unit can be teleported off the screen (usually true, Merlin is the exception)
+property pTeleportOutStarted -- whether we started a teleport out
+
+on new me
+  ancestor = new (script("modModule"))
+  return me
+end
+
+on addModParams me
+  i = me.modifyParams(#init)
+  
+  i[#teleportable] = true
+  
+  ancestor.addModParams()
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  pArmyDetails = #none
+  pTeleportable = params.teleportable
+  pTeleportOutStarted = false
+  
+  -- react intelligently to ghostiness
+  if params[#ghost] = true then
+    pTeleportable = false
+  end if
+end
+
+on addSaveData me,sd
+  ancestor.addSaveData(sd)
+  
+  me.addToSaveData(sd)
+end
+
+on addToArmyDetails me
+  ad = me.big.getArmyDetails()
+  me.addToSaveData(ad)
+end
+
+on addToSaveData me, sd
+  sd[#pTeleportOutStarted] = pTeleportOutStarted  
+end
+
+on armyTeleportIn me
+  me.big.collisionDetectionOff()
+  me.big.frameAdvance() -- correct width problem
+  
+  me.big.teleportInAt(me.getLoc())
+end
+
+on armyTeleportOut me
+  if pTeleportable = false then
+    return
+  end if
+  
+  -- if we are already teleporting
+  if pTeleportOutStarted then
+    return
+  end if
+  
+  -- if we are in the middle of building something ignore the teleport
+  --  if me.big.getMode() = #build then
+  --    return
+  --  end if
+  
+  pTeleportOutStarted = true
+  
+  -- switch off collisionDetection as it messes with the teleport
+  me.big.collisionDetectionOff()
+  stageFloor = me.big.getRect().bottom
+  me.big.teleportOut(#none, stageFloor)
+end
+
+on generateArmyDetails me
+  -- not using addSaveData because there are a lot of things
+  -- we don't want to record
+  -- eg. targeting info, health levels, animFrame
+  
+  pArmyDetails = [:]
+  --  armyDetails.team = me.big.getTeam()
+  --  armyDetails.typ = me.big.getActorType()
+  
+  me.big.internalEvent(#addToArmyDetails)
+  
+  
+  return pArmyDetails
+end
+
+on getArmyDetails me
+  return pArmyDetails
+end
+
+on internalEvent me, theEvent
+  ancestor.internalEvent(theEvent)
+  
+  case theEvent of
+    #addToArmyDetails:
+      me.addToArmyDetails()
+      
+    #restoreFromArmyDetails:
+      me.restoreFromArmyDetails()
+      
+    #teleportInFinished:
+      me.big.collisionDetectionOn()
+      
+    #teleportOutFinished:
+      if pTeleportOutStarted = true then
+        pTeleportOutStarted = false
+        g.armyMaster.recordUnitDetails(me.big)
+        me.big.leaveGame()
+        me.big.eventNotify(#leaveGame)
+      end if
+      
+  end case
+end
+
+on restoreArmyDetails me, armyDetails
+  pArmyDetails = armyDetails
+  
+  me.internalEvent(#restoreFromArmyDetails)
+end
+
+on restoreFromArmyDetails me
+  ad = me.big.getArmyDetails()
+  me.restoreFromSaveData(ad)
+end
+
+on restoreFromSave me, sd
+  ancestor.restoreFromSave(sd)
+  
+  me.restoreFromSaveData(sd)
+end
+
+on restoreFromSaveData me,sd
+  pTeleportOutStarted = sd.pTeleportOutStarted
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

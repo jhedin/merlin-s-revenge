@@ -1,0 +1,124 @@
+[#name: "objUpdater", #scriptType: #parent, #type: #script]
+global q
+
+property ancestor
+property pUpdateCats
+property pUpdateLists
+
+on new me
+  ancestor = new(script "objBasic")
+  return me
+end new
+
+on init me, uCats
+  if not ilk(uCats, #list) then
+    uCats = [#norm]
+  end if
+  pUpdateCats = uCats.duplicate()
+  pUpdateLists = []
+  
+  me.initCats()
+end init
+
+on initCats me
+  numCats = pUpdateCats.count
+  repeat with c = 1 to numCats
+    pUpdateLists[c] = []
+  end repeat
+end initCats
+
+on updatePrgs me, mou
+  repeat with ul = 1 to pUpdateLists.count
+    nUl = pUpdateLists[ul]
+    repeat with prg = 1 to nUl.count
+      nPrg = nUl[prg]
+      update nPrg, mou
+    end repeat
+  end repeat
+end updatePrgs
+
+on addPrg me, prg, cat
+  catPos = pUpdateCats.getpos(cat)
+  
+  if catPos = 0 then
+    alert "updater: unknown cat("&q&"#" & cat &q& " from prg: " & prg & ")"
+    halt
+  end if
+  
+  ul = pUpdateLists[catPos]
+  if ul.getpos(prg) = 0 then
+    ul.append(prg)
+  end if
+ 
+end addPrg
+
+on removePrg me, prg
+  repeat with ul in pUpdateLists
+    pos = ul.getpos(prg)
+    if pos > 0 then
+      ul.deleteat(pos)
+    end if
+  end repeat
+end removePrg
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

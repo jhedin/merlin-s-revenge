@@ -1,0 +1,108 @@
+[#name: "objAiFlyingBomber", #scriptType: #parent, #type: #script]
+global g
+
+property ancestor
+
+on new me
+  ancestor = new (script"objAiCPU")
+  return me
+end
+
+on update me
+  case me.pMode of
+    #moveToAttack:
+      fin = me.ID.bigMe.updateMoveToAttack()
+      if fin then me.ID.bigMe.goMode(#attack)
+      
+    #attack:
+      fin = me.updateAttack()
+      if fin then me.ID.bigMe.goMode(#moveToAttack)
+  end case
+  
+  CounterOnce(me.pAttack.cooldownCounter)
+end
+
+on updateMoveToAttack me
+  if me.pPlayer = #none then
+    me.pPlayer = g.actormaster.getPlayer()
+  end if
+  
+  attackLoc = me.pAttack.idealAttackLoc.duplicate()
+  reach = me.pAttack.reach
+  idealRect = me.pPlayer.getRect() + rect(attackLoc, attackLoc)
+  attackRect = me.pPlayer.getRect().inflate(reach[1], reach[2])
+  
+  me.updateMoveToRect(idealRect)
+  inRect = me.checkInRect(attackRect)
+  if inRect = true then
+    fin = true
+  else
+    fin = false
+  end if
+  
+  return fin
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

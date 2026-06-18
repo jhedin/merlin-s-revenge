@@ -1,0 +1,37 @@
+[#name: "SineDist(loc1,loc2)", #scriptType: #movie, #type: #script]
+on SineDist loc1,loc2
+  --returns the distance between loc 1 and 2, within a reasonable tolerance.
+  distXY = loc1 - loc2
+  if distXY.loch = 0 then
+    dist= distXY.locv * 1.000
+  else
+    theta = aTan(distXY.locv/(distXY.loch))
+    if theta = 0 then
+      dist = distXY.loch * 1.000
+    else
+--      if theta < 0.5  and theta > -0.5 then
+--        dist = distXY/theta
+--      else
+        dist = distXY.locv/sin(theta)
+--      end if
+    end if
+  end if
+  if dist < 0 then
+    dist = -dist
+  end if
+  
+  return dist
+end
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,797 @@
+[#name: "objRoom", #scriptType: #parent, #type: #script]
+-- a room consists of the following layers:
+-- #backgroundPassive, #backgroundSolid, #objects, #foregroundPassive
+
+global g
+global gExitArrows
+global gNavMode
+
+property ancestor
+property pBeenActivated
+property pCurrentEditLayer
+property pDefaultScale
+property pFrontLayerBlendLevel
+property pHostileStatus          -- whether the room contains a special or hostile item
+property pLocation
+property pRoomCleared            -- whether the room has been cleared (used to determine whether to play the roomClearedSound)
+property pRoomClearedSound       -- the sound to make when the room is cleared
+property pRoomObjects            -- a list that stores the objects currently in play, the actormaster will automatically log new objects with the current room
+property pRoomObjectsToRestore   -- if the room was the active room when the game was saved, then when the game is loaded, the data for the objects to be restored will be placed here for when the room is activated.
+property pState                  -- a save state so the room can be restored when next entered
+property pTileLayers
+property pTileSets
+property pMap
+property pMode
+property pNum
+
+on new me
+  ancestor = new (script "objSpriteMember")
+  
+  i = me.modifyParams(#init)
+  i[#defaultEditLayer] = #backgroundPassive 
+  i[#defaultScale] = 1
+  i[#frontLayerBlendLevel] = 128
+  i[#tileSets] = g.structMaster.getStruct(#roomTileSets)
+  i[#layerDefinitions] = #none
+  i[#layers] = #none
+  i[#map] = #none
+  i[#mapLoc] = #none
+  i[#num] = 0
+  
+  me.addModule("modCollisionDetection")
+  me.addModule("modRoomGraves")
+  me.addModule("modSoundFX")
+  
+  return me
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  -- remembers whether the room has been entered before
+  -- ie whether it should start according to its default state.
+  pBeenActivated = false
+  
+  pCollisionRectBoxes = []
+  pCurrentEditLayer = #none
+  pDefaultScale = params.defaultScale
+  pFrontLayerBlendLevel = params.frontLayerBlendLevel
+  pLocation = #none
+  pNum = params.num
+  pMap = params.map            -- the map of which this room is a part
+  pMode = #none
+  pRoomCleared = false
+  pRoomClearedSound = "end_screen"
+  pRoomObjects = []
+  pRoomObjectsToRestore = []
+  pTileSets = params.tileSets
+  pState = []
+  me.initTileLayers(params)
+  
+  me.setCurrentEditLayer(params.defaultEditLayer)
+end
+
+on initTileLayers me, params
+  pTileLayers = g.structMaster.getStruct(#roomTileSets)
+  layerDefs = params.layers
+  
+  if ilk(layerDefs, #proplist) then
+    layerDefs = [layerDefs]
+  end if
+  
+  repeat with i = 1 to pTileSets.count
+    nLayerSym = pTileSets.getPropAt(i)
+    layerDef = me.findDefForLayer(nLayerSym, layerDefs)
+    
+    me.initTileLayer(layerDef)
+  end repeat
+end
+
+on initTileLayer me, layerDef
+  layerSym = layerDef.name
+  layerObj = g.objectMaster.requestObject(#objTileLayer)
+  params = layerObj.getParams(#init)
+  params.room = me
+  params.roomTileSets = pTileSets.duplicate()
+  params.type = layerSym
+  params.map = layerDef.map
+  if params.map = #none then
+    params.mapSize = layerDef.mapSize
+  end if
+  layerObj.init(params)
+  pTileLayers[layerSym] = layerObj
+end
+
+on finish me
+  call(#finish, pTileLayers)
+  ancestor.finish()
+end 
+
+on activate me
+  
+  ancestor.activate()
+  g.teamMaster.setRoomClear(false)
+  -- player and charging spell need to be added to room objects
+  -- as they were removed from previous room's objects
+  me.addPlayerToRoomObjects()
+  
+  if pBeenActivated = false then
+    me.activateActors()
+  else
+    if pRoomObjectsToRestore.count > 0 then
+      -- will only do anything if room is the active room on loading a saveGame
+      me.restoreRoomObjects()
+    else
+      -- we don't want to restoreState if this was the active room before save - objects saved in the state will reappear
+      me.restoreState()
+    end if
+    
+    me.reDrawGraves()
+    
+  end if
+  
+  me.attemptOpenExits()
+  
+  pBeenActivated = true
+  
+end
+
+on activateActors me
+  if pTileLayers[#objects] <> #none then
+    pTileLayers[#objects].activateActors()
+  end if
+end
+
+on activateZones me
+  if pTileLayers[#backgroundActive] <> #none then
+    pTileLayers[#backgroundActive].activateZones()
+  end if
+end
+
+on addPlayerToRoomObjects me
+  player = g.actorMaster.getPlayer()
+  
+  if player <> #none then
+    chargingSpell = player.getChargingSpell()
+    
+    me.addRoomObject(player)
+    if chargingSpell <> #none then
+      me.addRoomObject(chargingSpell)
+    end if
+  end if
+  
+end
+
+on addRoomObject me, theObj
+  pRoomObjects.add(theObj)
+end
+
+on addSaveData me, sd
+  sd[#pBeenActivated] = pBeenActivated
+  sd[#pRoomCleared] = pRoomCleared
+  sd[#pNum] = pNum
+  sd[#pState] = VarDuplicateIfList(pState)
+  
+  roomObjects = []
+  repeat with roomObject in pRoomObjects
+    saveData = [:]
+    roomObject.addSaveData(saveData)
+    roomObjects.append(saveData)
+  end repeat
+  
+  sd[#pRoomObjects] = roomObjects
+  
+  ancestor.addSaveData(sd)
+end
+
+on attemptOpenExits me
+  exitsOpen = false
+  
+  -- check whether there are any enemies alive
+  -- if not, opens the edges of the room which are not at the edge of the map
+  if g.teamMaster.isPlayerEnemiesDead() then
+  g.teamMaster.setRoomClear(true)
+  exitsOpen = true
+  
+  me.openExits()
+  
+  -- pRoomCleared will also be set to true when navMode is entered
+  -- it is done there so that rooms which start clear are recognised as such
+  if pRoomCleared = false then
+    pRoomCleared = true
+    -- don't play the room complete sound if the map is clear as there will
+    -- probably be a game complete sound to play instead
+    if pMap.isMapClear() = false then
+      me.playSound(pRoomClearedSound)
+    end if
+  end if
+  
+  if gNavMode = true then
+    g.gameMaster.goNavMode()
+  end if
+  
+  if gExitArrows then
+    me.drawExitArrows()
+  end if
+  
+  
+  pMap.checkMapCleared()
+  
+end if
+
+return exitsOpen
+end
+
+on deactivate me
+  me.freezeObjects()
+  
+  ancestor.deactivate()
+end
+
+
+on drawExitArrows me
+  -- get surroundingHostiles
+  surroundingHostiles = pMap.getSurroundingHostiles()
+  
+  -- get edge tiles
+  surroundingExitTiles = pMap.getSurroundingExitTiles()
+  myExitTiles = me.getExitTiles()
+  
+  -- combine to find edge exits
+  combinedTiles = g.structMaster.getStruct(#screenExits)
+  repeat with i = 1 to combinedTiles.count
+    combinedTiles[i] = ListCombineExitTiles(surroundingExitTiles[i], myExitTiles[i])
+  end repeat
+  
+  -- get arrowRects
+  exitArrowRects = me.pTileLayers[#backgroundActive].calcExitArrowRects(combinedTiles)
+  
+  -- draw the arrows
+  myImage = me.getMember().image
+  
+  -- get modScreenExits to drawArrows
+  me.pTileLayers[#backgroundActive].drawExitArrowsOnImage(myImage, exitArrowRects, surroundingHostiles)
+  
+  -- set collsionZones
+  -- me.pTileLayers[#backgroundActive].setExitCollisionZones(combinedTiles)
+  
+end
+
+on findDefForLayer me, theSym, layerDefs
+  repeat with nLayerDef in layerDefs
+    nSym = nLayerDef.name
+    if nSym = theSym then
+      return nLayerDef
+    end if
+  end repeat
+  
+  return me.getBlankLayerDef(theSym)
+end
+
+on finishZones me
+  if pTileLayers[#backgroundActive] <> #none then
+    pTileLayers[#backgroundActive].finishZones()
+  end if
+end
+
+on freezeObjects me
+  -- get the objects that are in the room
+  roomObjects = me.getRoomObjects()
+  
+  -- record their positions and other info
+  me.saveState(roomObjects)
+  
+  -- finish the objects
+  g.objectMaster.finishObjects(roomObjects)
+  
+end
+
+on getBlankLayerDef me, theSym
+  layerDef = g.structMaster.getStruct(#blankRoomLayer)
+  layerDef.name = theSym
+  layerDef.mapSize = pMap.getRoomSize()
+  return layerDef
+end
+
+on getBlendLevelForLayer me, theLayer
+  case pMode of
+    #activate:
+      return 100
+      
+    #edit:
+      editLayerPos = me.getLayerPos(pCurrentEditLayer)
+      layerPos = me.getLayerPos(theLayer)
+      if editLayerPos < layerPos then
+        return pFrontLayerBlendLevel
+      end if
+  end case
+end
+
+on getExitTiles me
+  myTiles = g.structMaster.getStruct(#screenExits)
+  
+  repeat with i = 1 to myTiles.count
+    edge = myTiles.getPropAt(i)
+    myTiles[i] = me.getExitTilesForEdge(edge)
+  end repeat
+  
+  return myTiles
+end
+
+on getExitTilesForEdge me, theEdge
+  return pTileLayers[#backgroundActive].getScreenExitsForEdge(theEdge)
+end
+
+on getMap me
+  return pMap
+end
+
+on getMiniMapLoc me
+  spriteRect = me.getSpriteRect()
+  return point(spriteRect.right, spriteRect.bottom)
+end
+
+on getGridSize me
+  return pTileSets[1].getTileSize()
+end
+
+on getGridRect me
+  return me.getSpriteRect()
+end
+
+on getHostile me
+  if pTileLayers[#objects] = #none then
+    return false
+  else
+    if pBeenActivated = true then
+      return me.getHostileInState()
+    else
+      return pTileLayers[#objects].getHostile()      
+    end if
+  end if
+end
+
+on getHostileInState me
+  if me.getMiniMapStatusFromRoomState(#exitArrows) = #inf then
+    return true
+  end if
+end
+
+on getImage me
+  return me.getScaleImage(pDefaultScale)
+end
+
+on getImageSize me
+  tileSize = pTileLayers[1].getTileSize()
+  roomSize = pTileLayers[1].getSize()
+  
+  imageSize = point(tileSize[1] * roomSize[1] * pDefaultScale, tileSize[2] * roomSize[2] * pDefaultScale)
+  
+  return imageSize
+end
+
+on getImageFromLayer me, theLayer, theScale
+  theImage = #none
+  
+  if pTileLayers[theLayer] <> #none then
+    theImage = pTileLayers[theLayer].getScaleImage(theScale)
+  end if
+  
+  return theImage
+end
+
+on getInitialGridSelection me
+  return #none
+end
+
+on getLayerPos me, theLayer
+  layerSym = theLayer.getType()
+  i = 1
+  repeat with i = 1 to pTileLayers.count
+    nSym = pTileLayers.getPropAt(i)
+    if nSym = layerSym then
+      return i
+    end if
+    i = i +1
+  end repeat
+  
+  return #none
+end
+
+on getLoc me
+  return me.getLocation()
+end
+
+on getLocation me
+  return pLocation.duplicate()
+end
+
+on getMiniMapStatus me
+  -- can be #inf, #clr, or #spe
+  miniMapStatus = #none
+  
+  -- if there is a save state, query that state
+  if pBeenActivated = true then
+    miniMapStatus = me.getMiniMapStatusFromRoomState(#miniMap)
+    
+  else if pTileLayers[#objects] <> void then
+    -- otherwise query the object layer if there is one
+    miniMapStatus = pTileLayers.objects.getMiniMapStatus(#miniMap)
+    
+  else 
+    -- if not then the room is clear
+    miniMapStatus = #clr
+  end if
+  
+  -- update pRoomCleared status
+  -- this means that rooms that start clear are recognised as such
+  if miniMapStatus = #clr then
+    pRoomCleared = true
+  end if
+  
+  return miniMapStatus
+end
+
+on getMiniMapStatusFromRoomState me, forWhat
+  -- there is an equivelent function in
+  -- objTileMap.getMiniMapStatus()
+  -- changes must be mapped
+  
+  case forWhat of
+    #minimap:
+      statusStruct = #miniMapStatusProgression
+      
+    #exitArrows:
+      statusStruct = #exitArrowsStatusProgression
+  end case
+  
+  statusProgression = g.structMaster.getStruct(statusStruct)
+  miniMapStatus = statusProgression[1]
+  
+  repeat with objState in pState
+    nActorType = objState.actorType
+    nStatus = g.actorMaster.getMiniMapStatusForSymbol(nActorType)
+    if statusProgression.getPos(nStatus) > statusProgression.getPos(miniMapStatus) then
+      miniMapStatus = nStatus
+    end if
+  end repeat
+  
+  return miniMapStatus
+end
+
+on getRoomObjects me
+  -- get all the objects that are currently in play
+  
+  -- remove the spell that the player is charging from the list (spells already fired should be kept, as they need to be finished)
+  roomObjects = me.removeChargingSpell()
+  
+  -- roomObjects used to be got from the objectMaster using flags
+  roomObjects = pRoomObjects
+  
+  -- remove the player and hair from the list
+  roomObjects = g.objectMaster.removeObjectsWithFlagFromList(roomObjects, #objPlayerCharacter)
+  roomObjects = g.objectMaster.removeObjectsWithFlagFromList(roomObjects, #objHair)
+  
+  
+  
+  return roomObjects
+end
+
+on getRoomDwellings me
+  roomDwellings = g.objectMaster.getActiveObjectsWithFlag(#objDwelling)
+  
+  return roomDwellings
+end
+
+on getRoomEnemies me
+  roomEnemies = g.objectMaster.getActiveObjectsWithFlag(#objEnemyCharacter)
+  
+  return roomEnemies
+end
+
+on getScaleImage me, theScale
+  backgroundImage = me.getImageFromLayer(#backgroundPassive, theScale)
+  backgroundSolid = me.getImageFromLayer(#backgroundActive, theScale)
+  
+  -- object image won't be needed if real objects will take their place
+  if pMode <> #activate then
+    objects = me.getImageFromLayer(#objects, theScale)
+  end if
+  
+  copyPixelsParams = [#usefastQuads: true, #ink:36]
+  
+  editLayer = pCurrentEditLayer.getType()
+  if editLayer = #backgroundPassive then
+    copyPixelsParams[#blendLevel] = pFrontLayerBlendLevel
+  end if
+  
+  if backgroundSolid <> #none then
+    backgroundImage.copypixels(backgroundSolid, backgroundImage.rect, backgroundSolid.rect, copyPixelsParams)
+  end if
+  
+  -- don't draw objects layer if pMode = #activate
+  -- real objects will be generated instead
+  if pMode <> #activate then
+    
+    if editLayer = #backgroundActive then
+      copyPixelsParams[#blendLevel] = pFrontLayerBlendLevel
+    end if
+    
+    if objects <> #none then
+      backgroundImage.copypixels(objects, backgroundImage.rect, objects.rect, copyPixelsParams)
+    end if
+    
+  end if
+  
+  return backgroundImage
+end
+
+on getScreenExitsForEdge me, theEdge
+  screenExits = pTileLayers[#backgroundActive].getScreenExitsForEdge(theEdge)
+  return screenExits
+end
+
+on getTilesInSelection me, theSel
+  return pCurrentEditLayer.getTilesInSelection(theSel)
+end
+
+on getTileSize me
+  return pTileLayers[1].getTileSize()
+end
+
+on isCleared me
+  return pRoomCleared
+end
+
+on killAllDwellings me
+  dwellings = me.getRoomDwellings()
+  call(#die, dwellings)
+end
+
+on killAllEnemies me
+  enemies = me.getRoomEnemies()
+  call(#die, enemies)
+end
+
+on offScreen me
+  me.freeSprite()
+  me.freeMember()
+  
+  if pMode = #activate then
+    me.deactivate()
+  end if
+end
+
+on onScreen me, theLoc
+  pLocation = theLoc
+  
+  currentEditLayer = pMap.getCurrentEditLayer()
+  me.setCurrentEditLayer(currentEditLayer)
+  
+  me.requestMember()
+  me.requestSprite()
+  
+  me.refreshImage()
+  me.setMember()
+  me.setSpriteLoc(theLoc)
+end
+
+on refreshImage me
+  myImage = me.getImage()
+  me.setImage(myImage)
+  me.setRegPoint(#topLeft)
+end
+
+on removeChargingSpell me
+  player = g.actorMaster.getPlayer()
+  chargingSpell = player.getChargingSpell()
+  if chargingSpell <> #none then
+    me.removeRoomObject(chargingSpell)
+  end if
+end
+
+on removeRoomObject me, theObj
+  pos = pRoomObjects.getPos(theObj)
+  if pos > 0 then
+    pRoomObjects.deleteAt(pos)
+  end if
+end
+
+on restoreFromSave me, sd
+  if pNum <> sd.pNum then
+    put "objRoom.restoreFromSave() Warning: roomNum doesn't match with save data!"
+  end if
+  
+  ancestor.restoreFromSave(sd)
+  
+  pBeenActivated = sd.pBeenActivated
+  pRoomCleared = sd.pRoomCleared
+  pRoomObjectsToRestore = sd.pRoomObjects
+  pState = sd.pState
+end
+
+on restoreRoomObjects me
+  
+  newActors = []
+  
+  repeat with roomObjectData in pRoomObjectsToRestore
+    actorType = roomObjectData.pActorType
+    
+    startLoc = roomObjectData.pMoveXY.pLoc
+    
+    params = g.actorMaster.getParams(#newActor)
+    params.typ = actorType
+    params.startLoc = startLoc
+    params.useOffset = false
+    params.forceCreate = true
+    params.startActor = true
+    
+    newActor = g.actorMaster.newActor(params)
+    
+    
+    newActor.restoreFromSave(roomObjectData)
+    
+    newActors.append(newActor)
+  end repeat
+  
+  -- restore the graphic
+  call(#frameAdvance, newActors)
+  
+  -- clear away any default buildings, the builders started
+  call(#internalEvent, newActors, #clearDefaultBuildings)
+  
+  -- re-establish relationships
+  -- pRoomObjects is not used because bullets are not included
+  call(#restoreRelationships, newActors)
+  
+  -- finish any other setting up
+  -- eg multistage spell icons
+  call(#internalEvent, newActors, #restoredFromSave)
+  
+  -- clear list so it is not restored next time the room is entered
+  pRoomObjectsToRestore = []
+end
+
+on restoreState me
+  -- if restoring from saveGame
+  if pState = #none then
+    return
+  end if
+  
+  newActors = []
+  
+  repeat with act in pState
+    params = g.actorMaster.getParams(#newActor)
+    params.typ = act.actorType
+    params.startLoc = act.loc
+    params.useOffset = false
+    params.forceCreate = true
+    
+    newAct = g.actorMaster.newActor(params)
+    
+    newAct.restoreFromSave(act.saveData)
+    
+    -- start any hair objects in "cutOff" mode
+    if act.actorType = #hair then
+      newAct.goMode(#cutOff)
+    end if
+    
+    newActors.append(newAct)
+  end repeat
+  
+  -- restore the graphic
+  call(#frameAdvance, newActors)
+  
+  
+  -- clear away any default buildings, the builders started
+  call(#internalEvent, newActors, #clearDefaultBuildings)
+  
+  -- re-establish relationships
+  -- pRoomObjects is not used because bullets are not included
+  -- *** merlin's spells will often find the wrong owner ***
+  ---    doesn't seem important right now but might be later.
+  repeat with newActor in newActors
+    newActor.restoreRelationships() 
+  end repeat
+  
+  
+  -- finish any other setting up
+  -- eg multistage spell icons
+  call(#internalEvent, newActors, #restoredFromSave)
+end
+
+on saveLayers me
+  layerProperties = []
+  repeat with layer in pTileLayers
+    if layer <> #none then
+      layerProperties.append(layer.saveLayer())
+    end if
+  end repeat
+  return layerProperties
+end
+
+on saveRoom me
+  myProperties = [:]
+  p = myProperties
+  
+  p[#num] = pNum
+  p[#layers] = me.saveLayers()
+  
+  return myProperties
+end
+
+on saveState me, roomObjects
+  
+  -- save the objects ready to be recreated in their current positions upon re-entry
+  roomState = []
+  repeat with obj in roomObjects
+    objProps = [#loc: #none, #actorType: #none, #saveData: #none]
+    
+    recordInRoomState = obj.getRecordInRoomState()
+    if recordInRoomState = true then
+      
+      objProps.loc = obj.getLoc()
+      objProps.actorType = obj.getActorType()
+      saveData = [:]
+      obj.addSaveData(saveData)
+      objProps.saveData = saveData
+      
+      roomState.append(objProps.duplicate())
+      
+    end if
+    
+  end repeat 
+  
+  pState = roomState
+end
+
+on setTile me, tileLoc, newTileNo
+  pCurrentEditLayer.poke(tileLoc, newTileNo)
+end
+
+on setTilesBrush me, theSel, theBrush
+  -- end of selection is ignored
+  
+  brushWidth = theBrush[1].count
+  brushHeight = theBrush.count
+  
+  startPoint = theSel
+  
+  repeat with y = 1 to brushHeight
+    repeat with x = 1 to brushWidth
+      nTile = theBrush[y][x]
+      nTilePos = startPoint + point(x,y) - point(1,1)
+      me.setTile(nTilePos, nTile)
+    end repeat
+  end repeat
+  
+end
+
+on setCurrentEditLayer me, layerSymbol
+  pCurrentEditLayer = pTileLayers[layerSymbol]
+end
+
+on show me, theMode, theLoc
+  pMode = theMode
+  
+  me.onScreen(theLoc)
+  
+  case pMode of
+    #activate:
+      me.activate()
+  end case
+end
+
+on showTileSet me, theMode
+  myWidth = me.getSpriteWidth()
+  theLoc = pLocation + point(myWidth, 0) + point(32, 0)
+  
+  pCurrentEditLayer.showTileSet(theMode, theLoc)
+end
+
+
+
+
+
+
+

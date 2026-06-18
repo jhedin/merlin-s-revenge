@@ -1,0 +1,117 @@
+[#name: "controllerMaster", #scriptType: #parent, #type: #script]
+global g
+
+property pControllerTypes
+property pControllers
+
+on new me
+  return me
+end
+
+on init me
+  pControllerTypes = [#menu, #map, #menuBackground, #playMusic, #playSound]
+  pControllers = [:]
+  
+  me.initControllers()
+end
+
+on initControllers me
+  repeat with nType in pControllerTypes
+    objSym = me.convertTypeToObjectSym(nType)
+    nController = g.objectMaster.requestObject(objSym)
+    params = nController.getParams(#init)
+    nController.init(params)
+    pControllers[nType] = nController
+  end repeat
+end
+
+on finish me
+  if ilk(pControllers) <> #void then
+    g.objectMaster.finishObjects(pControllers)
+  end if
+end
+
+on convertTypeToObjectSym me, nType
+  theStr = string(nType)
+  stringSym = "obj" & theStr & "Controller"
+  theSym = symbol(stringSym)
+  
+  return theSym
+end
+
+on getController me, theType
+  return pControllers[theType]
+end
+
+on newObject me, theType, defMember, location, caller
+  return pControllers[theType].newObject(defMember, location, caller)
+end
+
+on stop me
+  me.finish()
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

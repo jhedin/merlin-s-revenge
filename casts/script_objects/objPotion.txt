@@ -1,0 +1,99 @@
+[#name: "objPotion", #scriptType: #parent, #type: #script]
+property ancestor
+property pCounterColour
+
+on new me
+  ancestor = new (script "objPowerUpWriting")
+  
+  i = me.modifyParams(#init)
+  
+  i[#counterColour] = rgb(255,255,255)
+  
+  return me
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  pCounterColour = params.counterColour
+end
+
+-- for getting hit by energy blast
+on checkDead me
+  return false
+end
+
+on collected me, collector
+  ancestor.collected(collector)
+  collector.potionCollected(me.getCharacter(), me.ID.bigMe)
+end
+
+on getCounterColour me
+  return pCounterColour
+end
+
+on getCounterMember me
+  return me.getNonWritingMember()
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

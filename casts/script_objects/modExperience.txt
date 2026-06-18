@@ -1,0 +1,376 @@
+[#name: "modExperience", #scriptType: #parent, #type: #script]
+global g
+
+property ancestor
+property pExperienceAmountForNextLevel -- the amount of experience to pass to level up
+property pExperienceGained  -- the amount of experience this object has gained
+property pExperienceImWorth -- the amount of experience this object is worth to kill
+property pExperienceLevel   -- the level num of the object (starts at 0)
+property pExperienceRequiredForNextLevel -- the amount of experience to gain for the next level up
+property pExperienceRequiredInc -- the amount extra that needs to be gained for the next level up compared with the previous one.
+property pStartingLevel     -- the level num to start on (experienceGained is not increased, so a pre-levelled unit is not worth more experience than a non-levelled unit of the same type).
+property pReleaseStarOnLevel -- whether or not to release a star when levelling up
+property pReleaseStarOnLevelOld -- the old setting for pReleaseStarOnLevel stored during temporary switch off of stars.
+property pResizeOnLevel     -- whether or not to adjust the size of the character according to their level
+property pKills             -- the types of units I have killed
+property pLevelData         -- information for the experience bar
+property pExperienceAmountForLastLevel -- The amount of experience it took to get to the current level
+property pinitExperienceAmountNeeded    --The amount needed to cross the first level
+
+on new me
+  ancestor = new (script("modModule"))
+  return me
+end
+
+on addModParams me
+  i = me.modifyParams(#init)
+  
+  i[#experienceAmountForNextLevel] = 0
+  i[#experienceRequiredForNextLevel] = 3
+  i[#experienceRequiredInc] = 2
+  i[#experienceImWorth] = 3
+  i[#startingLevel] = 0
+  
+  ancestor.addModParams()
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  pExperienceAmountForNextLevel = params.experienceAmountForNextLevel
+  pinitExperienceAmountNeeded = pExperienceAmountForNextLevel
+  pExperienceGained = 0
+  pExperienceImWorth = params.experienceImWorth
+  pExperienceRequiredForNextLevel = params.experienceRequiredForNextLevel
+  pExperienceRequiredInc = params.experienceRequiredInc
+  pExperienceLevel = 0
+  pKills = [:]
+  pReleaseStarOnLevel = true
+  pReleaseStarOnLevelOld = true
+  pResizeOnLevel = true
+  pStartingLevel = params.startingLevel
+  pLevelData = [:]
+  pLevelData[#expToNxtLvl] = pExperienceAmountForNextLevel
+  pLevelData[#expPnts] = 0
+  pLevelData[#percentToNxt] = 0
+  pExperienceAmountForLastLevel = 0
+  
+  
+end
+
+on addSaveData me, sd
+  ancestor.addSaveData(sd)
+  
+  me.addToSaveData(sd)
+end
+
+on addToArmyDetails me
+  ad = me.big.getArmyDetails()
+  
+  me.addToSaveData(ad)
+end
+
+on addToSaveData me, sd
+  sd[#pExperienceAmountForNextLevel] = pExperienceAmountForNextLevel
+  sd[#pExperienceGained] = pExperienceGained
+  sd[#pExperienceLevel] = pExperienceLevel
+  sd[#pExperienceRequiredForNextLevel] = pExperienceRequiredForNextLevel
+  sd[#pKills] = pKills
+  sd[#pLevelData] = pLevelData
+end
+
+on attemptToLevelUp me
+  levelled = false
+  
+  if pExperienceGained >= pExperienceAmountForNextLevel then
+    pExperienceAmountForLastLevel = pExperienceAmountForNextLevel  
+    pExperienceAmountForNextLevel =  ((pExperienceLevel * pExperienceLevel * pExperienceLevel) +  (pExperienceLevel * pExperienceLevel) + pExperienceAmountForNextLevel/(pExperienceLevel + 1)) + 5 + pinitExperienceAmountNeeded
+    --pExperienceAmountForNextLevel = 2*pExperienceAmountForNextLevel --test check 1
+    --pExperienceAmountForNextLevel = pExperienceAmountForNextLevel + pExperienceRequiredForNextLevel --test check 2
+    me.levelUp()
+    levelled = true
+    pLevelData[#expToNxtLvl] = pExperienceAmountForNextLevel - pExperienceAmountForLastLevel
+    pExperienceRequiredForNextLevel = pExperienceRequiredForNextLevel + pExperienceRequiredInc
+  end if
+  
+  return levelled
+end
+
+on attributeExperience me
+  lastAttacker = me.big.getRelation(#lastAttacker)
+  
+  -- in case of kill all cheat
+  if lastAttacker <> #none then
+    -- if we are a building, calculate our experience based on residents
+    if me.isDwelling() then
+      pExperienceImWorth = me.calculateExperienceFromResidents()
+    end if
+    
+    
+    myLevel = pExperienceLevel + 1
+    if lastAttacker.getType() <> #objBullet then
+      lastAttacker.gainExperience(pExperienceImWorth + (pExperienceGained / 2))
+      lastAttacker.recordKill(me.big.getActorType())
+    end if
+    
+    me.big.setRelation( #lastAttacker, #none)
+  end if
+end
+
+on disableLevelUpStars me
+  pReleaseStarOnLevelOld = pReleaseStarOnLevel
+  pReleaseStarOnLevel = false
+end
+
+on eventNotification me, theEvent, theObj
+  ancestor.eventNotification(theEvent, theObj)
+  
+  case theEvent of
+    #leaveGame:
+      if theObj = me.big.getRelation(#lastAttacker) then
+        me.big.breakRelationship(theObj, #lastAttacker)
+      end if
+  end case
+end
+
+on gainExperience me, theAmount
+  pExperienceGained = pExperienceGained + theAmount  
+  levelled = true
+  repeat while levelled = true
+    -- keep levelling while experience allows
+    -- allows unit to gain several levels by killing one monster
+    levelled = me.attemptToLevelUp()
+  end repeat
+  pLevelData[#expPnts] = pExperienceGained - pExperienceAmountForLastLevel
+  if pLevelData[#expToNxtLvl] = 0 then
+      pLevelData[#percentToNxt] = 0
+   else
+  pLevelData[#percentToNxt] = (pLevelData.expPnts+0.0)/pLevelData.expToNxtLvl
+    end if
+end
+
+on gainExperienceFromHealing me, theHealedObj, theAmount
+  me.gainExperience(theAmount)
+end
+
+on gainExperienceFromTransfer me, amount
+  -- don't do sounds and stars when levelling this way
+  me.disableLevelUpStars()
+  
+  me.gainExperience(amount)
+  
+  me.restoreLevelUpStars()
+end
+
+on getExperience me
+  return pExperienceGained
+end
+
+on getExperienceLevel me
+  return pExperienceLevel
+end
+
+on getExperienceData me
+  return pLevelData
+end
+
+on internalEvent me, theEvent
+  ancestor.internalEvent(theEvent)
+  
+  case theEvent of
+    #addToArmyDetails:
+      me.addToArmyDetails()
+      
+    #buildingFinished:
+      if pStartingLevel > 0 then
+        me.levelUpToStartingLevel()
+      end if
+      
+    #outOfEnergy:
+      me.attributeExperience()
+      
+    #reincarnated:
+      me.transferExperience()
+      
+    #restoreFromArmyDetails:
+      me.restoreFromArmyDetails()
+      
+  end case
+end
+
+on levelUp me
+  pExperienceLevel = pExperienceLevel +1
+  --  put me.big.getActorType() & ": now level " & pExperienceLevel
+  
+  if pReleaseStarOnLevel then
+    -- release a star to show level up
+    me.big.releaseStar()
+    
+    -- play the level up sound effect
+    me.big.playSound("level_up", 100)
+  end if
+  
+  -- increase walk speed (merlin)
+  -- cpu walk speed increased in moveToLoc mod
+  me.big.incWalkAcceleration()
+  
+  --increase size of graphic
+  --me.setSpriteSizeFromLevel()
+  
+  -- let other modules respond to the levelup
+  me.big.internalEvent(#levelUp)
+  
+  -- let other interested objects know (eg. objMoveableLevelBar)
+  me.eventNotify(#levelUp)
+end
+
+on levelUpToStartingLevel me
+  
+  -- don't release stars when levelling like this
+  me.disableLevelUpStars()
+  
+  repeat with i = 1 to pStartingLevel
+    me.levelUp()
+  end repeat
+  
+  -- put back to it's original setting
+  me.restoreLevelUpStars()
+end
+
+on mergeExperience me, targetUnit
+  experience = pExperienceImWorth + pExperienceGained
+  targetUnit.gainExperience(experience)
+  targetUnit.glowPink()
+end
+
+on recordKill me, actorType
+  
+  -- ensure list exists
+  if pKills[actorType] = void then
+    pKills[actorType] = 0
+  end if
+  
+  pKills[actorType] = pKills[actorType] + 1
+  
+  --  put me.big.getActorType() & ": Kills =" & pKills
+end
+
+on restoreFromArmyDetails me
+  ad = me.big.getArmyDetails()
+  
+  me.restoreFromSaveData(ad)
+end
+
+on restoreFromSave me, sd
+  ancestor.restoreFromSave(sd)
+  
+  me.restoreFromSaveData(sd)
+end
+
+on restoreFromSaveData me, sd
+  pExperienceAmountForNextLevel = sd.pExperienceAmountForNextLevel
+  pExperienceGained = sd.pExperienceGained
+  pExperienceLevel = sd.pExperienceLevel
+  pExperienceRequiredForNextLevel = sd.pExperienceRequiredForNextLevel
+  pKills = sd.pKills
+  pLevelData = sd.pLevelData
+  
+  me.setSpriteSizeFromLevel()
+end
+
+on restoreLevelUpStars me
+  pReleaseStarOnLevel = pReleaseStarOnLevelOld
+end
+
+on setSpriteSizeFromLevel me
+--  if pResizeOnLevel then
+--    me.big.setAdditionalHeight(pExperienceLevel/10)
+--    me.big.setAdditionalWidth(pExperienceLevel/10)
+--  end if
+end
+
+on setStartingLevel me, newVal
+  pStartingLevel = newVal
+  
+  if pStartingLevel > 0 then
+    me.levelUpToStartingLevel()
+  end if
+end
+
+on takeHit me, collisionVect, attackingObj, owner
+  -- important to update attackingObj before modEnergy
+  -- discovers that we are outOfEnergy
+  -- otherwise exp could go to the wrong character
+  if owner <> #none then
+    me.big.formRelationship(owner, #lastAttacker, #exclusive)
+    me.keepMePosted(owner, #leaveGame, #once)
+  end if
+  
+  ancestor.takeHit(collisionVect, attackingObj, owner)
+end
+
+on takeHeal me, collisionVect, healingObj, owner
+  ancestor.takeHeal(collisionVect, healingObj, owner)
+  
+  owner.gainExperienceFromHealing(me.big, collisionVect.loch + collisionVect.locv)
+end
+
+on transferExperience me
+  reincarnatedMe = me.big.getReincarnatedMe()
+  reincarnatedMe.gainExperienceFromTransfer(pExperienceGained/ 2)
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

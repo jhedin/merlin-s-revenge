@@ -1,0 +1,465 @@
+[#name: "objMoveXY", #scriptType: #parent, #type: #script]
+global gFrameNum, gGameSpeed, gMoveSpeedLimit, gStageSize
+global gGameView
+global g
+
+property ancestor
+property pAdjustXY
+property pCallingPrg
+property pCheckStalled    -- whether or not to check whether the movement is stalled
+property pFin
+property pFinIfOffscreen
+property pFinReason       -- reason why moveXY has finished
+property pFriction
+property pKeepVect
+property pGravity
+property pLoc
+property pMoveToTarget    -- when true, MoveXY will finish if the target is reached
+property pMoveVect        -- a record of how much the sprite moved between the last frame and this one
+property pOldLoc
+property pOldRect
+property pOldSpriteLoc
+property pStallCount
+property pStallSpeed      -- the speed at which the movement is considered to have come to a natural halt
+property pSpr
+property pTargetLoc       -- used in me.moveToTarget()
+property pVect            -- momentum - how far the sprite will travel if unimpeded
+property pWeight
+
+on new me
+  me.ancestor = new(script "objAutoUpdate")
+  
+  i = me.modifyParams(#init)
+  i[#spr] = #none
+  i[#callingPrg] = #none
+  i[#callingPrgMessage] = #moveXYFin
+  
+  m = me.modifyParams(#moveToTarget)
+  m[#targetLoc] = point(100,100)
+  m[#speed]     = 10  
+  
+  Return me
+end new
+
+on init me, params
+  me.ancestor.init(params)
+  pAdjustXY = false
+  pCallingPrg = params.callingPrg.ID.bigMe
+  pCheckStalled = true
+  pFinIfOffscreen = true
+  pFriction = point(12.5,0)
+  pKeepVect = false
+  pGravity = 0
+  pMoveToTarget = false
+  pMoveVect= #none -- maybe returned on first frame, important to differentiate from point(0,0)
+  pSpr = params.spr
+  pWeight = 0
+  pVect = point(0.00,0.00)
+  pStallCount = CounterNew()
+  pStallCount.tim = [1,10]
+  pStallCount.inc = gGameSpeed
+  pStallSpeed = 0.2
+  pTargetLoc = #none
+  
+  pLoc = pSpr.loc.duplicate() -- needed to initialise pOldRect
+  me.setLoc(pSpr.loc.duplicate())
+  pOldSpriteLoc = pSpr.loc.duplicate()
+end init
+
+on initGameChar me, callingPrg, spr
+  me.init(callingPrg, spr)
+  me.setAdjustXY(true)
+  me.setAutoUpdate(false)
+  me.setFinIfOffScreen(false)
+  --  if gGameView = #sideOn then
+  --    me.setGravity(1)
+  --  end if    
+  me.setWeight(0.2)
+end
+
+on bounceLeft me
+  if pVect[1] > 0 then
+    me.flipVect(1)
+  end if
+end
+
+on bounceRight me
+  if pVect[1] < 0 then
+    me.flipVect(1)
+  end if
+end
+
+on calcStart me
+  --  CounterReset(pStallCount)
+  
+  me.ancestor.calcStart()
+end
+
+on checkTargetReached me
+  return PointArrivedAtTarget(pLoc, pTargetLoc, pVect)
+end
+
+on finishConditionMet me
+  fin = false
+  
+  if pCheckStalled then
+    if pStallCount.fin then
+      fin = true
+      pFinReason = #stalled 
+    end if
+  end if
+  
+  if pFinIfOffscreen then
+    if me.onscreen() = false then
+      fin = true
+      pFinReason = #offScreen
+    end if
+  end if
+  
+  if pMoveToTarget then
+    fin = me.checkTargetReached()
+    if fin then
+      pFinReason = #targetReached
+    end if
+  end if
+  
+  if fin then
+    pMoveToTarget = false
+    pVect = point(0,0)
+  end if
+  
+  return fin
+end 
+
+on flipVect me, i
+  pVect[i] = pVect[i] * -1
+end
+
+on incStallSpeed me, amount
+  pStallSpeed = pStallSpeed + amount  
+end
+
+on informCallingPrg me
+  pCallingPrg.moveXYFin()
+end
+
+on onscreen me
+  stageRect = rect(0,0, gStageSize[1], gStageSize[2])
+  if pSpr.loc.inside(stageRect) then
+    return true
+  end if
+  
+  sprRect = pSpr.rect
+  intRect = sprRect.intersect(stageRect)
+  if intRect = rect (0,0,0,0) then
+    return false
+  end if
+  return true  
+end
+
+on update me
+  if pAdjustXY then
+    pCallingPrg.updateAI()
+  end if
+  
+  -- record/feedback vectors
+  if pKeepVect then
+    pVect = pLoc - pOldLoc 
+    
+    pOldLoc = pLoc.duplicate()
+  end if
+  
+  speed = PointPositive(pVect.duplicate())
+  lostSpeed = PointValRange(pFriction, [point(0.000,0.000), speed])
+  lostSpeed = lostSpeed * gGameSpeed
+  GravWeightSpeed = pGravity * pWeight * gGameSpeed
+  pVect[2] = pVect[2] + GravWeightSpeed
+  pVect = PointTowardZero(pVect, lostSpeed)
+  
+  --limit speed
+  mvVect = pVect.duplicate()
+  if gMoveSpeedLimit <> #none then
+    mvVect = PointConstrainToRect(mvVect, gMoveSpeedLimit)
+  end if
+  
+  newLoc = pLoc + mvVect
+  
+  me.stallUpdate(newLoc.duplicate(), pLoc.duplicate())
+  
+  if pAdjustXY then
+    newLoc = pCallingPrg.checkCollisions(newLoc)
+  end if
+  
+  me.moveLoc(newLoc)
+  
+  -- pLoc can be adjusted by fin so as not to overshoot targetLoc
+  me.calcFin()
+  
+  pSpr.loc = pLoc.duplicate()
+  
+  --record onscreen movement
+  pMoveVect = pSpr.loc - pOldSpriteLoc
+  pOldSpriteLoc = pSpr.loc.duplicate()
+end update
+
+on addSaveData me, sd
+  
+  sd[#pFriction] = pFriction
+  sd[#pLoc] = pLoc
+  sd[#pMoveToTarget] = pMoveToTarget
+  sd[#pMoveVect] = pMoveVect
+  sd[#pOldSpriteLoc] = pOldSpriteLoc
+  sd[#pStallSpeed] = pStallSpeed
+  sd[#pTargetLoc] = pTargetLoc
+  sd[#pVect] = pVect
+  sd[#pSpr_flipH] = pSpr.flipH
+  
+  ancestor.addSaveData(sd)
+end
+
+on addVectY me, newVectY
+  pVect[2] = pVect[2] + newVectY
+end
+
+on getFin me
+  return pFin
+end
+
+on getFinReason me
+  return pFinReason
+end
+
+on getMoveVect me
+  if pMoveVect = #none then
+    return pMoveVect
+  else
+    return pMoveVect.duplicate()
+  end if
+end
+
+on getOldRect me
+  return pOldRect.duplicate()
+end
+
+on getStalled me
+  return pStallCount.fin
+end
+
+on getVect me
+  return pVect.duplicate()
+end
+
+on getVectX me
+  return pVect[1]
+end 
+
+on getVectY me
+  return pVect[2]
+end
+
+on moveLoc me, newLoc
+  --me.updateOldRect()
+  pLoc = newLoc.duplicate()
+end
+
+on moveToTarget me, params
+  pTargetLoc = params.targetLoc
+  moveVect = GeomMoveVector(pLoc, pTargetLoc, params.speed)
+  me.setVect(moveVect)
+  pMoveToTarget = true
+end
+
+on resetStallCounter me
+  CounterReset(pStallCount)  
+end
+
+on restoreFromSave me, sd
+  pFriction = sd.pFriction
+  pLoc = sd.pLoc
+  pMoveToTarget = sd.pMoveToTarget
+  pOldSpriteLoc = sd.pOldSpriteLoc
+  pSpr.flipH = sd.pSpr_flipH
+  pStallSpeed = sd.pStallSpeed
+  pTargetLoc = sd.pTargetLoc
+  pVect = sd.pVect
+  
+  
+  ancestor.restoreFromSave(sd)
+end
+
+
+on setAdjustXY me,newAdjustXY
+  pAdjustXY = newAdjustXY
+end
+
+on setCheckStalled me, newVal
+  pCheckStalled = newVal
+end
+
+on setFinIfOffscreen me, newFinIfOffscreen
+  pFinIfOffscreen = newFinIfOffscreen
+end
+
+on frictionSet me, newFric
+  pFriction = newFric
+end frictionSet
+
+on setFriction me, newFriction
+  pFriction = newFriction
+end
+
+on setFrictionX me, newFricX
+  pFriction[1] = newFricX
+end
+
+on setFrictionY me, newFricY
+  pFriction[2] = newFricY
+end
+
+on setGravity me, newGravity
+  pGravity = newGravity
+end
+
+on setKeepVect me, newKeepVect
+  pKeepVect = newKeepVect
+end
+
+on setLoc me, newLoc
+  pOldLoc = newLoc.duplicate()
+  pVect = point(0,0)
+  me.moveLoc(newLoc)
+end locSet
+
+on setStallSpeed me, newVal
+  pStallSpeed = newVal
+end
+
+on setVect me, newVect
+  pVect = newVect.duplicate()
+  --  pFin = false
+  --  CounterReset(pStallCount)
+  --  me.calcFin()
+  --  me.calcStart()
+end vectSet
+
+on setVectX me, newVectX
+  pVect[1] = newVectX
+  --  pFin = false
+  --  CounterReset(pStallCount)
+  --  me.calcFin()
+  --  me.calcStart()
+end
+
+on setVectY me, newVectY
+  pVect[2] = newVectY
+  --  pFin = false
+  --  CounterReset(pStallCount)
+  --  me.calcFin()
+  --  me.calcStart()
+end
+
+on setWeight me, newWeight
+  pWeight = newWeight
+end
+
+on stallUpdate me, newLoc, currentLoc
+  -- newLoc = PointInteger(newLoc)
+  --currentLoc = PointInteger(currentLoc)
+  
+  -- don't update on first frame
+  if pMoveVect = #none then
+    return
+  end if
+  
+  speed = PointPositive(pMoveVect.duplicate())
+  
+  speed = speed.loch + speed.locv
+  
+  
+  --if newLoc = currentLoc then
+  
+  if speed <= pStallSpeed then
+    CounterOnce(pStallCount)
+  else
+    pStallCount = CounterReset(pStallCount)
+    pFin = false
+  end if
+end stallUpdate
+
+on vectAdd me, newVect
+  pVect = pVect + newVect
+--  pFin = false
+--  CounterReset(pStallCount)
+end vectAdd
+
+on updateOldRect me
+  iLoc = PointInteger(pLoc.duplicate())
+  oldRectInfo = pCallingPrg.calcNewRect(iLoc)
+  pOldRect = oldRectInfo.rect
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

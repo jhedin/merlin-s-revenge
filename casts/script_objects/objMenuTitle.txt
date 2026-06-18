@@ -1,0 +1,100 @@
+[#name: "objMenuTitle", #scriptType: #parent, #type: #script]
+global gMenuTextLayer
+
+property ancestor
+property pColour
+property pLayer
+
+on new me
+  ancestor = new(script "objSpriteMember")
+  
+  i = me.modifyParams(#init)
+  
+  i[#colour] = rgb(255,255,255)
+  i[#layer] = gMenuTextLayer
+  
+  me.addModule("modFader")
+  
+  return me
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  pColour = params.colour
+  pLayer = params.layer
+end
+
+on displayImageAtLoc me, theImage, theLoc
+  ancestor.displayImageAtLoc(theImage, theLoc)
+  
+  me.setSpriteLayer(pLayer)
+  me.setSpriteColour(pColour)
+end
+
+on startFadeIn me
+  me.setSpriteBlend(0)
+  me.startQuickFadeIn()
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

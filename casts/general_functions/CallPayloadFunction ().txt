@@ -1,0 +1,38 @@
+[#name: "CallPayloadFunction (payloadFunctions, nObj, collisionVect, attackingObj, owner)", #scriptType: #movie, #type: #script]
+on CallPayloadFunction (payloadFunctions, nObj, collisionVect, attackingObj, owner)
+  -- returns a percentage as a value in a range 
+  if ilk(payloadFunctions, #list) then
+    repeat with payloadFunction in PayloadFunctions
+      case payloadFunction of
+        #armyTeleportOut, #takeHeal, #takeHit, #takeFreeze:
+          call(payloadFunction, nObj, collisionVect, attackingObj, owner)
+        #none:
+          nothing        
+      end case
+    end repeat
+  else
+    case payloadFunctions of
+      #armyTeleportOut, #takeHeal, #takeHit, #takeFreeze:
+        call(payloadFunctions, nObj, collisionVect, attackingObj, owner)
+      #none, #void, void:
+        nothing        
+    end case
+  end if 
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

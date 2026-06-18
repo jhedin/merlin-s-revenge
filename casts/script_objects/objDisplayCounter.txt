@@ -1,0 +1,139 @@
+[#name: "objDisplayCounter", #scriptType: #parent, #type: #script]
+-- this object displays a number in a given font and colour
+-- will automatically pad zeros to the beginning if required
+
+global g
+global gGlobalDisplayLayer
+
+property ancestor
+property pColour      -- the colour to use
+property pDisplayLoc  -- where to display
+property pFont        -- the name of the font to use
+property pLastValue   -- the last value displayed
+property pNumDigits   -- the num of digits to pad to
+
+on new me
+  ancestor = new (script "objSpriteMember")
+  
+  i = me.modifyParams(#init)
+  
+  i.layer = gGlobalDisplayLayer
+  
+  i[#colour] = rgb(255,255,255)
+  i[#displayLoc] = point(0,0)
+  
+  return me
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  pColour = params.colour
+  pDisplayLoc = params.displayLoc
+  pFont = #numbers
+  pLastValue = #none
+  pNumDigits = 2
+end
+
+on displayValue me, newValue
+  if newValue <> pLastValue then
+    
+    newString = string(newValue)
+    addToStart = true
+    newString = StringAddChars(newString, pNumDigits, addToStart, "0") -- add a zeroes to start to pad to correct length
+    
+    theFont = me.getFontObj()
+    newImage = theFont.getString(newString)
+    
+    me.displayImageAtLoc(newImage, pDisplayLoc)
+    
+    me.setSpriteColor(pColour)
+    
+    pLastValue = newValue    
+  end if
+end
+
+on getDisplayWidth me
+  theFont = me.getFontObj()
+  charWidth = theFont.getCharWidth()
+  myWidth = charWidth * pNumDigits
+  
+  return myWidth
+end
+
+on getFontObj me
+  return g.collectionsMaster.getObject(#objFont, pFont)
+end
+
+on setDisplayLoc me, newLoc
+  pDisplayLoc = newLoc
+  me.setSpriteLoc(newLoc)
+end
+
+on updateValue me, newValue
+  me.displayValue(newValue)
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

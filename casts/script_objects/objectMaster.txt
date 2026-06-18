@@ -1,0 +1,362 @@
+[#name: "objectMaster", #scriptType: #parent, #type: #script]
+on new me
+  return me
+end new
+
+global g
+
+property pCast
+property pCastKey
+property pFreeList    -- keeps track of the number of free objects for each type (saves searching pStatusList)
+property pObjList     -- references to the objects that have been created
+property pMaxObjects  -- once an object list gets too long it is no longer speedier to use it than to create the object from scratch
+property pStatusList  -- the status of each object
+
+on init me
+  pFreeList = [:]
+  pObjList = [:]
+  pMaxObjects = 100
+  pStatusList = [:]
+  pCast = member("objectMaster").castLibNum
+  
+  me.analyseCast()
+end init
+
+on analyseCast me, theCastName
+  --pCast = castLib(theCastName).number
+  
+  pCastKey = CastMakeNameKey(pCast, #script)
+  
+  repeat with cas = 1 to pCastKey.count
+    catSym = pCastKey.getPropAt(cas)
+    me.checkCat(catSym)
+  end repeat
+end analyseCast
+
+on requestObject me, objSym 
+  
+  if objSym = #objTimer then
+    nothing
+  end if
+  
+  freeObj = me.getAvailable(objSym)
+  
+  if freeObj = 0 then
+    freeObj = me.createNew(objSym)
+  end if
+  
+  return freeObj
+end requestObject
+
+on checkCat me, objsym
+  if getaProp(pStatusList, objSym) = void then
+    pFreeList[objSym] = 0
+    pObjList[objSym] = []
+    pStatusList[objSym] = []
+  end if
+end checkCat
+
+on finishAllWithFlag me, theFlag
+  statusCopy = pStatusList.duplicate()
+  objectCopy = pObjList.duplicate()
+  
+  listIndex = 1
+  repeat with statList in statusCopy
+    objIndex = 1
+    repeat with stat in statList
+      if stat = 1 then
+        obj = objectCopy[listIndex][objIndex]
+        if me.objHasFlag(obj, theFlag) then
+          obj.finish()
+        end if
+      end if
+      objIndex = objIndex + 1
+    end repeat
+    listIndex = listIndex + 1
+  end repeat
+end
+
+on finishAllOfType me, objSym
+  statusList = pObjList[objSym]
+  index = 1
+  repeat with stat in pStatusList[objSym]
+    if stat = 1 then
+      obj = pObjList[objSym][index]
+      obj.finish()
+    end if
+    index = index + 1
+  end repeat
+end
+
+on finishObjects me, objList
+  -- objects are assumed to be active
+  objList = objList.duplicate()
+  repeat with obj in objList
+    if obj <> #none then
+      obj.finish()
+    end if
+  end repeat
+end 
+
+on getAvailable (me, objSym)
+  
+  freeObj = 0
+  
+  objectsFree = pFreeList[objSym]
+  if objectsFree = 0 then
+    return 0
+  else
+    pFreeList[objSym] = objectsFree - 1
+  end if
+  
+  objStatus = pStatusList[objSym]
+  
+  if objStatus = void then
+    alert "objectMaster.getAvailable()" & return & "object doesn't exist:" & return & return & objSym
+    nothing
+  end if
+  
+  ob = objStatus.getPos(0)
+  
+  if ob > 0 then
+    obList = pObjList[objsym]
+    freeobj = obList[ob]
+    pStatusList[objsym][ob] = 1
+  end if
+  
+  return freeObj
+end getAvailable
+
+on getActiveObjectsWithFlag me, theFlag
+  objList = []
+  
+  listIndex = 1
+  repeat with statList in pStatusList
+    objIndex = 1
+    repeat with stat in statList
+      if stat = 1 then
+        obj = pObjList[listIndex][objIndex]
+        
+        if obj.hasFlag(theFlag) then
+          objList.append(obj)
+        end if
+      end if
+      objIndex = objIndex + 1
+    end repeat
+    listIndex = listIndex + 1
+  end repeat
+  
+  return objList
+end
+
+on getFirstOfType me, objSym
+  if pObjList[objSym].count > 0 then
+    return pObjList[objSym][1]  
+  end if
+end
+
+on getFlagActive me, theFlag
+  objs = me.getActive()
+  
+  repeat with obj in objs
+    if me.objHasFlag(obj, theFlag) then
+      return true
+    end if
+  end repeat
+  
+  return false
+end
+
+on getPlayers me, thePlayers
+  potentialObjects = me.getActiveObjectsWithFlag(#player)
+  
+  repeat with nPlayer in thePlayers
+    nCharacter = nPlayer.objCharacter
+    repeat with nPotObj in potentialObjects
+      if nPotObj.getCharacter() = nCharacter then
+        nPlayer.obj = nPotObj
+        exit repeat
+      end if
+    end repeat
+  end repeat
+  
+  return thePlayers
+end
+
+on getTotal me
+  total = 0
+  repeat with obList in pObjList
+    total = total + obList.count
+  end repeat
+  return total
+end
+
+on getTotalInUse me
+  inUseObj = 0
+  
+  repeat with statList in pStatusList
+    repeat with statu in statList
+      inUseObj = inUseObj + statu
+    end repeat
+  end repeat
+  
+  return inUseObj
+end
+
+on putInUse me
+  put "objectMaster : in Use report"
+  
+  repeat with i = 1 to pStatusList.count
+    statList = pStatusList[i]
+    statProp = getPropAt(pStatusList, i)
+    typeTotal = 0
+    repeat with statu in statList
+      typeTotal = typeTotal + statu
+    end repeat
+    if typeTotal > 0 then
+      put statProp & " = " & typeTotal
+    end if
+  end repeat
+end
+
+on removeObjectsWithFlagFromList me, objList, theFlag
+  indexesToDelete = []
+  
+  objIndex = 1
+  repeat with obj in objList
+    if obj.hasFlag(theFlag) then
+      indexesToDelete.append(objIndex)
+    end if
+    
+    objIndex = objIndex + 1
+  end repeat
+  
+  numToDelete = indexesToDelete.count
+  repeat with i = numToDelete down to 1
+    objList.deleteAt(indexesToDelete[i])
+  end repeat
+  
+  return objList
+end
+
+--- private ---
+on createNew (me, objSym)
+  newObj = new(script (string(objSym)))
+  
+  pStatusList[objSym].add(1)
+  pObjList[objSym].add(newObj)
+  indx = pObjList[objSym].count
+  
+  newObj.ID = [#typ: objSym, #indx: indx, #master:me, #bigMe: newObj]
+  newObj.big = newObj
+  
+  --  put "objectMaster.createNew total = " & me.getTotal() & " Last: " & objSym
+  
+  --  put "objectMaster.createNew() Last = " & objSym & " there are now " & pObjList[objSym].count & " of them"
+  
+  Return newObj
+end createNew
+
+on objAllDelete me
+  repeat with obList in pObjList
+    repeat with ob = 1 to obList.count
+      obList[ob].finish()
+      obList[ob] = 0
+    end repeat
+  end repeat
+end objAllDelete
+
+on objFree me, obj
+  ID = obj.ID
+  
+  objSym = ID.typ
+  indx = ID.indx
+  
+  if indx > pMaxObjects then
+    pos = pObjList[objSym].getPos(obj)
+    if pos > 0 then  -- object may be finished more than once eg TransBlend could be finished by callingPrg and itself.
+      pObjList[objSym].deleteAt(pos)
+      pStatusList[objSym].deleteAt(pos)
+    end if
+  else
+    
+    if pStatusList[objSym][indx] <> 0 then -- object may be finished more than once
+      pStatusList[objSym][indx] = 0
+      pFreeList[objSym] = pFreeList[objSym] +1
+    end if
+    
+  end if
+  
+  --  put "objectMaster.objFree total = " & me.getTotalInUse() & " Last: " & objSym
+end objFree
+
+on objHasFlag me, theObj, theFlag
+  if theObj.pFlags.getPos(theFlag) > 0 then
+    return true
+  end if
+  
+  return false
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

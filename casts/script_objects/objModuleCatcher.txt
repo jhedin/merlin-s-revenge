@@ -1,0 +1,149 @@
+[#name: "objModuleCatcher", #scriptType: #parent, #type: #script]
+-- this object is just here to catch function calls passed back by modules
+
+property ancestor
+
+on new me
+  ancestor = new(script"objParams")
+  
+  return me
+end
+
+on addModParams me
+end
+
+on checkDead me
+  -- if an object doesn't define this anywhere else use getDead()
+  return me.big.getDead()
+end
+
+on colourTransformFin me
+end
+
+on die me
+  -- triggered by the killall cheat
+end
+
+on faderFin me
+  -- this is to catch uncaught calls when the fader finishes
+end
+
+-- chargeActive isn't used in non-character game objects
+on getChargeActive me
+  return false
+end
+
+-- experienceLevel isn't used in buildings
+on getExperienceLevel me
+  return 0
+end
+
+
+-- the invince module isn't installed for most objects
+on getInvinceActive me
+  return false
+end
+
+-- the move to loc and nav mode modules aren't installed for dwellings/some characters
+on getAcceleration me
+  return 0
+end
+
+on getWalkSpeed me
+  return 0
+end
+
+on getMode me
+  return #finish
+end
+
+on setWalkSpeed me, newVal
+end
+
+on setAcceleration me, newVal
+end
+
+-- the move to loc module isn't installed for dwellings
+on getMoving me
+  return false
+end
+
+-- for when a non-character is firing eg. a spell
+on modifyLocWithEyestrain me, theLoc
+  return theLoc  
+end
+
+--almost nobody has a gmg
+on getGmgOn me
+  return false
+end
+
+-- releaseActive isn't used in non-character game objects
+on getReleaseActive me
+  return false
+end
+
+on goMode me, newMode
+end
+
+-- usually handled by navMode
+-- cpu characters use walkSpeed instead
+on incWalkAcceleration me
+end
+
+-- if the residents mod isn't installed,
+-- then we are not a dwelling
+on isDwelling me
+  return false
+end
+
+on linkIn me
+end
+on linkOut me
+end
+
+on moveXYFin me
+end
+
+on outOfEnergy me
+end
+
+on paws me
+end
+
+on start me
+end
+
+on takeHeal me, collisionVect, healingObj
+end
+
+on takeHit me, collisionVect, attackingObj, owner
+end
+
+on takeFreeze me, collisionVect, attackingObj, owner
+end
+
+on teleportInFinished me
+end
+
+on teleportOutFinished me, caller
+end
+
+on unpaws me
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

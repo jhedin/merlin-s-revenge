@@ -1,0 +1,93 @@
+[#name: "objPlayMusicController", #scriptType: #parent, #type: #script]
+global g
+
+property ancestor
+
+on new me
+  ancestor = new(script"objController")
+  
+  i = me.modifyParams(#init)
+  
+  i.exclusive = false
+  
+  return me
+end
+
+on newObject me, definition, theLoc, caller
+  definitionText = StringEliminateChars(definition.text, return)
+ 
+  newObj = g.objectMaster.requestObject(#objPlayMusic)
+  params = newObj.getParams(#init)
+  params.definition = definitionText
+  newObj.init(params)
+  
+  newObj.playMusic()
+  
+  me.pObjects.append(newObj)
+  
+  return newObj
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,226 @@
+[#name: "modSplashDamage", #scriptType: #parent, #type: #script]
+
+-- for bullets
+
+-- allows them to cause splash damage on landing
+
+
+
+global g
+
+
+
+property ancestor
+
+property pSplashDamageOn -- whether or not the bullet does splash damage
+
+property pSplashGraveOn  -- whether to draw the #grave image as the result of the thing landing - this appears while the bullet is still on screen (eg. cracks)
+
+
+
+on new me
+  
+  ancestor = new (script("modModule"))
+  
+  return me
+  
+end
+
+
+
+on addModParams me
+  
+  i = me.modifyParams(#init)
+  
+  
+  
+  i[#splashDamageOn] = false
+  
+  i[#splashGraveOn] = false
+  
+  
+  
+  ancestor.addModParams()
+  
+end
+
+
+
+on init me, params
+  
+  ancestor.init(params)
+  
+  
+  
+  pSplashDamageOn = params.splashDamageOn
+  
+  pSplashGraveOn = params.splashGraveOn
+  
+end
+
+on calcAttackDistSplash me
+  return me.big.pAttack.power
+end
+
+on calcAttackHitSplash me, obj
+
+  hit = false
+
+  
+
+  dist = GeomDistSqr(obj.getLoc(), me.big.getLoc())
+
+  if dist < (me.big.pAttack.power*me.big.pAttack.power) then
+
+    hit = true
+
+  end if
+
+  
+
+  return hit
+
+end
+
+
+
+on calcCollisionVectSplash me, objTarget
+
+  targetLoc = objTarget.getLoc()
+
+  attackLoc = me.getLoc()
+
+  attackPower = me.big.pAttack.power
+
+  
+
+  collisionVect = CollisionCalcVect(targetLoc, attackLoc, attackPower)
+
+  
+
+  return collisionVect
+
+  
+
+end
+
+
+
+on drawSplashGrave me
+
+  if pSplashGraveOn then
+
+    me.big.drawGrave()
+
+  end if
+
+end
+
+
+
+on hasSplashDamage me
+
+  return pSplashDamageOn
+
+end
+
+
+
+on impactSplashDamage me
+
+  if pSplashDamageOn then
+
+    g.teamMaster.impactAttack(me.big)
+
+  end if
+
+end
+
+
+
+on internalEvent me, theEvent
+
+  case theEvent of
+
+    #land, #mineTriggered:
+
+      me.impactSplashDamage()
+
+      me.drawSplashGrave()
+
+  end case
+
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

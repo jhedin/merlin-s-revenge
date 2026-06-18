@@ -1,0 +1,198 @@
+[#name: "modMedikit", #scriptType: #parent, #type: #script]
+-- can be used by any character who uses medikits
+-- if used by an object other than the player, the display function
+-- will need to be disabled
+
+global g
+
+property ancestor
+property pHealAmount          -- the amount to heal each time HealDelay expires
+property pHealDelayCounter    -- the num of frames in between heals
+property pRemainingHitpoints  -- the amount of hitpoints left in the current medikit
+property pMedikitActive       -- *records* whether the medikit is currently healing
+property pNumOfMedikits       -- the number of medikits unused
+property pUpdateMedikitDisplay       -- whether or not to update the global display (default: true)
+
+on new me
+  ancestor = new (script("modModule"))
+  return me
+end
+
+on addModParams me
+  i = me.modifyParams(#init)
+  
+  i[#updateMedikitDisplay] = true
+  
+  ancestor.addModParams()
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  pHealAmount = 1
+  pHealDelayCounter = CounterNew()
+  pHealDelayCounter.tim[2] = 5
+  pRemainingHitpoints = 0
+  pNumOfMedikits = 0
+  pUpdateMedikitDisplay = params.updateMedikitDisplay
+end
+
+on addSaveData me, sd
+  ancestor.addSaveData(sd)
+  
+  sd[#pHealDelayCounter] = pHealDelayCounter
+  sd[#pRemainingHitpoints] = pRemainingHitpoints
+  sd[#pMedikitActive] = pMedikitActive
+  sd[#pNumOfMedikits] = pNumOfMedikits
+  sd[#pUpdateMedikitDisplay] = pUpdateMedikitDisplay
+end
+
+on attemptHeal me
+  Counter(pHealDelayCounter)
+  if pHealDelayCounter.fin then
+    if pRemainingHitpoints > 0 then
+      pRemainingHitpoints = pRemainingHitpoints - pHealAmount
+      me.ID.bigMe.addToEnergy(pHealAmount)
+      
+      pMedikitActive = true
+      
+      me.updateMedikitDisplay()
+    else
+      pMedikitActive = false
+      
+      me.nextMedikit()
+      
+      me.updateMedikitDisplay()
+    end if
+  end if
+end
+
+on getMedikitActive me
+  return pMedikitActive
+end
+
+on getMedikitRemainingHitpoints me
+  return pRemainingHitpoints
+end
+
+on getMedikitMaxHitpoints me
+  return me.ID.bigMe.getMaxEnergy()
+end
+
+on getNumOfMedikits me
+  numOfMedikits = pNumOfMedikits
+  
+  if pRemainingHitpoints > 0 then
+    numOfMedikits = numOfMedikits +1
+  end if
+  
+  return numOfMedikits
+end
+
+on nextMedikit me
+  if pNumOfMedikits > 0 then
+    pNumOfMedikits = pNumOfMedikits - 1
+    pRemainingHitpoints = me.getMedikitMaxHitpoints()
+    
+    pMedikitActive = true
+  end if
+end
+
+on medikitCollected me
+  pNumOfMedikits = pNumOfMedikits + 1
+  
+  me.updateMedikitDisplay()
+end
+
+on restoreFromSave me, sd
+  ancestor.restoreFromSave(sd)
+  
+  pHealDelayCounter = sd.pHealDelayCounter
+  pRemainingHitpoints = sd.pRemainingHitpoints
+  pMedikitActive = sd.pMedikitActive
+  pNumOfMedikits = sd.pNumOfMedikits
+  pUpdateMedikitDisplay = sd.pUpdateMedikitDisplay
+  
+  me.updateMedikitDisplay()
+end
+
+on update me
+  ancestor.update()
+  
+  if me.ID.bigMe.checkEnergyIsAtMax() = false then
+    me.attemptHeal()
+  else
+    pMedikitActive = false
+    me.updateMedikitDisplay()
+  end if
+end
+
+on updateMedikitDisplay me
+  if pUpdateMedikitDisplay then
+    g.medikitMaster.updateDisplay(me.ID.bigMe)
+  end if
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,281 @@
+[#name: "modAnimSet", #scriptType: #parent, #type: #script]
+-- will take care of animset related activities
+-- should be used by any object that is animated
+
+global g
+global gGameView
+
+property ancestor
+property pAnimKeepSize  -- whether or not sprites are sized the same as members (false by default)
+property pAnimPaused    -- whether or not the animation is currently paused (can be updated by manually calling "frame advance")
+property pAnimSet
+
+on new me
+  ancestor = new (script("modModule"))
+  return me
+end
+
+on init me, params
+  pAnimKeepSize = false
+  pAnimPaused = false
+  pAnimSet = g.objectMaster.requestObject(#objAnimSet)
+  pAnimSet.init(params.name, params.character)
+  
+  ancestor.init(params)
+end
+
+on addModParams me
+  i = me.modifyParams(#init)
+  
+  i[#name] = ""
+  i[#character] = #none
+  
+  ancestor.addModParams()
+end
+
+on finish me 
+  
+  if pAnimSet <> #none and me.big.getMode() = #finish then 
+    --without the extra condition, it often finishes too early. The extra condition(getMode() = #finish), however may cause problems/be bad practise...
+    pAnimSet.finish()
+    pAnimSet = #none
+  end if
+  
+  ancestor.finish()
+end
+
+
+on addSaveData me, sd
+  ancestor.addSaveData(sd)
+  
+  me.addToSaveData(sd)
+  
+end
+
+on addToArmyDetails me
+  ad = me.big.getArmyDetails()
+  
+  me.addToSaveData(ad)
+end
+
+on addToSaveData me, sd
+  sd[#pAnimKeepSize] = pAnimKeepSize
+  sd[#pAnimPaused] = pAnimPaused
+  
+  -- animSet always exists
+  saveData = [:]
+  pAnimSet.addSaveData(saveData)
+  sd[#pAnimSet] = saveData
+end
+
+on frameAdvance me
+  me.updateAnim()
+  
+  me.ID.bigMe.animUpdated()
+  me.internalEvent(#animUpdated)
+end
+
+on frameExtendDelay me, delayAmount
+  pAnimSet.extendDelay(me.big.getAnimSym(#none), delayAmount)  
+end
+
+on animUpdated me
+  -- override this to adjust the anim after it's been updated
+end
+
+on getAnimSym me, sym
+  if sym = #none then
+    sym = me.ID.bigMe.getMode()
+  end if
+  
+  case sym of
+    #build:
+      if me.big.checkMyBuildingInRange() = false then
+        sym = #walk
+      end if
+      
+    #fall:
+      sym = #jump
+      
+    #landed, #moveToLoc:
+      sym = #walk
+      
+    #look:
+      sym = #stand
+      
+    #dead, #finish, #reelSit:
+      --      if gGameView = #sideOn then
+      --        sym = #reelLanded
+      --      else if gGameView = #topDown then
+      sym = #grave
+      --      end if
+  end case
+  
+  if sym = #walk then
+    if me.big.getMoving() = false then
+      sym = #stand
+    end if
+  end if
+  
+  --if I have a magic weapon, if moving, #weaponMagic, or #weaponMagicWalk, else, continue
+  
+  if me.big.getGmgOn() <> true then
+    
+    if sym = #charge then
+      if me.big.getMoving() then
+        sym = #chargeWalk
+      end if
+    end if
+    
+    if sym = #release then
+      if me.big.getMoving() then
+        sym = #releaseWalk
+      end if
+    end if
+  else
+    if me.big.getMoving() then
+      sym = #weaponMagicWalk
+    else
+      sym = #weaponMagic
+    end if
+  end if
+  
+  
+  return sym
+end
+
+on getAnimFrame me
+  return pAnimSet.getFrame(me.ID.bigMe.getAnimSym(#none))
+end
+
+on getAnimFrameFresh me
+  return pAnimSet.getFrameFresh(me.ID.bigMe.getAnimSym(#none))
+end
+
+on getAnimImage me
+  return pAnimSet.getImage(me.big.getAnimSym(#none))
+end
+
+on getAnimImageFromStrip me, animSym
+  return pAnimSet.getImage(animSym)
+end
+
+on getAnimKeepSize me
+  return pAnimKeepSize
+end
+
+on getAnimLooped me
+  if pAnimSet = #none then 
+    return true
+  end if
+  return pAnimSet.getLooped(me.ID.bigMe.getAnimSym(#none))
+end
+
+on getAnimMember me
+  return pAnimSet.getCurrentMember(me.big.getAnimSym(#none))
+end
+
+on getAnimMemberFromStrip me, animSym
+  return pAnimSet.getCurrentMember(animSym)
+end
+
+on getAnimMemberFromStripAt me, animSym, frameNo
+  return pAnimSet.getMemberAt(animSym, frameNo)
+end
+
+on getNoOfFramesInStrip me, animSym
+  return pAnimSet.getNoOfFrames(animSym)
+end
+
+on goToAnimFrame me, frameNum
+  return pAnimSet.goToAnimFrame(me.big.getAnimSym(#none), frameNum)
+end
+
+on internalEvent me, theEvent
+  ancestor.internalEvent(theEvent)
+  
+  case theEvent of
+    #addToArmyDetails:
+      me.addToArmyDetails()
+      
+    #restoreFromArmyDetails:
+      me.restoreFromArmyDetails()
+      
+      
+  end case
+  
+end
+
+on pauseAnim me
+  pAnimPaused = true
+end
+
+on resetAnim me, animSym
+  pAnimSet.resetAnim(animSym)
+end
+
+on restoreFromArmyDetails me
+  ad = me.big.getArmyDetails()
+  
+  me.restoreFromSaveData(ad)
+  
+end
+
+on restoreFromSave me, sd
+  ancestor.restoreFromSave(sd)
+  
+  me.restoreFromSaveData(sd)
+end
+
+on restoreFromSaveData me, sd
+  pAnimKeepSize = sd.pAnimKeepSize
+  pAnimPaused = sd.pAnimPaused
+  
+  -- animSet already created and inited on me.init()
+  pAnimSet.restoreFromSave(sd.pAnimSet)
+  
+  -- this is now done from objRoom in case mode is mis-reported (e.g. half built dwarf tower)
+  -- spool up the next frame in case anim was paused
+  --me.frameAdvance()
+end
+
+on setAnimAllowStretching me, newVal
+  me.setAnimKeepSize(newVal)
+end
+
+on setAnimKeepSize me, newVal
+  pAnimKeepSize = newVal
+end
+
+on unpauseAnim me
+  pAnimPaused = false
+end
+
+on update me
+  
+  if pAnimPaused = false then
+    me.frameAdvance()
+  end if
+  
+  ancestor.update()
+end
+
+on updateAnim me
+  sym = me.ID.bigMe.getAnimSym(#none)
+  
+  member = pAnimSet.getMember(sym)
+  
+  SpriteSetMember(me.ID.bigMe.getSprite(), member, #gameChar, pAnimKeepSize)
+end
+
+
+
+
+
+
+
+
+
+
+
+

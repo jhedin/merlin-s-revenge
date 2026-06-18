@@ -1,0 +1,333 @@
+[#name: "objCPUCharacter", #scriptType: #parent, #type: #script]
+global g, gGameSpeed
+global gFrameNum
+global gPlayerHair
+
+property ancestor
+property pEnergyBar
+property pEnergyBarColour
+property pHitByHairSound
+property pLookCounter
+property pLookDelayCounter
+property pPathFinding          -- whether to try to find alternate paths around obstacles.
+property pRunReload            -- whether to run away while reloading
+property pTakeHitSound
+property pTakenHit
+
+on new me
+  ancestor = new (script "objCharacter")
+  
+  i = me.modifyParams(#init)
+  i.character = #enemyCharacter
+  i.energyRecoverDelay = 300
+  i.flags.append(#objEnemyCharacter)
+  
+  i[#energyBarColour] = rgb(0,255,0)
+  i[#hitByHairSound] = #none
+  i[#lookTimes] = 4
+  i[#lookDelay] = 10
+  i[#pathFinding] = false
+  i[#runReload] = false
+  i[#takeHitSound] = #none
+  
+  me.addModule("modFlasher")
+  me.addModule("modGrave")
+  
+  return me
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  pEnergyBar = #none
+  pEnergyBarColour = params.energyBarColour
+  
+  pLookCounter = CounterNew()
+  pLookCounter.tim[2] = params.lookTimes
+  
+  pLookDelayCounter = CounterNew()
+  pLookDelayCounter.tim[2] = params.lookDelay
+  pLookDelayCounter.inc = gGameSpeed
+  
+  pHitByHairSound = params.hitByHairSound
+  
+  pPathFinding = params.pathFinding
+  
+  pReelFinishSpeed = params.reelFinishSpeed
+  
+  pRecoil = params.recoil
+  pRecoilCounter = CounterNew()
+  pRecoilCounter.tim = [0,params.recoilDuration]
+  
+  pRunReload = params.runReload
+  
+  pRotationCounter = CounterNew()
+  pRotationCounter.tim[2] = 360
+  pRotationCounter.inc = params.rotationSpeed
+  
+  pSitCounter = CounterNew()
+  pSitCounter.tim[2] = params.sitTime
+  pSitCounter.inc = gGameSpeed
+  
+  pTakeHitSound = params.takeHitSound
+  pTakenHit = false
+  
+  me.initEnergyBar()
+end 
+
+on initEnergyBar me
+  pEnergyBar = g.enemyEnergyMaster.requestEnergyBar(me.ID.bigMe)
+  if pEnergyBar <> #none then
+    pEnergyBar.reset(me.pEnergy, me.pMaxEnergy, pEnergyBarColour)
+  end if
+end
+
+on finish me
+  g.enemyEnergyMaster.freeEnergyBar(pEnergyBar, me.ID.bigMe)
+  
+  ancestor.finish()
+end
+
+on collisionCeiling me
+  me.collisionVertical()
+  
+  ancestor.collisionCeiling()
+end
+
+on collisionPlatform me
+  me.collisionVertical()
+  
+  ancestor.collisionPlatform()
+end
+
+on collisionVertical me
+  vectY = me.pMoveXY.getVectY()
+  vectY = VarPositive(vectY)
+  
+  
+  -- only take damage in #reel mode
+  case me.big.getMode() of
+    #reel, #reel_fly, #reel_land:
+      me.takeDamage(vectY)
+      
+  end case
+  
+end
+
+on collisionWall me
+  vectX = me.pMoveXY.getVectX()
+  speedX = VarPositive(vectX)
+  
+  -- only take damage in #reel mode
+  case me.big.getMode() of
+    #reel, #reel_fly, #reel_land:
+      me.takeDamage(speedX)
+      
+  end case
+end
+
+on collisionWallLeft me
+  me.collisionWall()
+  ancestor.collisionWallLeft()
+end
+
+on collisionWallRight me
+  me.collisionWall()
+  ancestor.collisionWallRight()
+end
+
+on energyBarNowFree me
+  -- called if there were no free energyBars on object's creation
+  me.initEnergyBar()
+end
+
+on energyChanged me
+  if pEnergyBar <> #none then
+    pEnergyBar.updateEnergy(me.pEnergy)
+  end if
+end
+
+on flasherFinished me
+  me.pDead = true
+  me.goMode(#finish)
+  me.drawGrave()
+  
+  ancestor.flasherFinished()
+end
+
+on getPathFinding me
+  return pPathFinding
+end
+
+on getRunReload me
+  return pRunReload
+end
+
+on goMode me, newMode
+  
+  case me.pMode of
+    #recoil:
+      me.frictionXOn()
+      me.frictionYOn()
+      
+  end case
+  
+  case newMode of
+    #finish:
+      me.drawGrave()
+      me.setDead(true)
+      
+    #landed, #reelLanded, #walk:
+      me.pMoveXY.setVectY(0)
+      me.frictionNormal()
+      
+    #look:
+      CounterReset(pLookCounter)
+      CounterReset(pLookDelayCounter)
+      
+  end case
+  
+  ancestor.goMode(newMode)
+  
+end
+
+on start me
+  ancestor.start()
+end
+
+on takeHit me, collisionVect, attackingObj, owner
+  -- if we are a ghost don't get hit.
+  if me.amGhost() then
+    return
+  end if
+  
+  if me.pMode <> #dead then
+    if me.checkDead() = false then
+      me.playSound(pHitByHairSound)
+      ancestor.takeHit(collisionVect, attackingObj, owner)
+    end if
+  end if
+  pTakenHit = true 
+  --put "enemyChararcter.takeHit, framenum = " & gFrameNum & ", collisionVect = " & collisionVect
+end
+
+on update me
+  case me.pMode of
+    #dead:
+      fin = me.updateDead()
+      if fin then me.goMode(#finish)
+      
+    #look:
+      fin = me.updateLook()
+      if fin then me.goMode(#walk)
+      
+  end case
+  
+  ancestor.update()
+  
+end
+
+on updateAI me
+  if gPlayerHair then
+    me.checkCollisionsWithHair()  
+  end if
+  
+  ancestor.updateAI()
+end
+
+on updateDead me
+  if me.getGraveOn() = true then
+    me.setFlipFromDir(1)
+    fin = me.getAnimLooped()
+  else
+    fin = true
+  end if
+  
+  return fin
+end
+
+on updateLook me
+  
+  if pLookDelayCounter.fin then
+    if pLookCounter.fin then
+      
+      return true
+      
+    else
+      
+      spr = me.pSpr
+      
+      if spr.fliph then
+        spr.fliph = false
+      else
+        spr.fliph = true
+      end if
+      
+      Counter(pLookCounter)
+      
+    end if
+  end if
+  
+  Counter(pLookDelayCounter)
+  
+  return false
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

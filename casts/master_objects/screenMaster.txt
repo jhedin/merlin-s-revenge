@@ -1,0 +1,289 @@
+[#name: "screenMaster", #scriptType: #parent, #type: #script]
+global g
+global gErrorTrace
+
+property p
+property pCurrentScreen -- the last screen displayed
+property pBackToScreen  -- the last-but-one screen displayed
+
+on new me
+  return me
+end
+
+-- <public>
+
+on init me
+  p = [:]
+  p[#params] = [:]
+  
+  p.params[#goScreen] = [#screenSym: #none, #transition: #flick, #caller: #none]
+  
+  -- if an item contains the following in it's name, we dont want a sprite for it
+  p[#dontDraw] = ["dd_", "prg_"]
+  
+  p[#mark] = [#member: #none, #loc: point(0,0), #width: 0, #height: 0, #ink: 0, #blend: 0, #flipH: 0, #flipV: 0, #color: rgb(0,0,0), #bgColor: rgb(255,0,255), #draw:true]
+  
+  p[#screenList] = [:]
+  
+  p[#currentTransition] = [:]
+  ct = p.currentTransition
+  ct[#caller] = #none
+  ct[#stage] = #none
+  ct[#targetScreenSym] = #none
+  ct[#transition] = #none
+  ct[#waitingForScreens] = 0
+  
+  pBackToScreen = g.structMaster.getStruct(#screenCall)
+  pCurrentScreen = g.structMaster.getStruct(#screenCall)
+  
+  me.initScreenList()
+end
+
+on backAScreen me
+  -- clears the last screen displayed, and redisplays the previous screen
+  -- only works with screens brought on with screenOn()
+  me.screenOff(pCurrentScreen.sym)
+  me.screenOn(pBackToScreen.sym, pBackToScreen.caller)
+end
+
+on getParams me, functionSym
+  return p.params[functionSym]
+end
+
+on goScreen me, params
+  me.startTransition(params.screenSym, params.transition, params.caller)
+  
+  pBackToScreen = pCurrentScreen.duplicate()
+  pCurrentScreen.sym = params.screenSym
+  pCurrentScreen.caller = params.caller
+end
+
+on stop me
+  me.finish()
+end
+
+
+-- <private>
+
+on calcDraw me, memName
+  repeat with dontName in p.dontDraw
+    if memName contains dontName then
+      return false
+    end if
+  end repeat
+  
+  return true
+end
+
+on finish me
+--  gErrorTrace.append(#screenMasterFinish)
+  --gErrorTrace.append(string(p))
+  if ilk(p, #list) then
+    call(#finish, p.screenList)
+  end if
+  --gErrorTrace.deleteOne(string(p))
+--  gErrorTrace.deleteOne(#screenMasterFinish)
+end
+
+on initScreenList me
+  g.spriteMaster.hideAll2DSprites()
+  
+  numLabels = the labelList.lines.count -1
+  repeat with i = 1 to numLabels
+    go marker(1)
+    screenSym = symbol(the frameLabel)
+    nScreen = g.objectMaster.requestObject(#objScreen)
+    nScreen.init(screenSym, me)
+    nScreen.setMarks(me.getMarks())
+    p.screenList[screenSym] = nScreen
+  end repeat
+  go frame 1
+  
+  g.spriteMaster.showAll2DSprites()
+end 
+
+on getMarks me
+  theList = []
+  repeat with i = 1 to the lastChannel
+    if sprite(i).member <> member(0, 0) then
+      nMark = me.newBlank(#mark)
+      nMark.member  = sprite(i).member
+      nMark.loc     = sprite(i).loc.duplicate()
+      nMark.width   = sprite(i).width
+      nMark.height  = sprite(i).height
+      nMark.ink     = sprite(i).ink
+      nMark.blend   = sprite(i).blend
+      nMark.flipH   = sprite(i).flipH
+      nMark.flipV   = sprite(i).flipV
+      nMark.color   = sprite(i).color
+      nMark.bgColor = sprite(i).bgColor
+      
+      nMark.draw = me.calcDraw(nMark.member.name)
+      
+      theList.append(nMark)
+    end if
+  end repeat
+  
+  return theList
+end
+
+on newBlank me, sym
+  return p[sym].duplicate()
+end
+
+on sendAllScreens me, function, transition
+  ct = p.currentTransition
+  ct.waitingForScreens = 0
+  
+  repeat with scr in p.screenList
+    call (function, scr, transition, #screenResponseWaitForMe) 
+  end repeat
+end
+
+on screenFinished me
+  ct = p.currentTransition
+  ct.waitingForScreens = ct.waitingForScreens -1
+  
+  if ct.waitingForScreens = 0 then
+    case ct.stage of
+      #start:
+        me.continueTransition()
+        
+      #continue:
+        me.finishTransition()
+        
+    end case
+  end if
+end
+
+on screenOn me, theScreen, caller
+  -- displays a screen on top of existing screens
+  scr = p.screenList[theScreen]
+  
+  scr.onScreen(#flick, #screenOnCallBack, caller)
+  
+  pBackToScreen = pCurrentScreen.duplicate()
+  pCurrentScreen.sym = theScreen
+  pCurrentScreen.caller = caller
+end
+
+on screenOnCallBack me, bDone
+  -- a dummy function to absorb the callback
+  nothing
+end
+
+on screenOff me, theScreen
+  -- removes a screen from the display
+  scr = p.screenList[theScreen]
+  
+  scr.offScreen(#flick, #screenOffCallBack)
+end
+
+on screenOffCallBack me, bDone
+  -- a dummy function to absorb the callback
+  nothing
+end
+
+on screenResponseWaitForMe me, bDone
+  ct = p.currentTransition
+  if bDone = false then
+    ct.waitingForScreens = ct.waitingForScreens + 1
+  end if
+end
+
+on startTransition me, targetScreenSym, transition, caller
+  -- record transition details and clear unneeded screens
+  ct = p.currentTransition
+  ct.targetScreenSym = targetScreenSym
+  ct.transition = transition
+  ct.caller = caller
+  ct.stage = #start
+  
+  me.sendAllScreens(#offScreen, ct.transition)
+  if ct.waitingForScreens = 0 then
+    me.continueTransition()
+  end if
+end
+
+on continueTransition me
+  -- bring new screens onto stage
+  ct = p.currentTransition
+  targetScreen = p.screenList[ct.targetScreenSym]
+  targetScreen.onScreen(ct.transition, #screenResponseWaitForMe, ct.caller)
+  ct.stage = #continue
+  if ct.waitingForScreens = 0 then
+    me.finishTransition()
+  end if
+end
+
+on finishTransition me
+  ct = p.currentTransition
+  ct.stage = #finish
+  ct.caller.goScreenFinished(ct.targetScreenSym)
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

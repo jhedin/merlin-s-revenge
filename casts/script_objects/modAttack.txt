@@ -1,0 +1,873 @@
+[#name: "modAttack", #scriptType: #parent, #type: #script]
+
+-- acts as the repository for the objects attack, and handles any function calls
+
+-- from teamMaster or anywhere else.
+
+
+
+global g
+
+global gGameView
+
+
+
+
+
+property ancestor
+
+property pAttack
+
+property pRangedVectOffset  -- the amount above the target's head to aim
+
+property pChargeMax
+
+property pChargeSpeed
+
+property pChargeStart
+
+property pChargeSpeedMax
+
+on new me
+  
+  ancestor = new (script("modModule"))
+  
+  return me
+  
+end
+
+
+
+on addModParams me
+  
+  i = me.modifyParams(#init)
+  
+  
+  
+  i[#attack] = #none
+  
+  
+  
+  ancestor.addModParams()
+  
+end
+
+
+
+on init me, params
+  
+  ancestor.init(params)
+  
+  
+  
+  --  case gGameView of
+  --      
+  --    #sideOn:
+  --      
+  --      pRangedVectOffset = -2
+  --      
+  --      
+  --      
+  --    #topDown:
+  
+  pRangedVectOffset = 0
+  
+  --  end case
+  
+  me.setAttack(params.attack)
+  
+end
+
+
+
+on calcAttackChargeMax me
+  
+  characterMax = me.pCharacterPrg.getManaCapacity() * pAttack.chargeMaxModifier
+  
+  characterMax = characterMax + pAttack.chargeMaxBasic
+  
+  chargeMax = min(pChargeMax, characterMax)
+  
+  
+  -- magic limiter
+  
+  if pAttack.limitMagic then
+    
+    magicLimit = g.magicLimitMaster.getMagicLimit()
+    
+    chargeMax = chargeMax * magicLimit / 100
+    
+  end if
+  
+  
+  
+  -- randomize summon
+  
+  if pAttack[#randomSummon] then
+    if pAttack[#multistage][2] - chargeMax < 0 then
+      tempMax = chargeMax * random(20) / 17 + random(pAttack[#multistage][1])
+      chargeMax = min(chargeMax, tempMax)
+      chargeMax = chargeMax + random(2) - 1
+    end if
+  end if
+  
+  
+  
+  
+  return chargeMax
+  
+end
+
+
+
+on calcAttackChargeStart me
+  
+  chargeStart = pChargeStart + me.pCharacterPrg.getManaBurst()
+  
+  -- make sure charge doesn't start bigger than it's max size
+  
+  chargeStart = min(chargeStart, me.calcAttackChargeMax())
+  
+  
+  
+  -- update old versions of the spell from save games
+  
+  if pAttack[#chargeStartMax] = void then
+    
+    pAttack[#chargeStartMax] = #none
+    
+    put "modAttack.calcAttackChargeStart() chargeStartMax added"
+    
+  end if
+  
+  
+  
+  -- make sure charge doesn't start bigger than it's max start size (if there is one)
+  
+  if pChargeStart <> #none then
+    
+    chargeStart = min(pChargeStart, pAttack.chargeStartMax)
+    
+  end if
+  
+  
+  
+  return chargeStart
+  
+end
+
+
+
+on calcAttackChargeSpeed me
+  
+  chargeSpeed = pChargeSpeed * me.pCharacterPrg.getManaFlow()
+  
+  
+  
+  if pChargeSpeedMax <> #unlimited then
+    
+    if pChargeSpeedMax < chargeSpeed then
+      
+      chargeSpeed = pChargeSpeedMax
+      
+    end if
+    
+  end if
+  
+  
+  
+  return chargeSpeed
+  
+end
+
+
+
+on calcAttackLoc me
+  
+  dir = SpriteGetFlipHAsDir(me.pSpr)
+  
+  attackLoc = pAttack.collisionLoc.duplicate()
+  
+  attackLoc[1] = attackLoc[1] * dir
+  
+  attackLoc = me.pCharacterPrg.getLoc() + attackLoc
+  
+  
+  
+  return attackLoc
+  
+end 
+
+
+on calcAttackDist me, tileSize
+  dist = 0
+  case me.getAttack().type of
+    #melee:
+      nothing
+    #explode, #magic:      
+      dist = integer(me.big.getCurrentCharge()/(2*tileSize[1])) 
+    #bullet:      
+      if me.hasSplashDamage() then        
+        dist = integer(me.calcAttackDistSplash()/tileSize[1])
+      end if          
+    otherwise
+      nothing 
+  end case   
+  return dist
+end
+
+on calcAttackHit me, targetObj
+  
+  hit = false  
+  
+  case me.getAttack().type of
+      
+    #melee:
+      
+      hit = me.calcAttackHitMelee(targetObj)
+      
+      
+      
+    #explode, #magic:
+      
+      hit = me.calcAttackHitMagic(targetObj)
+      
+      
+      
+    #bullet:
+      
+      --if me.hasSplashDamage() then --taken care of above.
+      
+      hit = me.calcAttackHitSplash(targetObj)
+      
+      --end if
+      
+      
+      
+    otherwise
+      
+      nothing
+      
+      
+      
+  end case
+  
+  
+  
+  return hit
+  
+end
+
+
+
+on calcAttackHitMagic me, targetObj
+  
+  hit = false
+  
+  targetRadius = targetObj.getRadius()
+  
+  myRadius = me.big.getCurrentCharge()/2
+  
+  dist = GeomDistSqr(me.getLoc(), targetObj.getLoc())
+  
+  hitRange = myRadius + targetRadius
+  
+  if  dist < (hitRange*hitRange) then
+    
+    hit = true
+    
+  end if
+  
+  return hit
+  
+end
+
+
+
+on calcAttackHitMelee me, targetObj
+  
+  hit = false
+  
+  targetRect = targetObj.getRect()
+  
+  if me.calcAttackLoc().inside(targetRect) then
+    
+    hit = true
+    
+  end if
+  
+  
+  
+  return hit
+  
+end
+
+
+
+on calcAttackPower me
+  
+  attackPower = point(0,0)
+  
+  
+  
+  attackType = me.calcAttackType()
+  
+  
+  
+  case attackType of
+      
+    #bullet:
+      
+      attackPower = me.calcAttackPowerBullet()
+      
+      
+      
+    #melee:
+      
+      attackPower = me.calcAttackPowerMelee()
+      
+      
+      
+    #explode, #magic, #spell:
+      
+      attackPower = me.calcAttackPowerSpell()
+      
+      
+      
+  end case
+  
+  
+  
+  return attackPower
+  
+end
+
+
+
+on calcAttackPowerBullet me
+  
+  attackPower = me.getVect() * me.getAttack().power
+  
+  
+  
+  return attackPower
+  
+end
+
+
+
+on calcAttackPowerMelee me
+  
+  dir = SpriteGetFlipHAsDir(me.pSpr)
+  
+  attackPower = pAttack.power.duplicate()
+  
+  attackPower[1] = attackPower[1] * dir
+  
+  
+  
+  return attackPower
+  
+end
+
+on calcAttackPowerSpell me
+  
+  return pAttack.power
+  
+end
+
+
+
+on calcAttackType me
+  
+  
+  
+  aType = pAttack.type
+  
+  attackType = aType
+  
+  
+  
+  return attackType
+  
+end
+
+
+
+on calcCollisionVect me, targetObj
+  
+  collisionVect = point(0,0)
+  
+  
+  
+  attackType = me.calcAttackType()
+  
+  
+  
+  case attackType of
+      
+    #bullet:
+      
+      collisionVect = me.calcCollisionVectBullet(targetObj)
+      
+      
+      
+    #melee:
+      
+      collisionVect = me.calcCollisionVectMelee(targetObj)
+      
+      
+      
+    #explode, #magic, #spell:
+      
+      collisionVect = me.calcCollisionVectSpell(targetObj)
+      
+      
+      
+  end case
+  
+  
+  
+  return collisionVect
+  
+end
+
+
+
+on calcCollisionVectBullet me, targetObj
+  
+  
+  
+  collisionVect = point(0,0)
+  
+  
+  
+  if me.big.hasSplashDamage() then
+    
+    collisionVect = me.big.calcCollisionVectSplash(targetObj)
+    
+  else
+    
+    collisionVect = me.calcAttackPower()
+    
+  end if
+  
+  
+  
+  return collisionVect
+  
+end
+
+
+
+on calcCollisionVectMelee me, targetObj
+  
+  attack = me.getAttack()
+  
+  
+  
+  case ilk(attack.power) of
+      
+    #point:
+      
+      case attack.type of 
+          
+        #melee:
+          
+          case attack.animType of
+              
+            #magicMelee: 
+              
+              collisionVect = me.calcAttackPower() * (me.pCharacterPrg.getStrength() + 1.5*me.pCharacterPrg.getManaCapacity()) / 1.5   
+              
+            otherwise:
+              
+              collisionVect = me.calcAttackPower() * me.pCharacterPrg.getStrength()
+              
+          end case
+          
+      end case
+      
+      
+      
+      
+      
+    #integer:
+      
+      attackLoc = me.getAttackLoc()
+      
+      CollisionCalcVect(attackLoc, targetObj.getLoc(), attack.power)
+      
+      
+      
+      
+      
+    otherwise:
+      
+      put "error: modAttack.getCollisionVect(): pAttack.power set to wrong type of variable"
+      
+      nothing
+      
+      
+      
+  end case
+  
+  
+  
+  return collisionVect
+  
+end
+
+
+
+on calcCollisionVectSpell me, targetObj
+  
+  targetLoc = targetObj.getLoc()
+  
+  
+  
+  myRadius = me.big.getCurrentCharge()/2
+  
+  targetRadius = targetObj.getRadius()
+  
+  
+  
+  hitRange = myRadius + targetRadius
+  
+  
+  
+  dist = SineDist(me.getLoc(), targetLoc)
+  
+  speed = (hitRange - dist) * me.calcAttackPower()
+  
+  -- avoid locs being on top of each other
+  
+  if targetLoc = me.getLoc() then
+    
+    targetLoc = targetLoc + point(0,1)
+    
+  end if
+  
+  
+  
+  if speed > 0 then
+    
+    collisionVect = GeomMoveVector(me.getLoc(), targetLoc, speed)
+    
+  else 
+    
+    collisionVect = point(0,0)
+    
+  end if
+  
+  
+  
+  return collisionVect
+  
+end
+
+
+
+on getAttack me
+  
+  return pAttack
+  
+end
+
+on isOnAttackFrame me
+  
+  -- whether the character is currently on an attack frame
+  
+  onAttackFrame = false
+  
+  
+  
+  -- make sure it is a fresh frame
+  
+  if me.pCharacterPrg.getAnimFrameFresh() = false then
+    
+    return onAttackFrame
+    
+  end if
+  
+  
+  
+  
+  
+  attackFrame = pAttack.animFrame
+  
+  currentFrame = me.pCharacterPrg.getAnimFrame()
+  
+  
+  
+  
+  
+  if ilk(attackFrame) = #list then
+    
+    onAttackFrame = (attackFrame.getPos(currentFrame) > 0)
+    
+  else 
+    
+    onAttackFrame = (currentFrame = attackFrame)
+    
+  end if
+  
+  
+  
+  return onAttackFrame
+  
+  
+  
+end
+
+on performBeamAttack me, 
+  
+  targetLoc = me.ID.bigMe.getTargetLoc()
+  
+  if targetLoc = #none then
+    
+    return
+    
+  end if
+  modx = random(20) - 10
+  mody = random(20) - 10
+  
+  targetLoc.loch = targetLoc.loch + modx
+  targetLoc.locv = targetLoc.locv + mody
+  
+  
+  distXY = targetLoc - me.calcAttackLoc()
+  if distXY <> point(0,0) then
+    distToTarget = GeomDist(targetLoc, me.calcAttackLoc())
+  else
+    distToTarget = 0
+  end if
+  distToTargetScale = Integer(distToTarget)
+  --  case me.getAttack().firingType of
+  --      
+  --    #proportional:
+  --      
+  --      throwVect = distXY / 10
+  --      
+  --      
+  --      
+  --      
+  --      
+  --    #fullstrength:
+  --      
+  --      if distXY <> point(0,0) then
+  --        
+  --        distToTarget = SineDist(targetLoc, me.calcAttackLoc())
+  --        
+  --        speed = me.pCharacterPrg.getStrength()
+  --        
+  --        distRatio = distToTarget/speed
+  --        
+  --        
+  --        
+  --        throwVect = distXY / point(distRatio, distRatio)
+  --        
+  --      else 
+  --        
+  --        throwVect = point(-1,0) * me.pCharacterPrg.getStrength()       
+  --        
+  --      end if
+  --      
+  --      
+  --      
+  --  end case
+  --  
+  --  
+  --  
+  --  throwVect[2] = throwVect[2] + pRangedVectOffset
+  --  
+  --  
+  
+  params = g.actorMaster.getParams(#newActor)
+  
+  params.initVect = point(0,0)
+  
+  params.typ = me.getAttack().bullet
+  
+  params.startLoc = targetLoc
+  
+  params.useOffset = false
+  
+  
+  
+  bulletObj = g.actorMaster.newActor(params)
+  
+  -- bullet object needs to know target so it can detect collision with it
+  
+  bulletObj.setTarget(me.big.getTarget())
+  
+  bulletObj.setTargetLoc(targetLoc)
+  
+  -- needs to know team so that it is recorded as part of the room objects
+  
+  -- and therefore included in the saveGame
+  
+  bulletObj.setTeam(me.big.getTeam())
+  
+  
+  
+  bulletObj.setOwner(me.big.getOwner())
+  
+  bulletObj.setBeam(distToTargetScale, distXY)
+  
+end
+
+
+on performRangedAttack me, 
+  
+  targetLoc = me.ID.bigMe.getTargetLoc()
+  
+  if targetLoc = #none then
+    
+    return
+    
+  end if
+  
+  
+  
+  -- add eyestrain
+  
+  targetLoc = me.modifyLocWithEyestrain(targetLoc)
+  
+  
+  
+  distXY = targetLoc - me.calcAttackLoc()
+  
+  
+  
+  case me.getAttack().firingType of
+      
+    #proportional:
+      
+      throwVect = distXY / 10
+      
+      
+      
+      
+      
+    #fullstrength:
+      
+      if distXY <> point(0,0) then
+        
+        distToTarget = SineDist(targetLoc, me.calcAttackLoc())
+        
+        speed = me.pCharacterPrg.getStrength()
+        
+        distRatio = distToTarget/speed
+        
+        
+        
+        throwVect = distXY / point(distRatio, distRatio)
+        
+      else 
+        
+        throwVect = point(-1,0) * me.pCharacterPrg.getStrength()       
+        
+      end if
+      
+      
+      
+  end case
+  
+  
+  
+  throwVect[2] = throwVect[2] + pRangedVectOffset
+  
+  
+  
+  params = g.actorMaster.getParams(#newActor)
+  
+  params.initVect = throwVect
+  
+  params.typ = me.getAttack().bullet
+  
+  params.startLoc = me.calcAttackLoc()
+  
+  params.useOffset = false
+  
+  
+  
+  bulletObj = g.actorMaster.newActor(params)
+  
+  -- bullet object needs to know target so it can detect collision with it
+  
+  bulletObj.setTarget(me.big.getTarget())
+  
+  bulletObj.setTargetLoc(targetLoc)
+  
+  -- needs to know team so that it is recorded as part of the room objects
+  
+  -- and therefore included in the saveGame
+  
+  bulletObj.setTeam(me.big.getTeam())
+  
+  bulletObj.setOwner(me.big.getOwner())
+  
+end
+
+on setAttack me, attack
+  
+  if attack = #none then
+    
+    pAttack = #none
+    pChargeMax = 5
+    pChargeSpeed = 1
+    
+    return
+    
+  end if
+  
+  
+  
+  pAttack = attack.duplicate()
+  
+  
+  
+  if pAttack.idealAttackLoc = #collisionLoc then
+    
+    pAttack.idealAttackLoc = pAttack.collisionLoc.duplicate()
+    
+  end if
+  
+  -- set the type
+  
+  AttackSetTypeFromAnimType(pAttack)
+  
+  
+  
+  -- let other modules know that a new attack has been set
+  
+  me.big.internalEvent(#attackSet)
+  
+end
+
+on gmgOn
+  pChargeMax = pAttack.gmgChargeMax
+  pChargeSpeed = pAttack.gmgChargeSpeed
+  pChargeStart = pAttack.gmgChargeStart
+  pChargeSpeedMax = pAttack.gmgChargeSpeed
+end
+
+on gmgOff
+  pChargeMax = pAttack.chargeMax
+  pChargeSpeed = pAttack.chargeSpeed
+  pChargeStart = pAttack.chargeStart
+  pChargeSpeedMax = pAttack.chargeSpeedMax
+end
+
+
+
+
+
+
+
+
+
+
+
+

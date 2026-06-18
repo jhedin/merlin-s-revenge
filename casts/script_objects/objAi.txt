@@ -1,0 +1,123 @@
+[#name: "objAi", #scriptType: #parent, #type: #script]
+property ancestor
+property pCharacterPrg
+property pMode
+property pMoveVector
+property pPreviousMode
+property pSpr
+
+on new me
+  ancestor = new(script"objModules")
+  
+  me.addModule("modRelationships")
+  
+  return me
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  me.recordMoveVector(point(0,0))
+  
+  pMode = #none
+end
+
+on initCharacterInfo me, characterPrg, spr
+  pCharacterPrg = characterPrg.ID.bigMe
+  pSpr = spr
+end
+
+on addSaveData me, sd
+  ancestor.addSaveData(sd)
+  
+  sd[#pMode] = pMode
+end
+
+on characterModeChanged me, newMode
+  -- override this to have the AI respond to differing circumstances for the character
+end
+
+on ensureMode me, newMode
+  if pMode <> newMode then
+    me.ID.bigMe.goMode(newMode)
+  end if
+end
+
+on getCharacter me
+  return pCharacterPrg.getCharacter()
+end
+
+on getLoc me
+  return pCharacterPrg.getLoc()
+end
+
+on getFlip me
+  return pCharacterPrg.getFlip()
+end
+
+on getMode me
+  return pMode
+end
+
+on getOwner me
+  return pCharacterPrg
+end
+
+on getPlatformDrop me
+  return pMoveVector[2] = 1
+end
+
+on getTeam me
+  return pCharacterPrg.getTeam()
+end
+
+on goMode me, newMode
+  pMode = newMode
+end
+
+on goThespianMode me
+  pPreviousMode = me.getMode()
+  me.goMode(#freeze)
+end
+
+on leaveThespianMode me
+  me.goMode(pPreviousMode)
+end
+
+on unpaws me
+  -- override to respond to the character prg being unpaused
+end
+
+on recordMoveVector me, newVal
+  pMoveVector = newVal.duplicate()
+end
+
+on restoreFromSave me, sd
+  ancestor.restoreFromSave(sd)
+  
+  pMode = sd.pMode
+end
+
+on setMode me, theMode
+  -- used after reeling
+  -- and after restoring a building target from save
+  pMode = theMode
+end
+
+on start me
+end
+
+on walkToLoc me, targetLoc
+  pCharacterPrg.walkToLoc()
+end
+
+
+
+
+
+
+
+
+
+
+

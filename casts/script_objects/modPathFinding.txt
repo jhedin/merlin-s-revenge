@@ -1,0 +1,212 @@
+[#name: "modPathFinding", #scriptType: #parent, #type: #script]
+-- a module for Ai to allow it to find routes around objects
+global g
+
+property ancestor
+property pPathFindingCounter -- the counter used to time how long we've been off pathfinding for. 
+property pPathFindingDistance -- the maximum distance away to move when pathfinding
+property pPathFindingLoc  -- the loc of a random way point to move towards if our path is blocked.
+property pPathFindingMode -- the mode of this module (#beeline, #scenic)
+property pStallCounter    -- uses it's own stall counter, movexy one is too fiddly to use here.
+property pTargetLoc       -- the loc we are ultimately trying to reach
+
+on new me
+  ancestor = new (script("modModule"))
+  return me
+end
+
+on addModParams me
+  i = me.modifyParams(#init)
+  
+  i[#pathFindingTime] = 60
+  i[#pathFindingStallTime] = 5
+  
+  ancestor.addModParams()
+end
+
+on init me, params
+  ancestor.init(params)
+  
+  pPathFindingCounter = CounterNew()
+  pPathFindingCounter.tim[2] = params.pathFindingTime
+  pPathFindingDistance = 100
+  pPathFindingLoc = #none
+  pPathFindingMode = #beeline
+  pStallCounter = CounterNew()
+  pStallCounter.tim[2] = params.pathFindingStallTime
+  pTargetLoc = #none
+end
+
+on addSaveData me, sd
+  ancestor.addSaveData(sd)
+  
+  sd[#pPathFindingCounter] = pPathFindingCounter
+  sd[#pPathFindingLoc] = pPathFindingLoc
+  sd[#pPathFindingMode] = pPathFindingMode
+  sd[#pStallCounter] = pStallCounter
+  sd[#pTargetLoc] = pTargetLoc
+end
+
+on findPathToLoc me, targetLoc
+  pTargetLoc = targetLoc
+  
+  case pPathFindingMode of
+    #beeline:
+      stalled = me.updateBeeline()
+      if stalled then me.goPathFindingMode(#scenic)
+      
+    #scenic:
+      fin = me.updateScenic()
+      if fin then me.goPathFindingMode(#beeline)
+      
+  end case
+end
+
+on goPathFindingMode me, newMode
+  case newMode of
+    #scenic:
+      pPathFindingLoc = PointRoughly(me.big.pCharacterPrg.getLoc(), pPathFindingDistance)
+      
+  end case
+  
+  pPathFindingMode = newMode
+end
+
+on internalEvent me, theEvent
+  ancestor.internalEvent(theEvent)
+  
+  case theEvent of
+    #arrivedAtAttackLoc:
+      CounterReset(pStallCounter)
+      me.big.pCharacterPrg.moveToLoc(#none)
+      
+    #targetLeft:
+      me.big.pCharacterPrg.moveToLoc(#none)
+      
+  end case
+end
+
+on restoreFromSave me, sd
+  pPathFindingCounter = sd.pPathFindingCounter
+  pPathFindingLoc = sd.pPathFindingLoc
+  pPathFindingMode = sd.pPathFindingMode
+  pStallCounter = sd.pStallCounter
+  pTargetLoc = sd.pTargetLoc
+end
+
+on updateBeeline me
+  stalled = false
+  
+  me.big.pCharacterPrg.moveToLoc(pTargetLoc)
+  
+  stalled = me.updateStallCount()
+  
+  return stalled
+end
+
+on updateScenic me
+  fin = false
+  
+  me.big.pCharacterPrg.moveToLoc(pPathFindingLoc)
+  
+  stalled = me.updateStallCount()
+  
+  if stalled then
+    fin = true
+  end if
+  
+--  Counter(pPathFindingCounter)
+--  if pPathFindingCounter.fin then
+--    fin = true
+--    CounterReset(pPathFindingCounter)
+--  end if
+  
+  return fin
+end
+
+on updateStallCount me
+  stalled = false
+  if me.big.pCharacterPrg.pMoveXY.getMoveVect() = point(0,0) then
+    Counter(pStallCounter)
+    
+    if pStallCounter.fin then
+      CounterReset(pStallCounter)
+      stalled = true
+    end if
+    
+  else
+    
+    CounterReset(pStallCounter)
+    
+  end if
+  
+  return stalled
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
