@@ -101,8 +101,9 @@ async function main() {
           const s = loadSave();
           if (s) { rooms.enter(s.room); player.send("restoreFromSave", s.player); flash("game loaded"); }
         }
-        const snapshot = game.entities.slice();
-        for (const e of snapshot) e.send("update");
+        // iterate over this tick's entities by captured length (alloc-free; newly spawned
+        // bullets/allies appended during the loop are processed next tick, like a snapshot)
+        for (let i = 0, n = game.entities.length; i < n; i++) game.entities[i]!.send("update");
         sweepBullets();
         for (let i = game.entities.length - 1; i >= 0; i--) { // sweep collected pickups
           const e = game.entities[i]!;
@@ -209,7 +210,7 @@ function drawHud(renderer: Renderer, player: import("./engine/dispatch").Entity)
 // the charge meter follows the cursor while a spell is being held (gmgChargeLoc feedback)
 function drawCharge(renderer: Renderer, player: import("./engine/dispatch").Entity) {
   const frac = player.send("chargeFrac") as number;
-  if (!frac || frac <= 0) return;
+  if (frac <= 0) return;
   const aim = game.input.cursor();
   const m = player.get(Movement);
   const x = aim ? aim.x : m.x, y = aim ? aim.y : m.y - 18;
@@ -221,7 +222,7 @@ function drawCharge(renderer: Renderer, player: import("./engine/dispatch").Enti
   ctx.lineWidth = 1;
 }
 
-const PICKUP_COLOR: Record<string, string> = { heal: "#3d6", speed: "#4cf", power: "#c5f" };
+const PICKUP_COLOR: Record<string, string> = { heal: "#3d6", speed: "#4cf", power: "#c5f", sword: "#fe8" };
 function drawPickups(renderer: Renderer) {
   const ctx = renderer.ctx;
   for (const e of game.entities) {

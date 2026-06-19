@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { spawnPlayer, spawnPickup } from "@/entities/archetypes";
 import { Energy } from "@/components/combat";
+import { PlayerControl } from "@/components/control";
 import { game } from "@/game/context";
 import { CollisionGrid } from "@/world/collision";
 
@@ -23,5 +24,18 @@ describe("pickups", () => {
     game.entities = [player, pickup];
     pickup.send("update");
     expect(pickup.send("isFinished")).toBe(false);
+  });
+  it("the merlinSword pickup equips a stronger, longer-reaching melee", () => {
+    game.grid = new CollisionGrid(20, 20, 32);
+    const player = spawnPlayer(100, 100); game.player = player;
+    const pc = player.get(PlayerControl);
+    const basePower = pc.power, baseReach = pc.meleeReach;
+    const pickup = spawnPickup("sword", 100, 100);
+    game.entities = [player, pickup];
+    pickup.send("update");
+    expect(pc.hasSword).toBe(true);
+    expect(pc.power).toBeGreaterThan(basePower);
+    expect(pc.meleeReach).toBeGreaterThan(baseReach);
+    expect(pickup.send("isFinished")).toBe(true);
   });
 });

@@ -60,9 +60,11 @@ export function spawnDwelling(actorName: string, x: number, y: number, produces:
   const d = registry.resolveActor(actorName) ?? {};
   const energy = typeof d["energy"] === "number" ? (d["energy"] as number) : 400;
   const team = typeof d["team"] === "string" ? (d["team"] as string) : "#monsters";
+  // resident cap from real #totalResidents (clamped so a portal doesn't flood the room)
+  const cap = Math.min(6, Math.max(2, typeof d["totalResidents"] === "number" ? (d["totalResidents"] as number) : 3));
   const e = DwellingArchetype.create(makeEntityId());
   e.type = "enemy"; // targetable/destroyable like an enemy
-  return e.build({ x, y, walkSpeed: 0, energy, team, animChar, box: 24, produces, producesRanged });
+  return e.build({ x, y, walkSpeed: 0, energy, team, animChar, box: 24, produces, producesRanged, cap });
 }
 
 export function spawnPlayer(x: number, y: number): Entity {
