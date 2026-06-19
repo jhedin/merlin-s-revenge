@@ -6,14 +6,19 @@ import { Component, type NextFn } from "../engine/dispatch";
 import { game } from "../game/context";
 
 export class Energy extends Component {
-  static handles = ["takeHit", "isDead", "energyFrac", "addSaveData", "restoreFromSave"];
-  energy = 100; max = 100; dead = false; xpReward = 10; dieSound = "";
+  static handles = ["takeHit", "update", "levelUp", "isDead", "energyFrac", "addSaveData", "restoreFromSave"];
+  energy = 100; max = 100; dead = false; dieSound = "";
+  private baseEnergy = 100;   // original energy, for the per-level increment
+  private incPct = 0;         // energyIncPercentage (max grows by this % of baseEnergy per level)
+  private recoverDelay = 0;   // energyRecoverDelay (0 = no passive regen)
+  private recoverCtr = 0;
 
   override init(cfg: Record<string, any>): void {
-    this.max = this.energy = typeof cfg["energy"] === "number" ? cfg["energy"] : 100;
-    this.xpReward = typeof cfg["xpReward"] === "number" ? cfg["xpReward"] : Math.max(5, Math.ceil(this.max / 12));
+    this.baseEnergy = this.max = this.energy = typeof cfg["energy"] === "number" ? cfg["energy"] : 100;
+    this.incPct = typeof cfg["energyIncPercentage"] === "number" ? cfg["energyIncPercentage"] : 0;
+    this.recoverDelay = typeof cfg["energyRecoverDelay"] === "number" ? cfg["energyRecoverDelay"] : 0;
     this.dieSound = typeof cfg["dieSound"] === "string" ? cfg["dieSound"] : "";
-    this.dead = false;
+    this.recoverCtr = 0; this.dead = false;
   }
 
   takeHit(next: NextFn, dmg: number, attackerId = -1): void {
@@ -22,13 +27,30 @@ export class Energy extends Component {
     if (this.energy <= 0) {
       this.energy = 0; this.dead = true;
       if (this.dieSound) game.audio?.play(this.dieSound, 0.6); // actor #dieSound
-      if (attackerId >= 0) {                       // award XP to the killer
+      if (attackerId >= 0) {                       // award XP to the killer (imWorth + half my gained)
         const killer = game.entities.find((e) => e.id === attackerId && !e.send("isDead"));
-        killer?.send("gainXp", this.xpReward);
+        killer?.send("gainXp", this.entity.send("getReward") ?? this.imWorthFallback());
       }
     }
     next(dmg, attackerId);
   }
+
+  // recoverEnergy: trickle +1 every energyRecoverDelay ticks while below max (modEnergy)
+  update(next: NextFn): void {
+    if (!this.dead && this.recoverDelay > 0 && this.energy < this.max) {
+      if (++this.recoverCtr >= this.recoverDelay) { this.recoverCtr = 0; this.energy++; }
+    }
+    next();
+  }
+
+  // levelUpEnergy: max += baseEnergy * energyIncPercentage/100, heal by the same increment
+  levelUp(next: NextFn): void {
+    const inc = Math.round(this.baseEnergy * this.incPct / 100);
+    if (inc > 0) { this.max += inc; this.energy = Math.min(this.max, this.energy + inc); }
+    next();
+  }
+
+  private imWorthFallback(): number { return Math.max(3, Math.ceil(this.baseEnergy / 12)); }
   isDead(): boolean { return this.dead; }       // query
   energyFrac(): number { return this.max > 0 ? this.energy / this.max : 0; }
 
