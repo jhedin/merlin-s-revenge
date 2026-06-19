@@ -4,6 +4,7 @@
 
 import { Component, type NextFn } from "../engine/dispatch";
 import { Energy } from "./combat";
+import { game } from "../game/context";
 
 export class Experience extends Component {
   static handles = ["takeHit", "gainXp", "getLevel", "addSaveData", "restoreFromSave"];
@@ -40,5 +41,6 @@ export class Experience extends Component {
     this.level++;
     const en = this.entity.tryGet(Energy);
     if (en) { en.max = Math.round(en.max * 1.15); en.energy = en.max; } // level-up heal + bigger pool
+    if (this.entity.type === "player") game.audio?.play("level_up");
   }
 }

@@ -90,6 +90,7 @@ export class PlayerControl extends Component {
     const mana = this.entity.get(Mana);
     const primary = input.mouseDown() || input.held(" ");
     if (primary && this.fireCd === 0 && mana.has(mana.burst)) {
+      if (!this.charging) game.audio?.play("spell_charge"); // one-shot when the charge begins
       this.charging = true;
       m.facingLeft = this.aimLeft;
       const ceiling = Math.min(SPELL.chargeMax, this.charge + mana.current); // can't charge past the pool
@@ -111,6 +112,7 @@ export class PlayerControl extends Component {
     mana.spend(Math.ceil(c * SPELL.costPerCharge));
     m.facingLeft = this.aimLeft;
     this.fireCd = SPELL.cooldown; this.releaseT = SPELL.releaseFrames;
+    game.audio?.play("spell_release"); // act_energyBlast releaseSound
   }
 
   private tryPunch(m: Movement, target: Entity | null): void {
@@ -120,6 +122,7 @@ export class PlayerControl extends Component {
     target.send("takeHit", this.power, this.entity.id);
     m.facingLeft = p.x < m.x;
     this.meleeCd = PUNCH.cooldown; this.meleeT = PUNCH.frames;
+    game.audio?.play(this.hasSword ? "skeleton_fire" : "wizard_punch"); // act_player #punch / merlinSword
   }
 
   // action override for modAnimSet: melee / release / charge strips take priority over walk/stand
@@ -145,6 +148,7 @@ export class EnemyAI extends Component {
   cooldownMax = 18;
   kind: "beeline" | "wander" | "kite" | "bomber" = "beeline"; // from #AiType
   targetTypes: readonly string[] = ["player", "ally"]; // enemies hunt the player + allies
+  atkSound = ""; // #attack.sound (played on attack if the file exists)
   private wanderAng = 0; private wanderTimer = 0;
 
   override init(cfg: Record<string, any>): void {
@@ -162,6 +166,7 @@ export class EnemyAI extends Component {
       else this.reach = Math.max(16, Math.min(40, cfg["atkReach"]));
     }
     if (Array.isArray(cfg["targetTypes"])) this.targetTypes = cfg["targetTypes"];
+    this.atkSound = typeof cfg["atkSound"] === "string" ? cfg["atkSound"] : "";
     this.cooldown = 0;
   }
 
@@ -189,6 +194,7 @@ export class EnemyAI extends Component {
     if (this.cooldown !== 0) return;
     if (this.ranged) fireBullet(this.entity.id, m.x, m.y - 6, dx, dy, 4.5, this.power * 2, this.entity.send("getTeam"));
     else target.send("takeHit", this.power, this.entity.id);
+    if (this.atkSound) game.audio?.play(this.atkSound, 0.5); // #attack.sound (quieter than player)
     this.cooldown = this.cooldownMax;
   }
 

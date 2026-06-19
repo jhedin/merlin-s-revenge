@@ -31,6 +31,7 @@ export class Pickup extends Component {
       if (Math.abs(pp.x - m.x) < 16 && Math.abs(pp.y - m.y) < 16) {
         this.apply(p);
         this.collected = true;
+        game.audio?.play("collect_powerup_01"); // collectSound
       }
     }
     next();

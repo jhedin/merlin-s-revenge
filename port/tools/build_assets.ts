@@ -2,7 +2,7 @@
 // frames) from ../extracted into public/assets, and emit src/generated/assets.json with
 // regpoints + tileset column counts. Animation frames are grouped/sorted per animStripMaster
 // (char=tok[1], action=tok[2], delay=tok[3]; frame order = numeric prefix of last token).
-import { readFileSync, writeFileSync, mkdirSync, copyFileSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync, copyFileSync, existsSync, readdirSync } from "node:fs";
 import { join, dirname, basename } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -71,7 +71,31 @@ copyFileSync(join(MAPS, "tlk_merlin4Active_key.txt"), join(OUT_ASSETS, "active_k
 copyFileSync(join(MAPS, "tlk_merlin4Objects_key.txt"), join(OUT_ASSETS, "objects_key.txt"));
 copyFileSync(join(MAPS, "scr_demo_001.txt"), join(OUT_ASSETS, "intro.txt")); // intro cutscene
 
-writeFileSync(join(OUT_GEN, "assets.json"), JSON.stringify({ tile: TILE, tilesets, anims }, null, 1));
-console.log(`assets: ${Object.keys(tilesets).length} tilesets, ${Object.keys(anims).length} animations`);
+// --- audio: SFX (PCM wav) + music (MP3) keyed by their data names (sound:/musicName:) ---
+// SFX filenames are "NNN_<name><suffix>.wav"; strip the index prefix and Director name suffix
+// so "005_wizard_punchC.wav" -> "wizard_punch" matches the #attack.sound / collectSound refs.
+const sfxName = (f: string): string => f.replace(/\.wav$/i, "").replace(/^\d+_/, "")
+  .replace(/(_[A-Z]+)+$/, "").replace(/[A-Z]$/, "");
+const sounds: Record<string, string> = {};
+const SND_SRC = join(EXTRACTED, "sounds"), SND_OUT = join(OUT_ASSETS, "sounds");
+if (existsSync(SND_SRC)) {
+  mkdirSync(SND_OUT, { recursive: true });
+  for (const f of readdirSync(SND_SRC).filter((f) => f.endsWith(".wav"))) {
+    copyFileSync(join(SND_SRC, f), join(SND_OUT, f));
+    sounds[sfxName(f)] = `sounds/${f}`;
+  }
+}
+const music: Record<string, string> = {};
+const MUS_SRC = join(EXTRACTED, "music"), MUS_OUT = join(OUT_ASSETS, "music");
+if (existsSync(MUS_SRC)) {
+  mkdirSync(MUS_OUT, { recursive: true });
+  for (const f of readdirSync(MUS_SRC).filter((f) => f.endsWith(".mp3"))) {
+    copyFileSync(join(MUS_SRC, f), join(MUS_OUT, f));
+    music[basename(f, ".mp3")] = `music/${f}`;
+  }
+}
+
+writeFileSync(join(OUT_GEN, "assets.json"), JSON.stringify({ tile: TILE, tilesets, anims, sounds, music }, null, 1));
+console.log(`assets: ${Object.keys(tilesets).length} tilesets, ${Object.keys(anims).length} animations, ${Object.keys(sounds).length} sfx, ${Object.keys(music).length} music`);
 console.log(`tilesets: ${Object.entries(tilesets).map(([k, v]) => `${k}(${v.cols}c)`).join(", ")}`);
 console.log(`player anims: ${Object.entries(anims).map(([k, v]) => `${k}:${v.frames.length}`).join(", ")}`);

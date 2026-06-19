@@ -7,11 +7,12 @@ import { game } from "../game/context";
 
 export class Energy extends Component {
   static handles = ["takeHit", "isDead", "energyFrac", "addSaveData", "restoreFromSave"];
-  energy = 100; max = 100; dead = false; xpReward = 10;
+  energy = 100; max = 100; dead = false; xpReward = 10; dieSound = "";
 
   override init(cfg: Record<string, any>): void {
     this.max = this.energy = typeof cfg["energy"] === "number" ? cfg["energy"] : 100;
     this.xpReward = typeof cfg["xpReward"] === "number" ? cfg["xpReward"] : Math.max(5, Math.ceil(this.max / 12));
+    this.dieSound = typeof cfg["dieSound"] === "string" ? cfg["dieSound"] : "";
     this.dead = false;
   }
 
@@ -20,6 +21,7 @@ export class Energy extends Component {
     this.energy -= dmg;
     if (this.energy <= 0) {
       this.energy = 0; this.dead = true;
+      if (this.dieSound) game.audio?.play(this.dieSound, 0.6); // actor #dieSound
       if (attackerId >= 0) {                       // award XP to the killer
         const killer = game.entities.find((e) => e.id === attackerId && !e.send("isDead"));
         killer?.send("gainXp", this.xpReward);

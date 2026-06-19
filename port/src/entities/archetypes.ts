@@ -75,9 +75,10 @@ export function spawnDwelling(actorName: string, x: number, y: number, animChar 
     .filter((t) => t && registry.resolveActor(t));
   // resident cap from real #totalResidents (clamped so a portal doesn't flood the room)
   const cap = Math.min(6, Math.max(2, typeof d["totalResidents"] === "number" ? (d["totalResidents"] as number) : 4));
+  const dieSound = typeof d["dieSound"] === "string" ? (d["dieSound"] as string) : undefined;
   const e = DwellingArchetype.create(makeEntityId());
   e.type = isFriendlyTeam(team) ? "ally" : "enemy"; // targetable/destroyable; a #village hut is friendly
-  return e.build({ x, y, walkSpeed: 0, energy, team, animChar, box: 24, residentTypes, cap });
+  return e.build({ x, y, walkSpeed: 0, energy, team, animChar, box: 24, residentTypes, cap, dieSound });
 }
 
 export function spawnPlayer(x: number, y: number): Entity {
@@ -135,5 +136,7 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     atkCooldown: typeof atk["cooldown"] === "number" ? atk["cooldown"] : undefined,
     atkReach: typeof atk["reach"] === "number" ? atk["reach"] : undefined,
     atkPower: atkPower || undefined,
+    atkSound: typeof atk["sound"] === "string" ? atk["sound"] : undefined,   // #attack.sound
+    dieSound: typeof d["dieSound"] === "string" ? d["dieSound"] : undefined,  // played on death
   });
 }

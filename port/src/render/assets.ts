@@ -7,6 +7,8 @@ export interface AssetIndex {
   tile: number;
   tilesets: Record<string, TilesetMeta>;
   anims: Record<string, AnimMeta>;
+  sounds?: Record<string, string>; // SFX name (#attack.sound / collectSound / dieSound) -> file
+  music?: Record<string, string>;  // musicName -> file
 }
 
 export type Drawable = HTMLCanvasElement;

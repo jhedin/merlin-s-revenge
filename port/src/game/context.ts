@@ -4,6 +4,7 @@
 import type { CollisionGrid } from "../world/collision";
 import type { Input } from "../systems/input";
 import type { Assets } from "../render/assets";
+import type { AudioSystem } from "../systems/audio";
 import type { Entity } from "../engine/dispatch";
 import { Rng } from "../engine/math";
 
@@ -11,6 +12,7 @@ export interface GameContext {
   grid: CollisionGrid;
   input: Input;
   assets: Assets;
+  audio?: AudioSystem;
   rng: Rng;
   tilePx: number;
   entities: Entity[];
