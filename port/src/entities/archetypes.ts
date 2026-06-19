@@ -19,6 +19,15 @@ export const EnemyArchetype = new Archetype("enemy", [EnemyAI, Freeze, Movement,
 // Dwellings are static (no AI) but reuse Movement for position + Energy/Team so they're targetable.
 export const DwellingArchetype = new Archetype("dwelling", [Dwelling, Movement, Anim, Energy, Team], { defaults: DEFAULTS });
 
+/** Summon a friendly ally (player's team) that hunts enemies. */
+export function spawnAlly(actorName: string, x: number, y: number, animChar = actorName): Entity {
+  const d = registry.resolveActor(actorName) ?? {};
+  const walk = typeof d["walkSpeed"] === "number" ? (d["walkSpeed"] as number) : 4;
+  const e = EnemyArchetype.create(makeEntityId());
+  e.type = "ally";
+  return e.build({ x, y, walkSpeed: walk * 0.6, energy: 120, strength: 24, team: "#aldevar", animChar, box: 12, targetTypes: ["enemy"] });
+}
+
 export function spawnDwelling(actorName: string, x: number, y: number, produces: string, producesRanged: boolean, animChar = actorName): Entity {
   const d = registry.resolveActor(actorName) ?? {};
   const energy = typeof d["energy"] === "number" ? (d["energy"] as number) : 400;

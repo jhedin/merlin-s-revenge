@@ -10,7 +10,7 @@ import { parseMap, type GameMap, type Vec2i } from "./world/map";
 import { parseTileKey } from "./data/tlk";
 import { RoomManager } from "./world/rooms";
 import { game, initContext } from "./game/context";
-import { spawnPlayer, spawnEnemy } from "./entities/archetypes";
+import { spawnPlayer, spawnEnemy, spawnAlly } from "./entities/archetypes";
 import { Anim } from "./components/anim";
 import { Energy } from "./components/combat";
 import { Experience } from "./components/experience";
@@ -42,7 +42,7 @@ async function main() {
   const renderer = new Renderer(canvas, viewW, viewH, 2);
 
   const input = new Input();
-  initContext({ input, assets, tilePx: tile, entities: [], player: null, tick: 0, spawnEnemy });
+  initContext({ input, assets, tilePx: tile, entities: [], player: null, tick: 0, spawnEnemy, spawnAlly });
 
   // scene state machine (scenes.json): title -> intro cutscene -> playing -> gameover
   let mode: "title" | "cutscene" | "playing" | "gameover" = "title";
@@ -95,7 +95,10 @@ async function main() {
         .map((e) => e.get(Anim).sprite()).filter((s): s is Sprite => s !== null);
       renderer.drawSprites(sprites);
       drawBullets(renderer);
-      for (const e of game.entities) if (e.type === "enemy") drawEnemyBar(renderer, e);
+      for (const e of game.entities) {
+        if (e.type === "enemy") drawEnemyBar(renderer, e, "#e44");
+        else if (e.type === "ally") drawEnemyBar(renderer, e, "#4d6");
+      }
       drawHud(renderer, player);
       drawMinimap(renderer, map, rooms.loc, viewW);
       if (mode === "gameover") drawGameOver(renderer, viewW, viewH);
@@ -121,7 +124,7 @@ function drawTitle(renderer: Renderer, w: number, h: number) {
   ctx.fillStyle = (Math.floor(Date.now() / 400) % 2) ? "#fff" : "#888";
   ctx.fillText("press SPACE to begin", w / 2, h / 2 + 28);
   ctx.fillStyle = "#566"; ctx.font = "8px monospace";
-  ctx.fillText("move: WASD/arrows   attack: space   save/load: 1/2", w / 2, h - 16);
+  ctx.fillText("move: WASD   attack: space   summon: Q   save/load: 1/2", w / 2, h - 16);
   ctx.textAlign = "left";
 }
 
@@ -160,7 +163,7 @@ function drawBullets(renderer: Renderer) {
   }
 }
 
-function drawEnemyBar(renderer: Renderer, e: import("./engine/dispatch").Entity) {
+function drawEnemyBar(renderer: Renderer, e: import("./engine/dispatch").Entity, color: string) {
   if (e.send("isDead")) return;
   const p = e.send("getPos") as { x: number; y: number };
   const ctx = renderer.ctx;
@@ -170,7 +173,7 @@ function drawEnemyBar(renderer: Renderer, e: import("./engine/dispatch").Entity)
   }
   const frac = e.get(Energy).energyFrac();
   ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(p.x - 11, p.y - 26, 22, 4);
-  ctx.fillStyle = "#e44"; ctx.fillRect(p.x - 10, p.y - 25, 20 * frac, 2);
+  ctx.fillStyle = color; ctx.fillRect(p.x - 10, p.y - 25, 20 * frac, 2);
 }
 
 function drawMinimap(renderer: Renderer, map: GameMap, loc: Vec2i, viewW: number) {
