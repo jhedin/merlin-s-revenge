@@ -11,12 +11,18 @@ export interface Sprite {
   regX: number; regY: number;
   z: number;
   visible?: boolean;
+  flip?: boolean;            // mirror horizontally (face left)
+  flash?: boolean;           // white hit-flash tint
 }
 
 export interface TileSheet { img: CanvasImageSource; cols: number; tile: number; }
 
 export class Renderer {
   readonly ctx: CanvasRenderingContext2D;
+  // scratch canvas for the white hit-flash: stamp the sprite, tint via source-atop, blit once.
+  // Used only for the few flashing sprites, so the per-frame getImageData ban is respected.
+  private flashCanvas = document.createElement("canvas");
+  private flashCtx = this.flashCanvas.getContext("2d")!;
   constructor(readonly canvas: HTMLCanvasElement, readonly viewW: number, readonly viewH: number, readonly scale = 2) {
     canvas.width = viewW; canvas.height = viewH;
     canvas.style.width = `${viewW * scale}px`;
@@ -51,7 +57,33 @@ export class Renderer {
     list.sort((a, b) => a.z - b.z);
     const ctx = this.ctx;
     for (const s of list) {
-      ctx.drawImage(s.img, Math.round(s.x - s.regX), Math.round(s.y - s.regY));
+      const x = Math.round(s.x), y = Math.round(s.y);
+      const img = s.flash ? this.whiten(s.img) : s.img;
+      if (s.flip) {
+        // mirror about the registration point: with scale(-1,1) the anchor (regX from the left)
+        // lands at world x when drawn at flipped-x = -(x + regX); y is unaffected.
+        ctx.save();
+        ctx.scale(-1, 1);
+        ctx.drawImage(img, -(x + s.regX), y - s.regY);
+        ctx.restore();
+      } else {
+        ctx.drawImage(img, x - s.regX, y - s.regY);
+      }
     }
+  }
+
+  /** A white-tinted copy of a sprite (keeps its alpha shape) for the hit-flash. */
+  private whiten(img: CanvasImageSource): HTMLCanvasElement {
+    const w = (img as HTMLCanvasElement).width, h = (img as HTMLCanvasElement).height;
+    this.flashCanvas.width = w; this.flashCanvas.height = h;
+    const c = this.flashCtx;
+    c.clearRect(0, 0, w, h);
+    c.globalCompositeOperation = "source-over";
+    c.drawImage(img, 0, 0);
+    c.globalCompositeOperation = "source-atop"; // tint only the sprite's opaque pixels
+    c.fillStyle = "rgba(255,255,255,0.85)";
+    c.fillRect(0, 0, w, h);
+    c.globalCompositeOperation = "source-over";
+    return this.flashCanvas;
   }
 }

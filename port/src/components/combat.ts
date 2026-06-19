@@ -17,7 +17,7 @@ export class Energy extends Component {
   }
 
   takeHit(next: NextFn, dmg: number, attackerId = -1): void {
-    if (this.dead) return;
+    if (this.dead || this.entity.send("isInvince")) return; // i-frames (set by Hurt on a prior hit)
     this.energy -= dmg;
     if (this.energy <= 0) {
       this.energy = 0; this.dead = true;
