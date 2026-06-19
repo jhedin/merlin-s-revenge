@@ -204,15 +204,16 @@ function drawVictory(renderer: Renderer, w: number, h: number) {
 function drawHud(renderer: Renderer, player: import("./engine/dispatch").Entity) {
   const ctx = renderer.ctx;
   const hp = player.get(Energy).energyFrac();
+  const hasSpell = player.send("getHasSpell") as boolean; // mana bar only once magic is acquired
   const mana = player.get(Mana).manaFrac();
   ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(6, 6, 104, 28);
   ctx.fillStyle = hp > 0.3 ? "#3c9" : "#e44"; ctx.fillRect(8, 8, 100 * hp, 6);   // health (energy)
-  ctx.fillStyle = "#48f"; ctx.fillRect(8, 16, 100 * mana, 5);                     // mana pool
+  if (hasSpell) { ctx.fillStyle = "#48f"; ctx.fillRect(8, 16, 100 * mana, 5); }   // mana pool
   const xp = player.get(Experience);
   ctx.fillStyle = "#fc4"; ctx.fillRect(8, 23, 100 * Math.min(1, xp.frac()), 4);   // experience
   ctx.fillStyle = "#fff"; ctx.font = "8px monospace";
   ctx.fillText("HP", 114, 13);
-  ctx.fillText("MP", 114, 21);
+  ctx.fillText(hasSpell ? "MP" : "—", 114, 21);
   ctx.fillText("Lv " + xp.level, 114, 29);
   if (Date.now() < flashUntil) { ctx.fillStyle = "#ff4"; ctx.fillText(flashMsg, 8, 44); }
 }
@@ -232,7 +233,10 @@ function drawCharge(renderer: Renderer, player: import("./engine/dispatch").Enti
   ctx.lineWidth = 1;
 }
 
-const PICKUP_COLOR: Record<string, string> = { heal: "#3d6", speed: "#4cf", power: "#c5f", sword: "#fe8" };
+const PICKUP_COLOR: Record<string, string> = {
+  heal: "#3d6", speed: "#4cf", power: "#c5f", sword: "#fe8", spell: "#fc8",
+  manaCapacity: "#48f", manaFlow: "#4cf", manaBurst: "#88f",
+};
 function drawPickups(renderer: Renderer) {
   const ctx = renderer.ctx;
   for (const e of game.entities) {
