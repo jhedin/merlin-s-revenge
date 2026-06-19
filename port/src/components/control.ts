@@ -32,7 +32,7 @@ export class PlayerControl extends Component {
       const mv = game.input.moveVector();
       const m = this.entity.get(Movement);
       m.intentX = mv.x; m.intentY = mv.y;
-      if (game.input.pressed("q") && this.summonCd === 0 && game.spawnAlly) { // summon a warrior ally
+      if (game.input.pressed("e") && this.summonCd === 0 && game.spawnAlly) { // summon a warrior ally (E)
         const a = game.rng.next() * Math.PI * 2;
         game.entities.push(game.spawnAlly("warrior", m.x + Math.cos(a) * 24, m.y + Math.sin(a) * 24));
         this.summonCd = 90;

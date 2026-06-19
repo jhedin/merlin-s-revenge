@@ -16,12 +16,11 @@ export class Menu {
     if (input.pressed(" ") || input.pressed("enter")) this.items[this.index]!.action();
   }
 
-  render(renderer: Renderer, w: number, h: number): void {
+  render(renderer: Renderer, w: number, h: number, opaque = true): void {
     const ctx = renderer.ctx;
-    ctx.fillStyle = "rgba(0,0,0,0.72)"; ctx.fillRect(0, 0, w, h);
+    if (opaque) { ctx.fillStyle = "rgba(0,0,0,0.72)"; ctx.fillRect(0, 0, w, h); }
     ctx.textAlign = "center";
-    ctx.fillStyle = "#fc4"; ctx.font = "bold 16px serif";
-    ctx.fillText(this.title, w / 2, h / 2 - 36);
+    if (this.title) { ctx.fillStyle = "#fc4"; ctx.font = "bold 16px serif"; ctx.fillText(this.title, w / 2, h / 2 - 36); }
     ctx.font = "11px monospace";
     this.items.forEach((it, i) => {
       const sel = i === this.index;

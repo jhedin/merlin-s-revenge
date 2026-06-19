@@ -52,6 +52,19 @@ async function main() {
   let cutscene: CutscenePlayer | null = null;
   let pauseMenu: Menu | null = null;
 
+  // title + controls menus
+  const startItem = { label: "Start Game", action: () => { cutscene = new CutscenePlayer(intro, assets, viewW, viewH); mode = "cutscene"; } };
+  const mainTitleMenu = new Menu("", [startItem, { label: "Controls", action: () => { titleMenu = controlsMenu; } }]);
+  const setScheme = (n: "both" | "arrows" | "wasd" | "zqsd") => () => { input.setScheme(n); flash("controls: " + n); titleMenu = mainTitleMenu; };
+  const controlsMenu = new Menu("CONTROLS", [
+    { label: "Arrows", action: setScheme("arrows") },
+    { label: "WASD", action: setScheme("wasd") },
+    { label: "ZQSD", action: setScheme("zqsd") },
+    { label: "WASD + Arrows", action: setScheme("both") },
+    { label: "Back", action: () => { titleMenu = mainTitleMenu; } },
+  ]);
+  let titleMenu: Menu = mainTitleMenu;
+
   function openPause() {
     pauseMenu = new Menu("PAUSED", [
       { label: "Resume", action: () => { mode = "playing"; } },
@@ -75,7 +88,7 @@ async function main() {
     () => {
       game.tick++;
       if (mode === "title") {
-        if (input.pressed(" ") || input.pressed("enter")) { cutscene = new CutscenePlayer(intro, assets, viewW, viewH); mode = "cutscene"; }
+        titleMenu.tick(input);
       } else if (mode === "cutscene") {
         if (cutscene!.tick(input)) startGame();
       } else if (mode === "playing") {
@@ -103,7 +116,7 @@ async function main() {
     },
     () => {
       renderer.clear();
-      if (mode === "title") { drawTitle(renderer, viewW, viewH); return; }
+      if (mode === "title") { drawTitle(renderer, viewW, viewH); titleMenu.render(renderer, viewW, viewH, false); return; }
       if (mode === "cutscene") { cutscene!.render(renderer); return; }
       const passive = rooms.room.layer("#backgroundPassive");
       const active = rooms.room.layer("#backgroundActive");
@@ -138,14 +151,10 @@ function drawTitle(renderer: Renderer, w: number, h: number) {
   const ctx = renderer.ctx;
   ctx.fillStyle = "#0a1020"; ctx.fillRect(0, 0, w, h);
   ctx.textAlign = "center";
-  ctx.fillStyle = "#fc4"; ctx.font = "bold 28px serif";
-  ctx.fillText("MERLIN'S REVENGE", w / 2, h / 2 - 24);
-  ctx.fillStyle = "#9cf"; ctx.font = "10px monospace";
-  ctx.fillText("a TypeScript/HTML5 port", w / 2, h / 2 - 4);
-  ctx.fillStyle = (Math.floor(Date.now() / 400) % 2) ? "#fff" : "#888";
-  ctx.fillText("press SPACE to begin", w / 2, h / 2 + 28);
+  ctx.fillStyle = "#fc4"; ctx.font = "bold 26px serif";
+  ctx.fillText("MERLIN'S REVENGE", w / 2, h / 2 - 48);
   ctx.fillStyle = "#566"; ctx.font = "8px monospace";
-  ctx.fillText("move: WASD   attack: space   summon: Q   save/load: 1/2   pause: Esc", w / 2, h - 16);
+  ctx.fillText("move: WASD/arrows   attack: space   summon: E   save/load: 1/2   pause: Esc", w / 2, h - 16);
   ctx.textAlign = "left";
 }
 
