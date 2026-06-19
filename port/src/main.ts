@@ -10,7 +10,7 @@ import { parseMap, type GameMap, type Vec2i } from "./world/map";
 import { parseTileKey } from "./data/tlk";
 import { RoomManager } from "./world/rooms";
 import { game, initContext } from "./game/context";
-import { spawnPlayer, spawnEnemy, spawnAlly } from "./entities/archetypes";
+import { spawnPlayer, spawnEnemy, spawnUnit, spawnAlly } from "./entities/archetypes";
 import { Anim } from "./components/anim";
 import { Energy } from "./components/combat";
 import { Mana } from "./components/mana";
@@ -45,7 +45,7 @@ async function main() {
 
   const input = new Input();
   input.attachMouse(canvas); // objAiPlayer aims charged magic at the cursor
-  initContext({ input, assets, tilePx: tile, entities: [], player: null, tick: 0, spawnEnemy, spawnAlly });
+  initContext({ input, assets, tilePx: tile, entities: [], player: null, tick: 0, spawnEnemy, spawnUnit, spawnAlly });
 
   // scene state machine (scenes.json): title -> intro cutscene -> playing <-> paused -> gameover/victory
   let mode: "title" | "cutscene" | "playing" | "paused" | "gameover" | "victory" = "title";

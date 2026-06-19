@@ -11,20 +11,12 @@ import { game } from "../game/context";
 import { spawnUnit, spawnDwelling, spawnPickup } from "../entities/archetypes";
 import { spriteCharOr } from "../components/anim";
 import { Movement } from "../components/movement";
+import { registry } from "../game/data";
 import type { PickupEffect } from "../components/pickup";
 import type { Entity } from "../engine/dispatch";
 
-// Dwellings (construction/residents economy): building symbol -> the hostile unit it produces
-// (from each building's real #residentGroups — goblinHut makes goblins, not Merlin's #warrior).
-const DWELLINGS: Record<string, { produces: string; ranged: boolean }> = {
-  "#goblinHut": { produces: "goblinWarrior", ranged: false }, // #goblins melee
-  "#orcHouse": { produces: "swordOrc", ranged: false },       // #orcs melee
-  "#dojo": { produces: "kongFuChicken", ranged: false },      // #karate (bundled sprite)
-  "#goblinMageHut": { produces: "goblinMage", ranged: true }, // #goblins ranged spellcasters
-  "#fangBunnyPortal": { produces: "fangBunny", ranged: false }, // #cave melee swarm
-};
-
-// Powerup tiles -> collectible pickup effect.
+// Powerup tiles -> collectible pickup effect (the effect is a port abstraction; the rest of a
+// spawn's behavior comes from its real actor data — dwellings/units are detected by #objType).
 const PICKUPS: Record<string, PickupEffect> = {
   "#medikit": "heal", "#maxikit": "heal",
   "#walkSpeed": "speed",
@@ -32,10 +24,10 @@ const PICKUPS: Record<string, PickupEffect> = {
   "#merlinSword": "sword", // melee weapon upgrade (act_merlinSword, damageMultiplier 16)
 };
 
-// Items / spawners / spells not yet represented.
+// Items / spells with no unit/dwelling behavior yet (scrolls, mines, music, towers). Characters
+// (#objCPUCharacter) and dwellings (#objDwelling) are handled by data; this only skips the rest.
 const SKIP_SPAWN = new Set([
-  "#none", "#player",
-  "#skeletonDwelling", "#mysteriousCloud", "#musicLastStand",
+  "#none", "#player", "#musicLastStand",
   "#energyBlast", "#energyMines", "#energyMine",
   "#energyPulseSpell", "#armySummon", "#dwarfTower",
 ]);
@@ -140,10 +132,9 @@ export class RoomManager {
             // already-cleared room: keep its dead, spawn no actors/pickups
           } else if (PICKUPS[sym]) {
             game.entities.push(spawnPickup(PICKUPS[sym]!, px, py));
-          } else if (DWELLINGS[sym]) {
-            const d = DWELLINGS[sym]!;
-            const name = sym.slice(1);
-            game.entities.push(spawnDwelling(name, px, py, d.produces, d.ranged, spriteCharOr(name)));
+          } else if (registry.resolveActor(sym.slice(1))?.["objType"] === "#objDwelling") {
+            const name = sym.slice(1); // a building: its residents come from its own #residentGroups
+            game.entities.push(spawnDwelling(name, px, py, spriteCharOr(name)));
           } else if (!SKIP_SPAWN.has(sym)) {
             const name = sym.slice(1);
             const animChar = spriteCharOr(name); // stand-in sprite if unbundled

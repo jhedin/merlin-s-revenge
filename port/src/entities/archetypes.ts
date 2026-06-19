@@ -56,15 +56,21 @@ export function spawnPickup(effect: PickupEffect, x: number, y: number): Entity 
   return e.build({ x, y, walkSpeed: 0, effect, box: 8 });
 }
 
-export function spawnDwelling(actorName: string, x: number, y: number, produces: string, producesRanged: boolean, animChar = actorName): Entity {
+export function spawnDwelling(actorName: string, x: number, y: number, animChar = actorName): Entity {
   const d = registry.resolveActor(actorName) ?? {};
   const energy = typeof d["energy"] === "number" ? (d["energy"] as number) : 400;
   const team = typeof d["team"] === "string" ? (d["team"] as string) : "#monsters";
+  // what it produces comes from the building's own data (#residentGroups), not a hardcoded table.
+  // Keep only resident types we have data for; #fangBunnyBaby / #SpeedyGuy etc. have no act_ record.
+  const groups = Array.isArray(d["residentGroups"]) ? (d["residentGroups"] as Record<string, any>[]) : [];
+  const residentTypes = groups
+    .map((g) => (typeof g["typ"] === "string" ? g["typ"].replace(/^#/, "") : ""))
+    .filter((t) => t && registry.resolveActor(t));
   // resident cap from real #totalResidents (clamped so a portal doesn't flood the room)
-  const cap = Math.min(6, Math.max(2, typeof d["totalResidents"] === "number" ? (d["totalResidents"] as number) : 3));
+  const cap = Math.min(6, Math.max(2, typeof d["totalResidents"] === "number" ? (d["totalResidents"] as number) : 4));
   const e = DwellingArchetype.create(makeEntityId());
-  e.type = "enemy"; // targetable/destroyable like an enemy
-  return e.build({ x, y, walkSpeed: 0, energy, team, animChar, box: 24, produces, producesRanged, cap });
+  e.type = isFriendlyTeam(team) ? "ally" : "enemy"; // targetable/destroyable; a #village hut is friendly
+  return e.build({ x, y, walkSpeed: 0, energy, team, animChar, box: 24, residentTypes, cap });
 }
 
 export function spawnPlayer(x: number, y: number): Entity {

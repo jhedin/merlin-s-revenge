@@ -18,6 +18,8 @@ export interface GameContext {
   tick: number;
   /** spawn an enemy by actor name (set in main; lets Dwelling produce units without an import cycle) */
   spawnEnemy?: (name: string, x: number, y: number, opts?: { animChar?: string; ranged?: boolean }) => Entity;
+  /** spawn a unit routed by its real team (ally if friendly, else enemy) — used by dwellings */
+  spawnUnit?: (name: string, x: number, y: number, opts?: { animChar?: string; ranged?: boolean }) => Entity;
   /** summon a friendly ally (set in main; used by player summon without an import cycle) */
   spawnAlly?: (name: string, x: number, y: number, animChar?: string) => Entity;
 }
