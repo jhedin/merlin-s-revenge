@@ -18,7 +18,7 @@ const start = await p.evaluate(`(() => { const g = window.__game; return {
 
 // Play it: each round move Merlin next to the nearest hostile (the room has rock mazes; the bot
 // closes distance directly) and full-charge a bolt into it. Allies pitch in. Repeat until clear.
-for (let i = 0; i < 40; i++) {
+for (let i = 0; i < 120; i++) { // dwellings now release waves, so the bot needs more passes
   const foe = await p.evaluate(`(() => {
     const g = window.__game; const m = g.player.comps.find(c=>"x"in c);
     let best=null,bd=1e9; for (const e of g.entities){ if(e.type!=="enemy"||e.send("isDead"))continue; const q=e.send("getPos"); const d=(q.x-m.x)**2+(q.y-m.y)**2; if(d<bd){bd=d;best=q;} }

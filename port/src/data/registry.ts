@@ -15,16 +15,22 @@ export const PREFIX_TYPE: Record<string, string> = {
   scr: "script", tem: "team", txt: "text", tls: "tileSet", tlk: "tileSetKey",
 };
 
-/** structMaster.structAttack defaults (the #attack schema). Values are merged under by data. */
+/** structMaster.structAttack — the complete #attack schema. Data is merged under these. */
 export const STRUCT_ATTACK: Record_ = {
   animFrame: 2, animType: "#none", beam: false, bullet: "#none",
-  chargeColour: { r: 255, g: 255, b: 255 }, chargePerUnit: 1, chargeMax: 0,
-  chargeSpeed: 0, chargeStart: 0, chargeVolumeMap: { charge: [1, 100], vol: [10, 255] },
-  collisionLoc: { x: 25, y: 0 }, cooldown: 0, fireDelay: 2, firingType: "#proportional",
-  hits: ["#teamMembers"], limitMagic: false, multistage: "#none", name: "#none",
-  payloadFunction: ["#takeHit"], power: { x: 5, y: -1 }, reach: 25, spellSpeed: 2,
-  targetAllegiance: "#enemy", targetCriteria: "#closestDistance",
-  targetRoles: [["#teamMembers", "#teamBuildings"]], type: "#auto", volume: 150,
+  chargeColour: { r: 255, g: 255, b: 255 }, chargeExplodeFactor: 4, chargePerUnit: 5,
+  chargeMax: 5, chargeMaxBasic: 0, chargeMaxModifier: 1, chargeSize: 1, chargeSpeed: 1,
+  chargeSpeedMax: "#unlimited", chargeStart: 1, chargeStartMax: "#none",
+  chargeVolumeMap: { charge: [1, 100], vol: [10, 255] },
+  collisionLoc: { x: 25, y: 0 }, idealAttackLoc: "#collisionLoc", cooldown: 0, cutHair: false,
+  damageMultiplier: 1, explodeCharge: 10, explodeFunction: "#none", explodeSound: "#none",
+  fireDelay: 2, firingType: "#proportional", freezeMultiplier: 1, hits: ["#teamMembers"],
+  limitMagic: false, multistage: "#none", name: "#none", payloadFunction: ["#takeHit"],
+  payloadFunctionNonBlank: ["#same"], power: { x: 5, y: -1 }, reach: 25,
+  releaseFunction: "#release", releaseSound: "#none", residentTeamCategory: "#none",
+  spellSpeed: 2, sound: "#none", targetAllegiance: "#enemy", targetCriteria: "#closestDistance",
+  targetRoles: [["#teamMembers", "#teamBuildings"]], targetTileWhenNotBlank: false,
+  type: "#auto", volume: 150,
 };
 
 const isPlainObject = (v: Lingo | undefined): v is Record_ =>
@@ -35,6 +41,16 @@ const isPlainObject = (v: Lingo | undefined): v is Record_ =>
 /** ListsMerge: shallow child-over-parent. Child keys override parent keys. */
 export function mergeRecords(parent: Record_, child: Record_): Record_ {
   return { ...parent, ...child };
+}
+
+/** ListModifyProperties: deep overlay — recurse into nested proplists, overwrite leaves/points. */
+export function deepModify(target: Record_, source: Record_): Record_ {
+  for (const k of Object.keys(source)) {
+    const tv = target[k], sv = source[k];
+    if (isPlainObject(tv) && isPlainObject(sv)) deepModify(tv, sv);
+    else target[k] = sv as Lingo;
+  }
+  return target;
 }
 
 export interface DataFileLike { header: { [k: string]: Lingo }; data: Lingo; }
@@ -75,10 +91,11 @@ export class Registry {
       const parent = this.resolveActor(inherit);
       if (parent) data = mergeRecords(parent, data);
     }
-    // #attack schema merge (after inherit so inherited attack is included)
+    // #attack schema merge (after inherit so inherited attack is included): deep overlay onto a
+    // fresh clone of structAttack (ListModifyProperties), so nested proplists merge per Lingo.
     const atk = data["attack"];
     if (isPlainObject(atk)) {
-      data = { ...data, attack: { ...STRUCT_ATTACK, ...atk } };
+      data = { ...data, attack: deepModify(structuredClone(STRUCT_ATTACK), atk) };
     }
     this.inheritCache.set(key, data);
     return data;
