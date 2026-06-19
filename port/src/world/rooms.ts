@@ -8,8 +8,9 @@ import { tileSymbol, type TileKey } from "../data/tlk";
 import type { Assets } from "../render/assets";
 import type { TileSheet } from "../render/renderer";
 import { game } from "../game/context";
-import { spawnEnemy, spawnDwelling } from "../entities/archetypes";
+import { spawnEnemy, spawnDwelling, spawnPickup } from "../entities/archetypes";
 import { Movement } from "../components/movement";
+import type { PickupEffect } from "../components/pickup";
 import type { Entity } from "../engine/dispatch";
 
 // Dwellings (construction/residents economy): building symbol -> unit it produces.
@@ -19,12 +20,19 @@ const DWELLINGS: Record<string, { produces: string; ranged: boolean }> = {
   "#dojo": { produces: "ninja", ranged: false },
 };
 
-// Items / spawners / spells not yet represented as actors.
+// Powerup tiles -> collectible pickup effect.
+const PICKUPS: Record<string, PickupEffect> = {
+  "#medikit": "heal", "#maxikit": "heal",
+  "#walkSpeed": "speed",
+  "#manaBurst": "power", "#manaCapacity": "power", "#manaFlow": "power",
+};
+
+// Items / spawners / spells not yet represented.
 const SKIP_SPAWN = new Set([
   "#none", "#player",
   "#goblinMageHut", "#skeletonDwelling", "#fangBunnyPortal", "#mysteriousCloud", "#musicLastStand",
-  "#maxikit", "#medikit", "#merlinSword", "#energyBlast", "#energyMines", "#energyMine",
-  "#energyPulseSpell", "#armySummon", "#manaCapacity", "#manaBurst", "#manaFlow", "#walkSpeed", "#dwarfTower",
+  "#merlinSword", "#energyBlast", "#energyMines", "#energyMine",
+  "#energyPulseSpell", "#armySummon", "#dwarfTower",
 ]);
 
 export class RoomManager {
@@ -101,6 +109,8 @@ export class RoomManager {
           const px = c * t + t / 2, py = r * t + t / 2;
           if (sym === "#player") {
             if (!reposition) { m.x = px; m.y = py; m.vx = m.vy = 0; playerPlaced = true; }
+          } else if (PICKUPS[sym]) {
+            game.entities.push(spawnPickup(PICKUPS[sym]!, px, py));
           } else if (DWELLINGS[sym]) {
             const d = DWELLINGS[sym]!;
             const name = sym.slice(1);

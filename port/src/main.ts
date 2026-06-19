@@ -88,6 +88,10 @@ async function main() {
         const snapshot = game.entities.slice();
         for (const e of snapshot) e.send("update");
         sweepBullets();
+        for (let i = game.entities.length - 1; i >= 0; i--) { // sweep collected pickups
+          const e = game.entities[i]!;
+          if (e.type === "pickup" && e.send("isFinished")) game.entities.splice(i, 1);
+        }
         rooms.update();
         if (player.send("isDead")) mode = "gameover";
       } else if (mode === "paused") {
@@ -106,10 +110,11 @@ async function main() {
       if (passive && rooms.passiveSheet) renderer.drawTileLayer(passive, rooms.passiveSheet);
       if (active && rooms.activeSheet) renderer.drawTileLayer(active, rooms.activeSheet);
       const sprites = game.entities
-        .filter((e) => e.type !== "bullet")
+        .filter((e) => e.type !== "bullet" && e.type !== "pickup")
         .map((e) => e.get(Anim).sprite()).filter((s): s is Sprite => s !== null);
       renderer.drawSprites(sprites);
       drawBullets(renderer);
+      drawPickups(renderer);
       for (const e of game.entities) {
         if (e.type === "enemy") drawEnemyBar(renderer, e, "#e44");
         else if (e.type === "ally") drawEnemyBar(renderer, e, "#4d6");
@@ -167,6 +172,22 @@ function drawHud(renderer: Renderer, player: import("./engine/dispatch").Entity)
   ctx.fillText("Lv " + xp.level, 114, 23);
   ctx.fillText("1:save 2:load", 6, 36);
   if (Date.now() < flashUntil) { ctx.fillStyle = "#ff4"; ctx.fillText(flashMsg, 90, 36); }
+}
+
+const PICKUP_COLOR: Record<string, string> = { heal: "#3d6", speed: "#4cf", power: "#c5f" };
+function drawPickups(renderer: Renderer) {
+  const ctx = renderer.ctx;
+  for (const e of game.entities) {
+    if (e.type !== "pickup") continue;
+    const m = e.get(Movement);
+    const blink = (Math.floor(Date.now() / 250) % 2) ? 1 : 0.6;
+    ctx.globalAlpha = blink;
+    ctx.fillStyle = PICKUP_COLOR[e.send("getEffect") as string] ?? "#fff";
+    ctx.beginPath(); // diamond
+    ctx.moveTo(m.x, m.y - 5); ctx.lineTo(m.x + 5, m.y); ctx.lineTo(m.x, m.y + 5); ctx.lineTo(m.x - 5, m.y);
+    ctx.closePath(); ctx.fill();
+    ctx.globalAlpha = 1;
+  }
 }
 
 function drawBullets(renderer: Renderer) {
