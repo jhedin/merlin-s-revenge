@@ -45,7 +45,6 @@ export class PlayerControl extends Component {
   private meleeCd = 0;
   private charge = 0;
   private charging = false;
-  private prevPrimary = false;
   private releaseT = 0;
   private meleeT = 0;
   private aimLeft = false;
@@ -55,7 +54,7 @@ export class PlayerControl extends Component {
     this.basePower = this.power = Math.round(str * 4) + 8; // punch damage from strength (scaled to enemy energy)
     this.meleeReach = PUNCH.reach; this.hasSword = false;
     this.summonCd = this.fireCd = this.meleeCd = 0;
-    this.charge = 0; this.charging = false; this.prevPrimary = false; this.releaseT = this.meleeT = 0;
+    this.charge = 0; this.charging = false; this.releaseT = this.meleeT = 0;
   }
 
   /** merlinSword scroll: a real melee weapon (damageMultiplier 16) — stronger, longer reach. */
@@ -101,7 +100,6 @@ export class PlayerControl extends Component {
     } else if (this.meleeCd === 0) {
       this.tryPunch(m, target); // no magic in flight -> punch anything in reach
     }
-    this.prevPrimary = primary;
     next();
   }
 

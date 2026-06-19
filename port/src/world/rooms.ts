@@ -9,6 +9,7 @@ import type { Assets } from "../render/assets";
 import type { TileSheet } from "../render/renderer";
 import { game } from "../game/context";
 import { spawnUnit, spawnDwelling, spawnPickup } from "../entities/archetypes";
+import { spriteCharOr } from "../components/anim";
 import { Movement } from "../components/movement";
 import type { PickupEffect } from "../components/pickup";
 import type { Entity } from "../engine/dispatch";
@@ -47,7 +48,6 @@ export class RoomManager {
   activeSheet?: TileSheet;
   exitsOpen = false;             // edges are solid until the room's hostiles are dead
   private margin = 12;
-  private animChars = new Set<string>();
   private rangedChars = new Set<string>();
   private cleared = new Set<number>(); // room nums already cleared (persist across visits)
   private won = false;
@@ -59,13 +59,11 @@ export class RoomManager {
     private onMapClear: () => void = () => {},
   ) {
     this.loc = { ...map.startRoom };
-    // which characters have sprites, and which are ranged (have a ranged/charge anim)
+    // which characters are ranged (have a ranged/charge anim) — drives melee-vs-ranged AI
     const RANGED_ACTIONS = new Set(["weaponRanged", "charge", "naturalRanged", "release"]);
     for (const key of Object.keys(assets.index.anims)) {
-      const u = key.indexOf("_");
-      const char = key.slice(0, u), action = key.slice(u + 1);
-      this.animChars.add(char);
-      if (RANGED_ACTIONS.has(action)) this.rangedChars.add(char);
+      const action = key.slice(key.indexOf("_") + 1);
+      if (RANGED_ACTIONS.has(action)) this.rangedChars.add(key.slice(0, key.indexOf("_")));
     }
   }
 
@@ -145,11 +143,10 @@ export class RoomManager {
           } else if (DWELLINGS[sym]) {
             const d = DWELLINGS[sym]!;
             const name = sym.slice(1);
-            const animChar = this.animChars.has(name) ? name : "blackOrc";
-            game.entities.push(spawnDwelling(name, px, py, d.produces, d.ranged, animChar));
+            game.entities.push(spawnDwelling(name, px, py, d.produces, d.ranged, spriteCharOr(name)));
           } else if (!SKIP_SPAWN.has(sym)) {
             const name = sym.slice(1);
-            const animChar = this.animChars.has(name) ? name : "blackOrc"; // fallback sprite
+            const animChar = spriteCharOr(name); // stand-in sprite if unbundled
             // route by team: #aldevar units join Merlin as allies, hostiles spawn as enemies
             game.entities.push(spawnUnit(name, px, py, { animChar, ranged: this.rangedChars.has(animChar) }));
           }

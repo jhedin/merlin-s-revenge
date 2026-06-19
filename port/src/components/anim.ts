@@ -6,6 +6,11 @@ import { Movement } from "./movement";
 import { game } from "../game/context";
 import type { Sprite } from "../render/renderer";
 
+/** The sprite character for an actor, or a stand-in ("blackOrc") when its anims aren't bundled. */
+export function spriteCharOr(name: string, fallback = "blackOrc"): string {
+  return game.assets.index.anims[`${name}_stand`] ? name : fallback;
+}
+
 export class Anim extends Component {
   static handles = ["update"];
   char = "mer";

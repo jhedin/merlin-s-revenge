@@ -4,6 +4,7 @@
 
 import { Component, type NextFn } from "../engine/dispatch";
 import { Movement } from "./movement";
+import { spriteCharOr } from "./anim";
 import { game } from "../game/context";
 import type { Entity } from "../engine/dispatch";
 
@@ -34,7 +35,7 @@ export class Dwelling extends Component {
       const m = this.entity.get(Movement);
       const a = game.rng.next() * Math.PI * 2, r = 20 + game.rng.next() * 16;
       // produced units keep their real data (by name) but fall back to a stand-in sprite if unbundled
-      const animChar = game.assets.index.anims[`${this.produces}_stand`] ? this.produces : "blackOrc";
+      const animChar = spriteCharOr(this.produces);
       const e = game.spawnEnemy(this.produces, m.x + Math.cos(a) * r, m.y + Math.sin(a) * r,
         { animChar, ranged: this.ranged });
       game.entities.push(e);
