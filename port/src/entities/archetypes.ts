@@ -9,6 +9,7 @@ import { Experience } from "../components/experience";
 import { Freeze } from "../components/freeze";
 import { PlayerControl, EnemyAI } from "../components/control";
 import { Dwelling } from "../components/dwelling";
+import { Pickup, type PickupEffect } from "../components/pickup";
 import { registry } from "../game/data";
 
 const DEFAULTS = { isDead: false, getTeam: "", energyFrac: 1, getLevel: 1, isFrozen: false };
@@ -26,6 +27,14 @@ export function spawnAlly(actorName: string, x: number, y: number, animChar = ac
   const e = EnemyArchetype.create(makeEntityId());
   e.type = "ally";
   return e.build({ x, y, walkSpeed: walk * 0.6, energy: 120, strength: 24, team: "#aldevar", animChar, box: 12, targetTypes: ["enemy"] });
+}
+
+export const PickupArchetype = new Archetype("pickup", [Pickup, Movement], { defaults: { isDead: false, isFinished: false, getTeam: "" } });
+
+export function spawnPickup(effect: PickupEffect, x: number, y: number): Entity {
+  const e = PickupArchetype.create(makeEntityId());
+  e.type = "pickup";
+  return e.build({ x, y, walkSpeed: 0, effect, box: 8 });
 }
 
 export function spawnDwelling(actorName: string, x: number, y: number, produces: string, producesRanged: boolean, animChar = actorName): Entity {

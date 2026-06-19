@@ -52,6 +52,19 @@ async function main() {
   let cutscene: CutscenePlayer | null = null;
   let pauseMenu: Menu | null = null;
 
+  // title + controls menus
+  const startItem = { label: "Start Game", action: () => { cutscene = new CutscenePlayer(intro, assets, viewW, viewH); mode = "cutscene"; } };
+  const mainTitleMenu = new Menu("", [startItem, { label: "Controls", action: () => { titleMenu = controlsMenu; } }]);
+  const setScheme = (n: "both" | "arrows" | "wasd" | "zqsd") => () => { input.setScheme(n); flash("controls: " + n); titleMenu = mainTitleMenu; };
+  const controlsMenu = new Menu("CONTROLS", [
+    { label: "Arrows", action: setScheme("arrows") },
+    { label: "WASD", action: setScheme("wasd") },
+    { label: "ZQSD", action: setScheme("zqsd") },
+    { label: "WASD + Arrows", action: setScheme("both") },
+    { label: "Back", action: () => { titleMenu = mainTitleMenu; } },
+  ]);
+  let titleMenu: Menu = mainTitleMenu;
+
   function openPause() {
     pauseMenu = new Menu("PAUSED", [
       { label: "Resume", action: () => { mode = "playing"; } },
@@ -75,7 +88,7 @@ async function main() {
     () => {
       game.tick++;
       if (mode === "title") {
-        if (input.pressed(" ") || input.pressed("enter")) { cutscene = new CutscenePlayer(intro, assets, viewW, viewH); mode = "cutscene"; }
+        titleMenu.tick(input);
       } else if (mode === "cutscene") {
         if (cutscene!.tick(input)) startGame();
       } else if (mode === "playing") {
@@ -88,6 +101,10 @@ async function main() {
         const snapshot = game.entities.slice();
         for (const e of snapshot) e.send("update");
         sweepBullets();
+        for (let i = game.entities.length - 1; i >= 0; i--) { // sweep collected pickups
+          const e = game.entities[i]!;
+          if (e.type === "pickup" && e.send("isFinished")) game.entities.splice(i, 1);
+        }
         rooms.update();
         if (player.send("isDead")) mode = "gameover";
       } else if (mode === "paused") {
@@ -99,17 +116,18 @@ async function main() {
     },
     () => {
       renderer.clear();
-      if (mode === "title") { drawTitle(renderer, viewW, viewH); return; }
+      if (mode === "title") { drawTitle(renderer, viewW, viewH); titleMenu.render(renderer, viewW, viewH, false); return; }
       if (mode === "cutscene") { cutscene!.render(renderer); return; }
       const passive = rooms.room.layer("#backgroundPassive");
       const active = rooms.room.layer("#backgroundActive");
       if (passive && rooms.passiveSheet) renderer.drawTileLayer(passive, rooms.passiveSheet);
       if (active && rooms.activeSheet) renderer.drawTileLayer(active, rooms.activeSheet);
       const sprites = game.entities
-        .filter((e) => e.type !== "bullet")
+        .filter((e) => e.type !== "bullet" && e.type !== "pickup")
         .map((e) => e.get(Anim).sprite()).filter((s): s is Sprite => s !== null);
       renderer.drawSprites(sprites);
       drawBullets(renderer);
+      drawPickups(renderer);
       for (const e of game.entities) {
         if (e.type === "enemy") drawEnemyBar(renderer, e, "#e44");
         else if (e.type === "ally") drawEnemyBar(renderer, e, "#4d6");
@@ -133,14 +151,10 @@ function drawTitle(renderer: Renderer, w: number, h: number) {
   const ctx = renderer.ctx;
   ctx.fillStyle = "#0a1020"; ctx.fillRect(0, 0, w, h);
   ctx.textAlign = "center";
-  ctx.fillStyle = "#fc4"; ctx.font = "bold 28px serif";
-  ctx.fillText("MERLIN'S REVENGE", w / 2, h / 2 - 24);
-  ctx.fillStyle = "#9cf"; ctx.font = "10px monospace";
-  ctx.fillText("a TypeScript/HTML5 port", w / 2, h / 2 - 4);
-  ctx.fillStyle = (Math.floor(Date.now() / 400) % 2) ? "#fff" : "#888";
-  ctx.fillText("press SPACE to begin", w / 2, h / 2 + 28);
+  ctx.fillStyle = "#fc4"; ctx.font = "bold 26px serif";
+  ctx.fillText("MERLIN'S REVENGE", w / 2, h / 2 - 48);
   ctx.fillStyle = "#566"; ctx.font = "8px monospace";
-  ctx.fillText("move: WASD   attack: space   summon: Q   save/load: 1/2   pause: Esc", w / 2, h - 16);
+  ctx.fillText("move: WASD/arrows   attack: space   summon: E   save/load: 1/2   pause: Esc", w / 2, h - 16);
   ctx.textAlign = "left";
 }
 
@@ -167,6 +181,22 @@ function drawHud(renderer: Renderer, player: import("./engine/dispatch").Entity)
   ctx.fillText("Lv " + xp.level, 114, 23);
   ctx.fillText("1:save 2:load", 6, 36);
   if (Date.now() < flashUntil) { ctx.fillStyle = "#ff4"; ctx.fillText(flashMsg, 90, 36); }
+}
+
+const PICKUP_COLOR: Record<string, string> = { heal: "#3d6", speed: "#4cf", power: "#c5f" };
+function drawPickups(renderer: Renderer) {
+  const ctx = renderer.ctx;
+  for (const e of game.entities) {
+    if (e.type !== "pickup") continue;
+    const m = e.get(Movement);
+    const blink = (Math.floor(Date.now() / 250) % 2) ? 1 : 0.6;
+    ctx.globalAlpha = blink;
+    ctx.fillStyle = PICKUP_COLOR[e.send("getEffect") as string] ?? "#fff";
+    ctx.beginPath(); // diamond
+    ctx.moveTo(m.x, m.y - 5); ctx.lineTo(m.x + 5, m.y); ctx.lineTo(m.x, m.y + 5); ctx.lineTo(m.x - 5, m.y);
+    ctx.closePath(); ctx.fill();
+    ctx.globalAlpha = 1;
+  }
 }
 
 function drawBullets(renderer: Renderer) {

@@ -24,6 +24,7 @@ export class PlayerControl extends Component {
   static handles = ["update"];
   cooldown = 0;
   summonCd = 0;
+  power = 80; // bolt damage (raised by #power pickups)
   update(next: NextFn): void {
     if (this.cooldown > 0) this.cooldown--;
     if (this.summonCd > 0) this.summonCd--;
@@ -31,7 +32,7 @@ export class PlayerControl extends Component {
       const mv = game.input.moveVector();
       const m = this.entity.get(Movement);
       m.intentX = mv.x; m.intentY = mv.y;
-      if (game.input.pressed("q") && this.summonCd === 0 && game.spawnAlly) { // summon a warrior ally
+      if (game.input.pressed("e") && this.summonCd === 0 && game.spawnAlly) { // summon a warrior ally (E)
         const a = game.rng.next() * Math.PI * 2;
         game.entities.push(game.spawnAlly("warrior", m.x + Math.cos(a) * 24, m.y + Math.sin(a) * 24));
         this.summonCd = 90;
@@ -41,7 +42,7 @@ export class PlayerControl extends Component {
         const dir = target ? target.send("getPos") as { x: number; y: number }
           : { x: m.x + (m.facingLeft ? -1 : 1) * 100, y: m.y };
         // player's bolt also briefly freezes on hit (#takeFreeze payload, arcticBlast-style)
-        fireBullet(this.entity.id, m.x, m.y - 6, dir.x - m.x, dir.y - m.y, 6.5, 80, this.entity.send("getTeam"), 100, 36);
+        fireBullet(this.entity.id, m.x, m.y - 6, dir.x - m.x, dir.y - m.y, 6.5, this.power, this.entity.send("getTeam"), 100, 36);
         this.cooldown = 5;
       }
     }
