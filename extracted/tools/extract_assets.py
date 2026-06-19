@@ -201,9 +201,30 @@ def extract_bitmaps(data, ents, owner_to, outdir):
         json.dump(meta, f, indent=0)
     return n, fail
 
+def extract_music(data, ents, owner_to, outdir):
+    """Director stores streamed music as MP3 inside ediM (compressed media) cast members."""
+    os.makedirs(outdir, exist_ok=True)
+    child_owner = {child: owner for owner, kids in owner_to.items() for child in kids.values()}
+    n = 0
+    for rid, (t, s, o) in ents.items():
+        if t != 'ediM' or s < 40000:           # music tracks are large; small ediM are images/etc
+            continue
+        b = data[o + 8:o + 8 + s]
+        if not (b[:3] == b'ID3' or (b[0] == 0xFF and (b[1] & 0xE0) == 0xE0)):
+            continue                            # only raw-MP3 ediM members are music
+        owner = child_owner.get(rid)
+        nm = cast_name(data, ents, owner) if owner is not None else None
+        nm = (nm or "music_%d" % rid).split("kMoaCfFormat")[0]  # strip Director's format suffix
+        with open(os.path.join(outdir, safe(nm, "music_%d" % rid) + ".mp3"), 'wb') as f:
+            f.write(b)
+        n += 1
+    return n
+
+
 if __name__ == "__main__":
     movie, outdir = sys.argv[1], sys.argv[2]
     data, ents, owner_to = parse(movie)
     ns = extract_sounds(data, ents, owner_to, os.path.join(outdir, "sounds"))
+    nm = extract_music(data, ents, owner_to, os.path.join(outdir, "music"))
     nb, fb = extract_bitmaps(data, ents, owner_to, os.path.join(outdir, "bitmaps"))
-    print("%s: %d sounds, %d bitmaps (%d failed)" % (os.path.basename(movie), ns, nb, fb))
+    print("%s: %d sounds, %d music, %d bitmaps (%d failed)" % (os.path.basename(movie), ns, nm, nb, fb))

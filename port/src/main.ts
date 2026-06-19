@@ -5,6 +5,7 @@
 import { Assets } from "./render/assets";
 import { Renderer, type Sprite } from "./render/renderer";
 import { Input } from "./systems/input";
+import { AudioSystem } from "./systems/audio";
 import { GameLoop } from "./engine/loop";
 import { parseMap, type GameMap, type Vec2i } from "./world/map";
 import { parseTileKey } from "./data/tlk";
@@ -45,7 +46,12 @@ async function main() {
 
   const input = new Input();
   input.attachMouse(canvas); // objAiPlayer aims charged magic at the cursor
-  initContext({ input, assets, tilePx: tile, entities: [], player: null, tick: 0, spawnEnemy, spawnUnit, spawnAlly });
+  const audio = new AudioSystem(assets.index);
+  audio.preload();
+  // browsers block audio until a user gesture — resume on the first key/click, then play title music
+  const unlock = () => { audio.unlock(); audio.playMusic("baroque_rock_v1"); window.removeEventListener("keydown", unlock); window.removeEventListener("pointerdown", unlock); };
+  window.addEventListener("keydown", unlock); window.addEventListener("pointerdown", unlock);
+  initContext({ input, assets, audio, tilePx: tile, entities: [], player: null, tick: 0, spawnEnemy, spawnUnit, spawnAlly });
 
   // scene state machine (scenes.json): title -> intro cutscene -> playing <-> paused -> gameover/victory
   let mode: "title" | "cutscene" | "playing" | "paused" | "gameover" | "victory" = "title";
@@ -72,7 +78,7 @@ async function main() {
       { label: "Resume", action: () => { mode = "playing"; } },
       { label: "Save game", action: () => { saveGame(player, rooms.loc); flash("game saved"); mode = "playing"; } },
       { label: "Load game", action: () => { const s = loadSave(); if (s) { rooms.enter(s.room); player.send("restoreFromSave", s.player); } mode = "playing"; } },
-      { label: "Return to title", action: () => { mode = "title"; } },
+      { label: "Return to title", action: () => { mode = "title"; audio.playMusic("baroque_rock_v1"); } },
     ]);
     mode = "paused";
   }
@@ -82,14 +88,17 @@ async function main() {
     game.player = player;
     game.entities = [player];
     // every room cleared -> the dungeon is won (objMap: last #endRoom #none -> victory)
-    rooms = new RoomManager(map, assets, activeKey, objectsKey, viewW, viewH, player, () => { mode = "victory"; });
+    rooms = new RoomManager(map, assets, activeKey, objectsKey, viewW, viewH, player,
+      () => { mode = "victory"; audio.play("end_level"); audio.playMusic("last_stand_v4"); });
     rooms.enter(map.startRoom);
+    audio.playMusic("electronic_merlin_v1_02"); // the dungeon theme
     mode = "playing";
   }
 
   const loop = new GameLoop(
     () => {
       game.tick++;
+      if (input.pressed("m")) { flash(audio.toggleMute() ? "sound off" : "sound on"); } // global mute
       if (mode === "title") {
         titleMenu.tick(input);
       } else if (mode === "cutscene") {
@@ -110,13 +119,13 @@ async function main() {
           if (e.type === "pickup" && e.send("isFinished")) game.entities.splice(i, 1);
         }
         rooms.update();
-        if (player.send("isDead")) mode = "gameover";
+        if (player.send("isDead")) { mode = "gameover"; audio.play("end_screen"); audio.stopMusic(); }
       } else if (mode === "paused") {
         if (input.pressed("escape")) mode = "playing"; else pauseMenu!.tick(input);
       } else if (mode === "gameover") {
         if (input.pressed(" ") || input.pressed("enter")) startGame();
       } else if (mode === "victory") {
-        if (input.pressed(" ") || input.pressed("enter")) { titleMenu = mainTitleMenu; mode = "title"; }
+        if (input.pressed(" ") || input.pressed("enter")) { titleMenu = mainTitleMenu; mode = "title"; audio.playMusic("baroque_rock_v1"); }
       }
       input.endTick();
     },
@@ -152,6 +161,7 @@ async function main() {
   (window as any).__rooms = () => rooms;
   (window as any).__mode = () => mode;
   (window as any).__bulletStats = bulletPoolStats;
+  (window as any).__audio = audio;
   console.log("Merlin's Revenge —", map.mapSize.x + "x" + map.mapSize.y, "room dungeon ready (title screen)");
 }
 
@@ -163,7 +173,7 @@ function drawTitle(renderer: Renderer, w: number, h: number) {
   ctx.fillText("MERLIN'S REVENGE", w / 2, h / 2 - 48);
   ctx.fillStyle = "#566"; ctx.font = "8px monospace";
   ctx.fillText("move: WASD/arrows   aim: mouse   hold to charge magic, release to cast   punch: auto", w / 2, h - 26);
-  ctx.fillText("summon: E   save/load: 1/2   pause: Esc", w / 2, h - 14);
+  ctx.fillText("summon: E   save/load: 1/2   pause: Esc   mute: M", w / 2, h - 14);
   ctx.textAlign = "left";
 }
 
