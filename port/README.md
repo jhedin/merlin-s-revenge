@@ -6,14 +6,23 @@ and `../docs/PLAN_REVIEW.md`). Game data and assets come from `../casts`, `../ma
 
 ## Status
 
-Playable through **Phases 0–7** of the roadmap: title screen → a real 10-room dungeon with tile
-collision and per-room spawn tables, a player + AI enemies (chase, melee & ranged, HP/death),
-projectiles with object pooling, XP/leveling, save/load, and a game-over/restart flow — all at a
-fixed 30 Hz through the component dispatch. Controls: **WASD/arrows** move, **space** attack,
-**1/2** save/load.
+A complete, playable game on the faithful engine architecture. Title → intro cutscene → a real
+10-room dungeon, all running at a fixed 30 Hz through the component dispatch:
 
-Still unported (Phases 6 cutscenes / 8 content): the cutscene engine, construction/army economy,
-status effects, summoning, full menus, and the remaining ~115 actor types' sprites/behaviors.
+- **Flow**: title, intro **cutscene** (the real `scr_demo_001` DSL), pause **menu**,
+  game-over/restart — a scene state machine.
+- **World**: real maps (per-map sizes), tile collision, **multi-room navigation** + minimap,
+  `#objects` **spawn tables** populating the **real actor roster** (17 character sets).
+- **Combat**: melee + **pooled projectiles**, ranged AI, **XP/leveling**, **freeze** status,
+  HP/death, team/type-based targeting.
+- **Economy**: **dwellings** that produce resident units; **summon** allies that fight for you.
+- **Persistence**: save/load via the `addSaveData`/`restoreFromSave` fold.
+
+Controls: **WASD/arrows** move, **space** attack, **Q** summon, **1/2** save/load, **Esc** pause.
+
+Still unported (long-tail content): the key-config menu screens and the bespoke per-actor AI of the
+remaining ~100 actor types (they currently use shared melee/ranged AI). The engine and all major
+systems are in place; what remains is breadth of content.
 
 ## Run
 
