@@ -12,18 +12,14 @@ import { spawnEnemy } from "../entities/archetypes";
 import { Movement } from "../components/movement";
 import type { Entity } from "../engine/dispatch";
 
-// Stand-in mapping: spawn-table symbols -> bundled actor sprites (melee->blackOrc, ranged->dwarf).
-// Faithful spawn POSITIONS from the map; sprites are placeholders until more anims are bundled.
-const ENEMY_STANDIN: Record<string, { char: string; ranged: boolean }> = {
-  "#warrior": { char: "blackOrc", ranged: false }, "#goblinWarrior": { char: "blackOrc", ranged: false },
-  "#goblinHero": { char: "blackOrc", ranged: false }, "#skeletonWarrior": { char: "blackOrc", ranged: false },
-  "#ninja": { char: "blackOrc", ranged: false }, "#monk": { char: "blackOrc", ranged: false },
-  "#berlinInGame": { char: "blackOrc", ranged: false },
-  "#dwarf": { char: "dwarf", ranged: false },
-  "#archer": { char: "dwarf", ranged: true }, "#goblinArcher": { char: "dwarf", ranged: true },
-  "#skeletonArcher": { char: "dwarf", ranged: true }, "#skeletonThrower": { char: "dwarf", ranged: true },
-  "#goblinMage": { char: "dwarf", ranged: true }, "#dwarfTower": { char: "dwarf", ranged: true },
-};
+// Non-combatant spawn symbols (buildings / items / spawners) — not yet spawned as actors.
+const SKIP_SPAWN = new Set([
+  "#none", "#player",
+  "#goblinHut", "#dojo", "#orcHouse", "#goblinMageHut", "#skeletonDwelling",
+  "#fangBunnyPortal", "#mysteriousCloud", "#musicLastStand", "#maxikit", "#medikit",
+  "#merlinSword", "#energyBlast", "#energyMines", "#energyMine", "#energyPulseSpell",
+  "#armySummon", "#manaCapacity", "#manaBurst", "#manaFlow", "#walkSpeed", "#dwarfTower",
+]);
 
 export class RoomManager {
   loc: Vec2i;
@@ -32,12 +28,24 @@ export class RoomManager {
   passiveSheet?: TileSheet;
   activeSheet?: TileSheet;
   private margin = 12;
+  private animChars = new Set<string>();
+  private rangedChars = new Set<string>();
 
   constructor(
     private map: GameMap, private assets: Assets,
     private activeKey: TileKey, private objectsKey: TileKey,
     private viewW: number, private viewH: number, private player: Entity,
-  ) { this.loc = { ...map.startRoom }; }
+  ) {
+    this.loc = { ...map.startRoom };
+    // which characters have sprites, and which are ranged (have a ranged/charge anim)
+    const RANGED_ACTIONS = new Set(["weaponRanged", "charge", "naturalRanged", "release"]);
+    for (const key of Object.keys(assets.index.anims)) {
+      const u = key.indexOf("_");
+      const char = key.slice(0, u), action = key.slice(u + 1);
+      this.animChars.add(char);
+      if (RANGED_ACTIONS.has(action)) this.rangedChars.add(char);
+    }
+  }
 
   enter(loc: Vec2i, repositionPlayer?: "left" | "right" | "up" | "down"): void {
     this.loc = loc;
@@ -87,9 +95,10 @@ export class RoomManager {
           const px = c * t + t / 2, py = r * t + t / 2;
           if (sym === "#player") {
             if (!reposition) { m.x = px; m.y = py; m.vx = m.vy = 0; playerPlaced = true; }
-          } else {
-            const s = ENEMY_STANDIN[sym];
-            if (s) game.entities.push(spawnEnemy(s.char, px, py, { ranged: s.ranged }));
+          } else if (!SKIP_SPAWN.has(sym)) {
+            const name = sym.slice(1);
+            const animChar = this.animChars.has(name) ? name : "blackOrc"; // fallback sprite
+            game.entities.push(spawnEnemy(name, px, py, { animChar, ranged: this.rangedChars.has(animChar) }));
           }
         }
       }

@@ -39,7 +39,12 @@ for (const [sym, prefix] of [
 }
 
 // --- character animations: grouped by <char>_<action> for each bundled character ---
-const CHARS = ["mer", "blackOrc", "dwarf"];
+const CHARS = [
+  "mer", "blackOrc", "dwarf",
+  // real spawn-table combatants present in the dungeon maps
+  "swordOrc", "warrior", "skelitonLord", "kongFuChicken", "bowOrc", "mageOrc",
+  "vultureGuard", "archer", "ninja", "shurikenNinja", "monk", "druid", "scw", "ochreWizard",
+];
 interface Frame { file: string; w: number; h: number; reg: [number, number]; }
 const anims: Record<string, { delay: number; frames: Frame[] }> = {};
 const frameNo = (tok: string): number => parseInt(/^\d+/.exec(tok)?.[0] ?? "0", 10);

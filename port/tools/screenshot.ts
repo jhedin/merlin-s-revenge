@@ -12,26 +12,19 @@ page.on("pageerror", (e) => logs.push("PAGEERROR: " + e.message));
 
 await page.goto(URL, { waitUntil: "networkidle" });
 await page.waitForTimeout(400);
-const titleMode = await page.evaluate(`window.__mode()`);
-await page.screenshot({ path: "title.png" }); // capture the title screen
-// start the game
-await page.keyboard.press("Space");
-await page.waitForTimeout(400);
-// walk right two rooms, save, walk back, load
-await page.keyboard.down("ArrowRight"); await page.waitForTimeout(900); await page.keyboard.up("ArrowRight");
-const savedRoom = await page.evaluate(`window.__rooms().loc.x`);
-await page.keyboard.press("Digit1");
-await page.waitForTimeout(100);
-await page.keyboard.down("ArrowLeft"); await page.waitForTimeout(900); await page.keyboard.up("ArrowLeft");
-await page.keyboard.press("Digit2");
-await page.waitForTimeout(150);
+await page.keyboard.press("Space"); // start
+await page.waitForTimeout(500);     // let the populated first room settle
 
-const state = await page.evaluate(`(() => ({
-  titleMode: ${JSON.stringify(titleMode)},
-  mode: window.__mode(),
-  savedRoom: ${savedRoom},
-  afterLoad: window.__rooms().loc.x,
-}))()`);
+const state = await page.evaluate(`(() => {
+  const g = window.__game;
+  const enemies = g.entities.filter((e) => e.type === "enemy");
+  const chars = {};
+  for (const e of enemies) {
+    const anim = e.comps.find((c) => "char" in c);
+    chars[anim.char] = (chars[anim.char] || 0) + 1;
+  }
+  return { mode: window.__mode(), room: window.__rooms().loc.x, enemies: enemies.length, roster: chars };
+})()`);
 
 await page.screenshot({ path: "slice.png" });
 await browser.close();
