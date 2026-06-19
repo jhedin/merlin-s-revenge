@@ -18,6 +18,8 @@ import { Movement } from "./components/movement";
 import { Projectile } from "./components/projectile";
 import { sweepBullets, bulletPoolStats } from "./systems/bullets";
 import { saveGame, loadSave } from "./systems/save";
+import { parseCutscene } from "./data/cutscene";
+import { CutscenePlayer } from "./scenes/cutscenePlayer";
 
 let flashMsg = ""; let flashUntil = 0;
 const flash = (m: string) => { flashMsg = m; flashUntil = Date.now() + 1200; };
@@ -25,11 +27,13 @@ const flash = (m: string) => { flashMsg = m; flashUntil = Date.now() + 1200; };
 async function main() {
   const canvas = document.getElementById("game") as HTMLCanvasElement;
   const assets = await Assets.load();
-  const [mapSrc, keySrc, objSrc] = await Promise.all([
+  const [mapSrc, keySrc, objSrc, introSrc] = await Promise.all([
     fetch("/assets/map.txt").then((r) => r.text()),
     fetch("/assets/active_key.txt").then((r) => r.text()),
     fetch("/assets/objects_key.txt").then((r) => r.text()),
+    fetch("/assets/intro.txt").then((r) => r.text()),
   ]);
+  const intro = parseCutscene(introSrc);
   const map = parseMap(mapSrc);
   const activeKey = parseTileKey(keySrc);
   const objectsKey = parseTileKey(objSrc);
@@ -40,10 +44,11 @@ async function main() {
   const input = new Input();
   initContext({ input, assets, tilePx: tile, entities: [], player: null, tick: 0 });
 
-  // scene state machine (scenes.json): title -> playing -> gameover (PORTING_PLAN §4)
-  let mode: "title" | "playing" | "gameover" = "title";
+  // scene state machine (scenes.json): title -> intro cutscene -> playing -> gameover
+  let mode: "title" | "cutscene" | "playing" | "gameover" = "title";
   let player!: import("./engine/dispatch").Entity;
   let rooms!: RoomManager;
+  let cutscene: CutscenePlayer | null = null;
 
   function startGame() {
     player = spawnPlayer(viewW / 2, viewH / 2);
@@ -58,7 +63,9 @@ async function main() {
     () => {
       game.tick++;
       if (mode === "title") {
-        if (input.pressed(" ") || input.pressed("enter")) startGame();
+        if (input.pressed(" ") || input.pressed("enter")) { cutscene = new CutscenePlayer(intro, assets, viewW, viewH); mode = "cutscene"; }
+      } else if (mode === "cutscene") {
+        if (cutscene!.tick(input)) startGame();
       } else if (mode === "playing") {
         if (input.pressed("1")) { saveGame(player, rooms.loc); flash("game saved"); }
         if (input.pressed("2")) {
@@ -78,6 +85,7 @@ async function main() {
     () => {
       renderer.clear();
       if (mode === "title") { drawTitle(renderer, viewW, viewH); return; }
+      if (mode === "cutscene") { cutscene!.render(renderer); return; }
       const passive = rooms.room.layer("#backgroundPassive");
       const active = rooms.room.layer("#backgroundActive");
       if (passive && rooms.passiveSheet) renderer.drawTileLayer(passive, rooms.passiveSheet);
