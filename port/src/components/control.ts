@@ -35,10 +35,11 @@ const SPELL = {
 const PUNCH = { reach: 18, cooldown: 20, frames: 6 };
 
 export class PlayerControl extends Component {
-  static handles = ["update", "levelUp", "animAction", "chargeFrac"];
+  static handles = ["update", "levelUp", "animAction", "chargeFrac", "getHasSpell", "addSaveData", "restoreFromSave"];
   power = 0;       // strength -> punch damage (set from cfg)
   meleeReach = PUNCH.reach;
   hasSword = false; // merlinSword equipped -> #weaponMelee strip + longer/stronger swing
+  hasSpell = false; // energyBlast acquired -> charged magic enabled (starts punch-only)
   private strength = 8;
   private strengthInc = 0.1;
   private basePower = 0;
@@ -55,13 +56,28 @@ export class PlayerControl extends Component {
     this.strength = typeof cfg["strength"] === "number" ? cfg["strength"] : 8;
     this.strengthInc = typeof cfg["strengthIncLevel"] === "number" ? cfg["strengthIncLevel"] : 0.1;
     this.basePower = this.power = Math.round(this.strength * 4) + 8; // punch damage from strength (scaled to enemy energy)
-    this.meleeReach = PUNCH.reach; this.hasSword = false;
+    this.meleeReach = PUNCH.reach; this.hasSword = false; this.hasSpell = false;
     this.summonCd = this.fireCd = this.meleeCd = 0;
     this.charge = 0; this.charging = false; this.releaseT = this.meleeT = 0;
   }
 
   /** merlinSword scroll: a real melee weapon (damageMultiplier 16) — stronger, longer reach. */
   equipSword(): void { this.hasSword = true; this.power = this.basePower + 160; this.meleeReach = 24; }
+
+  /** energyBlast scroll (room 6): grants Merlin his charged magic (modWeaponManager.addWeapon). */
+  grantSpell(): void { this.hasSpell = true; }
+  getHasSpell(): boolean { return this.hasSpell; } // HUD gates the mana/charge bar on this
+
+  // persist acquired weapons across save/load so a mid-game load keeps sword + magic
+  addSaveData(next: NextFn, sd: Record<string, any>): Record<string, any> {
+    sd["weapons"] = { hasSword: this.hasSword, hasSpell: this.hasSpell };
+    return next(sd);
+  }
+  restoreFromSave(next: NextFn, sd: Record<string, any>): Record<string, any> {
+    const w = sd["weapons"];
+    if (w) { if (w.hasSword) this.equipSword(); this.hasSpell = !!w.hasSpell; }
+    return next(sd);
+  }
 
   // incStrength on level-up (modCharacterAttackProperties); rescale punch, keep sword bonus
   levelUp(next: NextFn): void {
@@ -97,10 +113,11 @@ export class PlayerControl extends Component {
       this.summonCd = 90;
     }
 
-    // hold-to-charge magic (left mouse or space); release casts at the aim point
+    // hold-to-charge magic — only once Merlin has collected a spell (energyBlast scroll, room 6).
+    // act_player's only weapon is #punch; modWeaponManager adds spells from #objScroll pickups.
     const mana = this.entity.get(Mana);
     const primary = input.mouseDown() || input.held(" ");
-    if (primary && this.fireCd === 0 && mana.has(mana.burst)) {
+    if (this.hasSpell && primary && this.fireCd === 0 && mana.has(mana.burst)) {
       if (!this.charging) game.audio?.play("spell_charge"); // one-shot when the charge begins
       this.charging = true;
       m.facingLeft = this.aimLeft;
@@ -110,7 +127,7 @@ export class PlayerControl extends Component {
       this.castMagic(m, aim, mana); // released, cooled down, or out of mana -> fire
       this.charging = false; this.charge = 0;
     } else if (this.meleeCd === 0) {
-      this.tryPunch(m, target); // no magic in flight -> punch anything in reach
+      this.tryPunch(m, target); // no magic (or none acquired yet) -> punch anything in reach
     }
     next();
   }

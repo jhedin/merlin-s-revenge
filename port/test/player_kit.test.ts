@@ -5,6 +5,7 @@ import { spawnPlayer, spawnEnemy, spawnUnit } from "@/entities/archetypes";
 import { Mana } from "@/components/mana";
 import { Energy } from "@/components/combat";
 import { Anim } from "@/components/anim";
+import { PlayerControl } from "@/components/control";
 
 // Minimal input stub exposing only what PlayerControl reads.
 function fakeInput(opts: { mouseDown?: boolean; cursor?: { x: number; y: number } | null; held?: Set<string> }) {
@@ -31,6 +32,7 @@ describe("Merlin's charged-magic + punch kit", () => {
   it("holds to charge then casts a bolt at the cursor, spending mana", () => {
     game.input = fakeInput({ mouseDown: true, cursor: { x: 400, y: 100 } }) as any;
     const p = spawnPlayer(100, 100);
+    p.get(PlayerControl).grantSpell();                    // acquired the energyBlast scroll
     game.entities = [p];
     const mana = p.get(Mana);
     const full = mana.current;
@@ -52,6 +54,7 @@ describe("Merlin's charged-magic + punch kit", () => {
   it("a cast bolt damages an enemy it flies into", () => {
     game.input = fakeInput({ mouseDown: true, cursor: { x: 40, y: 94 } }) as any; // aim left
     const p = spawnPlayer(100, 100);
+    p.get(PlayerControl).grantSpell();
     const foe = spawnEnemy("swordOrc", 60, 94, { animChar: "swordOrc" }); // hostile (#orcs), on the path
     game.entities = [p, foe];
     const hp0 = foe.get(Energy).energy;
@@ -84,11 +87,26 @@ describe("Merlin's charged-magic + punch kit", () => {
   it("cannot cast with an empty mana pool", () => {
     game.input = fakeInput({ mouseDown: true, cursor: { x: 400, y: 100 } }) as any;
     const p = spawnPlayer(100, 100);
+    p.get(PlayerControl).grantSpell();
     game.entities = [p];
     p.get(Mana).current = 0;
     for (let i = 0; i < 6; i++) p.send("update");
     (game.input as any).mouseDown = () => false;
     p.send("update");
     expect(game.entities.filter((e) => e.type === "bullet").length).toBe(0);
+  });
+
+  it("starts punch-only: holding fire casts nothing until the energyBlast scroll is collected", () => {
+    game.input = fakeInput({ mouseDown: true, cursor: { x: 400, y: 100 } }) as any;
+    const p = spawnPlayer(100, 100);
+    game.entities = [p];                                  // no spell granted
+    for (let i = 0; i < 6; i++) p.send("update");
+    expect(p.send("chargeFrac")).toBe(0);                 // no charge builds
+    (game.input as any).mouseDown = () => false;
+    p.send("update");
+    expect(game.entities.filter((e) => e.type === "bullet").length).toBe(0); // no bolt
+    expect(p.send("getHasSpell")).toBe(false);
+    p.get(PlayerControl).grantSpell();                    // collect the scroll -> magic enabled
+    expect(p.send("getHasSpell")).toBe(true);
   });
 });

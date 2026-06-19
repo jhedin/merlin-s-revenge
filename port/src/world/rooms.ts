@@ -23,14 +23,15 @@ const PICKUPS: Record<string, PickupEffect> = {
   // each mana powerup raises its own stat (objManaCapacity/Burst/Flow), not one generic boost
   "#manaCapacity": "manaCapacity", "#manaBurst": "manaBurst", "#manaFlow": "manaFlow",
   "#merlinSword": "sword", // melee weapon upgrade (act_merlinSword, damageMultiplier 16)
+  "#energyBlast": "spell",  // scroll (room 6): grants Merlin's charged magic — he starts punch-only
 };
 
 // Items / spells with no unit/dwelling behavior yet (scrolls, mines, music, towers). Characters
 // (#objCPUCharacter) and dwellings (#objDwelling) are handled by data; this only skips the rest.
 const SKIP_SPAWN = new Set([
   "#none", "#player", "#musicLastStand",
-  "#energyBlast", "#energyMines", "#energyMine",
-  "#energyPulseSpell", "#armySummon", "#dwarfTower",
+  // unplaced-or-unreachable spell scrolls (none appear in the map except #energyBlast, now a pickup)
+  "#energyMines", "#energyMine", "#energyPulseSpell", "#armySummon", "#dwarfTower",
 ]);
 
 export class RoomManager {
