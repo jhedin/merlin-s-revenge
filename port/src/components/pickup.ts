@@ -4,10 +4,11 @@
 import { Component, type NextFn } from "../engine/dispatch";
 import { Movement } from "./movement";
 import { Energy } from "./combat";
+import { Mana } from "./mana";
 import { PlayerControl } from "./control";
 import { game } from "../game/context";
 
-export type PickupEffect = "heal" | "speed" | "power" | "sword";
+export type PickupEffect = "heal" | "speed" | "sword" | "manaCapacity" | "manaFlow" | "manaBurst";
 
 export class Pickup extends Component {
   static handles = ["update", "isFinished", "getEffect"];
@@ -39,8 +40,11 @@ export class Pickup extends Component {
     switch (this.effect) {
       case "heal": { const en = player.get(Energy); en.energy = en.max; break; }
       case "speed": player.get(Movement).maxSpeed += 0.6; break;
-      case "power": player.get(PlayerControl).power += 8; break;
-      case "sword": player.get(PlayerControl).equipSword(); break; // merlinSword: strong melee weapon
+      case "sword": player.get(PlayerControl).equipSword(); break;       // merlinSword: strong melee weapon
+      // mana powerups (objManaCapacity/Flow/Burst) each raise their own stat, then top up the pool
+      case "manaCapacity": { const m = player.get(Mana); m.capacity += 5; m.current = m.capacity; break; }
+      case "manaFlow": player.get(Mana).flow += 0.5; break;
+      case "manaBurst": player.get(Mana).burst += 1; break;
     }
   }
 }

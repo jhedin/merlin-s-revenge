@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { spawnPlayer, spawnPickup } from "@/entities/archetypes";
 import { Energy } from "@/components/combat";
+import { Mana } from "@/components/mana";
 import { PlayerControl } from "@/components/control";
 import { game } from "@/game/context";
 import { CollisionGrid } from "@/world/collision";
@@ -24,6 +25,20 @@ describe("pickups", () => {
     game.entities = [player, pickup];
     pickup.send("update");
     expect(pickup.send("isFinished")).toBe(false);
+  });
+  it("each mana powerup raises its own stat (not one generic boost)", () => {
+    game.grid = new CollisionGrid(20, 20, 32);
+    const player = spawnPlayer(100, 100); game.player = player;
+    const mana = player.get(Mana);
+    const cap0 = mana.capacity, flow0 = mana.flow, burst0 = mana.burst;
+    game.entities = [player];
+    for (const eff of ["manaCapacity", "manaFlow", "manaBurst"] as const) {
+      const pk = spawnPickup(eff, 100, 100);
+      game.entities.push(pk); pk.send("update");
+    }
+    expect(mana.capacity).toBeGreaterThan(cap0);
+    expect(mana.flow).toBeGreaterThan(flow0);
+    expect(mana.burst).toBeGreaterThan(burst0);
   });
   it("the merlinSword pickup equips a stronger, longer-reaching melee", () => {
     game.grid = new CollisionGrid(20, 20, 32);
