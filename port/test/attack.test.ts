@@ -19,3 +19,12 @@ describe("data-driven attacks (real #attack via #weapon)", () => {
     expect(ai.reachRanged).toBeLessThanOrEqual(220);
   });
 });
+
+import { EnemyAI as AI2 } from "@/components/control";
+describe("distinct AI from #AiType", () => {
+  it("maps spellcaster/ghost/cpu to kite/wander/beeline", () => {
+    expect(spawnEnemy("mageOrc", 0, 0).get(AI2).kind).toBe("kite");     // #objAiCPUSpellCaster
+    expect(spawnEnemy("monkGhost", 0, 0).get(AI2).kind).toBe("wander"); // #objAiCPUGhost
+    expect(spawnEnemy("warrior", 0, 0).get(AI2).kind).toBe("beeline");  // #objAiCPU
+  });
+});

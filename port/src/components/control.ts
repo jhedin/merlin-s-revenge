@@ -57,7 +57,9 @@ export class EnemyAI extends Component {
   ranged = false;
   cooldown = 0;
   cooldownMax = 18;
+  kind: "beeline" | "wander" | "kite" | "bomber" = "beeline"; // from #AiType
   targetTypes: readonly string[] = ["player", "ally"]; // enemies hunt the player + allies
+  private wanderAng = 0; private wanderTimer = 0;
 
   override init(cfg: Record<string, any>): void {
     // power blends real #attack power (knockback magnitude) with strength
@@ -65,6 +67,7 @@ export class EnemyAI extends Component {
     const atkPow = typeof cfg["atkPower"] === "number" ? cfg["atkPower"] : 0;
     this.power = Math.max(4, Math.round(strPow + atkPow));
     this.ranged = cfg["ranged"] === true;
+    if (typeof cfg["aiKind"] === "string") this.kind = cfg["aiKind"] as EnemyAI["kind"];
     // real #attack cooldown/reach where present, else sensible defaults
     if (typeof cfg["atkCooldown"] === "number") this.cooldownMax = cfg["atkCooldown"] + (this.ranged ? 18 : 6);
     else this.cooldownMax = this.ranged ? 40 : 18;
@@ -81,24 +84,59 @@ export class EnemyAI extends Component {
     if (this.entity.send("isDead")) { m.intentX = 0; m.intentY = 0; return next(); }
     if (this.cooldown > 0) this.cooldown--;
     const target = nearestOfTypes(m.x, m.y, this.targetTypes, this.entity);
-    if (!target || target.send("isDead")) { m.intentX = 0; m.intentY = 0; return next(); }
+    if (!target || target.send("isDead")) { this.idle(m); return next(); }
     const tp = target.send("getPos") as { x: number; y: number };
     const dx = tp.x - m.x, dy = tp.y - m.y;
     const d = Math.hypot(dx, dy) || 1;
-    const range = this.ranged ? this.reachRanged : this.reach;
-    if (d > range) {
-      m.intentX = dx / d; m.intentY = dy / d;     // beeline
-    } else {
-      m.intentX = 0; m.intentY = 0;
-      if (this.cooldown === 0) {
-        if (this.ranged) {
-          fireBullet(this.entity.id, m.x, m.y - 6, dx, dy, 4.5, this.power * 2, this.entity.send("getTeam"));
-        } else {
-          target.send("takeHit", this.power, this.entity.id);
-        }
-        this.cooldown = this.cooldownMax;
-      }
+    switch (this.kind) {
+      case "wander": this.wander(m, dx, dy, d, target); break;
+      case "kite": this.kite(m, dx, dy, d, target); break;
+      case "bomber": this.bomber(m, dx, dy, d, target); break;
+      default: this.beeline(m, dx, dy, d, target);
     }
     next();
+  }
+
+  private idle(m: Movement): void { m.intentX = 0; m.intentY = 0; }
+
+  private attack(m: Movement, dx: number, dy: number, target: Entity): void {
+    if (this.cooldown !== 0) return;
+    if (this.ranged) fireBullet(this.entity.id, m.x, m.y - 6, dx, dy, 4.5, this.power * 2, this.entity.send("getTeam"));
+    else target.send("takeHit", this.power, this.entity.id);
+    this.cooldown = this.cooldownMax;
+  }
+
+  // objAiCPU: approach to range, then attack
+  private beeline(m: Movement, dx: number, dy: number, d: number, target: Entity): void {
+    const range = this.ranged ? this.reachRanged : this.reach;
+    if (d > range) { m.intentX = dx / d; m.intentY = dy / d; }
+    else { this.idle(m); this.attack(m, dx, dy, target); }
+  }
+
+  // objAiCPUSpellCaster: hold at range, back away if crowded, fire
+  private kite(m: Movement, dx: number, dy: number, d: number, target: Entity): void {
+    const want = this.reachRanged * 0.7;
+    if (d < want * 0.6) { m.intentX = -dx / d; m.intentY = -dy / d; }      // too close -> retreat
+    else if (d > this.reachRanged) { m.intentX = dx / d; m.intentY = dy / d; } // too far -> approach
+    else this.idle(m);
+    if (d <= this.reachRanged) this.attack(m, dx, dy, target);
+  }
+
+  // objAiCPUGhost: drift on a slowly-changing heading, attack if a target wanders close
+  private wander(m: Movement, dx: number, dy: number, d: number, target: Entity): void {
+    if (--this.wanderTimer <= 0) { this.wanderAng = game.rng.next() * Math.PI * 2; this.wanderTimer = 40 + Math.floor(game.rng.next() * 40); }
+    // bias the heading toward the target a little
+    const bx = Math.cos(this.wanderAng) * 0.7 + (dx / d) * 0.3, by = Math.sin(this.wanderAng) * 0.7 + (dy / d) * 0.3;
+    m.intentX = bx; m.intentY = by;
+    if (d < this.reach + 6) this.attack(m, dx, dy, target);
+  }
+
+  // objAiFlyingBomber: rush the target and self-destruct on contact
+  private bomber(m: Movement, dx: number, dy: number, d: number, target: Entity): void {
+    m.intentX = dx / d; m.intentY = dy / d;
+    if (d < 16) {
+      target.send("takeHit", this.power * 4, this.entity.id);
+      this.entity.send("takeHit", 999999, this.entity.id); // explode
+    }
   }
 }

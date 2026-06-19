@@ -58,6 +58,11 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
   }
   const animType = typeof atk["animType"] === "string" ? atk["animType"] : "";
   const ranged = opts.ranged ?? (animType === "#weaponRanged" || animType === "#magic");
+  const aiType = str("AiType", "");
+  const aiKind = aiType === "#objAiCPUGhost" ? "wander"
+    : aiType === "#objAiFlyingBomber" ? "bomber"
+    : (aiType === "#objAiCPUSpellCaster" || animType === "#magic") ? "kite"
+    : "beeline";
   const pw = atk["power"];
   const atkPower = pw && typeof pw === "object" && "x" in pw ? Math.abs(pw.x) + Math.abs(pw.y) : 0;
   const e = EnemyArchetype.create(makeEntityId());
@@ -69,7 +74,7 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     strength: num("strength", 5),
     team: str("team", "#monsters"),
     animChar: opts.animChar ?? actorName, box: 14,
-    ranged,
+    ranged, aiKind,
     atkCooldown: typeof atk["cooldown"] === "number" ? atk["cooldown"] : undefined,
     atkReach: typeof atk["reach"] === "number" ? atk["reach"] : undefined,
     atkPower: atkPower || undefined,
