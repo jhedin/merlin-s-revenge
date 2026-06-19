@@ -13,11 +13,14 @@ import { Movement } from "../components/movement";
 import type { PickupEffect } from "../components/pickup";
 import type { Entity } from "../engine/dispatch";
 
-// Dwellings (construction/residents economy): building symbol -> unit it produces.
+// Dwellings (construction/residents economy): building symbol -> the hostile unit it produces
+// (from each building's real #residentGroups — goblinHut makes goblins, not Merlin's #warrior).
 const DWELLINGS: Record<string, { produces: string; ranged: boolean }> = {
-  "#goblinHut": { produces: "warrior", ranged: false },
-  "#orcHouse": { produces: "swordOrc", ranged: false },
-  "#dojo": { produces: "ninja", ranged: false },
+  "#goblinHut": { produces: "goblinWarrior", ranged: false }, // #goblins melee
+  "#orcHouse": { produces: "swordOrc", ranged: false },       // #orcs melee
+  "#dojo": { produces: "kongFuChicken", ranged: false },      // #karate (bundled sprite)
+  "#goblinMageHut": { produces: "goblinMage", ranged: true }, // #goblins ranged spellcasters
+  "#fangBunnyPortal": { produces: "fangBunny", ranged: false }, // #cave melee swarm
 };
 
 // Powerup tiles -> collectible pickup effect.
@@ -25,13 +28,14 @@ const PICKUPS: Record<string, PickupEffect> = {
   "#medikit": "heal", "#maxikit": "heal",
   "#walkSpeed": "speed",
   "#manaBurst": "power", "#manaCapacity": "power", "#manaFlow": "power",
+  "#merlinSword": "sword", // melee weapon upgrade (act_merlinSword, damageMultiplier 16)
 };
 
 // Items / spawners / spells not yet represented.
 const SKIP_SPAWN = new Set([
   "#none", "#player",
-  "#goblinMageHut", "#skeletonDwelling", "#fangBunnyPortal", "#mysteriousCloud", "#musicLastStand",
-  "#merlinSword", "#energyBlast", "#energyMines", "#energyMine",
+  "#skeletonDwelling", "#mysteriousCloud", "#musicLastStand",
+  "#energyBlast", "#energyMines", "#energyMine",
   "#energyPulseSpell", "#armySummon", "#dwarfTower",
 ]);
 

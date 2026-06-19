@@ -7,7 +7,7 @@ import { Energy } from "./combat";
 import { PlayerControl } from "./control";
 import { game } from "../game/context";
 
-export type PickupEffect = "heal" | "speed" | "power";
+export type PickupEffect = "heal" | "speed" | "power" | "sword";
 
 export class Pickup extends Component {
   static handles = ["update", "isFinished", "getEffect"];
@@ -40,6 +40,7 @@ export class Pickup extends Component {
       case "heal": { const en = player.get(Energy); en.energy = en.max; break; }
       case "speed": player.get(Movement).maxSpeed += 0.6; break;
       case "power": player.get(PlayerControl).power += 8; break;
+      case "sword": player.get(PlayerControl).equipSword(); break; // merlinSword: strong melee weapon
     }
   }
 }

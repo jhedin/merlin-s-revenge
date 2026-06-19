@@ -33,8 +33,10 @@ export class Dwelling extends Component {
       this.timer = 0;
       const m = this.entity.get(Movement);
       const a = game.rng.next() * Math.PI * 2, r = 20 + game.rng.next() * 16;
+      // produced units keep their real data (by name) but fall back to a stand-in sprite if unbundled
+      const animChar = game.assets.index.anims[`${this.produces}_stand`] ? this.produces : "blackOrc";
       const e = game.spawnEnemy(this.produces, m.x + Math.cos(a) * r, m.y + Math.sin(a) * r,
-        { animChar: this.produces, ranged: this.ranged });
+        { animChar, ranged: this.ranged });
       game.entities.push(e);
       this.residents.push(e);
     }

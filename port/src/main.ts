@@ -221,7 +221,7 @@ function drawCharge(renderer: Renderer, player: import("./engine/dispatch").Enti
   ctx.lineWidth = 1;
 }
 
-const PICKUP_COLOR: Record<string, string> = { heal: "#3d6", speed: "#4cf", power: "#c5f" };
+const PICKUP_COLOR: Record<string, string> = { heal: "#3d6", speed: "#4cf", power: "#c5f", sword: "#fe8" };
 function drawPickups(renderer: Renderer) {
   const ctx = renderer.ctx;
   for (const e of game.entities) {

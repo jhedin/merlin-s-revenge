@@ -37,6 +37,9 @@ const PUNCH = { reach: 18, cooldown: 20, frames: 6 };
 export class PlayerControl extends Component {
   static handles = ["update", "animAction", "chargeFrac"];
   power = 0;       // strength -> punch damage (set from cfg)
+  meleeReach = PUNCH.reach;
+  hasSword = false; // merlinSword equipped -> #weaponMelee strip + longer/stronger swing
+  private basePower = 0;
   private summonCd = 0;
   private fireCd = 0;
   private meleeCd = 0;
@@ -49,10 +52,14 @@ export class PlayerControl extends Component {
 
   override init(cfg: Record<string, any>): void {
     const str = typeof cfg["strength"] === "number" ? cfg["strength"] : 8;
-    this.power = Math.round(str * 4) + 8; // punch damage from strength (scaled to enemy energy)
+    this.basePower = this.power = Math.round(str * 4) + 8; // punch damage from strength (scaled to enemy energy)
+    this.meleeReach = PUNCH.reach; this.hasSword = false;
     this.summonCd = this.fireCd = this.meleeCd = 0;
     this.charge = 0; this.charging = false; this.prevPrimary = false; this.releaseT = this.meleeT = 0;
   }
+
+  /** merlinSword scroll: a real melee weapon (damageMultiplier 16) — stronger, longer reach. */
+  equipSword(): void { this.hasSword = true; this.power = this.basePower + 160; this.meleeReach = 24; }
 
   update(next: NextFn): void {
     if (this.fireCd > 0) this.fireCd--;
@@ -111,17 +118,17 @@ export class PlayerControl extends Component {
   private tryPunch(m: Movement, target: Entity | null): void {
     if (!target) return;
     const p = target.send("getPos") as { x: number; y: number };
-    if (Math.hypot(p.x - m.x, p.y - m.y) > PUNCH.reach) return;
+    if (Math.hypot(p.x - m.x, p.y - m.y) > this.meleeReach) return;
     target.send("takeHit", this.power, this.entity.id);
     m.facingLeft = p.x < m.x;
     this.meleeCd = PUNCH.cooldown; this.meleeT = PUNCH.frames;
   }
 
-  // action override for modAnimSet: punch / release / charge strips take priority over walk/stand
+  // action override for modAnimSet: melee / release / charge strips take priority over walk/stand
   animAction(): string | null {
     if (this.entity.send("isDead")) return null;
     const moving = this.entity.get(Movement).moving();
-    if (this.meleeT > 0) return "naturalMelee";
+    if (this.meleeT > 0) return this.hasSword ? "weaponMelee" : "naturalMelee";
     if (this.releaseT > 0) return moving ? "releasewalk" : "release";
     if (this.charging) return moving ? "chargewalk" : "charge";
     return null;
