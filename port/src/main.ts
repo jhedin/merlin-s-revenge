@@ -155,8 +155,12 @@ function drawBullets(renderer: Renderer) {
 function drawEnemyBar(renderer: Renderer, e: import("./engine/dispatch").Entity) {
   if (e.send("isDead")) return;
   const p = e.send("getPos") as { x: number; y: number };
-  const frac = e.get(Energy).energyFrac();
   const ctx = renderer.ctx;
+  if (e.send("isFrozen")) { // modFreeze: teal frost overlay
+    ctx.fillStyle = "rgba(80,220,255,0.35)";
+    ctx.fillRect(p.x - 9, p.y - 20, 18, 22);
+  }
+  const frac = e.get(Energy).energyFrac();
   ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(p.x - 11, p.y - 26, 22, 4);
   ctx.fillStyle = "#e44"; ctx.fillRect(p.x - 10, p.y - 25, 20 * frac, 2);
 }

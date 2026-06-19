@@ -8,12 +8,13 @@ import { game } from "../game/context";
 
 export class Projectile extends Component {
   static handles = ["update", "isFinished"];
-  life = 0; maxLife = 100; power = 10; team = ""; ownerId = -1; done = false;
+  life = 0; maxLife = 100; power = 10; team = ""; ownerId = -1; done = false; freeze = 0;
 
-  configure(power: number, team: string, ownerId: number, maxLife = 100): void {
-    this.life = 0; this.power = power; this.team = team; this.ownerId = ownerId; this.maxLife = maxLife; this.done = false;
+  configure(power: number, team: string, ownerId: number, maxLife = 100, freeze = 0): void {
+    this.life = 0; this.power = power; this.team = team; this.ownerId = ownerId;
+    this.maxLife = maxLife; this.freeze = freeze; this.done = false;
   }
-  override reset(): void { this.done = false; this.life = 0; this.ownerId = -1; }
+  override reset(): void { this.done = false; this.life = 0; this.ownerId = -1; this.freeze = 0; }
   isFinished(): boolean { return this.done; }
 
   update(next: NextFn): void {
@@ -26,6 +27,7 @@ export class Projectile extends Component {
       const p = e.send("getPos") as { x: number; y: number };
       if (Math.abs(p.x - m.x) < 12 && Math.abs(p.y - m.y) < 12) {
         e.send("takeHit", this.power, this.ownerId);
+        if (this.freeze > 0) e.send("takeFreeze", this.freeze); // payload: #takeFreeze
         this.done = true;
         break;
       }

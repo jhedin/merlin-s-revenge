@@ -13,17 +13,21 @@ page.on("pageerror", (e) => logs.push("PAGEERROR: " + e.message));
 await page.goto(URL, { waitUntil: "networkidle" });
 await page.waitForTimeout(400);
 await page.keyboard.press("Space"); // start
-await page.waitForTimeout(500);     // let the populated first room settle
+await page.waitForTimeout(500);
+// move down toward the enemy cluster, then fire a burst to freeze them
+await page.keyboard.down("ArrowDown"); await page.waitForTimeout(500); await page.keyboard.up("ArrowDown");
+await page.keyboard.down("ArrowLeft"); await page.waitForTimeout(400);
+for (let i = 0; i < 8; i++) { await page.keyboard.press("Space"); await page.waitForTimeout(55); }
+await page.keyboard.up("ArrowLeft");
 
 const state = await page.evaluate(`(() => {
   const g = window.__game;
   const enemies = g.entities.filter((e) => e.type === "enemy");
+  let frozen = 0;
+  for (const e of enemies) if (e.send("isFrozen")) frozen++;
   const chars = {};
-  for (const e of enemies) {
-    const anim = e.comps.find((c) => "char" in c);
-    chars[anim.char] = (chars[anim.char] || 0) + 1;
-  }
-  return { mode: window.__mode(), room: window.__rooms().loc.x, enemies: enemies.length, roster: chars };
+  for (const e of enemies) { const a = e.comps.find((c) => "char" in c); chars[a.char] = (chars[a.char]||0)+1; }
+  return { mode: window.__mode(), enemies: enemies.length, frozen, roster: chars };
 })()`);
 
 await page.screenshot({ path: "slice.png" });

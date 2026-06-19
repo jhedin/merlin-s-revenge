@@ -46,8 +46,9 @@ export class Movement extends Component {
     this.vy += this.intentY * this.accel;
     if (this.intentX === 0) this.vx *= this.friction;
     if (this.intentY === 0) this.vy *= this.friction;
+    const cap = this.entity.send("isFrozen") ? this.maxSpeed * 0.35 : this.maxSpeed; // modFreeze
     const sp = Math.hypot(this.vx, this.vy);
-    if (sp > this.maxSpeed) { this.vx = (this.vx / sp) * this.maxSpeed; this.vy = (this.vy / sp) * this.maxSpeed; }
+    if (sp > cap) { this.vx = (this.vx / sp) * cap; this.vy = (this.vy / sp) * cap; }
     if (Math.abs(this.vx) < 0.05) this.vx = 0;
     if (Math.abs(this.vy) < 0.05) this.vy = 0;
     if (this.vx < 0) this.facingLeft = true; else if (this.vx > 0) this.facingLeft = false;

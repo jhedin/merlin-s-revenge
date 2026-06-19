@@ -32,7 +32,8 @@ export class PlayerControl extends Component {
         const target = nearestEnemy(m.x, m.y);
         const dir = target ? target.send("getPos") as { x: number; y: number }
           : { x: m.x + (m.facingLeft ? -1 : 1) * 100, y: m.y };
-        fireBullet(this.entity.id, m.x, m.y - 6, dir.x - m.x, dir.y - m.y, 6.5, 80, this.entity.send("getTeam"));
+        // player's bolt also briefly freezes on hit (#takeFreeze payload, arcticBlast-style)
+        fireBullet(this.entity.id, m.x, m.y - 6, dir.x - m.x, dir.y - m.y, 6.5, 80, this.entity.send("getTeam"), 100, 36);
         this.cooldown = 5;
       }
     }
