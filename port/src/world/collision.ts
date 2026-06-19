@@ -67,28 +67,56 @@ export class CollisionGrid {
     return false;
   }
 
+  /** any solid cell in column c across rows r0..r1 */
+  private colSolid(c: number, r0: number, r1: number): boolean {
+    for (let r = r0; r <= r1; r++) if (this.solidCell(c, r)) return true;
+    return false;
+  }
+  /** any solid cell in row r across cols c0..c1 */
+  private rowSolid(r: number, c0: number, c1: number): boolean {
+    for (let c = c0; c <= c1; c++) if (this.solidCell(c, r)) return true;
+    return false;
+  }
+
   /**
-   * Axis-separated swept move of an AABB. Returns the resolved position and which axes were
-   * blocked. Caller integrates velocity; blocked axes should zero their velocity component.
+   * Axis-separated swept move of an AABB. On contact, snaps flush to the *blocking* tile's
+   * near face (scanning for the first solid tile along the swept span — not the box's far
+   * edge), which is the bug the golden tests caught. Caller zeroes velocity on a blocked axis.
    */
   moveBox(x: number, y: number, w: number, h: number, dx: number, dy: number):
     { x: number; y: number; hitX: boolean; hitY: boolean } {
+    const t = this.tilePx;
     let nx = x, ny = y, hitX = false, hitY = false;
     if (dx !== 0) {
       const tryX = x + dx;
       if (this.boxHits(tryX, y, w, h)) {
-        // snap to tile edge in the direction of travel
-        const t = this.tilePx;
-        nx = dx > 0 ? Math.floor((tryX + w) / t) * t - w : Math.floor(tryX / t) * t + t;
         hitX = true;
+        const r0 = Math.floor(y / t), r1 = Math.floor((y + h - 1) / t);
+        if (dx > 0) {
+          let blocked = Math.floor((tryX + w - 1) / t);
+          for (let c = Math.floor((x + w) / t); c <= blocked; c++) { if (this.colSolid(c, r0, r1)) { blocked = c; break; } }
+          nx = blocked * t - w;
+        } else {
+          let blocked = Math.floor(tryX / t);
+          for (let c = Math.floor((x + w - 1) / t); c >= blocked; c--) { if (this.colSolid(c, r0, r1)) { blocked = c; break; } }
+          nx = (blocked + 1) * t;
+        }
       } else nx = tryX;
     }
     if (dy !== 0) {
       const tryY = y + dy;
       if (this.boxHits(nx, tryY, w, h)) {
-        const t = this.tilePx;
-        ny = dy > 0 ? Math.floor((tryY + h) / t) * t - h : Math.floor(tryY / t) * t + t;
         hitY = true;
+        const c0 = Math.floor(nx / t), c1 = Math.floor((nx + w - 1) / t);
+        if (dy > 0) {
+          let blocked = Math.floor((tryY + h - 1) / t);
+          for (let r = Math.floor((y + h) / t); r <= blocked; r++) { if (this.rowSolid(r, c0, c1)) { blocked = r; break; } }
+          ny = blocked * t - h;
+        } else {
+          let blocked = Math.floor(tryY / t);
+          for (let r = Math.floor((y + h - 1) / t); r >= blocked; r--) { if (this.rowSolid(r, c0, c1)) { blocked = r; break; } }
+          ny = (blocked + 1) * t;
+        }
       } else ny = tryY;
     }
     return { x: nx, y: ny, hitX, hitY };
