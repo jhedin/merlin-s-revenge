@@ -17,6 +17,8 @@ export class Anim extends Component {
 
   private pickAction(): string {
     if (this.entity.send("isDead")) return "grave";
+    const override = this.entity.send("animAction"); // control may force charge/release/punch
+    if (typeof override === "string") return override;
     return this.entity.get(Movement).moving() ? "walk" : "stand";
   }
 

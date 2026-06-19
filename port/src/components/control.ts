@@ -4,6 +4,7 @@
 
 import { Component, type NextFn } from "../engine/dispatch";
 import { Movement } from "./movement";
+import { Mana } from "./mana";
 import { game } from "../game/context";
 import { fireBullet } from "../systems/bullets";
 import type { Entity } from "../engine/dispatch";
@@ -20,34 +21,111 @@ function nearestOfTypes(x: number, y: number, types: readonly string[], ignore?:
 }
 const nearestEnemy = (x: number, y: number) => nearestOfTypes(x, y, ["enemy"]);
 
+// energyBlast (act_player's charged magic): hold to charge at chargeSpeed*flow, release at the
+// cursor. Damage/speed scale with the charge; each cast spends mana. Tuned to the slice's px
+// scale rather than the engine's 9999/spellSpeed-20 units (PLAN_REVIEW: damage == knockback).
+const SPELL = {
+  chargeRate: 0.16, chargeMax: 5, minCharge: 0.8,
+  dmgPerCharge: 9, speedBase: 5.5, speedPerCharge: 0.5, speedCap: 8.5,
+  costPerCharge: 0.5, cooldown: 6, releaseFrames: 6, life: 110,
+};
+// #punch (#naturalMelee): close-range fallback. cooldown 20, reach ~ hypot(7,10).
+const PUNCH = { reach: 18, cooldown: 20, frames: 6 };
+
 export class PlayerControl extends Component {
-  static handles = ["update"];
-  cooldown = 0;
-  summonCd = 0;
-  power = 80; // bolt damage (raised by #power pickups)
+  static handles = ["update", "animAction", "chargeFrac"];
+  power = 0;       // strength -> punch damage (set from cfg)
+  private summonCd = 0;
+  private fireCd = 0;
+  private meleeCd = 0;
+  private charge = 0;
+  private charging = false;
+  private prevPrimary = false;
+  private releaseT = 0;
+  private meleeT = 0;
+  private aimLeft = false;
+
+  override init(cfg: Record<string, any>): void {
+    const str = typeof cfg["strength"] === "number" ? cfg["strength"] : 8;
+    this.power = Math.round(str * 0.7) + 4; // punch damage from strength
+    this.summonCd = this.fireCd = this.meleeCd = 0;
+    this.charge = 0; this.charging = false; this.prevPrimary = false; this.releaseT = this.meleeT = 0;
+  }
+
   update(next: NextFn): void {
-    if (this.cooldown > 0) this.cooldown--;
+    if (this.fireCd > 0) this.fireCd--;
+    if (this.meleeCd > 0) this.meleeCd--;
     if (this.summonCd > 0) this.summonCd--;
-    if (!this.entity.send("isDead")) {
-      const mv = game.input.moveVector();
-      const m = this.entity.get(Movement);
-      m.intentX = mv.x; m.intentY = mv.y;
-      if (game.input.pressed("e") && this.summonCd === 0 && game.spawnAlly) { // summon a warrior ally (E)
-        const a = game.rng.next() * Math.PI * 2;
-        game.entities.push(game.spawnAlly("warrior", m.x + Math.cos(a) * 24, m.y + Math.sin(a) * 24));
-        this.summonCd = 90;
-      }
-      if (game.input.pressed(" ") && this.cooldown === 0) {
-        const target = nearestEnemy(m.x, m.y);
-        const dir = target ? target.send("getPos") as { x: number; y: number }
-          : { x: m.x + (m.facingLeft ? -1 : 1) * 100, y: m.y };
-        // player's bolt also briefly freezes on hit (#takeFreeze payload, arcticBlast-style)
-        fireBullet(this.entity.id, m.x, m.y - 6, dir.x - m.x, dir.y - m.y, 6.5, this.power, this.entity.send("getTeam"), 100, 36);
-        this.cooldown = 5;
-      }
+    if (this.releaseT > 0) this.releaseT--;
+    if (this.meleeT > 0) this.meleeT--;
+    if (this.entity.send("isDead")) { const m = this.entity.get(Movement); m.intentX = m.intentY = 0; return next(); }
+
+    const input = game.input;
+    const m = this.entity.get(Movement);
+    const mv = input.moveVector();
+    m.intentX = mv.x; m.intentY = mv.y;
+
+    // aim point: the cursor in world space, else the nearest enemy, else current facing
+    const cur = input.cursor();
+    const target = nearestEnemy(m.x, m.y);
+    const aim = cur ?? (target ? target.send("getPos") as { x: number; y: number }
+      : { x: m.x + (m.facingLeft ? -100 : 100), y: m.y });
+    this.aimLeft = aim.x < m.x;
+
+    if (input.pressed("e") && this.summonCd === 0 && game.spawnAlly) { // summon an army ally (E)
+      const a = game.rng.next() * Math.PI * 2;
+      game.entities.push(game.spawnAlly("warrior", m.x + Math.cos(a) * 24, m.y + Math.sin(a) * 24));
+      this.summonCd = 90;
     }
+
+    // hold-to-charge magic (left mouse or space); release casts at the aim point
+    const mana = this.entity.get(Mana);
+    const primary = input.mouseDown() || input.held(" ");
+    if (primary && this.fireCd === 0 && mana.has(mana.burst)) {
+      this.charging = true;
+      m.facingLeft = this.aimLeft;
+      const ceiling = Math.min(SPELL.chargeMax, this.charge + mana.current); // can't charge past the pool
+      this.charge = Math.min(ceiling, this.charge + SPELL.chargeRate * mana.flow);
+    } else if (this.charging) {
+      this.castMagic(m, aim, mana); // released, cooled down, or out of mana -> fire
+      this.charging = false; this.charge = 0;
+    } else if (this.meleeCd === 0) {
+      this.tryPunch(m, target); // no magic in flight -> punch anything in reach
+    }
+    this.prevPrimary = primary;
     next();
   }
+
+  private castMagic(m: Movement, aim: { x: number; y: number }, mana: Mana): void {
+    const c = Math.max(SPELL.minCharge, this.charge);
+    const dmg = Math.round(SPELL.dmgPerCharge * c);
+    const speed = Math.min(SPELL.speedCap, SPELL.speedBase + c * SPELL.speedPerCharge);
+    fireBullet(this.entity.id, m.x, m.y - 6, aim.x - m.x, (aim.y - 6) - m.y, speed, dmg, this.entity.send("getTeam"), SPELL.life);
+    mana.spend(Math.ceil(c * SPELL.costPerCharge));
+    m.facingLeft = this.aimLeft;
+    this.fireCd = SPELL.cooldown; this.releaseT = SPELL.releaseFrames;
+  }
+
+  private tryPunch(m: Movement, target: Entity | null): void {
+    if (!target) return;
+    const p = target.send("getPos") as { x: number; y: number };
+    if (Math.hypot(p.x - m.x, p.y - m.y) > PUNCH.reach) return;
+    target.send("takeHit", this.power, this.entity.id);
+    m.facingLeft = p.x < m.x;
+    this.meleeCd = PUNCH.cooldown; this.meleeT = PUNCH.frames;
+  }
+
+  // action override for modAnimSet: punch / release / charge strips take priority over walk/stand
+  animAction(): string | null {
+    if (this.entity.send("isDead")) return null;
+    const moving = this.entity.get(Movement).moving();
+    if (this.meleeT > 0) return "naturalMelee";
+    if (this.releaseT > 0) return moving ? "releasewalk" : "release";
+    if (this.charging) return moving ? "chargewalk" : "charge";
+    return null;
+  }
+
+  chargeFrac(): number { return this.charging ? Math.min(1, this.charge / SPELL.chargeMax) : 0; }
 }
 
 export class EnemyAI extends Component {

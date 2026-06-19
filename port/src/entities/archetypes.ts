@@ -8,6 +8,7 @@ import { Energy, Team } from "../components/combat";
 import { Experience } from "../components/experience";
 import { Freeze } from "../components/freeze";
 import { PlayerControl, EnemyAI } from "../components/control";
+import { Mana } from "../components/mana";
 import { Dwelling } from "../components/dwelling";
 import { Pickup, type PickupEffect } from "../components/pickup";
 import { registry } from "../game/data";
@@ -15,7 +16,7 @@ import { registry } from "../game/data";
 const DEFAULTS = { isDead: false, getTeam: "", energyFrac: 1, getLevel: 1, isFrozen: false };
 
 // Experience is ordered BEFORE Energy so it records the attacker before energy applies death.
-export const PlayerArchetype = new Archetype("player", [PlayerControl, Freeze, Movement, Anim, Experience, Energy, Team], { defaults: DEFAULTS });
+export const PlayerArchetype = new Archetype("player", [PlayerControl, Freeze, Mana, Movement, Anim, Experience, Energy, Team], { defaults: DEFAULTS });
 export const EnemyArchetype = new Archetype("enemy", [EnemyAI, Freeze, Movement, Anim, Experience, Energy, Team], { defaults: DEFAULTS });
 // Dwellings are static (no AI) but reuse Movement for position + Energy/Team so they're targetable.
 export const DwellingArchetype = new Archetype("dwelling", [Dwelling, Movement, Anim, Energy, Team], { defaults: DEFAULTS });
@@ -47,9 +48,23 @@ export function spawnDwelling(actorName: string, x: number, y: number, produces:
 }
 
 export function spawnPlayer(x: number, y: number): Entity {
+  // real Merlin: act_player carries energy/strength/mana_* + the #punch attack; act_merlin the walkSpeed.
+  const d = registry.resolveActor("player") ?? {};
+  const md = registry.resolveActor("merlin") ?? {};
+  const num = (src: Record<string, any>, k: string, dflt: number) => (typeof src[k] === "number" ? (src[k] as number) : dflt);
   const e = PlayerArchetype.create(makeEntityId());
   e.type = "player";
-  return e.build({ x, y, walkSpeed: 4, energy: 100, team: "#aldevar", animChar: "mer", box: 12 });
+  return e.build({
+    x, y,
+    walkSpeed: num(md, "walkSpeed", 4),
+    energy: num(d, "energy", 200),
+    strength: num(d, "strength", 8),
+    mana_capacity: num(d, "mana_capacity", 10),
+    mana_flow: num(d, "mana_flow", 1),
+    mana_burst: num(d, "mana_burst", 1),
+    mana_regeneration: num(d, "mana_regeneration", 30),
+    team: "#aldevar", animChar: "mer", box: 12,
+  });
 }
 
 /** Spawn an enemy from real act_*.txt data (resolved #inherit/#attack), e.g. "blackOrc". */

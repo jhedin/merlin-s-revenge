@@ -13,6 +13,7 @@ import { game, initContext } from "./game/context";
 import { spawnPlayer, spawnEnemy, spawnAlly } from "./entities/archetypes";
 import { Anim } from "./components/anim";
 import { Energy } from "./components/combat";
+import { Mana } from "./components/mana";
 import { Experience } from "./components/experience";
 import { Movement } from "./components/movement";
 import { Projectile } from "./components/projectile";
@@ -43,6 +44,7 @@ async function main() {
   const renderer = new Renderer(canvas, viewW, viewH, 2);
 
   const input = new Input();
+  input.attachMouse(canvas); // objAiPlayer aims charged magic at the cursor
   initContext({ input, assets, tilePx: tile, entities: [], player: null, tick: 0, spawnEnemy, spawnAlly });
 
   // scene state machine (scenes.json): title -> intro cutscene -> playing <-> paused -> gameover/victory
@@ -135,6 +137,7 @@ async function main() {
         if (e.type === "enemy") drawEnemyBar(renderer, e, "#e44");
         else if (e.type === "ally") drawEnemyBar(renderer, e, "#4d6");
       }
+      drawCharge(renderer, player);
       drawHud(renderer, player);
       drawMinimap(renderer, map, rooms.loc, viewW);
       if (mode === "gameover") drawGameOver(renderer, viewW, viewH);
@@ -158,7 +161,8 @@ function drawTitle(renderer: Renderer, w: number, h: number) {
   ctx.fillStyle = "#fc4"; ctx.font = "bold 26px serif";
   ctx.fillText("MERLIN'S REVENGE", w / 2, h / 2 - 48);
   ctx.fillStyle = "#566"; ctx.font = "8px monospace";
-  ctx.fillText("move: WASD/arrows   attack: space   summon: E   save/load: 1/2   pause: Esc", w / 2, h - 16);
+  ctx.fillText("move: WASD/arrows   aim: mouse   hold to charge magic, release to cast   punch: auto", w / 2, h - 26);
+  ctx.fillText("summon: E   save/load: 1/2   pause: Esc", w / 2, h - 14);
   ctx.textAlign = "left";
 }
 
@@ -189,15 +193,32 @@ function drawVictory(renderer: Renderer, w: number, h: number) {
 function drawHud(renderer: Renderer, player: import("./engine/dispatch").Entity) {
   const ctx = renderer.ctx;
   const hp = player.get(Energy).energyFrac();
-  ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(6, 6, 104, 20);
-  ctx.fillStyle = hp > 0.3 ? "#3c9" : "#e44"; ctx.fillRect(8, 8, 100 * hp, 7);
+  const mana = player.get(Mana).manaFrac();
+  ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(6, 6, 104, 28);
+  ctx.fillStyle = hp > 0.3 ? "#3c9" : "#e44"; ctx.fillRect(8, 8, 100 * hp, 6);   // health (energy)
+  ctx.fillStyle = "#48f"; ctx.fillRect(8, 16, 100 * mana, 5);                     // mana pool
   const xp = player.get(Experience);
-  ctx.fillStyle = "#fc4"; ctx.fillRect(8, 17, 100 * Math.min(1, xp.frac()), 5);
+  ctx.fillStyle = "#fc4"; ctx.fillRect(8, 23, 100 * Math.min(1, xp.frac()), 4);   // experience
   ctx.fillStyle = "#fff"; ctx.font = "8px monospace";
-  ctx.fillText("HP", 114, 14);
-  ctx.fillText("Lv " + xp.level, 114, 23);
-  ctx.fillText("1:save 2:load", 6, 36);
-  if (Date.now() < flashUntil) { ctx.fillStyle = "#ff4"; ctx.fillText(flashMsg, 90, 36); }
+  ctx.fillText("HP", 114, 13);
+  ctx.fillText("MP", 114, 21);
+  ctx.fillText("Lv " + xp.level, 114, 29);
+  if (Date.now() < flashUntil) { ctx.fillStyle = "#ff4"; ctx.fillText(flashMsg, 8, 44); }
+}
+
+// the charge meter follows the cursor while a spell is being held (gmgChargeLoc feedback)
+function drawCharge(renderer: Renderer, player: import("./engine/dispatch").Entity) {
+  const frac = player.send("chargeFrac") as number;
+  if (!frac || frac <= 0) return;
+  const aim = game.input.cursor();
+  const m = player.get(Movement);
+  const x = aim ? aim.x : m.x, y = aim ? aim.y : m.y - 18;
+  const ctx = renderer.ctx;
+  ctx.strokeStyle = "rgba(120,180,255,0.5)"; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(x, y, 9, 0, Math.PI * 2); ctx.stroke();
+  ctx.strokeStyle = "#9cf"; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(x, y, 9, -Math.PI / 2, -Math.PI / 2 + frac * Math.PI * 2); ctx.stroke();
+  ctx.lineWidth = 1;
 }
 
 const PICKUP_COLOR: Record<string, string> = { heal: "#3d6", speed: "#4cf", power: "#c5f" };
