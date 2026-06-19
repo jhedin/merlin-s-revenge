@@ -44,6 +44,7 @@ const CHARS = [
   // real spawn-table combatants present in the dungeon maps
   "swordOrc", "warrior", "skelitonLord", "kongFuChicken", "bowOrc", "mageOrc",
   "vultureGuard", "archer", "ninja", "shurikenNinja", "monk", "druid", "scw", "ochreWizard",
+  "uli", "ber", "tv", // cutscene cast (merlin is "mer")
 ];
 interface Frame { file: string; w: number; h: number; reg: [number, number]; }
 const anims: Record<string, { delay: number; frames: Frame[] }> = {};
@@ -67,6 +68,7 @@ const MAPS = join(here, "../../casts/data");
 copyFileSync(join(here, "../../maps/works/descent_into_darkness-megaman4ever.txt"), join(OUT_ASSETS, "map.txt"));
 copyFileSync(join(MAPS, "tlk_merlin4Active_key.txt"), join(OUT_ASSETS, "active_key.txt"));
 copyFileSync(join(MAPS, "tlk_merlin4Objects_key.txt"), join(OUT_ASSETS, "objects_key.txt"));
+copyFileSync(join(MAPS, "scr_demo_001.txt"), join(OUT_ASSETS, "intro.txt")); // intro cutscene
 
 writeFileSync(join(OUT_GEN, "assets.json"), JSON.stringify({ tile: TILE, tilesets, anims }, null, 1));
 console.log(`assets: ${Object.keys(tilesets).length} tilesets, ${Object.keys(anims).length} animations`);
