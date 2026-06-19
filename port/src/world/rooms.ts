@@ -20,7 +20,8 @@ import type { Entity } from "../engine/dispatch";
 const PICKUPS: Record<string, PickupEffect> = {
   "#medikit": "heal", "#maxikit": "heal",
   "#walkSpeed": "speed",
-  "#manaBurst": "power", "#manaCapacity": "power", "#manaFlow": "power",
+  // each mana powerup raises its own stat (objManaCapacity/Burst/Flow), not one generic boost
+  "#manaCapacity": "manaCapacity", "#manaBurst": "manaBurst", "#manaFlow": "manaFlow",
   "#merlinSword": "sword", // melee weapon upgrade (act_merlinSword, damageMultiplier 16)
 };
 
@@ -40,7 +41,6 @@ export class RoomManager {
   activeSheet?: TileSheet;
   exitsOpen = false;             // edges are solid until the room's hostiles are dead
   private margin = 12;
-  private rangedChars = new Set<string>();
   private cleared = new Set<number>(); // room nums already cleared (persist across visits)
   private won = false;
 
@@ -51,12 +51,6 @@ export class RoomManager {
     private onMapClear: () => void = () => {},
   ) {
     this.loc = { ...map.startRoom };
-    // which characters are ranged (have a ranged/charge anim) — drives melee-vs-ranged AI
-    const RANGED_ACTIONS = new Set(["weaponRanged", "charge", "naturalRanged", "release"]);
-    for (const key of Object.keys(assets.index.anims)) {
-      const action = key.slice(key.indexOf("_") + 1);
-      if (RANGED_ACTIONS.has(action)) this.rangedChars.add(key.slice(0, key.indexOf("_")));
-    }
   }
 
   enter(loc: Vec2i, repositionPlayer?: "left" | "right" | "up" | "down"): void {
@@ -137,9 +131,8 @@ export class RoomManager {
             game.entities.push(spawnDwelling(name, px, py, spriteCharOr(name)));
           } else if (!SKIP_SPAWN.has(sym)) {
             const name = sym.slice(1);
-            const animChar = spriteCharOr(name); // stand-in sprite if unbundled
-            // route by team: #aldevar units join Merlin as allies, hostiles spawn as enemies
-            game.entities.push(spawnUnit(name, px, py, { animChar, ranged: this.rangedChars.has(animChar) }));
+            // route by team (#aldevar units join Merlin as allies); ranged-ness comes from #attack
+            game.entities.push(spawnUnit(name, px, py, { animChar: spriteCharOr(name) }));
           }
         }
       }

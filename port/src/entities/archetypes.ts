@@ -21,19 +21,26 @@ export const EnemyArchetype = new Archetype("enemy", [EnemyAI, Freeze, Movement,
 // Dwellings are static (no AI) but reuse Movement for position + Energy/Team so they're targetable.
 export const DwellingArchetype = new Archetype("dwelling", [Dwelling, Movement, Anim, Energy, Team], { defaults: DEFAULTS });
 
-/** Summon a friendly ally (player's team) that hunts enemies. */
+/** Summon a friendly unit on Merlin's team that hunts enemies, using the actor's real stats. */
 export function spawnAlly(actorName: string, x: number, y: number, animChar = actorName): Entity {
-  const d = registry.resolveActor(actorName) ?? {};
-  const walk = typeof d["walkSpeed"] === "number" ? (d["walkSpeed"] as number) : 4;
-  const e = EnemyArchetype.create(makeEntityId());
+  const e = spawnEnemy(actorName, x, y, { animChar }); // real energy/strength/walkSpeed/attack from data
   e.type = "ally";
-  return e.build({ x, y, walkSpeed: walk * 0.6, energy: 120, strength: 24, team: "#aldevar", animChar, box: 12, targetTypes: ["enemy"] });
+  e.get(Team).team = "#aldevar"; // summoned onto the player's side regardless of the unit's native team
+  e.get(EnemyAI).targetTypes = ["enemy"];
+  return e;
 }
 
-// Teams allied with the player (tem_aldevar #friends + self). Units on these teams fight FOR
-// Merlin; everyone else is hostile. (Pre-placed warriors/archers in a room are allies, not foes.)
-const FRIENDLY_TEAMS = new Set(["#aldevar", "#village", "#monsterSummon"]);
-export function isFriendlyTeam(team: string): boolean { return FRIENDLY_TEAMS.has(team); }
+// Teams allied with the player are the player team (#aldevar) plus its #friends, both from the
+// team data (tem_aldevar). Units on these teams fight FOR Merlin; everyone else is hostile.
+let friendlyTeams: Set<string> | null = null;
+export function isFriendlyTeam(team: string): boolean {
+  if (!friendlyTeams) {
+    friendlyTeams = new Set(["#aldevar"]);
+    const friends = registry.team("#aldevar")?.["friends"];
+    if (Array.isArray(friends)) for (const f of friends) if (typeof f === "string") friendlyTeams.add(f);
+  }
+  return friendlyTeams.has(team);
+}
 
 /**
  * Spawn a unit from the objects layer, routing by its real team: same-side actors (the
