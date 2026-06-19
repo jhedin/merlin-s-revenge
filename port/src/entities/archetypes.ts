@@ -8,6 +8,7 @@ import { Energy, Team } from "../components/combat";
 import { Experience } from "../components/experience";
 import { Freeze } from "../components/freeze";
 import { PlayerControl, EnemyAI } from "../components/control";
+import { Dwelling } from "../components/dwelling";
 import { registry } from "../game/data";
 
 const DEFAULTS = { isDead: false, getTeam: "", energyFrac: 1, getLevel: 1, isFrozen: false };
@@ -15,6 +16,17 @@ const DEFAULTS = { isDead: false, getTeam: "", energyFrac: 1, getLevel: 1, isFro
 // Experience is ordered BEFORE Energy so it records the attacker before energy applies death.
 export const PlayerArchetype = new Archetype("player", [PlayerControl, Freeze, Movement, Anim, Experience, Energy, Team], { defaults: DEFAULTS });
 export const EnemyArchetype = new Archetype("enemy", [EnemyAI, Freeze, Movement, Anim, Experience, Energy, Team], { defaults: DEFAULTS });
+// Dwellings are static (no AI) but reuse Movement for position + Energy/Team so they're targetable.
+export const DwellingArchetype = new Archetype("dwelling", [Dwelling, Movement, Anim, Energy, Team], { defaults: DEFAULTS });
+
+export function spawnDwelling(actorName: string, x: number, y: number, produces: string, producesRanged: boolean, animChar = actorName): Entity {
+  const d = registry.resolveActor(actorName) ?? {};
+  const energy = typeof d["energy"] === "number" ? (d["energy"] as number) : 400;
+  const team = typeof d["team"] === "string" ? (d["team"] as string) : "#monsters";
+  const e = DwellingArchetype.create(makeEntityId());
+  e.type = "enemy"; // targetable/destroyable like an enemy
+  return e.build({ x, y, walkSpeed: 0, energy, team, animChar, box: 24, produces, producesRanged });
+}
 
 export function spawnPlayer(x: number, y: number): Entity {
   const e = PlayerArchetype.create(makeEntityId());

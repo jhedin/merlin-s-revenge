@@ -16,6 +16,8 @@ export interface GameContext {
   entities: Entity[];
   player: Entity | null;
   tick: number;
+  /** spawn an enemy by actor name (set in main; lets Dwelling produce units without an import cycle) */
+  spawnEnemy?: (name: string, x: number, y: number, opts?: { animChar?: string; ranged?: boolean }) => Entity;
 }
 
 export const game: GameContext = {

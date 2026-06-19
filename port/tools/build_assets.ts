@@ -45,6 +45,7 @@ const CHARS = [
   "swordOrc", "warrior", "skelitonLord", "kongFuChicken", "bowOrc", "mageOrc",
   "vultureGuard", "archer", "ninja", "shurikenNinja", "monk", "druid", "scw", "ochreWizard",
   "uli", "ber", "tv", // cutscene cast (merlin is "mer")
+  "goblinHut", "orcHouse", "dojo", // dwellings (construction/residents economy)
 ];
 interface Frame { file: string; w: number; h: number; reg: [number, number]; }
 const anims: Record<string, { delay: number; frames: Frame[] }> = {};

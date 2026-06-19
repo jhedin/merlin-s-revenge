@@ -10,7 +10,7 @@ import { parseMap, type GameMap, type Vec2i } from "./world/map";
 import { parseTileKey } from "./data/tlk";
 import { RoomManager } from "./world/rooms";
 import { game, initContext } from "./game/context";
-import { spawnPlayer } from "./entities/archetypes";
+import { spawnPlayer, spawnEnemy } from "./entities/archetypes";
 import { Anim } from "./components/anim";
 import { Energy } from "./components/combat";
 import { Experience } from "./components/experience";
@@ -42,7 +42,7 @@ async function main() {
   const renderer = new Renderer(canvas, viewW, viewH, 2);
 
   const input = new Input();
-  initContext({ input, assets, tilePx: tile, entities: [], player: null, tick: 0 });
+  initContext({ input, assets, tilePx: tile, entities: [], player: null, tick: 0, spawnEnemy });
 
   // scene state machine (scenes.json): title -> intro cutscene -> playing -> gameover
   let mode: "title" | "cutscene" | "playing" | "gameover" = "title";
