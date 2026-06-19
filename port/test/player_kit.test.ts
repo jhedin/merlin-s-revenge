@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { game } from "@/game/context";
 import { CollisionGrid } from "@/world/collision";
-import { spawnPlayer, spawnEnemy } from "@/entities/archetypes";
+import { spawnPlayer, spawnEnemy, spawnUnit } from "@/entities/archetypes";
 import { Mana } from "@/components/mana";
 import { Energy } from "@/components/combat";
 import { Anim } from "@/components/anim";
@@ -49,14 +49,36 @@ describe("Merlin's charged-magic + punch kit", () => {
     expect(v.x).toBeGreaterThanOrEqual(100);
   });
 
+  it("a cast bolt damages an enemy it flies into", () => {
+    game.input = fakeInput({ mouseDown: true, cursor: { x: 40, y: 94 } }) as any; // aim left
+    const p = spawnPlayer(100, 100);
+    const foe = spawnEnemy("swordOrc", 60, 94, { animChar: "swordOrc" }); // hostile (#orcs), on the path
+    game.entities = [p, foe];
+    const hp0 = foe.get(Energy).energy;
+    for (let i = 0; i < 6; i++) p.send("update");      // charge
+    (game.input as any).mouseDown = () => false;
+    p.send("update");                                  // release -> bolt spawned
+    const bolt = game.entities.find((e) => e.type === "bullet")!;
+    for (let i = 0; i < 12; i++) bolt.send("update");  // let it travel into the foe
+    expect(foe.get(Energy).energy).toBeLessThan(hp0);
+  });
+
   it("auto-punches an adjacent enemy when not casting", () => {
     game.input = fakeInput({ mouseDown: false, cursor: null }) as any;
     const p = spawnPlayer(100, 100);
-    const foe = spawnEnemy("warrior", 110, 100, { animChar: "warrior" }); // within punch reach
+    const foe = spawnEnemy("swordOrc", 110, 100, { animChar: "swordOrc" }); // hostile, within punch reach
     game.entities = [p, foe];
     const hp0 = foe.get(Energy).energy;
     p.send("update"); // melee fires on the first eligible tick
     expect(foe.get(Energy).energy).toBeLessThan(hp0);
+  });
+
+  it("routes objects-layer units by team: #aldevar -> ally, hostile -> enemy", () => {
+    game.input = fakeInput({}) as any;
+    expect(spawnUnit("warrior", 0, 0, { animChar: "warrior" }).type).toBe("ally");   // #aldevar
+    expect(spawnUnit("archer", 0, 0, { animChar: "archer" }).type).toBe("ally");     // #aldevar
+    expect(spawnUnit("swordOrc", 0, 0, { animChar: "swordOrc" }).type).toBe("enemy"); // #orcs
+    expect(spawnUnit("blackOrc", 0, 0, { animChar: "blackOrc" }).type).toBe("enemy"); // #monsters
   });
 
   it("cannot cast with an empty mana pool", () => {

@@ -24,9 +24,11 @@ const nearestEnemy = (x: number, y: number) => nearestOfTypes(x, y, ["enemy"]);
 // energyBlast (act_player's charged magic): hold to charge at chargeSpeed*flow, release at the
 // cursor. Damage/speed scale with the charge; each cast spends mana. Tuned to the slice's px
 // scale rather than the engine's 9999/spellSpeed-20 units (PLAN_REVIEW: damage == knockback).
+// Damage is scaled to the actors' real engine energy (warrior/swordOrc 300, blackOrc 1200):
+// a full charge fells a rank-and-file enemy, matching the original's "Merlin is powerful" feel.
 const SPELL = {
   chargeRate: 0.16, chargeMax: 5, minCharge: 0.8,
-  dmgPerCharge: 9, speedBase: 5.5, speedPerCharge: 0.5, speedCap: 8.5,
+  dmgPerCharge: 65, speedBase: 5.5, speedPerCharge: 0.5, speedCap: 8.5,
   costPerCharge: 0.5, cooldown: 6, releaseFrames: 6, life: 110,
 };
 // #punch (#naturalMelee): close-range fallback. cooldown 20, reach ~ hypot(7,10).
@@ -47,7 +49,7 @@ export class PlayerControl extends Component {
 
   override init(cfg: Record<string, any>): void {
     const str = typeof cfg["strength"] === "number" ? cfg["strength"] : 8;
-    this.power = Math.round(str * 0.7) + 4; // punch damage from strength
+    this.power = Math.round(str * 4) + 8; // punch damage from strength (scaled to enemy energy)
     this.summonCd = this.fireCd = this.meleeCd = 0;
     this.charge = 0; this.charging = false; this.prevPrimary = false; this.releaseT = this.meleeT = 0;
   }

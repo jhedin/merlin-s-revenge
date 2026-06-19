@@ -30,6 +30,24 @@ export function spawnAlly(actorName: string, x: number, y: number, animChar = ac
   return e.build({ x, y, walkSpeed: walk * 0.6, energy: 120, strength: 24, team: "#aldevar", animChar, box: 12, targetTypes: ["enemy"] });
 }
 
+// Teams allied with the player (tem_aldevar #friends + self). Units on these teams fight FOR
+// Merlin; everyone else is hostile. (Pre-placed warriors/archers in a room are allies, not foes.)
+const FRIENDLY_TEAMS = new Set(["#aldevar", "#village", "#monsterSummon"]);
+export function isFriendlyTeam(team: string): boolean { return FRIENDLY_TEAMS.has(team); }
+
+/**
+ * Spawn a unit from the objects layer, routing by its real team: same-side actors (the
+ * #aldevar army) become allies that hunt enemies; hostile actors become enemies. Allies reuse
+ * the data-driven enemy build but with type "ally" + enemy-only targeting.
+ */
+export function spawnUnit(actorName: string, x: number, y: number, opts: { animChar?: string; ranged?: boolean } = {}): Entity {
+  const d = registry.resolveActor(actorName) ?? {};
+  const team = typeof d["team"] === "string" ? (d["team"] as string) : "#monsters";
+  const e = spawnEnemy(actorName, x, y, opts);
+  if (isFriendlyTeam(team)) { e.type = "ally"; e.get(EnemyAI).targetTypes = ["enemy"]; }
+  return e;
+}
+
 export const PickupArchetype = new Archetype("pickup", [Pickup, Movement], { defaults: { isDead: false, isFinished: false, getTeam: "" } });
 
 export function spawnPickup(effect: PickupEffect, x: number, y: number): Entity {

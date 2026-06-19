@@ -8,7 +8,7 @@ import { tileSymbol, type TileKey } from "../data/tlk";
 import type { Assets } from "../render/assets";
 import type { TileSheet } from "../render/renderer";
 import { game } from "../game/context";
-import { spawnEnemy, spawnDwelling, spawnPickup } from "../entities/archetypes";
+import { spawnUnit, spawnDwelling, spawnPickup } from "../entities/archetypes";
 import { Movement } from "../components/movement";
 import type { PickupEffect } from "../components/pickup";
 import type { Entity } from "../engine/dispatch";
@@ -146,7 +146,8 @@ export class RoomManager {
           } else if (!SKIP_SPAWN.has(sym)) {
             const name = sym.slice(1);
             const animChar = this.animChars.has(name) ? name : "blackOrc"; // fallback sprite
-            game.entities.push(spawnEnemy(name, px, py, { animChar, ranged: this.rangedChars.has(animChar) }));
+            // route by team: #aldevar units join Merlin as allies, hostiles spawn as enemies
+            game.entities.push(spawnUnit(name, px, py, { animChar, ranged: this.rangedChars.has(animChar) }));
           }
         }
       }
