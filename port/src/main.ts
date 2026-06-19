@@ -20,6 +20,7 @@ import { sweepBullets, bulletPoolStats } from "./systems/bullets";
 import { saveGame, loadSave } from "./systems/save";
 import { parseCutscene } from "./data/cutscene";
 import { CutscenePlayer } from "./scenes/cutscenePlayer";
+import { Menu } from "./scenes/menu";
 
 let flashMsg = ""; let flashUntil = 0;
 const flash = (m: string) => { flashMsg = m; flashUntil = Date.now() + 1200; };
@@ -44,11 +45,22 @@ async function main() {
   const input = new Input();
   initContext({ input, assets, tilePx: tile, entities: [], player: null, tick: 0, spawnEnemy, spawnAlly });
 
-  // scene state machine (scenes.json): title -> intro cutscene -> playing -> gameover
-  let mode: "title" | "cutscene" | "playing" | "gameover" = "title";
+  // scene state machine (scenes.json): title -> intro cutscene -> playing <-> paused -> gameover
+  let mode: "title" | "cutscene" | "playing" | "paused" | "gameover" = "title";
   let player!: import("./engine/dispatch").Entity;
   let rooms!: RoomManager;
   let cutscene: CutscenePlayer | null = null;
+  let pauseMenu: Menu | null = null;
+
+  function openPause() {
+    pauseMenu = new Menu("PAUSED", [
+      { label: "Resume", action: () => { mode = "playing"; } },
+      { label: "Save game", action: () => { saveGame(player, rooms.loc); flash("game saved"); mode = "playing"; } },
+      { label: "Load game", action: () => { const s = loadSave(); if (s) { rooms.enter(s.room); player.send("restoreFromSave", s.player); } mode = "playing"; } },
+      { label: "Return to title", action: () => { mode = "title"; } },
+    ]);
+    mode = "paused";
+  }
 
   function startGame() {
     player = spawnPlayer(viewW / 2, viewH / 2);
@@ -67,6 +79,7 @@ async function main() {
       } else if (mode === "cutscene") {
         if (cutscene!.tick(input)) startGame();
       } else if (mode === "playing") {
+        if (input.pressed("escape")) { openPause(); input.endTick(); return; }
         if (input.pressed("1")) { saveGame(player, rooms.loc); flash("game saved"); }
         if (input.pressed("2")) {
           const s = loadSave();
@@ -77,6 +90,8 @@ async function main() {
         sweepBullets();
         rooms.update();
         if (player.send("isDead")) mode = "gameover";
+      } else if (mode === "paused") {
+        if (input.pressed("escape")) mode = "playing"; else pauseMenu!.tick(input);
       } else if (mode === "gameover") {
         if (input.pressed(" ") || input.pressed("enter")) startGame();
       }
@@ -102,6 +117,7 @@ async function main() {
       drawHud(renderer, player);
       drawMinimap(renderer, map, rooms.loc, viewW);
       if (mode === "gameover") drawGameOver(renderer, viewW, viewH);
+      if (mode === "paused") pauseMenu!.render(renderer, viewW, viewH);
     },
   );
   loop.start();
@@ -124,7 +140,7 @@ function drawTitle(renderer: Renderer, w: number, h: number) {
   ctx.fillStyle = (Math.floor(Date.now() / 400) % 2) ? "#fff" : "#888";
   ctx.fillText("press SPACE to begin", w / 2, h / 2 + 28);
   ctx.fillStyle = "#566"; ctx.font = "8px monospace";
-  ctx.fillText("move: WASD   attack: space   summon: Q   save/load: 1/2", w / 2, h - 16);
+  ctx.fillText("move: WASD   attack: space   summon: Q   save/load: 1/2   pause: Esc", w / 2, h - 16);
   ctx.textAlign = "left";
 }
 
