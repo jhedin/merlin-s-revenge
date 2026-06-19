@@ -1,5 +1,7 @@
 // Animation component (modAnimSet): picks an action strip from the entity's mode (dead->grave,
-// moving->walk, else stand) and advances frames on a tick delay. Provides the render Sprite.
+// moving->walk, else stand) and advances frames on a tick delay. One-shot actions (a swing, a
+// cast, a death) play once and hold the last frame; cyclic ones (walk/charge) loop. Sprites are
+// mirrored by facing direction. Provides the render Sprite.
 
 import { Component, type NextFn } from "../engine/dispatch";
 import { Movement } from "./movement";
@@ -10,6 +12,13 @@ import type { Sprite } from "../render/renderer";
 export function spriteCharOr(name: string, fallback = "blackOrc"): string {
   return game.assets.index.anims[`${name}_stand`] ? name : fallback;
 }
+
+// Actions that play through once and hold their final frame (vs walk/charge which cycle).
+const ONE_SHOT = new Set([
+  "grave", "die", "reel",
+  "naturalMelee", "weaponMelee", "magicMelee", "weaponMagic",
+  "release", "weaponRanged", "naturalRanged",
+]);
 
 export class Anim extends Component {
   static handles = ["update"];
@@ -31,8 +40,13 @@ export class Anim extends Component {
     const action = this.pickAction();
     if (action !== this.action) { this.action = action; this.frame = 0; this.timer = 0; }
     const anim = this.animFor(action);
-    if (anim && anim.frames.length > 1 && action !== "grave") {
-      if (++this.timer >= Math.max(1, anim.delay)) { this.timer = 0; this.frame = (this.frame + 1) % anim.frames.length; }
+    if (anim && anim.frames.length > 1) {
+      if (++this.timer >= Math.max(1, anim.delay)) {
+        this.timer = 0;
+        // one-shot strips advance to the last frame and hold; cyclic strips wrap
+        if (ONE_SHOT.has(action)) this.frame = Math.min(this.frame + 1, anim.frames.length - 1);
+        else this.frame = (this.frame + 1) % anim.frames.length;
+      }
     }
     next();
   }
@@ -51,6 +65,9 @@ export class Anim extends Component {
       img: game.assets.img(f.file),
       x: m.x, y: m.y, regX: f.reg[0], regY: f.reg[1],
       z: m.y, // simple painter's depth by world-y
+      flip: m.facingLeft, // mirror to face the movement/aim direction (SpriteGetFlipHAsDir)
+      flash: this.entity.send("isHurt") === true, // white hit-flash (modFlasher)
     };
   }
 }
+

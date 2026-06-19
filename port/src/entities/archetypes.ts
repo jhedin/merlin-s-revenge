@@ -9,17 +9,19 @@ import { Experience } from "../components/experience";
 import { Freeze } from "../components/freeze";
 import { PlayerControl, EnemyAI } from "../components/control";
 import { Mana } from "../components/mana";
+import { Hurt } from "../components/hurt";
 import { Dwelling } from "../components/dwelling";
 import { Pickup, type PickupEffect } from "../components/pickup";
 import { registry } from "../game/data";
 
-const DEFAULTS = { isDead: false, getTeam: "", energyFrac: 1, getLevel: 1, isFrozen: false };
+const DEFAULTS = { isDead: false, getTeam: "", energyFrac: 1, getLevel: 1, isFrozen: false, isInvince: false, isHurt: false };
 
-// Experience is ordered BEFORE Energy so it records the attacker before energy applies death.
-export const PlayerArchetype = new Archetype("player", [PlayerControl, Freeze, Mana, Movement, Anim, Experience, Energy, Team], { defaults: DEFAULTS });
-export const EnemyArchetype = new Archetype("enemy", [EnemyAI, Freeze, Movement, Anim, Experience, Energy, Team], { defaults: DEFAULTS });
+// Experience is ordered BEFORE Energy (records attacker before death); Hurt is AFTER Energy
+// (feedback + i-frames arm once the hit has landed).
+export const PlayerArchetype = new Archetype("player", [PlayerControl, Freeze, Mana, Movement, Anim, Experience, Energy, Hurt, Team], { defaults: DEFAULTS });
+export const EnemyArchetype = new Archetype("enemy", [EnemyAI, Freeze, Movement, Anim, Experience, Energy, Hurt, Team], { defaults: DEFAULTS });
 // Dwellings are static (no AI) but reuse Movement for position + Energy/Team so they're targetable.
-export const DwellingArchetype = new Archetype("dwelling", [Dwelling, Movement, Anim, Energy, Team], { defaults: DEFAULTS });
+export const DwellingArchetype = new Archetype("dwelling", [Dwelling, Movement, Anim, Energy, Hurt, Team], { defaults: DEFAULTS });
 
 /** Summon a friendly unit on Merlin's team that hunts enemies, using the actor's real stats. */
 export function spawnAlly(actorName: string, x: number, y: number, animChar = actorName): Entity {
@@ -98,6 +100,7 @@ export function spawnPlayer(x: number, y: number): Entity {
     mana_burst: num(d, "mana_burst", 1),
     mana_regeneration: num(d, "mana_regeneration", 30),
     team: "#aldevar", animChar: "mer", box: 12,
+    invince: 18, // brief i-frames so overlapping enemies can't chain-kill
   });
 }
 

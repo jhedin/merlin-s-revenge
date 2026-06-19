@@ -150,6 +150,7 @@ export class EnemyAI extends Component {
   targetTypes: readonly string[] = ["player", "ally"]; // enemies hunt the player + allies
   atkSound = ""; // #attack.sound (played on attack if the file exists)
   private wanderAng = 0; private wanderTimer = 0;
+  private detourT = 0; private detourX = 0; private detourY = 0; // wall-detour (pathfinding fallback)
 
   override init(cfg: Record<string, any>): void {
     // power blends real #attack power (knockback magnitude) with strength
@@ -198,10 +199,22 @@ export class EnemyAI extends Component {
     this.cooldown = this.cooldownMax;
   }
 
+  // Head toward (dx,dy) but, when wedged on a wall (modPathFinding: beeline -> scenic), commit to
+  // a perpendicular detour for a short window so the unit slides around obstacles instead of stalling.
+  private seek(m: Movement, dx: number, dy: number, d: number): void {
+    if (this.detourT > 0) { this.detourT--; m.intentX = this.detourX; m.intentY = this.detourY; return; }
+    if (m.hitX || m.hitY) { // blocked last tick -> sidestep perpendicular to the desired heading
+      const sign = game.rng.next() < 0.5 ? 1 : -1;
+      this.detourX = (-dy / d) * sign; this.detourY = (dx / d) * sign;
+      this.detourT = 18;
+      m.intentX = this.detourX; m.intentY = this.detourY;
+    } else { m.intentX = dx / d; m.intentY = dy / d; }
+  }
+
   // objAiCPU: approach to range, then attack
   private beeline(m: Movement, dx: number, dy: number, d: number, target: Entity): void {
     const range = this.ranged ? this.reachRanged : this.reach;
-    if (d > range) { m.intentX = dx / d; m.intentY = dy / d; }
+    if (d > range) this.seek(m, dx, dy, d);
     else { this.idle(m); this.attack(m, dx, dy, target); }
   }
 
@@ -209,7 +222,7 @@ export class EnemyAI extends Component {
   private kite(m: Movement, dx: number, dy: number, d: number, target: Entity): void {
     const want = this.reachRanged * 0.7;
     if (d < want * 0.6) { m.intentX = -dx / d; m.intentY = -dy / d; }      // too close -> retreat
-    else if (d > this.reachRanged) { m.intentX = dx / d; m.intentY = dy / d; } // too far -> approach
+    else if (d > this.reachRanged) this.seek(m, dx, dy, d);                // too far -> approach
     else this.idle(m);
     if (d <= this.reachRanged) this.attack(m, dx, dy, target);
   }
@@ -225,7 +238,7 @@ export class EnemyAI extends Component {
 
   // objAiFlyingBomber: rush the target and self-destruct on contact
   private bomber(m: Movement, dx: number, dy: number, d: number, target: Entity): void {
-    m.intentX = dx / d; m.intentY = dy / d;
+    this.seek(m, dx, dy, d);
     if (d < 16) {
       target.send("takeHit", this.power * 4, this.entity.id);
       this.entity.send("takeHit", 999999, this.entity.id); // explode
