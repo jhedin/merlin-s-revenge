@@ -48,6 +48,18 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
   const d = registry.resolveActor(actorName) ?? {};
   const num = (k: string, dflt: number) => (typeof d[k] === "number" ? (d[k] as number) : dflt);
   const str = (k: string, dflt: string) => (typeof d[k] === "string" ? (d[k] as string) : dflt);
+  // real #attack drives cooldown / reach / ranged-ness / power (PLAN_REVIEW: damage == knockback).
+  // characters carry attacks indirectly via #weapon (the attack lives on the weapon actor).
+  const objAttack = (v: any): Record<string, any> =>
+    (v && typeof v === "object" && !Array.isArray(v)) ? v : {};
+  let atk = objAttack(d["attack"]);
+  if (!atk["animType"] && typeof d["weapon"] === "string") {
+    atk = objAttack((registry.resolveActor(d["weapon"]) ?? {})["attack"]);
+  }
+  const animType = typeof atk["animType"] === "string" ? atk["animType"] : "";
+  const ranged = opts.ranged ?? (animType === "#weaponRanged" || animType === "#magic");
+  const pw = atk["power"];
+  const atkPower = pw && typeof pw === "object" && "x" in pw ? Math.abs(pw.x) + Math.abs(pw.y) : 0;
   const e = EnemyArchetype.create(makeEntityId());
   e.type = "enemy";
   return e.build({
@@ -57,6 +69,9 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     strength: num("strength", 5),
     team: str("team", "#monsters"),
     animChar: opts.animChar ?? actorName, box: 14,
-    ranged: opts.ranged === true,
+    ranged,
+    atkCooldown: typeof atk["cooldown"] === "number" ? atk["cooldown"] : undefined,
+    atkReach: typeof atk["reach"] === "number" ? atk["reach"] : undefined,
+    atkPower: atkPower || undefined,
   });
 }

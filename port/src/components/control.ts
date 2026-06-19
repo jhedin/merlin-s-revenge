@@ -60,9 +60,18 @@ export class EnemyAI extends Component {
   targetTypes: readonly string[] = ["player", "ally"]; // enemies hunt the player + allies
 
   override init(cfg: Record<string, any>): void {
-    if (typeof cfg["strength"] === "number") this.power = Math.max(4, Math.round(cfg["strength"] / 3));
+    // power blends real #attack power (knockback magnitude) with strength
+    const strPow = typeof cfg["strength"] === "number" ? cfg["strength"] / 3 : 2;
+    const atkPow = typeof cfg["atkPower"] === "number" ? cfg["atkPower"] : 0;
+    this.power = Math.max(4, Math.round(strPow + atkPow));
     this.ranged = cfg["ranged"] === true;
-    if (this.ranged) this.cooldownMax = 40;
+    // real #attack cooldown/reach where present, else sensible defaults
+    if (typeof cfg["atkCooldown"] === "number") this.cooldownMax = cfg["atkCooldown"] + (this.ranged ? 18 : 6);
+    else this.cooldownMax = this.ranged ? 40 : 18;
+    if (typeof cfg["atkReach"] === "number") {
+      if (this.ranged) this.reachRanged = Math.min(220, Math.max(60, cfg["atkReach"])); // cap magic's 9999
+      else this.reach = Math.max(16, Math.min(40, cfg["atkReach"]));
+    }
     if (Array.isArray(cfg["targetTypes"])) this.targetTypes = cfg["targetTypes"];
     this.cooldown = 0;
   }
