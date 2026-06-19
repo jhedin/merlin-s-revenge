@@ -11,7 +11,7 @@ const pool = new Pool(BulletArchetype);
 
 export function fireBullet(
   ownerId: number, x: number, y: number, dirX: number, dirY: number,
-  speed: number, power: number, team: string, maxLife = 100,
+  speed: number, power: number, team: string, maxLife = 100, freeze = 0,
 ): Entity {
   const b = pool.acquire();
   b.type = "bullet";
@@ -19,7 +19,7 @@ export function fireBullet(
   const d = Math.hypot(dirX, dirY) || 1;
   const m = b.get(Movement);
   m.vx = (dirX / d) * speed; m.vy = (dirY / d) * speed;
-  b.get(Projectile).configure(power, team, ownerId, maxLife);
+  b.get(Projectile).configure(power, team, ownerId, maxLife, freeze);
   game.entities.push(b);
   return b;
 }
