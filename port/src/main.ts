@@ -45,8 +45,8 @@ async function main() {
   const input = new Input();
   initContext({ input, assets, tilePx: tile, entities: [], player: null, tick: 0, spawnEnemy, spawnAlly });
 
-  // scene state machine (scenes.json): title -> intro cutscene -> playing <-> paused -> gameover
-  let mode: "title" | "cutscene" | "playing" | "paused" | "gameover" = "title";
+  // scene state machine (scenes.json): title -> intro cutscene -> playing <-> paused -> gameover/victory
+  let mode: "title" | "cutscene" | "playing" | "paused" | "gameover" | "victory" = "title";
   let player!: import("./engine/dispatch").Entity;
   let rooms!: RoomManager;
   let cutscene: CutscenePlayer | null = null;
@@ -79,7 +79,8 @@ async function main() {
     player = spawnPlayer(viewW / 2, viewH / 2);
     game.player = player;
     game.entities = [player];
-    rooms = new RoomManager(map, assets, activeKey, objectsKey, viewW, viewH, player);
+    // every room cleared -> the dungeon is won (objMap: last #endRoom #none -> victory)
+    rooms = new RoomManager(map, assets, activeKey, objectsKey, viewW, viewH, player, () => { mode = "victory"; });
     rooms.enter(map.startRoom);
     mode = "playing";
   }
@@ -111,6 +112,8 @@ async function main() {
         if (input.pressed("escape")) mode = "playing"; else pauseMenu!.tick(input);
       } else if (mode === "gameover") {
         if (input.pressed(" ") || input.pressed("enter")) startGame();
+      } else if (mode === "victory") {
+        if (input.pressed(" ") || input.pressed("enter")) { titleMenu = mainTitleMenu; mode = "title"; }
       }
       input.endTick();
     },
@@ -135,6 +138,7 @@ async function main() {
       drawHud(renderer, player);
       drawMinimap(renderer, map, rooms.loc, viewW);
       if (mode === "gameover") drawGameOver(renderer, viewW, viewH);
+      if (mode === "victory") drawVictory(renderer, viewW, viewH);
       if (mode === "paused") pauseMenu!.render(renderer, viewW, viewH);
     },
   );
@@ -166,6 +170,19 @@ function drawGameOver(renderer: Renderer, w: number, h: number) {
   ctx.fillText("YOU HAVE FALLEN", w / 2, h / 2 - 6);
   ctx.fillStyle = "#fff"; ctx.font = "9px monospace";
   ctx.fillText("press SPACE to try again", w / 2, h / 2 + 18);
+  ctx.textAlign = "left";
+}
+
+function drawVictory(renderer: Renderer, w: number, h: number) {
+  const ctx = renderer.ctx;
+  ctx.fillStyle = "rgba(8,16,32,0.78)"; ctx.fillRect(0, 0, w, h);
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#fc4"; ctx.font = "bold 24px serif";
+  ctx.fillText("THE DUNGEON IS CLEARED", w / 2, h / 2 - 6);
+  ctx.fillStyle = "#9cf"; ctx.font = "11px serif";
+  ctx.fillText("Merlin's revenge is complete.", w / 2, h / 2 + 16);
+  ctx.fillStyle = "#fff"; ctx.font = "9px monospace";
+  ctx.fillText("press SPACE to return to the title", w / 2, h / 2 + 40);
   ctx.textAlign = "left";
 }
 

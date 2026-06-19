@@ -41,14 +41,18 @@ export class RoomManager {
   grid!: CollisionGrid;
   passiveSheet?: TileSheet;
   activeSheet?: TileSheet;
+  exitsOpen = false;             // edges are solid until the room's hostiles are dead
   private margin = 12;
   private animChars = new Set<string>();
   private rangedChars = new Set<string>();
+  private cleared = new Set<number>(); // room nums already cleared (persist across visits)
+  private won = false;
 
   constructor(
     private map: GameMap, private assets: Assets,
     private activeKey: TileKey, private objectsKey: TileKey,
     private viewW: number, private viewH: number, private player: Entity,
+    private onMapClear: () => void = () => {},
   ) {
     this.loc = { ...map.startRoom };
     // which characters have sprites, and which are ranged (have a ranged/charge anim)
@@ -68,23 +72,43 @@ export class RoomManager {
     this.grid = active
       ? CollisionGrid.fromActiveLayer(active, this.activeKey, this.map.tilePx)
       : new CollisionGrid(this.map.roomSize.x, this.map.roomSize.y, this.map.tilePx);
-    this.grid.open = {
-      left: !!this.map.roomAt({ x: loc.x - 1, y: loc.y }),
-      right: !!this.map.roomAt({ x: loc.x + 1, y: loc.y }),
-      up: !!this.map.roomAt({ x: loc.x, y: loc.y - 1 }),
-      down: !!this.map.roomAt({ x: loc.x, y: loc.y + 1 }),
-    };
     game.grid = this.grid;
     this.passiveSheet = this.sheetFor("#backgroundPassive");
     this.activeSheet = this.sheetFor("#backgroundActive");
 
     // keep only the player; clear enemies/bullets from the previous room
     game.entities = game.entities.filter((e) => e.type === "player");
-    this.spawnObjects(repositionPlayer);
+    const alreadyClear = this.cleared.has(this.room.num);
+    this.spawnObjects(repositionPlayer, !alreadyClear); // cleared rooms keep their dead
+    // a room with no hostiles is cleared on entry (objRoom.attemptOpenExits)
+    if (alreadyClear || !this.enemiesAlive()) this.markCleared();
+    this.setExits(this.cleared.has(this.room.num));
   }
 
-  /** Transition when the player crosses an open edge; returns true if a room change happened. */
+  /** open edges only where an adjacent room exists, and only once the room is cleared. */
+  private setExits(open: boolean): void {
+    this.exitsOpen = open;
+    const { x, y } = this.loc;
+    this.grid.open = open ? {
+      left: !!this.map.roomAt({ x: x - 1, y }), right: !!this.map.roomAt({ x: x + 1, y }),
+      up: !!this.map.roomAt({ x, y: y - 1 }), down: !!this.map.roomAt({ x, y: y + 1 }),
+    } : { left: false, right: false, up: false, down: false };
+  }
+
+  private enemiesAlive(): boolean {
+    return game.entities.some((e) => e.type === "enemy" && !e.send("isDead"));
+  }
+
+  private markCleared(): void {
+    if (this.cleared.has(this.room.num)) return;
+    this.cleared.add(this.room.num);
+    if (!this.won && this.cleared.size >= this.map.rooms.size) { this.won = true; this.onMapClear(); }
+  }
+
+  /** Transition on edge crossing; gate exits behind clearing the room; returns true on room change. */
   update(): boolean {
+    // open the exits the moment the room's hostiles are dead (objRoom.attemptOpenExits)
+    if (!this.exitsOpen && !this.enemiesAlive()) { this.markCleared(); this.setExits(true); }
     const m = this.player.get(Movement);
     const o = this.grid.open;
     if (m.x < 0 && o.left) { this.enter({ x: this.loc.x - 1, y: this.loc.y }, "left"); return true; }
@@ -94,7 +118,7 @@ export class RoomManager {
     return false;
   }
 
-  private spawnObjects(reposition?: "left" | "right" | "up" | "down"): void {
+  private spawnObjects(reposition?: "left" | "right" | "up" | "down", spawnActors = true): void {
     const objects = this.room.layer("#objects");
     const t = this.map.tilePx;
     const m = this.player.get(Movement);
@@ -108,7 +132,10 @@ export class RoomManager {
           const sym = tileSymbol(this.objectsKey, n);
           const px = c * t + t / 2, py = r * t + t / 2;
           if (sym === "#player") {
+            // the player marker is always honored so we drop into the room at its start tile
             if (!reposition) { m.x = px; m.y = py; m.vx = m.vy = 0; playerPlaced = true; }
+          } else if (!spawnActors) {
+            // already-cleared room: keep its dead, spawn no actors/pickups
           } else if (PICKUPS[sym]) {
             game.entities.push(spawnPickup(PICKUPS[sym]!, px, py));
           } else if (DWELLINGS[sym]) {

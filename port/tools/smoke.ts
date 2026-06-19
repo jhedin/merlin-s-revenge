@@ -9,6 +9,6 @@ await p.keyboard.press("Space"); await p.waitForTimeout(200);  // (cutscene)
 await p.keyboard.press("Escape"); await p.waitForTimeout(400); // skip
 // walk into walls in all directions to exercise collision
 for (const k of ["ArrowUp","ArrowLeft","ArrowDown","ArrowRight"]) { await p.keyboard.down(k); await p.waitForTimeout(300); await p.keyboard.up(k); }
-const s = await p.evaluate(`(() => ({ mode: window.__mode(), inWall: (() => { const m = window.__game.player.comps.find(c=>"x" in c); return window.__game.grid.solidAtPx(m.x, m.y); })() }))()`);
+const s = await p.evaluate(`(() => ({ mode: window.__mode(), inWall: (() => { const m = window.__game.player.comps.find(c=>"x" in c); return window.__game.grid.solidAtPx(m.x, m.y); })() }))()`) as { mode: string; inWall: boolean };
 await b.close();
 console.log("mode:", s.mode, "playerInWall:", s.inWall, "errors:", errs.join("|") || "none");
