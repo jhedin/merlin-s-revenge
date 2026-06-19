@@ -19,6 +19,10 @@ export class Input {
   private pressedThisTick = new Set<string>();
   private keys: MoveKeys;
   schemeName: SchemeName;
+  // mouse (objAiPlayer aims magic at the cursor): view-space cursor + left-button edges
+  mouseX = 0; mouseY = 0; private hasMouse = false;
+  private mouseHeld = false;
+  private mousePressedTick = false; private mouseReleasedTick = false;
 
   constructor(target: EventTarget = window) {
     this.schemeName = (typeof localStorage !== "undefined" && localStorage.getItem(PREF_KEY) as SchemeName) || "both";
@@ -32,6 +36,26 @@ export class Input {
     });
     target.addEventListener("keyup", (e) => this.down.delete((e as KeyboardEvent).key.toLowerCase()));
   }
+
+  /** Map cursor + left button into view space; canvas is CSS-scaled so divide by the display ratio. */
+  attachMouse(canvas: HTMLCanvasElement): void {
+    const toView = (e: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      this.mouseX = (e.clientX - rect.left) * (canvas.width / rect.width);
+      this.mouseY = (e.clientY - rect.top) * (canvas.height / rect.height);
+      this.hasMouse = true;
+    };
+    canvas.addEventListener("mousemove", toView);
+    canvas.addEventListener("mousedown", (e) => { toView(e); if (e.button === 0) { if (!this.mouseHeld) this.mousePressedTick = true; this.mouseHeld = true; } e.preventDefault(); });
+    canvas.addEventListener("mouseup", (e) => { if (e.button === 0) { if (this.mouseHeld) this.mouseReleasedTick = true; this.mouseHeld = false; } });
+    canvas.addEventListener("contextmenu", (e) => e.preventDefault());
+  }
+
+  /** view-space cursor, or null if the mouse has never moved over the canvas */
+  cursor(): { x: number; y: number } | null { return this.hasMouse ? { x: this.mouseX, y: this.mouseY } : null; }
+  mouseDown(): boolean { return this.mouseHeld; }
+  mousePressed(): boolean { return this.mousePressedTick; }
+  mouseReleased(): boolean { return this.mouseReleasedTick; }
 
   setScheme(name: SchemeName): void {
     this.schemeName = name; this.keys = SCHEMES[name];
@@ -57,5 +81,5 @@ export class Input {
   }
 
   /** call at end of each logical tick to clear edge state */
-  endTick(): void { this.pressedThisTick.clear(); }
+  endTick(): void { this.pressedThisTick.clear(); this.mousePressedTick = false; this.mouseReleasedTick = false; }
 }
