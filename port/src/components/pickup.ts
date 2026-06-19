@@ -42,10 +42,10 @@ export class Pickup extends Component {
       case "heal": { const en = player.get(Energy); en.energy = en.max; break; }
       case "speed": player.get(Movement).maxSpeed += 0.6; break;
       case "sword": player.get(PlayerControl).equipSword(); break;       // merlinSword: strong melee weapon
-      // mana powerups (objManaCapacity/Flow/Burst) each raise their own stat, then top up the pool
-      case "manaCapacity": { const m = player.get(Mana); m.capacity += 5; m.current = m.capacity; break; }
-      case "manaFlow": player.get(Mana).flow += 0.5; break;
-      case "manaBurst": player.get(Mana).burst += 1; break;
+      // mana powerups (objManaCapacity/Flow/Burst) each raise their own stat by the real potion inc
+      case "manaCapacity": player.get(Mana).incCapacity(); break;
+      case "manaFlow": player.get(Mana).incFlow(); break;
+      case "manaBurst": player.get(Mana).incBurst(); break;
     }
   }
 }

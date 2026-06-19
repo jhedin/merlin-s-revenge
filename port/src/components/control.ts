@@ -35,10 +35,12 @@ const SPELL = {
 const PUNCH = { reach: 18, cooldown: 20, frames: 6 };
 
 export class PlayerControl extends Component {
-  static handles = ["update", "animAction", "chargeFrac"];
+  static handles = ["update", "levelUp", "animAction", "chargeFrac"];
   power = 0;       // strength -> punch damage (set from cfg)
   meleeReach = PUNCH.reach;
   hasSword = false; // merlinSword equipped -> #weaponMelee strip + longer/stronger swing
+  private strength = 8;
+  private strengthInc = 0.1;
   private basePower = 0;
   private summonCd = 0;
   private fireCd = 0;
@@ -50,8 +52,9 @@ export class PlayerControl extends Component {
   private aimLeft = false;
 
   override init(cfg: Record<string, any>): void {
-    const str = typeof cfg["strength"] === "number" ? cfg["strength"] : 8;
-    this.basePower = this.power = Math.round(str * 4) + 8; // punch damage from strength (scaled to enemy energy)
+    this.strength = typeof cfg["strength"] === "number" ? cfg["strength"] : 8;
+    this.strengthInc = typeof cfg["strengthIncLevel"] === "number" ? cfg["strengthIncLevel"] : 0.1;
+    this.basePower = this.power = Math.round(this.strength * 4) + 8; // punch damage from strength (scaled to enemy energy)
     this.meleeReach = PUNCH.reach; this.hasSword = false;
     this.summonCd = this.fireCd = this.meleeCd = 0;
     this.charge = 0; this.charging = false; this.releaseT = this.meleeT = 0;
@@ -59,6 +62,14 @@ export class PlayerControl extends Component {
 
   /** merlinSword scroll: a real melee weapon (damageMultiplier 16) — stronger, longer reach. */
   equipSword(): void { this.hasSword = true; this.power = this.basePower + 160; this.meleeReach = 24; }
+
+  // incStrength on level-up (modCharacterAttackProperties); rescale punch, keep sword bonus
+  levelUp(next: NextFn): void {
+    this.strength += this.strengthInc;
+    this.basePower = Math.round(this.strength * 4) + 8;
+    this.power = this.basePower + (this.hasSword ? 160 : 0);
+    next();
+  }
 
   update(next: NextFn): void {
     if (this.fireCd > 0) this.fireCd--;

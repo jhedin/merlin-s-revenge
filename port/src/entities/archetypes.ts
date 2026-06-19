@@ -99,6 +99,15 @@ export function spawnPlayer(x: number, y: number): Entity {
     mana_flow: num(d, "mana_flow", 1),
     mana_burst: num(d, "mana_burst", 1),
     mana_regeneration: num(d, "mana_regeneration", 30),
+    // per-level growth (modCharacterAttackProperties / modEnergy)
+    mana_capacityIncLevel: num(d, "mana_capacityIncLevel", 0.5),
+    mana_flowIncLevel: num(d, "mana_flowIncLevel", 0.1),
+    mana_burstIncLevel: num(d, "mana_burstIncLevel", 0.1),
+    mana_regenerationIncLevel: num(d, "mana_regenerationIncLevel", 0.1),
+    strengthIncLevel: num(d, "strengthIncLevel", 0.1),
+    experienceAmountForNextLevel: num(d, "experienceAmountForNextLevel", 10),
+    energyIncPercentage: num(d, "energyIncPercentage", 2),
+    energyRecoverDelay: num(d, "energyRecoverDelay", 30),
     team: "#aldevar", animChar: "mer", box: 12,
     invince: 18, // brief i-frames so overlapping enemies can't chain-kill
   });
@@ -141,5 +150,8 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     atkPower: atkPower || undefined,
     atkSound: typeof atk["sound"] === "string" ? atk["sound"] : undefined,   // #attack.sound
     dieSound: typeof d["dieSound"] === "string" ? d["dieSound"] : undefined,  // played on death
+    experienceImWorth: num("experienceImWorth", 0) || undefined,             // XP this unit grants
+    energyIncPercentage: num("energyIncPercentage", 0) || undefined,
+    energyRecoverDelay: num("energyRecoverDelay", 0) || undefined,
   });
 }
