@@ -253,7 +253,7 @@ describe("G3b: potionMaster per-type counter", () => {
   });
 });
 
-describe("G1b: save tree v2 + version gate", () => {
+describe("G1b/H3: save tree v3 (full per-room pState) + version gate", () => {
   beforeEach(() => { setupWorld(); stubLocalStorage(); });
 
   it("buildSave -> saveGame -> loadSave round-trips the whole world (rooms/cleared/player/army/medikit/potions)", () => {
@@ -276,6 +276,7 @@ describe("G1b: save tree v2 + version gate", () => {
 
     const s = loadSave()!;
     expect(s.ver).toBe(SAVE_VERSION);
+    expect(SAVE_VERSION).toBe(3);
     expect(s.map).toBe("dungeon");
     expect(s.currentRoomNum).toBe(1);
     expect(s.rooms.filter((r) => r.cleared).map((r) => r.num).sort()).toEqual([2, 3]);
@@ -294,12 +295,35 @@ describe("G1b: save tree v2 + version gate", () => {
     expect(s.potions.pPotionsCollected.find((r: any) => r.character === "manaFlow").numCollected).toBe(1);
   });
 
+  it("H3: serializes the FULL per-room pState map (every visited room, not just the current one)", () => {
+    const player = spawnPlayer(0, 0); game.player = player;
+    const orcA = spawnEnemy("blackOrc", 10, 10); orcA.get(Energy).energy = 5;
+    game.entities = [player, orcA];
+    const curObjects = game.entities.filter((e) => e.type !== "player").map(serializeActor);
+    // room 1 is current (live); rooms 2 + 5 carry FROZEN pState snapshots from earlier visits.
+    const orcB = spawnEnemy("orc", 20, 20); orcB.get(Energy).energy = 7;
+    const orcC = spawnEnemy("blackOrc", 30, 30); orcC.get(Energy).energy = 3;
+    const pState: Record<number, any[]> = { 2: [serializeActor(orcB)], 5: [serializeActor(orcC)] };
+    const blob = buildSave({
+      player, mapId: "m", currentRoom: { x: 1, y: 1 }, currentRoomNum: 1,
+      clearedRooms: [2], currentObjects: curObjects, pState: { ...pState, 1: curObjects },
+    });
+    saveGame(blob);
+    const s = loadSave()!;
+    const byNum = new Map(s.rooms.map((r) => [r.num, r]));
+    expect(byNum.get(1)!.objects[0]!.chain.energy.energy).toBe(5); // current room
+    expect(byNum.get(2)!.objects[0]!.chain.energy.energy).toBe(7); // a frozen visited room
+    expect(byNum.get(5)!.objects[0]!.chain.energy.energy).toBe(3); // another frozen room
+    expect(byNum.get(2)!.cleared).toBe(true);
+    expect(byNum.get(5)!.cleared).toBe(false);
+  });
+
   it("rejects a version mismatch and a malformed/legacy blob (returns null, no throw)", () => {
-    localStorage.setItem("mr_save_v2", JSON.stringify({ ver: 1, map: "x" }));
+    localStorage.setItem("mr_save_v3", JSON.stringify({ ver: 2, map: "x" }));
     expect(loadSave()).toBeNull();
-    localStorage.setItem("mr_save_v2", "{ not json");
+    localStorage.setItem("mr_save_v3", "{ not json");
     expect(loadSave()).toBeNull();
-    localStorage.removeItem("mr_save_v2");
+    localStorage.removeItem("mr_save_v3");
     expect(loadSave()).toBeNull();
   });
 });

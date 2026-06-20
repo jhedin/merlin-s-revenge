@@ -1,122 +1,92 @@
-// Cutscene player (cutSceneMaster + modThespian): drives stage actors and dialogue from a parsed
-// cutscene. Presentational verbs (at/enterStage/turnToFace/backgroundColourTo/lights/showTitle/
-// wait) are implemented; dialogue advances on space. A subset of modThespian's verb set.
+// Cutscene host: a thin wrapper that owns a Thespian engine (the faithful cutSceneMaster + modThespian
+// runner over REAL spawned actors) and renders its stage — background colour, lights, title, the live
+// cutscene actors (drawn from their own Anim sprites), and the auto-advancing speech caption.
+//
+// The Thespian drives real entities through Movement/Anim; this host only paints them. Dialogue
+// auto-advances on the frame-timed line model (no space press); ESC/space cancels the whole scene.
 
 import type { Cutscene } from "../data/cutscene";
+import { Thespian, type ThespianHost } from "./thespian";
+import { Anim } from "../components/anim";
+import { Movement } from "../components/movement";
 import type { Assets } from "../render/assets";
 import type { Renderer } from "../render/renderer";
 import type { Input } from "../systems/input";
-
-const SYM_CHAR: Record<string, string> = { merlin: "mer", ulin: "uli", berlin: "ber", tv: "tv" };
-
-interface StageActor { sym: string; char: string; x: number; facingLeft: boolean; visible: boolean; }
+import type { Entity } from "../engine/dispatch";
 
 export class CutscenePlayer {
-  private i = 0;
-  private waitTicks = 0;
-  private current?: { name: string; text: string };
-  private bg = "#0a1018";
-  private lights = true;
-  private title = "";
-  private actors: Record<string, StageActor> = {};
-  private readonly groundY: number;
+  private thespian: Thespian;
 
-  constructor(private cut: Cutscene, private assets: Assets, private viewW: number, private viewH: number) {
-    this.groundY = Math.round(viewH * 0.6);
-    for (const [alias, sym] of Object.entries(cut.chars)) {
-      const name = sym.replace("#", "");
-      this.actors[alias] = { sym, char: SYM_CHAR[name] ?? name.slice(0, 3), x: viewW / 2, facingLeft: false, visible: false };
-    }
+  constructor(cut: Cutscene, private assets: Assets, private viewW: number, private viewH: number,
+    host: Partial<ThespianHost> = {}) {
+    const full: ThespianHost = { viewW, viewH, ...host };
+    this.thespian = new Thespian(cut, full);
   }
 
   /** advance one tick; returns true when the cutscene is finished (or skipped). */
   tick(input: Input): boolean {
-    if (input.pressed("escape")) return true;
-    if (this.current) {
-      if (input.pressed(" ") || input.pressed("enter")) { this.current = undefined; this.i++; }
-      return false;
-    }
-    if (this.waitTicks > 0) { this.waitTicks--; return false; }
-    while (this.i < this.cut.steps.length) {
-      const s = this.cut.steps[this.i]!;
-      if (s.kind === "say") {
-        const sym = this.cut.chars[s.alias] ?? s.alias;
-        this.current = { name: sym.replace("#", ""), text: s.text };
-        const a = this.actors[s.alias]; if (a) a.visible = true;
-        return false;
-      }
-      this.applyCmd(s.actor, s.verb, s.args);
-      if (s.verb === "wait") { this.waitTicks = Number(s.args[0]) || 30; this.i++; return false; }
-      this.i++;
-    }
-    return true;
-  }
-
-  private applyCmd(actor: string | undefined, verb: string, args: string[]): void {
-    const a = actor ? this.actors[actor] : undefined;
-    const n = (s?: string) => { const m = /-?\d+/.exec(s ?? ""); return m ? Number(m[0]) : 0; };
-    switch (verb) {
-      case "at": if (a) { a.x = n(args[0]); a.visible = true; } break;
-      case "enterStageRight": if (a) { a.x = n(args[0]) || this.viewW - 60; a.visible = true; a.facingLeft = true; } break;
-      case "enterStageLeft": if (a) { a.x = n(args[0]) || 60; a.visible = true; a.facingLeft = false; } break;
-      case "exitStageRight": case "teleportOut": if (a) a.visible = false; break;
-      case "teleportInAt": if (a) { a.x = n(args[0]); a.visible = true; } break;
-      case "turnToFace": {
-        const t = args[0] ? this.actors[args[0]] : undefined;
-        if (a && t) a.facingLeft = t.x < a.x;
-        break;
-      }
-      case "backgroundColourTo": {
-        const m = /rgb\((\d+),\s*(\d+),\s*(\d+)\)/.exec(args.join(""));
-        if (m) this.bg = `rgb(${m[1]},${m[2]},${m[3]})`;
-        break;
-      }
-      case "lightsUp": this.lights = true; break;
-      case "lightsDown": this.lights = false; break;
-      case "showTitle": this.title = args.join(" "); break;
-      case "setStage": for (const k of Object.keys(this.actors)) this.actors[k]!.visible = false; break;
-    }
+    if (input.pressed("escape") || input.pressed(" ") || input.pressed("enter")) this.thespian.cancel();
+    return this.thespian.tick();
   }
 
   render(renderer: Renderer): void {
     const ctx = renderer.ctx;
     const { viewW, viewH } = this;
-    ctx.fillStyle = this.bg; ctx.fillRect(0, 0, viewW, viewH);
-    // actors (scaled 2x, anchored at the ground line)
+    const t = this.thespian;
+    ctx.fillStyle = `rgb(${Math.round(t.bg.r)},${Math.round(t.bg.g)},${Math.round(t.bg.b)})`;
+    ctx.fillRect(0, 0, viewW, viewH);
+
+    // actors (scaled 2x, anchored at the ground line) — drawn from each entity's OWN Anim sprite.
     const scale = 2;
-    for (const a of Object.values(this.actors)) {
-      if (!a.visible) continue;
-      const anim = this.assets.index.anims[`${a.char}_stand`] ?? this.assets.index.anims[`${a.char}_walk`];
-      const f = anim?.frames[0];
-      if (!f) continue;
-      // frames load lazily; if this actor's char isn't loaded yet, kick its load and skip the draw.
-      if (!this.assets.images.has(f.file)) { void this.assets.ensureChar(a.char); continue; }
-      const img = this.assets.img(f.file);
-      const w = f.w * scale, h = f.h * scale;
-      const dx = Math.round(a.x - w / 2), dy = Math.round(this.groundY - h);
+    for (const p of t.visibleActors()) {
+      const sp = p.entity.tryGet(Anim)?.sprite();
+      const m = p.entity.get(Movement);
+      if (!sp) continue;
+      const img = sp.img as CanvasImageSource;
+      const w = (img as HTMLImageElement).width * scale, h = (img as HTMLImageElement).height * scale;
+      let dx = Math.round(m.x - w / 2), dy = Math.round(m.y - h);
+      if (p.wasted) { dy = Math.round(m.y - h * 0.6); } // modWastedMode squash (h=60%)
       ctx.save();
-      if (a.facingLeft) { ctx.translate(dx + w, dy); ctx.scale(-1, 1); ctx.drawImage(img, 0, 0, w, h); }
-      else ctx.drawImage(img, dx, dy, w, h);
+      if (p.wasted) ctx.globalAlpha = 0.4; // modWastedMode blend (~30%)
+      if (m.facingLeft) { ctx.translate(dx + w, dy); ctx.scale(-1, 1); ctx.drawImage(img, 0, 0, w, p.wasted ? h * 0.6 : h); }
+      else ctx.drawImage(img, dx, dy, w, p.wasted ? h * 0.6 : h);
       ctx.restore();
     }
-    if (!this.lights) { ctx.fillStyle = "rgba(0,0,0,0.55)"; ctx.fillRect(0, 0, viewW, viewH); }
-    if (this.title) {
+
+    // lights (fade to black)
+    const dark = t.darkness();
+    if (dark > 0) { ctx.fillStyle = `rgba(0,0,0,${(0.55 * dark).toFixed(3)})`; ctx.fillRect(0, 0, viewW, viewH); }
+
+    if (t.title) {
       ctx.textAlign = "center"; ctx.fillStyle = "#fc4"; ctx.font = "bold 20px serif";
-      ctx.fillText(this.title, viewW / 2, viewH / 2); ctx.textAlign = "left";
+      ctx.fillText(t.title, viewW / 2, viewH / 2); ctx.textAlign = "left";
     }
-    // dialogue box
-    if (this.current) {
+
+    // speech caption (auto-advancing; no prompt)
+    const speech = t.getSpeech();
+    if (speech) {
       const boxH = 56, y = viewH - boxH - 6;
       ctx.fillStyle = "rgba(0,0,0,0.78)"; ctx.fillRect(8, y, viewW - 16, boxH);
       ctx.strokeStyle = "#577"; ctx.strokeRect(8, y, viewW - 16, boxH);
       ctx.fillStyle = "#fc4"; ctx.font = "bold 10px monospace";
-      ctx.fillText(this.current.name + ":", 16, y + 14);
+      ctx.fillText(speech.speaker + ":", 16, y + 14);
       ctx.fillStyle = "#fff"; ctx.font = "10px monospace";
-      wrap(ctx, this.current.text, 16, y + 28, viewW - 32, 12);
-      ctx.fillStyle = "#7a8"; ctx.font = "8px monospace";
-      ctx.fillText("space ▶", viewW - 56, y + boxH - 6);
+      wrap(ctx, speech.text, 16, y + 28, viewW - 32, 12);
     }
-    ctx.fillStyle = "#445"; ctx.font = "8px monospace"; ctx.fillText("esc: skip", 12, 14);
+    ctx.fillStyle = "#445"; ctx.font = "8px monospace"; ctx.fillText("esc/space: skip", 12, 14);
+  }
+
+  /** debug: visible cutscene actors' x positions (used by the H verification tool). */
+  visibleActorXs(): number[] {
+    return this.thespian.visibleActors().map((p) => Math.round(p.entity.get(Movement).x));
+  }
+  /** debug: the active speech text (or null). */
+  speechText(): string | null { return this.thespian.getSpeech()?.text ?? null; }
+
+  /** bind an existing entity (the real Merlin) into the cast under an alias before play (wasted scene). */
+  static withBound(cut: Cutscene, assets: Assets, viewW: number, viewH: number,
+    host: Partial<ThespianHost>, bound: Record<string, Entity>): CutscenePlayer {
+    return new CutscenePlayer(cut, assets, viewW, viewH, { ...host, bound });
   }
 }
 

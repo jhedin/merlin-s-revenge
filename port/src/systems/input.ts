@@ -80,6 +80,21 @@ export class Input {
     return { x, y };
   }
 
+  /** keyForControl (keyMaster.getKeyFor): the live bound key for a control name, for #key interpolation.
+   *  Movement controls resolve to the active scheme's first key; fire/charge map to the primary action. */
+  keyForControl(control: string): string {
+    const c = control.replace(/^#/, "").toLowerCase();
+    const first = (list: string[]) => list[0] ?? "";
+    switch (c) {
+      case "up": return first(this.keys.up);
+      case "down": return first(this.keys.down);
+      case "left": return first(this.keys.left);
+      case "right": return first(this.keys.right);
+      case "fire": case "attack": case "magic": case "charge": return "mouse"; // hold-to-charge on the mouse/space
+      default: return c;
+    }
+  }
+
   /** call at end of each logical tick to clear edge state */
   endTick(): void { this.pressedThisTick.clear(); this.mousePressedTick = false; this.mouseReleasedTick = false; }
 }

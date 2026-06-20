@@ -23,6 +23,9 @@ export class RoomManager {
   exitsOpen = false;             // edges are solid until the room's hostiles are dead
   private margin = 12;
   private cleared = new Set<number>(); // room nums already cleared (persist across visits)
+  // pState (objRoom.pState, H3): per-room snapshot of recordable live actors, taken on room-leave and
+  // restored on re-entry, so a half-fought room comes back exactly as you left it (not re-spawned fresh).
+  private pState = new Map<number, ActorSave[]>();
   private won = false;
 
   constructor(
@@ -43,8 +46,17 @@ export class RoomManager {
   private restoring = false; // suppress onLeaveRoom/onEnterRoom while loadGame tears the world down
 
   enter(loc: Vec2i, repositionPlayer?: "left" | "right" | "up" | "down", restoreObjects?: ActorSave[]): void {
+    const leavingNum = this.room?.num;
     // notify before tearing down the room we're leaving (G2 army teleport-out); skip on a restore.
-    if (!this.restoring) this.onLeaveRoom(game.entities.filter((e) => e.type !== "player"));
+    if (!this.restoring) {
+      this.onLeaveRoom(game.entities.filter((e) => e.type !== "player"));
+      // pState snapshot-on-leave (objRoom.deactivate -> freezeObjects -> saveState): freeze the leaving
+      // room's recordable actors AFTER the teleport-out hook (so a reserve-banked ally is excluded —
+      // it lives in the army reserve, not pState — avoiding a double-spawn on re-entry, plan §f.4).
+      if (leavingNum !== undefined) {
+        this.pState.set(leavingNum, game.entities.filter((e) => e.type !== "player").map(serializeActor));
+      }
+    }
     this.loc = loc;
     this.room = this.map.roomAt(loc) ?? this.map.rooms.get(1)!;
     const active = this.room.layer("#backgroundActive");
@@ -57,9 +69,15 @@ export class RoomManager {
 
     // keep only the player; clear enemies/bullets from the previous room
     game.entities = game.entities.filter((e) => e.type === "player");
-    if (restoreObjects) {
-      // RESTORE PATH (objRoom.restoreRoomObjects): respawn the saved live actors instead of tile-spawning.
-      this.restoreRoomObjects(restoreObjects, repositionPlayer);
+    // restore source: an explicit save-restore (restoreObjects) > a live pState snapshot (re-entry).
+    const snapshot = restoreObjects ?? (this.restoring ? undefined : this.pState.get(this.room.num));
+    if (snapshot) {
+      // RESTORE PATH (objRoom.restoreState): respawn the saved live actors instead of tile-spawning, so a
+      // re-entered room comes back exactly as you left it (same enemies/HP/positions, not a fresh spawn).
+      this.restoreRoomObjects(snapshot, repositionPlayer);
+      // re-field banked reserve allies near the player (G2 army teleport-in on the next room) — a live
+      // re-entry still re-fields the reserve (only a save-restore suppresses it via `restoring`).
+      if (!this.restoring && !restoreObjects) { const pm = this.player.get(Movement); this.onEnterRoom(pm.x, pm.y); }
     } else {
       const alreadyClear = this.cleared.has(this.room.num);
       this.spawnObjects(repositionPlayer, !alreadyClear); // cleared rooms keep their dead
@@ -86,7 +104,22 @@ export class RoomManager {
   snapshotCurrentRoom(): ActorSave[] {
     return game.entities.filter((e) => e.type !== "player").map(serializeActor);
   }
-  /** loadGame: enter `loc` and rebuild it from saved actors (suppressing the teleport-out hook). */
+  /** the full per-room pState (H3): every visited room's snapshot + the live current room. The current
+   *  room's slot is taken fresh from the live world (it may be mid-fight, not yet frozen into pState). */
+  fullPState(): Record<number, ActorSave[]> {
+    const out: Record<number, ActorSave[]> = {};
+    for (const [num, snap] of this.pState) out[num] = snap;
+    out[this.room.num] = this.snapshotCurrentRoom(); // current room's live actors override its frozen slot
+    return out;
+  }
+  /** restore the whole pState map (loadGame): every room re-enters from its saved snapshot. */
+  restorePState(map: Record<number, ActorSave[]> | undefined): void {
+    this.pState = new Map();
+    if (!map) return;
+    for (const k of Object.keys(map)) this.pState.set(Number(k), map[Number(k)]!);
+  }
+  /** loadGame: enter `loc` and rebuild it from saved actors (suppressing the teleport-out hook). The
+   *  current-room objects come from pState[currentRoomNum] (restored above) — passed explicitly here. */
   restoreInto(loc: Vec2i, objects: ActorSave[]): void {
     this.restoring = true;
     try { this.enter(loc, undefined, objects); } finally { this.restoring = false; }
@@ -127,10 +160,22 @@ export class RoomManager {
     return game.entities.some((e) => e.type === "enemy" && !e.send("isDead"));
   }
 
+  // isEndRoom (objMap.txt:499): the current room IS the designated #endRoom.
+  private isEndRoom(): boolean {
+    const er = this.map.endRoom;
+    return !!er && er.x === this.loc.x && er.y === this.loc.y;
+  }
+
+  // markCleared (gameMaster.teamDied / objRoom.attemptOpenExits): a room clears. TWO independent win
+  // triggers fire onMapClear (A3): reaching+clearing the designated #endRoom (isEndRoom), OR clearing
+  // every room (isMapClear). A map with #endRoom:#none wins only on the clear-all path.
   private markCleared(): void {
-    if (this.cleared.has(this.room.num)) return;
-    this.cleared.add(this.room.num);
-    if (!this.won && this.cleared.size >= this.map.rooms.size) { this.won = true; this.onMapClear(); }
+    const firstClear = !this.cleared.has(this.room.num);
+    if (firstClear) this.cleared.add(this.room.num);
+    if (this.won) return;
+    const endRoomWin = this.isEndRoom();                        // reached + cleared the end room
+    const clearAllWin = this.cleared.size >= this.map.rooms.size; // cleared every room
+    if (endRoomWin || clearAllWin) { this.won = true; this.onMapClear(); }
   }
 
   /** Transition on edge crossing; gate exits behind clearing the room; returns true on room change. */

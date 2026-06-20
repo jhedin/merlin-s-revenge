@@ -23,6 +23,7 @@ export interface GameMap {
   roomSize: Vec2i;       // tiles across/down (e.g. 18x9)
   tilePx: number;        // gameplay tile px, resolved from the map's tilesets (32 for all shipped maps)
   startRoom: Vec2i;
+  endRoom?: Vec2i;       // #endRoom (objMap.txt:79): reaching+clearing this room wins; #none -> undefined
   layerDefs: { name: string; tileSet: string }[];
   rooms: Map<number, Room>;
   roomAt(loc: Vec2i): Room | undefined;
@@ -71,8 +72,13 @@ export function parseMap(src: string, tilePxFor?: TilePxFor): GameMap {
   }
 
   const mapSize = asPoint(m["mapSize"]);
+  // #endRoom (objMap.txt:79): the designated end room. #none (a symbol, not a point) -> undefined, so
+  // isEndRoom is never true and the map wins only on clear-all. A real point -> the end-room win trigger.
+  const endRoomRaw = m["endRoom"];
+  const endRoom = (endRoomRaw && typeof endRoomRaw === "object" && !Array.isArray(endRoomRaw))
+    ? asPoint(endRoomRaw) : undefined;
   return {
-    mapSize, roomSize, tilePx, startRoom: asPoint(m["startRoom"]),
+    mapSize, roomSize, tilePx, startRoom: asPoint(m["startRoom"]), endRoom,
     layerDefs, rooms,
     roomAt(loc) {
       // rooms are stored by 1-based incremental num, row-major across mapSize

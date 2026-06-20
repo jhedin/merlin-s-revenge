@@ -6,7 +6,7 @@ import { Component, type NextFn } from "../engine/dispatch";
 import { game } from "../game/context";
 
 export class Energy extends Component {
-  static handles = ["takeHit", "takeHeal", "update", "levelUp", "isDead", "getKilledInAction", "energyFrac", "glowGold", "addSaveData", "restoreFromSave"];
+  static handles = ["takeHit", "takeHeal", "update", "levelUp", "isDead", "getKilledInAction", "energyFrac", "glowGold", "restoreEnergy", "reviveFull", "addSaveData", "restoreFromSave"];
   energy = 100; max = 100; dead = false; dieSound = "";
   goldGlow = 0;               // glowGold() frames (cosmetic, rendered as a gold tint)
   killedInAction = false;     // modEnergy.pKilledInAction: set ONLY by lethal damage (never by cull/retire)
@@ -57,6 +57,11 @@ export class Energy extends Component {
     next(vx, vy, _healerId);
   }
   glowGold(): void { this.goldGlow = 12; }
+
+  // modEnergy.restoreEnergy: refill to max (used by modExtraLives.respawn after death).
+  restoreEnergy(next: NextFn): void { this.energy = this.max; next(); }
+  // reviveFull: clear the dead latch + refill (an in-place respawn brings the actor back to life).
+  reviveFull(next: NextFn): void { this.dead = false; this.killedInAction = false; this.energy = this.max; next(); }
 
   // recoverEnergy: trickle +1 every energyRecoverDelay ticks while below max (modEnergy)
   update(next: NextFn): void {

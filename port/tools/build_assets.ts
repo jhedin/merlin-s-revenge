@@ -137,8 +137,11 @@ for (const f of mapFiles) {
 }
 if (!maps.some((m) => m.id === DEFAULT_MAP)) console.warn("default map missing:", DEFAULT_MAP);
 
-// intro cutscene (loaded separately by main.ts; unchanged)
+// cutscenes (loaded separately by main.ts): the intro, the wasted (gGameOverScript — death flow), and a
+// game-complete script. All are real shipped scr_*/cut_scene scripts the Thespian engine plays (H1/H2).
 copyFileSync(join(DATA, "scr_demo_001.txt"), join(OUT_ASSETS, "intro.txt"));
+copyFileSync(join(DATA, "scr_cut_scene_to_play_when_wasted.txt"), join(OUT_ASSETS, "wasted.txt"));
+copyFileSync(join(REPO, "cut_scenes/mr4Complete.txt"), join(OUT_ASSETS, "complete.txt"));
 
 // ── (d) audio: vocabulary-driven SFX map + music ──────────────────────────────────────────────
 // Build the CLOSED set of logical SFX names from casts/data (#sound:/#collectSound:/#dieSound:

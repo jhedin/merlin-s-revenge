@@ -22,7 +22,7 @@ This tracker is the running backlog; update the status table + log each iteratio
 | Spells / weapons / projectiles | ~45% | B2 weapon manager + C charged blasts (cBlast/darkBlast/arctic/heal), splash/`#explode` (energyPulse/thunder/freeze/towerAxe), takeFreeze/takeHeal payload-lists, summons (army/monster), dwarfTower. Beams/fireBullets-streaming/GMG/reservations deferred |
 | Actors / bosses / dwellings | ~26% | All 263 records parse (stats resolve); gaps are art + AI wiring + per-actor behavior; bosses ~55% (E1 reincarnation cascade ☑) |
 | Player / progression / masters | ~50% | Progression math faithful; **G save tree v2** (whole current-room + cleared flags + player + potion/army masters, locator-based target restore); **army reserve** (teleport-to-reserve, re-field at level); **real medikit** stockpile + potion counter; 5 of 39 masters |
-| World / render / pipeline / shell | ~45% | Asset pipeline complete (F1 ☑): all 10 tilesets / 171 chars / 47 maps, load-any-map, lazy per-map loading; collision = solid-AABB only (F2); cutscene is a reimpl (H1) |
+| World / render / pipeline / shell | ~60% | Asset pipeline complete (F1 ☑): all 10 tilesets / 171 chars / 47 maps, load-any-map, lazy per-map loading; collision = solid-AABB only (F2). **Shell complete (H ☑):** Thespian cutscene engine over real actors, scene FSM + data-driven menus, faithful death->wasted->reload, endRoom win + per-room pState (save v3) |
 
 The **data** pipeline is genuinely complete (all 263 actors → `data.json`). Almost everything missing is
 *behavior and assets*, not data — consistent with "content is data, not code."
@@ -139,10 +139,29 @@ Status: ☐ not started · ◐ in progress · ☑ done
   `PotionMaster` per-type "potions drunk" tally + save. HUD draw is agent 5 (queries exposed). *(04 #3)*
 
 ### Phase H — Shell & flow
-- ☐ **H1. Cutscene engine over real actors** — `modThespian` ~30 verbs, props, goMode, frame-timed lines,
-  `#key` interpolation (vs the ~10-verb presentational reimpl). Gates game-over/complete/wasted. *(05 #3)*
-- ☐ **H2. Scene FSM + `objMenu` menus + death/respawn/reincarnate flow.**
-- ☐ **H3. `#endRoom` win condition + live room-state restore on re-entry.**
+- ☑ **H1. Cutscene engine over real actors** — `Thespian` (`scenes/thespian.ts`) collapses cutSceneMaster +
+  modThespian + objScriptPerformer + objScript into ONE runner that drives REAL spawned entities through
+  the gameplay `Movement`/`Anim` (walk/stand/face/teleport/wasted) — a cutscene character IS a live Entity,
+  not a draw-frame. Faithful `interpretLineCommand`/`interpretLineArgs` (point/rgb/symbol/text/sound; `:`
+  ->speakLine; word2-command). Sync verbs fall through same tick; async (`speakLine`/`wait`/`lights`/`fade`)
+  set a frame gate (`displayTime = 50 + chars·1.4`, `delay 12`; `wait N`; fade window) — dialogue
+  auto-advances, no key. `#key` interpolation at display time. `cutscenePlayer.ts` is now a thin host.
+  Gates H2's game-over/complete/wasted. *(05 #3)*
+- ☑ **H2. Scene FSM + `objMenu` menus + death flow.** `SceneManager` (`scenes/sceneManager.ts`) mirrors
+  movieMaster/screenMaster/gameMaster: `goScreen(sym, action)`, overlay `screenOn`/`backAScreen`, and the
+  load-bearing `cutSceneFinished(scene)` dispatch (intro->game+startGame; **wasted->game+#loadGame** (reload
+  the save, NOT a fresh run); complete->victory). `objMenu` is data-driven with **shadowed** items (Save
+  greys while a cutscene plays). **Faithful death:** player `#die` (after the die anim) ->
+  `modExtraLives.attemptRespawn` (`components/extraLives.ts` — lives>0 -> in-place respawn at the recorded
+  point, energy restored, lives--) ELSE `gameMaster.gameOver` -> the **wasted cutscene** (the REAL Merlin
+  bound by alias, `goWastedMode` blend+squash via `components/wasted.ts`) -> reload the save. Fallback to
+  title when no save/wasted script.
+- ☑ **H3. `#endRoom` win + per-room state restore.** Two win triggers (`RoomManager.markCleared`): clear-all
+  (`isMapClear`) OR reach+clear the designated `#endRoom` (`isEndRoom`, parsed from the map). A `pState:
+  Map<roomNum, ActorSave[]>` snapshots a room's recordable actors on leave (excluding reserve-banked allies,
+  G2) and restores them on re-entry (reusing G1's `serializeActor`/`respawnActor`) — a half-fought room comes
+  back exactly as you left it. The save tree extends to the **full per-room pState map** (superseding G1's
+  current-room-only Option-A); `SAVE_VERSION` bumped to **3** with the same graceful-reject gate.
 
 ### Out of scope
 - **Map editor** — ships as a *separate executable* (`map_editor.exe`); `mapEditMaster` is editor-only.
@@ -312,3 +331,50 @@ Status: ☐ not started · ◐ in progress · ☑ done
   ships; the enemy-caster fire-loop is AI wiring, not a mechanic), `#collisionDetection:false`
   pass-through (F2), `#reincarnated` XP transfer (cosmetic), bullet reincarnation (no shipped bullet sets
   it), berlin arena fight (cutscene-only, §g). Next: D1 (per-enemy sprites) or H (cutscene/flow).
+- **Iter 8** — ☑ H1/H2/H3 shipped (the shell & game flow). **H1 (cutscene engine over REAL actors):** the
+  standalone draw-frame reimpl is gone; `scenes/thespian.ts` is a faithful `Thespian` collapsing
+  cutSceneMaster + modThespian + objScriptPerformer + objScript into one runner that drives REAL spawned
+  entities through the gameplay `Movement`/`Anim` — a cutscene character is a live `Entity` (a minimal
+  Identity+Movement+Anim+Energy+WastedMode+Team archetype, or the bound real Merlin for the wasted scene),
+  walking/standing/facing/teleporting under its own modules, NOT a bespoke draw path (cutscene actors aren't
+  in `game.entities`, so combat never touches them; the host paints them from each actor's `Anim.sprite()`).
+  The parser (`data/cutscene.ts`) is faithful `interpretLineCommand` + `interpretLineArgs` (typed args:
+  point/rgb/symbol/text/sound; `:`->speakLine; word2-command when word1 is a character). Two completion
+  models: sync verbs (`at`/`walkTo`/`turnToFace`/`goMode`/`teleportIn/Out`/`enterStage*`/`exitStage*`/
+  `gotoWings`/`setStage`/`showTitle`/`backgroundColourTo`/`playSound`/`playMusic`/`goWastedMode`) fall through
+  the same tick; async (`speakLine`/`wait`/`lightsUp`/`lightsDown`/`fadeDown`) set a frame gate —
+  `displayTime = round(50 + chars·1.4)` + `delay 12` (objScriptPerformer 27-31), `wait N`, fade window —
+  dialogue AUTO-advances (no key). `#key` interpolation re-evaluated at display time (`keyForControl`). Prop /
+  walkScroll / random-flash verbs staged behind the core movement+speech path (plan §f.1; unused by intro/
+  wasted/complete). `cutscenePlayer.ts` is a thin host. **H2 (scene FSM + menus + death):** `SceneManager`
+  (`scenes/sceneManager.ts`) replaces main.ts's mode var — `goScreen(sym, action)`, overlay `screenOn`/
+  `backAScreen`, and the load-bearing `cutSceneFinished(scene)` dispatch (intro->game+startGame;
+  **wasted->game+#loadGame** reload-the-save NOT fresh-restart; complete->victory). `objMenu` (`scenes/menu.ts`)
+  is data-driven with **shadowed** items (Save greys while a cutscene plays, `isMenuItemShadowed`). Faithful
+  death: player `#die` -> (after the die-anim delay) `modExtraLives.attemptRespawn` (`components/extraLives.ts`:
+  lives>0 -> in-place respawn at the recorded point + `restoreEnergy` + lives--; else false) -> `gameOver`
+  plays the **wasted cutscene** driving the REAL Merlin in `goWastedMode` (`components/wasted.ts`: blend
+  30% + squash h=60%) -> reload the save (fallback to title when none). **H3 (endRoom win + per-room pState):**
+  `map.ts` parses `#endRoom` (`#none`->undefined). `RoomManager.markCleared` fires on TWO triggers: clear-all
+  OR reach+clear the `#endRoom` (`isEndRoom`). A `pState: Map<roomNum, ActorSave[]>` snapshots a room's
+  recordable actors on leave (AFTER the G2 teleport-out hook, so reserve-banked allies are excluded) and
+  restores them on re-entry (reusing G1's `serializeActor`/`respawnActor` + the G1c deferred relationship
+  pass) — a half-fought room comes back exactly as left. The save tree extends to the **full per-room pState
+  map** (`save.ts` v3, `buildSave.pState` + `pStateFromSave`/`rooms.fullPState`/`restorePState`), superseding
+  G1's current-room-only Option-A; `SAVE_VERSION` bumped 2->3 with the same graceful-reject gate (G's save
+  round-trips migrated to v3, kept green). tsc clean; **212 tests pass** (+30: 9 Thespian-runner — walkTo
+  moves a real actor, speakLine/wait/lights gate timing, goMode/turnToFace, #key, cancel; 8 scene-FSM
+  transitions incl wasted->reload-not-fresh + no-save->title + overlay round-trip; 5 death — respawn-with-life
+  vs game-over + save round-trip + goWastedMode; 5 H3 — endRoom-triggers-win, #none-clear-all-regression,
+  per-room HP restore round-trip, cleared-room-restores-empty, full-pState save round-trip; +1 pState save-tree
+  + 2 parser typed-args; save tests migrated to v3). Room-1 no-regression: `playthrough_smoke` ends
+  `enemies:0, exitsOpen:true, errors:none` (identical, default `#endRoom:#none` wins on clear-all unchanged).
+  In-browser: the **intro cutscene plays with real actors MOVING** (distinct actor-x frames=19, walkTo drives
+  them) + dialogue auto-advancing, then drops into gameplay (enemies:2, no pageerrors); `?map=merliniii` (real
+  `#endRoom point(17,3)` = room 53): entering with 12 live enemies does NOT win, killing them -> **gameComplete
+  victory cutscene** fires (the endRoom trigger, not clear-all); **death** (0 lives) -> wasted cutscene (real
+  Merlin in goWastedMode) -> reload save -> back in game; **death with a banked life** -> in-place respawn
+  (lives 1->0, not dead, no game-over); walk out of a half-cleared room + back -> the wounded orc restores at
+  HP 15 (not fresh) — all with no pageerrors. Deferred (plan §g): credits/profile/showArmy/instructions screen
+  CONTENT (transitions wired, overlays stubbed), copy-protection, map editor, screen-transition tweens (instant),
+  grave persistence in pState, the rare prop/walkScroll cutscene verbs. Next: D1 (per-enemy sprites) or F2/F3.

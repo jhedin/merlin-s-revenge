@@ -21,10 +21,11 @@ import { Movement } from "./components/movement";
 import { Projectile } from "./components/projectile";
 import { sweepBullets, bulletPoolStats } from "./systems/bullets";
 import { rebuildCombatSubstrate } from "./systems/combatTick";
-import { saveGame, loadSave, buildSave, clearLegacy } from "./systems/save";
+import { saveGame, loadSave, buildSave, clearLegacy, pStateFromSave } from "./systems/save";
 import { parseCutscene } from "./data/cutscene";
 import { CutscenePlayer } from "./scenes/cutscenePlayer";
 import { Menu } from "./scenes/menu";
+import { SceneManager, type CutScene } from "./scenes/sceneManager";
 
 let flashMsg = ""; let flashUntil = 0;
 const flash = (m: string) => { flashMsg = m; flashUntil = Date.now() + 1200; };
@@ -80,11 +81,15 @@ async function main() {
   const assets = await Assets.load();
   // dev map picker: ?map=<id> selects any of the 47 bundled maps; default is unchanged.
   const wantMap = new URLSearchParams(location.search).get("map") ?? assets.index.defaultMap ?? "";
-  const [loaded, introSrc] = await Promise.all([
+  const [loaded, introSrc, wastedSrc, completeSrc] = await Promise.all([
     loadMap(assets, wantMap),
     fetch("/assets/intro.txt").then((r) => r.text()),
+    fetch("/assets/wasted.txt").then((r) => r.text()).catch(() => ""),
+    fetch("/assets/complete.txt").then((r) => r.text()).catch(() => ""),
   ]);
   const intro = parseCutscene(introSrc);
+  const wastedScript = wastedSrc ? parseCutscene(wastedSrc) : null;   // gGameOverScript (real Merlin, wasted)
+  const completeScript = completeSrc ? parseCutscene(completeSrc) : null; // gGameCompleteScript
   // preload the cutscene cast's frames (small) so the intro renders immediately on first play.
   const CUT_SYM_CHAR: Record<string, string> = { merlin: "mer", ulin: "uli", berlin: "ber", tv: "tv" };
   for (const sym of Object.values(intro.chars)) {
@@ -108,72 +113,58 @@ async function main() {
   // render from (0,0) at map.tilePx, so origin 0,0 / tile=map.tilePx (fallback 32) matches getTileLoc.
   game.teamMaster.unitMap.configure(tile || 32, 0, 0);
 
-  // scene state machine (scenes.json): title -> intro cutscene -> playing <-> paused -> gameover/victory
-  let mode: "title" | "cutscene" | "playing" | "paused" | "gameover" | "victory" = "title";
+  // --- scene state ---
   let player!: import("./engine/dispatch").Entity;
   let rooms!: RoomManager;
   let cutscene: CutscenePlayer | null = null;
-  let pauseMenu: Menu | null = null;
+  let deathT = 0; // die-animation delay before the death pathway resolves (modExtraLives.attemptRespawn)
 
-  // title + controls menus
-  const startItem = { label: "Start Game", action: () => { cutscene = new CutscenePlayer(intro, assets, viewW, viewH); mode = "cutscene"; } };
-  const mainTitleMenu = new Menu("", [startItem, { label: "Controls", action: () => { titleMenu = controlsMenu; } }]);
-  const setScheme = (n: "both" | "arrows" | "wasd" | "zqsd") => () => { input.setScheme(n); flash("controls: " + n); titleMenu = mainTitleMenu; };
-  const controlsMenu = new Menu("CONTROLS", [
-    { label: "Arrows", action: setScheme("arrows") },
-    { label: "WASD", action: setScheme("wasd") },
-    { label: "ZQSD", action: setScheme("zqsd") },
-    { label: "WASD + Arrows", action: setScheme("both") },
-    { label: "Back", action: () => { titleMenu = mainTitleMenu; } },
-  ]);
-  let titleMenu: Menu = mainTitleMenu;
+  // cutscene host services (sounds/music/#key) shared by every scene the Thespian plays.
+  const cutHost = {
+    viewW, viewH,
+    playSound: (m: string, vol: number) => audio.play(m, vol / 255),
+    playMusic: (m: string) => audio.playMusic(m),
+    keyForControl: (c: string) => input.keyForControl(c),
+  };
 
-  // doSave (saveMaster.saveGame): cascade the whole world (current room + cleared set + masters + player).
+  // doSave (saveMaster.saveGame): cascade the WHOLE world — full per-room pState (H3) + cleared set +
+  // masters + player chain.
   function doSave() {
     const blob = buildSave({
       player, mapId: loaded.meta.id, currentRoom: rooms.loc, currentRoomNum: rooms.currentRoomNum(),
       clearedRooms: rooms.clearedRooms(), currentObjects: rooms.snapshotCurrentRoom(),
+      pState: rooms.fullPState(),
     });
     saveGame(blob);
   }
 
   // doLoad (objMap.restoreFromSave): reject a version mismatch; else restore masters + cleared set + the
-  // player chain, then rebuild the current room from its saved actors (the deferred relationship pass runs
-  // inside restoreInto). The save's map must match the loaded map (single-map slice; cross-map reload is F1).
+  // FULL per-room pState (H3) + the player chain, then rebuild the current room from its saved actors.
   function doLoad(): boolean {
+    if (!rooms) return false;
     const s = loadSave();
     if (!s) return false;
     if (s.map !== loaded.meta.id) { flash("save is for a different map"); return false; }
     game.armyMaster.restoreFromSave(s.army);
     game.potionMaster.restoreFromSave(s.potions);
     rooms.restoreCleared(s.rooms.filter((r) => r.cleared).map((r) => r.num));
-    player.send("restoreFromSave", s.player);          // player chain (energy/xp/mana/weapons/medikit)
+    rooms.restorePState(pStateFromSave(s));            // every visited room's exact state (H3)
+    player.send("restoreFromSave", s.player);          // player chain (energy/xp/mana/weapons/medikit/lives)
     const cur = s.rooms.find((r) => r.num === s.currentRoomNum);
     rooms.restoreInto(s.currentRoom, cur?.objects ?? []); // tear down + respawn the current room's actors
     return true;
   }
 
-  function openPause() {
-    pauseMenu = new Menu("PAUSED", [
-      { label: "Resume", action: () => { mode = "playing"; } },
-      { label: "Save game", action: () => { doSave(); flash("game saved"); mode = "playing"; } },
-      { label: "Load game", action: () => { if (doLoad()) flash("game loaded"); mode = "playing"; } },
-      { label: "Return to title", action: () => { mode = "title"; audio.playMusic("baroque_rock_v1"); } },
-    ]);
-    mode = "paused";
-  }
-
-  function startGame() {
+  function freshGame() {
     game.teamMaster.reset(); // fresh rosters/subscriptions for a new run
     game.armyMaster.reset(); // empty the reserve bank
     game.potionMaster.reset(); // zero the potion tally
-    clearLegacy();           // drop any pre-v2 save blob (clean break)
     player = spawnPlayer(viewW / 2, viewH / 2);
     game.player = player;
     game.entities = [player];
-    // every room cleared -> the dungeon is won (objMap: last #endRoom #none -> victory)
+    // win on TWO triggers (H3): clear-all OR reach+clear the #endRoom (RoomManager.markCleared).
     rooms = new RoomManager(map, assets, activeKey, objectsKey, viewW, viewH, player,
-      () => { mode = "victory"; audio.play("end_level"); audio.playMusic("last_stand_v4"); });
+      () => scene.gameComplete());
     // G2 army reserve: bank teleportable allies when leaving a room; re-field them on the next room.
     rooms.onLeaveRoom = (leaving) => {
       for (let i = leaving.length - 1; i >= 0; i--) {
@@ -186,27 +177,92 @@ async function main() {
     };
     rooms.onEnterRoom = (x, y) => { game.armyMaster.refieldAll("#aldevar", x, y); };
     rooms.enter(map.startRoom);
+    deathT = 0;
     audio.playMusic("electronic_merlin_v1_02"); // the dungeon theme
-    mode = "playing";
+  }
+
+  // SceneManager (movieMaster + screenMaster + gameMaster): the explicit scene FSM (replaces the mode var).
+  const scene = new SceneManager({
+    startGame: () => { clearLegacy(); freshGame(); },
+    playCutScene: (s: CutScene) => {
+      if (s === "wasted" && wastedScript) {
+        audio.play("end_screen"); audio.stopMusic();
+        // the wasted cutscene DRIVES THE REAL MERLIN actor (bound by its alias `m`) in goWastedMode.
+        cutscene = CutscenePlayer.withBound(wastedScript, assets, viewW, viewH, cutHost, { m: player });
+      } else if (s === "complete" && completeScript) {
+        audio.play("end_level"); audio.playMusic("last_stand_v4");
+        cutscene = CutscenePlayer.withBound(completeScript, assets, viewW, viewH, cutHost, { m: player });
+      } else if (s === "intro") {
+        cutscene = new CutscenePlayer(intro, assets, viewW, viewH, cutHost);
+      } else {
+        // no script available (e.g. no wasted asset): finish immediately so the FSM advances.
+        cutscene = null; queueMicrotask(() => scene.cutSceneFinished(s));
+      }
+    },
+    loadGame: () => doLoad(),
+    pause: () => { /* simulation is gated on scene.isPaused() in the loop */ },
+    resume: () => { /* resume handled by the loop reading scene state */ },
+    onTitle: () => audio.playMusic("baroque_rock_v1"),
+  });
+
+  // title + controls menus (data-driven objMenu)
+  const mainTitleMenu = new Menu("", [
+    { label: "Start Game", action: () => scene.startGameFromTitle() },
+    { label: "Controls", action: () => { titleMenu = controlsMenu; } },
+  ]);
+  const setScheme = (n: "both" | "arrows" | "wasd" | "zqsd") => () => { input.setScheme(n); flash("controls: " + n); titleMenu = mainTitleMenu; };
+  const controlsMenu = new Menu("CONTROLS", [
+    { label: "Arrows", action: setScheme("arrows") },
+    { label: "WASD", action: setScheme("wasd") },
+    { label: "ZQSD", action: setScheme("zqsd") },
+    { label: "WASD + Arrows", action: setScheme("both") },
+    { label: "Back", action: () => { titleMenu = mainTitleMenu; } },
+  ]);
+  let titleMenu: Menu = mainTitleMenu;
+
+  // in-game pause menu (objMenu): Save is SHADOWED while a cutscene plays (gameMaster.isMenuItemShadowed).
+  const pauseMenu = new Menu("PAUSED", [
+    { label: "Resume", action: () => scene.closeOverlay() },
+    { label: "Save game", action: () => { doSave(); flash("game saved"); scene.closeOverlay(); }, shadowed: () => scene.isCutscene() },
+    { label: "Load game", action: () => { if (doLoad()) flash("game loaded"); scene.closeOverlay(); } },
+    { label: "Return to title", action: () => scene.toTitle() },
+  ]);
+
+  // death pathway (objPlayerMerlinCharacter.takeHit -> #die -> attemptRespawn / gameOver). The die anim
+  // plays, then: lives>0 -> respawn in place (keep playing); else -> game-over -> wasted cutscene -> reload.
+  function resolveDeath() {
+    const respawned = player.send("attemptRespawn") as boolean; // modExtraLives.attemptRespawn (in place)
+    if (respawned) { audio.play("level_up"); return; }          // banked a life: back on your feet
+    scene.gameOver(!!wastedScript);                             // else: wasted cutscene -> #loadGame
   }
 
   const loop = new GameLoop(
     () => {
       game.tick++;
       if (input.pressed("m")) { flash(audio.toggleMute() ? "sound off" : "sound on"); } // global mute
-      if (mode === "title") {
+      const s = scene.current();
+      if (s === "title") {
         titleMenu.tick(input);
-      } else if (mode === "cutscene") {
-        if (cutscene!.tick(input)) startGame();
-      } else if (mode === "playing") {
-        if (input.pressed("escape")) { openPause(); input.endTick(); return; }
+      } else if (s === "controls") {
+        controlsMenu.tick(input);
+      } else if (scene.isCutscene()) {
+        // intro / wasted / gameComplete: a Thespian cutscene drives real actors; on finish, route by script.
+        if (!cutscene || cutscene.tick(input)) {
+          const which = scene.activeCutScene();
+          cutscene = null;
+          if (which) scene.cutSceneFinished(which);
+        }
+      } else if (s === "game") {
+        if (scene.isPaused()) {
+          if (input.pressed("escape")) scene.escapePressed(); else pauseMenu.tick(input);
+          input.endTick(); return;
+        }
+        if (input.pressed("escape")) { scene.escapePressed(); input.endTick(); return; }
         if (input.pressed("1")) { doSave(); flash("game saved"); }
         if (input.pressed("2")) { if (doLoad()) flash("game loaded"); }
         // refresh the team roster + unit-map broad-phase BEFORE AIs run (teamMaster.findTarget /
         // impactMeleeAttack read a current map). Drops dead/left targets, firing #leaveGame.
         rebuildCombatSubstrate();
-        // iterate over this tick's entities by captured length (alloc-free; newly spawned
-        // bullets/allies appended during the loop are processed next tick, like a snapshot)
         for (let i = 0, n = game.entities.length; i < n; i++) game.entities[i]!.send("update");
         sweepBullets();
         for (let i = game.entities.length - 1; i >= 0; i--) { // sweep collected pickups
@@ -214,27 +270,28 @@ async function main() {
           if (e.type === "pickup" && e.send("isFinished")) game.entities.splice(i, 1);
         }
         rooms.update();
-        if (player.send("isDead")) { mode = "gameover"; audio.play("end_screen"); audio.stopMusic(); }
-      } else if (mode === "paused") {
-        if (input.pressed("escape")) mode = "playing"; else pauseMenu!.tick(input);
-      } else if (mode === "gameover") {
-        if (input.pressed(" ") || input.pressed("enter")) startGame();
-      } else if (mode === "victory") {
-        if (input.pressed(" ") || input.pressed("enter")) { titleMenu = mainTitleMenu; mode = "title"; audio.playMusic("baroque_rock_v1"); }
+        // death: let the die animation play (deathT frames) before resolving respawn/game-over.
+        if (player.send("isDead")) { if (deathT === 0) deathT = 1; }
+        if (deathT > 0 && ++deathT > 36) { deathT = 0; resolveDeath(); }
+      } else if (s === "victory") {
+        if (input.pressed(" ") || input.pressed("enter")) scene.toTitle();
       }
       input.endTick();
     },
     () => {
       renderer.clear();
-      if (mode === "title") { drawTitle(renderer, viewW, viewH); titleMenu.render(renderer, viewW, viewH, false); return; }
-      if (mode === "cutscene") { cutscene!.render(renderer); return; }
+      const s = scene.current();
+      if (s === "title") { drawTitle(renderer, viewW, viewH); titleMenu.render(renderer, viewW, viewH, false); return; }
+      if (s === "controls") { drawTitle(renderer, viewW, viewH); controlsMenu.render(renderer, viewW, viewH, false); return; }
+      if (scene.isCutscene() && cutscene) { cutscene.render(renderer); return; }
+      if (!rooms) { drawTitle(renderer, viewW, viewH); return; }
       const passive = rooms.room.layer("#backgroundPassive");
       const active = rooms.room.layer("#backgroundActive");
       if (passive && rooms.passiveSheet) renderer.drawTileLayer(passive, rooms.passiveSheet);
       if (active && rooms.activeSheet) renderer.drawTileLayer(active, rooms.activeSheet);
       const sprites = game.entities
         .filter((e) => e.type !== "bullet" && e.type !== "pickup")
-        .map((e) => e.get(Anim).sprite()).filter((s): s is Sprite => s !== null);
+        .map((e) => e.get(Anim).sprite()).filter((sp): sp is Sprite => sp !== null);
       renderer.drawSprites(sprites);
       drawBullets(renderer);
       drawPickups(renderer);
@@ -245,16 +302,25 @@ async function main() {
       drawCharge(renderer, player);
       drawHud(renderer, player);
       drawMinimap(renderer, map, rooms.loc, viewW);
-      if (mode === "gameover") drawGameOver(renderer, viewW, viewH);
-      if (mode === "victory") drawVictory(renderer, viewW, viewH);
-      if (mode === "paused") pauseMenu!.render(renderer, viewW, viewH);
+      if (s === "victory") drawVictory(renderer, viewW, viewH);
+      if (scene.isPaused()) pauseMenu.render(renderer, viewW, viewH);
     },
   );
   loop.start();
   (window as any).__game = game;
-  (window as any).__startGame = startGame;
+  (window as any).__scene = scene;
+  (window as any).__startGame = () => scene.startGameFromTitle();
   (window as any).__rooms = () => rooms;
-  (window as any).__mode = () => mode;
+  // __mode: a compatibility shim for the smoke tools (title/cutscene/playing/paused/gameover/victory).
+  (window as any).__mode = () => {
+    const s = scene.current();
+    if (s === "intro") return "cutscene";
+    if (s === "gameOver" || s === "gameComplete") return "cutscene";
+    if (s === "game") return scene.isPaused() ? "paused" : "playing";
+    if (s === "victory") return "victory";
+    return s;
+  };
+  (window as any).__cut = () => cutscene;
   (window as any).__bulletStats = bulletPoolStats;
   (window as any).__audio = audio;
   console.log("Merlin's Revenge —", loaded.meta.id, map.mapSize.x + "x" + map.mapSize.y, "room dungeon ready (title screen)");
@@ -272,17 +338,7 @@ function drawTitle(renderer: Renderer, w: number, h: number) {
   ctx.textAlign = "left";
 }
 
-function drawGameOver(renderer: Renderer, w: number, h: number) {
-  const ctx = renderer.ctx;
-  ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(0, 0, w, h);
-  ctx.textAlign = "center";
-  ctx.fillStyle = "#e44"; ctx.font = "bold 24px serif";
-  ctx.fillText("YOU HAVE FALLEN", w / 2, h / 2 - 6);
-  ctx.fillStyle = "#fff"; ctx.font = "9px monospace";
-  ctx.fillText("press SPACE to try again", w / 2, h / 2 + 18);
-  ctx.textAlign = "left";
-}
-
+// (the old "YOU HAVE FALLEN" game-over overlay is gone: death now plays the wasted cutscene -> reload.)
 function drawVictory(renderer: Renderer, w: number, h: number) {
   const ctx = renderer.ctx;
   ctx.fillStyle = "rgba(8,16,32,0.78)"; ctx.fillRect(0, 0, w, h);
