@@ -21,6 +21,28 @@ import type { Entity } from "../engine/dispatch";
 // room activation always re-runs its tile spawn and restoreState only overlays the recorded actors. So a
 // detonated mine comes back on re-entry (fresh), and a bullet in flight when you leave simply vanishes.
 
+// K22: one arrow overlay rect (room pixel space) + which edge it sits on and its green/red colour.
+export interface ExitArrowRect { x: number; y: number; w: number; h: number; edge: "left" | "up" | "right" | "down"; colour: "green" | "red"; }
+
+// convertExitTilesToRangesEdge (modScreenExits ~149): collapse a 1-D run of matching (passable) edge cells
+// into [startPx, endPx] ranges. A range opens at the first matching cell's start ((i)*tileLen) and closes at
+// the end of the last matching cell in the run ((i+1)*tileLen) — i.e. the original's currentStart/currentEnd
+// arithmetic, re-expressed as 0-based cell indices. Returns one range per contiguous passable run.
+function runs(n: number, passable: (i: number) => boolean, tileLen: number): [number, number][] {
+  const out: [number, number][] = [];
+  let openStart = -1;
+  for (let i = 0; i < n; i++) {
+    const m = passable(i);
+    if (m && openStart < 0) openStart = i;          // start a new range
+    if (openStart >= 0 && (!m || i === n - 1)) {     // close on a non-match or the final cell
+      const lastCell = m ? i : i - 1;                // include the final cell only if it matched
+      out.push([openStart * tileLen, (lastCell + 1) * tileLen]);
+      openStart = -1;
+    }
+  }
+  return out;
+}
+
 export class RoomManager {
   loc: Vec2i;
   room!: Room;
@@ -209,6 +231,53 @@ export class RoomManager {
 
   private enemiesAlive(): boolean {
     return game.entities.some((e) => e.type === "enemy" && !e.send("isDead"));
+  }
+
+  // ── K22 exit arrows (objRoom.drawExitArrows + modScreenExits) ─────────────────────────────────────
+  // Per room edge, the contiguous runs of passable edge tiles where an adjacent room exists become arrow
+  // rects: GREEN when that exit is currently usable (this room cleared → grid.open[edge]), else RED.
+  // Faithful chain: getScreenExitsForEdge → convertExitTilesToRangesEdge(match #none) → convertExitRanges-
+  // ToArrowRectsEdge. The colour mirrors drawExitArrowsOnImage's green/red-by-surroundingHostiles: in the
+  // port a room's exits don't open until it's cleared, so open[edge] is the usability (green) signal and an
+  // uncleared room shows its (would-be) exits RED. (Original keyed RED off the DESTINATION room's hostiles;
+  // here it's the current room's clear state — the port's actual exit-gating signal — see plan note K22.)
+  private static readonly ARROW_THICKNESS = 16; // the arrow art is 16×16 (no gExitArrowThickness in cast)
+
+  /** Arrow overlay rects for the current room, in room pixel space. Empty when the room has no exits. */
+  exitArrowRects(): ExitArrowRect[] {
+    const out: ExitArrowRect[] = [];
+    const { x, y } = this.loc;
+    const cols = this.grid.cols, rows = this.grid.rows, t = this.grid.tilePx;
+    const th = RoomManager.ARROW_THICKNESS;
+    const imgW = cols * t, imgH = rows * t;
+    type Edge = "left" | "up" | "right" | "down";
+    // (edge, adjacent room exists?, the column/row of cells along that edge).
+    const edges: { edge: Edge; adj: boolean }[] = [
+      { edge: "left", adj: !!this.map.roomAt({ x: x - 1, y }) },
+      { edge: "up", adj: !!this.map.roomAt({ x, y: y - 1 }) },
+      { edge: "right", adj: !!this.map.roomAt({ x: x + 1, y }) },
+      { edge: "down", adj: !!this.map.roomAt({ x, y: y + 1 }) },
+    ];
+    for (const { edge, adj } of edges) {
+      if (!adj) continue; // no arrow on an edge with no neighbouring room
+      const open = this.grid.open[edge];
+      const colour: "green" | "red" = open ? "green" : "red";
+      // passable run of edge cells (match #none) → ranges, in px along the edge axis.
+      const horizontal = edge === "up" || edge === "down";
+      const n = horizontal ? cols : rows;
+      const passable = (i: number): boolean =>
+        horizontal ? this.grid.passableCell(i, edge === "up" ? 0 : rows - 1)
+                    : this.grid.passableCell(edge === "left" ? 0 : cols - 1, i);
+      for (const [start, end] of runs(n, passable, t)) {
+        // convertExitRangesToArrowRectsEdge: thickness on the perpendicular axis, range along the edge.
+        const rect = edge === "left" ? { x: 0, y: start, w: th, h: end - start }
+          : edge === "right" ? { x: imgW - th, y: start, w: th, h: end - start }
+          : edge === "up" ? { x: start, y: 0, w: end - start, h: th }
+          : { x: start, y: imgH - th, w: end - start, h: th };
+        out.push({ ...rect, edge, colour });
+      }
+    }
+    return out;
   }
 
   // isEndRoom (objMap.txt:499): the current room IS the designated #endRoom.

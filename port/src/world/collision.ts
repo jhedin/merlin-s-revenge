@@ -196,6 +196,16 @@ export class CollisionGrid {
     return this.solidCell(Math.floor(px / this.tilePx), Math.floor(py / this.tilePx));
   }
 
+  // K22 exit ranges: passability of an IN-BOUNDS edge cell as the exit-arrow scan sees it (getScreenExitsForEdge
+  // → convertExitTilesToRangesEdge match #none). A cell is passable when it carries no solid collision tile —
+  // the same `solid` array the resolver reads. (Edge open/closed state is the room's, not the cell's: an open
+  // box with no edge walls is all-passable, so the whole edge is one range; a wall with a doorway gap yields a
+  // range only at the gap.) Deliberately ignores `open`/out-of-bounds — callers pass in-range indices only.
+  passableCell(c: number, r: number): boolean {
+    if (c < 0 || r < 0 || c >= this.cols || r >= this.rows) return false;
+    return this.solid[r * this.cols + c] === 0;
+  }
+
   private boxHits(x: number, y: number, w: number, h: number): boolean {
     const t = this.tilePx;
     const c0 = Math.floor(x / t), c1 = Math.floor((x + w - 1) / t);

@@ -10,7 +10,7 @@ import { AudioSystem } from "./systems/audio";
 import { GameLoop } from "./engine/loop";
 import { parseMap, type GameMap, type Vec2i } from "./world/map";
 import { parseTileKey, tileSymbol, type TileKey } from "./data/tlk";
-import { RoomManager } from "./world/rooms";
+import { RoomManager, type ExitArrowRect } from "./world/rooms";
 import { registry } from "./game/data";
 import { resolveAttack } from "./components/weapon";
 import { game, initContext } from "./game/context";
@@ -369,6 +369,10 @@ async function main() {
       // draws it OVER the actors (after drawSprites). pFrontLayerBlendLevel=128 -> globalAlpha 0.5 default.
       const fg = rooms.room.layer("#foregroundPassive");
       if (fg && rooms.foregroundSheet) renderer.drawTileLayer(fg, rooms.foregroundSheet, 0, 0, 0.5);
+      // K22 exit arrows (objRoom.drawExitArrows → modScreenExits.drawExitArrowsOnImage): overlay the
+      // green/red directional arrows on each exit edge, OVER the room layers. Pure overlay — no effect on
+      // collision/transition. No-ops when the arrow art wasn't bundled (assets.arrowImg → undefined).
+      drawExitArrows(renderer, assets, rooms.exitArrowRects());
       for (const e of game.entities) {
         if (e.type === "enemy") drawEnemyBar(renderer, e, "#e44");
         else if (e.type === "ally") drawEnemyBar(renderer, e, "#4d6");
@@ -480,6 +484,28 @@ function drawPickups(renderer: Renderer) {
 // rotates it to GeomAngle(caster,target), pivoting at the caster anchor. Loaded lazily (the spell is a
 // pickup, so the char isn't in the map's spawn set); until the frame is in memory we fall back to a line.
 const BEAM_ANIM = "energyBeam_fly";
+
+// K22: tile each arrow member across its exit rect (modScreenExits.drawExitArrowsOnImage → ImageDrawRepeated).
+// The member image is repeated to fill the rect; clipped to the rect so a partial tile at the far end crops
+// cleanly. No-ops per-rect when the colour/edge member wasn't bundled (guarded — never crashes on missing art).
+function drawExitArrows(renderer: Renderer, assets: Assets, rects: ExitArrowRect[]) {
+  if (rects.length === 0) return;
+  const ctx = renderer.ctx;
+  for (const r of rects) {
+    const img = assets.arrowImg(r.colour, r.edge);
+    if (!img) continue; // art not bundled for this colour/edge — skip (overlay no-ops)
+    const iw = img.width, ih = img.height;
+    if (iw === 0 || ih === 0) continue;
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(r.x, r.y, r.w, r.h);
+    ctx.clip();
+    for (let dy = 0; dy < r.h; dy += ih)
+      for (let dx = 0; dx < r.w; dx += iw)
+        ctx.drawImage(img, r.x + dx, r.y + dy);
+    ctx.restore();
+  }
+}
 
 function drawBullets(renderer: Renderer) {
   const ctx = renderer.ctx;

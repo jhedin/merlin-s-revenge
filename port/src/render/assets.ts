@@ -22,6 +22,9 @@ export interface AssetIndex {
   sounds?: Record<string, string>; // SFX name (#attack.sound / collectSound / dieSound) -> file
   music?: Record<string, string>;  // musicName -> file
   cutscenes?: Record<string, string>; // K12: cutscene script name (stones1..10) -> file (lazy loaded)
+  // K22 exit arrows (structMaster #exitArrowMembers): colour ("green"|"red") -> edge -> png file.
+  // Empty/absent when the .tif→png conversion was unavailable at build time (overlay then no-ops).
+  arrows?: Record<string, Record<string, string>>;
 }
 
 export const mapList = mapsIndex as MapMeta[];
@@ -86,7 +89,19 @@ export class Assets {
     const index = (await import("../generated/assets.json")).default as unknown as AssetIndex;
     const a = new Assets(index, base);
     await Promise.all(Object.values(index.tilesets).map((t) => a.loadFile(t.file, "global")));
+    // K22 exit arrows: 8 small members, loaded up front (flood-keyed white matte like sprites). Absent
+    // when the build couldn't convert the .tif art — arrowImg() then returns undefined and the overlay
+    // no-ops (collision/transition behaviour is unaffected either way).
+    const arrowFiles = Object.values(index.arrows ?? {}).flatMap((edges) => Object.values(edges));
+    await Promise.all(arrowFiles.map((f) => a.loadFile(f, "flood")));
     return a;
+  }
+
+  /** K22: the loaded arrow member for a colour ("green"|"red") + edge ("left"|"up"|"right"|"down"),
+   *  or undefined when the art wasn't bundled (the renderer skips the arrow). */
+  arrowImg(colour: "green" | "red", edge: "left" | "up" | "right" | "down"): Drawable | undefined {
+    const file = this.index.arrows?.[colour]?.[edge];
+    return file ? this.images.get(file) : undefined;
   }
 
   private async loadFile(file: string, mode: "flood" | "global"): Promise<void> {

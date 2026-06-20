@@ -9,6 +9,7 @@
 import { readFileSync, writeFileSync, mkdirSync, copyFileSync, existsSync, readdirSync } from "node:fs";
 import { join, dirname, basename } from "node:path";
 import { fileURLToPath } from "node:url";
+import { spawnSync } from "node:child_process";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const REPO = join(here, "../..");
@@ -216,9 +217,57 @@ if (existsSync(MUS_SRC)) {
   }
 }
 
+// ── (e) exit arrows (K22): the 8 directional arrow members (structMaster.txt ~374-398) ───────────
+// modScreenExits.drawExitArrowsOnImage tiles `pExitArrowMembers[#grn|#rdd][#left|#top|#right|#bottom]`
+// across each exit rect. The source art ships as 16×16 palette .tif (gfx/.../arrow_{green,red}_*.tif).
+// node has no image lib here, so we shell to Python/PIL (available) to flatten each .tif → RGBA PNG; the
+// runtime keys out the white matte at load (assets.keyOutMatte, flood mode), matching Director's
+// "background transparent" ink. The art ships only {plain,down,left,up}; the plain arrow IS the
+// right-facing one (arrow_green.tif == mirror(arrow_green_left.tif), verified) → plain maps to #right,
+// matching structMaster's member("arrow_green_right"). If PIL/conversion is unavailable, `arrows` is
+// left empty and the render path no-ops (the arrow overlay simply doesn't draw — collision unaffected).
+const GFX_ARROWS = join(REPO, "gfx/gfx/mr2_gfx/background/episode_one");
+const OUT_ARROWS = join(OUT_ASSETS, "arrows");
+// arrows[colour][edge] = png filename. colour ∈ {green,red}; edge ∈ {left,up,right,down}.
+const arrows: Record<string, Record<string, string>> = {};
+// (edge → source .tif stem). `right` has no own .tif; the plain `arrow_{col}` is the right-facing arrow.
+const ARROW_EDGES: { edge: string; stem: (col: string) => string }[] = [
+  { edge: "left", stem: (c) => `arrow_${c}_left` },
+  { edge: "up", stem: (c) => `arrow_${c}_up` },
+  { edge: "right", stem: (c) => `arrow_${c}` },
+  { edge: "down", stem: (c) => `arrow_${c}_down` },
+];
+// tif → png via PIL: `Image.open(src).convert('RGBA').save(out)`. One probe first; bail cleanly if absent.
+const tifToPng = (src: string, out: string): boolean => {
+  const r = spawnSync("python3", ["-c",
+    "import sys;from PIL import Image;Image.open(sys.argv[1]).convert('RGBA').save(sys.argv[2])",
+    src, out], { encoding: "utf8" });
+  return r.status === 0;
+};
+let arrowsOk = false;
+if (existsSync(GFX_ARROWS)) {
+  mkdirSync(OUT_ARROWS, { recursive: true });
+  arrowsOk = true;
+  outer:
+  for (const col of ["green", "red"]) {
+    arrows[col] = {};
+    for (const { edge, stem } of ARROW_EDGES) {
+      const src = join(GFX_ARROWS, `${stem(col)}.tif`);
+      const outName = `arrows/arrow_${col}_${edge}.png`;
+      if (!existsSync(src) || !tifToPng(src, join(OUT_ASSETS, outName))) {
+        console.warn("  arrow conversion failed for", src, "— exit-arrow overlay will no-op");
+        arrowsOk = false;
+        break outer;
+      }
+      arrows[col]![edge] = outName;
+    }
+  }
+}
+if (!arrowsOk) { for (const k of Object.keys(arrows)) delete arrows[k]; }
+
 // ── emit + report ─────────────────────────────────────────────────────────────────────────────
 writeFileSync(join(OUT_GEN, "assets.json"),
-  JSON.stringify({ version: 2, defaultMap: DEFAULT_MAP, tilesets, chars, anims, sounds, music, cutscenes }, null, 1));
+  JSON.stringify({ version: 2, defaultMap: DEFAULT_MAP, tilesets, chars, anims, sounds, music, cutscenes, arrows }, null, 1));
 writeFileSync(join(OUT_GEN, "maps.json"), JSON.stringify(maps, null, 1));
 
 const charCount = Object.keys(chars).length, animCount = Object.keys(anims).length;
@@ -228,5 +277,6 @@ console.log(`  chars:    ${charCount}   anims: ${animCount}`);
 console.log(`  maps:     ${maps.length}`);
 console.log(`  sounds:   ${Object.keys(sounds).length}   music: ${Object.keys(music).length}`);
 console.log(`  cutscenes: ${Object.keys(cutscenes).length}  (stones1-10 + intro/wasted/complete)`);
+console.log(`  arrows:   ${arrowsOk ? "8 (green/red × left/up/right/down)" : "0 (conversion unavailable — overlay no-ops)"}`);
 if (sfxWarnings.length) console.warn("  SFX warnings:\n    " + sfxWarnings.join("\n    "));
 if (missingFromData.length) console.log("  data vocab with no shipped wav (ok): " + missingFromData.join(", "));
