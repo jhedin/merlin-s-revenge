@@ -3,6 +3,7 @@
 // chain-kill). Ordered AFTER Energy in the chain so the landing hit applies before i-frames arm.
 
 import { Component, type NextFn } from "../engine/dispatch";
+import { ColourTransform } from "./colourTransform";
 
 export class Hurt extends Component {
   static handles = ["update", "takeHit", "isInvince", "isHurt", "isReelProof", "animAction"];
@@ -40,6 +41,9 @@ export class Hurt extends Component {
       if (!this.reelProof || dead) {
         this.flashT = 6;
         if (this.invinceFrames > 0) this.invinceT = this.invinceFrames;
+        // modEnergy.loseEnergy 203: a non-lethal hit plays the real flickWhite (white->black, speed 33)
+        // instead of the binary flash. ColourTransform plays it; isHurt still gates the reel anim.
+        if (!dead) this.entity.tryGet(ColourTransform)?.flickWhite();
         this.entity.send("characterModeChanged", dead ? "#die" : "#reel");
       }
     }

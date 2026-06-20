@@ -4,6 +4,7 @@
 
 import { Assets, mapList, type MapMeta } from "./render/assets";
 import { Renderer, type Sprite } from "./render/renderer";
+import { drawMinimap } from "./render/minimap";
 import { Input } from "./systems/input";
 import { AudioSystem } from "./systems/audio";
 import { GameLoop } from "./engine/loop";
@@ -295,13 +296,22 @@ async function main() {
       renderer.drawSprites(sprites);
       drawBullets(renderer);
       drawPickups(renderer);
+      // #foregroundPassive (objRoom layer, gMapLayer over the actor band): F1 preserved the data; this
+      // draws it OVER the actors (after drawSprites). pFrontLayerBlendLevel=128 -> globalAlpha 0.5 default.
+      const fg = rooms.room.layer("#foregroundPassive");
+      if (fg && rooms.foregroundSheet) renderer.drawTileLayer(fg, rooms.foregroundSheet, 0, 0, 0.5);
       for (const e of game.entities) {
         if (e.type === "enemy") drawEnemyBar(renderer, e, "#e44");
         else if (e.type === "ally") drawEnemyBar(renderer, e, "#4d6");
       }
       drawCharge(renderer, player);
       drawHud(renderer, player);
-      drawMinimap(renderer, map, rooms.loc, viewW);
+      // 5-state minimap (modMiniMap): #cur/#clr/#inf (+ data #fre/#spe) with a proximity distance blend.
+      const pm = player.get(Movement);
+      drawMinimap(renderer, {
+        map, loc: rooms.loc, cleared: rooms.clearedSet(), infested: rooms.infestedRooms(),
+        playerPx: { x: pm.x, y: pm.y }, cursorPx: game.input.cursor(),
+      }, viewW);
       if (s === "victory") drawVictory(renderer, viewW, viewH);
       if (scene.isPaused()) pauseMenu.render(renderer, viewW, viewH);
     },
@@ -423,21 +433,6 @@ function drawEnemyBar(renderer: Renderer, e: import("./engine/dispatch").Entity,
   const frac = e.get(Energy).energyFrac();
   ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(p.x - 11, p.y - 26, 22, 4);
   ctx.fillStyle = color; ctx.fillRect(p.x - 10, p.y - 25, 20 * frac, 2);
-}
-
-function drawMinimap(renderer: Renderer, map: GameMap, loc: Vec2i, viewW: number) {
-  const ctx = renderer.ctx;
-  const cell = 5;
-  const w = map.mapSize.x * cell, h = map.mapSize.y * cell;
-  const ox = viewW - w - 6, oy = 6;
-  ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.fillRect(ox - 2, oy - 2, w + 4, h + 4);
-  for (let y = 0; y < map.mapSize.y; y++) {
-    for (let x = 0; x < map.mapSize.x; x++) {
-      const here = x + 1 === loc.x && y + 1 === loc.y;
-      ctx.fillStyle = here ? "#fff" : map.roomAt({ x: x + 1, y: y + 1 }) ? "#69a" : "#333";
-      ctx.fillRect(ox + x * cell, oy + y * cell, cell - 1, cell - 1);
-    }
-  }
 }
 
 main().catch((e) => { console.error(e); document.body.append(Object.assign(document.createElement("pre"), { textContent: String(e), style: "color:#f88" })); });

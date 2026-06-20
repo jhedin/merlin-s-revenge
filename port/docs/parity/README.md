@@ -22,7 +22,7 @@ This tracker is the running backlog; update the status table + log each iteratio
 | Spells / weapons / projectiles | ~45% | B2 weapon manager + C charged blasts (cBlast/darkBlast/arctic/heal), splash/`#explode` (energyPulse/thunder/freeze/towerAxe), takeFreeze/takeHeal payload-lists, summons (army/monster), dwarfTower. Beams/fireBullets-streaming/GMG/reservations deferred |
 | Actors / bosses / dwellings | ~26% | All 263 records parse (stats resolve); gaps are art + AI wiring + per-actor behavior; bosses ~55% (E1 reincarnation cascade ☑) |
 | Player / progression / masters | ~50% | Progression math faithful; **G save tree v2** (whole current-room + cleared flags + player + potion/army masters, locator-based target restore); **army reserve** (teleport-to-reserve, re-field at level); **real medikit** stockpile + potion counter; 5 of 39 masters |
-| World / render / pipeline / shell | ~60% | Asset pipeline complete (F1 ☑): all 10 tilesets / 171 chars / 47 maps, load-any-map, lazy per-map loading; collision = solid-AABB only (F2). **Shell complete (H ☑):** Thespian cutscene engine over real actors, scene FSM + data-driven menus, faithful death->wasted->reload, endRoom win + per-room pState (save v3) |
+| World / render / pipeline / shell | ~75% | Asset pipeline complete (F1 ☑); **collision tile-types complete (F2 ☑):** per-edge `EdgeGrid` (solid/platform/ceiling/wallLeft/wallRight + merge + corners + directional events), `#solid`-only byte-identical/golden-locked; **render/anim fidelity (F3 ☑):** real `modColourTransform` tint palette (cached offscreen pass), per-frame anim `dela`+gGameSpeed+data loop flag, `#foregroundPassive` over-actors, per-sprite alpha, 5-state minimap. **Shell complete (H ☑):** Thespian cutscene engine over real actors, scene FSM + menus, death->wasted->reload, endRoom win + per-room pState (save v3) |
 
 The **data** pipeline is genuinely complete (all 263 actors → `data.json`). Almost everything missing is
 *behavior and assets*, not data — consistent with "content is data, not code."
@@ -116,10 +116,22 @@ Status: ☐ not started · ◐ in progress · ☑ done
   (`ensureMapAssets`) keeps first paint fast; `tilePx` resolved per-map. **Atlas baking descoped** (no
   image lib in the environment, `public/assets/` build-generated — frames stay individual PNGs, renderer
   unchanged). The lever for "load whatever the data ships." Gates D1. *(05 #1)*
-- ☐ **F2. Collision tile-type breadth** — `#platform`/`#ceiling`/`#wallLeft`/`#wallRight`, per-edge merge,
-  corner detection, directional collision events (golden tests first). *(05 #2)*
-- ☐ **F3. Render/anim fidelity** — `modColourTransform` tint/glow (not binary white flash), per-sprite
-  alpha/blend, `#foregroundPassive` layer, 5-state minimap, configurable tile size. *(05)*
+- ☑ **F2. Collision tile-type breadth** — `tlk.tileTypeNums` + a derived `EdgeGrid` (4-bit edge mask +
+  corner byte per cell): `#solid`/`#platform`(one-way top)/`#ceiling`/`#wallLeft`/`#wallRight`, per-edge
+  merge (facing solid faces cancel, except bottom-over-platform), anti-diagonal corner detection, and a
+  directional collision **event set** (`collisionWallLeft/Right/Ceiling/Platform/NoPlatform`) dispatched
+  as chain messages by `Movement`. The **`#solid`-only path stays byte-identical** (the original swept-AABB
+  resolver, gated by `hasTypedTiles`) so `collision_golden`/`world` pass UNCHANGED — none of the 47 maps
+  ship non-solid active tiles (all `#solid`/`#none`), so room-1 is unaffected. Magic-rect ported literally
+  (collapses to the box's 4 corner cells at the port's world origin). +14 golden tests. *(05 #2)*
+- ☑ **F3. Render/anim fidelity** — `modColourTransform` palette as a `ColourTransform` component
+  (glowRed/glowTeal/glowGold/glowRedAndTeal/flickWhite + chained fadeGoldBlack/fadeBlack, ping-pong, speed
+  tween) + a renderer **offscreen source-atop tint pass cached by quantized (image, colour, strength)** —
+  no per-frame getImageData; triggers wired in `Energy` (red-on-low-health re-armed on `colourTransformFin`,
+  gold-on-heal, stopGlowRed), `Hurt` (flickWhite, retiring the binary flash), `Freeze` (teal). Per-frame
+  anim `dela` + `gGameSpeed` + **data-driven loop flag** (retired the hard-coded `ONE_SHOT` set; recorded
+  in `assets.json`). `#foregroundPassive` drawn OVER actors. Per-sprite `alpha`. **5-state minimap**
+  (`#cur`/`#clr`/`#inf` live + data `#fre`/`#spe`) + distance blend. +15 structural tests. *(05)*
 
 ### Phase G — Systems & persistence
 - ☑ **G1. Full save/load tree** — save v2 cascades `map → rooms[] (cleared flags) → current-room
@@ -378,3 +390,52 @@ Status: ☐ not started · ◐ in progress · ☑ done
   HP 15 (not fresh) — all with no pageerrors. Deferred (plan §g): credits/profile/showArmy/instructions screen
   CONTENT (transitions wired, overlays stubbed), copy-protection, map editor, screen-transition tweens (instant),
   grave persistence in pState, the rare prop/walkScroll cutscene verbs. Next: D1 (per-enemy sprites) or F2/F3.
+- **Iter 9** — ☑ F2/F3 shipped (collision tile-types + render/anim fidelity). **F2 (golden-first):** the
+  collision solver now handles every active-layer tile type via per-edge solidity. `tlk.tileTypeNums` maps
+  each tile number to its `TileType`; `CollisionGrid.fromActiveLayer` builds a **derived EdgeGrid** (a 4-bit
+  edge-solidity mask + a 4-bit corner byte per cell) — phase 1 sets each cell's raw edge mask from its type
+  (`#solid`=LTRB, `#platform`=T one-way, `#ceiling`=B, `#wallLeft`=L, `#wallRight`=R), phase 2 **merges**
+  facing solid edges between `#right`/`#bottom` neighbours (both cleared, EXCEPT a `#bottom` over a
+  `#platform`), phase 3 detects **corner** tiles (`calcSolidCorner`: a solid tile's corner is solid when the
+  two neighbour faces meeting at the diagonal are both solid — the anti-diagonal escape guard). `moveBox`
+  now returns `{x,y,hitX,hitY,events}`; the **typed per-edge resolver** (the magic-rect 4-corner select +
+  `calcOverlap` push-out with the −1,−1 fudge + the `#platform` was-above-last-frame one-way gate) runs ONLY
+  when a non-`#solid` tile is present (`hasTypedTiles`). **The cardinal no-regression:** `#solid`-only grids
+  stay on the original swept-AABB resolver, byte-for-byte — `collision_golden.test.ts`/`world.test.ts` pass
+  UNCHANGED. None of the 47 shipped maps ship a non-solid active tile (verified: 403 `#solid`/106 `#none`,
+  zero platform/ceiling/wall), so room-1 and every shipped map are unaffected; the typed path is breadth for
+  editor maps. `Movement` dispatches the directional events (`collisionWallLeft/Right/Ceiling/Platform/
+  NoPlatform`) as chain messages; the existing AI wall-detour keeps reading `hitX/hitY`, and reelFly-landing /
+  scenic-repath are data-gated (no shipped map fires platform/noPlatform). The magic-rect is ported literally
+  (its screen offset `tileSize−roomLocation` collapses to 0 at the port's world origin; +borderThickness is
+  the 0-based grid's out-of-bounds border) — kept, not redesigned, per plan §F.1. **F3:** `modColourTransform`
+  is now `components/colourTransform.ts` — the whole palette (glowRed/glowTeal/glowGold/glowRedAndTeal/
+  flickWhite/pulseWhite + chained fadeGoldBlack/fadeBlack, ping-pong, speed-tween, `cancelTransColor` on a new
+  transform, `transColorFin` chain) as a per-entity component exposing a resolved `{rgb,strength,additive}`
+  tint. Triggers WIRED at the combat/status seam: `Energy.glowRedOnLowHealth` (<50%, re-armed on
+  `colourTransformFin`) + `glowGold`-on-heal + `stopGlowRed`-on-recover; `Hurt` plays `flickWhite` on every
+  non-lethal hit (retiring the binary white flash); `Freeze` plays `glowTeal`; glowRed↔glowTeal promote to
+  glowRedAndTeal — all called DIRECTLY via `entity.tryGet(ColourTransform)` (no chain ambiguity). The renderer
+  applies the tint via an **offscreen source-atop pass cached by quantized (image, colour, strength, additive)**
+  — NO per-frame getImageData (the ban), bounded LRU cache. Anim: per-frame `dela` (the current frame's own
+  delay, already in `assets.json`; 47/556 anims vary) + `gGameSpeed` scaling (`game.gameSpeed`, default 1) +
+  a **data-driven `loop` flag** recorded by the builder (retiring the hard-coded `ONE_SHOT` set; the per-strip
+  loop bool isn't cleanly recoverable from the cast, so it's the action classification recorded as overridable
+  data — documented residual gap, plan §C.3.2). `#foregroundPassive` drawn OVER actors (front-layer blend 0.5).
+  Per-sprite `alpha` on `Sprite`. `render/minimap.ts` is 5-state (`#cur`/`#clr`/`#inf` from live state + data
+  `#fre`/`#spe` from `#miniMapStatus`, none ship) + the proximity distance blend (`VarMapRange(min(player,
+  cursor)dist, [60,200], [10,90])` as globalAlpha). tsc clean; **241 tests pass** (+14 F2: per-type one-way,
+  merge, corner via the typed path, directional events, Movement dispatch; +15 F3: ColourTransform state
+  machine incl. glowGold->fadeGoldBlack chain + glowRed ping-pong + red/teal promotion + flickWhite one-shot,
+  per-frame `dela` sequencing + gGameSpeed + loop-vs-hold from data + sprite-carries-tint, 5-state minimap
+  selection). **Room-1 no-regression:** `playthrough_smoke` ends `enemies:0, exitsOpen:true, errors:none`
+  (identical). In-browser: a hit shows a white flick (`[255,255,255]`), a low-health enemy glows red
+  (`[255,0,0]`, additive), the sprite carries the tint, no pageerrors/404s; the intro cutscene plays with real
+  actors; `?map=merlinart` loads + renders with no errors. Deviations/risks: (1) the magic-rect — ported
+  literally, locked by the golden + the 4-corner-select tests before any refactor (the highest §F risk; the
+  solid-only golden green is the proof). (2) `#current`-start colours approximated as black-start (the common
+  idle->glow case); `getColourTransform` floors a freshly-armed bright transform so the glow shows immediately
+  (the `objTransColor` exact curve is approximated linear, plan §G cosmetic). (3) no shipped map ships
+  non-solid tiles or a `#foregroundPassive` layer, so those paths are golden/structurally tested, not
+  in-browser-exercised. Out of scope (plan §G): WebGL tinting, map editor, minimap interaction, discrete
+  layer-Z, AI platform drop-through. Next: D1 (per-enemy sprites).

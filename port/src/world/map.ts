@@ -15,6 +15,9 @@ export interface Layer {
 export interface Room {
   num: number;
   layers: Layer[];
+  // #miniMapStatus (objRoom.getMiniMapStatus): a data-set per-room status (#fre/#spe), when present.
+  // None of the 47 shipped maps set it (they default to #clr / live-derived #inf); parsed for fidelity.
+  miniMapStatus?: string;
   layer(name: string): Layer | undefined;
 }
 
@@ -68,7 +71,8 @@ export function parseMap(src: string, tilePxFor?: TilePxFor): GameMap {
       const grid = asArr(lo["map"]).map((rowv) => asArr(rowv).map((c) => asNum(c)));
       return { name, tileSet: tileSetFor(name), grid };
     });
-    rooms.set(num, { num, layers, layer(n) { return this.layers.find((l) => l.name === n); } });
+    const miniMapStatus = typeof ro["miniMapStatus"] === "string" ? asStr(ro["miniMapStatus"]) : undefined;
+    rooms.set(num, { num, layers, miniMapStatus, layer(n) { return this.layers.find((l) => l.name === n); } });
   }
 
   const mapSize = asPoint(m["mapSize"]);

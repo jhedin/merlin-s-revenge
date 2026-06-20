@@ -6,7 +6,7 @@
 import mapsIndex from "../generated/maps.json";
 
 export interface FrameMeta { file: string; w: number; h: number; reg: [number, number]; dela?: number; }
-export interface AnimMeta { delay: number; frames: FrameMeta[] }
+export interface AnimMeta { delay: number; loop?: boolean; frames: FrameMeta[] }
 export interface TilesetMeta { file: string; w: number; h: number; cols: number; tile: number; keyFile?: string }
 export interface MapMeta {
   id: string; name: string; folder: string; file: string;

@@ -18,6 +18,9 @@ export interface GameContext {
   audio?: AudioSystem;
   rng: Rng;
   tilePx: number;
+  /** gGameSpeed (objAnimStrip.init: pDelay.inc = 1 * gGameSpeed): the per-tick frame-advance scale.
+   *  Default 1 (anim cadence == 1 frame-tick per game tick). A single global, never per-entity. */
+  gameSpeed: number;
   entities: Entity[];
   player: Entity | null;
   tick: number;
@@ -41,6 +44,7 @@ export const game: GameContext = {
   assets: null as unknown as Assets,
   rng: new Rng(12345),
   tilePx: 32,
+  gameSpeed: 1,
   entities: [],
   player: null,
   tick: 0,

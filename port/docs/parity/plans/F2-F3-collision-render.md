@@ -1,6 +1,6 @@
 # Plan F2 + F3 — Collision tile-types & Render/Anim fidelity
 
-Status: ☐ not started. Owner: world/render (agent 5). Backlog rows: F2, F3 in
+Status: ☑ DONE (Iter 9). Owner: world/render (agent 5). Backlog rows: F2, F3 in
 [`../README.md`](../README.md). Input audit: [`../05-world-render-shell.md`](../05-world-render-shell.md)
 §1 (collision), §2 (render/anim), §5 (the "play any map" gap), §7 (faithfulness risks).
 

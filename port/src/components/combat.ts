@@ -4,9 +4,11 @@
 
 import { Component, type NextFn } from "../engine/dispatch";
 import { game } from "../game/context";
+import { ColourTransform } from "./colourTransform";
 
 export class Energy extends Component {
-  static handles = ["takeHit", "takeHeal", "update", "levelUp", "isDead", "getKilledInAction", "energyFrac", "glowGold", "restoreEnergy", "reviveFull", "addSaveData", "restoreFromSave"];
+  static handles = ["takeHit", "takeHeal", "update", "levelUp", "isDead", "getKilledInAction", "energyFrac", "glowGold", "restoreEnergy", "reviveFull", "colourTransformFin", "addSaveData", "restoreFromSave"];
+  private ct(): ColourTransform | undefined { return this.entity.tryGet(ColourTransform); }
   energy = 100; max = 100; dead = false; dieSound = "";
   goldGlow = 0;               // glowGold() frames (cosmetic, rendered as a gold tint)
   killedInAction = false;     // modEnergy.pKilledInAction: set ONLY by lethal damage (never by cull/retire)
@@ -15,6 +17,7 @@ export class Energy extends Component {
   private incPct = 0;         // energyIncPercentage (max grows by this % of baseEnergy per level)
   private recoverDelay = 0;   // energyRecoverDelay (0 = no passive regen)
   private recoverCtr = 0;
+  private static readonly GLOW_RED_PCT = 50; // modEnergy.pGlowRedPercentage: glow red below 50% health
 
   override init(cfg: Record<string, any>): void {
     this.baseEnergy = this.max = this.energy = typeof cfg["energy"] === "number" ? cfg["energy"] : 100;
@@ -43,9 +46,19 @@ export class Energy extends Component {
           killer?.send("gainXp", this.entity.send("getReward") ?? this.imWorthFallback());
         }
       }
+      // glowRedOnLowHealth (modEnergy 125-129): below the threshold % -> arm the red low-health glow.
+      if (!this.dead) this.glowRedOnLowHealth();
     }
     next(vx, vy, attackerId, mult);
   }
+
+  // glowRedOnLowHealth: glow red while health < pGlowRedPercentage (50%). Re-armed on #colourTransformFin
+  // so it keeps pinging while still hurt (internalEvent 158-160). flickWhite from a hit cancels it briefly.
+  private glowRedOnLowHealth(): void {
+    if (this.max > 0 && (this.energy / this.max) * 100 < Energy.GLOW_RED_PCT) this.ct()?.glowRed();
+  }
+  // re-arm the low-health glow when any transform finishes (the white hit-flick clears -> red resumes).
+  colourTransformFin(next: NextFn): void { if (!this.dead) this.glowRedOnLowHealth(); return next(); }
 
   // modEnergy.takeHeal: healAmount = (|vx|+|vy|)·2 (same L1-of-vector shape as damage, ×2), clamp to
   // max, gold glow. Friendly — no i-frames. The vector is the SAME radial collision vector the splash
@@ -53,10 +66,17 @@ export class Energy extends Component {
   takeHeal(next: NextFn, vx = 0, vy = 0, _healerId = -1): void {
     if (this.dead) return;
     const healAmount = (Math.abs(vx) + Math.abs(vy)) * 2;
-    if (healAmount > 0) { this.energy = Math.min(this.max, this.energy + healAmount); this.goldGlow = 12; }
+    if (healAmount > 0) {
+      this.energy = Math.min(this.max, this.energy + healAmount);
+      this.ct()?.glowGold();                                          // modEnergy 264: heal -> gold glow
+      // increaseEnergy 142-144: stop the low-health red glow once back above the threshold.
+      if (this.max > 0 && (this.energy / this.max) * 100 >= Energy.GLOW_RED_PCT) this.ct()?.stopGlowRed();
+      this.goldGlow = 12;
+    }
     next(vx, vy, _healerId);
   }
-  glowGold(): void { this.goldGlow = 12; }
+  // glowGold (modEnergy.glowGold): plays the gold->fadeGoldBlack heal tint via ColourTransform.
+  glowGold(next: NextFn): void { this.goldGlow = 12; this.ct()?.glowGold(); return next(); }
 
   // modEnergy.restoreEnergy: refill to max (used by modExtraLives.respawn after death).
   restoreEnergy(next: NextFn): void { this.energy = this.max; next(); }

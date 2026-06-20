@@ -75,9 +75,21 @@ for (const { sym, prefix, key } of TILESET_DEFS) {
 // separated) belongs to MULTIPLE strips → split the member name on spaces FIRST, then process each
 // token as its own anm_ name. Per-frame `reg` (regpoint) + `dela` (delay) recorded for F3 fidelity.
 interface Frame { file: string; w: number; h: number; reg: [number, number]; dela: number; }
-const anims: Record<string, { delay: number; frames: Frame[] }> = {};
+const anims: Record<string, { delay: number; loop: boolean; frames: Frame[] }> = {};
 const chars: Record<string, true> = {};
 const frameNo = (tok: string): number => parseInt(/^\d+/.exec(tok)?.[0] ?? "0", 10);
+
+// Loop vs one-shot (objAnimStrip.getLooped / modAnimSet character-mode logic): the original treats every
+// strip as cyclic in objAnimStrip, but the CHARACTER mode logic reverts after one play for "transient"
+// actions (a swing, a cast, a death, a reel). The per-strip loop bool is NOT cleanly recoverable from the
+// cast (it's runtime counter state), so we record the action-name classification here (data-overridable
+// at runtime via assets.json), matching the port's prior ONE_SHOT set. Documented residual gap (plan §C.3.2).
+const ONE_SHOT_ACTIONS = new Set([
+  "grave", "die", "reel",
+  "naturalMelee", "weaponMelee", "magicMelee", "weaponMagic",
+  "release", "weaponRanged", "naturalRanged",
+]);
+const isLoopAction = (action: string): boolean => !ONE_SHOT_ACTIONS.has(action);
 
 for (const b of bitmaps) {
   // a single bitmap may carry several logical anm_ names (seperateMembers) — space-split first.
@@ -90,7 +102,7 @@ for (const b of bitmaps) {
     chars[char] = true;
     const key = `${char}_${action}`;
     const file = copy(b);
-    (anims[key] ??= { delay: dela, frames: [] }).frames.push({ file, w: b.w, h: b.h, reg: b.reg, dela });
+    (anims[key] ??= { delay: dela, loop: isLoopAction(action), frames: [] }).frames.push({ file, w: b.w, h: b.h, reg: b.reg, dela });
     (anims[key].frames.at(-1) as any)._n = frameNo(t.at(-1) ?? "0");
   }
 }

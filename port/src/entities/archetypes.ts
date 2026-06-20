@@ -11,6 +11,7 @@ import { PlayerControl, EnemyAI } from "../components/control";
 import { Mana } from "../components/mana";
 import { WeaponManager, resolveAttack } from "../components/weapon";
 import { Hurt } from "../components/hurt";
+import { ColourTransform } from "../components/colourTransform";
 import { Reincarnate } from "../components/reincarnate";
 import { Dwelling } from "../components/dwelling";
 import { Identity } from "../components/identity";
@@ -22,17 +23,17 @@ export type PickupSym = PickupEffect;
 import { registry } from "../game/data";
 import { game } from "../game/context";
 
-const DEFAULTS = { isDead: false, getTeam: "", getTeamRole: "#teamMembers", energyFrac: 1, getLevel: 1, isFrozen: false, freezeFactor: 1, isInvince: false, isHurt: false };
+const DEFAULTS = { isDead: false, getTeam: "", getTeamRole: "#teamMembers", energyFrac: 1, getLevel: 1, isFrozen: false, freezeFactor: 1, isInvince: false, isHurt: false, getColourTransform: null, getAlpha: undefined, colourTransformFin: undefined };
 
 // Experience is ordered BEFORE Energy (records attacker before death); Hurt is AFTER Energy
 // (feedback + i-frames arm once the hit has landed). Targeting (the #attack.target* config) sits with
 // Team so teamMaster.findTarget / impactMeleeAttack can read it generically.
 // WeaponManager (modWeaponManager) sits after Mana (so addCooldownCounter reads manaRegeneration at
 // init) and supplies the data-driven #attack/charge/cooldown the control/AI driver dispatches on.
-export const PlayerArchetype = new Archetype("player", [Identity, PlayerControl, Freeze, Mana, WeaponManager, Movement, Anim, Experience, Energy, Hurt, Medikit, ExtraLives, WastedMode, Team, Targeting], { defaults: { ...DEFAULTS, getActorType: "", getNumOfMedikits: 0, getExtraLives: 0, isWasted: false } });
-export const EnemyArchetype = new Archetype("enemy", [Identity, EnemyAI, Freeze, Mana, WeaponManager, Movement, Anim, Experience, Energy, Hurt, Reincarnate, Team, Targeting], { defaults: { ...DEFAULTS, getActorType: "", getKilledInAction: false } });
+export const PlayerArchetype = new Archetype("player", [Identity, PlayerControl, Freeze, Mana, WeaponManager, Movement, Anim, ColourTransform, Experience, Energy, Hurt, Medikit, ExtraLives, WastedMode, Team, Targeting], { defaults: { ...DEFAULTS, getActorType: "", getNumOfMedikits: 0, getExtraLives: 0, isWasted: false } });
+export const EnemyArchetype = new Archetype("enemy", [Identity, EnemyAI, Freeze, Mana, WeaponManager, Movement, Anim, ColourTransform, Experience, Energy, Hurt, Reincarnate, Team, Targeting], { defaults: { ...DEFAULTS, getActorType: "", getKilledInAction: false } });
 // Dwellings are static (no AI) but reuse Movement for position + Energy/Team so they're targetable.
-export const DwellingArchetype = new Archetype("dwelling", [Identity, Dwelling, Movement, Anim, Energy, Hurt, Team, Targeting], { defaults: { ...DEFAULTS, getActorType: "" } });
+export const DwellingArchetype = new Archetype("dwelling", [Identity, Dwelling, Movement, Anim, ColourTransform, Energy, Hurt, Team, Targeting], { defaults: { ...DEFAULTS, getActorType: "" } });
 
 /** Summon a friendly unit on Merlin's team that hunts enemies, using the actor's real stats. */
 export function spawnAlly(actorName: string, x: number, y: number, animChar = actorName): Entity {

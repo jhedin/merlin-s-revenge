@@ -20,6 +20,7 @@ export class RoomManager {
   grid!: CollisionGrid;
   passiveSheet?: TileSheet;
   activeSheet?: TileSheet;
+  foregroundSheet?: TileSheet; // #foregroundPassive (drawn OVER actors, F3)
   exitsOpen = false;             // edges are solid until the room's hostiles are dead
   private margin = 12;
   private cleared = new Set<number>(); // room nums already cleared (persist across visits)
@@ -66,6 +67,7 @@ export class RoomManager {
     game.grid = this.grid;
     this.passiveSheet = this.sheetFor("#backgroundPassive");
     this.activeSheet = this.sheetFor("#backgroundActive");
+    this.foregroundSheet = this.sheetFor("#foregroundPassive");
 
     // keep only the player; clear enemies/bullets from the previous room
     game.entities = game.entities.filter((e) => e.type === "player");
@@ -94,6 +96,19 @@ export class RoomManager {
   currentRoomNum(): number { return this.room.num; }
   /** the cleared-room flag set (objRoom.pRoomCleared), serialized whole. */
   clearedRooms(): number[] { return [...this.cleared]; }
+  /** the cleared set (for the minimap status). */
+  clearedSet(): Set<number> { return this.cleared; }
+  // infested rooms (getMiniMapStatus #inf): the current room while it still holds live hostiles, plus
+  // any VISITED (pState-snapshotted) room that isn't cleared and recorded a live hostile when left.
+  infestedRooms(): Set<number> {
+    const inf = new Set<number>();
+    if (this.room && !this.cleared.has(this.room.num) && this.enemiesAlive()) inf.add(this.room.num);
+    for (const [num, snap] of this.pState) {
+      if (this.cleared.has(num)) continue;
+      if (snap.some((s) => s.type === "enemy")) inf.add(num);
+    }
+    return inf;
+  }
   /** restore the cleared set (loadGame, before entering the current room). */
   restoreCleared(nums: number[]): void {
     this.cleared = new Set(nums);

@@ -6,6 +6,7 @@
 // level/potion speed gained while frozen) and stops the glow. Movement queries isFrozen()/freezeFactor().
 
 import { Component, type NextFn } from "../engine/dispatch";
+import { ColourTransform } from "./colourTransform";
 
 export class Freeze extends Component {
   static handles = ["update", "takeFreeze", "isFrozen", "freezeFactor"];
@@ -22,7 +23,10 @@ export class Freeze extends Component {
   takeFreeze(_next: NextFn, vx = 0, vy = 0, _attackerId = -1, freezeMultiplier = 1, glowTeal = false): void {
     if (!this.frozen) {
       this.frozen = true;
-      if (glowTeal) this.glowTeal = true; // teal overlay (rendered as the freeze tint)
+      if (glowTeal) {
+        this.glowTeal = true;                                  // teal overlay (rendered as the freeze tint)
+        this.entity.tryGet(ColourTransform)?.glowTeal();       // modFreeze 57/77-78: glowTeal on freeze
+      }
     }
     const add = (Math.abs(vx) + Math.abs(vy)) * freezeMultiplier * 4;
     this.ticks += add;                    // accumulate, not max (faithful multi-hit thaw extension)
@@ -35,7 +39,10 @@ export class Freeze extends Component {
   update(next: NextFn): void {
     if (this.ticks > 0) {
       this.ticks--;
-      if (this.ticks <= 0) { this.ticks = 0; this.frozen = false; this.glowTeal = false; } // defrost
+      if (this.ticks <= 0) {
+        this.ticks = 0; this.frozen = false;
+        if (this.glowTeal) { this.glowTeal = false; this.entity.tryGet(ColourTransform)?.stopGlowTeal(); } // defrost -> stop teal
+      }
     }
     next();
   }
