@@ -153,12 +153,14 @@ Status: ☐ not started · ◐ in progress · ☑ done
   current melee weapon (#punch→#merlinSword on pickup) AND holds to charge magic once owned — both at
   once; recast/swing each gate on that weapon's own counter, `resetCooldown` on FIRE (no free shot on
   swap). `damageMultiplier` now flows from `#attack` into `takeHit.mult` for the player's weapons.
-  **Calibration:** MELEE_SCALE=3 pins `#punch`=48 (today's `round(8*4)+8`) exactly; merlinSword=384
-  (one-shots the room-1 15–300-energy band, same effective clear speed). Enemy melee keeps the slice's
-  tuned scalar damage (routing enemy power·strength·mult would inflate lethality 5–25× and break room 1)
-  and enemy cooldowns are re-derived to preserve the old `atkCooldown+(ranged?18:6)` recovery in frames
-  — enemy feel unchanged. A1 inertia→damage coupling stays deferred (reason documented in the A1 plan).
-  tsc clean; 114 tests pass (+24: Counter edge cases, resolveAttack, charge reproduces today,
+  **Calibration (corrected in review):** MELEE_SCALE=2.5 pins `#punch`=40 (the pre-B2 `round(8*4)+8`)
+  exactly; merlinSword=320 (its real damageMultiplier 16; one-shots the room-1 15–300-energy band, same
+  effective clear speed). [Review caught the agent's arithmetic slip — it had SCALE=3/punch=48 claiming
+  =40.] Enemy melee keeps the slice's tuned scalar damage (routing enemy power·strength·mult would inflate
+  lethality 5–25× and break room 1) and enemy cooldowns are re-derived to preserve the old
+  `atkCooldown+(ranged?18:6)` recovery in frames — enemy feel unchanged. A1 inertia→damage coupling stays
+  deferred (reason documented in the A1 plan).
+  tsc clean; 116 tests pass (+26: Counter edge cases, resolveAttack, charge reproduces today,
   WeaponManager add/select/cooldown/save, melee calibration, spell-fells-300); room 1 clears
   (`enemies:0, exitsOpen:true, errors:none`); in-browser: sword pickup → both #punch+#merlinSword owned
   (sword auto-current), melee+knockback land, grant energyBlast → getHasSpell true, charge bar fills to
