@@ -11,9 +11,16 @@ import { ColourTransform } from "./colourTransform";
 import { game } from "../game/context";
 import type { Sprite } from "../render/renderer";
 
+// A few actors carry no bundled art of their own (e.g. goblinHero inherits #CPUCharacter with no
+// #character); map them to the closest kin sprite instead of the generic blackOrc stand-in.
+const CHAR_ALIAS: Record<string, string> = { goblinHero: "goblinWarrior" };
+
 /** The sprite character for an actor, or a stand-in ("blackOrc") when its anims aren't bundled. */
 export function spriteCharOr(name: string, fallback = "blackOrc"): string {
-  return game.assets.index.anims[`${name}_stand`] ? name : fallback;
+  if (game.assets.index.anims[`${name}_stand`]) return name;
+  const alias = CHAR_ALIAS[name];
+  if (alias && game.assets.index.anims[`${alias}_stand`]) return alias;
+  return fallback;
 }
 
 // Fallback one-shot classification when an anim's `loop` flag is absent (old assets.json). Mirrors the

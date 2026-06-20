@@ -81,9 +81,9 @@ export function spawnDwelling(actorName: string, x: number, y: number, animChar 
       releaseInterval: pair(g["releaseInterval"], [25, 45]),
     }))
     .filter((g) => g.typ && registry.resolveActor(g.typ));
-  // lifetime budget from real #totalResidents (default 10 per addModParams; clamped so a portal
-  // doesn't flood the slice). The building stops producing once the budget is spent.
-  const budget = Math.min(12, typeof d["totalResidents"] === "number" ? (d["totalResidents"] as number) : 10);
+  // lifetime budget from real #totalResidents (default 10 per addModParams). Shipped dwellings are
+  // 5-12; modResidents has no cap, so use the real value (the concurrent aliveCap prevents flooding).
+  const budget = typeof d["totalResidents"] === "number" ? (d["totalResidents"] as number) : 10;
   const dieSound = typeof d["dieSound"] === "string" ? (d["dieSound"] as string) : undefined;
   const e = DwellingArchetype.create(makeEntityId());
   e.type = game.teamMaster.isPlayerSide(team) ? "ally" : "enemy"; // targetable/destroyable; a #village hut is friendly

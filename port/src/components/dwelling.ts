@@ -34,7 +34,15 @@ export class Dwelling extends Component {
   private rnd(r: [number, number]): number { return r[0] + Math.floor(game.rng.next() * (r[1] - r[0] + 1)); }
 
   private startProduction(): void {
-    if (this.budget <= 0 || this.groups.length === 0) { this.mode = "empty"; return; }
+    if (this.budget <= 0 || this.groups.length === 0) {
+      // modResidents.noMoreResidents -> startDeath: a spent building self-destructs (leaves a grave)
+      // rather than standing inert, so the room clears once its residents are dealt with.
+      if (this.mode !== "empty" && !this.entity.send("isDead")) {
+        this.entity.send("takeHit", 999999, 0, this.entity.id);
+      }
+      this.mode = "empty";
+      return;
+    }
     this.group = this.groups[Math.floor(game.rng.next() * this.groups.length)]!;
     this.groupLeft = Math.min(this.rnd(this.group.groupSize), this.budget);
     this.timer = this.groupLeft * this.rnd(this.group.buildTime); // productionTime
@@ -64,6 +72,8 @@ export class Dwelling extends Component {
     const m = this.entity.get(Movement);
     const a = game.rng.next() * Math.PI * 2, r = 20 + game.rng.next() * 16;
     const e = spawn(this.group.typ, m.x + Math.cos(a) * r, m.y + Math.sin(a) * r, { animChar: spriteCharOr(this.group.typ) });
+    // modResidents.setStartingLevel: residents emerge at a small random level (kept modest at slice scale)
+    if (game.rng.next() < 0.5) e.send("forceLevelUp");
     game.entities.push(e);
     this.residents.push(e);
   }
