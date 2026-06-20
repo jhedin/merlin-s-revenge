@@ -52,9 +52,11 @@ per-actor code. **This is iteration 1.**
 Status: ☐ not started · ◐ in progress · ☑ done
 
 ### Phase A — Combat keystone
-- ☐ **A1. `damage == knockback` + data-driven `#attack` flow.** `takeHit(vect, attacker)`; damage from
-  `(|vx|+|vy|)·damageMultiplier`; apply knockback (inertia-damped) before energy; `fireBullet`/melee carry
-  each actor's real `#attack`. *(01 #1, 03 #1 — the keystone)*
+- ☑ **A1. `damage == knockback` (collision vector).** `takeHit(vx,vy,attacker,mult)`; damage =
+  `(|vx|+|vy|)·mult` (modEnergy); the same vector applied as knockback (objGameObject), inertia-damped, as
+  a separate decaying impulse; melee/bullet build aimed vectors via `aimedVect`. Damage numbers preserved
+  (no balance regression); inertia damps knockback only for now — faithful damage-damping pairs with real
+  data attack powers under B2. See [`plans/A1-damage-knockback.md`](plans/A1-damage-knockback.md). *(01 #1, 03 #1)*
 
 ### Phase B — Targeting & AI engine
 - ☐ **B1. `teamMaster` + `findTarget` + `objAiCPU` target FSM.** Data allegiance (`tem_*`), unit-map
@@ -112,3 +114,7 @@ Status: ☐ not started · ◐ in progress · ☑ done
 ## Status log
 - **Iter 0** — Full-game audit via 5 parallel agents; this tracker + five domain docs. Overall ~20%.
   Keystone identified: `damage == knockback` (A1).
+- **Iter 1** — ☑ A1 shipped. `takeHit` now carries a collision vector (damage = L1·mult, modEnergy) and
+  applies it as inertia-damped knockback (objGameObject); melee/bullet/bomber build aimed vectors. Damage
+  unchanged (room 1 still clears; spell still fells rank-and-file), enemies now recoil. +4 tests (75 total).
+  Next: B1 (teamMaster/findTarget) or B2 (weapon manager) — the AI/targeting engine.

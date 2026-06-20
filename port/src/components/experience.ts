@@ -25,10 +25,10 @@ export class Experience extends Component {
     this.imWorth = typeof cfg["experienceImWorth"] === "number" ? cfg["experienceImWorth"] : 3;
   }
 
-  // ordered before Energy: record who hit us, then forward
-  takeHit(next: NextFn, dmg: number, attackerId = -1): void {
+  // ordered before Energy: record who hit us, then forward the (vx,vy,attacker,mult) collision payload
+  takeHit(next: NextFn, vx = 0, vy = 0, attackerId = -1, mult = 1): void {
     if (attackerId >= 0) this.lastAttacker = attackerId;
-    next(dmg, attackerId);
+    next(vx, vy, attackerId, mult);
   }
 
   gainXp(_next: NextFn, amount: number): void {

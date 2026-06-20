@@ -23,8 +23,8 @@ export class Hurt extends Component {
   }
 
   // runs after Energy: damage already applied (Energy honored a prior i-frame), now arm feedback
-  takeHit(next: NextFn, dmg: number, attackerId = -1): any {
-    const r = next(dmg, attackerId);
+  takeHit(next: NextFn, vx = 0, vy = 0, attackerId = -1, mult = 1): any {
+    const r = next(vx, vy, attackerId, mult);
     this.flashT = 6;
     if (this.invinceFrames > 0) this.invinceT = this.invinceFrames;
     return r;

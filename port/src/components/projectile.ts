@@ -5,16 +5,17 @@
 import { Component, type NextFn } from "../engine/dispatch";
 import { Movement } from "./movement";
 import { game } from "../game/context";
+import { aimedVect } from "../engine/math";
 
 export class Projectile extends Component {
   static handles = ["update", "isFinished"];
-  life = 0; maxLife = 100; power = 10; team = ""; ownerId = -1; done = false; freeze = 0;
+  life = 0; maxLife = 100; power = 10; team = ""; ownerId = -1; done = false; freeze = 0; mult = 1;
 
-  configure(power: number, team: string, ownerId: number, maxLife = 100, freeze = 0): void {
+  configure(power: number, team: string, ownerId: number, maxLife = 100, freeze = 0, mult = 1): void {
     this.life = 0; this.power = power; this.team = team; this.ownerId = ownerId;
-    this.maxLife = maxLife; this.freeze = freeze; this.done = false;
+    this.maxLife = maxLife; this.freeze = freeze; this.mult = mult; this.done = false;
   }
-  override reset(): void { this.done = false; this.life = 0; this.ownerId = -1; this.freeze = 0; }
+  override reset(): void { this.done = false; this.life = 0; this.ownerId = -1; this.freeze = 0; this.mult = 1; }
   isFinished(): boolean { return this.done; }
 
   update(next: NextFn): void {
@@ -26,7 +27,10 @@ export class Projectile extends Component {
       if (e.send("isDead") || e.send("getTeam") === this.team) continue;
       const p = e.send("getPos") as { x: number; y: number };
       if (Math.abs(p.x - m.x) < 12 && Math.abs(p.y - m.y) < 12) {
-        e.send("takeHit", this.power, this.ownerId);
+        // collisionVect = bullet velocity carrying L1 magnitude `power` (objBullet: vect*power); damage
+        // = (|vx|+|vy|)*mult, knockback along travel (modEnergy/objGameObject via takeHit chain)
+        const v = aimedVect(m.vx, m.vy, this.power);
+        e.send("takeHit", v.x, v.y, this.ownerId, this.mult);
         if (this.freeze > 0) e.send("takeFreeze", this.freeze); // payload: #takeFreeze
         this.done = true;
         break;

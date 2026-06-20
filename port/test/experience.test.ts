@@ -40,7 +40,7 @@ describe("experience: XP + leveling (faithful curve)", () => {
     const victim = arch.create(4).build({ energy: 10, experienceImWorth: 6 });
     const killer = arch.create(5).build({ energy: 100 });
     game.entities = [victim, killer];
-    victim.send("takeHit", 999, killer.id);
+    victim.send("takeHit", 999, 0, killer.id); // collisionVect (vx=999) -> damage 999
     expect(victim.send("isDead")).toBe(true);
     expect(victim.get(Experience).lastAttacker).toBe(killer.id);
     expect(killer.get(Experience).xp).toBe(6); // imWorth 6 + floor(0/2)

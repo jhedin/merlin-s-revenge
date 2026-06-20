@@ -21,18 +21,23 @@ export class Energy extends Component {
     this.recoverCtr = 0; this.dead = false;
   }
 
-  takeHit(next: NextFn, dmg: number, attackerId = -1): void {
+  // modEnergy.takeHit: damage is the L1 magnitude of the (inertia-damped, by Movement upstream) collision
+  // vector times the attack's damageMultiplier. Knockback was already applied by Movement earlier in chain.
+  takeHit(next: NextFn, vx = 0, vy = 0, attackerId = -1, mult = 1): void {
     if (this.dead || this.entity.send("isInvince")) return; // i-frames (set by Hurt on a prior hit)
-    this.energy -= dmg;
-    if (this.energy <= 0) {
-      this.energy = 0; this.dead = true;
-      if (this.dieSound) game.audio?.play(this.dieSound, 0.6); // actor #dieSound
-      if (attackerId >= 0) {                       // award XP to the killer (imWorth + half my gained)
-        const killer = game.entities.find((e) => e.id === attackerId && !e.send("isDead"));
-        killer?.send("gainXp", this.entity.send("getReward") ?? this.imWorthFallback());
+    const dmg = (Math.abs(vx) + Math.abs(vy)) * mult;
+    if (dmg > 0) {
+      this.energy -= dmg;
+      if (this.energy <= 0) {
+        this.energy = 0; this.dead = true;
+        if (this.dieSound) game.audio?.play(this.dieSound, 0.6); // actor #dieSound
+        if (attackerId >= 0) {                       // award XP to the killer (imWorth + half my gained)
+          const killer = game.entities.find((e) => e.id === attackerId && !e.send("isDead"));
+          killer?.send("gainXp", this.entity.send("getReward") ?? this.imWorthFallback());
+        }
       }
     }
-    next(dmg, attackerId);
+    next(vx, vy, attackerId, mult);
   }
 
   // recoverEnergy: trickle +1 every energyRecoverDelay ticks while below max (modEnergy)

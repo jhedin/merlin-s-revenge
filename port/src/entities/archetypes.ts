@@ -151,6 +151,7 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     strength: num("strength", 5),
     team: str("team", "#monsters"),
     animChar: opts.animChar ?? actorName, box: 14,
+    inertia: num("inertia", 0), // resists knockback (modGameObject damping); heavy orcs get shoved less
     ranged, aiKind,
     atkCooldown: typeof atk["cooldown"] === "number" ? atk["cooldown"] : undefined,
     atkReach: typeof atk["reach"] === "number" ? atk["reach"] : undefined,

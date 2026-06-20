@@ -7,6 +7,7 @@ import { Movement } from "./movement";
 import { Mana } from "./mana";
 import { game } from "../game/context";
 import { fireBullet } from "../systems/bullets";
+import { aimedVect } from "../engine/math";
 import type { Entity } from "../engine/dispatch";
 
 function nearestOfTypes(x: number, y: number, types: readonly string[], ignore?: Entity): Entity | null {
@@ -150,7 +151,8 @@ export class PlayerControl extends Component {
     if (!target) return;
     const p = target.send("getPos") as { x: number; y: number };
     if (Math.hypot(p.x - m.x, p.y - m.y) > this.meleeReach) return;
-    target.send("takeHit", this.power, this.entity.id);
+    const v = aimedVect(p.x - m.x, p.y - m.y, this.power); // melee collisionVect aimed at the target
+    target.send("takeHit", v.x, v.y, this.entity.id);
     m.facingLeft = p.x < m.x;
     this.meleeCd = PUNCH.cooldown; this.meleeT = PUNCH.frames;
     game.audio?.play(this.hasSword ? "skeleton_fire" : "wizard_punch"); // act_player #punch / merlinSword
@@ -225,7 +227,7 @@ export class EnemyAI extends Component {
   private attack(m: Movement, dx: number, dy: number, target: Entity): void {
     if (this.cooldown !== 0) return;
     if (this.ranged) fireBullet(this.entity.id, m.x, m.y - 6, dx, dy, 4.5, this.power * 2, this.entity.send("getTeam"));
-    else target.send("takeHit", this.power, this.entity.id);
+    else { const v = aimedVect(dx, dy, this.power); target.send("takeHit", v.x, v.y, this.entity.id); }
     if (this.atkSound) game.audio?.play(this.atkSound, 0.5); // #attack.sound (quieter than player)
     this.cooldown = this.cooldownMax;
   }
@@ -271,8 +273,9 @@ export class EnemyAI extends Component {
   private bomber(m: Movement, dx: number, dy: number, d: number, target: Entity): void {
     this.seek(m, dx, dy, d);
     if (d < 16) {
-      target.send("takeHit", this.power * 4, this.entity.id);
-      this.entity.send("takeHit", 999999, this.entity.id); // explode
+      const v = aimedVect(dx, dy, this.power * 4); // contact blast aimed at the victim
+      target.send("takeHit", v.x, v.y, this.entity.id);
+      this.entity.send("takeHit", 999999, 0, this.entity.id); // self-destruct (lethal L1 magnitude)
     }
   }
 }

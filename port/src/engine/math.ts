@@ -54,3 +54,14 @@ export class Rng {
   seed(s: number): void { this.s = s >>> 0; }
   state(): number { return this.s; }
 }
+
+// A collision vector aimed along (dx,dy) whose L1 magnitude (|x|+|y|) equals `dmg`. takeHit derives
+// damage = (|vx|+|vy|)*damageMultiplier from this (modEnergy), and the same vector is the knockback
+// direction (objGameObject) — so building the vector this way keeps damage == the intended number while
+// giving knockback the right heading. Degenerate (0,0) -> a horizontal hit of magnitude dmg.
+export function aimedVect(dx: number, dy: number, dmg: number): { x: number; y: number } {
+  const l1 = Math.abs(dx) + Math.abs(dy);
+  if (l1 === 0) return { x: dmg, y: 0 };
+  const f = dmg / l1;
+  return { x: dx * f, y: dy * f };
+}
