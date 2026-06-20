@@ -14,6 +14,7 @@ import { WeaponTechnique } from "../components/weaponTechnique";
 import { Hurt } from "../components/hurt";
 import { ColourTransform } from "../components/colourTransform";
 import { Reincarnate } from "../components/reincarnate";
+import { Grave } from "../components/grave";
 import { Dwelling } from "../components/dwelling";
 import { Identity } from "../components/identity";
 import { Medikit } from "../components/medikit";
@@ -32,9 +33,9 @@ const DEFAULTS = { isDead: false, getTeam: "", getTeamRole: "#teamMembers", ener
 // WeaponManager (modWeaponManager) sits after Mana (so addCooldownCounter reads manaRegeneration at
 // init) and supplies the data-driven #attack/charge/cooldown the control/AI driver dispatches on.
 export const PlayerArchetype = new Archetype("player", [Identity, PlayerControl, Freeze, Mana, WeaponManager, Movement, Anim, ColourTransform, Experience, Energy, Hurt, Medikit, ExtraLives, WastedMode, Team, Targeting], { defaults: { ...DEFAULTS, getActorType: "", getNumOfMedikits: 0, getExtraLives: 0, isWasted: false } });
-export const EnemyArchetype = new Archetype("enemy", [Identity, EnemyAI, Freeze, Mana, WeaponManager, WeaponTechnique, Movement, Anim, ColourTransform, Experience, Energy, Hurt, Reincarnate, Team, Targeting], { defaults: { ...DEFAULTS, getActorType: "", getKilledInAction: false } });
+export const EnemyArchetype = new Archetype("enemy", [Identity, Grave, EnemyAI, Freeze, Mana, WeaponManager, WeaponTechnique, Movement, Anim, ColourTransform, Experience, Energy, Hurt, Reincarnate, Team, Targeting], { defaults: { ...DEFAULTS, getActorType: "", getKilledInAction: false } });
 // Dwellings are static (no AI) but reuse Movement for position + Energy/Team so they're targetable.
-export const DwellingArchetype = new Archetype("dwelling", [Identity, Dwelling, Movement, Anim, ColourTransform, Energy, Hurt, Team, Targeting], { defaults: { ...DEFAULTS, getActorType: "" } });
+export const DwellingArchetype = new Archetype("dwelling", [Identity, Grave, Dwelling, Movement, Anim, ColourTransform, Energy, Hurt, Team, Targeting], { defaults: { ...DEFAULTS, getActorType: "" } });
 
 /** Summon a friendly unit on Merlin's team that hunts enemies, using the actor's real stats. */
 export function spawnAlly(actorName: string, x: number, y: number, animChar = actorName): Entity {

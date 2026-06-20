@@ -101,7 +101,15 @@ omitted). Worked top-down by fidelity impact. Each item cites where it was defer
   once; the goScreen ACTION is deferred to finishTransition). `transitionFrames=0` test mode keeps the FSM
   unit tests synchronous; the host (main) uses a 3-frame fade. [H2/F3]
 - ☐ **K20. Per-effect sound channels.** `soundMaster` 0–255 volume + channel management. [05-audit]
-- ☐ **K21. Grave system + pState graves.** A real grave actor on death + its pState persistence. [G/H]
+- ☑ **K21. Grave system + pState graves.** `Grave` component (modGrave `pGraveOn`): a dead actor IS its
+  own grave — it holds the `#grave` anim frame at the death loc, renders BEHIND the living (a low render-z,
+  modelling the original's room-background blit), and faces RIGHT (`setFlipFromDir(1)`). A GHOST
+  (`#ghost:true` → `pGraveOn=false`) leaves NO grave (sprite null — it vanishes). Grave persistence rides
+  the existing per-room pState snapshot (dead actors round-trip with their `#grave` pose), matching
+  modRoomGraves' `pGraves` save. The heavy-entity-vs-baked-blit difference is internal (dead actors are
+  already inert: out of the unit map, off the team roster, no health bar) — the observable grave behaviour
+  (where it falls, behind the living, persists on re-entry/save, none for ghosts) is faithful. Tested in
+  `render_f3`. [G/H — resolved]
 - ☐ **K22. Collision edges.** AI one-way-platform drop-through, discrete layer-Z, per-tile screen-exit
   ranges, exit arrows. [F2/F3 §g — no shipped map uses non-solid tiles, but support + AI hook]
 

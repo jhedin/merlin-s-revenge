@@ -96,6 +96,14 @@ export class Anim extends Component {
 
   sprite(): Sprite | null {
     const m = this.entity.get(Movement);
+    // modGrave: a DEAD actor is its own grave. A ghost (pGraveOn=false) leaves NO grave — it vanishes when
+    // finished; every other dead actor holds the #grave frame BEHIND the living (the original draws it into
+    // the room background — modelled here as a low render-z) and faces RIGHT (drawGrave: setFlipFromDir(1)).
+    // getGraveOn is undefined for the player (no grave system — its in-game death plays on the normal path).
+    const dead = this.entity.send("isDead") === true;
+    const graveOn = this.entity.send("getGraveOn"); // true=leaves grave, false=ghost, undefined=player
+    if (dead && graveOn === false) return null;     // ghost: no grave, vanishes
+    const isGrave = dead && graveOn === true;
     const anim = this.animFor(this.action);
     if (!anim || anim.frames.length === 0) return null;
     const f = anim.frames[this.frame % anim.frames.length]!;
@@ -110,8 +118,10 @@ export class Anim extends Component {
     return {
       img: game.assets.img(f.file),
       x: m.x, y: m.y, regX: f.reg[0], regY: f.reg[1],
-      z: m.y, // simple painter's depth by world-y
-      flip: m.facingLeft, // mirror to face the movement/aim direction (SpriteGetFlipHAsDir)
+      // painter's depth by world-y; a grave sits BEHIND every live actor (room-background blit) while still
+      // ordering grave-vs-grave by y — a large negative bias keeps it under the living band.
+      z: isGrave ? m.y - 100000 : m.y,
+      flip: isGrave ? false : m.facingLeft, // graves face right (setFlipFromDir(1)); else mirror to aim dir
       tint: tint ?? undefined,
       alpha: typeof alpha === "number" ? alpha : undefined,
     };

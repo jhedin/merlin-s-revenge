@@ -4,6 +4,7 @@ import { Archetype } from "@/engine/dispatch";
 import { ColourTransform } from "@/components/colourTransform";
 import { Movement } from "@/components/movement";
 import { Anim } from "@/components/anim";
+import { Grave } from "@/components/grave";
 import { CollisionGrid } from "@/world/collision";
 
 // F3 structural tests. Render is hard to unit-test; these lock the state machines + data wiring.
@@ -131,5 +132,42 @@ describe("F3 Anim per-frame delay + loop flag (data-driven)", () => {
     const an = e.get(Anim);
     for (let i = 0; i < 6; i++) e.send("update"); // run past the end
     expect((an as any).frame).toBe(1); // held at last frame, not wrapped to 0
+  });
+});
+
+// K21 — modGrave: a dead actor renders as a grave (behind the living, facing right); a ghost leaves none.
+describe("K21 grave render (modGrave)", () => {
+  function withGraveAnims() {
+    game.assets = {
+      index: { anims: { x_stand: { delay: 1, loop: false, frames: [{ file: "a", w: 16, h: 16, reg: [8, 8], dela: 1 }] },
+                        x_grave: { delay: 1, loop: false, frames: [{ file: "g", w: 16, h: 16, reg: [8, 8], dela: 1 }] } } },
+      images: { has: () => true }, img: () => ({}), ensureChar: () => {},
+    } as any;
+  }
+  // isDead is forced true via archetype default (pickAction -> "grave"); facingLeft set true to prove the flip override.
+  const Dead = new Archetype("graveprobe", [Movement, Anim, Grave], { defaults: { isDead: true } });
+  const Live = new Archetype("liveprobe", [Movement, Anim, Grave], { defaults: { isDead: false } });
+  beforeEach(() => { game.gameSpeed = 1; game.grid = new CollisionGrid(40, 40, 32); withGraveAnims(); });
+
+  it("a dead non-ghost is a grave: behind the living (z << y) and faces right (flip=false)", () => {
+    const grave = Dead.create(1).build({ animChar: "x", x: 50, y: 80 });
+    grave.get(Movement).facingLeft = true; // would mirror if alive; a grave forces face-right
+    const live = Live.create(2).build({ animChar: "x", x: 60, y: 70 });
+    const gs = grave.get(Anim).sprite()!;
+    const ls = live.get(Anim).sprite()!;
+    expect(gs.flip).toBe(false);            // setFlipFromDir(1)
+    expect(gs.z).toBeLessThan(ls.z);        // grave drawn behind even a live actor at a LOWER y
+    expect(gs.z).toBe(80 - 100000);
+  });
+
+  it("a dead GHOST (graveOn=false) leaves no grave (sprite null)", () => {
+    const ghost = Dead.create(1).build({ animChar: "x", x: 50, y: 80, ghost: true });
+    expect(ghost.get(Anim).sprite()).toBeNull();
+  });
+
+  it("graves still order among themselves by world-y", () => {
+    const near = Dead.create(1).build({ animChar: "x", x: 0, y: 40 }).get(Anim).sprite()!;
+    const far = Dead.create(2).build({ animChar: "x", x: 0, y: 90 }).get(Anim).sprite()!;
+    expect(far.z).toBeGreaterThan(near.z); // y90 grave draws over y40 grave
   });
 });
