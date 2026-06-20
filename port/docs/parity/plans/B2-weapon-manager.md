@@ -473,7 +473,14 @@ step 9 is the one balance-sensitive change, isolated and gated.
   (C3). B2 builds the *engine* they plug into, not the spells.
 - **`weaponSelector` / weapon-cycle HUD** (`modWeaponSelector`) — the 1–9 `selectSpell` hotkeys are
   wired (cheap), but the weapon-selector overlay UI is a render seam.
-- **A1 inertia→damage coupling** — recommended *still deferred* (see §f.1); lands with a holistic
-  power-scale pass in C-phase, not here. B2's contribution is making `damageMultiplier` data-driven.
+- **A1 inertia→damage coupling + enemy melee `power·strength·mult`** — *RESOLVED by K1.* The §f.1
+  deferral (enemy melee kept on the tuned `this.power` scalar; inertia damps knockback only) is closed.
+  K1 turned the inertia→damage coupling on (`Movement.takeHit` damps the vector before Energy reads it)
+  and routed enemy melee through the faithful `power·strength·mult·ENEMY_DAMAGE_SCALE` (0.18) + enemy
+  bullets through `speed·power·mult·BULLET_DAMAGE_SCALE` (0.40), unified with the player path (which keeps
+  its own `MELEE_SCALE`/`DAMAGE_SCALE` 2.5). The two enemy-side scales are the documented px-scale
+  decoupling the headline risk predicted; room-1 still clears (gate verified). See
+  [`K1-faithful-damage.md`](K1-faithful-damage.md). B2's standing contribution remains making
+  `damageMultiplier` data-driven — K1 now consumes it on both sides.
 - **`modWeaponTechnique`** (attack-anim speedup accumulator) — separate small module, not part of the
   weapon registry; deferred.

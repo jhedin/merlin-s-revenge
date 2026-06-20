@@ -197,10 +197,15 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
   // towerAxe, energyPulse casters) fires the real splash bullet — on land/collide it resolves an AREA hit
   // through SplashDamage instead of single-target. Resolve that bullet's #attack (+ top-level splashDamageOn).
   let splashBullet: ReturnType<typeof resolveAttack> | undefined;
+  // K1: a PLAIN (non-splash) ranged bullet's resolved #attack (archerArrow) carries the faithful
+  // power·mult the CpuAI fires as speed·power·mult·BULLET_DAMAGE_SCALE. energyBlastBullet has no record
+  // (-> undefined here -> CpuAI falls back to the caster's power).
+  let bulletAttack: ReturnType<typeof resolveAttack> | undefined;
   if (ranged && typeof atk["bullet"] === "string" && atk["bullet"] !== "#none") {
     const bulletActor = registry.resolveActor(atk["bullet"].replace(/^#/, ""));
     const ba = bulletActor ? resolveAttack(bulletActor["attack"] as Record<string, any>, bulletActor) : undefined;
     if (ba && (ba.attackType === "#explode" || ba.splashDamageOn)) splashBullet = ba;
+    else if (ba) bulletAttack = ba;
   }
   const pw = atk["power"];
   const atkPower = pw && typeof pw === "object" && "x" in pw ? Math.abs(pw.x) + Math.abs(pw.y) : 0;
@@ -219,7 +224,7 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     team: str("team", "#monsters"), teamRole: "#teamMembers",
     animChar: opts.animChar ?? actorName, box: 14,
     inertia: num("inertia", 0), // resists knockback (modGameObject damping); heavy orcs get shoved less
-    ranged, runReload, ghost, splashBullet,
+    ranged, runReload, ghost, splashBullet, bulletAttack,
     // WeaponManager: the enemy's single weapon (one #attack) + cooldown-counter inc stats. manaRegen
     // is forwarded so a magic enemy's live counter inc (Mana.regeneration) matches the calibration.
     attack: enemyAttack, agility, dexterity, mana_regeneration: manaRegen,

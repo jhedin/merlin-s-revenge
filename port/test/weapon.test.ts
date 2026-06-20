@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { Counter } from "@/engine/counter";
-import { resolveAttack, meleeBasePower, WeaponManager, MELEE_SCALE, type AttackData } from "@/components/weapon";
+import { resolveAttack, meleeBasePower, enemyMeleeBasePower, WeaponManager, MELEE_SCALE, DAMAGE_SCALE, ENEMY_DAMAGE_SCALE, BULLET_DAMAGE_SCALE, type AttackData } from "@/components/weapon";
 import { chargeMaxOf, chargeStartOf, chargeSpeedOf } from "@/components/charge";
 import { registry } from "@/game/data";
 import { spawnPlayer, spawnEnemy } from "@/entities/archetypes";
@@ -183,6 +183,68 @@ describe("melee damage calibration (no regression vs today)", () => {
     const dmg = meleeBasePower(sword, 8) * sword.damageMultiplier; // 1 * 8 * 2.5 * 16 = 320
     expect(dmg).toBeCloseTo(320, 5);
     expect(dmg).toBeGreaterThan(300); // one-shots swordOrc (300) and everything lighter
+  });
+});
+
+// Resolve an actor's primary melee #attack, walking the #weapon chain (warrior -> warriorSword) the way
+// spawnEnemy does, so the matchup tests read the SAME AttackData the live enemy fires.
+function enemyWeaponAtk(actor: string): { a: AttackData; strength: number; inertia: number; energy: number } {
+  const d = (registry.resolveActor(actor) ?? {}) as Record<string, any>;
+  const weapon = typeof d["weapon"] === "string" ? d["weapon"].replace(/^#/, "") : null;
+  let atk: any = d["attack"] && typeof d["attack"] === "object" ? d["attack"] : {};
+  if (weapon && !atk["animType"]) atk = (registry.resolveActor(weapon) ?? {})["attack"] ?? {};
+  return { a: resolveAttack(atk), strength: Number(d["strength"]), inertia: Number(d["inertia"]), energy: Number(d["energy"]) };
+}
+
+describe("K1 — enemy melee is the faithful power·strength·mult·ENEMY_DAMAGE_SCALE", () => {
+  // The two enemy-side scales (vs the player's DAMAGE_SCALE). Pinned so a future tweak is a deliberate edit.
+  it("the calibrated constants are 2.5 (player) / 0.18 (enemy melee) / 0.40 (enemy bullet)", () => {
+    expect(DAMAGE_SCALE).toBe(2.5);
+    expect(MELEE_SCALE).toBe(2.5);
+    expect(ENEMY_DAMAGE_SCALE).toBe(0.18);
+    expect(BULLET_DAMAGE_SCALE).toBe(0.40);
+  });
+
+  // per-hit damage on the player (inertia 0, undamped — the worst case). Today's tuned model was 4/4/10
+  // (warrior/swordOrc/blackOrc), all flattened; K1 holds the rank-and-file near 4 and makes blackOrc hit
+  // HARDER (faithful: str 30) — restoring the order the flattened model erased.
+  const hit = (actor: string): number => {
+    const { a, strength } = enemyWeaponAtk(actor);
+    return enemyMeleeBasePower(a, strength) * a.damageMultiplier;
+  };
+  it("warrior ~3.2 (was 4) — in-band", () => { expect(hit("warrior")).toBeCloseTo(3.24, 2); });
+  it("swordOrc ~4.3 (was 4) — in-band", () => { expect(hit("swordOrc")).toBeCloseTo(4.32, 2); });
+  it("blackOrc ~16.2 (was 10) — faithfully tankier-hitting, NOT a one-shot", () => {
+    expect(hit("blackOrc")).toBeCloseTo(16.2, 2);
+    expect(hit("blackOrc")).toBeLessThan(200); // never one-shots the 200-energy player
+  });
+  it("the faithful ORDER is restored: blackOrc > swordOrc >= warrior (flat 4/4/10 before)", () => {
+    expect(hit("blackOrc")).toBeGreaterThan(hit("swordOrc"));
+    expect(hit("swordOrc")).toBeGreaterThanOrEqual(hit("warrior"));
+  });
+  it("the boss part (skelitonLordSword ~91/hit) threatens but does NOT instakill the player", () => {
+    const dmg = hit("skelitonLord");
+    expect(dmg).toBeCloseTo(90.72, 1);
+    expect(dmg).toBeLessThan(200);              // >= 2 hits to fell the 200-energy player
+    expect(Math.ceil(200 / dmg)).toBeGreaterThanOrEqual(2);
+  });
+});
+
+describe("K1 — enemy bullet damage is speed·power·mult·BULLET_DAMAGE_SCALE", () => {
+  const speed = 4.5; // the port's fixed enemy bullet travel speed
+  it("archerArrow (power 0.6, mult 4) lands a few/hit (~4.3), in the today-ish band", () => {
+    const arrow = resolveAttack((registry.resolveActor("archerArrow") ?? {})["attack"] as any,
+      registry.resolveActor("archerArrow") as any);
+    const dmg = arrow.powerScalar * speed * BULLET_DAMAGE_SCALE * arrow.damageMultiplier;
+    expect(dmg).toBeCloseTo(4.32, 2);
+    expect(dmg).toBeGreaterThan(0);
+    expect(dmg).toBeLessThan(20);              // no spike vs today's 18
+  });
+  it("a record-less bolt (energyBlastBullet) falls back to the caster power (mageOrc ~7.2 ≈ today's 8)", () => {
+    // mageOrc this.power = max(4, round(strength/3 + atkPower)) = 4; fallback dmg = power·speed·SCALE·1.
+    const casterPower = 4;
+    const dmg = casterPower * speed * BULLET_DAMAGE_SCALE * 1;
+    expect(dmg).toBeCloseTo(7.2, 2);
   });
 });
 

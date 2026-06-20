@@ -32,7 +32,7 @@ thing still inert in mr4Demo is `#player` (the spawn marker, not a mechanic).
 
 | Domain | Coverage | One-line state |
 |---|---|---|
-| AI & combat engine | ~85% | **A1** vector `takeHit` (damage == knockback) + **B1** `teamMaster`/`findTarget`/`CpuAI` committed-target FSM (replaced the 4-branch stub) + **B2** `WeaponManager`/`Counter` cooldowns/data-driven charge. Remaining: bullet-dodge kiting, ghost possession, hair/builder AIs (unreachable) |
+| AI & combat engine | ~88% | **A1** vector `takeHit` (damage == knockback) + **B1** `teamMaster`/`findTarget`/`CpuAI` committed-target FSM (replaced the 4-branch stub) + **B2** `WeaponManager`/`Counter` cooldowns/data-driven charge + **K1** faithful damage coupling (inertia damps DAMAGE; enemy melee `power·strength·mult·0.18`, enemy bullet `speed·power·mult·0.40`, player melee unchanged ×2.5). Remaining: bullet-dodge kiting, ghost possession, hair/builder AIs (unreachable) |
 | Spells / weapons / projectiles | ~45% | B2 weapon manager + C charged blasts (cBlast/darkBlast/arctic/heal), splash/`#explode` (energyPulse/thunder/freeze/towerAxe), takeFreeze/takeHeal payload-lists, summons (army/monster), dwarfTower. Beams/fireBullets-streaming/GMG/reservations deferred |
 | Actors / bosses / dwellings | ~26% | All 263 records parse (stats resolve); gaps are art + AI wiring + per-actor behavior; bosses ~55% (E1 reincarnation cascade ☑) |
 | Player / progression / masters | ~50% | Progression math faithful; **G save tree v2** (whole current-room + cleared flags + player + potion/army masters, locator-based target restore); **army reserve** (teleport-to-reserve, re-field at level); **real medikit** stockpile + potion counter; 5 of 39 masters |
@@ -622,3 +622,34 @@ Status: ☐ not started · ◐ in progress · ☑ done
   (#naturalMelee/#weaponMelee) unchanged. 279 tests; room-1 gate green. **Parity is now comprehensive:
   every objType placed across all 47 maps is handled, all mr4Demo content works, the only unresolved
   symbols are faithful source-data orphans.**
+
+### Phase K — implement previously-deferred items ([`K-deferred-backlog.md`](plans/K-deferred-backlog.md))
+- ☑ **K1. Faithful damage coupling (inertia damps DAMAGE; real attack powers).** The keystone deferral
+  (A1 §4 + B2 §f.1), closed. (1) `Movement.takeHit` now damps the collision vector by `(100−inertia)/100`
+  ONCE and passes the **damped** vector downstream to Energy/Freeze/Heal — so inertia cuts **damage** as
+  well as knockback, exactly like `objGameObject.takeHit` (was knockback-only). (2) **Enemy melee** retired
+  the tuned `this.power` scalar for the faithful `power·strength·mult·ENEMY_DAMAGE_SCALE` (0.18), unified
+  with the player path (both build the aimed vector via `meleeHitFn`→A1 `takeHit`; only the scale differs),
+  `damageMultiplier` data-driven (`enemyMeleeBasePower`). (3) **Enemy bullets** → `speed·power·mult·
+  BULLET_DAMAGE_SCALE` (0.40), threading `mult` through `fireBullet`→`Projectile.configure` and resolving
+  the plain bullet `#attack` in `spawnEnemy` (`bulletAttack`); the record-less `energyBlastBullet` falls
+  back to the caster's power. (4) **Player melee/spell unchanged** (`MELEE_SCALE`/`DAMAGE_SCALE` 2.5,
+  `dmgPerUnit·charge` spell — the radial magic recouple is K2). **Why two enemy scales:** the player's
+  `MELEE_SCALE` was reverse-engineered from `power(2)·str(8)` (#punch=40); reusing it on enemies (mults
+  3–16) inflates them 11–22× (a swordOrc would 3-shot, a blackOrc one-shot the player). The enemy side gets
+  its own consistent scale on the SAME faithful formula — the documented px-scale decoupling A1 took for
+  knockback. **Per-matchup (per-hit on the 200-energy player):** warrior 3.2 (was 4), swordOrc 4.3 (was 4),
+  blackOrc 16.2 (was 10 — faithfully tankier-hitting), skelitonLordSword 91 (a boss threatens, ≥2 hits, no
+  instakill); enemy bullet archer 4.3 / mageOrc 7.2 (≈ today's 8). **Player→orc now inertia-damped:** punch
+  40 → 8–16 vs inertia-60–80 orcs (the sword becomes the answer), merlinSword 320 → 64–128 (still clears).
+  Faithful ordering restored (blackOrc > swordOrc ≈ warrior; the tuned model flattened all to 4). tsc clean;
+  **288 tests** (knockback: updated the inertia-changes-shove test + ADDED inertia-damps-DAMAGE 0.2×-ratio;
+  weapon: ADDED the K1 per-matchup table — constants pinned, warrior/swordOrc/blackOrc values + the
+  restored order + boss-not-instakill + bullet faithful; reincarnate/hurt `kill`-helper/inertia-0 fixes for
+  the now-damped damage). Room-1 no-regression: `playthrough_smoke` ends `enemies:0, exitsOpen:true,
+  errors:none` (sword still clears, no reconciliation needed). In-browser (`?map=works_mr4Demo` + boss
+  `merliniii`): no pageerrors; no enemy instakills the player; the sword kills every type incl. the tanky
+  blackOrc (1200) — nothing unkillable. Deviations/risks: the two enemy-side scales are a deliberate
+  px-scale decoupling (player has no inertia so the lethal direction is uncoupled — `ENEMY_DAMAGE_SCALE`
+  is the only player-protection lever); the spell's faithful radial magic vector waits for K2's live spell
+  actor. Next: K2 (spell-actor lifecycle) or another Tier-1 backlog item.

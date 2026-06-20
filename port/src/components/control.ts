@@ -11,7 +11,7 @@ import { fireBullet, fireSplashBullet, fireBulletPayload, performBeamAttack } fr
 import { registry } from "../game/data";
 import { meleeHitFn } from "../systems/teams";
 import { Targeting } from "./combat";
-import { WeaponManager, meleeBasePower, resolveAttack, type AttackData } from "./weapon";
+import { WeaponManager, meleeBasePower, enemyMeleeBasePower, resolveAttack, BULLET_DAMAGE_SCALE, type AttackData } from "./weapon";
 import { summonUnit } from "./summon";
 import { chargeMaxOf, chargeStartOf, chargeSpeedOf } from "./charge";
 import type { Entity } from "../engine/dispatch";
@@ -285,6 +285,7 @@ export class CpuAI extends Component {
   atkSound = "";       // #attack.sound
   ghost = false;       // objAiCPUGhost approximation (drift; not a real possessor — out of scope)
   splashBullet: AttackData | null = null; // towerAxe/energyPulse etc: fire a SPLASH bullet, not single-target
+  bulletAttack: AttackData | null = null; // K1: a plain (non-splash) ranged weapon's resolved #attack.bullet
   private strength = 5;
 
   private mode: CpuMode = "findTarget";
@@ -308,6 +309,7 @@ export class CpuAI extends Component {
     }
     this.atkSound = typeof cfg["atkSound"] === "string" ? cfg["atkSound"] : "";
     this.splashBullet = (cfg["splashBullet"] as AttackData | undefined) ?? null; // a ranged CPU's splash bullet (tower)
+    this.bulletAttack = (cfg["bulletAttack"] as AttackData | undefined) ?? null; // K1: plain bullet's #attack (power/mult)
     this.retargetCtr = 0;
     this.mode = "findTarget"; this.target = null;
     this.wanderAng = 0; this.wanderTimer = 0; this.detourT = 0;
@@ -443,18 +445,31 @@ export class CpuAI extends Component {
             Math.round(SPELL_FX.dmgPerUnit * (ca.chargeMaxBasic || 5)), team, ca,
             tgc?.hits ?? ["#teamMembers"], "#friendly", SPELL_FX.life);
         } else {
-          fireBullet(this.entity.id, m.x, m.y - 6, dx, dy, 4.5, this.power * 2, team);
+          // K1 — faithful plain bullet: damage = speed·power·mult·BULLET_DAMAGE_SCALE carried as the
+          // bullet's collision-vector L1 (= power·speed·BULLET_DAMAGE_SCALE), with mult from the bullet's
+          // damageMultiplier. archerArrow (power 0.6, mult 4) etc. The bullet's #attack is resolved once
+          // at spawn (bulletAttack). When the fired bolt has NO data record (energyBlastBullet — mageOrc's
+          // goblinSummon), fall back to the caster spell's power·this.strength (objBullet spawned from the
+          // spell), so a record-less magic bolt still does ≈ today's damage.
+          const speed = 4.5;
+          const ba = this.bulletAttack;
+          const l1 = ba ? ba.powerScalar * speed * BULLET_DAMAGE_SCALE
+            : this.power * speed * BULLET_DAMAGE_SCALE;   // record-less bolt -> caster power (this.power)
+          const bmult = ba ? ba.damageMultiplier : 1;
+          fireBullet(this.entity.id, m.x, m.y - 6, dx, dy, speed, l1, team, 100, 0, bmult);
         }
       }
     } else {
       // performMeleeAttack -> teamMaster.impactMeleeAttack: AREA resolution (every hostile in reach,
-      // role-filtered by #hits), each via A1's aimed-vector takeHit. NO-REGRESSION CHOICE (B2 §f.1):
-      // enemy melee keeps the slice's tuned scalar damage (this.power, mult 1) — the enemy #attack
-      // powers are calibrated for the engine's native units, so routing them through power·strength·mult
-      // (as the player does) would inflate enemy lethality 5–25× and break room-1. The faithful
-      // damageMultiplier-from-data win applies to the PLAYER's weapons (where it's calibrated/tested);
-      // a holistic enemy power-rescale is deferred with the inertia-damage coupling (C-phase).
-      game.teamMaster.impactMeleeAttack(this.entity, meleeHitFn(this.entity, this.entity.id, this.power));
+      // role-filtered by #hits), each via A1's aimed-vector takeHit. K1: enemy melee is now the FAITHFUL
+      // power·strength·mult·ENEMY_DAMAGE_SCALE (unified with the player path — both build the vector via
+      // meleeHitFn -> A1 takeHit, only the scale constant differs), damageMultiplier data-driven, inertia-
+      // damped at the victim. The tuned this.power scalar is retired for melee (kept only as the
+      // record-less bullet fallback above). Restores the faithful ordering blackOrc > swordOrc ≈ warrior.
+      const ca = this.entity.get(WeaponManager).getCurrentAttack();
+      const base = ca ? enemyMeleeBasePower(ca, this.strength) : this.power;
+      const mult = ca ? ca.damageMultiplier : 1;
+      game.teamMaster.impactMeleeAttack(this.entity, meleeHitFn(this.entity, this.entity.id, base, mult));
     }
     m.facingLeft = dx < 0;
     if (this.atkSound) game.audio?.play(this.atkSound, 0.5); // #attack.sound (quieter than player)

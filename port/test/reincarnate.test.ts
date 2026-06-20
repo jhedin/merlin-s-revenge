@@ -34,7 +34,11 @@ function makeChain(reincarnateAs: string[] | string, x: number, y: number, energ
 // deal a lethal damage hit: damage = (|vx|+|vy|)*mult; vx=energy guarantees <=0.
 function kill(e: Entity, attackerId = -1): void {
   const en = e.get(Energy);
-  e.send("takeHit", en.max + 1, 0, attackerId, 1);
+  // K1: inertia damps the takeHit vector (and thus damage) by (100-inertia)/100, so to guarantee a lethal
+  // hit on a high-inertia skeleton part we send a vector large enough to remain lethal AFTER damping.
+  const inertia = e.get(Movement).inertia;
+  const d = (100 - inertia) / 100;
+  e.send("takeHit", (en.max + 1) / (d || 1), 0, attackerId, 1);
 }
 
 describe("Reincarnate (modReincarnate) cascade", () => {

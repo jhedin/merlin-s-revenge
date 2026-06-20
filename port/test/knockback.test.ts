@@ -17,7 +17,7 @@ describe("damage == knockback (collision vector)", () => {
       mousePressed: () => false, mouseReleased: () => false, held: () => false, pressed: () => false, endTick() {} } as any;
   });
 
-  it("damage is the L1 magnitude of the vector times damageMultiplier", () => {
+  it("damage is the L1 magnitude of the vector times damageMultiplier (inertia 0 -> undamped)", () => {
     const e = spawnEnemy("swordOrc", 500, 500, { animChar: "swordOrc" });
     e.get(Movement).inertia = 0;
     game.entities = [e];
@@ -38,7 +38,7 @@ describe("damage == knockback (collision vector)", () => {
     expect(m.x).toBeGreaterThan(x0 + 1);
   });
 
-  it("inertia reduces the shove (heavy units resist) without changing damage", () => {
+  it("inertia reduces the shove (heavy units resist the knockback impulse)", () => {
     const light = spawnEnemy("swordOrc", 200, 500, { animChar: "swordOrc" });
     const heavy = spawnEnemy("swordOrc", 800, 500, { animChar: "swordOrc" });
     light.get(Movement).inertia = 0;
@@ -46,14 +46,29 @@ describe("damage == knockback (collision vector)", () => {
     game.entities = [light, heavy];
     const lm = light.get(Movement), hm = heavy.get(Movement);
     const lx0 = lm.x, hx0 = hm.x;
-    const lhp = light.get(Energy).energy, hhp = heavy.get(Energy).energy;
     light.send("takeHit", 60, 0, -1, 1);
     heavy.send("takeHit", 60, 0, -1, 1);
     for (let i = 0; i < 4; i++) { light.send("update"); heavy.send("update"); }
     expect(lm.x - lx0).toBeGreaterThan(hm.x - hx0);                 // light flies further
-    expect(light.get(Energy).energy).toBe(heavy.get(Energy).energy); // ...but both take the same damage
-    expect(lhp - light.get(Energy).energy).toBe(60);
-    expect(hhp - heavy.get(Energy).energy).toBe(60);
+  });
+
+  // K1 — the coupling: inertia now damps DAMAGE too (objGameObject damps the vector ONCE, modEnergy then
+  // reads the damped vector). A hit on an inertia-80 actor deals 0.2x the damage of the same hit on an
+  // inertia-0 actor (was equal pre-K1 because damage was passed through undamped).
+  it("inertia damps DAMAGE: inertia-80 takes ~0.2x the inertia-0 damage from the same vector", () => {
+    const light = spawnEnemy("swordOrc", 200, 500, { animChar: "swordOrc" });
+    const heavy = spawnEnemy("swordOrc", 800, 500, { animChar: "swordOrc" });
+    light.get(Movement).inertia = 0;
+    heavy.get(Movement).inertia = 80;
+    game.entities = [light, heavy];
+    const lhp = light.get(Energy).energy, hhp = heavy.get(Energy).energy;
+    light.send("takeHit", 60, 0, -1, 1); // inertia 0 -> full 60
+    heavy.send("takeHit", 60, 0, -1, 1); // inertia 80 -> 60 * 0.2 = 12
+    const ldmg = lhp - light.get(Energy).energy;
+    const hdmg = hhp - heavy.get(Energy).energy;
+    expect(ldmg).toBe(60);
+    expect(hdmg).toBeCloseTo(12, 6);             // 60 * (100-80)/100
+    expect(hdmg / ldmg).toBeCloseTo(0.2, 6);     // the damped ratio
   });
 
   it("aimedVect builds a vector whose L1 magnitude equals the requested damage", () => {

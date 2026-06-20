@@ -104,10 +104,31 @@ const strOr = (v: any, d: string): string => (typeof v === "string" ? v : d);
 // (gate verified by the smoke), the headroom only showing against high-energy actors (blackOrc 1200:
 // 4 swings vs 6) which don't gate the slice.
 export const MELEE_SCALE = 2.5;
+// DAMAGE_SCALE — alias of MELEE_SCALE; the single PLAYER-side melee scale (K1). The player's #punch/sword
+// stay pinned (40 / 320). Kept as a named export so the player path and the calibration are self-documenting.
+export const DAMAGE_SCALE = MELEE_SCALE;
+
+// K1 — the ENEMY-side scales. The port's MELEE_SCALE was reverse-engineered from the PLAYER's
+// power(2)·strength(8) so #punch=40; applying it to enemies (mults 3–16) inflates them 11–22× (a swordOrc
+// would 3-shot, a blackOrc one-shot the player). So the enemy side gets its OWN consistent scale on the
+// SAME faithful power·strength·mult formula — a deliberate, documented px-scale decoupling (the same kind
+// A1 took for knockback). ENEMY_DAMAGE_SCALE holds the rank-and-file (warrior/swordOrc) near today's
+// ~4/hit while restoring the faithful ordering the tuned model erased (blackOrc, str 30, now hits HARDER
+// than swordOrc — 16 vs 4 — faithfully, with no one-shots). BULLET_DAMAGE_SCALE on speed·power·mult keeps
+// enemy bolts near today's per-hit. See docs/parity/plans/K1-faithful-damage.md §b.
+export const ENEMY_DAMAGE_SCALE = 0.18;   // on enemy melee power·strength·mult
+export const BULLET_DAMAGE_SCALE = 0.40;  // on enemy/spell bullet speed·power·mult
 
 // The base collision-vector L1 magnitude for a melee swing (before damageMultiplier is applied as mult).
 export function meleeBasePower(attack: AttackData, strength: number): number {
   return attack.powerScalar * strength * MELEE_SCALE;
+}
+
+// enemyMeleeBasePower — the ENEMY twin of meleeBasePower (K1): the same faithful power·strength product,
+// scaled by the enemy-side ENEMY_DAMAGE_SCALE instead of the player's MELEE_SCALE. damageMultiplier is
+// carried as `mult` (so the L1 here is power·strength·ENEMY_DAMAGE_SCALE), inertia-damped at the victim.
+export function enemyMeleeBasePower(attack: AttackData, strength: number): number {
+  return attack.powerScalar * strength * ENEMY_DAMAGE_SCALE;
 }
 
 // resolveAttack(raw): build an AttackData from a (possibly partial) #attack proplist, filling from

@@ -3,6 +3,7 @@ import { game } from "@/game/context";
 import { CollisionGrid } from "@/world/collision";
 import { spawnPlayer, spawnEnemy } from "@/entities/archetypes";
 import { Energy } from "@/components/combat";
+import { Movement } from "@/components/movement";
 import { Anim } from "@/components/anim";
 
 describe("Hurt feedback (flash + i-frames)", () => {
@@ -31,6 +32,7 @@ describe("Hurt feedback (flash + i-frames)", () => {
 
   it("enemies flash but have no i-frames (take continuous damage)", () => {
     const e = spawnEnemy("swordOrc", 0, 0, { animChar: "swordOrc" });
+    e.get(Movement).inertia = 0; // isolate i-frames/flash from K1's inertia-damps-damage (swordOrc is 70)
     game.entities = [e];
     const en = e.get(Energy); const hp0 = en.energy;
     e.send("takeHit", 10, 0, -1);

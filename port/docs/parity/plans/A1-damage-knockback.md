@@ -65,6 +65,16 @@ with the real data attack powers (backlog B2).
 > inertia→damage stays a **C-phase item**, landing *with* that rescale. Room-1 orcs have `inertia:0`, so
 > the coupling is a no-op there but a landmine elsewhere — exactly why it waits for the rescale.
 
+> **RESOLVED by K1 (Iter — faithful damage coupling).** The §4 deferral is closed. `Movement.takeHit` now
+> damps the collision vector by `(100−inertia)/100` ONCE and passes the **damped** vector downstream to
+> Energy/Freeze/Heal — so inertia cuts **damage** too, exactly like `objGameObject.takeHit`. This landed
+> together with the enemy-side faithful `power·strength·mult` (the holistic power-rescale this note flagged
+> as the precondition): enemy melee = `power·strength·mult·ENEMY_DAMAGE_SCALE` (0.18) and enemy bullets =
+> `speed·power·mult·BULLET_DAMAGE_SCALE` (0.40), with the player melee unchanged on its own scale (2.5).
+> Player `inertia:0` keeps the player's attacking undamped; heavy orcs (inertia 60–80) now take ~20–40% —
+> tanky, with the sword the faithful answer. Room-1 still clears (gate verified). See
+> [`K1-faithful-damage.md`](K1-faithful-damage.md).
+
 ## Files
 - `components/movement.ts`: `inertia`, `kvx/kvy`, `KNOCK_SCALE`, `knockFriction`; `takeHit` handler
   (damp+impulse, ordered first); integrate `kvx/kvy` (uncapped) in `update`; save/restore knock state.

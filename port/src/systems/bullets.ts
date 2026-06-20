@@ -12,7 +12,7 @@ const pool = new Pool(BulletArchetype);
 
 export function fireBullet(
   ownerId: number, x: number, y: number, dirX: number, dirY: number,
-  speed: number, power: number, team: string, maxLife = 100, freeze = 0,
+  speed: number, power: number, team: string, maxLife = 100, freeze = 0, mult = 1,
 ): Entity {
   const b = pool.acquire();
   b.type = "bullet";
@@ -20,7 +20,9 @@ export function fireBullet(
   const d = Math.hypot(dirX, dirY) || 1;
   const m = b.get(Movement);
   m.vx = (dirX / d) * speed; m.vy = (dirY / d) * speed;
-  b.get(Projectile).configure(power, team, ownerId, maxLife, freeze);
+  // K1: mult (the bullet's damageMultiplier) flows into the bullet's takeHit; damage = (|vx|+|vy|)·mult,
+  // where the bullet's collision-vector L1 == `power`. Player bolts pass mult=1 (unchanged).
+  b.get(Projectile).configure(power, team, ownerId, maxLife, freeze, mult);
   game.entities.push(b);
   return b;
 }

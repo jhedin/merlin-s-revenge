@@ -39,20 +39,23 @@ export class Movement extends Component {
     this.vx = this.vy = this.kvx = this.kvy = this.intentX = this.intentY = 0; this.hitX = this.hitY = false;
   }
 
-  // objGameObject.takeHit: add the collision vector to velocity as a knockback impulse, damped by inertia.
-  // Ordered first in the chain (Movement precedes Energy/Hurt/Experience in every archetype).
-  // NB: the original damps inertia into the vector modEnergy then reads, so it cuts damage too — but those
-  // attack powers are calibrated for that coupling. A1 preserves the port's current (uncoupled) damage
-  // numbers, so we damp KNOCKBACK only and pass the vector through undamped. Faithful damage-damping pairs
-  // with adopting the real data attack powers (backlog B2); see docs/parity/plans/A1-damage-knockback.md.
+  // objGameObject.takeHit: damp the collision vector by inertia ONCE (modGameObject), then apply it both
+  // as the knockback impulse AND pass it DOWNSTREAM to Energy/Freeze/Heal — so inertia cuts DAMAGE too,
+  // exactly like the original (VarValRange(percent,[0,vect]) = vect·(100−inertia)/100 read by modEnergy).
+  // Ordered first in the chain (Movement precedes Energy/Hurt/Experience in every archetype). The enemy/
+  // player attack powers are now the faithful data values (K1: power·strength·mult), calibrated for this
+  // coupling. Player inertia is 0 (undamped attacking); heavy orcs (inertia 60–80) take ~20–40% — tanky.
+  // See docs/parity/plans/K1-faithful-damage.md.
   takeHit(next: NextFn, vx = 0, vy = 0, attackerId = -1, mult = 1): any {
-    if (this.entity.send("isReelProof")) return next(vx, vy, attackerId, mult); // #reelProof: no knockback
     const d = (100 - this.inertia) / 100;
-    let kx = vx * d * KNOCK_SCALE, ky = vy * d * KNOCK_SCALE;
-    const km = Math.hypot(kx, ky);
-    if (km > KNOCK_MAX) { kx = (kx / km) * KNOCK_MAX; ky = (ky / km) * KNOCK_MAX; }
-    this.kvx += kx; this.kvy += ky;
-    return next(vx, vy, attackerId, mult);
+    const dvx = vx * d, dvy = vy * d;                 // the inertia-damped collision vector (modGameObject)
+    if (!this.entity.send("isReelProof")) {           // #reelProof: no knockback impulse (still takes damage)
+      let kx = dvx * KNOCK_SCALE, ky = dvy * KNOCK_SCALE;
+      const km = Math.hypot(kx, ky);
+      if (km > KNOCK_MAX) { kx = (kx / km) * KNOCK_MAX; ky = (ky / km) * KNOCK_MAX; }
+      this.kvx += kx; this.kvy += ky;
+    }
+    return next(dvx, dvy, attackerId, mult);          // damped vector -> Energy/Freeze/Heal (the coupling)
   }
 
   moving(): boolean { return this.vx !== 0 || this.vy !== 0; }

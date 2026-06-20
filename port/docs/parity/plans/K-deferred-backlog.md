@@ -6,11 +6,14 @@ deferrals — per-room pState→H3, committed-target-save→G1c, GMG/limiter→P
 omitted). Worked top-down by fidelity impact. Each item cites where it was deferred.
 
 ## Tier 1 — substantive combat/AI behaviour
-- ☐ **K1. Inertia damps DAMAGE + faithful attack power.** `modEnergy.takeHit` reads the inertia-damped
-  vector, so inertia cuts damage *and* knockback; melee damage = `power·strength·damageMultiplier`,
-  bullet = `speed·power·mult` — from data, in the engine's native units. Needs a holistic damage/energy
-  rescale so it doesn't 5–25× enemy lethality. [A1 §4, B2 §f.1 — "still deferred until the power-scale
-  is faithful"] **The keystone deferral.**
+- ☑ **K1. Inertia damps DAMAGE + faithful attack power.** `Movement.takeHit` damps the collision vector
+  by `(100−inertia)/100` ONCE and passes the **damped** vector to Energy/Freeze/Heal — so inertia cuts
+  damage *and* knockback (the coupling). Enemy melee = `power·strength·mult·ENEMY_DAMAGE_SCALE` (0.18);
+  enemy bullets = `speed·power·mult·BULLET_DAMAGE_SCALE` (0.40); player melee unchanged on `MELEE_SCALE`/
+  `DAMAGE_SCALE` (2.5). The whole-game rebalance avoids the 5–25× lethality blow-up via the two enemy-side
+  scales (the documented px-scale decoupling); faithful ordering restored (blackOrc > swordOrc ≈ warrior),
+  no one-shots, room-1 still clears (gate verified). See [`K1-faithful-damage.md`](K1-faithful-damage.md).
+  [A1 §4, B2 §f.1 — resolved] **The keystone deferral.**
 - ☐ **K2. Spell-actor live-growth lifecycle.** `objAiAttack.ensureSpell`/`chargeSpell`/`releaseMagic`: a
   charged spell is a live `objSpell` actor that grows over the caster's head and converts to bullets on
   release (`getCurrentCharge`, `calcChargeLoc`, attack-frame gating, eyestrain). Port currently does
