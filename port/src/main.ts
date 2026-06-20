@@ -204,17 +204,16 @@ function drawVictory(renderer: Renderer, w: number, h: number) {
 function drawHud(renderer: Renderer, player: import("./engine/dispatch").Entity) {
   const ctx = renderer.ctx;
   const hp = player.get(Energy).energyFrac();
-  const hasSpell = player.send("getHasSpell") as boolean; // mana bar only once magic is acquired
-  const mana = player.get(Mana).manaFrac();
-  ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(6, 6, 104, 28);
+  const hasSpell = player.send("getHasSpell") as boolean;
+  ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(6, 6, 104, 24);
   ctx.fillStyle = hp > 0.3 ? "#3c9" : "#e44"; ctx.fillRect(8, 8, 100 * hp, 6);   // health (energy)
-  if (hasSpell) { ctx.fillStyle = "#48f"; ctx.fillRect(8, 16, 100 * mana, 5); }   // mana pool
   const xp = player.get(Experience);
-  ctx.fillStyle = "#fc4"; ctx.fillRect(8, 23, 100 * Math.min(1, xp.frac()), 4);   // experience
+  ctx.fillStyle = "#fc4"; ctx.fillRect(8, 18, 100 * Math.min(1, xp.frac()), 4);   // experience
+  // no mana bar: magic has no pool (charge is shown by the ring at the cursor); flag once acquired
   ctx.fillStyle = "#fff"; ctx.font = "8px monospace";
   ctx.fillText("HP", 114, 13);
-  ctx.fillText(hasSpell ? "MP" : "—", 114, 21);
-  ctx.fillText("Lv " + xp.level, 114, 29);
+  ctx.fillText("Lv " + xp.level, 114, 24);
+  if (hasSpell) { ctx.fillStyle = "#fc8"; ctx.fillText("✦", 100, 13); } // magic acquired
   if (Date.now() < flashUntil) { ctx.fillStyle = "#ff4"; ctx.fillText(flashMsg, 8, 44); }
 }
 

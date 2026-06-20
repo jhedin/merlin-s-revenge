@@ -29,13 +29,11 @@ describe("Merlin's charged-magic + punch kit", () => {
     game.assets = { index: { anims: {} }, img: () => null } as any; // Anim.update reads index.anims
   });
 
-  it("holds to charge then casts a bolt at the cursor, spending mana", () => {
+  it("holds to charge then casts a bolt at the cursor", () => {
     game.input = fakeInput({ mouseDown: true, cursor: { x: 400, y: 100 } }) as any;
     const p = spawnPlayer(100, 100);
     p.get(PlayerControl).grantSpell();                    // acquired the energyBlast scroll
     game.entities = [p];
-    const mana = p.get(Mana);
-    const full = mana.current;
 
     for (let i = 0; i < 6; i++) p.send("update");        // hold to charge
     expect(p.send("chargeFrac")).toBeGreaterThan(0);
@@ -45,7 +43,6 @@ describe("Merlin's charged-magic + punch kit", () => {
     p.send("update");
     const bolts = game.entities.filter((e) => e.type === "bullet");
     expect(bolts.length).toBe(1);
-    expect(mana.current).toBeLessThan(full);              // mana spent
     // the bolt travels toward the cursor (to the right)
     const v = bolts[0]!.send("getPos") as { x: number };
     expect(v.x).toBeGreaterThanOrEqual(100);
@@ -84,16 +81,34 @@ describe("Merlin's charged-magic + punch kit", () => {
     expect(spawnUnit("blackOrc", 0, 0, { animChar: "blackOrc" }).type).toBe("enemy"); // #monsters
   });
 
-  it("cannot cast with an empty mana pool", () => {
+  it("charge ramps then pins at the capacity-derived ceiling (no pool to run out)", () => {
     game.input = fakeInput({ mouseDown: true, cursor: { x: 400, y: 100 } }) as any;
     const p = spawnPlayer(100, 100);
     p.get(PlayerControl).grantSpell();
     game.entities = [p];
-    p.get(Mana).current = 0;
-    for (let i = 0; i < 6; i++) p.send("update");
-    (game.input as any).mouseDown = () => false;
-    p.send("update");
-    expect(game.entities.filter((e) => e.type === "bullet").length).toBe(0);
+    for (let i = 0; i < 3; i++) p.send("update");
+    const mid = p.send("chargeFrac") as number;
+    expect(mid).toBeGreaterThan(0); expect(mid).toBeLessThan(1); // still ramping
+    for (let i = 0; i < 40; i++) p.send("update");
+    expect(p.send("chargeFrac")).toBeCloseTo(1, 5);             // pinned at the ceiling, never errors out
+  });
+
+  it("higher mana.capacity raises the charge ceiling, so a full blast hits harder", () => {
+    const fullBlastDamage = (capacity: number): number => {
+      game.input = fakeInput({ mouseDown: true, cursor: { x: 40, y: 94 } }) as any; // aim left
+      const p = spawnPlayer(100, 100); p.get(PlayerControl).grantSpell();
+      p.get(Mana).capacity = capacity;
+      const foe = spawnEnemy("blackOrc", 60, 94, { animChar: "blackOrc" }); // 1200 energy, survives one bolt
+      game.entities = [p, foe];
+      const hp0 = foe.get(Energy).energy;
+      for (let i = 0; i < 30; i++) p.send("update");   // hold to full
+      (game.input as any).mouseDown = () => false;
+      p.send("update");                                 // release
+      const bolt = game.entities.find((e) => e.type === "bullet")!;
+      for (let i = 0; i < 14; i++) bolt.send("update"); // fly into the foe
+      return hp0 - foe.get(Energy).energy;
+    };
+    expect(fullBlastDamage(30)).toBeGreaterThan(fullBlastDamage(10)); // capacity 30 -> bigger blast
   });
 
   it("starts punch-only: holding fire casts nothing until the energyBlast scroll is collected", () => {

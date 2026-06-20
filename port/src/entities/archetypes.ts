@@ -105,7 +105,7 @@ export function spawnPlayer(x: number, y: number): Entity {
     mana_capacity: num(d, "mana_capacity", 10),
     mana_flow: num(d, "mana_flow", 1),
     mana_burst: num(d, "mana_burst", 1),
-    mana_regeneration: num(d, "mana_regeneration", 30),
+    mana_regeneration: num(d, "mana_regeneration", 1), // cooldown divisor (not a pool regen rate)
     // per-level growth (modCharacterAttackProperties / modEnergy)
     mana_capacityIncLevel: num(d, "mana_capacityIncLevel", 0.5),
     mana_flowIncLevel: num(d, "mana_flowIncLevel", 0.1),
