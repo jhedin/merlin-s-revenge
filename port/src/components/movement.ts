@@ -46,6 +46,7 @@ export class Movement extends Component {
   // numbers, so we damp KNOCKBACK only and pass the vector through undamped. Faithful damage-damping pairs
   // with adopting the real data attack powers (backlog B2); see docs/parity/plans/A1-damage-knockback.md.
   takeHit(next: NextFn, vx = 0, vy = 0, attackerId = -1, mult = 1): any {
+    if (this.entity.send("isReelProof")) return next(vx, vy, attackerId, mult); // #reelProof: no knockback
     const d = (100 - this.inertia) / 100;
     let kx = vx * d * KNOCK_SCALE, ky = vy * d * KNOCK_SCALE;
     const km = Math.hypot(kx, ky);

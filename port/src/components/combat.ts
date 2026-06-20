@@ -6,20 +6,23 @@ import { Component, type NextFn } from "../engine/dispatch";
 import { game } from "../game/context";
 
 export class Energy extends Component {
-  static handles = ["takeHit", "takeHeal", "update", "levelUp", "isDead", "energyFrac", "glowGold", "addSaveData", "restoreFromSave"];
+  static handles = ["takeHit", "takeHeal", "update", "levelUp", "isDead", "getKilledInAction", "energyFrac", "glowGold", "addSaveData", "restoreFromSave"];
   energy = 100; max = 100; dead = false; dieSound = "";
   goldGlow = 0;               // glowGold() frames (cosmetic, rendered as a gold tint)
+  killedInAction = false;     // modEnergy.pKilledInAction: set ONLY by lethal damage (never by cull/retire)
   private baseEnergy = 100;   // original energy, for the per-level increment
+  private minEnergy = 0;      // #minEnergy: the energy at/below which the unit dies (multistage enemies)
   private incPct = 0;         // energyIncPercentage (max grows by this % of baseEnergy per level)
   private recoverDelay = 0;   // energyRecoverDelay (0 = no passive regen)
   private recoverCtr = 0;
 
   override init(cfg: Record<string, any>): void {
     this.baseEnergy = this.max = this.energy = typeof cfg["energy"] === "number" ? cfg["energy"] : 100;
+    this.minEnergy = typeof cfg["minEnergy"] === "number" ? cfg["minEnergy"] : 0;
     this.incPct = typeof cfg["energyIncPercentage"] === "number" ? cfg["energyIncPercentage"] : 0;
     this.recoverDelay = typeof cfg["energyRecoverDelay"] === "number" ? cfg["energyRecoverDelay"] : 0;
     this.dieSound = typeof cfg["dieSound"] === "string" ? cfg["dieSound"] : "";
-    this.recoverCtr = 0; this.dead = false;
+    this.recoverCtr = 0; this.dead = false; this.killedInAction = false;
   }
 
   // modEnergy.takeHit: damage is the L1 magnitude of the (inertia-damped, by Movement upstream) collision
@@ -29,8 +32,11 @@ export class Energy extends Component {
     const dmg = (Math.abs(vx) + Math.abs(vy)) * mult;
     if (dmg > 0) {
       this.energy -= dmg;
-      if (this.energy <= 0) {
-        this.energy = 0; this.dead = true;
+      // #minEnergy: multistage enemies (hydra) die at minEnergy, not 0 — at which point they reincarnate
+      // down a tier. Default 0 (die at <=0). modEnergy.loseEnergy: checkDead = pEnergy <= pMinEnergy.
+      if (this.energy <= this.minEnergy) {
+        this.energy = this.minEnergy; this.dead = true;
+        this.killedInAction = true;             // modEnergy.pKilledInAction — set ONLY here (lethal damage)
         if (this.dieSound) game.audio?.play(this.dieSound, 0.6); // actor #dieSound
         if (attackerId >= 0) {                       // award XP to the killer (imWorth + half my gained)
           const killer = game.entities.find((e) => e.id === attackerId && !e.send("isDead"));
@@ -70,6 +76,10 @@ export class Energy extends Component {
 
   private imWorthFallback(): number { return Math.max(3, Math.ceil(this.baseEnergy / 12)); }
   isDead(): boolean { return this.dead; }       // query
+  // getKilledInAction (modEnergy.pKilledInAction): true only when this unit went down from lethal damage.
+  // A room-exit / #leaveWhenFinished retire / screen-clear removes the entity WITHOUT a lethal takeHit, so
+  // killedInAction stays false — the gate Reincarnate uses so a retiring ally (monk) doesn't split.
+  getKilledInAction(): boolean { return this.killedInAction; }
   energyFrac(): number { return this.max > 0 ? this.energy / this.max : 0; }
 
   addSaveData(next: NextFn, sd: Record<string, any>): Record<string, any> {

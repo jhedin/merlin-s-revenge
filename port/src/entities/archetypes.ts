@@ -11,6 +11,7 @@ import { PlayerControl, EnemyAI } from "../components/control";
 import { Mana } from "../components/mana";
 import { WeaponManager, resolveAttack } from "../components/weapon";
 import { Hurt } from "../components/hurt";
+import { Reincarnate } from "../components/reincarnate";
 import { Dwelling } from "../components/dwelling";
 import { Identity } from "../components/identity";
 import { Medikit } from "../components/medikit";
@@ -27,7 +28,7 @@ const DEFAULTS = { isDead: false, getTeam: "", getTeamRole: "#teamMembers", ener
 // WeaponManager (modWeaponManager) sits after Mana (so addCooldownCounter reads manaRegeneration at
 // init) and supplies the data-driven #attack/charge/cooldown the control/AI driver dispatches on.
 export const PlayerArchetype = new Archetype("player", [Identity, PlayerControl, Freeze, Mana, WeaponManager, Movement, Anim, Experience, Energy, Hurt, Medikit, Team, Targeting], { defaults: { ...DEFAULTS, getActorType: "", getNumOfMedikits: 0 } });
-export const EnemyArchetype = new Archetype("enemy", [Identity, EnemyAI, Freeze, Mana, WeaponManager, Movement, Anim, Experience, Energy, Hurt, Team, Targeting], { defaults: { ...DEFAULTS, getActorType: "" } });
+export const EnemyArchetype = new Archetype("enemy", [Identity, EnemyAI, Freeze, Mana, WeaponManager, Movement, Anim, Experience, Energy, Hurt, Reincarnate, Team, Targeting], { defaults: { ...DEFAULTS, getActorType: "", getKilledInAction: false } });
 // Dwellings are static (no AI) but reuse Movement for position + Energy/Team so they're targetable.
 export const DwellingArchetype = new Archetype("dwelling", [Identity, Dwelling, Movement, Anim, Energy, Hurt, Team, Targeting], { defaults: { ...DEFAULTS, getActorType: "" } });
 
@@ -219,5 +220,14 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     experienceImWorth: num("experienceImWorth", 0) || undefined,             // XP this unit grants
     energyIncPercentage: num("energyIncPercentage", 0) || undefined,
     energyRecoverDelay: num("energyRecoverDelay", 0) || undefined,
+    // E1 reincarnation: on a lethal death, split into these actors at the corpse loc (Reincarnate).
+    // Both #reincarnateAs and #reincarnateInto are honored; #none entries skipped; bare symbol -> [one].
+    reincarnateAs: d["reincarnateAs"],
+    reincarnateInto: d["reincarnateInto"],
+    reincarnateRadius: num("reincarnateRadius", 0) || undefined,
+    // #minEnergy: multistage enemies (hydra) die at this energy floor, not 0 (Energy death threshold).
+    minEnergy: num("minEnergy", 0) || undefined,
+    // #reelProof: knockback/reel-immune (skelitonHead) — Hurt skips the reel feedback (still takes damage).
+    reelProof: d["reelProof"] === true || undefined,
   });
 }

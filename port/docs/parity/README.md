@@ -20,7 +20,7 @@ This tracker is the running backlog; update the status table + log each iteratio
 |---|---|---|
 | AI & combat engine | ~18% | Dispatch kernel faithful but near-empty; combat is scalar/imperative; 11 AI types collapsed to 1 with 4 branches |
 | Spells / weapons / projectiles | ~45% | B2 weapon manager + C charged blasts (cBlast/darkBlast/arctic/heal), splash/`#explode` (energyPulse/thunder/freeze/towerAxe), takeFreeze/takeHeal payload-lists, summons (army/monster), dwarfTower. Beams/fireBullets-streaming/GMG/reservations deferred |
-| Actors / bosses / dwellings | ~22% | All 263 records parse (stats resolve); gaps are art + AI wiring + per-actor behavior; bosses ~5% |
+| Actors / bosses / dwellings | ~26% | All 263 records parse (stats resolve); gaps are art + AI wiring + per-actor behavior; bosses ~55% (E1 reincarnation cascade ☑) |
 | Player / progression / masters | ~50% | Progression math faithful; **G save tree v2** (whole current-room + cleared flags + player + potion/army masters, locator-based target restore); **army reserve** (teleport-to-reserve, re-field at level); **real medikit** stockpile + potion counter; 5 of 39 masters |
 | World / render / pipeline / shell | ~45% | Asset pipeline complete (F1 ☑): all 10 tilesets / 171 chars / 47 maps, load-any-map, lazy per-map loading; collision = solid-AABB only (F2); cutscene is a reimpl (H1) |
 
@@ -102,8 +102,11 @@ Status: ☐ not started · ◐ in progress · ☑ done
   real `#totalResidents` (drop `min(12)`), death grave. *(02 #2)*
 
 ### Phase E — Bosses
-- ☐ **E1. `modReincarnate` component → skelitonLord cascade** (Lord→3→more, 8 actors); also unlocks ~11
-  other reincarnating actors (hydras, golems, eggs). `berlin` is a **cutscene** lead, not an arena boss.
+- ☑ **E1. `modReincarnate` component → skelitonLord cascade** (Lord→3→more, 8 actors); also unlocks the
+  17 other reincarnating actors (hydras, golems, eggs, monk, sc-units). One generic data-driven
+  `Reincarnate` component: on a killed-in-action death it spawns each non-`#none` `#reincarnateAs` entry
+  at the corpse loc (fire-once latch, depth guard); team/level from each child's own data; `#minEnergy`
+  multistage threshold + `#reelProof` honored. `berlin` is a **cutscene** lead, not an arena boss (§g).
   *(02 #3)*
 
 ### Phase F — World / render / pipeline
@@ -281,3 +284,31 @@ Status: ☐ not started · ◐ in progress · ☑ done
   player position round-trips exactly through save/load. Deviations: Option A (not per-room `pState`, → H3);
   maxikit banks 1 like medikit (the data shows them identical — no bigger stockpile in the original);
   sound-slice save deferred (audio domain). Next: H3 (per-room state) or D1 (sprites).
+- **Iter 7** — ☑ E1 shipped (modReincarnate → the skelitonLord cascade). ONE generic data-driven
+  `Reincarnate` component (`components/reincarnate.ts`, the only new file) on the enemy/ally archetype:
+  on a **killed-in-action** death it spawns each non-`#none` entry of the actor's `#reincarnateAs` /
+  `#reincarnateInto` at the **corpse loc**, in list order; each spawned part re-arms its OWN Reincarnate
+  from its act-data, so cascade depth is implicit (Lord→Upper→TorsoTank→Head is 4 deep). **Cardinal
+  correctness:** (a) a **fire-once latch** (`done`, set BEFORE the spawn loop) so a double-update in the
+  death frame can't duplicate; (b) spawn at the **death-finalize edge** reading `getPos` while the corpse
+  is still valid (dead actors persist as graves in the port); (c) an **infinite-reincarnate guard** — a
+  depth budget (12, deeper than any shipped chain) threaded into each child so a data cycle (A→A) can't
+  spawn forever. **Team & level come from each CHILD's own act-data** (spawnUnit resolves the child's
+  `#team`/`#startingLevel`), nothing inherited from the parent — so monk→monkGhost wouldn't mis-team.
+  **Gate plumbing:** `Energy.takeHit` sets a `killedInAction` flag ONLY on lethal *damage* (modEnergy
+  .pKilledInAction); a retire / room-exit / cull never sets it, so a `#leaveWhenFinished` ally doesn't
+  split. `#minEnergy` added to the death threshold (hydra2/3 die at 500/1000, not 0). `#reelProof`
+  (skelitonHead) wired generically in Hurt+Movement (no knockback/reel, still takes damage). All **17**
+  `#reincarnateAs` actors wired generically (4 skeleton + hydra2/3 + doubleDarkGolem + fourArmGolem +
+  lizardEgg + ostrichEgg + iceRock + garTower + monk + scArcher/scMonk/scWarrior + flamingRock). tsc
+  clean; **182 tests pass** (+10 reincarnate: 3-tier in-order-at-corpse spawn, fire-once latch,
+  #none-skip, bare-symbol parse, killedInAction gate, cyclic-chain depth-cap, child-data team, #minEnergy
+  threshold, full skelitonLord tree drains to leaves, reelProof no-knockback). Room-1 no-regression:
+  `playthrough_smoke` ends `enemies:0, exitsOpen:true, errors:none` (identical). In-browser (spawned a
+  real skelitonLord via the live `game.spawnUnit` into works_mr4Demo + mr4Demo, killed it): Lord cascades
+  into **skelitonUpper+skelitonLowerLeg+skelitonSword** (fires once), and draining the whole tree surfaces
+  all **8 part types** (Lord, Upper, TorsoTank, Head, Arm, LowerLeg, FootSoldier, Sword), ending with 0
+  live parts — no pageerrors. Deferred (plan §g): skelitonUpper's summon cast-loop (the C3 summon content
+  ships; the enemy-caster fire-loop is AI wiring, not a mechanic), `#collisionDetection:false`
+  pass-through (F2), `#reincarnated` XP transfer (cosmetic), bullet reincarnation (no shipped bullet sets
+  it), berlin arena fight (cutscene-only, §g). Next: D1 (per-enemy sprites) or H (cutscene/flow).

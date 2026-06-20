@@ -78,14 +78,14 @@ bespoke engines.
 
 | Boss item | Original behavior (from data) | Port status | Gap | Effort |
 |---|---|---|---|---|
-| **skelitonLord** (`act_skelitonLord`) | `#objCPUCharacter` / `#objAiCPU`, energy 750, str 14, `#weapon:#skelitonLordSword` (dmgMult 12), `#team:#undead`. The set-piece: **`#reincarnateAs:[#skelitonUpper,#skelitonLowerLeg,#skelitonSword]`** + `#reincarnateRadius:40`. On death the generic `modReincarnate` spawns those 3 parts at the corpse. | ◑ spawns as a strong generic enemy; has bundled `skelitonLord` art | **No `modReincarnate` in port** → killing it just dies, no split into parts. This is the entire boss mechanic. | **L** (build reincarnation cascade + the 8 part actors) |
-| ↳ **skelitonUpper** | `#objAiCPUSpellCaster`, energy 220, `#weapon:#skelitonSummon` (summons infantry), reincarnates → `[skelitonTorsoTank, skelitonArm, skelitonArm]`. Casts + spawns adds. | ✗ | needs spellcaster cast loop + summon weapon + reincarnate | M (within the L above) |
-| ↳ **skelitonTorsoTank** | energy 200, ranged `#bullet:#skelitonMissile` reach 200, reincarnates → `[skelitonHead]`. | ✗ | ranged config + reincarnate | S |
-| ↳ **skelitonHead** | energy 10, ranged missile reach **600**, `#reelProof:true`, `#fireMissle`. The "final" flying head. | ✗ | reelProof flag + long-range fire | S |
-| ↳ **skelitonArm** | energy 110, melee `#swordSwipe` power(3,0). | ✗ | generic melee config | S |
-| ↳ **skelitonLowerLeg** | energy 120, `#highKick` (dmgMult 1.5), reincarnates → `[skelitonFootSoldier ×2]`. | ✗ | melee + reincarnate | S |
-| ↳ **skelitonFootSoldier** | energy 90, melee infantry leaf (no reincarnate). | ✗ | generic melee config | S |
-| ↳ **skelitonSword / skelitonMissile** | `skelitonSword` = a CPU melee body (energy 200, `#collisionDetection:false`); `skelitonMissile` = the bullet (agent 3). | ✗ / agent 3 | config / bullet asset | S |
+| **skelitonLord** (`act_skelitonLord`) | `#objCPUCharacter` / `#objAiCPU`, energy 750, str 14, `#weapon:#skelitonLordSword` (dmgMult 12), `#team:#undead`. The set-piece: **`#reincarnateAs:[#skelitonUpper,#skelitonLowerLeg,#skelitonSword]`** + `#reincarnateRadius:40`. On death the generic `modReincarnate` spawns those 3 parts at the corpse. | ☑ **E1** — generic `Reincarnate` component splits the Lord into its 3 parts at the corpse loc (verified in-browser on works_mr4Demo + mr4Demo: Lord→Upper+LowerLeg+Sword, fires once, no pageerrors); has bundled `skelitonLord` art | — | done |
+| ↳ **skelitonUpper** | `#objAiCPUSpellCaster`, energy 220, `#weapon:#skelitonSummon` (summons infantry), reincarnates → `[skelitonTorsoTank, skelitonArm, skelitonArm]`. Casts + spawns adds. | ☑ reincarnates → TorsoTank+2 Arms (re-arms its own Reincarnate). Caster *summon* fire-loop deferred (plan §g — AI wiring, not a mechanic) | summon cast loop (§g) | S |
+| ↳ **skelitonTorsoTank** | energy 200, ranged `#bullet:#skelitonMissile` reach 200, reincarnates → `[skelitonHead]`. | ☑ reincarnates → Head; ranged via C2 bullet path | — | done |
+| ↳ **skelitonHead** | energy 10, ranged missile reach **600**, `#reelProof:true`, `#fireMissle`. The "final" flying head. | ☑ `#reelProof` honored (no knockback/reel, still takes damage); ranged via C2 | — | done |
+| ↳ **skelitonArm** | energy 110, melee `#swordSwipe` power(3,0). | ☑ generic melee leaf | — | done |
+| ↳ **skelitonLowerLeg** | energy 120, `#highKick` (dmgMult 1.5), reincarnates → `[skelitonFootSoldier ×2]`. | ☑ reincarnates → 2 FootSoldiers | — | done |
+| ↳ **skelitonFootSoldier** | energy 90, melee infantry leaf (no reincarnate). | ☑ generic melee leaf | — | done |
+| ↳ **skelitonSword / skelitonMissile** | `skelitonSword` = a CPU melee body (energy 200, `#collisionDetection:false`); `skelitonMissile` = the bullet (agent 3). | ☑ skelitonSword melee leaf (dead content — reachable only via cascade, unit-tested) / skelitonMissile bullet (C2) | `#collisionDetection:false` pass-through deferred (F2) | S |
 | **berlin** — title villain "Merlin's Revenge" (`act_berlin`, "ber") | `#inherit:#actorPlayer`, **no `#objType`** → a **cutscene/scripted actor**, not a free-roaming CPU enemy. Driven via `modThespian` in cutscenes (`scr_*`), `#speechColor`, `#initFaceDir:-1`. Has bundled `ber` art. | ◑ data resolves; art present | berlin-as-villain is a **cutscene set-piece (agent 6/5 seam)**, not an arena boss. The fightable analogue does not exist as an enemy record. | M (cutscene-driven, cross-agent) |
 | **berlinInGame** | THIS is the in-game berlin: an **ally** Merlin *summons* (`modSummonBerlin` → `armyMaster.createUnit`). `#objAiCPUSpellCaster`, `#team:#aldevar`, `#weapon:#energyBlast`, `#wizard:true`, `#leaveWhenFinished`. | ✗ | summon-berlin command + army-master path (agent 4 seam) | M |
 | **king / kingInGame** | same pattern: `act_king` = cutscene lead; `kingInGame` = summonable `#aldevar` ally (energy 300, str 15, `#kingSword`). kingInGame IS placed in the slice. | ◑ kingInGame spawns generic ally | art + summon semantics | S |
@@ -160,9 +160,11 @@ player-built-structure feature.
 - **Generic enemies/allies:** ~30% — all 97 character records resolve stats/attack/team and *spawn*,
   but only ~23 have bundled art and AI is bucketed into beeline/kite/wander/bomber. The breadth is
   "wired but generic," not faithful per-type.
-- **Bosses:** ~5% — skelitonLord spawns as a fat generic enemy with no reincarnation; the multi-part
-  cascade, the summoner phase, berlinInGame/kingInGame summon allies, and the berlin cutscene villain
-  are all absent.
+- **Bosses:** ~55% (was ~5%) — **E1 ☑**: the generic `Reincarnate` component (modReincarnate) gives
+  skelitonLord its full reincarnation cascade (Lord→Upper+LowerLeg+Sword→…→8 part types, 4 deep) and
+  unlocks all 17 `#reincarnateAs` actors (hydras, golems, eggs, monk→monkGhost, sc-units, garTower,
+  iceRock, …) for free. Still absent: skelitonUpper's *summon* cast-loop (AI wiring, plan §g),
+  berlinInGame/kingInGame summon allies (G2/agent-4 seam), and the berlin cutscene villain (H).
 
 Weighted across the domain (dwellings are a small slice of the catalog; the 97 characters dominate),
 the headline lands at **~22%**.

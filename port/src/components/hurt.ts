@@ -5,13 +5,15 @@
 import { Component, type NextFn } from "../engine/dispatch";
 
 export class Hurt extends Component {
-  static handles = ["update", "takeHit", "isInvince", "isHurt", "animAction"];
+  static handles = ["update", "takeHit", "isInvince", "isHurt", "isReelProof", "animAction"];
   invinceFrames = 0; // >0 for the player; enemies flash but take continuous damage
+  reelProof = false; // #reelProof: knockback/reel-immune (skelitonHead) — still takes damage, no reel
   private flashT = 0;
   private invinceT = 0;
 
   override init(cfg: Record<string, any>): void {
     this.invinceFrames = typeof cfg["invince"] === "number" ? cfg["invince"] : 0;
+    this.reelProof = cfg["reelProof"] === true;
     this.flashT = 0; this.invinceT = 0;
   }
   override reset(): void { this.flashT = 0; this.invinceT = 0; }
@@ -32,15 +34,21 @@ export class Hurt extends Component {
   takeHit(next: NextFn, vx = 0, vy = 0, attackerId = -1, mult = 1): any {
     const r = next(vx, vy, attackerId, mult);
     if ((Math.abs(vx) + Math.abs(vy)) * mult > 0 && !this.entity.send("isInvince")) {
-      this.flashT = 6;
-      if (this.invinceFrames > 0) this.invinceT = this.invinceFrames;
-      this.entity.send("characterModeChanged", this.entity.send("isDead") ? "#die" : "#reel");
+      const dead = this.entity.send("isDead");
+      // #reelProof (skelitonHead): immune to the reel/recoil feedback (still takes damage; a lethal hit
+      // still notifies #die so the brain stops). A reel-proof unit shows no white flash / reel strip.
+      if (!this.reelProof || dead) {
+        this.flashT = 6;
+        if (this.invinceFrames > 0) this.invinceT = this.invinceFrames;
+        this.entity.send("characterModeChanged", dead ? "#die" : "#reel");
+      }
     }
     return r;
   }
 
   isInvince(): boolean { return this.invinceT > 0; }
   isHurt(): boolean { return this.flashT > 0; }
+  isReelProof(): boolean { return this.reelProof; } // Movement reads this to skip the knockback impulse
 
   // brief "reel" override (modReel) — falls back to stand for chars with no reel strip
   animAction(next: NextFn): any { return this.flashT > 0 ? "reel" : next(); }
