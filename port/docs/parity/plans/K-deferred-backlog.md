@@ -80,10 +80,18 @@ omitted). Worked top-down by fidelity impact. Each item cites where it was defer
   orc restores wounded). [I §c.9 note — resolved]
 
 ## Tier 3 — render / shell / audio fidelity
-- ☐ **K14. Beam sprite-strip render.** energyBeam as the original stretched sprite-strip, not a 2D line.
-  [I8 §g.2]
-- ☐ **K15. `objTransColor` exact tween.** Real speed-33 white→black tween + true `#current`-start colour
-  (port uses linear + black-start). [F3]
+- ☑ **K14. Beam sprite-strip render.** `drawBullets` now renders energyBeam as the `energyBeam_fly` strip
+  (`act_energyBeam` #member `anm_energyBeam_fly_03_01`) stretched to the caster→target distance
+  (`scaleX = beamDist/frameWidth`, setSpriteWidth) and rotated to the beam angle (`rotation = beamAngle`,
+  setSpriteRotation = GeomAngle), pivoting at the caster anchor (regX 0) — through the renderer's existing
+  rotate/scale-about-regpoint sprite path. The char loads lazily (the spell is a pickup), with the bright
+  line kept only as a pre-load fallback. [I8 §g.2 — resolved]
+- ☑ **K15. `objTransColor` exact tween.** `ColourTransform` rewritten to the faithful `objTransColor`/
+  `objTransformer` model: `pCurr` is a percent in [0,100], `VarToward(pCurr,100,speed·gGameSpeed)` per tick
+  (first frame holds, `pFirstFrame`), colour = `VarColRange(pCurr,start,target)`, pingpong swaps the ends
+  (`finishConditionMet`), and a `#current` start captures the LIVE resolved colour at arm time
+  (`initCurrentColor`) — so flickWhite (speed 33 white→black) ramps strength DOWN and a glow interrupting
+  another starts from the on-screen hue, not black. [F3 — resolved]
 - ☑ **K16. Cutscene verbs: prop / walkScroll / random-flash.** Implemented in the Thespian engine:
   `produceProp`/`putAwayProp`/`dropProp` (a carried character tracks its carrier, #prop suppresses
   turnToFace), `propAt` sets #prop status, `walkScrollLeft/Right/Stop` (continuous scroll-walk; a #prop
@@ -100,7 +108,12 @@ omitted). Worked top-down by fidelity impact. Each item cites where it was defer
 - ☑ **K19. Screen-transition tweens.** `SceneManager` runs an inter-screen fade tween (screen flips at
   once; the goScreen ACTION is deferred to finishTransition). `transitionFrames=0` test mode keeps the FSM
   unit tests synchronous; the host (main) uses a 3-frame fade. [H2/F3]
-- ☐ **K20. Per-effect sound channels.** `soundMaster` 0–255 volume + channel management. [05-audit]
+- ☑ **K20. Per-effect sound channels.** `AudioSystem` ports soundMaster's fixed 8-channel pool: channel 1
+  reserved for music (`pMusicChannel`), channels 2–8 the SFX pool allocated via the round-robin cursor
+  `pNextChan` (→ `soundEmptyChan` lowest-free fallback, → drop when all busy, matching the commented-out
+  "override oldest" branch); the 0–255 volume scale (`pDefaultVolume=150` → gain) via `vol255ToGain` + an
+  optional `vol255` param + `adjustVol`/`stopSound`/`stopAllSound`. The existing `play(name, volume)` 0–1
+  API is unchanged (`onended` frees the channel). [05-audit — resolved]
 - ☑ **K21. Grave system + pState graves.** `Grave` component (modGrave `pGraveOn`): a dead actor IS its
   own grave — it holds the `#grave` anim frame at the death loc, renders BEHIND the living (a low render-z,
   modelling the original's room-background blit), and faces RIGHT (`setFlipFromDir(1)`). A GHOST
@@ -121,6 +134,8 @@ Map editor (`mapEditMaster`, separate executable), copy-protection, the `ochreWi
 - Opened K to burn down every deferral per the owner's directive.
 - Tier 1 closed (K1 keystone + K3–K8a AI completeness; K8b/c evidence-backed dead engine code).
 - Tier 2 closed: K9 (armySummon → G2 reserve), K10 (randomSummon wobble), K11 (chargeStart overwrite),
-  K12 (chatter cutscenes), K13 (recordInRoomState:false). Remaining open: **K2** (spell-actor live-growth)
-  and Tier-3 render/audio (K14 beam strip, K15 transColor tween, K20 sound channels, K21 graves, K22
-  collision edges). 326 tests green, tsc clean, room-1 gate green.
+  K12 (chatter cutscenes), K13 (recordInRoomState:false).
+- Tier 3 closed: K14 (beam sprite-strip), K15 (objTransColor faithful tween), K16–K19 (cutscene verbs /
+  faders / screens / transitions), K20 (sound channels), K21 (grave system). The K14/K15/K20 passes were
+  built by worktree-isolated agents and reviewed + cherry-picked here. **Only K22 (collision edges) and
+  K2 (spell-actor live-growth) remain open.** 336 tests green, tsc clean, room-1 gate green.
