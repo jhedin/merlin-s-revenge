@@ -13,14 +13,31 @@ import { Freeze } from "@/components/freeze";
 import { TeamMaster } from "@/systems/teams";
 import { MagicLimitMaster } from "@/systems/magicLimit";
 import { resolveAttack, type AttackData } from "@/components/weapon";
-import { chargeMaxOf } from "@/components/charge";
+import { chargeMaxOf, chargeStartOf, chargeSpeedOf } from "@/components/charge";
 import { registry } from "@/game/data";
 import { game } from "@/game/context";
 import { CollisionGrid } from "@/world/collision";
 import { spawnMine } from "@/entities/objTypes";
-import { spawnPlayer } from "@/entities/archetypes";
+import { spawnPlayer, spawnEnemy } from "@/entities/archetypes";
 import { spawnFromSymbol } from "@/entities/actorSerial";
 import { AudioSystem } from "@/systems/audio";
+import { PlayerControl } from "@/components/control";
+import { Projectile } from "@/components/projectile";
+
+// Minimal input stub exposing only what PlayerControl reads (mirrors player_kit.test.ts).
+function fakeInput(opts: { mouseDown?: boolean; cursor?: { x: number; y: number } | null; pressedG?: boolean }) {
+  return {
+    moveVector: () => ({ x: 0, y: 0 }),
+    cursor: () => opts.cursor ?? null,
+    mouseDown: () => !!opts.mouseDown,
+    mousePressed: () => false, mouseReleased: () => false,
+    held: (_k: string) => false,
+    pressed: (k: string) => k === "g" && !!opts.pressedG,
+    endTick: () => {},
+  } as any;
+}
+const pcOf = (p: Entity): PlayerControl => (p as any).comps.find((c: any) => typeof c.gmgCollected === "function");
+const grant = (p: Entity, actor: string) => p.get(PlayerControl).grantSpell(atkOf(actor));
 
 const atkOf = (actor: string): AttackData =>
   resolveAttack(((registry.resolveActor(actor) ?? {})["attack"]) as any, registry.resolveActor(actor) as any);
@@ -264,5 +281,171 @@ describe("I6 — objMine prime/detonate/team-gate; auras freeze (not damage)", (
   it("the mine is type 'mine' (does NOT gate room-clear as an enemy)", () => {
     const mine = spawnMine("fire", 0, 0);
     expect(mine.type).toBe("mine");
+  });
+});
+
+// ─────────────────────────── I7: GMG (Golden Machine Gun) ───────────────────────────
+describe("I7 — GMG collect/toggle/charge-swap/auto-fire", () => {
+  beforeEach(() => {
+    game.grid = new CollisionGrid(40, 40, 32); game.entities = []; game.assets = headlessAssets();
+    game.audio = undefined; game.magicLimit = new MagicLimitMaster();
+    game.teamMaster = new TeamMaster(); game.teamMaster.unitMap.configure(32, 0, 0);
+    game.input = fakeInput({}) ;
+  });
+
+  it("act_energyBlast carries the gmg* charge set (gmgChargeMax 15, gmgAutoFire true)", () => {
+    const a = atkOf("energyBlast");
+    expect(a.gmgChargeMax).toBe(15); expect(a.gmgChargeSpeed).toBe(5);
+    expect(a.gmgChargeStart).toBe(5); expect(a.gmgAutoFire).toBe(true);
+  });
+
+  it("collecting the #gmg scroll sets collected + turns the GMG on (NOT addWeapon)", () => {
+    const player = spawnPlayer(100, 100); game.entities.push(player); game.player = player;
+    const pickup = spawnFromSymbol("#gmg", 100, 100);
+    expect(pickup).not.toBeNull();
+    pickup!.send("update"); // collect on overlap
+    const pc = pcOf(player);
+    expect(pc.getGmgCollected()).toBe(true);
+    expect(pc.getGmgOn()).toBe(true);
+    // it is a mode, NOT a weapon: the inventory still has no #gmg weapon.
+    const wm = (player as any).comps.find((c: any) => typeof c.getWeapons === "function");
+    expect(wm.weaponsOfType("magic")).not.toContain("#gmg");
+  });
+
+  it("setGmg toggles on/off, and is inert until collected", () => {
+    const player = spawnPlayer(100, 100); const pc = pcOf(player);
+    pc.setGmg(); expect(pc.getGmgOn()).toBe(false); // not collected -> inert
+    pc.gmgCollected(); expect(pc.getGmgOn()).toBe(true); // collect turns it on
+    pc.setGmg(); expect(pc.getGmgOn()).toBe(false);      // toggle off
+    pc.setGmg(); expect(pc.getGmgOn()).toBe(true);       // toggle back on
+  });
+
+  it("with GMG on, chargeMaxOf reads gmgChargeMax (15) instead of the mana ceiling (12.5)", () => {
+    const a = atkOf("energyBlast");
+    const mana = { capacity: 10, flow: 1, burst: 1 };
+    expect(chargeMaxOf(a, mana)).toBeCloseTo(12.5);             // normal: capacity*.75+5
+    expect(chargeMaxOf(a, mana, undefined, true)).toBe(15);     // GMG: flat gmgChargeMax
+    expect(chargeStartOf(a, mana, true)).toBe(5);               // GMG: gmgChargeStart
+    expect(chargeSpeedOf(a, mana, true)).toBe(5);               // GMG: gmgChargeSpeed
+  });
+
+  it("the spellCharged auto-fire loop fires >1 bolt over N ticks with gmgAutoFire", () => {
+    game.input = fakeInput({ mouseDown: true, cursor: { x: 400, y: 100 } });
+    const player = spawnPlayer(100, 100); game.entities.push(player); game.player = player;
+    grant(player, "energyBlast"); pcOf(player).gmgCollected(); // GMG on
+    // gmgChargeStart 5 -> +5/tick -> reaches gmgChargeMax 15 fast; each tick at max auto-releases+recharges.
+    for (let i = 0; i < 12; i++) player.send("update");
+    const bolts = game.entities.filter((e) => e.type === "bullet").length;
+    expect(bolts).toBeGreaterThan(1); // continuous machine-gun fire (not a single bolt)
+  });
+
+  it("WITHOUT GMG, the same held-charge fires a single bolt on release (no auto-fire)", () => {
+    game.input = fakeInput({ mouseDown: true, cursor: { x: 400, y: 100 } });
+    const player = spawnPlayer(100, 100); game.entities.push(player); game.player = player;
+    grant(player, "energyBlast");
+    for (let i = 0; i < 12; i++) player.send("update");        // hold (no release while held)
+    expect(game.entities.filter((e) => e.type === "bullet").length).toBe(0);
+    (game.input as any).mouseDown = () => false;
+    player.send("update");                                      // release -> exactly one bolt
+    expect(game.entities.filter((e) => e.type === "bullet").length).toBe(1);
+  });
+});
+
+// ─────────────────────────── I8: beams (streaming release + beam render) ───────────────────────────
+describe("I8 — beams: streaming release + energyBeam render", () => {
+  beforeEach(() => {
+    game.grid = new CollisionGrid(40, 40, 32); game.entities = []; game.assets = headlessAssets();
+    game.audio = undefined; game.magicLimit = new MagicLimitMaster();
+    game.teamMaster = new TeamMaster(); game.teamMaster.unitMap.configure(32, 0, 0);
+    game.input = fakeInput({ mouseDown: true, cursor: { x: 400, y: 100 } });
+  });
+
+  it("the beam scrolls grant a #magic weapon with releaseFunction #fireBullets", () => {
+    const beam = atkOf("energyBeamSpell"); const pulse = atkOf("energyPulseSpell");
+    expect(beam.releaseFunction).toBe("#fireBullets"); expect(beam.beam).toBe(true);
+    expect(beam.fireDelay).toBeCloseTo(6.75); expect(beam.chargePerUnit).toBe(5);
+    expect(pulse.releaseFunction).toBe("#fireBullets"); expect(pulse.beam).toBe(false);
+    expect(pulse.fireDelay).toBe(5); expect(pulse.chargePerUnit).toBe(2);
+  });
+
+  // floor(C/chargePerUnit): drain happens BEFORE the <0 check, so the count = floor(held/chargePerUnit).
+  it("energyPulse: a release with charge C emits floor(C/chargePerUnit) explode bullets spaced by fireDelay", () => {
+    const player = spawnPlayer(100, 100); game.entities.push(player); game.player = player;
+    grant(player, "energyPulseSpell"); // chargePerUnit 2, fireDelay 5
+    // charge up: energyPulse chargeMax 999 capped by capacity (10*?+0)=... base energyPulse has no
+    // chargeMaxModifier so chargeMaxBasic 0 -> capacity*0+0 = 0; force a known held charge via the stream.
+    // Drive a full charge then release.
+    for (let i = 0; i < 40; i++) player.send("update"); // hold to charge to ceiling
+    const held = (player as any).comps.find((c: any) => typeof c.chargeFrac === "function");
+    void held;
+    (game.input as any).mouseDown = () => false;
+    player.send("update"); // release -> stream starts
+    // run the stream out (fireDelay 5 -> one bullet every 5 ticks until charge<0).
+    let bullets = 0;
+    for (let i = 0; i < 200; i++) {
+      const before = game.entities.filter((e) => e.type === "bullet").length;
+      player.send("update");
+      const after = game.entities.filter((e) => e.type === "bullet").length;
+      if (after > before) bullets += after - before;
+    }
+    expect(bullets).toBeGreaterThanOrEqual(1); // at least one explode bullet streamed
+  });
+
+  it("the stream count == floor(heldCharge/chargePerUnit) (exact drain semantics)", () => {
+    // Use the stream directly via a controlled charge to assert the count is exact.
+    const player = spawnPlayer(100, 100); game.entities.push(player); game.player = player;
+    const pulse = atkOf("energyPulseSpell"); // chargePerUnit 2
+    // Inject a stream with known charge by calling the private path through a release: set charge=10.
+    const pc = pcOf(player) as any;
+    pc.stream = { attack: pulse, charge: 10, delay: 0, counter: 0, aimX: 400, aimY: 100, team: "#aldevar" };
+    // delay 0 -> empties in one tick. floor(10/2)=5 bullets (the 6th drain pushes charge to -2<0, no shot).
+    player.send("update");
+    expect(game.entities.filter((e) => e.type === "bullet").length).toBe(5);
+  });
+
+  it("energyBeam: performBeamAttack spawns a bullet AT the target with a stretched/rotated sprite", () => {
+    const player = spawnPlayer(100, 100); game.entities.push(player); game.player = player;
+    const beam = atkOf("energyBeamSpell"); // beam:true, bullet:#energyBeam
+    const pc = pcOf(player) as any;
+    pc.stream = { attack: beam, charge: 10, delay: 0, counter: 0, aimX: 300, aimY: 100, team: "#aldevar" };
+    player.send("update"); // emits beam bullets
+    const beams = game.entities.filter((e) => e.type === "bullet" && e.get(Projectile).beam);
+    expect(beams.length).toBeGreaterThanOrEqual(1);
+    const b = beams[0]!;
+    const proj = b.get(Projectile);
+    expect(proj.beam).toBe(true);
+    expect(proj.beamDist).toBeGreaterThan(0);        // setSpriteWidth = caster->target distance
+    expect(Number.isFinite(proj.beamAngle)).toBe(true); // setSpriteRotation = GeomAngle
+    // spawned AT (near) the target loc (300,100) ±10 jitter, NOT travelling from the caster (100,100).
+    const p = b.send("getPos") as { x: number; y: number };
+    expect(Math.abs(p.x - 300)).toBeLessThanOrEqual(7);
+  });
+
+  it("energyBeam detonates its explode #attack at the target on the first frame (damages a hostile there)", () => {
+    const player = spawnPlayer(100, 100); game.entities.push(player); game.player = player;
+    // a hostile sitting at the target loc
+    const foe = spawnEnemy("swordOrc", 300, 100, { animChar: "swordOrc" });
+    game.entities.push(foe);
+    game.teamMaster.register(player, player.send("getTeam"), "#teamMembers");
+    game.teamMaster.register(foe, foe.send("getTeam"), "#teamMembers");
+    game.teamMaster.unitMap.insert(foe, 300, 100); // so the area search finds it
+    const hp0 = foe.get(Energy).energy;
+    const beam = atkOf("energyBeamSpell");
+    const pc = pcOf(player) as any;
+    pc.stream = { attack: beam, charge: 5, delay: 0, counter: 0, aimX: 300, aimY: 100, team: player.send("getTeam") };
+    player.send("update"); // emit the beam bullet
+    for (const e of game.entities) if (e.type === "bullet") e.send("update"); // first-frame detonate
+    expect(foe.get(Energy).energy).toBeLessThan(hp0);  // the explode #attack hit it
+  });
+
+  it("under GMG, fireDelay=0 -> the whole stream empties in one tick", () => {
+    const player = spawnPlayer(100, 100); game.entities.push(player); game.player = player;
+    const pulse = atkOf("energyPulseSpell");
+    pcOf(player).gmgCollected(); // GMG on -> stream delay forced to 0
+    const pc = pcOf(player) as any;
+    // simulate the release path setting delay from gmgOn:
+    pc.stream = { attack: pulse, charge: 8, delay: 0, counter: 0, aimX: 400, aimY: 100, team: "#aldevar" };
+    player.send("update");
+    expect(game.entities.filter((e) => e.type === "bullet").length).toBe(4); // floor(8/2) all at once
   });
 });

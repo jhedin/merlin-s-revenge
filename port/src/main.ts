@@ -12,6 +12,7 @@ import { parseMap, type GameMap, type Vec2i } from "./world/map";
 import { parseTileKey, tileSymbol, type TileKey } from "./data/tlk";
 import { RoomManager } from "./world/rooms";
 import { registry } from "./game/data";
+import { resolveAttack } from "./components/weapon";
 import { game, initContext } from "./game/context";
 import { spawnPlayer, spawnEnemy, spawnUnit, spawnAlly } from "./entities/archetypes";
 import { Anim } from "./components/anim";
@@ -333,6 +334,9 @@ async function main() {
   (window as any).__cut = () => cutscene;
   (window as any).__bulletStats = bulletPoolStats;
   (window as any).__audio = audio;
+  // debug: resolve an actor's #attack to an AttackData (for scripting grantSpell/equipSword in checks).
+  (window as any).__resolveActor = (n: string) => registry.resolveActor(n);
+  (window as any).__atk = (n: string) => resolveAttack((registry.resolveActor(n) ?? {})["attack"] as any, registry.resolveActor(n) as any);
   console.log("Merlin's Revenge —", loaded.meta.id, map.mapSize.x + "x" + map.mapSize.y, "room dungeon ready (title screen)");
 }
 
@@ -417,7 +421,19 @@ function drawBullets(renderer: Renderer) {
   for (const e of game.entities) {
     if (e.type !== "bullet") continue;
     const m = e.get(Movement);
-    ctx.fillStyle = e.get(Projectile).team === "#aldevar" ? "#9cf" : "#fd6";
+    const proj = e.get(Projectile);
+    // I8 energyBeam: a stretched/rotated line from the caster to the target (objBullet.setBeam — the
+    // sprite's width is the caster->target distance, rotated to the angle). Drawn as a bright beam line.
+    if (proj.beam) {
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,255,120,0.9)"; ctx.lineWidth = 3; ctx.lineCap = "round";
+      ctx.beginPath(); ctx.moveTo(proj.beamCasterX, proj.beamCasterY); ctx.lineTo(m.x, m.y); ctx.stroke();
+      ctx.strokeStyle = "rgba(255,255,255,0.7)"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(proj.beamCasterX, proj.beamCasterY); ctx.lineTo(m.x, m.y); ctx.stroke();
+      ctx.restore();
+      continue;
+    }
+    ctx.fillStyle = proj.team === "#aldevar" ? "#9cf" : "#fd6";
     ctx.beginPath(); ctx.arc(m.x, m.y, 3, 0, Math.PI * 2); ctx.fill();
   }
 }

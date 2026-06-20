@@ -58,6 +58,7 @@ export function spawnFromSymbol(sym: string, x: number, y: number): Entity | nul
 const PICKUP_EFFECTS = new Set<string>([
   "heal", "speed", "sword", "spell", "energyPunch", "manaCapacity", "manaFlow", "manaBurst",
   "cBlast", "darkBlast", "arcticBlast", "healBlast", "armySummon", "monsterSummon", "energyMines",
+  "gmg", "energyBeam", "energyPulse",
 ]);
 function isPickupEffect(name: string): boolean { return PICKUP_EFFECTS.has(name); }
 

@@ -40,6 +40,13 @@ export interface AttackData {
   chargeStart: number; chargeSpeed: number;
   chargeSpeedMax: number | string; chargeStartMax: number | string;
   limitMagic: boolean;
+  // I7 GMG (modGoldenMachineGun / modAttack.gmgOn): when the GMG is on, the live charge params swap to
+  // these and gmgAutoFire drives the continuous auto-fire loop (spellCharged -> release+recharge).
+  gmgChargeMax: number; gmgChargeSpeed: number; gmgChargeStart: number; gmgAutoFire: boolean;
+  // I8 beams (modFireBullets / performBeamAttack): a #releaseFunction:#fireBullets spell streams a
+  // bullet every fireDelay frames, draining chargePerUnit per shot. beam -> the energyBeam render path
+  // (spawn at the target loc, sprite stretched to the caster->target distance + rotated).
+  beam: boolean; fireDelay: number; releaseFunction: string;
   // C2 splash / explode / status payload (modSplashDamage / modExploder / CallPayloadFunction)
   attackType: string;                 // raw #attack.type (#explode / #bullet / #melee / #magic / #auto)
   explodeCharge: number;              // #explode radius source (radius = explodeCharge/2)
@@ -144,6 +151,16 @@ export function resolveAttack(raw: Record<string, any> | undefined, owner?: Reco
     chargeSpeedMax: (r["chargeSpeedMax"] ?? d["chargeSpeedMax"]) as number | string,
     chargeStartMax: (r["chargeStartMax"] ?? d["chargeStartMax"]) as number | string,
     limitMagic: r["limitMagic"] === true,
+    // I7 GMG charge-param set (defaults 0 / false so a non-GMG weapon under GMG can't fire — only
+    // energyBlast/energyBeam/energyPulse carry gmgAutoFire). gmgChargeSpeedMax mirrors gmgChargeSpeed.
+    gmgChargeMax: numOr(r["gmgChargeMax"], 0),
+    gmgChargeSpeed: numOr(r["gmgChargeSpeed"], 0),
+    gmgChargeStart: numOr(r["gmgChargeStart"], 0),
+    gmgAutoFire: r["gmgAutoFire"] === true,
+    // I8 beams: streaming-release fields (#none releaseFunction -> single bolt, the B2 default).
+    beam: r["beam"] === true,
+    fireDelay: numOr(r["fireDelay"], 0),
+    releaseFunction: strOr(r["releaseFunction"], "#none"),
     // C2/C3: raw #type drives the splash resolver branch; splashDamageOn is a top-level actor prop.
     attackType: strOr(r["type"], d["type"] as string),
     explodeCharge: numOr(r["explodeCharge"], d["explodeCharge"] as number),

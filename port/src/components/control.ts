@@ -7,10 +7,11 @@ import { Component, type NextFn } from "../engine/dispatch";
 import { Movement } from "./movement";
 import { Mana } from "./mana";
 import { game } from "../game/context";
-import { fireBullet, fireSplashBullet, fireBulletPayload } from "../systems/bullets";
+import { fireBullet, fireSplashBullet, fireBulletPayload, performBeamAttack } from "../systems/bullets";
+import { registry } from "../game/data";
 import { meleeHitFn } from "../systems/teams";
 import { Targeting } from "./combat";
-import { WeaponManager, meleeBasePower, type AttackData } from "./weapon";
+import { WeaponManager, meleeBasePower, resolveAttack, type AttackData } from "./weapon";
 import { summonUnit } from "./summon";
 import { chargeMaxOf, chargeStartOf, chargeSpeedOf } from "./charge";
 import type { Entity } from "../engine/dispatch";
@@ -20,6 +21,7 @@ import type { Entity } from "../engine/dispatch";
 // now flows from the magic weapon's #attack × Mana via charge.ts instead of an inline SPELL constant.
 const SPELL_FX = { dmgPerUnit: 26, speedBase: 4.5, speedPerUnit: 0.28, speedCap: 9, releaseFrames: 6, life: 110 };
 const MELEE_FRAMES = 6; // the melee anim-strip window (presentational)
+const bare = (s: string): string => (s.startsWith("#") ? s.slice(1) : s); // #energyBeam -> energyBeam (resolveActor key)
 
 // PORT CONTROL SCHEME (B2 plan §f.6): Merlin AUTO-MELEES adjacent hostiles with his current MELEE
 // weapon (#punch, upgraded to #merlinSword on pickup) AND holds mouse/space to charge+release magic
@@ -35,12 +37,28 @@ export class PlayerControl extends Component {
   private meleeT = 0;
   private aimLeft = false;
   private usingSword = false; // most-recent melee swing used #merlinSword (anim/sound)
+  // I7 GMG (modGoldenMachineGun): a MODE (not a weapon) modifying the current magic weapon's charge.
+  private gmgCollected_ = false; // pGmgCollected — found at least once (the toggle is inert until then)
+  private gmgOn = false;         // pGmgOn — the live on/off state (the cosmetic gmgMaster HUD flag)
+  // I8 beams (modFireBullets): a short-lived streaming-release substate. On releasing a
+  // releaseFunction:#fireBullets spell, latch the held charge here; each tick, every fireDelay frames,
+  // emit one #bullet draining chargePerUnit until charge<0. (The port's stand-in for the objSpell actor.)
+  private stream: { attack: AttackData; charge: number; delay: number; counter: number;
+    aimX: number; aimY: number; team: string } | null = null;
 
   override init(cfg: Record<string, any>): void {
     this.strength = typeof cfg["strength"] === "number" ? cfg["strength"] : 8;
     this.strengthInc = typeof cfg["strengthIncLevel"] === "number" ? cfg["strengthIncLevel"] : 0.1;
     this.charge = 0; this.charging = false; this.releaseT = this.meleeT = 0; this.usingSword = false;
+    this.gmgCollected_ = false; this.gmgOn = false; this.stream = null;
   }
+
+  // gmgCollected (modGoldenMachineGun.gmgCollected): collecting the GMG scroll sets collected + turns on.
+  gmgCollected(): void { this.gmgCollected_ = true; this.setGmg(); }
+  // setGmg (modGoldenMachineGun.setGmg): toggle on/off — inert until the GMG has been collected.
+  setGmg(): void { if (this.gmgCollected_) this.gmgOn = !this.gmgOn; }
+  getGmgOn(): boolean { return this.gmgOn; }
+  getGmgCollected(): boolean { return this.gmgCollected_; }
 
   private wm(): WeaponManager { return this.entity.get(WeaponManager); }
 
@@ -53,9 +71,14 @@ export class PlayerControl extends Component {
   grantSpell(attack: AttackData): void { this.wm().addWeapon(attack.name, attack); }
 
   // weapon inventory persists via WeaponManager.addSaveData/restoreFromSave (no booleans here anymore).
-  addSaveData(next: NextFn, sd: Record<string, any>): Record<string, any> { return next(sd); }
+  // The GMG collected/on flags persist (modGoldenMachineGun.addSaveData) — a held GMG survives save/load.
+  addSaveData(next: NextFn, sd: Record<string, any>): Record<string, any> {
+    sd["gmg"] = { collected: this.gmgCollected_, on: this.gmgOn };
+    return next(sd);
+  }
   restoreFromSave(next: NextFn, sd: Record<string, any>): Record<string, any> {
     const r = next(sd);
+    if (sd["gmg"]) { this.gmgCollected_ = sd["gmg"].collected === true; this.gmgOn = sd["gmg"].on === true; }
     // after WeaponManager restored the inventory, re-widen the melee sweep to the current melee reach.
     const ma = this.wm().getMeleeAttack();
     const tg = this.entity.tryGet(Targeting); if (ma && tg) tg.reach = ma.reach;
@@ -69,12 +92,18 @@ export class PlayerControl extends Component {
   update(next: NextFn): void {
     if (this.releaseT > 0) this.releaseT--;
     if (this.meleeT > 0) this.meleeT--;
+    // I8: tick any in-flight bullet stream (modFireBullets) regardless of input/death — it owns its
+    // own residual charge and drains independently once released.
+    if (this.stream) this.tickStream();
     if (this.entity.send("isDead")) { const m = this.entity.get(Movement); m.intentX = m.intentY = 0; return next(); }
 
     const input = game.input;
     const m = this.entity.get(Movement);
     const mv = input.moveVector();
     m.intentX = mv.x; m.intentY = mv.y;
+
+    // G key (objAiPlayer.interpretGameKeys -> setGmg): toggle the Golden Machine Gun on/off (edge).
+    if (input.pressed("g")) this.setGmg();
 
     // aim point: the cursor in world space, else the auto-acquired target (teamMaster.findTarget over
     // data allegiance/roles — same logic every unit uses), else current facing
@@ -89,15 +118,23 @@ export class PlayerControl extends Component {
     const magic = wm.getMagicAttack();           // the owned magic weapon (energyBlast), or null
     const melee = wm.getMeleeAttack();           // the current melee weapon (#punch / #merlinSword)
     const primary = input.mouseDown() || input.held(" ");
+    const gmg = this.gmgOn;
 
     // hold-to-charge magic — only once Merlin owns a magic weapon. No pool gate; the recast gate is the
     // magic weapon's own cooldown counter (getCooldownFin), reset on FIRE.
     const magicReady = magic ? wm.cooldownFinFor(magic.name) : false;
     if (magic && primary && magicReady) {
-      if (!this.charging) { this.charge = chargeStartOf(magic, mana); game.audio?.play("spell_charge"); }
+      if (!this.charging) { this.charge = chargeStartOf(magic, mana, gmg); game.audio?.play("spell_charge"); }
       this.charging = true;
       m.facingLeft = this.aimLeft;
-      this.charge = Math.min(chargeMaxOf(magic, mana), this.charge + chargeSpeedOf(magic, mana));
+      const cm = chargeMaxOf(magic, mana, undefined, gmg);
+      this.charge = Math.min(cm, this.charge + chargeSpeedOf(magic, mana, gmg));
+      // I7 auto-fire (objAiPlayer.internalEvent #spellCharged): under GMG with gmgAutoFire, the instant
+      // the charge reaches max, release the spell and immediately re-charge (continuous machine-gun fire).
+      if (gmg && magic.gmgAutoFire && this.charge >= cm) {
+        this.castMagic(magic, m, aim, wm);              // playerAttackRelease
+        this.charge = chargeStartOf(magic, mana, gmg);  // playerAttackCharge (re-charge from gmgChargeStart)
+      }
     } else if (this.charging) {
       if (magic) this.castMagic(magic, m, aim, wm); // released or cooled down -> fire at whatever charge was held
       this.charging = false; this.charge = 0;
@@ -107,11 +144,59 @@ export class PlayerControl extends Component {
     next();
   }
 
+  // I8 tickStream (modFireBullets.updateFireBullets): every fireDelay frames, fire one bullet draining
+  // chargePerUnit; drain happens BEFORE the <0 check (so the bullet count == floor(held/chargePerUnit) and
+  // the LAST shot that would push charge negative does NOT fire). fireDelay=0 (GMG) empties in one tick.
+  private tickStream(): void {
+    const s = this.stream!;
+    const m = this.entity.get(Movement);
+    // emit as many shots as fall due this tick (fireDelay==0 -> drain the whole stream in one tick).
+    let guard = 0;
+    while (s.counter <= 0 && guard++ < 10000) {
+      s.charge -= s.attack.chargePerUnit;       // reduce charge (modFireBullets.fireBullet)
+      if (s.charge < 0) { this.stream = null; return; } // finished -> spell actor dies
+      this.emitStreamBullet(s, m);
+      s.counter = s.delay;                       // resetFireDelay (CounterReset)
+      if (s.delay <= 0) continue;                // fireDelay 0 -> keep emptying this tick
+      break;
+    }
+    if (this.stream) s.counter--;                // Counter(pFireDelayCounter) — count toward the next shot
+  }
+
+  // emit one bullet of the stream — energyBeam via the beam path, energyPulse via fireSplashBullet (it
+  // carries an explode #attack, C2). Both spawn the #bullet actor's resolved #attack at the cast/target.
+  private emitStreamBullet(s: { attack: AttackData; aimX: number; aimY: number; team: string }, m: Movement): void {
+    const bulletAttack = resolveAttack(((registry.resolveActor(bare(s.attack.bullet)) ?? {})["attack"]) as any,
+      registry.resolveActor(bare(s.attack.bullet)) as any);
+    const hits = s.attack.hits.length ? s.attack.hits : ["#teamMembers", "#teamBuildings"];
+    if (s.attack.beam) {
+      performBeamAttack(this.entity.id, m.x, m.y - 6, s.aimX, s.aimY, bulletAttack, s.team, hits, "#enemy");
+    } else {
+      const dirX = s.aimX - m.x, dirY = (s.aimY - 6) - m.y;
+      fireSplashBullet(this.entity.id, m.x, m.y - 6, dirX, dirY, s.attack.spellSpeed / 3, bulletAttack,
+        s.team, hits, "#enemy", 90);
+    }
+    game.audio?.play("spell_release", 0.4);
+  }
+
   private castMagic(attack: AttackData, m: Movement, aim: { x: number; y: number }, wm: WeaponManager): void {
     const c = this.charge; // already >= chargeStart
+    const team = this.entity.send("getTeam") as string;
+
+    // I8 streaming release (modFireBullets #spellReleased): a releaseFunction:#fireBullets spell does NOT
+    // fire one bolt — it starts a bullet stream draining chargePerUnit per shot over fireDelay frames.
+    // Under GMG, ensureSpell forces fireDelay=0 -> the stream empties in one tick.
+    if (attack.releaseFunction === "#fireBullets" || attack.releaseFunction === "fireBullets") {
+      const delay = this.gmgOn ? 0 : Math.round(attack.fireDelay);
+      this.stream = { attack, charge: c, delay, counter: 0, aimX: aim.x, aimY: aim.y, team };
+      m.facingLeft = this.aimLeft;
+      wm.resetCooldownFor(attack.name);
+      this.releaseT = SPELL_FX.releaseFrames;
+      return;
+    }
+
     const dmg = Math.round(SPELL_FX.dmgPerUnit * c);
     const speed = Math.min(SPELL_FX.speedCap, SPELL_FX.speedBase + c * SPELL_FX.speedPerUnit);
-    const team = this.entity.send("getTeam") as string;
     const dirX = aim.x - m.x, dirY = (aim.y - 6) - m.y;
 
     // SUMMON spell (armySummon/monsterSummon): release summons the highest affordable tier at the cast

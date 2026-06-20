@@ -13,7 +13,7 @@ import type { AttackData } from "./weapon";
 import { resolveSplash, applyPayload } from "./splash";
 
 export class Projectile extends Component {
-  static handles = ["update", "isFinished"];
+  static handles = ["update", "isFinished", "getTeam"];
   life = 0; maxLife = 100; power = 10; team = ""; ownerId = -1; done = false; freeze = 0; mult = 1;
   // splash payload (C2): when set, the bullet resolves an area hit on trigger instead of single-target.
   private splash: AttackData | null = null;
@@ -22,6 +22,10 @@ export class Projectile extends Component {
   // single-target payload (C2): a player spell bolt (arctic/heal) carries its spell #attack so its hit
   // runs the full (possibly-list) payloadFunction (takeFreeze/takeHeal/takeHit) off the bolt's vector.
   private payload: AttackData | null = null;
+  // I8 beam (objBullet.setBeam / performBeamAttack): a non-travelling bullet spawned AT the target loc,
+  // its sprite stretched to the caster->target distance + rotated, detonating its explode #attack on the
+  // first frame. beamDist/beamAngle/beamCasterX/Y drive the renderer's stretched-line draw.
+  beam = false; beamDist = 0; beamAngle = 0; beamCasterX = 0; beamCasterY = 0; beamLife = 0;
 
   configure(power: number, team: string, ownerId: number, maxLife = 100, freeze = 0, mult = 1): void {
     this.life = 0; this.power = power; this.team = team; this.ownerId = ownerId;
@@ -42,8 +46,20 @@ export class Projectile extends Component {
     this.life = 0; this.team = team; this.ownerId = ownerId; this.maxLife = maxLife; this.done = false;
     this.splash = attack; this.splashHits = hits ?? attack.hits; this.splashAllegiance = allegiance;
   }
-  override reset(): void { this.done = false; this.life = 0; this.ownerId = -1; this.freeze = 0; this.mult = 1; this.splash = null; }
+  // configureBeam: an energyBeam shot — spawned at the target loc, stretched/rotated, detonates its
+  // explode #attack on the first frame (a one-frame beam line from caster to target).
+  configureBeam(attack: AttackData, team: string, ownerId: number, hits: string[], allegiance: string,
+    dist: number, angle: number, casterX: number, casterY: number): void {
+    this.life = 0; this.team = team; this.ownerId = ownerId; this.maxLife = 8; this.done = false;
+    this.splash = attack; this.splashHits = hits; this.splashAllegiance = allegiance; this.payload = null;
+    this.beam = true; this.beamDist = dist; this.beamAngle = angle; this.beamCasterX = casterX; this.beamCasterY = casterY;
+    this.beamLife = 4; // a few frames so the line is visible before it sweeps out
+  }
+  override reset(): void { this.done = false; this.life = 0; this.ownerId = -1; this.freeze = 0; this.mult = 1; this.splash = null; this.payload = null; this.beam = false; }
   isFinished(): boolean { return this.done; }
+  // a splash/beam bullet IS the attacker passed to resolveSplash; expose its owner team so the area
+  // search resolves the right hostile teams (calcTargetTeams reads attacker.getTeam). objBullet.setTeam.
+  getTeam(_next: NextFn): string { return this.team; }
 
   private detonate(x: number, y: number): void {
     const a = this.splash!;
@@ -61,6 +77,16 @@ export class Projectile extends Component {
 
   update(next: NextFn): void {
     const m = this.entity.get(Movement);
+    // I8 beam: detonate the explode #attack at the target on the FIRST frame (#bulletArrivedAtTargetLoc),
+    // then linger a few frames so the stretched line renders before the bullet retires.
+    if (this.beam) {
+      if (this.life === 0) {
+        resolveSplash(this.entity, this.splash!, m.x, m.y, this.ownerId, this.splashHits, this.splashAllegiance);
+        game.audio?.play("spell_release", 0.4);
+      }
+      if (++this.life >= this.beamLife) this.done = true;
+      return next();
+    }
     if (m.hitX || m.hitY) { if (this.splash) this.detonate(m.x, m.y); else this.done = true; return next(); } // wall / land
     if (++this.life > this.maxLife) { if (this.splash) this.detonate(m.x, m.y); else this.done = true; return next(); }
     for (const e of game.entities) {

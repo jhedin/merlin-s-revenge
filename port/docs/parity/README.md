@@ -17,10 +17,11 @@ This tracker is the running backlog; update the status table + log each iteratio
 ## Where we are: engine + slice complete; mr4Demo content (Phase I) in progress
 
 Started at ~20%. Phases A–H below are implemented and verified (tsc-clean, room-1 no-regression gate held
-at every step). Phase I Pass A (I1–I6 + I9) is done — **263 tests** (+22). The port faithfully runs the
-combat/AI/weapon engine, the full 47-map asset pipeline, the spell roster, save/army/medikit, the boss
-reincarnation cascade, the complete game shell, collision/render fidelity, and the mr4Demo region/mine/
-chatter objType mechanics. Pass B (I7 GMG, I8 beams) remains.
+at every step). **Phase I is COMPLETE** (Pass A I1–I6 + I9; Pass B I7 GMG + I8 beams) — **275 tests** (+34).
+The port faithfully runs the combat/AI/weapon engine, the full 47-map asset pipeline, the spell roster,
+save/army/medikit, the boss reincarnation cascade, the complete game shell, collision/render fidelity, and
+EVERY placed-but-inert mr4Demo objType mechanic (region/mine/chatter + GMG mode + streaming beams). The only
+thing still inert in mr4Demo is `#player` (the spawn marker, not a mechanic).
 
 > **CORRECTION (don't repeat this mistake):** an earlier wrap-up claimed the backlog was "complete" and
 > that GMG, the magic limiter, beams, reservations, team-override, etc. were "out of scope / unreachable."
@@ -212,8 +213,21 @@ Status: ☐ not started · ◐ in progress · ☑ done
   (prime→check→detonate FSM calling `resolveSplash` at the mine loc). fire/pitMonster damage + re-arm (fire
   dies after 10, pit forever); the 5 auras are `damageMultiplier:0` + `#takeFreeze` → routed through the
   freeze payload (NOT a 0-damage takeHit). `teamMaster.findHostileWithin` added; team-gated. *(×550)*
-- ☐ **I7. GMG** (`gmg`) — Golden Machine Gun collect + toggle + `modAttack.gmgOn/Off` auto-fire charge mode. **(Pass B)**
-- ☐ **I8. Beams** (`energyBeamSpell`, `energyPulseSpell`) — `modAttack.performBeamAttack` / streaming release. **(Pass B)**
+- ☑ **I7. GMG** (`gmg`) — Golden Machine Gun: a MODE (not a weapon). `PICKUPS["#gmg"]` → `PlayerControl.
+  gmgCollected()` (sets collected + turns on); the **G key** toggles `setGmg()`. When on, `chargeMaxOf/
+  StartOf/SpeedOf` read the weapon's `gmg*` fields (flat, no mana calc / no limitMagic, per `modAttack.gmgOn`),
+  and on reaching max with `gmgAutoFire` the player auto-releases + immediately re-charges (the `spellCharged`
+  loop — continuous fire; `fireDelay=0` under GMG). `gmgMaster` HUD is a cosmetic on/off flag. *(placed ×3)*
+- ☑ **I8. Beams** (`energyBeamSpell`, `energyPulseSpell`) — `#objScroll`s granting a `#magic` weapon with
+  `#releaseFunction:#fireBullets`. **Streaming release** (`modFireBullets`): release latches the held charge
+  and emits a bullet every `fireDelay` frames, draining `chargePerUnit` per shot (drain BEFORE the <0 check →
+  count = `floor(held/chargePerUnit)`), modeled as a short-lived stream substate on `PlayerControl`.
+  energyPulse streams `fireSplashBullet` explode bullets; energyBeam uses `performBeamAttack` — a bullet
+  spawned AT the target loc (±6px jitter), NOT travelling, its sprite stretched to the caster→target distance
+  + rotated (`objBullet.setBeam`: `beamDist`/`beamAngle`), detonating its explode `#attack` at the target on
+  the first frame (a beam line). Added `beam`/`fireDelay`/`releaseFunction`/`gmg*` to `AttackData`; a beam mode
+  to `Projectile` + a stretched-line beam render. Also gave `Projectile` a `getTeam` (the splash/beam bullet IS
+  the attacker passed to `resolveSplash` — fixes the disc's hostile-team resolution). *(beam ×4, pulse ×13)*
 - ☑ **I9. Unit/dwelling audit** — towers fire (C2/E1), invasions cycle ALL `#residentGroups` (Dwelling
   random-picks a group each production cycle — verified `orcInvasion`→bowOrc/swordOrc/mageOrc emerge), and
   the `*InGame` spellcaster wizards now **cast their magic weapon**. **Found + fixed `berlinInGame`:** it
@@ -545,3 +559,42 @@ Status: ☐ not started · ◐ in progress · ☑ done
   (3) `#recordInRoomState:false` (fire mines) are snapshotted into pState like any actor (the port's restore
   replaces tile-spawning, so excluding them would drop content — the mine FSM re-inits on respawn so the
   state is equivalent; save-bookkeeping deviation noted). Out of scope (Pass B): I7 GMG, I8 beams.
+- **Iter 13 — Phase I Pass B (I7 GMG + I8 beams) shipped — Phase I COMPLETE.** Added `gmgChargeMax/Speed/
+  Start`, `gmgAutoFire`, `beam`, `fireDelay`, `releaseFunction` to `AttackData` (from the `#attack` via
+  `resolveAttack`). **I7 GMG** is a MODE on `PlayerControl` (not a weapon): `PICKUPS["#gmg"]` -> a `gmg`
+  effect calling `gmgCollected()` (sets `pGmgCollected`, turns on); the **G key** edge calls `setGmg()`
+  (toggle, inert until collected). When on, `chargeMaxOf/StartOf/SpeedOf` take a `gmgOn` flag and return the
+  flat `gmg*` fields (no mana calc, no limitMagic — literal `modAttack.gmgOn`); on reaching `chargeMax` with
+  `gmgAutoFire`, `update` auto-releases + re-charges from `gmgChargeStart` (the `spellCharged` loop = continuous
+  fire). The collected/on flags persist in the save (`modGoldenMachineGun.addSaveData`). energyBlast carries
+  `gmgChargeMax 15 / Speed 5 / Start 5 / autoFire true`. **I8 beams:** `energyBeamSpell`/`energyPulseSpell`
+  grant a `#magic` weapon with `#releaseFunction:#fireBullets`. On release, `castMagic` does NOT fire one
+  bolt — it latches a **stream** substate `{attack, charge, delay, counter, aim, team}` on `PlayerControl`;
+  each tick `tickStream` (mirroring `modFireBullets.updateFireBullets`) drains `chargePerUnit` BEFORE the <0
+  check (so count = `floor(held/chargePerUnit)`, last over-drain shot doesn't fire) and emits a bullet every
+  `fireDelay` frames (resetting the counter each shot). energyPulse -> `fireSplashBullet` (explode bullets,
+  C2); energyBeam -> a new `performBeamAttack` (`systems/bullets.ts`) spawning a `Projectile` in **beam mode**
+  AT the target loc (±6px jitter — clamped from the original `random(20)-10` so the small explode disc
+  reliably lands, since the port lacks the original's target-binding, §g.2), sprite stretched to the
+  caster->target distance (`beamDist`) + rotated (`beamAngle = atan2`), detonating its explode `#attack` on
+  the first frame, lingering a few frames for the render. Under GMG `fireDelay=0` -> the stream empties in
+  one tick. Added `rotation`/`scaleX`/`scaleY` to `Sprite` + the renderer transform; the beam renders as a
+  bright stretched line (caster->target) in `drawBullets`. **Also gave `Projectile` a `getTeam`** returning
+  its owner team — the splash/beam bullet IS the `attacker` passed to `resolveSplash`, and `calcTargetTeams`
+  reads `attacker.getTeam`; without it the bullet's empty team resolved no hostile teams (a latent splash-team
+  bug, now fixed). Dropped `#gmg`/`#energyBeamSpell`/`#energyPulseSpell` from `SKIP_SPAWN`; `classify_placed`
+  now `[skipped]` = `{player}` only. tsc clean; **275 tests** (+12 in `phase_i.test.ts`: GMG gmg*-data /
+  collect->on / toggle-inert-until-collected / chargeMaxOf-reads-gmgChargeMax / auto-fire->1 bolt / no-GMG=
+  single-bolt; beam releaseFunction-data / energyPulse stream / exact `floor(C/chargePerUnit)`=5 drain /
+  energyBeam spawns-at-target with stretched+rotated sprite / energyBeam detonates+damages a hostile / GMG
+  fireDelay=0 empties in one tick). Room-1 no-regression: `playthrough_smoke` ends `enemies:0, exitsOpen:true,
+  errors:none`; energyBlast non-GMG charge math unchanged (the gmgOn flag defaults false). In-browser on
+  `?map=works_mr4Demo` (granted via debug hooks, no pageerrors): GMG collect -> collected+on, inventory still
+  `[#energyBlast]` (mode not weapon); holding to charge under GMG -> continuous auto-fire (concurrent bullets
+  4->14); energyPulse (GMG off, +mana) -> a spaced stream (peak 10 concurrent); energyBeam -> a beam-mode
+  bullet `beamDist 250 / beamAngle -0.14` (a stretched/rotated line). Deviations/risks: (1) beam jitter
+  clamped ±6 (vs ±10) to compensate for the missing target-binding (§g.2); (2) beam render is a 2D line, not
+  the original's rotated sprite-strip (F3 sprite rotation/scale is wired but the energyBeam fly-frame isn't
+  reliably bundled — the line is the acceptable first cut, §g.2); (3) the beam/pulse stream lives on
+  PlayerControl, not a live `objSpell` actor (port adaptation, §g.1 — same observable cadence). **Phase I and
+  the audited backlog (A–I) are complete.**

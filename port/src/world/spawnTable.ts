@@ -17,16 +17,18 @@ export const PICKUPS: Record<string, PickupEffect> = {
   // C spell scrolls (reachable in other maps via F1): each grants a #magic weapon (addWeapon).
   "#cBlast": "cBlast", "#darkBlast": "darkBlast", "#arcticBlast": "arcticBlast", "#healBlast": "healBlast",
   "#armySummon": "armySummon", "#monsterSummon": "monsterSummon", "#energyMines": "energyMines",
+  // I7/I8 (Pass B): the GMG is a #objScroll routed to a mode (not addWeapon); the beam scrolls grant a
+  // #magic weapon with the modFireBullets streaming release.
+  "#gmg": "gmg", "#energyBeamSpell": "energyBeam", "#energyPulseSpell": "energyPulse",
 };
 
 // Items / spells with no unit/dwelling behavior yet (scrolls, mines, music, towers). Characters
 // (#objCPUCharacter) and dwellings (#objDwelling) are handled by data; this only skips the rest.
 export const SKIP_SPAWN = new Set([
   "#none", "#player",
-  // Phase I Pass A handled (now spawn via objType dispatch / PICKUPS): #objMusic (incl musicLastStand),
-  // #objMagicLimit (incl magicLimit25), #objTeamOverride, #objChatter, #objMine, #energyPunch.
-  // Still deferred to Pass B (§g): #gmg (GMG mode), #energyBeamSpell/#energyPulseSpell (streaming/beam).
-  // #energyMine is the deposited mine actor (other-map item, not Pass A). #armySummonStones is a separate
-  // army-summon monolith (other-map item, §f.8).
-  "#energyMine", "#energyPulseSpell", "#energyBeamSpell", "#gmg", "#armySummonStones",
+  // Phase I Pass A handled (objType dispatch / PICKUPS): #objMusic, #objMagicLimit, #objTeamOverride,
+  // #objChatter, #objMine, #energyPunch. Pass B handled (PICKUPS): #gmg (GMG mode), #energyBeamSpell /
+  // #energyPulseSpell (modFireBullets streaming / beam). #energyMine is the deposited mine actor
+  // (other-map item). #armySummonStones is a separate army-summon monolith (other-map item, §f.8).
+  "#energyMine", "#armySummonStones",
 ]);

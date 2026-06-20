@@ -19,13 +19,16 @@ const SCROLL_ACTOR: Record<string, string> = {
   sword: "merlinSword", spell: "energyBlast", energyPunch: "energyPunch",
   cBlast: "cBlast", darkBlast: "darkBlast", arcticBlast: "arcticBlast", healBlast: "healBlast",
   armySummon: "armySummon", monsterSummon: "monsterSummon", energyMines: "energyMines",
+  // I8 beams: each grants a #magic weapon with a #releaseFunction:#fireBullets streaming release.
+  energyBeam: "energyBeamSpell", energyPulse: "energyPulseSpell",
 };
 function scrollAttack(effect: string) {
   return resolveAttack((registry.resolveActor(SCROLL_ACTOR[effect]!) ?? {})["attack"] as Record<string, any>);
 }
 
 export type PickupEffect = "heal" | "maxikit" | "speed" | "sword" | "spell" | "energyPunch" | "manaCapacity" | "manaFlow" | "manaBurst"
-  | "cBlast" | "darkBlast" | "arcticBlast" | "healBlast" | "armySummon" | "monsterSummon" | "energyMines";
+  | "cBlast" | "darkBlast" | "arcticBlast" | "healBlast" | "armySummon" | "monsterSummon" | "energyMines"
+  | "gmg" | "energyBeam" | "energyPulse";
 
 export class Pickup extends Component {
   static handles = ["update", "isFinished", "getEffect"];
@@ -75,7 +78,12 @@ export class Pickup extends Component {
       // payload/splash/summon behaviour is driven off the weapon's #attack at cast time (control.ts).
       case "cBlast": case "darkBlast": case "arcticBlast": case "healBlast":
       case "armySummon": case "monsterSummon": case "energyMines":
+      // I8 beams: energyBeam/energyPulse scrolls grant a #magic weapon with the streaming release.
+      case "energyBeam": case "energyPulse":
         player.get(PlayerControl).grantSpell(scrollAttack(this.effect)); break;
+      // I7 GMG (newScrollCollected's #gmg branch): NOT addWeapon — it's a MODE. Collecting sets the
+      // collected flag and turns it on (PlayerControl.gmgCollected).
+      case "gmg": player.get(PlayerControl).gmgCollected(); break;
       // mana powerups (objManaCapacity/Flow/Burst) each raise their own stat by the real potion inc
       case "manaCapacity": player.get(Mana).incCapacity(); break;
       case "manaFlow": player.get(Mana).incFlow(); break;

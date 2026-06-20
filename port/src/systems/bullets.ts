@@ -61,6 +61,33 @@ export function fireSplashBullet(
   return b;
 }
 
+// performBeamAttack (modAttack.performBeamAttack): the energyBeam bullet spawns AT the target loc (with a
+// ±10px jitter), NOT travelling, with its sprite stretched to the caster->target distance and rotated to
+// the angle (objBullet.setBeam: width=dist, rotation=GeomAngle). It detonates its explode #attack at the
+// target on the first frame. (cx,cy)=caster loc; (tx,ty)=raw target loc (cursor/auto-target).
+export function performBeamAttack(
+  ownerId: number, cx: number, cy: number, tx: number, ty: number,
+  attack: AttackData, team: string, hits: string[], allegiance: string,
+): Entity {
+  // random(20)-10 jitter (objBullet visual variation), but clamped to ±6 so a beam aimed at a target
+  // reliably lands inside its small explode disc — the original guarantees the hit by binding the beam
+  // bullet to its #target (setTarget); the port's area model has no target-binding, so we keep the jitter
+  // within the hit range instead. (A minor, documented deviation, plan §g.2.)
+  const jx = Math.floor(game.rng.next() * 13) - 6, jy = Math.floor(game.rng.next() * 13) - 6;
+  const targetX = tx + jx, targetY = ty + jy;
+  const distX = targetX - cx, distY = targetY - cy;
+  const dist = Math.hypot(distX, distY);          // distToTargetScale (setSpriteWidth = dist+1)
+  const angle = Math.atan2(distY, distX);         // GeomAngle(distXY) for setSpriteRotation
+  const b = pool.acquire();
+  b.type = "bullet";
+  b.build({ x: targetX, y: targetY, friction: 1, accel: 0, walkSpeed: 999, box: 6 });
+  const m = b.get(Movement);
+  m.vx = 0; m.vy = 0; // spawned AT the target, not travelling
+  b.get(Projectile).configureBeam(attack, team, ownerId, hits, allegiance, dist, angle, cx, cy);
+  game.entities.push(b);
+  return b;
+}
+
 export function sweepBullets(): void {
   const ents = game.entities;
   for (let i = ents.length - 1; i >= 0; i--) {

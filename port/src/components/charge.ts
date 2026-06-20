@@ -23,7 +23,10 @@ export const MAGIC_LIMIT = 100; // the default value (kept for back-compat; live
 // chargeMaxOf(attack, mana, rng?): the per-cast charge ceiling. `rng` enables the randomSummon wobble
 // (calcAttackChargeMax 106-112) for skeleton/goblin/undead/sc summons — those let you NOT reliably hit
 // the top tier each cast. Without an rng (or a non-randomSummon attack) the result is deterministic.
-export function chargeMaxOf(attack: AttackData, mana: ManaStats, rng?: Rng): number {
+export function chargeMaxOf(attack: AttackData, mana: ManaStats, rng?: Rng, gmgOn = false): number {
+  // I7: modAttack.gmgOn swaps pChargeMax to the flat gmgChargeMax (NO capacity calc, NO limitMagic
+  // scaling — the literal gmgOn handler assigns pChargeMax = pAttack.gmgChargeMax directly).
+  if (gmgOn) return attack.gmgChargeMax;
   let cm = Math.min(attack.chargeMax, mana.capacity * attack.chargeMaxModifier + attack.chargeMaxBasic);
   // calcAttackChargeMax: a #limitMagic spell's ceiling is scaled by the live magic limiter (room-scoped).
   if (attack.limitMagic) cm = cm * game.magicLimit.get() / 100;
@@ -42,7 +45,9 @@ export function chargeMaxOf(attack: AttackData, mana: ManaStats, rng?: Rng): num
   return cm;
 }
 
-export function chargeStartOf(attack: AttackData, mana: ManaStats): number {
+export function chargeStartOf(attack: AttackData, mana: ManaStats, gmgOn = false): number {
+  // I7: gmgOn assigns pChargeStart = gmgChargeStart flat (energyBeam/Pulse 0, energyBlast 5).
+  if (gmgOn) return Math.min(attack.gmgChargeStart, chargeMaxOf(attack, mana, undefined, true));
   // NOTE (deliberate, per the B2 "spell unchanged" gate): the port keeps today's `chargeStart + burst`
   // (clamped to chargeMax / chargeStartMax). Raw Lingo calcAttackChargeStart has a trailing
   // `if pChargeStart <> #none then chargeStart = min(pChargeStart, chargeStartMax)` that OVERWRITES the
@@ -57,7 +62,10 @@ export function chargeStartOf(attack: AttackData, mana: ManaStats): number {
   return cs;
 }
 
-export function chargeSpeedOf(attack: AttackData, mana: ManaStats): number {
+export function chargeSpeedOf(attack: AttackData, mana: ManaStats, gmgOn = false): number {
+  // I7: gmgOn assigns pChargeSpeed = gmgChargeSpeed flat AND pChargeSpeedMax = gmgChargeSpeed (so the
+  // raw speed is not flow-scaled — it's the fixed GMG ramp, e.g. energyBeam 2, energyBlast 5).
+  if (gmgOn) return attack.gmgChargeSpeed;
   const raw = attack.chargeSpeed * mana.flow;
   if (attack.chargeSpeedMax === "#unlimited") return raw;
   return Math.min(raw, attack.chargeSpeedMax as number);

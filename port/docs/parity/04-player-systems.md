@@ -47,7 +47,7 @@ implement `addSaveData`/`restoreFromSave` (potion, sound, army) — plus `charac
 | **structMaster** | Blank-struct factory for ~50 record types (attack defaults, potionRecord, screenExits…). | **PARTIAL** | Port resolves `#attack` via data registry; no central struct-defaults table. Some defaults inlined. | S |
 | **weaponMaster** | Droppable-weapon registry, ownership, nearest-available lookup for AI. | **MISSING** (agent 3) | Weapon mechanics domain. | — |
 | **wizardMaster** | Wizard/summon-selector display + unlock notifications. | **MISSING** (agent 5/3) | Wizard selection UI. | M |
-| **gmgMaster** | Golden-machine-gun display/charge feedback. | **N-A** (agent 3/5) | Special weapon HUD. | — |
+| **gmgMaster** | Golden-machine-gun display/charge feedback. | **DONE** (I7) | The GMG mode lives on `PlayerControl` (collect/toggle/charge-swap/auto-fire); `gmgMaster` itself is a cosmetic on/off HUD flag. | — |
 | **magicLimitMaster** | Stores global magic-cast power cap (`act_magicLimit*`). | **MISSING** (agent 3) | Spell-power cap not enforced. | S |
 | **mapEditMaster** | Map load/edit dev menu. | **N-A** (dev tooling) | — | — |
 | **creditsMaster** | Loads/scrolls credits text. | **N-A** (agent 5) | — | — |

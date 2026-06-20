@@ -16,6 +16,9 @@ export interface Sprite {
   flip?: boolean;            // mirror horizontally (face left)
   tint?: SpriteTint;         // modColourTransform overlay (white flick / glowRed/Teal/Gold)
   alpha?: number;            // per-sprite globalAlpha (modColourTransform/front-layer blend), default 1
+  rotation?: number;         // I8 beam: sprite rotation in radians about the registration point (setSpriteRotation)
+  scaleX?: number;           // I8 beam: horizontal stretch about the registration point (setSpriteWidth -> width/imgW)
+  scaleY?: number;
 }
 
 export interface TileSheet { img: CanvasImageSource; cols: number; tile: number; }
@@ -69,6 +72,18 @@ export class Renderer {
       const img = s.tint ? this.tinted(s.img, s.tint) : s.img;
       const alpha = s.alpha ?? 1;
       if (alpha !== 1) ctx.globalAlpha = alpha;
+      // I8 beam: a rotated/stretched sprite (setSpriteRotation + setSpriteWidth). Transform about the
+      // registration point so the beam pivots at the caster-facing anchor and stretches along its axis.
+      if (s.rotation || s.scaleX !== undefined || s.scaleY !== undefined) {
+        ctx.save();
+        ctx.translate(x, y);
+        if (s.rotation) ctx.rotate(s.rotation);
+        ctx.scale((s.flip ? -1 : 1) * (s.scaleX ?? 1), s.scaleY ?? 1);
+        ctx.drawImage(img, -s.regX, -s.regY);
+        ctx.restore();
+        if (alpha !== 1) ctx.globalAlpha = 1;
+        continue;
+      }
       if (s.flip) {
         // mirror about the registration point: with scale(-1,1) the anchor (regX from the left)
         // lands at world x when drawn at flipped-x = -(x + regX); y is unaffected.
