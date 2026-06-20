@@ -19,6 +19,7 @@ import { Experience } from "./components/experience";
 import { Movement } from "./components/movement";
 import { Projectile } from "./components/projectile";
 import { sweepBullets, bulletPoolStats } from "./systems/bullets";
+import { rebuildCombatSubstrate } from "./systems/combatTick";
 import { saveGame, loadSave } from "./systems/save";
 import { parseCutscene } from "./data/cutscene";
 import { CutscenePlayer } from "./scenes/cutscenePlayer";
@@ -52,6 +53,9 @@ async function main() {
   const unlock = () => { audio.unlock(); audio.playMusic("baroque_rock_v1"); window.removeEventListener("keydown", unlock); window.removeEventListener("pointerdown", unlock); };
   window.addEventListener("keydown", unlock); window.addEventListener("pointerdown", unlock);
   initContext({ input, assets, audio, tilePx: tile, entities: [], player: null, tick: 0, spawnEnemy, spawnUnit, spawnAlly });
+  // teamMaster.pUnitMap sizing from the current map (getTileLoc: world loc -> tile, origin 0,0). Rooms
+  // render from (0,0) at map.tilePx, so origin 0,0 / tile=map.tilePx (fallback 32) matches getTileLoc.
+  game.teamMaster.unitMap.configure(tile || 32, 0, 0);
 
   // scene state machine (scenes.json): title -> intro cutscene -> playing <-> paused -> gameover/victory
   let mode: "title" | "cutscene" | "playing" | "paused" | "gameover" | "victory" = "title";
@@ -84,6 +88,7 @@ async function main() {
   }
 
   function startGame() {
+    game.teamMaster.reset(); // fresh rosters/subscriptions for a new run
     player = spawnPlayer(viewW / 2, viewH / 2);
     game.player = player;
     game.entities = [player];
@@ -110,6 +115,9 @@ async function main() {
           const s = loadSave();
           if (s) { rooms.enter(s.room); player.send("restoreFromSave", s.player); flash("game loaded"); }
         }
+        // refresh the team roster + unit-map broad-phase BEFORE AIs run (teamMaster.findTarget /
+        // impactMeleeAttack read a current map). Drops dead/left targets, firing #leaveGame.
+        rebuildCombatSubstrate();
         // iterate over this tick's entities by captured length (alloc-free; newly spawned
         // bullets/allies appended during the loop are processed next tick, like a snapshot)
         for (let i = 0, n = game.entities.length; i < n; i++) game.entities[i]!.send("update");

@@ -59,14 +59,15 @@ Status: ☐ not started · ◐ in progress · ☑ done
   data attack powers under B2. See [`plans/A1-damage-knockback.md`](plans/A1-damage-knockback.md). *(01 #1, 03 #1)*
 
 ### Phase B — Targeting & AI engine
-- ◐ **B1. `teamMaster` + `findTarget` + `objAiCPU` target FSM.** Data allegiance (`tem_*`), unit-map
+- ☑ **B1. `teamMaster` + `findTarget` + `objAiCPU` target FSM.** Data allegiance (`tem_*`), unit-map
   broad-phase, target criteria/roles, committed `#target` relationships, `impactMeleeAttack` loop. Unlocks
   every CPU enemy/ally/dwelling. Plan: [`plans/B1-targeting-ai.md`](plans/B1-targeting-ai.md). *(01 #2)*
   - ☑ **2a substrate** — `UnitMap` broad-phase, `TeamMaster` (data allegiance/cull/roster/`#leaveGame`
-    pub-sub), `findTarget`, `impactMeleeAttack`, `Targeting` component. Pure + unit-tested (11 tests); not
-    yet wired into the live loop (no behavior change).
-  - ☐ **2b brain swap** — `EnemyAI`→`CpuAI` FSM (committed target, retarget throttle, dazed-on-reel),
-    PlayerControl melee/aim via `TeamMaster`, archetype/context wiring + per-tick `UnitMap` rebuild.
+    pub-sub), `findTarget`, `impactMeleeAttack`, `Targeting` component. Pure + unit-tested (11 tests).
+  - ☑ **2b brain swap** — `EnemyAI`→`CpuAI` FSM (committed target, 30-frame retarget throttle,
+    dazed-on-reel via `characterModeChanged`, `attackFin` re-acquire, bomber un-suicided), PlayerControl
+    melee/aim via `TeamMaster`, archetype/context wiring + per-tick `UnitMap`/roster rebuild
+    (`combatTick.ts`). Room 1 still clears; +4 CpuAI FSM tests (90 total).
 - ☐ **B2. `modWeaponManager` + data-driven charge/cooldown.** Retire hardcoded `SPELL`/`PUNCH`/`hasSword`/
   `hasSpell`; real weapon slots so enemies get ranged/magic and spells plug in. *(01 #3, 03 #2)*
 
@@ -123,3 +124,15 @@ Status: ☐ not started · ◐ in progress · ☑ done
   applies it as inertia-damped knockback (objGameObject); melee/bullet/bomber build aimed vectors. Damage
   unchanged (room 1 still clears; spell still fells rank-and-file), enemies now recoil. +4 tests (75 total).
   Next: B1 (teamMaster/findTarget) or B2 (weapon manager) — the AI/targeting engine.
+- **Iter 2** — ☑ B1 fully shipped. 2a (substrate) + 2b (brain swap). `EnemyAI`→`CpuAI` is now a real
+  `objAiCPU` FSM with a **committed** `#target` (acquired once via `teamMaster.findTarget`, dropped
+  reactively on `#leaveGame`, forced re-eval on a 30-frame throttle) instead of a per-tick nearest re-scan —
+  the cardinal behaviour change. `Hurt` broadcasts `characterModeChanged` so the brain enters `#dazed`
+  (zero intent) while reeling/dying and re-finds on recovery. Melee (player + CPU) routes through
+  `teamMaster.impactMeleeAttack` (team-scoped AREA loop, A1 vector per victim) — a swing knocks back a
+  cluster. Bomber no longer suicides (normal attack loop). Allegiance is now fully data-driven from
+  `tem_*`/`#attack.targetAllegiance` (dropped `isFriendlyTeam`/`aiKind`/`targetTypes`). `UnitMap`+roster
+  rebuilt once per tick (`combatTick.ts`) before AIs run. tsc clean; 90 tests pass (+4 CpuAI FSM); room 1
+  clears (`enemies:0, exitsOpen:true, errors:none`); in-browser: orcs commit to player-side targets (30/30),
+  0 target flicker over 12 ticks, one swing damages a 2-enemy cluster, no pageerrors. Next: B2 (weapon
+  manager) — data-driven charge/cooldown + real weapon slots.

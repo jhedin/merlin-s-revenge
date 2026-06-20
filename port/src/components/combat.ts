@@ -74,10 +74,13 @@ export class Team extends Component {
   static handles = ["getTeam", "getTeamRole"];
   team = "";
   role = "#teamMembers"; // joinTeam role: #teamMembers (units) or #teamBuildings (dwellings)
+  registered = false;    // true while joined to teamMaster's roster (reconciled by the combat tick)
   override init(cfg: Record<string, any>): void {
     this.team = typeof cfg["team"] === "string" ? cfg["team"] : "";
-    if (typeof cfg["teamRole"] === "string") this.role = cfg["teamRole"];
+    this.role = typeof cfg["teamRole"] === "string" ? cfg["teamRole"] : "#teamMembers";
+    this.registered = false;
   }
+  override reset(): void { this.registered = false; }
   getTeam(): string { return this.team; }       // query
   getTeamRole(): string { return this.role; }   // query (obj.getTeamRole())
 }

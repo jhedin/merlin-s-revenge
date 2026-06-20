@@ -27,8 +27,11 @@ export class TeamMaster {
   unitMap = new UnitMap();
   teamOverride: string | null = null; // gang-up override (calcTargetTeamsOverride); off by default
   private subs = new Map<Entity, Entity[]>(); // #leaveGame: target -> listeners (keepMePosted #once)
+  private rostered = new Set<Entity>();        // all currently-registered units (for the room-exit sweep)
 
-  reset(): void { this.teams.clear(); this.subs.clear(); this.teamOverride = null; }
+  reset(): void { this.teams.clear(); this.subs.clear(); this.teamOverride = null; this.rostered.clear(); }
+
+  registeredEntities(): Iterable<Entity> { return this.rostered; }
 
   // initTeams: lazily build a team's runtime struct from its tem_ record (tolerate missing -> neutral).
   private team(name: string): TeamRuntime {
@@ -47,10 +50,12 @@ export class TeamMaster {
   register(e: Entity, teamName: string, role: string): void {
     const t = this.team(teamName);
     (isBuilding(role) ? t.buildings : t.members).add(e);
+    this.rostered.add(e);
   }
   unregister(e: Entity, teamName: string, role: string): void {
     const t = this.team(teamName);
     (isBuilding(role) ? t.buildings : t.members).delete(e);
+    this.rostered.delete(e);
     this.emitLeave(e); // outOfEnergy/leaveGame fold together for B1
   }
 
@@ -64,6 +69,13 @@ export class TeamMaster {
     if (!list) return;
     this.subs.delete(target);          // #once
     for (const l of list) l.send("eventLeaveGame", target);
+  }
+
+  // Is `teamName` on the player's side (#aldevar + its #friends)? Used only to tag spawned units as
+  // ally vs enemy for rendering / room-clear counting — targeting itself is fully data-driven.
+  isPlayerSide(teamName: string): boolean {
+    if (teamName === "#aldevar") return true;
+    return this.team("#aldevar").friends.includes(teamName);
   }
 
   // calcTargetTeamsByAllegiance (+Override): the tiered list of teams this attacker may target.

@@ -7,6 +7,7 @@ import type { Assets } from "../render/assets";
 import type { AudioSystem } from "../systems/audio";
 import type { Entity } from "../engine/dispatch";
 import { Rng } from "../engine/math";
+import { TeamMaster } from "../systems/teams";
 
 export interface GameContext {
   grid: CollisionGrid;
@@ -18,6 +19,8 @@ export interface GameContext {
   entities: Entity[];
   player: Entity | null;
   tick: number;
+  /** teamMaster: data allegiance + unit-map broad-phase + findTarget/impactMeleeAttack (B1) */
+  teamMaster: TeamMaster;
   /** spawn an enemy by actor name (set in main; lets Dwelling produce units without an import cycle) */
   spawnEnemy?: (name: string, x: number, y: number, opts?: { animChar?: string; ranged?: boolean }) => Entity;
   /** spawn a unit routed by its real team (ally if friendly, else enemy) — used by dwellings */
@@ -35,6 +38,7 @@ export const game: GameContext = {
   entities: [],
   player: null,
   tick: 0,
+  teamMaster: new TeamMaster(),
 };
 
 export function initContext(c: Partial<GameContext>): void { Object.assign(game, c); }

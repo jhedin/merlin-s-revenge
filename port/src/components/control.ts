@@ -1,26 +1,16 @@
 // Control components set Movement intent each tick (run before Movement in the chain).
-// PlayerControl reads input and fires projectiles; EnemyAI (objAiCPU) beelines and attacks,
-// in melee or ranged mode.
+// PlayerControl reads input, auto-aims/melees through teamMaster, and fires projectiles; CpuAI
+// (objAiCPU) is a committed-target FSM (findTarget/moveToAttack/runReload/dazed) that hunts via
+// teamMaster.findTarget and resolves melee through teamMaster.impactMeleeAttack.
 
 import { Component, type NextFn } from "../engine/dispatch";
 import { Movement } from "./movement";
 import { Mana } from "./mana";
 import { game } from "../game/context";
 import { fireBullet } from "../systems/bullets";
-import { aimedVect } from "../engine/math";
+import { meleeHitFn } from "../systems/teams";
+import { Targeting } from "./combat";
 import type { Entity } from "../engine/dispatch";
-
-function nearestOfTypes(x: number, y: number, types: readonly string[], ignore?: Entity): Entity | null {
-  let best: Entity | null = null, bestD = Infinity;
-  for (const e of game.entities) {
-    if (e === ignore || !types.includes(e.type) || e.send("isDead")) continue;
-    const p = e.send("getPos") as { x: number; y: number };
-    const d = (p.x - x) ** 2 + (p.y - y) ** 2;
-    if (d < bestD) { bestD = d; best = e; }
-  }
-  return best;
-}
-const nearestEnemy = (x: number, y: number) => nearestOfTypes(x, y, ["enemy"]);
 
 // energyBlast (act_energyBlast): hold to charge, release at the cursor. There is NO mana pool
 // (modAttack): the charge grows from chargeStart (+mana.burst) by chargeSpeed (*mana.flow) up to
@@ -64,7 +54,10 @@ export class PlayerControl extends Component {
   }
 
   /** merlinSword scroll: a real melee weapon (damageMultiplier 16) — stronger, longer reach. */
-  equipSword(): void { this.hasSword = true; this.power = this.basePower + 160; this.meleeReach = 24; }
+  equipSword(): void {
+    this.hasSword = true; this.power = this.basePower + 160; this.meleeReach = 24;
+    const tg = this.entity.tryGet(Targeting); if (tg) tg.reach = this.meleeReach; // widen the melee area sweep
+  }
 
   /** energyBlast scroll (room 6): grants Merlin his charged magic (modWeaponManager.addWeapon). */
   grantSpell(): void { this.hasSpell = true; }
@@ -102,9 +95,10 @@ export class PlayerControl extends Component {
     const mv = input.moveVector();
     m.intentX = mv.x; m.intentY = mv.y;
 
-    // aim point: the cursor in world space, else the nearest enemy, else current facing
+    // aim point: the cursor in world space, else the auto-acquired target (teamMaster.findTarget over
+    // data allegiance/roles — same logic every unit uses), else current facing
     const cur = input.cursor();
-    const target = nearestEnemy(m.x, m.y);
+    const target = game.teamMaster.findTarget(this.entity).obj;
     const aim = cur ?? (target ? target.send("getPos") as { x: number; y: number }
       : { x: m.x + (m.facingLeft ? -100 : 100), y: m.y });
     this.aimLeft = aim.x < m.x;
@@ -133,6 +127,9 @@ export class PlayerControl extends Component {
     next();
   }
 
+  /** punch reach for impactMeleeAttack's area sweep (Targeting.reach is the player's #punch reach). */
+  punchReach(): number { return this.meleeReach; }
+
   private chargeMaxOf(mana: Mana): number { return mana.capacity * SPELL.chargeMaxModifier + SPELL.chargeMaxBasic; }
 
   private castMagic(m: Movement, aim: { x: number; y: number }, mana: Mana): void {
@@ -150,10 +147,11 @@ export class PlayerControl extends Component {
   private tryPunch(m: Movement, target: Entity | null): void {
     if (!target) return;
     const p = target.send("getPos") as { x: number; y: number };
-    if (Math.hypot(p.x - m.x, p.y - m.y) > this.meleeReach) return;
-    const v = aimedVect(p.x - m.x, p.y - m.y, this.power); // melee collisionVect aimed at the target
-    target.send("takeHit", v.x, v.y, this.entity.id);
+    if (Math.hypot(p.x - m.x, p.y - m.y) > this.meleeReach) return; // swing only when something's in reach
     m.facingLeft = p.x < m.x;
+    // performMeleeAttack -> teamMaster.impactMeleeAttack: area resolution. A swing knocks back EVERY
+    // hostile (role #hits) within reach, each via A1's aimed-vector takeHit (not just the nearest).
+    game.teamMaster.impactMeleeAttack(this.entity, meleeHitFn(this.entity, this.entity.id, this.power));
     this.meleeCd = PUNCH.cooldown; this.meleeT = PUNCH.frames;
     game.audio?.play(this.hasSword ? "skeleton_fire" : "wizard_punch"); // act_player #punch / merlinSword
   }
@@ -171,65 +169,152 @@ export class PlayerControl extends Component {
   chargeFrac(): number { return this.charging ? Math.min(1, this.charge / this.chargeMaxOf(this.entity.get(Mana))) : 0; }
 }
 
-export class EnemyAI extends Component {
-  static handles = ["update"];
-  reach = 22;
-  reachRanged = 150;
-  power = 8;
+// CpuAI (objAiCPU): the committed-target decision FSM. A referenced controller (objAiGameObject.pAI)
+// whose update() drives modes findTarget -> moveToAttack -> attack -> attackFin, with runReload (kite)
+// and dazed (reel/recoil/die). The single best target is acquired ONCE via teamMaster.findTarget,
+// COMMITTED as a #target relationship (teamMaster.subscribe), dropped reactively on #leaveGame, and
+// only re-evaluated on a 30-frame throttle or after an attack — not re-scanned every tick (the cardinal
+// behaviour change vs the old per-tick nearest scan). Allegiance/criteria/roles flow from Targeting.
+type CpuMode = "findTarget" | "moveToAttack" | "runReload" | "dazed";
+
+export class CpuAI extends Component {
+  static handles = ["update", "eventLeaveGame", "characterModeChanged", "getAiMode", "getAiTarget"];
+  reach = 22;          // melee strike reach (targetInReachMelee)
+  reachRanged = 150;   // ranged targetInReachRanged (GeomDist < reach)
+  power = 8;           // #attack power (knockback/damage magnitude)
   ranged = false;
+  runReload = false;   // getRunReload: kite away after a shot until cooled (ranged casters)
   cooldown = 0;
   cooldownMax = 18;
-  kind: "beeline" | "wander" | "kite" | "bomber" = "beeline"; // from #AiType
-  targetTypes: readonly string[] = ["player", "ally"]; // enemies hunt the player + allies
-  atkSound = ""; // #attack.sound (played on attack if the file exists)
+  atkSound = "";       // #attack.sound
+  ghost = false;       // objAiCPUGhost approximation (drift; not a real possessor — out of scope)
+
+  private mode: CpuMode = "findTarget";
+  private target: Entity | null = null;
+  private retargetCtr = 0;                  // pRetargetCounter: forced re-eval every 30 frames
+  private static readonly RETARGET = 30;
   private wanderAng = 0; private wanderTimer = 0;
   private detourT = 0; private detourX = 0; private detourY = 0; // wall-detour (pathfinding fallback)
 
   override init(cfg: Record<string, any>): void {
-    // power blends real #attack power (knockback magnitude) with strength
     const strPow = typeof cfg["strength"] === "number" ? cfg["strength"] / 3 : 2;
     const atkPow = typeof cfg["atkPower"] === "number" ? cfg["atkPower"] : 0;
     this.power = Math.max(4, Math.round(strPow + atkPow));
     this.ranged = cfg["ranged"] === true;
-    if (typeof cfg["aiKind"] === "string") this.kind = cfg["aiKind"] as EnemyAI["kind"];
-    // real #attack cooldown/reach where present, else sensible defaults
+    this.runReload = cfg["runReload"] === true; // spellcaster kite
+    this.ghost = cfg["ghost"] === true;
     if (typeof cfg["atkCooldown"] === "number") this.cooldownMax = cfg["atkCooldown"] + (this.ranged ? 18 : 6);
     else this.cooldownMax = this.ranged ? 40 : 18;
     if (typeof cfg["atkReach"] === "number") {
       if (this.ranged) this.reachRanged = Math.min(220, Math.max(60, cfg["atkReach"])); // cap magic's 9999
       else this.reach = Math.max(16, Math.min(40, cfg["atkReach"]));
     }
-    if (Array.isArray(cfg["targetTypes"])) this.targetTypes = cfg["targetTypes"];
     this.atkSound = typeof cfg["atkSound"] === "string" ? cfg["atkSound"] : "";
-    this.cooldown = 0;
+    this.cooldown = 0; this.retargetCtr = 0;
+    this.mode = "findTarget"; this.target = null;
+    this.wanderAng = 0; this.wanderTimer = 0; this.detourT = 0;
+  }
+  override reset(): void { this.mode = "findTarget"; this.target = null; this.retargetCtr = 0; this.cooldown = 0; }
+
+  getAiMode(): CpuMode { return this.mode; }        // query (tests / debug)
+  getAiTarget(): Entity | null { return this.target; }
+
+  // characterModeChanged (modAi): reel/recoil/die -> #dazed (freeze intent); recovery -> #findTarget.
+  characterModeChanged(_next: NextFn, charMode: string): void {
+    const dazing = charMode === "#reel" || charMode === "#recoil" || charMode === "#die" ||
+      charMode === "#dead" || charMode === "#look" || charMode === "#finish" ||
+      charMode === "#reelFly" || charMode === "#reelLanded" || charMode === "#reelSit";
+    if (dazing) this.mode = "dazed";
+    else if (this.mode === "dazed") this.mode = "findTarget";
+  }
+
+  // eventNotification(#leaveGame, obj): if my committed target left play, drop it and re-acquire.
+  eventLeaveGame(_next: NextFn, obj: Entity): void {
+    if (obj === this.target) { this.target = null; this.refreshTarget(); }
   }
 
   update(next: NextFn): void {
     const m = this.entity.get(Movement);
-    if (this.entity.send("isDead")) { m.intentX = 0; m.intentY = 0; return next(); }
+    if (this.entity.send("isDead")) { this.idle(m); return next(); }
     if (this.cooldown > 0) this.cooldown--;
-    const target = nearestOfTypes(m.x, m.y, this.targetTypes, this.entity);
-    if (!target || target.send("isDead")) { this.idle(m); return next(); }
+    switch (this.mode) {
+      case "dazed": this.idle(m); break;                       // frozen while reeling/dying
+      case "findTarget":
+        this.refreshTarget();
+        if (this.target) this.goMode("moveToAttack", m); else this.idle(m);
+        break;
+      case "moveToAttack": this.updateMoveToAttack(m); break;
+      case "runReload": this.updateRunReload(m); break;
+    }
+    next();
+  }
+
+  private goMode(mode: CpuMode, m: Movement): void {
+    this.mode = mode;
+    if (mode === "moveToAttack") this.retargetCtr = 0; // CounterReset(pRetargetCounter)
+    if (mode === "dazed" || mode === "findTarget") this.idle(m);
+  }
+
+  // updateMoveToAttack (objAiAttack): tick the retarget throttle, drop dead/gone targets, attack in
+  // reach, else seek toward the ideal attack loc. Ghosts keep the drift approximation (possession is
+  // out of scope), still committing a target so they don't twitch.
+  private updateMoveToAttack(m: Movement): void {
+    if (++this.retargetCtr >= CpuAI.RETARGET) {       // pRetargetCounter: periodic forced re-eval
+      this.retargetCtr = 0; this.target = null; this.refreshTarget();
+    }
+    const target = this.target;
+    if (!target || target.send("isDead")) { this.target = null; this.goMode("findTarget", m); return; }
     const tp = target.send("getPos") as { x: number; y: number };
     const dx = tp.x - m.x, dy = tp.y - m.y;
     const d = Math.hypot(dx, dy) || 1;
-    switch (this.kind) {
-      case "wander": this.wander(m, dx, dy, d, target); break;
-      case "kite": this.kite(m, dx, dy, d, target); break;
-      case "bomber": this.bomber(m, dx, dy, d, target); break;
-      default: this.beeline(m, dx, dy, d, target);
-    }
-    next();
+    if (this.ghost) { this.wander(m, dx, dy, d); if (d < this.reach + 6) this.attack(m, dx, dy, target); return; }
+    if (this.targetInReach(d)) { this.idle(m); this.attack(m, dx, dy, target); }
+    else this.seek(m, dx, dy, d);
+  }
+
+  private targetInReach(d: number): boolean { return d <= (this.ranged ? this.reachRanged : this.reach); }
+
+  // updateRunReload (kite): back away from the target until the shot has cooled, then re-engage.
+  private updateRunReload(m: Movement): void {
+    const target = this.target;
+    if (!target || target.send("isDead")) { this.target = null; this.goMode("findTarget", m); return; }
+    const tp = target.send("getPos") as { x: number; y: number };
+    const dx = tp.x - m.x, dy = tp.y - m.y; const d = Math.hypot(dx, dy) || 1;
+    if (d < this.reachRanged * 0.7) { m.intentX = -dx / d; m.intentY = -dy / d; } else this.idle(m); // moveAwayFromLoc
+    if (this.cooldown === 0) this.goMode("moveToAttack", m);
+  }
+
+  // refreshTarget: only acquire when the #target relation is empty/dead. Commit + subscribe to #leaveGame.
+  private refreshTarget(): void {
+    if (this.target && !this.target.send("isDead")) return;
+    const t = game.teamMaster.findTarget(this.entity);
+    if (t.obj) { this.target = t.obj; game.teamMaster.subscribe(t.obj, this.entity); }
+    else this.target = null;
+  }
+
+  // attackFin: after a strike, clear + re-acquire, then runReload (kite) / moveToAttack / findTarget.
+  private attackFin(m: Movement): void {
+    this.target = null; this.refreshTarget();
+    if (!this.target) this.goMode("findTarget", m);
+    else if (this.runReload) this.goMode("runReload", m);
+    else this.goMode("moveToAttack", m);
   }
 
   private idle(m: Movement): void { m.intentX = 0; m.intentY = 0; }
 
   private attack(m: Movement, dx: number, dy: number, target: Entity): void {
     if (this.cooldown !== 0) return;
-    if (this.ranged) fireBullet(this.entity.id, m.x, m.y - 6, dx, dy, 4.5, this.power * 2, this.entity.send("getTeam"));
-    else { const v = aimedVect(dx, dy, this.power); target.send("takeHit", v.x, v.y, this.entity.id); }
+    if (this.ranged) {
+      fireBullet(this.entity.id, m.x, m.y - 6, dx, dy, 4.5, this.power * 2, this.entity.send("getTeam"));
+    } else {
+      // performMeleeAttack -> teamMaster.impactMeleeAttack: AREA resolution (every hostile in reach,
+      // role-filtered by #hits), each via A1's aimed-vector takeHit. No more single-target hit.
+      game.teamMaster.impactMeleeAttack(this.entity, meleeHitFn(this.entity, this.entity.id, this.power));
+    }
+    m.facingLeft = dx < 0;
     if (this.atkSound) game.audio?.play(this.atkSound, 0.5); // #attack.sound (quieter than player)
     this.cooldown = this.cooldownMax;
+    this.attackFin(m); // re-acquire / kite
   }
 
   // Head toward (dx,dy) but, when wedged on a wall (modPathFinding: beeline -> scenic), commit to
@@ -244,38 +329,13 @@ export class EnemyAI extends Component {
     } else { m.intentX = dx / d; m.intentY = dy / d; }
   }
 
-  // objAiCPU: approach to range, then attack
-  private beeline(m: Movement, dx: number, dy: number, d: number, target: Entity): void {
-    const range = this.ranged ? this.reachRanged : this.reach;
-    if (d > range) this.seek(m, dx, dy, d);
-    else { this.idle(m); this.attack(m, dx, dy, target); }
-  }
-
-  // objAiCPUSpellCaster: hold at range, back away if crowded, fire
-  private kite(m: Movement, dx: number, dy: number, d: number, target: Entity): void {
-    const want = this.reachRanged * 0.7;
-    if (d < want * 0.6) { m.intentX = -dx / d; m.intentY = -dy / d; }      // too close -> retreat
-    else if (d > this.reachRanged) this.seek(m, dx, dy, d);                // too far -> approach
-    else this.idle(m);
-    if (d <= this.reachRanged) this.attack(m, dx, dy, target);
-  }
-
-  // objAiCPUGhost: drift on a slowly-changing heading, attack if a target wanders close
-  private wander(m: Movement, dx: number, dy: number, d: number, target: Entity): void {
+  // objAiCPUGhost approximation: drift on a slowly-changing heading biased toward the target.
+  private wander(m: Movement, dx: number, dy: number, d: number): void {
     if (--this.wanderTimer <= 0) { this.wanderAng = game.rng.next() * Math.PI * 2; this.wanderTimer = 40 + Math.floor(game.rng.next() * 40); }
-    // bias the heading toward the target a little
-    const bx = Math.cos(this.wanderAng) * 0.7 + (dx / d) * 0.3, by = Math.sin(this.wanderAng) * 0.7 + (dy / d) * 0.3;
-    m.intentX = bx; m.intentY = by;
-    if (d < this.reach + 6) this.attack(m, dx, dy, target);
-  }
-
-  // objAiFlyingBomber: rush the target and self-destruct on contact
-  private bomber(m: Movement, dx: number, dy: number, d: number, target: Entity): void {
-    this.seek(m, dx, dy, d);
-    if (d < 16) {
-      const v = aimedVect(dx, dy, this.power * 4); // contact blast aimed at the victim
-      target.send("takeHit", v.x, v.y, this.entity.id);
-      this.entity.send("takeHit", 999999, 0, this.entity.id); // self-destruct (lethal L1 magnitude)
-    }
+    m.intentX = Math.cos(this.wanderAng) * 0.7 + (dx / d) * 0.3;
+    m.intentY = Math.sin(this.wanderAng) * 0.7 + (dy / d) * 0.3;
   }
 }
+
+// Back-compat alias: the archetype slot was named EnemyAI; CpuAI is the objAiCPU FSM that replaces it.
+export { CpuAI as EnemyAI };

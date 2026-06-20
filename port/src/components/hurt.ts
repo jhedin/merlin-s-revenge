@@ -17,16 +17,25 @@ export class Hurt extends Component {
   override reset(): void { this.flashT = 0; this.invinceT = 0; }
 
   update(next: NextFn): void {
-    if (this.flashT > 0) this.flashT--;
+    if (this.flashT > 0) {
+      this.flashT--;
+      // reel cleared this tick: tell the brain to leave #dazed (characterModeChanged otherwise)
+      if (this.flashT === 0 && !this.entity.send("isDead")) this.entity.send("characterModeChanged", "#walk");
+    }
     if (this.invinceT > 0) this.invinceT--;
     next();
   }
 
-  // runs after Energy: damage already applied (Energy honored a prior i-frame), now arm feedback
+  // runs after Energy: damage already applied (Energy honored a prior i-frame), now arm feedback.
+  // modReel/objCharacter: every goMode(#reel/#die) notifies pAI via characterModeChanged so the CPU
+  // brain enters #dazed (zero intent) while reeling/dying and returns to #findTarget when it clears.
   takeHit(next: NextFn, vx = 0, vy = 0, attackerId = -1, mult = 1): any {
     const r = next(vx, vy, attackerId, mult);
-    this.flashT = 6;
-    if (this.invinceFrames > 0) this.invinceT = this.invinceFrames;
+    if ((Math.abs(vx) + Math.abs(vy)) * mult > 0 && !this.entity.send("isInvince")) {
+      this.flashT = 6;
+      if (this.invinceFrames > 0) this.invinceT = this.invinceFrames;
+      this.entity.send("characterModeChanged", this.entity.send("isDead") ? "#die" : "#reel");
+    }
     return r;
   }
 

@@ -21,10 +21,13 @@ describe("data-driven attacks (real #attack via #weapon)", () => {
 });
 
 import { EnemyAI as AI2 } from "@/components/control";
-describe("distinct AI from #AiType", () => {
-  it("maps spellcaster/ghost/cpu to kite/wander/beeline", () => {
-    expect(spawnEnemy("mageOrc", 0, 0).get(AI2).kind).toBe("kite");     // #objAiCPUSpellCaster
-    expect(spawnEnemy("monkGhost", 0, 0).get(AI2).kind).toBe("wander"); // #objAiCPUGhost
-    expect(spawnEnemy("warrior", 0, 0).get(AI2).kind).toBe("beeline");  // #objAiCPU
+describe("FSM configuration from #AiType", () => {
+  it("maps spellcaster->ranged+runReload, ghost->drift, cpu->melee beeline", () => {
+    const mage = spawnEnemy("mageOrc", 0, 0).get(AI2);      // #objAiCPUSpellCaster (magic)
+    expect(mage.ranged).toBe(true); expect(mage.runReload).toBe(true);
+    const ghost = spawnEnemy("monkGhost", 0, 0).get(AI2);   // #objAiCPUGhost (drift approximation)
+    expect(ghost.ghost).toBe(true);
+    const warrior = spawnEnemy("warrior", 0, 0).get(AI2);   // #objAiCPU (plain melee)
+    expect(warrior.ranged).toBe(false); expect(warrior.runReload).toBe(false); expect(warrior.ghost).toBe(false);
   });
 });

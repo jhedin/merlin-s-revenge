@@ -4,7 +4,7 @@
 import { Archetype, type Entity, makeEntityId } from "../engine/dispatch";
 import { Movement } from "../components/movement";
 import { Anim } from "../components/anim";
-import { Energy, Team } from "../components/combat";
+import { Energy, Team, Targeting } from "../components/combat";
 import { Experience } from "../components/experience";
 import { Freeze } from "../components/freeze";
 import { PlayerControl, EnemyAI } from "../components/control";
@@ -13,47 +13,36 @@ import { Hurt } from "../components/hurt";
 import { Dwelling } from "../components/dwelling";
 import { Pickup, type PickupEffect } from "../components/pickup";
 import { registry } from "../game/data";
+import { game } from "../game/context";
 
-const DEFAULTS = { isDead: false, getTeam: "", energyFrac: 1, getLevel: 1, isFrozen: false, isInvince: false, isHurt: false };
+const DEFAULTS = { isDead: false, getTeam: "", getTeamRole: "#teamMembers", energyFrac: 1, getLevel: 1, isFrozen: false, isInvince: false, isHurt: false };
 
 // Experience is ordered BEFORE Energy (records attacker before death); Hurt is AFTER Energy
-// (feedback + i-frames arm once the hit has landed).
-export const PlayerArchetype = new Archetype("player", [PlayerControl, Freeze, Mana, Movement, Anim, Experience, Energy, Hurt, Team], { defaults: DEFAULTS });
-export const EnemyArchetype = new Archetype("enemy", [EnemyAI, Freeze, Movement, Anim, Experience, Energy, Hurt, Team], { defaults: DEFAULTS });
+// (feedback + i-frames arm once the hit has landed). Targeting (the #attack.target* config) sits with
+// Team so teamMaster.findTarget / impactMeleeAttack can read it generically.
+export const PlayerArchetype = new Archetype("player", [PlayerControl, Freeze, Mana, Movement, Anim, Experience, Energy, Hurt, Team, Targeting], { defaults: DEFAULTS });
+export const EnemyArchetype = new Archetype("enemy", [EnemyAI, Freeze, Movement, Anim, Experience, Energy, Hurt, Team, Targeting], { defaults: DEFAULTS });
 // Dwellings are static (no AI) but reuse Movement for position + Energy/Team so they're targetable.
-export const DwellingArchetype = new Archetype("dwelling", [Dwelling, Movement, Anim, Energy, Hurt, Team], { defaults: DEFAULTS });
+export const DwellingArchetype = new Archetype("dwelling", [Dwelling, Movement, Anim, Energy, Hurt, Team, Targeting], { defaults: DEFAULTS });
 
 /** Summon a friendly unit on Merlin's team that hunts enemies, using the actor's real stats. */
 export function spawnAlly(actorName: string, x: number, y: number, animChar = actorName): Entity {
   const e = spawnEnemy(actorName, x, y, { animChar }); // real energy/strength/walkSpeed/attack from data
   e.type = "ally";
-  e.get(Team).team = "#aldevar"; // summoned onto the player's side regardless of the unit's native team
-  e.get(EnemyAI).targetTypes = ["enemy"];
+  e.get(Team).team = "#aldevar"; // summoned onto the player's side; #enemy allegiance => hunts #aldevar.hates
   return e;
 }
 
-// Teams allied with the player are the player team (#aldevar) plus its #friends, both from the
-// team data (tem_aldevar). Units on these teams fight FOR Merlin; everyone else is hostile.
-let friendlyTeams: Set<string> | null = null;
-export function isFriendlyTeam(team: string): boolean {
-  if (!friendlyTeams) {
-    friendlyTeams = new Set(["#aldevar"]);
-    const friends = registry.team("#aldevar")?.["friends"];
-    if (Array.isArray(friends)) for (const f of friends) if (typeof f === "string") friendlyTeams.add(f);
-  }
-  return friendlyTeams.has(team);
-}
-
 /**
- * Spawn a unit from the objects layer, routing by its real team: same-side actors (the
- * #aldevar army) become allies that hunt enemies; hostile actors become enemies. Allies reuse
- * the data-driven enemy build but with type "ally" + enemy-only targeting.
+ * Spawn a unit from the objects layer, routing its render/room-clear TYPE by its real team: same-side
+ * actors (the #aldevar army) become allies, hostile actors become enemies. Targeting is fully
+ * data-driven (an ally is just a unit on #aldevar with #enemy allegiance, hunting #aldevar.hates).
  */
 export function spawnUnit(actorName: string, x: number, y: number, opts: { animChar?: string; ranged?: boolean } = {}): Entity {
   const d = registry.resolveActor(actorName) ?? {};
   const team = typeof d["team"] === "string" ? (d["team"] as string) : "#monsters";
   const e = spawnEnemy(actorName, x, y, opts);
-  if (isFriendlyTeam(team)) { e.type = "ally"; e.get(EnemyAI).targetTypes = ["enemy"]; }
+  if (game.teamMaster.isPlayerSide(team)) e.type = "ally";
   return e;
 }
 
@@ -86,8 +75,9 @@ export function spawnDwelling(actorName: string, x: number, y: number, animChar 
   const budget = Math.min(12, typeof d["totalResidents"] === "number" ? (d["totalResidents"] as number) : 10);
   const dieSound = typeof d["dieSound"] === "string" ? (d["dieSound"] as string) : undefined;
   const e = DwellingArchetype.create(makeEntityId());
-  e.type = isFriendlyTeam(team) ? "ally" : "enemy"; // targetable/destroyable; a #village hut is friendly
-  return e.build({ x, y, walkSpeed: 0, energy, team, animChar, box: 24, residentGroups: groups, budget, dieSound });
+  e.type = game.teamMaster.isPlayerSide(team) ? "ally" : "enemy"; // targetable/destroyable; a #village hut is friendly
+  // a dwelling joins the roster as a #teamBuildings member (so hunters with building-roles can target it)
+  return e.build({ x, y, walkSpeed: 0, energy, team, teamRole: "#teamBuildings", animChar, box: 24, residentGroups: groups, budget, dieSound });
 }
 
 export function spawnPlayer(x: number, y: number): Entity {
@@ -115,8 +105,12 @@ export function spawnPlayer(x: number, y: number): Entity {
     experienceAmountForNextLevel: num(d, "experienceAmountForNextLevel", 10),
     energyIncPercentage: num(d, "energyIncPercentage", 2),
     energyRecoverDelay: num(d, "energyRecoverDelay", 30),
-    team: "#aldevar", animChar: "mer", box: 12,
+    team: "#aldevar", teamRole: "#teamMembers", animChar: "mer", box: 12,
     invince: 18, // brief i-frames so overlapping enemies can't chain-kill
+    // act_player #punch targeting: auto-aim/melee at enemies (#aldevar.hates), reach = punch reach.
+    targetAllegiance: "#enemy", targetCriteria: "#closestDistance",
+    targetRoles: [["#teamMembers", "#teamBuildings"]],
+    hits: ["#teamMembers", "#teamBuildings"], targetReach: 18,
   });
 }
 
@@ -136,12 +130,17 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
   const animType = typeof atk["animType"] === "string" ? atk["animType"] : "";
   const ranged = opts.ranged ?? (animType === "#weaponRanged" || animType === "#magic");
   const aiType = str("AiType", "");
-  const aiKind = aiType === "#objAiCPUGhost" ? "wander"
-    : aiType === "#objAiFlyingBomber" ? "bomber"
-    : (aiType === "#objAiCPUSpellCaster" || animType === "#magic") ? "kite"
-    : "beeline";
+  // FSM configuration from #AiType: spellcasters/flying-bombers kite (runReload after a shot); the
+  // ghost keeps the drift approximation (possession is out of scope). Bombers now run a normal attack
+  // loop (no suicide). aiKind/targetTypes are gone — allegiance is data-driven via Targeting.
+  const ghost = aiType === "#objAiCPUGhost";
+  const runReload = !ghost && ranged && (aiType === "#objAiCPUSpellCaster" || animType === "#magic" || aiType === "#objAiFlyingBomber");
   const pw = atk["power"];
   const atkPower = pw && typeof pw === "object" && "x" in pw ? Math.abs(pw.x) + Math.abs(pw.y) : 0;
+  // #attack target fields (default structAttack): allegiance/criteria/roles/hits + reach (point -> radius)
+  const rch = atk["reach"];
+  const targetReach = typeof rch === "number" ? rch
+    : (rch && typeof rch === "object" && "x" in rch ? Math.hypot(rch.x, rch.y) : undefined);
   const e = EnemyArchetype.create(makeEntityId());
   e.type = "enemy";
   return e.build({
@@ -149,14 +148,20 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     walkSpeed: num("walkSpeed", 3) * 0.6, // engine walk units -> px/tick (tuned to the slice)
     energy: num("energy", 40),
     strength: num("strength", 5),
-    team: str("team", "#monsters"),
+    team: str("team", "#monsters"), teamRole: "#teamMembers",
     animChar: opts.animChar ?? actorName, box: 14,
     inertia: num("inertia", 0), // resists knockback (modGameObject damping); heavy orcs get shoved less
-    ranged, aiKind,
+    ranged, runReload, ghost,
     atkCooldown: typeof atk["cooldown"] === "number" ? atk["cooldown"] : undefined,
     atkReach: typeof atk["reach"] === "number" ? atk["reach"] : undefined,
     atkPower: atkPower || undefined,
     atkSound: typeof atk["sound"] === "string" ? atk["sound"] : undefined,   // #attack.sound
+    // teamMaster.findTarget / impactMeleeAttack config (#attack.target*); defaults from structAttack
+    targetAllegiance: typeof atk["targetAllegiance"] === "string" ? atk["targetAllegiance"] : "#enemy",
+    targetCriteria: typeof atk["targetCriteria"] === "string" ? atk["targetCriteria"] : "#closestDistance",
+    targetRoles: Array.isArray(atk["targetRoles"]) ? atk["targetRoles"] : [["#teamMembers", "#teamBuildings"]],
+    hits: Array.isArray(atk["hits"]) ? atk["hits"] : ["#teamMembers"],
+    targetReach: targetReach ?? (ranged ? 150 : 22),
     dieSound: typeof d["dieSound"] === "string" ? d["dieSound"] : undefined,  // played on death
     experienceImWorth: num("experienceImWorth", 0) || undefined,             // XP this unit grants
     energyIncPercentage: num("energyIncPercentage", 0) || undefined,

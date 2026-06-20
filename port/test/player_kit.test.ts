@@ -6,6 +6,7 @@ import { Mana } from "@/components/mana";
 import { Energy } from "@/components/combat";
 import { Anim } from "@/components/anim";
 import { PlayerControl } from "@/components/control";
+import { rebuildCombatSubstrate } from "@/systems/combatTick";
 
 // Minimal input stub exposing only what PlayerControl reads.
 function fakeInput(opts: { mouseDown?: boolean; cursor?: { x: number; y: number } | null; held?: Set<string> }) {
@@ -27,6 +28,7 @@ describe("Merlin's charged-magic + punch kit", () => {
     game.grid = new CollisionGrid(40, 40, 32); // open arena
     game.entities = [];
     game.assets = { index: { anims: {} }, img: () => null } as any; // Anim.update reads index.anims
+    game.teamMaster.reset(); game.teamMaster.unitMap.configure(32, 0, 0);
   });
 
   it("holds to charge then casts a bolt at the cursor", () => {
@@ -69,6 +71,7 @@ describe("Merlin's charged-magic + punch kit", () => {
     const foe = spawnEnemy("swordOrc", 110, 100, { animChar: "swordOrc" }); // hostile, within punch reach
     game.entities = [p, foe];
     const hp0 = foe.get(Energy).energy;
+    rebuildCombatSubstrate(); // roster + unit map (auto-aim + area melee both read teamMaster now)
     p.send("update"); // melee fires on the first eligible tick
     expect(foe.get(Energy).energy).toBeLessThan(hp0);
   });
