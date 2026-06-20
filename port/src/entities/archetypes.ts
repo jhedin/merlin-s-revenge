@@ -223,6 +223,8 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     // WeaponManager: the enemy's single weapon (one #attack) + cooldown-counter inc stats. manaRegen
     // is forwarded so a magic enemy's live counter inc (Mana.regeneration) matches the calibration.
     attack: enemyAttack, agility, dexterity, mana_regeneration: manaRegen,
+    // real mana_* so a CPU caster charges to its true ceiling (summon tiers / charge-scaled spell power)
+    mana_capacity: num("mana_capacity", 10), mana_flow: num("mana_flow", 1), mana_burst: num("mana_burst", 1),
     atkCooldown: typeof atk["cooldown"] === "number" ? atk["cooldown"] : undefined,
     atkReach: typeof atk["reach"] === "number" ? atk["reach"] : undefined,
     atkPower: atkPower || undefined,

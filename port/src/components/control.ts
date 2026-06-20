@@ -423,7 +423,22 @@ export class CpuAI extends Component {
         fireSplashBullet(this.entity.id, m.x, m.y - 6, dx, dy, 5, this.splashBullet, team,
           this.splashBullet.hits, tg?.allegiance ?? "#enemy", 140);
       } else {
-        fireBullet(this.entity.id, m.x, m.y - 6, dx, dy, 4.5, this.power * 2, team);
+        // J1: a magic-weapon CPU caster routes by its #attack payload, like the player's castMagic —
+        // a summoner spawns a unit, a healer fires a heal bolt at its (friendly) target — instead of
+        // every caster firing a generic damage bolt. Plain bolt-casters (energyBlast/dark/arctic) unchanged.
+        const ca = this.entity.get(WeaponManager).getCurrentAttack();
+        if (ca && ca.type === "magic" && (ca.explodeFunction === "#summonUnit" || ca.explodeFunction === "summonUnit")) {
+          // summon the multistage tier the caster's mana affords (chargeMaxOf = its real charge ceiling)
+          const sc = chargeMaxOf(ca, this.entity.get(Mana));
+          summonUnit(ca, sc, m.x, m.y, this.entity.id); // summon at the caster's loc
+        } else if (ca && ca.type === "magic" && ca.payloadFunction.includes("takeHeal")) {
+          const tgc = this.entity.send("getTargeting") as { hits: string[]; allegiance: string } | undefined;
+          fireBulletPayload(this.entity.id, m.x, m.y - 6, dx, dy, ca.spellSpeed / 6,
+            Math.round(SPELL_FX.dmgPerUnit * (ca.chargeMaxBasic || 5)), team, ca,
+            tgc?.hits ?? ["#teamMembers"], "#friendly", SPELL_FX.life);
+        } else {
+          fireBullet(this.entity.id, m.x, m.y - 6, dx, dy, 4.5, this.power * 2, team);
+        }
       }
     } else {
       // performMeleeAttack -> teamMaster.impactMeleeAttack: AREA resolution (every hostile in reach,
