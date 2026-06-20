@@ -234,7 +234,13 @@ export class PlayerControl extends Component {
     // performMeleeAttack -> teamMaster.impactMeleeAttack: area resolution. A swing knocks back EVERY
     // hostile (role #hits) within reach, each via A1's aimed-vector takeHit. Damage = power·strength·SCALE
     // carried as the vector L1, times damageMultiplier as `mult` (now data-driven from the weapon).
-    const base = meleeBasePower(attack, this.strength);
+    // J2 #magicMelee (energyPunch): calcCollisionVectMelee adds a mana term — power·(strength +
+    // 1.5·manaCapacity)/1.5 — so a magic punch scales with mana. #naturalMelee/#weaponMelee (punch/sword)
+    // use plain strength (unchanged, no room-1 regression).
+    const effStrength = attack.animType === "#magicMelee"
+      ? (this.strength + 1.5 * this.entity.get(Mana).capacity) / 1.5
+      : this.strength;
+    const base = meleeBasePower(attack, effStrength);
     game.teamMaster.impactMeleeAttack(this.entity, meleeHitFn(this.entity, this.entity.id, base, attack.damageMultiplier));
     wm.resetCooldownFor(attack.name);
     this.meleeT = MELEE_FRAMES;

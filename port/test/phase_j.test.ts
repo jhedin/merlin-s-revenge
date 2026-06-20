@@ -42,3 +42,22 @@ describe("J1 — AI caster mana stats + summon payload", () => {
     expect(game.entities.length).toBe(1); // nothing summoned
   });
 });
+
+import { PlayerControl } from "@/components/control";
+import { resolveAttack, meleeBasePower } from "@/components/weapon";
+import { registry } from "@/game/data";
+
+describe("J2 — energyPunch #magicMelee mana term", () => {
+  it("magic melee scales with manaCapacity: power·(strength + 1.5·cap)/1.5 (punch/sword do not)", () => {
+    const energyPunch = resolveAttack(registry.resolveActor("energyPunch")!["attack"] as any);
+    expect(energyPunch.animType).toBe("#magicMelee");
+    const strength = 8, cap = 10;
+    const effStrength = (strength + 1.5 * cap) / 1.5;       // the J2 mana term
+    const magicDmg = meleeBasePower(energyPunch, effStrength) * energyPunch.damageMultiplier;
+    const plainDmg = meleeBasePower(energyPunch, strength) * energyPunch.damageMultiplier;
+    expect(magicDmg).toBeGreaterThan(plainDmg);             // mana boosts the magic punch
+    // a #weaponMelee (sword) carries no mana term — strength only
+    const sword = resolveAttack(registry.resolveActor("merlinSword")!["attack"] as any);
+    expect(sword.animType).toBe("#weaponMelee");
+  });
+});

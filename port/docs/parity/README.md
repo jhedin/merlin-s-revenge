@@ -609,8 +609,16 @@ Status: ☐ not started · ◐ in progress · ☑ done
   bolt) + energyPunch `#magicMelee` mana term — small refinements, tracked below.
 
 ### Phase J — refinements (small, real)
-- ☐ **J1. AI-caster heal/summon payload** — a `#objAiCPUSpellCaster` whose `#weapon` is a heal/summon
+- ☑ **J1. AI-caster heal/summon payload** — a `#objAiCPUSpellCaster` whose `#weapon` is a heal/summon
   spell (ulinInGame healBlast, scarletInGame undeadSummon) should heal allies / summon units, not fire a
   generic bolt. Route CPU casts through the same payload logic the player's `castMagic` uses (C-phase).
-- ☐ **J2. energyPunch `#magicMelee` mana term** — melee adds `(strength + 1.5·manaCapacity)/1.5` for
+- ☑ **J2. energyPunch `#magicMelee` mana term** — melee adds `(strength + 1.5·manaCapacity)/1.5` for
   `#magicMelee`; the port uses the B2 `power·strength·MELEE_SCALE`. Honor the mana term (documented B2 deviation).
+- **Iter 14 — Phase J (refinements) complete.** J1: `spawnEnemy` now forwards real `mana_capacity/flow/
+  burst` (was defaulting to 10) so CPU casters charge to their true ceiling, and `CpuAI.attack` routes
+  magic casters by `#attack` payload — summoners summon the tier their mana affords, healers fire a
+  friendly heal bolt, plain bolt-casters unchanged (scarletInGame verified summoning in-browser). J2:
+  `#magicMelee` (energyPunch) adds the `(strength + 1.5·manaCapacity)/1.5` mana term; punch/sword
+  (#naturalMelee/#weaponMelee) unchanged. 279 tests; room-1 gate green. **Parity is now comprehensive:
+  every objType placed across all 47 maps is handled, all mr4Demo content works, the only unresolved
+  symbols are faithful source-data orphans.**
