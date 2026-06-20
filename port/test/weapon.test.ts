@@ -166,17 +166,18 @@ describe("WeaponManager (add/select/cooldown/save)", () => {
 });
 
 describe("melee damage calibration (no regression vs today)", () => {
-  // today: #punch power = round(strength*4)+8; sword = that + 160. We pin #punch exactly.
-  it("#punch at strength 8 deals today's value (round(8*4)+8 = 48)", () => {
+  // pre-B2: #punch power = round(strength*4)+8 = 40 at strength 8; sword = that + 160 = 200.
+  // We pin #punch to that 40 exactly; the sword follows its real damageMultiplier 16.
+  it("#punch at strength 8 deals the pre-B2 value (round(8*4)+8 = 40)", () => {
     const punch = resolveAttack(atkOf("player"));
     const dmg = meleeBasePower(punch, 8) * punch.damageMultiplier;
-    expect(dmg).toBeCloseTo(48, 5); // 2 * 8 * MELEE_SCALE(3) * 1
-    expect(MELEE_SCALE).toBe(3);
+    expect(dmg).toBeCloseTo(40, 5); // 2 * 8 * MELEE_SCALE(2.5) * 1
+    expect(MELEE_SCALE).toBe(2.5);
   });
   it("merlinSword at strength 8 stays in the slice's heavy-hit band (one-shots room-1 hostiles)", () => {
     const sword = resolveAttack(atkOf("merlinSword"));
-    const dmg = meleeBasePower(sword, 8) * sword.damageMultiplier; // 1 * 8 * 3 * 16 = 384
-    expect(dmg).toBeCloseTo(384, 5);
+    const dmg = meleeBasePower(sword, 8) * sword.damageMultiplier; // 1 * 8 * 2.5 * 16 = 320
+    expect(dmg).toBeCloseTo(320, 5);
     expect(dmg).toBeGreaterThan(300); // one-shots swordOrc (300) and everything lighter
   });
 });

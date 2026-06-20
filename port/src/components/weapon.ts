@@ -59,15 +59,16 @@ const strOr = (v: any, d: string): string => (typeof v === "string" ? v : d);
 // slice's tuned numbers (the powers are calibrated for the engine's native units, not the port's px
 // energies; see B2 plan §f.2). Faithful melee damage = (power_L1 · strength · MELEE_SCALE) carried as
 // the collision-vector L1, times damageMultiplier as `mult`. The faithful multiplicative model fixes
-// the sword/punch ratio at 8 (power 1·mult 16 vs power 2·mult 1), whereas today's flat-+160 sword has
-// ratio 4.33 — the two cannot both match exactly under one scale. We pin #punch to today's value (the
+// the sword/punch ratio at 8 (power 1·mult 16 vs power 2·mult 1), whereas the pre-B2 flat-+160 sword has
+// ratio 5.0 — the two cannot both match exactly under one scale. We pin #punch to the pre-B2 value (the
 // natural attack, asserted by the calibration unit test):
-//   #punch       (power_L1 2, mult 1,  strength 8): 2·8·SCALE·1   = 16·SCALE  == round(8*4)+8 = 48 -> SCALE 3
-//   merlinSword  (power_L1 1, mult 16, strength 8): 1·8·SCALE·16  = 128·SCALE = 384
-// At SCALE 3 the sword is 384 (vs today's 208), but room-1 hostiles are 15–300 energy and one-/two-shot
-// by BOTH, so the room-1 clear speed is unchanged (gate verified by the smoke). The headroom only shows
-// against high-energy actors (blackOrc 1200: 4 swings vs 6) which don't gate the slice.
-export const MELEE_SCALE = 3;
+//   #punch       (power_L1 2, mult 1,  strength 8): 2·8·SCALE·1   = 16·SCALE  == round(8*4)+8 = 40 -> SCALE 2.5
+//   merlinSword  (power_L1 1, mult 16, strength 8): 1·8·SCALE·16  = 128·SCALE = 320
+// #punch lands at exactly the pre-B2 40. The sword is 320 (vs pre-B2's 200) — the unavoidable, faithful
+// consequence of its real damageMultiplier 16; room-1 hostiles are 15–300 energy and cleared by both
+// (gate verified by the smoke), the headroom only showing against high-energy actors (blackOrc 1200:
+// 4 swings vs 6) which don't gate the slice.
+export const MELEE_SCALE = 2.5;
 
 // The base collision-vector L1 magnitude for a melee swing (before damageMultiplier is applied as mult).
 export function meleeBasePower(attack: AttackData, strength: number): number {
