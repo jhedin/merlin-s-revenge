@@ -83,11 +83,22 @@ export class Movement extends Component {
 
     // integrate walk velocity (capped, above) + knockback impulse (uncapped) together, then decay knockback
     const b = this.box;
-    const r = game.grid.moveBox(this.x - b / 2, this.y - b / 2, b, b, this.vx + this.kvx, this.vy + this.kvy);
+    const oldTop = this.y - b / 2;
+    const r = game.grid.moveBox(this.x - b / 2, this.y - b / 2, b, b, this.vx + this.kvx, this.vy + this.kvy, oldTop);
     this.hitX = r.hitX; this.hitY = r.hitY;
     if (r.hitX) { this.vx = 0; this.kvx = 0; }
     if (r.hitY) { this.vy = 0; this.kvy = 0; }
     this.x = r.x + b / 2; this.y = r.y + b / 2;
+    // directional collision events (checkCollisions 266-295): dispatch as chain messages so gameplay
+    // components (reelFly-landing, AI scenic repathing) can react. Solid grids only ever fire wall*/
+    // ceiling; #platform/#none* events come from the typed path. Sent via the entity so any listener
+    // on the chain receives them (no-op when nothing handles them).
+    const ev = r.events;
+    if (ev.wallLeft) this.entity.send("collisionWallLeft");
+    if (ev.wallRight) this.entity.send("collisionWallRight");
+    if (ev.ceiling) this.entity.send("collisionCeiling");
+    if (ev.platform) this.entity.send("collisionPlatform");
+    if (ev.noPlatform) this.entity.send("collisionNoPlatform");
     this.kvx *= KNOCK_FRICTION; this.kvy *= KNOCK_FRICTION;
     if (Math.abs(this.kvx) < 0.05) this.kvx = 0;
     if (Math.abs(this.kvy) < 0.05) this.kvy = 0;

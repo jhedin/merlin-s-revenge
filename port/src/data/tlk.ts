@@ -35,7 +35,24 @@ export function tileSymbol(key: TileKey, tileNum: number): string {
   return key.symbols[tileNum - 1] ?? "#none";
 }
 
-/** tile numbers whose symbol is #solid (for active-layer collision). */
+// The collision tile types objCollisionTile recognizes (pTileType). Anything else (a passive/decor
+// symbol that leaked into an active layer) is treated as #none (no collision) — matching the original,
+// where objCollisionTile defaults solid=false for an unknown type.
+export type TileType = "#solid" | "#none" | "#platform" | "#ceiling" | "#wallLeft" | "#wallRight";
+const COLLISION_TYPES = new Set<TileType>(["#solid", "#platform", "#ceiling", "#wallLeft", "#wallRight"]);
+
+/** Map of tile number -> collision TileType for every active-layer tile that has a collision type.
+ *  (objCollisionMap.initMap derives a collisionTile per active cell; the type comes from the key.) */
+export function tileTypeNums(key: TileKey): Map<number, TileType> {
+  const m = new Map<number, TileType>();
+  key.symbols.forEach((sym, idx) => {
+    if (COLLISION_TYPES.has(sym as TileType)) m.set(idx + 1, sym as TileType);
+  });
+  return m;
+}
+
+/** tile numbers whose symbol is #solid (for active-layer collision). Kept as a shim over
+ *  tileTypeNums so existing solid-only callers/tests are unaffected. */
 export function solidTileNums(key: TileKey): Set<number> {
   const s = new Set<number>();
   key.symbols.forEach((sym, idx) => { if (sym === "#solid") s.add(idx + 1); });
