@@ -14,16 +14,19 @@ This tracker is the running backlog; update the status table + log each iteratio
 
 ---
 
-## Where we are: the audited backlog (A–H) is complete
+## Where we are: engine + slice complete; mr4Demo content (Phase I) in progress
 
-Started at ~20%. Every phase of the dependency-ordered backlog below is now implemented and verified
-(tsc-clean, **241 tests**, the room-1 no-regression gate held at every step, plus per-phase in-browser
-checks and a final cross-map integration sweep). The port now faithfully runs the combat/AI/weapon
-engine, the full 47-map asset pipeline, the spell roster, save/army/medikit, the boss reincarnation
-cascade, the complete game shell (cutscenes over real actors, scene FSM, win/death flows), and
-collision/render fidelity. Remaining work is the long tail explicitly scoped OUT per-plan (each plan's
-§g) — GMG/magic-limiter, beam/streaming spells, reservations, per-effect sound channels, WebGL tinting,
-the map editor — none reachable or required in the shipped content.
+Started at ~20%. Phases A–H below are implemented and verified (tsc-clean, **241 tests**, room-1
+no-regression gate held at every step). The port faithfully runs the combat/AI/weapon engine, the full
+47-map asset pipeline, the spell roster, save/army/medikit, the boss reincarnation cascade, the complete
+game shell, and collision/render fidelity.
+
+> **CORRECTION (don't repeat this mistake):** an earlier wrap-up claimed the backlog was "complete" and
+> that GMG, the magic limiter, beams, reservations, team-override, etc. were "out of scope / unreachable."
+> **That was wrong** — `maps/works/mr4Demo.txt` (a 225-room map) PLACES all of them. The reachability was
+> asserted from the audit agents' scans without checking the owner's map. `tools/classify_placed.ts` now
+> prints exactly what `mr4Demo` places, bucketed by objType — **always verify reachability against the
+> actual map data, never assert it.** The remaining placed-but-inert mechanics are tracked as **Phase I**.
 
 | Domain | Coverage | One-line state |
 |---|---|---|
@@ -186,9 +189,24 @@ Status: ☐ not started · ◐ in progress · ☑ done
   back exactly as you left it. The save tree extends to the **full per-room pState map** (superseding G1's
   current-room-only Option-A); `SAVE_VERSION` bumped to **3** with the same graceful-reject gate.
 
-### Out of scope
+### Phase I — mr4Demo placed content (reopened — was wrongly called out-of-scope)
+`maps/works/mr4Demo.txt` places these; today they spawn inert (null/SKIP_SPAWN) — see `tools/classify_placed.ts`.
+- ☐ **I1. `#objMagicLimit`** (`magicLimit1/25/50/75`) — set the magic-limiter level per region (`charge.ts`
+  already multiplies by it; nothing sets it). *(placed ×16)*
+- ☐ **I2. `#objMusic`** (+ `musicLastStand`) — room music triggers (change the playing track). *(×25)*
+- ☐ **I3. `#objTeamOverride`** (`teamOverride`) — gang-up override (`teamMaster.teamOverride` exists, unset). *(×9)*
+- ☐ **I4. `#objScroll energyPunch`** — weapon scroll pickup not yet in PICKUPS.
+- ☐ **I5. `#objChatter`** (`stones1-5`) — determine + build (summon-stones / chatter).
+- ☐ **I6. `#objMine`** (`fire`, `pitMonster`, `snow/orc/quad/ice/undead Aura`) — proximity damage/effect zones. *(×550)*
+- ☐ **I7. GMG** (`gmg`) — Golden Machine Gun collect + toggle + `modAttack.gmgOn/Off` auto-fire charge mode.
+- ☐ **I8. Beams** (`energyBeamSpell`, `energyPulseSpell`) — `modAttack.performBeamAttack` / streaming release.
+- ☐ **I9. Unit/dwelling audit** — verify the 81 CPU + 15 dwelling placements behave (towers as turrets,
+  invasions as wave-spawners, `*InGame` named NPCs, dragons/golems) — fix any that spawn wrong/inert.
+
+### Out of scope (verify against the map data before trusting this list)
 - **Map editor** — ships as a *separate executable* (`map_editor.exe`); `mapEditMaster` is editor-only.
   Maps are externally authored data, not a parity requirement. *(05)*
+- (Per-effect sound channels / WebGL tinting — cosmetic; only after the above are reachable-and-working.)
 
 ---
 
@@ -456,3 +474,10 @@ Status: ☐ not started · ◐ in progress · ☑ done
   intro cutscene + default + boss (`monster_summon`) + endRoom (`merliniii`) + 64×64 (`merlinart`) all
   load/spawn/paint with **no pageerrors**. 241 tests; room-1 gate green ×3. **The audited backlog (A–H)
   is complete.** Long-tail out-of-scope items (per each plan's §g) remain as documented non-goals.
+- **Iter 11 — CORRECTION + Phase I opened.** The owner flagged that `mr4Demo` places the content a prior
+  wrap-up wrongly called "out of scope." Decoded `maps/works/mr4Demo.txt` (225 rooms): it places `gmg`,
+  `magicLimit1/25/50/75`, `energyBeamSpell`/`energyPulseSpell`, the auras/mines, `teamOverride`,
+  `stones1-5`, `energyPunch`, towers, invasions, `*InGame` NPCs — 136 distinct symbols. Added
+  `tools/classify_placed.ts` (objType buckets) as the reachability ground-truth. The engine/spell/save/
+  boss/shell work all stands; Phase I builds the placed-but-inert objType mechanics (I1–I9). Lesson:
+  verify reachability against the actual map data, never assert it from a partial scan.
