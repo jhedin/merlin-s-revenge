@@ -171,6 +171,33 @@ export class TeamMaster {
     return best;
   }
 
+  // findHostileWithin (teamMaster.findTargetWithin, objMine.updateCheckCollisions): the nearest hostile
+  // to (cx,cy) within `radius`, scoped to `attacker`'s hostile teams by `allegiance` (default #enemy) and
+  // role-filtered by `hits` (a mine's #attack.hits). Reuses calcTargetTeams + the unit-map broad-phase
+  // (mirrors findTarget's #closestDistance path). Returns {obj,dist} (dist = euclidean px, 1e9 if none).
+  // Team-gates implicitly: a #fire mine's hostile set comes from tem_fire.#hates, which excludes #fire.
+  findHostileWithin(
+    attacker: Entity, cx: number, cy: number, radius: number, hits: string[], allegiance = "#enemy",
+  ): { obj: Entity | null; dist: number } {
+    const myTeam = attacker.send("getTeam") as string;
+    const targetTeams = (this.calcTargetTeams(myTeam, allegiance)[0] ?? [])
+      .filter((n) => n !== "#none" && n !== "#collectables");
+    if (targetTeams.length === 0) return { obj: null, dist: 1e9 };
+    const teamSet = new Set(targetTeams);
+    const maxShell = Math.max(1, Math.ceil(radius / this.unitMap.tileSize) + 1);
+    const cands = this.unitMap.search(cx, cy, (u) =>
+      teamSet.has(u.send("getTeam") as string) && !u.send("isDead") && hits.includes(this.roleOf(u)),
+      maxShell, maxShell);
+    const r2 = radius * radius;
+    let best: Entity | null = null, bd = Infinity;
+    for (const u of cands) {
+      const p = u.send("getPos") as { x: number; y: number };
+      const dd = (p.x - cx) ** 2 + (p.y - cy) ** 2;
+      if (dd <= r2 && dd < bd) { bd = dd; best = u; }
+    }
+    return best ? { obj: best, dist: Math.sqrt(bd) } : { obj: null, dist: 1e9 };
+  }
+
   // impactAreaAttack (teamMaster.impactMeleeAttack/impactAttack core): the team-scoped disc search.
   // Resolves the hostile teams for `attacker` (by its #attack.targetAllegiance), searches the unit map
   // around (cx,cy) out to `radius`, role-filters by `hits`, and invokes hitFn(victim) for every hostile

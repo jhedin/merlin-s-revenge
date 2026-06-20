@@ -12,6 +12,7 @@ import { registry } from "../game/data";
 import { spriteCharOr } from "../components/anim";
 import { Team } from "../components/combat";
 import { spawnUnit, spawnDwelling, spawnPickup, type PickupSym } from "./archetypes";
+import { spawnMine, spawnRegionMarker, spawnChatter } from "./objTypes";
 import { PICKUPS } from "../world/spawnTable";
 
 /** A saved actor: its respawn key + the runtime type/team/role (re-applied on respawn) + its chain. */
@@ -31,6 +32,8 @@ export interface ActorSave {
 export interface RelSave { team: string; role: string; x: number; y: number; }
 
 const bare = (s: string): string => s.replace(/^#/, "");
+const num = (d: Record<string, any> | undefined, k: string, dflt: number): number => (typeof d?.[k] === "number" ? (d[k] as number) : dflt);
+const str = (d: Record<string, any> | undefined, k: string, dflt: string): string => (typeof d?.[k] === "string" ? (d[k] as string) : dflt);
 
 /** spawnFromSymbol: the shared tile/actor-type-symbol routing (used by RoomManager AND respawnActor). */
 export function spawnFromSymbol(sym: string, x: number, y: number): Entity | null {
@@ -39,15 +42,21 @@ export function spawnFromSymbol(sym: string, x: number, y: number): Entity | nul
   if (PICKUPS[withHash]) return spawnPickup(PICKUPS[withHash]!, x, y);
   // a pickup may also be saved by its bare effect key (actorType = the effect)
   if (isPickupEffect(name)) return spawnPickup(name as PickupSym, x, y);
-  if (registry.resolveActor(name)?.["objType"] === "#objDwelling") {
-    return spawnDwelling(name, x, y, spriteCharOr(name));
-  }
-  if (registry.resolveActor(name)) return spawnUnit(name, x, y, { animChar: spriteCharOr(name) });
+  const rec = registry.resolveActor(name);
+  // objType dispatch (Phase I): the placed-but-inert region/mine/chatter objTypes spawn real Entities.
+  const objType = rec?.["objType"];
+  if (objType === "#objDwelling") return spawnDwelling(name, x, y, spriteCharOr(name));
+  if (objType === "#objMine") return spawnMine(name, x, y);
+  if (objType === "#objMagicLimit") return spawnRegionMarker("magicLimit", num(rec, "magicLimit", 100), x, y, name);
+  if (objType === "#objMusic") return spawnRegionMarker("music", str(rec, "musicName", "stopMusic"), x, y, name);
+  if (objType === "#objTeamOverride") return spawnRegionMarker("teamOverride", str(rec, "teamToTarget", "#none"), x, y, name);
+  if (objType === "#objChatter") return spawnChatter(name, x, y);
+  if (rec) return spawnUnit(name, x, y, { animChar: spriteCharOr(name) });
   return null;
 }
 
 const PICKUP_EFFECTS = new Set<string>([
-  "heal", "speed", "sword", "spell", "manaCapacity", "manaFlow", "manaBurst",
+  "heal", "speed", "sword", "spell", "energyPunch", "manaCapacity", "manaFlow", "manaBurst",
   "cBlast", "darkBlast", "arcticBlast", "healBlast", "armySummon", "monsterSummon", "energyMines",
 ]);
 function isPickupEffect(name: string): boolean { return PICKUP_EFFECTS.has(name); }

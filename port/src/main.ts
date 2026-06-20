@@ -291,7 +291,7 @@ async function main() {
       if (passive && rooms.passiveSheet) renderer.drawTileLayer(passive, rooms.passiveSheet);
       if (active && rooms.activeSheet) renderer.drawTileLayer(active, rooms.activeSheet);
       const sprites = game.entities
-        .filter((e) => e.type !== "bullet" && e.type !== "pickup")
+        .filter((e) => e.type !== "bullet" && e.type !== "pickup" && e.type !== "marker")
         .map((e) => e.get(Anim).sprite()).filter((sp): sp is Sprite => sp !== null);
       renderer.drawSprites(sprites);
       drawBullets(renderer);

@@ -60,6 +60,8 @@ export class AudioSystem {
   }
 
   playMusic(name: string): void {
+    // soundMaster.playMusic: the "stopMusic" sentinel (act_musicOff's #musicName) stops the track.
+    if (name === "stopMusic") { this.stopMusic(); return; }
     const file = this.index.music?.[name];
     if (!file || this.currentMusic === name) return;
     if (!this.ctx) { this.pendingMusic = name; return; } // defer until unlocked

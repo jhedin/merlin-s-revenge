@@ -12,18 +12,21 @@
 
 import type { AttackData } from "./weapon";
 import type { Rng } from "../engine/math";
+import { game } from "../game/context";
 
 export interface ManaStats { capacity: number; flow: number; burst: number; }
 
-// Magic limiter (magicLimitMaster.getMagicLimit). Limiter master is unbuilt (§g) -> always 100 (no-op).
-export const MAGIC_LIMIT = 100;
+// Magic limiter (magicLimitMaster.getMagicLimit). Now a real room-scoped state (I1): an objMagicLimit
+// region sets it (set(N) on spawn / setDefault() on room-leave); default 100 = no limit.
+export const MAGIC_LIMIT = 100; // the default value (kept for back-compat; live value reads game.magicLimit)
 
 // chargeMaxOf(attack, mana, rng?): the per-cast charge ceiling. `rng` enables the randomSummon wobble
 // (calcAttackChargeMax 106-112) for skeleton/goblin/undead/sc summons — those let you NOT reliably hit
 // the top tier each cast. Without an rng (or a non-randomSummon attack) the result is deterministic.
 export function chargeMaxOf(attack: AttackData, mana: ManaStats, rng?: Rng): number {
   let cm = Math.min(attack.chargeMax, mana.capacity * attack.chargeMaxModifier + attack.chargeMaxBasic);
-  if (attack.limitMagic) cm = cm * MAGIC_LIMIT / 100;
+  // calcAttackChargeMax: a #limitMagic spell's ceiling is scaled by the live magic limiter (room-scoped).
+  if (attack.limitMagic) cm = cm * game.magicLimit.get() / 100;
   // randomSummon wobble: if the 2nd tier doesn't already exceed cm, randomise the ceiling within the
   // affordable band (tempMax = cm·random(20)/17 + random(tier1); cm = min(cm, tempMax) + random(2)−1).
   // random(n) is Lingo's 1..n inclusive (Rng.int). Bounded to [0, cm] by the min + the ±1 jitter clamp.

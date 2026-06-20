@@ -16,7 +16,7 @@ import { game } from "../game/context";
 // addWeapon row (the B2 engine fires them with zero new mechanics; their splash/freeze/heal/summon
 // behaviour rides on the C2/C3 payload/cast wiring).
 const SCROLL_ACTOR: Record<string, string> = {
-  sword: "merlinSword", spell: "energyBlast",
+  sword: "merlinSword", spell: "energyBlast", energyPunch: "energyPunch",
   cBlast: "cBlast", darkBlast: "darkBlast", arcticBlast: "arcticBlast", healBlast: "healBlast",
   armySummon: "armySummon", monsterSummon: "monsterSummon", energyMines: "energyMines",
 };
@@ -24,7 +24,7 @@ function scrollAttack(effect: string) {
   return resolveAttack((registry.resolveActor(SCROLL_ACTOR[effect]!) ?? {})["attack"] as Record<string, any>);
 }
 
-export type PickupEffect = "heal" | "maxikit" | "speed" | "sword" | "spell" | "manaCapacity" | "manaFlow" | "manaBurst"
+export type PickupEffect = "heal" | "maxikit" | "speed" | "sword" | "spell" | "energyPunch" | "manaCapacity" | "manaFlow" | "manaBurst"
   | "cBlast" | "darkBlast" | "arcticBlast" | "healBlast" | "armySummon" | "monsterSummon" | "energyMines";
 
 export class Pickup extends Component {
@@ -63,6 +63,13 @@ export class Pickup extends Component {
       case "heal": case "maxikit": player.send("medikitCollected", 1); break;
       case "speed": player.get(Movement).maxSpeed += 0.6; break;
       case "sword": player.get(PlayerControl).equipSword(scrollAttack("sword")); break; // merlinSword: addWeapon
+      // energyPunch (I4): a #magicMelee melee-weapon scroll (newScrollCollected -> addWeapon). Granted
+      // as a melee weapon via the SAME equipSword path (addWeapon + widen the melee sweep). Fires through
+      // the B2 WeaponManager like merlinSword. DEVIATION (plan §g.6): the original #magicMelee adds a mana
+      // term in calcCollisionVectMelee (·(strength+1.5·manaCapacity)/1.5); the port's melee uses
+      // power·strength·MELEE_SCALE (the documented B2 calibration), so energyPunch does not scale with mana
+      // — it lands as a faithful melee upgrade (damageMultiplier 1.75) without the mana coupling.
+      case "energyPunch": player.get(PlayerControl).equipSword(scrollAttack("energyPunch")); break;
       case "spell": player.get(PlayerControl).grantSpell(scrollAttack("spell")); break; // energyBlast: addWeapon magic
       // C1/C2/C3 spell scrolls — each is a #magic weapon, granted via the same addWeapon path. The
       // payload/splash/summon behaviour is driven off the weapon's #attack at cast time (control.ts).

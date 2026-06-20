@@ -16,10 +16,11 @@ This tracker is the running backlog; update the status table + log each iteratio
 
 ## Where we are: engine + slice complete; mr4Demo content (Phase I) in progress
 
-Started at ~20%. Phases A–H below are implemented and verified (tsc-clean, **241 tests**, room-1
-no-regression gate held at every step). The port faithfully runs the combat/AI/weapon engine, the full
-47-map asset pipeline, the spell roster, save/army/medikit, the boss reincarnation cascade, the complete
-game shell, and collision/render fidelity.
+Started at ~20%. Phases A–H below are implemented and verified (tsc-clean, room-1 no-regression gate held
+at every step). Phase I Pass A (I1–I6 + I9) is done — **263 tests** (+22). The port faithfully runs the
+combat/AI/weapon engine, the full 47-map asset pipeline, the spell roster, save/army/medikit, the boss
+reincarnation cascade, the complete game shell, collision/render fidelity, and the mr4Demo region/mine/
+chatter objType mechanics. Pass B (I7 GMG, I8 beams) remains.
 
 > **CORRECTION (don't repeat this mistake):** an earlier wrap-up claimed the backlog was "complete" and
 > that GMG, the magic limiter, beams, reservations, team-override, etc. were "out of scope / unreachable."
@@ -191,17 +192,36 @@ Status: ☐ not started · ◐ in progress · ☑ done
 
 ### Phase I — mr4Demo placed content (reopened — was wrongly called out-of-scope)
 `maps/works/mr4Demo.txt` places these; today they spawn inert (null/SKIP_SPAWN) — see `tools/classify_placed.ts`.
-- ☐ **I1. `#objMagicLimit`** (`magicLimit1/25/50/75`) — set the magic-limiter level per region (`charge.ts`
-  already multiplies by it; nothing sets it). *(placed ×16)*
-- ☐ **I2. `#objMusic`** (+ `musicLastStand`) — room music triggers (change the playing track). *(×25)*
-- ☐ **I3. `#objTeamOverride`** (`teamOverride`) — gang-up override (`teamMaster.teamOverride` exists, unset). *(×9)*
-- ☐ **I4. `#objScroll energyPunch`** — weapon scroll pickup not yet in PICKUPS.
-- ☐ **I5. `#objChatter`** (`stones1-5`) — determine + build (summon-stones / chatter).
-- ☐ **I6. `#objMine`** (`fire`, `pitMonster`, `snow/orc/quad/ice/undead Aura`) — proximity damage/effect zones. *(×550)*
-- ☐ **I7. GMG** (`gmg`) — Golden Machine Gun collect + toggle + `modAttack.gmgOn/Off` auto-fire charge mode.
-- ☐ **I8. Beams** (`energyBeamSpell`, `energyPulseSpell`) — `modAttack.performBeamAttack` / streaming release.
-- ☐ **I9. Unit/dwelling audit** — verify the 81 CPU + 15 dwelling placements behave (towers as turrets,
-  invasions as wave-spawners, `*InGame` named NPCs, dragons/golems) — fix any that spawn wrong/inert.
+**Pass A done (I1–I6 + I9); Pass B (I7–I8) deferred.**
+- ☑ **I1. `#objMagicLimit`** (`magicLimit1/25/50/75`) — `MagicLimitMaster` singleton on `game` (get/set/
+  setDefault, default 100); `charge.ts` reads `game.magicLimit.get()`; markers `set(N)` on spawn, reset to
+  default on room-leave (room-scoped, hooked in `RoomManager.enter`). *(placed ×16)*
+- ☑ **I2. `#objMusic`** (+ `musicLastStand`) — region markers call `audio.playMusic(record.musicName)` on
+  spawn; `musicOff`'s `"stopMusic"` sentinel → `stopMusic`. **Music keys map 1:1** (no alias table needed —
+  `baroque_rock_v1`/`woods_of_evil_v1`/`last_stand_v4`/`baroque_rock_techno_v1`/`electronic_merlin_v1_02`
+  are all bundled keys). *(×25)*
+- ☑ **I3. `#objTeamOverride`** (`teamOverride`) — marker sets `teamMaster.teamOverride = #aldevar` on spawn,
+  reset null on room-leave (the gang-up branch in `calcTargetTeams` already existed). *(×9)*
+- ☑ **I4. `#objScroll energyPunch`** — `PICKUPS["#energyPunch"]` → `equipSword(act_energyPunch)`: a
+  `#magicMelee` melee weapon granted via `addWeapon` (fires through the B2 WeaponManager like merlinSword;
+  the `#magicMelee` mana term is NOT applied — documented deviation, §g.6).
+- ☑ **I5. `#objChatter`** (`stones1-5`) — decorative stone NPCs (Anim+Team). The `scr_stonesN` cutscene
+  scripts are NOT bundled (only intro/wasted/complete are), so per the original's own "disabled inGame
+  scripts" state they spawn as INERT decorative sprites (no fabricated cutscenes, §g.8).
+- ☑ **I6. `#objMine`** (`fire`, `pitMonster`, `snow/orc/quad/ice/undead Aura`) — new `Mine` component
+  (prime→check→detonate FSM calling `resolveSplash` at the mine loc). fire/pitMonster damage + re-arm (fire
+  dies after 10, pit forever); the 5 auras are `damageMultiplier:0` + `#takeFreeze` → routed through the
+  freeze payload (NOT a 0-damage takeHit). `teamMaster.findHostileWithin` added; team-gated. *(×550)*
+- ☐ **I7. GMG** (`gmg`) — Golden Machine Gun collect + toggle + `modAttack.gmgOn/Off` auto-fire charge mode. **(Pass B)**
+- ☐ **I8. Beams** (`energyBeamSpell`, `energyPulseSpell`) — `modAttack.performBeamAttack` / streaming release. **(Pass B)**
+- ☑ **I9. Unit/dwelling audit** — towers fire (C2/E1), invasions cycle ALL `#residentGroups` (Dwelling
+  random-picks a group each production cycle — verified `orcInvasion`→bowOrc/swordOrc/mageOrc emerge), and
+  the `*InGame` spellcaster wizards now **cast their magic weapon**. **Found + fixed `berlinInGame`:** it
+  carries a `#naturalMelee` `#punch` backup AND `#weapon:#energyBlast`; the port only read the melee attack
+  (its animType is set), so 10/11 named wizards spawned melee-only and never cast. `spawnEnemy` now, for a
+  `#objAiCPUSpellCaster` whose `#weapon` is `#magic`, uses the WEAPON's `#attack` as primary → they fire
+  ranged magic via the existing CpuAI ranged path (instant-fire on cooldown, no charge-ramp — acceptable
+  per B1/B2). `kingInGame` (plain `#objAiCPU`) stays melee; melee/ranged units unchanged.
 
 ### Out of scope (verify against the map data before trusting this list)
 - **Map editor** — ships as a *separate executable* (`map_editor.exe`); `mapEditMaster` is editor-only.
@@ -481,3 +501,47 @@ Status: ☐ not started · ◐ in progress · ☑ done
   `tools/classify_placed.ts` (objType buckets) as the reachability ground-truth. The engine/spell/save/
   boss/shell work all stands; Phase I builds the placed-but-inert objType mechanics (I1–I9). Lesson:
   verify reachability against the actual map data, never assert it from a partial scan.
+- **Iter 12 — Phase I Pass A (I1–I6 + I9) shipped.** The placed-but-inert mr4Demo objTypes now spawn real
+  Entities via an `objType` switch in `spawnFromSymbol` (`entities/objTypes.ts`). **I2 objMusic** (cheapest):
+  region markers (`components/regionMarker.ts`) call `audio.playMusic(record.musicName)` on spawn; the
+  `"stopMusic"` sentinel (act_musicOff) routes to `audio.stopMusic()`. **The music-key mapping is 1:1** —
+  every `act_music*` `#musicName` (`baroque_rock_v1`, `woods_of_evil_v1`, `last_stand_v4`,
+  `baroque_rock_techno_v1`, `electronic_merlin_v1_02`) is already a bundled `audio.index.music` key, so NO
+  alias table was needed (§g.4 verified). **I1 objMagicLimit:** new `MagicLimitMaster` singleton on `game`
+  (get/set/setDefault, default 100); `charge.ts` reads `game.magicLimit.get()` (replacing the dead const);
+  the marker `set(N)` on spawn; `RoomManager.enter` resets it to default at room entry BEFORE that room's
+  markers re-apply, making it room-scoped (§g.5). **I3 objTeamOverride:** the marker sets
+  `teamMaster.teamOverride` (reset the same way); the gang-up branch in `calcTargetTeams` already existed.
+  **I4 energyPunch:** `PICKUPS["#energyPunch"]` -> `equipSword` grants the `#magicMelee` melee weapon via
+  `addWeapon` (deviation: the `#magicMelee` mana term isn't applied — the documented B2 melee calibration,
+  §g.6). **I5 objChatter:** `scr_stonesN` cutscene scripts are NOT bundled (only intro/wasted/complete are),
+  so the stones spawn as INERT decorative sprites (`components/chatter.ts`) per the original's own "disabled
+  inGame scripts" state — no fabricated cutscenes (§g.8). **I6 objMine** (`components/mine.ts`): a static
+  prime->check->detonate FSM (reusing the port's `Counter`) that calls **`resolveSplash`** with the mine's
+  `#attack` at its loc — ALL damage/freeze math is the C2 engine, zero special-casing. fire (dmgMult 15,
+  dies after 10) + pitMonster (dmgMult 40, re-arms forever) are damage emitters; the 5 auras (dmgMult 0 +
+  `#takeFreeze`) route through the freeze payload (a slowing field, NOT a 0-damage takeHit — §g.7). Added
+  `teamMaster.findHostileWithin` (reuses `calcTargetTeams`+unitMap); mines are team-gated (a `#fire` mine
+  doesn't hit `#fire` units — `tem_fire.#hates` excludes itself). Mines are `type:"mine"` so a re-arming
+  pitMonster never gates room-clear. **I9 audit:** towers/invasions verified (Dwelling random-picks a
+  resident group each production cycle -> cycles ALL `#residentGroups`, confirmed `orcInvasion`->mageOrc
+  emerges). **Found + fixed `berlinInGame` (and 9 other `*InGame` casters):** each carries a `#naturalMelee`
+  `#punch` backup AND a magic `#weapon`; `spawnEnemy` only read the melee `#attack` (its animType is set),
+  so the named wizards spawned MELEE-ONLY and never cast. Now, for a `#objAiCPUSpellCaster` whose `#weapon`
+  is `#magic`, the WEAPON's `#attack` is used as primary -> it fires ranged magic via the existing CpuAI
+  ranged path (instant-fire on cooldown, no charge-ramp, acceptable per B1/B2). `kingInGame` (`#objAiCPU`)
+  stays melee; melee/ranged units unchanged. tsc clean; **263 tests** (+22 in `test/phase_i.test.ts`).
+  Room-1 no-regression: `playthrough_smoke` ends `enemies:0, exitsOpen:true, errors:none`. In-browser on
+  `?map=works_mr4Demo` (no pageerrors): entering room loc (12,11)->(2,12) changes the music track (no restart
+  on re-entry); the (6,11) magicLimit25 cell dims the live charge ceiling to 3.125 (12.5×25%), reset to 100
+  on leave; the (4,1) teamOverride cell makes a `#monsters` unit target the player's side; a fire mine in
+  room (1,1) detonates on a blackOrc (1200->1080 energy); a pinned `#aldevar` warrior on a snowAura (room
+  15,13) becomes `frozen` at 0.5× speed with energy UNCHANGED (freeze, not damage); the (6,11) energyPunch
+  scroll grants `[#punch, #energyPunch]`; the (2,14) stones1 spawns a decorative NPC; `berlinInGame` (room
+  1,8) spawns as an ally with `#energyBlast` (magic) current. Deviations/risks: (1) the `#magicMelee` mana
+  term for energyPunch isn't applied (B2 calibration, §g.6); (2) heal/summon-caster wizards (ulinInGame
+  healBlast, scarletInGame undeadSummon) fire a generic bolt — the heal/summon payload isn't applied for the
+  CPU caster (the I9 fix only ensures they CAST; faithful payload routing for AI casters is a later pass);
+  (3) `#recordInRoomState:false` (fire mines) are snapshotted into pState like any actor (the port's restore
+  replaces tile-spawning, so excluding them would drop content — the mine FSM re-inits on respawn so the
+  state is equivalent; save-bookkeeping deviation noted). Out of scope (Pass B): I7 GMG, I8 beams.

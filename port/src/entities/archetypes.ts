@@ -141,8 +141,22 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
   const objAttack = (v: any): Record<string, any> =>
     (v && typeof v === "object" && !Array.isArray(v)) ? v : {};
   let atk = objAttack(d["attack"]);
-  if (!atk["animType"] && typeof d["weapon"] === "string") {
-    atk = objAttack((registry.resolveActor(d["weapon"]) ?? {})["attack"]);
+  // I9 fix — spellcaster casts its #weapon, not its melee #attack. A #objAiCPUSpellCaster (berlinInGame
+  // = energyBlast, garonlinInGame = darkBlast, …) carries its OWN #attack as a #naturalMelee #punch
+  // backup, but its primary weapon is the magic #weapon (reach 9999 — the spellcaster fires the spell,
+  // melee is just an animation backup). The original modWeaponManager sets the magic weapon current, so
+  // getAttack().reach == 9999 (the spellcaster's "spell loaded" signal). Previously the port read the
+  // melee #attack (its animType is set) and never reached the #weapon fallback, so these named wizards
+  // spawned MELEE-ONLY and never cast. When the actor is a spellcaster AND its #weapon resolves to a
+  // #magic attack, use the WEAPON's #attack as the firing attack.
+  const aiTypeEarly = typeof d["AiType"] === "string" ? (d["AiType"] as string) : "";
+  if (typeof d["weapon"] === "string") {
+    const weaponAtk = objAttack((registry.resolveActor(d["weapon"].replace(/^#/, "")) ?? {})["attack"]);
+    if (!atk["animType"]) {
+      atk = weaponAtk;                                            // no own attack -> use the weapon's
+    } else if (aiTypeEarly === "#objAiCPUSpellCaster" && weaponAtk["animType"] === "#magic") {
+      atk = weaponAtk;                                            // spellcaster -> the magic spell is primary
+    }
   }
   const animType = typeof atk["animType"] === "string" ? atk["animType"] : "";
   const ranged = opts.ranged ?? (animType === "#weaponRanged" || animType === "#magic");

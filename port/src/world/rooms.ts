@@ -14,6 +14,13 @@ import { rebuildCombatSubstrate } from "../systems/combatTick";
 import { Movement } from "../components/movement";
 import type { Entity } from "../engine/dispatch";
 
+// NOTE on #recordInRoomState (objGameObject): some placed actors (fire mines) opt OUT of the per-room
+// snapshot in the original — they re-tile-spawn fresh on re-entry. The port's pState restore replaces
+// tile-spawning wholesale, so to avoid dropping content (a missing mine on re-entry) the port snapshots
+// them like any other recordable actor; since a mine's FSM (and explosion count) re-inits on respawn,
+// the on-re-entry state is equivalent to a fresh spawn — behavioral parity, save-bookkeeping deviation
+// noted (plan §a.1 "minor"). The flag is preserved in data for a later strict-snapshot pass.
+
 export class RoomManager {
   loc: Vec2i;
   room!: Room;
@@ -58,6 +65,11 @@ export class RoomManager {
         this.pState.set(leavingNum, game.entities.filter((e) => e.type !== "player").map(serializeActor));
       }
     }
+    // room-scoped region effects (I1/I3): reset the magic limiter + team override to their defaults
+    // BEFORE this room's markers re-apply on spawn (mirrors objMagicLimit/objTeamOverride `on finish`
+    // restoring the default on room-leave). A dimmed region or a gang-up override can't leak rooms (§g.5).
+    game.magicLimit.setDefault();
+    game.teamMaster.teamOverride = null;
     this.loc = loc;
     this.room = this.map.roomAt(loc) ?? this.map.rooms.get(1)!;
     const active = this.room.layer("#backgroundActive");
