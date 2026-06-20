@@ -71,8 +71,35 @@ export class Energy extends Component {
 }
 
 export class Team extends Component {
-  static handles = ["getTeam"];
+  static handles = ["getTeam", "getTeamRole"];
   team = "";
-  override init(cfg: Record<string, any>): void { this.team = typeof cfg["team"] === "string" ? cfg["team"] : ""; }
+  role = "#teamMembers"; // joinTeam role: #teamMembers (units) or #teamBuildings (dwellings)
+  override init(cfg: Record<string, any>): void {
+    this.team = typeof cfg["team"] === "string" ? cfg["team"] : "";
+    if (typeof cfg["teamRole"] === "string") this.role = cfg["teamRole"];
+  }
   getTeam(): string { return this.team; }       // query
+  getTeamRole(): string { return this.role; }   // query (obj.getTeamRole())
+}
+
+// Targeting (the attacker-side #attack.target* config, read generically by TeamMaster.findTarget /
+// impactMeleeAttack). Resolved from #attack at spawn; defaults match structAttack.
+export class Targeting extends Component {
+  static handles = ["getTargeting"];
+  allegiance = "#enemy";
+  criteria = "#closestDistance";
+  targetRoles: string[][] = [["#teamMembers", "#teamBuildings"]];
+  hits: string[] = ["#teamMembers"];
+  reach = 18;
+
+  override init(cfg: Record<string, any>): void {
+    if (typeof cfg["targetAllegiance"] === "string") this.allegiance = cfg["targetAllegiance"];
+    if (typeof cfg["targetCriteria"] === "string") this.criteria = cfg["targetCriteria"];
+    if (Array.isArray(cfg["targetRoles"])) this.targetRoles = cfg["targetRoles"];
+    if (Array.isArray(cfg["hits"])) this.hits = cfg["hits"];
+    if (typeof cfg["targetReach"] === "number") this.reach = cfg["targetReach"];
+  }
+  getTargeting(): { allegiance: string; criteria: string; targetRoles: string[][]; hits: string[]; reach: number } {
+    return { allegiance: this.allegiance, criteria: this.criteria, targetRoles: this.targetRoles, hits: this.hits, reach: this.reach };
+  }
 }

@@ -59,9 +59,14 @@ Status: ☐ not started · ◐ in progress · ☑ done
   data attack powers under B2. See [`plans/A1-damage-knockback.md`](plans/A1-damage-knockback.md). *(01 #1, 03 #1)*
 
 ### Phase B — Targeting & AI engine
-- ☐ **B1. `teamMaster` + `findTarget` + `objAiCPU` target FSM.** Data allegiance (`tem_*`), unit-map
+- ◐ **B1. `teamMaster` + `findTarget` + `objAiCPU` target FSM.** Data allegiance (`tem_*`), unit-map
   broad-phase, target criteria/roles, committed `#target` relationships, `impactMeleeAttack` loop. Unlocks
-  every CPU enemy/ally/dwelling. *(01 #2)*
+  every CPU enemy/ally/dwelling. Plan: [`plans/B1-targeting-ai.md`](plans/B1-targeting-ai.md). *(01 #2)*
+  - ☑ **2a substrate** — `UnitMap` broad-phase, `TeamMaster` (data allegiance/cull/roster/`#leaveGame`
+    pub-sub), `findTarget`, `impactMeleeAttack`, `Targeting` component. Pure + unit-tested (11 tests); not
+    yet wired into the live loop (no behavior change).
+  - ☐ **2b brain swap** — `EnemyAI`→`CpuAI` FSM (committed target, retarget throttle, dazed-on-reel),
+    PlayerControl melee/aim via `TeamMaster`, archetype/context wiring + per-tick `UnitMap` rebuild.
 - ☐ **B2. `modWeaponManager` + data-driven charge/cooldown.** Retire hardcoded `SPELL`/`PUNCH`/`hasSword`/
   `hasSpell`; real weapon slots so enemies get ranged/magic and spells plug in. *(01 #3, 03 #2)*
 

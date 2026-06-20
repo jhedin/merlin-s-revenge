@@ -1,0 +1,168 @@
+// TeamMaster (casts/master_objects/teamMaster.txt): data-driven allegiance + the unit-map broad-phase +
+// findTarget / impactMeleeAttack. Allegiance is resolved PER ATTACK from the attacker's
+// #attack.targetAllegiance over its team's tiered #hates / #friends (tem_*.txt) — not a static friend set.
+
+import type { Entity } from "../engine/dispatch";
+import { registry } from "../game/data";
+import { UnitMap } from "./unitMap";
+import { aimedVect } from "../engine/math";
+
+export interface TargetConfig {
+  allegiance: string;        // "#enemy" | "#friendly"
+  criteria: string;          // "#closestDistance" | "#lowestHealth"
+  targetRoles: string[][];   // priority tiers of roles ("#teamMembers"/"#teamBuildings")
+  hits: string[];            // roles a melee swing can strike
+  reach: number;             // px (point reach collapsed to a radius)
+}
+
+interface TeamRuntime {
+  name: string; friends: string[]; hates: string[][];
+  members: Set<Entity>; buildings: Set<Entity>;
+}
+
+const isBuilding = (role: string) => role === "#teamBuildings";
+
+export class TeamMaster {
+  private teams = new Map<string, TeamRuntime>();
+  unitMap = new UnitMap();
+  teamOverride: string | null = null; // gang-up override (calcTargetTeamsOverride); off by default
+  private subs = new Map<Entity, Entity[]>(); // #leaveGame: target -> listeners (keepMePosted #once)
+
+  reset(): void { this.teams.clear(); this.subs.clear(); this.teamOverride = null; }
+
+  // initTeams: lazily build a team's runtime struct from its tem_ record (tolerate missing -> neutral).
+  private team(name: string): TeamRuntime {
+    let t = this.teams.get(name);
+    if (!t) {
+      const rec = registry.team(name) as any;
+      const friends: string[] = Array.isArray(rec?.friends) ? rec.friends.slice() : [];
+      const hates: string[][] = Array.isArray(rec?.hates) ? rec.hates.map((tier: string[]) => tier.slice()) : [];
+      t = { name, friends, hates, members: new Set(), buildings: new Set() };
+      this.teams.set(name, t);
+    }
+    return t;
+  }
+
+  // joinTeam / leaveTeam: roster membership (drives cullTeamList + findTarget candidates)
+  register(e: Entity, teamName: string, role: string): void {
+    const t = this.team(teamName);
+    (isBuilding(role) ? t.buildings : t.members).add(e);
+  }
+  unregister(e: Entity, teamName: string, role: string): void {
+    const t = this.team(teamName);
+    (isBuilding(role) ? t.buildings : t.members).delete(e);
+    this.emitLeave(e); // outOfEnergy/leaveGame fold together for B1
+  }
+
+  // keepMePosted(target, #leaveGame, #once): subscriber is told once when target leaves play
+  subscribe(target: Entity, listener: Entity): void {
+    const list = this.subs.get(target);
+    if (list) { if (!list.includes(listener)) list.push(listener); } else this.subs.set(target, [listener]);
+  }
+  private emitLeave(target: Entity): void {
+    const list = this.subs.get(target);
+    if (!list) return;
+    this.subs.delete(target);          // #once
+    for (const l of list) l.send("eventLeaveGame", target);
+  }
+
+  // calcTargetTeamsByAllegiance (+Override): the tiered list of teams this attacker may target.
+  calcTargetTeams(teamName: string, allegiance: string): string[][] {
+    const t = this.team(teamName);
+    const ov = this.teamOverride;
+    if (ov && teamName !== ov && allegiance === "#enemy" && !t.friends.includes(ov)) {
+      const o = this.team(ov);
+      return [[...o.friends, ov]];                    // gang up on the override team
+    }
+    if (allegiance === "#friendly") {
+      return t.friends.length ? [[...t.friends, teamName]] : [[teamName]];
+    }
+    return t.hates.map((tier) => tier.slice());        // #enemy
+  }
+
+  // cullTeamList: keep only non-empty target teams; if none, or fewer than 5 live hostiles total,
+  // prepend #none (signal "give up / fall back"). #collectables is stripped by callers.
+  cullTeamList(teamList: string[]): string[] {
+    let running = 0; const teams: string[] = [];
+    for (const name of teamList) {
+      const t = this.team(name);
+      const sum = t.buildings.size + t.members.size;
+      if (sum > 0) { running += sum; teams.push(name); }
+    }
+    if (teams.length === 0 || running < 5) teams.unshift("#none");
+    return teams;
+  }
+
+  private roleOf(e: Entity): string { return (e.send("getTeamRole") as string) || "#teamMembers"; }
+
+  // findTarget: the single best target by the attacker's criteria/roles (objAiCPU.refreshTarget input).
+  findTarget(e: Entity): { obj: Entity | null; dist: number } {
+    const tg = e.send("getTargeting") as TargetConfig | undefined;
+    if (!tg) return { obj: null, dist: 999999 };
+    const myTeam = e.send("getTeam") as string;
+    const tier0 = this.cullTeamList((this.calcTargetTeams(myTeam, tg.allegiance)[0] ?? []));
+    const targetTeams = tier0.filter((n) => n !== "#none" && n !== "#collectables");
+    if (targetTeams.length === 0) return { obj: null, dist: 999999 };
+    const teamSet = new Set(targetTeams);
+    const pos = e.send("getPos") as { x: number; y: number };
+
+    // #lowestHealth (healers): pick the weakest rostered member; skip full-health (healBlast). No map.
+    if (tg.criteria === "#lowestHealth") {
+      let best: Entity | null = null, bf = Infinity;
+      for (const name of targetTeams) {
+        for (const u of this.team(name).members) {
+          if (u.send("isDead")) continue;
+          const f = u.send("energyFrac") as number;
+          if (f >= 1) continue;        // refreshTarget rejects 100%-health heal targets
+          if (f < bf) { bf = f; best = u; }
+        }
+      }
+      return { obj: best, dist: best ? 1 : 999999 };
+    }
+
+    // #closestDistance: expanding-shell unit-map search, optional single-role filter, min squared dist.
+    const roles = tg.targetRoles[0] ?? [];
+    const onlyRole = roles.length === 1 ? roles[0]! : null;
+    const cands = this.unitMap.search(pos.x, pos.y, (u) =>
+      teamSet.has(u.send("getTeam") as string) && !u.send("isDead") &&
+      (onlyRole === null || this.roleOf(u) === onlyRole), 0, 20);
+    let best: Entity | null = null, bd = Infinity;
+    for (const u of cands) {
+      const p = u.send("getPos") as { x: number; y: number };
+      const dd = (p.x - pos.x) ** 2 + (p.y - pos.y) ** 2;
+      if (dd < bd) { bd = dd; best = u; }
+    }
+    return { obj: best, dist: best ? bd : 999999 };
+  }
+
+  // impactMeleeAttack: team-scoped AREA resolution. Find hostiles within `reach` around the attacker,
+  // filter by the attack's #hits roles, and invoke hitFn(victim) for each — which builds the aimed
+  // collision vector and calls A1's takeHit. teamMaster decides WHO; A1 decides what the hit does.
+  impactMeleeAttack(attacker: Entity, hitFn: (victim: Entity) => void): void {
+    const tg = attacker.send("getTargeting") as TargetConfig | undefined;
+    if (!tg) return;
+    const myTeam = attacker.send("getTeam") as string;
+    const targetTeams = (this.calcTargetTeams(myTeam, tg.allegiance)[0] ?? []).filter((n) => n !== "#collectables");
+    const teamSet = new Set(targetTeams);
+    const pos = attacker.send("getPos") as { x: number; y: number };
+    const reach2 = tg.reach * tg.reach;
+    const maxShell = Math.max(1, Math.ceil(tg.reach / this.unitMap.tileSize) + 1);
+    const cands = this.unitMap.search(pos.x, pos.y, (u) =>
+      teamSet.has(u.send("getTeam") as string) && !u.send("isDead") && tg.hits.includes(this.roleOf(u)),
+      maxShell, maxShell); // sweep the whole reach radius (not nearest-only) for an area hit
+    for (const u of cands) {
+      const p = u.send("getPos") as { x: number; y: number };
+      if ((p.x - pos.x) ** 2 + (p.y - pos.y) ** 2 <= reach2) hitFn(u);
+    }
+  }
+}
+
+// Helper for callers building a melee hitFn (keeps A1's aimedVect import out of control.ts churn).
+export function meleeHitFn(attacker: Entity, attackerId: number, dmg: number, mult = 1): (v: Entity) => void {
+  const ap = attacker.send("getPos") as { x: number; y: number };
+  return (v: Entity) => {
+    const p = v.send("getPos") as { x: number; y: number };
+    const vec = aimedVect(p.x - ap.x, p.y - ap.y, dmg);
+    v.send("takeHit", vec.x, vec.y, attackerId, mult);
+  };
+}
