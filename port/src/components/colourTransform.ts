@@ -5,6 +5,19 @@
 // which applies it via an offscreen source-atop pass (cached by quantized frame/colour/strength — NO
 // per-frame getImageData).
 //
+// The tween is the faithful objTransColor/objTransformer model (NOT a hand-tuned linear-t heuristic):
+//   objTransColor.init (22-46):  pCurr starts at 0, setTarget(100) — pCurr is a PERCENT in [0,100].
+//   objTransformer.update (117-128):  pCurr = VarToward(pCurr, pTarget=100, pSpeed) each tick, then
+//                                     updateAttribute(). The FIRST frame after init does NOT step.
+//   objTransformer.setSpeed (113-115): pSpeed = speed * gGameSpeed.
+//   VarToward (var,targit,amount):  move var toward targit by amount, clamped (so pCurr += pSpeed, cap 100).
+//   objTransColor.updateAttribute (86-97):  newColor = VarColRange(pCurr, pStartColor, pTargetColor).
+//   VarColRange (percent,col1,col2):  per-channel  col1 + (col2-col1)*(percent/100)  (Director rgb 0..255).
+//   objTransformer.finishConditionMet (60-69):  non-pingpong finishes when pCurr == 100; pingpong instead
+//                                     SWAPS pTarget<->pInitialValue at each end (so pCurr bounces 0->100->0).
+//   objTransColor.initCurrentColor (48-57):  a #current start = the sprite's CURRENT resolved colour at the
+//                                     moment the transform is armed (member.color) — the live tint, NOT black.
+//
 // Palette (modColourTransform.txt, the A.2 table):
 //   glowRed       current->rgb(255,0,0)   speed 10  pingpong  (low health, held)
 //   glowTeal      current->rgb(0,255,255) speed 100           (freeze, held)
@@ -13,7 +26,7 @@
 //   fadeGoldBlack rgb(255,201,57)->black  speed 10            (tail of glowGold)
 //   glowPink      current->rgb(255,200,200) speed 10 -> fadeBlack
 //   fadeBlack     last->black             speed 10
-//   flashWhite    white->black            (default speed)
+//   flashWhite    white->black            speed 10 (default)
 //   flickWhite    white->black            speed 33             (every non-lethal hit)
 //   pulseWhite    white<->black           pingpong             (invince)
 
@@ -31,7 +44,27 @@ const WHITE: RGB = [255, 255, 255];
 // transforms whose glow is ADDITIVE (brighten the sprite via "lighter") vs REPLACE (white flick/flash).
 const ADDITIVE = new Set(["glowRed", "glowTeal", "glowRedAndTeal", "glowGold", "fadeGoldBlack", "glowPink", "fadeBlack"]);
 
+// #current sentinel for arm()'s start: capture the live resolved colour at arm time (initCurrentColor).
+const CURRENT = "#current" as const;
+
 export interface Tint { rgb: RGB; strength: number; additive: boolean; }
+
+// VarColRange (percent,col1,col2): per-channel lerp col1 + (col2-col1)*(percent/100), percent in [0,100].
+function varColRange(percent: number, c1: RGB, c2: RGB): RGB {
+  const p = Math.max(0, Math.min(100, percent)) / 100;
+  return [
+    Math.round(c1[0] + (c2[0] - c1[0]) * p),
+    Math.round(c1[1] + (c2[1] - c1[1]) * p),
+    Math.round(c1[2] + (c2[2] - c1[2]) * p),
+  ];
+}
+
+// VarToward (var,targit,amount): move var toward targit by amount, clamping so it never overshoots.
+function varToward(v: number, targit: number, amount: number): number {
+  if (v > targit) { v -= amount; if (v < targit) v = targit; }
+  else if (v < targit) { v += amount; if (v > targit) v = targit; }
+  return v;
+}
 
 export class ColourTransform extends Component {
   // Only `update` (and the renderer's getColourTransform query) are dispatched messages; the palette
@@ -43,35 +76,56 @@ export class ColourTransform extends Component {
   private current = "";
   // pNextTransform: a follow-up transform run when the current finishes (chain).
   private next = "";
+  // pStartColor / pTargetColor: the fixed tween endpoints (Director rgb 0..255).
   private start: RGB = BLACK;
   private target: RGB = BLACK;
+  // pSpeed (pre-gGameSpeed): per-tick increment of pCurr toward its end.
   private speed = 10;
+  // pPingPong: bounce at the ends instead of finishing (held oscillating glows).
   private pingpong = false;
-  // the tween parameter t in [0,255] (Director colours are 0..255); colour = lerp(start,target, t/255).
-  private t = 0;
-  private dir = 1;          // tween direction (+1 toward target, -1 back for ping-pong)
-  private lastColour: RGB = BLACK; // pLastFinishingColour: the colour we were before reset to black
+  // pCurr: the tween PERCENT in [0,100]. colour = VarColRange(pCurr, start, target).
+  private curr = 0;
+  // pInitialValue / pTarget for the pingpong end-swap (objTransformer.finishConditionMet 60-69).
+  private from = 0;     // pInitialValue: the end pCurr is leaving
+  private toward = 100; // pTarget:       the end pCurr is heading to
+  // pFirstFrame: the first update() after init does not step (so the start colour shows for a tick).
+  private firstFrame = true;
+  // pLastFinishingColour: the live resolved colour we were before reset to black (cancelTransColor 56-67).
+  private lastColour: RGB = BLACK;
   private active = false;
 
   override init(): void { this.cancel(); }
   override reset(): void { this.cancel(); }
 
-  // newTransColor (modColourTransform.newTransColor): cancel the current, clear the chain, arm a tween.
-  private arm(name: string, target: RGB, opts: { start?: RGB; speed?: number; pingpong?: boolean; next?: string } = {}): void {
+  // newTransColor (modColourTransform.newTransColor 195-207): cancel the current, clear the chain, arm a
+  // tween. `start` may be a literal RGB or CURRENT — CURRENT resolves to the live colour captured by cancel().
+  private arm(name: string, target: RGB, opts: { start?: RGB | typeof CURRENT; speed?: number; pingpong?: boolean; next?: string } = {}): void {
+    // newTransColor first calls cancelTransColor (modColourTransform 196), which stashes the LIVE resolved
+    // colour into pLastFinishingColour. Capture it BEFORE overwriting the endpoints so a #current start (and
+    // fadeBlack) resolves to the colour we are actually showing this instant, not a stale value.
+    if (this.active) this.lastColour = this.colourAt();
+    const startSpec = opts.start ?? CURRENT;
+    // initCurrentColor (48-57): a #current start = the sprite's CURRENT resolved colour at arm time, so a glow
+    // that interrupts another glow starts from the right hue rather than snapping to black. When idle the live
+    // colour is black (no overlay) — correct for the common idle->glow case.
+    this.start = startSpec === CURRENT ? this.lastColour : (startSpec as RGB);
     this.current = name;
     this.next = opts.next ?? "";
-    // a #current start means "from whatever colour we are now" — approximated as black (no tint) start,
-    // which is correct for the common idle->glow case (the sprite has no active overlay before the glow).
-    this.start = opts.start ?? BLACK;
     this.target = target;
     this.speed = opts.speed ?? 10;
     this.pingpong = opts.pingpong ?? false;
-    this.t = 0; this.dir = 1; this.active = true;
+    // objTransColor.init: pCurr=0, setTarget(100). (If start==target the original collapses the range via
+    // setTarget(1); here pCurr simply sweeps a zero-length colour range — the colour stays constant — and
+    // then finishes, which is the same observable result.)
+    this.curr = 0; this.from = 0; this.toward = 100; this.firstFrame = true; this.active = true;
   }
 
+  // cancelTransColor (56-67): stop the tween, remember the live colour (pLastFinishingColour) so a chained
+  // #current start (or fadeBlack) resumes from it, then go idle (the sprite is reset to black = no tint).
   private cancel(): void {
     if (this.active) this.lastColour = this.colourAt();
-    this.current = ""; this.next = ""; this.active = false; this.t = 0; this.dir = 1;
+    this.current = ""; this.next = ""; this.active = false;
+    this.curr = 0; this.from = 0; this.toward = 100; this.firstFrame = true;
     this.start = BLACK; this.target = BLACK;
   }
 
@@ -88,10 +142,11 @@ export class ColourTransform extends Component {
   glowGold(): void { this.arm("glowGold", GOLD, { speed: 10, next: "fadeGoldBlack" }); }
   fadeGoldBlack(): void { this.arm("fadeGoldBlack", BLACK, { start: GOLD, speed: 10 }); }
   glowPink(): void { this.arm("glowPink", PINK, { speed: 10, next: "fadeBlack" }); }
+  // fadeBlack (79-89): start = pLastFinishingColour (the colour at the end of the prior transform).
   fadeBlack(): void { this.arm("fadeBlack", BLACK, { start: this.lastColour, speed: 10 }); }
   flashWhite(): void { this.arm("flashWhite", BLACK, { start: WHITE, speed: 10 }); }
   flickWhite(): void { this.arm("flickWhite", BLACK, { start: WHITE, speed: 33 }); }
-  pulseWhite(): void { this.arm("pulseWhite", BLACK, { start: WHITE, pingpong: true }); }
+  pulseWhite(): void { this.arm("pulseWhite", BLACK, { start: WHITE, speed: 10, pingpong: true }); }
 
   // stopGlowRed/stopGlowTeal (253-271): cancel, demoting glowRedAndTeal back to the other single glow.
   stopGlowRed(): void {
@@ -110,46 +165,54 @@ export class ColourTransform extends Component {
     else { this.lastColour = this.colourAt(); this.current = ""; this.active = false; this.entity.send("colourTransformFin"); }
   }
 
-  // objTransColor.step: linear tween of t toward the target by `speed`/tick (gGameSpeed-scaled). For a
-  // ping-pong, reverse direction at the ends and hold (held glows never finish; non-ping-pong finish at 1).
+  // objTransformer.update (117-128): the first frame after init holds (just shows the start colour); every
+  // later tick steps pCurr toward `toward` by speed*gGameSpeed (VarToward, clamped). finishConditionMet
+  // (60-69): pingpong swaps the ends (initialValue<->target) so pCurr bounces 0<->100; non-pingpong
+  // finishes when pCurr reaches 100.
   update(next: NextFn): void {
     if (this.active) {
-      const step = this.speed * game.gameSpeed;
-      this.t += this.dir * step;
-      if (this.pingpong) {
-        if (this.t >= 255) { this.t = 255; this.dir = -1; }
-        else if (this.t <= 0) { this.t = 0; this.dir = 1; } // bounce back up (held glow oscillates)
-      } else if (this.t >= 255) {
-        this.t = 255; this.finish();
+      if (this.firstFrame) {
+        this.firstFrame = false; // pFirstFrame: skip the first step so the start colour renders for a tick
+      } else {
+        const step = this.speed * game.gameSpeed; // pSpeed = speed * gGameSpeed
+        this.curr = varToward(this.curr, this.toward, step);
+        if (this.curr === this.toward) {
+          if (this.pingpong) {
+            // swap the ends so the next sweep heads back the other way (held glow oscillates 0<->100).
+            const t = this.toward; this.toward = this.from; this.from = t;
+          } else {
+            this.finish();
+          }
+        }
       }
     }
     next();
   }
 
-  private colourAt(): RGB {
-    const k = Math.max(0, Math.min(1, this.t / 255));
-    return [
-      Math.round(this.start[0] + (this.target[0] - this.start[0]) * k),
-      Math.round(this.start[1] + (this.target[1] - this.start[1]) * k),
-      Math.round(this.start[2] + (this.target[2] - this.start[2]) * k),
-    ];
-  }
+  // the live resolved colour: VarColRange(pCurr, start, target). pCurr/from/toward describe the sweep; the
+  // colour endpoints (start/target) are fixed, so the colour reads `start` at pCurr=0 and `target` at
+  // pCurr=100 regardless of which way a pingpong is currently heading.
+  private colourAt(): RGB { return varColRange(this.curr, this.start, this.target); }
 
-  // getColourTransform: the renderer reads this for the offscreen tint pass. While active, the tint is
-  // the TARGET colour (so the glow's hue is stable) at a strength that ramps with the tween progress.
-  // A pure-black target (a fade-to-black tail) ramps DOWN as t->255. null when idle.
+  // getColourTransform: the renderer reads this for the offscreen tint pass. The tint colour is the LIVE
+  // lerped colour (VarColRange) — exactly the sprite member.color the original would have set, so the glow's
+  // HUE progresses faithfully start->target. Strength is the overlay's coverage:
+  //   - toward a BRIGHT target (glowRed/Teal/Gold/Pink, white pulse peak): the original is BRIGHTENING the
+  //     sprite, so the overlay is "on" the instant it is armed. We floor strength to track the tween percent
+  //     (pCurr/100) rather than the lerped-from-black brightness, so an idle->glow shows immediately instead
+  //     of spending its first frames invisibly at black. The hue still comes from the exact VarColRange lerp.
+  //   - toward a BLACK target (flickWhite/flashWhite, fadeBlack/fadeGoldBlack tails, pulseWhite trough): the
+  //     original is DARKENING toward black, so strength faithfully follows the lerped brightness DOWN to 0.
   getColourTransform(): Tint | null {
     if (!this.active) return null;
-    const k = Math.max(0, Math.min(1, this.t / 255));
-    // brightness of the current lerped colour drives strength; for a bright target it ramps up, for a
-    // fade-to-black it ramps down. Floor a freshly-armed bright transform so the glow shows immediately.
     const rgb = this.colourAt();
+    const lit = Math.max(rgb[0], rgb[1], rgb[2]) / 255;            // brightness of the live lerped colour
     const targetBright = Math.max(this.target[0], this.target[1], this.target[2]) > 0;
-    let strength = Math.max(rgb[0], rgb[1], rgb[2]) / 255;
-    if (targetBright) strength = Math.max(strength, 0.15 + k * 0.85); // ramp 0.15 -> 1.0 toward a bright target
+    // pCurr in [0,100] -> the tween fraction; for a bright target the overlay ramps in with it from a small
+    // floor (the glow is "armed/on" the instant it starts, even while the lerped colour is still near black).
+    const k = Math.max(0, Math.min(1, this.curr / 100));
+    const strength = targetBright ? Math.max(lit, 0.15 + k * 0.85) : lit;
     if (strength <= 0.01) return null;
-    // the tint hue: the target colour for a bright target (stable glow hue), else the current lerp.
-    const tintRgb: RGB = targetBright ? this.target : rgb;
-    return { rgb: tintRgb, strength, additive: ADDITIVE.has(this.current) };
+    return { rgb, strength, additive: ADDITIVE.has(this.current) };
   }
 }

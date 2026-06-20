@@ -18,20 +18,22 @@ describe("F3 ColourTransform state machine", () => {
     ct.flickWhite();
     const t0 = ct.getColourTransform();
     expect(t0).not.toBeNull();
-    expect(t0!.rgb[0]).toBe(255); // starts white-ish
-    // speed 33 -> ~8 ticks to reach 255 and finish
-    for (let i = 0; i < 12; i++) e.send("update");
-    expect(ct.getColourTransform()).toBeNull(); // finished -> no tint
+    expect(t0!.rgb[0]).toBe(255); // starts white (pCurr=0 -> start colour WHITE)
+    // faithful objTransColor: pCurr is a percent in [0,100], stepped by speed 33/tick (first frame holds),
+    // so ~4 steps to reach 100 and finish. 8 ticks is comfortably past the end.
+    for (let i = 0; i < 8; i++) e.send("update");
+    expect(ct.getColourTransform()).toBeNull(); // finished -> no tint (faded fully to black)
   });
 
   it("glowGold chains to fadeGoldBlack and then ends", () => {
-    ct.glowGold();
+    ct.glowGold(); // #current(black) -> gold, speed 10; first frame holds at black (no tint yet)
+    e.send("update"); e.send("update"); // 1st holds, 2nd steps pCurr -> the gold overlay reads
     expect(ct.getColourTransform()).not.toBeNull();
-    // glowGold (speed 10, ~26 ticks) then fadeGoldBlack (speed 10, ~26 ticks)
-    for (let i = 0; i < 30; i++) e.send("update");
-    // now in fadeGoldBlack (chained) — still active until it too finishes
+    // glowGold (speed 10) reaches pCurr=100 at ~tick 11 -> chains fadeGoldBlack (gold->black, speed 10).
+    for (let i = 0; i < 12; i++) e.send("update");
+    // now in fadeGoldBlack (chained) — still active until it too fades to black.
     let activeMid = ct.getColourTransform();
-    for (let i = 0; i < 40; i++) e.send("update");
+    for (let i = 0; i < 12; i++) e.send("update");
     expect(ct.getColourTransform()).toBeNull(); // both transforms done
     expect(activeMid).not.toBeNull(); // the chain was still tinting mid-way
   });
@@ -57,12 +59,42 @@ describe("F3 ColourTransform state machine", () => {
   });
 
   it("getColourTransform returns rgb+strength at sampled t", () => {
-    ct.glowRed();
-    e.send("update"); // one step toward red
+    ct.glowRed(); // #current(black) -> red, speed 10
+    for (let i = 0; i < 3; i++) e.send("update"); // step the red ramp so the lerped colour reads
     const t = ct.getColourTransform()!;
-    expect(t.rgb[0]).toBeGreaterThan(0);
+    expect(t.rgb[0]).toBeGreaterThan(0); // red channel ramping up
     expect(t.strength).toBeGreaterThan(0);
     expect(t.strength).toBeLessThanOrEqual(1);
+  });
+
+  // K15: faithful objTransColor tween. flickWhite is white->black at speed 33; the lerped colour darkens
+  // each tick (pCurr 0->100 over white->black), so the overlay STRENGTH must ramp DOWN, not up.
+  it("flickWhite (speed 33) tweens white->black: strength ramps DOWN as t advances", () => {
+    ct.flickWhite();
+    e.send("update"); // consume the held first frame (still white)
+    const s0 = ct.getColourTransform()!.strength;
+    expect(ct.getColourTransform()!.rgb[0]).toBe(255); // white start (pCurr=0)
+    e.send("update"); // pCurr += 33 -> colour darkens toward black
+    const s1 = ct.getColourTransform()!.strength;
+    e.send("update"); // pCurr += 33 again
+    const s2 = ct.getColourTransform()!.strength;
+    expect(s1).toBeLessThan(s0); // white -> grey: strength falls
+    expect(s2).toBeLessThan(s1); // monotonically toward black
+  });
+
+  // K15: a #current-start glow armed WHILE another glow is active must begin from the LIVE colour of the
+  // glow it interrupts (initCurrentColor), not snap to black.
+  it("a #current glow interrupting an active glow starts from the live colour, not black", () => {
+    ct.glowGold(); // #current(black) -> gold; ramp it partway so the live colour is a real gold
+    for (let i = 0; i < 6; i++) e.send("update");
+    const live = ct.getColourTransform()!.rgb;
+    expect(Math.max(...live)).toBeGreaterThan(0); // genuinely tinted gold mid-ramp
+
+    ct.glowPink(); // glowPink uses a #current start -> must begin from `live`, NOT black
+    const t0 = ct.getColourTransform();
+    expect(t0).not.toBeNull();           // would be null (black, strength 0) if it snapped to black
+    // the freshly-armed pink tween's start colour equals the gold we were just showing.
+    expect(t0!.rgb).toEqual(live);
   });
 });
 
@@ -114,11 +146,11 @@ describe("F3 Anim per-frame delay + loop flag (data-driven)", () => {
     ] } });
     const B = new Archetype("tintsprite", [Movement, Anim, ColourTransform]);
     const e = B.create(1).build({ animChar: "x" });
-    e.get(ColourTransform).glowRed();
-    e.send("update"); // step the tween so the tint reads
+    e.get(ColourTransform).glowRed(); // #current(black) -> red, speed 10
+    for (let i = 0; i < 11; i++) e.send("update"); // ramp the red glow to its peak (pCurr=100 -> pure red)
     const sp = e.get(Anim).sprite()!;
     expect(sp.tint).toBeDefined();
-    expect(sp.tint!.rgb[0]).toBe(255); // red glow
+    expect(sp.tint!.rgb[0]).toBe(255); // red glow at peak
     expect(sp.tint!.additive).toBe(true);
   });
 
