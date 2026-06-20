@@ -475,15 +475,28 @@ function drawPickups(renderer: Renderer) {
   }
 }
 
+// K14: the energyBeam fly strip (act_energyBeam #member: anm_energyBeam_fly_03_01 -> char "energyBeam",
+// action "fly"). The original setBeam stretches this sprite's WIDTH to the caster->target distance and
+// rotates it to GeomAngle(caster,target), pivoting at the caster anchor. Loaded lazily (the spell is a
+// pickup, so the char isn't in the map's spawn set); until the frame is in memory we fall back to a line.
+const BEAM_ANIM = "energyBeam_fly";
+
 function drawBullets(renderer: Renderer) {
   const ctx = renderer.ctx;
+  // collect beam sprites so they go through the renderer's stretched/rotated sprite path (which
+  // transforms about the registration point exactly like setSpriteRotation + setSpriteWidth).
+  const beamSprites: Sprite[] = [];
   for (const e of game.entities) {
     if (e.type !== "bullet") continue;
     const m = e.get(Movement);
     const proj = e.get(Projectile);
-    // I8 energyBeam: a stretched/rotated line from the caster to the target (objBullet.setBeam — the
-    // sprite's width is the caster->target distance, rotated to the angle). Drawn as a bright beam line.
+    // I8/K14 energyBeam: the energyBeam fly strip stretched to the caster->target distance and rotated to
+    // the beam angle (objBullet.setBeam: setSpriteWidth(dist) + setSpriteRotation(GeomAngle(distXY))).
     if (proj.beam) {
+      const sp = beamSprite(proj);
+      if (sp) { beamSprites.push(sp); continue; }
+      // fallback (frame not loaded yet / art missing): a bright line caster->target. Kept so the beam is
+      // always visible even on the first frames after the char's lazy load is kicked off.
       ctx.save();
       ctx.strokeStyle = "rgba(255,255,120,0.9)"; ctx.lineWidth = 3; ctx.lineCap = "round";
       ctx.beginPath(); ctx.moveTo(proj.beamCasterX, proj.beamCasterY); ctx.lineTo(m.x, m.y); ctx.stroke();
@@ -495,6 +508,32 @@ function drawBullets(renderer: Renderer) {
     ctx.fillStyle = proj.team === "#aldevar" ? "#9cf" : "#fd6";
     ctx.beginPath(); ctx.arc(m.x, m.y, 3, 0, Math.PI * 2); ctx.fill();
   }
+  if (beamSprites.length) renderer.drawSprites(beamSprites);
+}
+
+// beamSprite: build the energyBeam fly sprite anchored at the caster anchor, stretched to the beam
+// distance and rotated to the beam angle (objBullet.setBeam). Returns null (caller falls back to a line)
+// when the art isn't bundled or its frame hasn't lazily loaded yet — kicks off the load on the way out.
+function beamSprite(proj: Projectile): Sprite | null {
+  const anim = game.assets.index.anims[BEAM_ANIM];
+  const f = anim?.frames[0];
+  if (!f) return null; // energyBeam art genuinely not bundled -> fall back to the line.
+  if (!game.assets.images.has(f.file)) { void game.assets.ensureChar("energyBeam"); return null; }
+  // setSpriteWidth(dist): horizontal stretch = dist / frame width. The strip is drawn left->right from
+  // its registration point (regX 0 -> anchor at the caster, beam extends +X toward the target before the
+  // rotation), regY centred so the strip straddles the beam line. setSpriteRotation(GeomAngle) = rotation.
+  // brief beamLife flicker: alternate the strip's alpha across the beam's few frames (proj.life counts up
+  // 0..beamLife in Projectile.update) so the beam shimmers as it sweeps out.
+  const flicker = (proj.life & 1) ? 0.7 : 1;
+  return {
+    img: game.assets.img(f.file),
+    x: proj.beamCasterX, y: proj.beamCasterY,
+    regX: 0, regY: f.h / 2,
+    z: proj.beamCasterY,
+    rotation: proj.beamAngle,
+    scaleX: proj.beamDist / Math.max(1, f.w),
+    alpha: flicker,
+  };
 }
 
 function drawEnemyBar(renderer: Renderer, e: import("./engine/dispatch").Entity, color: string) {
