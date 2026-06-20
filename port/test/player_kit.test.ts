@@ -37,7 +37,7 @@ describe("Merlin's charged-magic + punch kit", () => {
     game.teamMaster.reset(); game.teamMaster.unitMap.configure(32, 0, 0);
   });
 
-  it("holds to charge then casts a bolt at the cursor", () => {
+  it("holds to charge then releases a spell that flies at the cursor", () => {
     game.input = fakeInput({ mouseDown: true, cursor: { x: 400, y: 100 } }) as any;
     const p = spawnPlayer(100, 100);
     grantSpell(p);                    // acquired the energyBlast scroll
@@ -46,28 +46,32 @@ describe("Merlin's charged-magic + punch kit", () => {
     for (let i = 0; i < 6; i++) p.send("update");        // hold to charge
     expect(p.send("chargeFrac")).toBeGreaterThan(0);
     expect(p.get(Anim)["action"]).toBe("charge");
+    // K2: the charged spell is a LIVE objSpell actor over Merlin's head (not a number) while charging.
+    expect(game.entities.filter((e) => e.type === "spell").length).toBe(1);
 
-    (game.input as any).mouseDown = () => false;          // release
+    (game.input as any).mouseDown = () => false;          // release -> the spell flies to the cursor
     p.send("update");
-    const bolts = game.entities.filter((e) => e.type === "bullet");
-    expect(bolts.length).toBe(1);
-    // the bolt travels toward the cursor (to the right)
-    const v = bolts[0]!.send("getPos") as { x: number };
-    expect(v.x).toBeGreaterThanOrEqual(100);
+    const spells = game.entities.filter((e) => e.type === "spell");
+    expect(spells.length).toBe(1);
+    const x0 = (spells[0]!.send("getPos") as { x: number }).x;
+    for (let i = 0; i < 5; i++) spells[0]!.send("update"); // it flies toward the cursor (to the right)
+    const x1 = (spells[0]!.send("getPos") as { x: number }).x;
+    expect(x1).toBeGreaterThan(x0);
   });
 
-  it("a cast bolt damages an enemy it flies into", () => {
+  it("a released spell explodes on arrival, damaging an enemy in the blast", () => {
     game.input = fakeInput({ mouseDown: true, cursor: { x: 40, y: 94 } }) as any; // aim left
     const p = spawnPlayer(100, 100);
     grantSpell(p);
-    const foe = spawnEnemy("swordOrc", 60, 94, { animChar: "swordOrc" }); // hostile (#orcs), on the path
+    const foe = spawnEnemy("swordOrc", 60, 94, { animChar: "swordOrc" }); // hostile (#orcs), in the blast radius
     game.entities = [p, foe];
     const hp0 = foe.get(Energy).energy;
     for (let i = 0; i < 6; i++) p.send("update");      // charge
     (game.input as any).mouseDown = () => false;
-    p.send("update");                                  // release -> bolt spawned
-    const bolt = game.entities.find((e) => e.type === "bullet")!;
-    for (let i = 0; i < 12; i++) bolt.send("update");  // let it travel into the foe
+    p.send("update");                                  // release -> spell flies left
+    const spell = game.entities.find((e) => e.type === "spell")!;
+    rebuildCombatSubstrate();                          // populate the unit map for the radial area hit
+    for (let i = 0; i < 14; i++) spell.send("update"); // fly to the aim + explode radially over the foe
     expect(foe.get(Energy).energy).toBeLessThan(hp0);
   });
 
@@ -107,14 +111,15 @@ describe("Merlin's charged-magic + punch kit", () => {
       game.input = fakeInput({ mouseDown: true, cursor: { x: 40, y: 94 } }) as any; // aim left
       const p = spawnPlayer(100, 100); grantSpell(p);
       p.get(Mana).capacity = capacity;
-      const foe = spawnEnemy("blackOrc", 60, 94, { animChar: "blackOrc" }); // 1200 energy, survives one bolt
+      const foe = spawnEnemy("blackOrc", 60, 94, { animChar: "blackOrc" }); // 1200 energy, survives one blast
       game.entities = [p, foe];
       const hp0 = foe.get(Energy).energy;
       for (let i = 0; i < 30; i++) p.send("update");   // hold to full
       (game.input as any).mouseDown = () => false;
-      p.send("update");                                 // release
-      const bolt = game.entities.find((e) => e.type === "bullet")!;
-      for (let i = 0; i < 14; i++) bolt.send("update"); // fly into the foe
+      p.send("update");                                 // release -> spell flies
+      const spell = game.entities.find((e) => e.type === "spell")!;
+      rebuildCombatSubstrate();                         // unit map for the radial hit
+      for (let i = 0; i < 16; i++) spell.send("update"); // K2: a BIGGER charge -> bigger radius + magnitude
       return hp0 - foe.get(Energy).energy;
     };
     expect(fullBlastDamage(30)).toBeGreaterThan(fullBlastDamage(10)); // capacity 30 -> bigger blast

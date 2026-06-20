@@ -38,6 +38,10 @@ export interface AttackData {
   // charge (modAttack) — read by charge.ts
   chargeMax: number; chargeMaxModifier: number; chargeMaxBasic: number;
   chargeStart: number; chargeSpeed: number;
+  // K2 spell-actor (objSpell): the growing-disc visual + the explode radius growth.
+  chargeColour: [number, number, number]; // #chargeColour — the charge orb's tint (rgb)
+  chargeSize: number;                      // #chargeSize — disc size = charge·chargeSize (calcSize)
+  chargeExplodeFactor: number;             // #chargeExplodeFactor — charge ×= this on explode (goMode #explode)
   chargeSpeedMax: number | string; chargeStartMax: number | string;
   limitMagic: boolean;
   // I7 GMG (modGoldenMachineGun / modAttack.gmgOn): when the GMG is on, the live charge params swap to
@@ -93,6 +97,9 @@ export function typeFromAnimType(animType: string): AttackType {
 
 const numOr = (v: any, d: number): number => (typeof v === "number" ? v : d);
 const strOr = (v: any, d: string): string => (typeof v === "string" ? v : d);
+// #chargeColour parses as {r,g,b} (Director rgb()) -> a [r,g,b] tuple; white default.
+const rgbOf = (v: any): [number, number, number] =>
+  (v && typeof v === "object" && "r" in v) ? [v.r, v.g, v.b] : [255, 255, 255];
 
 // MELEE_SCALE — the calibration factor on melee `power·strength` so per-swing damage stays at the
 // slice's tuned numbers (the powers are calibrated for the engine's native units, not the port's px
@@ -173,6 +180,9 @@ export function resolveAttack(raw: Record<string, any> | undefined, owner?: Reco
     chargeMaxBasic: numOr(r["chargeMaxBasic"], d["chargeMaxBasic"] as number),
     chargeStart: numOr(r["chargeStart"], d["chargeStart"] as number),
     chargeSpeed: numOr(r["chargeSpeed"], d["chargeSpeed"] as number),
+    chargeColour: rgbOf(r["chargeColour"] ?? d["chargeColour"]),
+    chargeSize: numOr(r["chargeSize"], d["chargeSize"] as number),
+    chargeExplodeFactor: numOr(r["chargeExplodeFactor"], d["chargeExplodeFactor"] as number),
     chargeSpeedMax: (r["chargeSpeedMax"] ?? d["chargeSpeedMax"]) as number | string,
     chargeStartMax: (r["chargeStartMax"] ?? d["chargeStartMax"]) as number | string,
     limitMagic: r["limitMagic"] === true,

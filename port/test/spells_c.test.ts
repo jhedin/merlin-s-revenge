@@ -13,7 +13,10 @@ import { geomMoveVector, collisionCalcVect, Rng } from "@/engine/math";
 import { resolveSplash, applyPayload } from "@/components/splash";
 import { selectTier, summonUnit } from "@/components/summon";
 import { Experience } from "@/components/experience";
-import { spawnUnit, spawnAlly } from "@/entities/archetypes";
+import { spawnUnit, spawnAlly, spawnEnemy } from "@/entities/archetypes";
+import { spawnSpell } from "@/systems/spells";
+import { SpellActor } from "@/components/spellActor";
+import { rebuildCombatSubstrate } from "@/systems/combatTick";
 import { registry } from "@/game/data";
 import { game } from "@/game/context";
 import { CollisionGrid } from "@/world/collision";
@@ -239,5 +242,59 @@ describe("C3 — summon fields a unit on the right team", () => {
     const u = summonUnit(atkOf("monsterSummon"), 12, 100, 100, player.id); // tier 12 = summonArcher
     expect(u).not.toBeNull();
     expect(u!.send("getTeam")).toBe("#monsterSummon");
+  });
+});
+
+// K2 — the spell-actor lifecycle (objSpell grow-fly-explode) + the load-bearing lethality invariant: a
+// base-charge energyBlast explosion centre hit still fells a rank-and-file ~300-energy enemy (the calibration
+// K1 carried on the scalar and re-pins here via SPELL_RADIAL_SCALE through resolveSplash's #explode shape).
+describe("K2 — spell-actor lethality + lifecycle", () => {
+  beforeEach(() => {
+    game.grid = new CollisionGrid(60, 60, 32); game.entities = [];
+    game.assets = { index: { anims: {} }, img: () => null } as any;
+    game.teamMaster.reset(); game.teamMaster.unitMap.configure(32, 0, 0);
+    game.spawnUnit = spawnUnit; game.spawnAlly = spawnAlly;
+  });
+
+  it("a base-charge (12.5) energyBlast explosion fells a 300-energy enemy at the blast centre", () => {
+    const player = spawnPlayer(100, 100); game.entities.push(player); game.player = player; // team #aldevar
+    const foe = spawnEnemy("swordOrc", 400, 100, { animChar: "swordOrc" });                 // hostile #orcs
+    foe.get(Energy).max = 300; foe.get(Energy).energy = 300;                                 // rank-and-file band
+    foe.get(Movement).inertia = 0; // a light rank-and-file (heavy/tanky orcs damp the hit per K1 — faithful)
+    game.entities.push(foe);
+    // a live spell at base charge, released straight at the foe (it explodes ON the foe -> centre hit).
+    const spell = spawnSpell(atkOf("energyBlast"), player.id, 100, 94, "#aldevar", ["#teamMembers", "#teamBuildings"], "#enemy");
+    spell.get(SpellActor).setCharge(12.5, 100, 94);   // base mana charge ceiling (capacity 10 -> 12.5)
+    spell.get(SpellActor).release(400, 100, 8);
+    rebuildCombatSubstrate();                          // unit map for the radial area hit
+    for (let i = 0; i < 60 && !spell.send("isFinished"); i++) spell.send("update"); // fly + explode
+    expect(spell.send("isFinished")).toBe(true);       // the orb flew to the foe and exploded
+    expect(foe.send("isDead")).toBe(true);             // centre hit fells the 300-energy enemy (the invariant)
+  });
+
+  it("the disc grows with charge (calcSize = charge·chargeSize) and positions over the head (#top)", () => {
+    const player = spawnPlayer(100, 100); game.entities.push(player); game.player = player;
+    const spell = spawnSpell(atkOf("energyBlast"), player.id, 100, 94, "#aldevar", [], "#enemy");
+    const sa = spell.get(SpellActor);
+    sa.setCharge(4, 100, 94); const small = sa.size();
+    sa.setCharge(12, 100, 94); const big = sa.size();
+    expect(big).toBeGreaterThan(small);                // grows with charge
+    const pos = spell.send("getPos") as { x: number; y: number };
+    expect(pos.x).toBe(100);                            // #top offset keeps it centred over the head
+    expect(pos.y).toBeLessThan(94);                     // and lifts it above the head (−size/2)
+  });
+
+  it("a non-fatal rim hit still damages (radial falloff: centre > rim > 0)", () => {
+    const player = spawnPlayer(100, 100); game.entities.push(player); game.player = player;
+    const foe = spawnEnemy("blackOrc", 400, 130, { animChar: "blackOrc" }); // 30px off the blast centre
+    const hp0 = foe.get(Energy).energy;
+    game.entities.push(foe);
+    const spell = spawnSpell(atkOf("energyBlast"), player.id, 100, 94, "#aldevar", ["#teamMembers", "#teamBuildings"], "#enemy");
+    spell.get(SpellActor).setCharge(12.5, 100, 94);
+    spell.get(SpellActor).release(400, 100, 8);          // explodes at (400,100); foe at (400,130) = rim
+    rebuildCombatSubstrate();
+    for (let i = 0; i < 60 && !spell.send("isFinished"); i++) spell.send("update");
+    const dmg = hp0 - foe.get(Energy).energy;
+    expect(dmg).toBeGreaterThan(0); expect(dmg).toBeLessThan(300); // rim damage: nonzero but < a centre hit
   });
 });

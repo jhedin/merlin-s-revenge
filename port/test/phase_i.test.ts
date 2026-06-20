@@ -329,25 +329,26 @@ describe("I7 — GMG collect/toggle/charge-swap/auto-fire", () => {
     expect(chargeSpeedOf(a, mana, true)).toBe(5);               // GMG: gmgChargeSpeed
   });
 
-  it("the spellCharged auto-fire loop fires >1 bolt over N ticks with gmgAutoFire", () => {
+  it("the spellCharged auto-fire loop releases >1 spell over N ticks with gmgAutoFire", () => {
     game.input = fakeInput({ mouseDown: true, cursor: { x: 400, y: 100 } });
     const player = spawnPlayer(100, 100); game.entities.push(player); game.player = player;
     grant(player, "energyBlast"); pcOf(player).gmgCollected(); // GMG on
-    // gmgChargeStart 5 -> +5/tick -> reaches gmgChargeMax 15 fast; each tick at max auto-releases+recharges.
+    // gmgChargeStart 5 -> +5/tick -> reaches gmgChargeMax 15 fast; each tick at max auto-releases a spell
+    // (K2: a flying objSpell) and re-charges a fresh one — a continuous stream of released orbs.
     for (let i = 0; i < 12; i++) player.send("update");
-    const bolts = game.entities.filter((e) => e.type === "bullet").length;
-    expect(bolts).toBeGreaterThan(1); // continuous machine-gun fire (not a single bolt)
+    const spells = game.entities.filter((e) => e.type === "spell").length;
+    expect(spells).toBeGreaterThan(1); // continuous machine-gun fire (not a single shot)
   });
 
-  it("WITHOUT GMG, the same held-charge fires a single bolt on release (no auto-fire)", () => {
+  it("WITHOUT GMG, the same held-charge produces ONE spell (no auto-fire)", () => {
     game.input = fakeInput({ mouseDown: true, cursor: { x: 400, y: 100 } });
     const player = spawnPlayer(100, 100); game.entities.push(player); game.player = player;
     grant(player, "energyBlast");
-    for (let i = 0; i < 12; i++) player.send("update");        // hold (no release while held)
-    expect(game.entities.filter((e) => e.type === "bullet").length).toBe(0);
+    for (let i = 0; i < 12; i++) player.send("update");        // hold: charges a SINGLE orb, never auto-releases
+    expect(game.entities.filter((e) => e.type === "spell").length).toBe(1); // one charging orb, not a stream
     (game.input as any).mouseDown = () => false;
-    player.send("update");                                      // release -> exactly one bolt
-    expect(game.entities.filter((e) => e.type === "bullet").length).toBe(1);
+    player.send("update");                                      // release -> still exactly one (it now flies)
+    expect(game.entities.filter((e) => e.type === "spell").length).toBe(1);
   });
 });
 

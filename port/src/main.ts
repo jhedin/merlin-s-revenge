@@ -23,6 +23,8 @@ import { Experience } from "./components/experience";
 import { Movement } from "./components/movement";
 import { Projectile } from "./components/projectile";
 import { sweepBullets, bulletPoolStats } from "./systems/bullets";
+import { sweepSpells } from "./systems/spells";
+import { SpellActor } from "./components/spellActor";
 import { rebuildCombatSubstrate } from "./systems/combatTick";
 import { saveGame, loadSave, buildSave, clearLegacy, pStateFromSave } from "./systems/save";
 import { parseCutscene, loadCutscene } from "./data/cutscene";
@@ -317,6 +319,7 @@ async function main() {
         rebuildCombatSubstrate();
         for (let i = 0, n = game.entities.length; i < n; i++) game.entities[i]!.send("update");
         sweepBullets();
+        sweepSpells(); // K2: return exploded spell actors to the pool
         for (let i = game.entities.length - 1; i >= 0; i--) { // sweep collected pickups
           const e = game.entities[i]!;
           if (e.type === "pickup" && e.send("isFinished")) game.entities.splice(i, 1);
@@ -360,10 +363,11 @@ async function main() {
       if (passive && rooms.passiveSheet) renderer.drawTileLayer(passive, rooms.passiveSheet);
       if (active && rooms.activeSheet) renderer.drawTileLayer(active, rooms.activeSheet);
       const sprites = game.entities
-        .filter((e) => e.type !== "bullet" && e.type !== "pickup" && e.type !== "marker")
+        .filter((e) => e.type !== "bullet" && e.type !== "pickup" && e.type !== "marker" && e.type !== "spell")
         .map((e) => e.get(Anim).sprite()).filter((sp): sp is Sprite => sp !== null);
       renderer.drawSprites(sprites);
       drawBullets(renderer);
+      drawSpells(renderer); // K2: the growing/flying charge orbs (objSpell), over the actors
       drawPickups(renderer);
       // #foregroundPassive (objRoom layer, gMapLayer over the actor band): F1 preserved the data; this
       // draws it OVER the actors (after drawSprites). pFrontLayerBlendLevel=128 -> globalAlpha 0.5 default.
@@ -503,6 +507,28 @@ function drawExitArrows(renderer: Renderer, assets: Assets, rects: ExitArrowRect
     for (let dy = 0; dy < r.h; dy += ih)
       for (let dx = 0; dx < r.w; dx += iw)
         ctx.drawImage(img, r.x + dx, r.y + dy);
+    ctx.restore();
+  }
+}
+
+// K2 (objSpell render / updateSize): the charge orb — a glowing disc of radius size/2 (size = charge·
+// chargeSize) in the spell's #chargeColour, growing as it charges and travelling on release. A soft outer
+// glow + bright core read as an energy ball at any size.
+function drawSpells(renderer: Renderer) {
+  const ctx = renderer.ctx;
+  for (const e of game.entities) {
+    if (e.type !== "spell") continue;
+    const sa = e.get(SpellActor);
+    const m = e.get(Movement);
+    const r = Math.max(2, sa.size() / 2);
+    const [cr, cg, cb] = sa.attack.chargeColour;
+    ctx.save();
+    const grad = ctx.createRadialGradient(m.x, m.y, 0, m.x, m.y, r * 1.6);
+    grad.addColorStop(0, `rgba(255,255,255,0.95)`);
+    grad.addColorStop(0.5, `rgba(${cr},${cg},${cb},0.85)`);
+    grad.addColorStop(1, `rgba(${cr},${cg},${cb},0)`);
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(m.x, m.y, r * 1.6, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
   }
 }

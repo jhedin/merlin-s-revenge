@@ -14,10 +14,20 @@ omitted). Worked top-down by fidelity impact. Each item cites where it was defer
   scales (the documented px-scale decoupling); faithful ordering restored (blackOrc > swordOrc ≈ warrior),
   no one-shots, room-1 still clears (gate verified). See [`K1-faithful-damage.md`](K1-faithful-damage.md).
   [A1 §4, B2 §f.1 — resolved] **The keystone deferral.**
-- ☐ **K2. Spell-actor live-growth lifecycle.** `objAiAttack.ensureSpell`/`chargeSpell`/`releaseMagic`: a
-  charged spell is a live `objSpell` actor that grows over the caster's head and converts to bullets on
-  release (`getCurrentCharge`, `calcChargeLoc`, attack-frame gating, eyestrain). Port currently does
-  instant `fireBullet`-on-release. [B2 §g] *(deferred to a later pass; not in the K3–K8a AI-completeness batch)*
+- ☑ **K2. Spell-actor live-growth lifecycle.** A charged `#release` spell is now a LIVE `objSpell` actor
+  (`SpellActor` + the pooled `Spell` archetype): it GROWS over Merlin's head while charging
+  (`calcSize = charge·chargeSize`, `calcChargeOffset #top = −size/2`), FLIES to the aim on release
+  (`releaseNormal` → `moveToTarget`, ignoring terrain per `objSpell.checkCollisions`), and EXPLODES radially
+  on arrival (`goMode #explode`: `charge ·= chargeExplodeFactor`; summon/deposit explodeFunction at the
+  LANDING loc; the radial `calcCollisionVectSpell` area hit via C2's `resolveSplash #explode` running the
+  spell's `payloadFunction` — takeHit/[takeFreeze,takeHit]/takeHeal). The K1-deferred spell coupling lands
+  here: a single `SPELL_RADIAL_SCALE` pins the px-scale so a base-charge (12.5) energyBlast centre hit fells
+  a rank-and-file 300-energy enemy (the invariant K1 carried on the scalar), with the faithful radial
+  falloff (centre > rim > 0) and the inertia-damp from K1. The `#fireBullets` streamers (energyPulse/beam)
+  keep the I8 stream (faithful — they don't fly+explode). `PlayerControl` ensureSpell/chargeSpell/release +
+  GMG auto-fire spawn-release-respawn. Tested (`spells_c` lethality + grow + rim; `player_kit`/`phase_i`
+  retimed to the actor) + verified in-browser (orb grows/flies/explodes, kills, no leak, no errors).
+  attack-frame gating + eyestrain remain default-off cosmetic follow-ons (no shipped-content effect). [B2 §g — resolved]
 - ☑ **K3. `modPathFinding` beeline→scenic (NOT A*).** `PathFinding` helper on `CpuAI`: beeline at the goal;
   on a 5-frame zero-movement stall → `#scenic` with one random `±100px` waypoint (`PointRoughly`, map-rect
   clamped); next stall → beeline; arrival within 5px. Replaced the `seek`/perpendicular-detour heuristic.
@@ -149,6 +159,8 @@ Map editor (`mapEditMaster`, separate executable), copy-protection, the `ochreWi
 - Tier 3 closed: K14 (beam sprite-strip), K15 (objTransColor faithful tween), K16–K19 (cutscene verbs /
   faders / screens / transitions), K20 (sound channels), K21 (grave system), K22 (exit arrows). The
   K14/K15/K20/K22 passes were built by worktree-isolated agents and reviewed + cherry-picked here.
-  **Only K2 (spell-actor live-growth) remains open** — the balance-critical finale (energyBlast's faithful
-  grow-fly-explode-radially lifecycle, recoupling magic damage to K1's scale). 343 tests green, tsc clean,
-  room-1 gate green; exit arrows visually confirmed.
+- **K2 closed (the finale): energyBlast's faithful grow-fly-explode-radially `objSpell` lifecycle**,
+  recoupling magic damage to K1's scale (SPELL_RADIAL_SCALE re-pins "base charge fells a 300-energy enemy").
+- **ALL Phase-K deferrals are now implemented** (the only never-built items are the evidence-backed dead
+  engine code K8b/K8c and the genuinely-out-of-scope non-game tooling). 346 tests green, tsc clean, room-1
+  gate green; exit arrows + the spell lifecycle visually confirmed in-browser.

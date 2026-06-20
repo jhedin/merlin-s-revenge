@@ -5,6 +5,8 @@
 
 import { Component, type NextFn } from "../engine/dispatch";
 import { Movement } from "./movement";
+import { spawnSpell } from "../systems/spells";
+import { SpellActor } from "./spellActor";
 import { Mana } from "./mana";
 import { game } from "../game/context";
 import { fireBullet, fireSplashBullet, fireBulletPayload, performBeamAttack } from "../systems/bullets";
@@ -25,6 +27,9 @@ import type { Entity } from "../engine/dispatch";
 const SPELL_FX = { dmgPerUnit: 26, speedBase: 4.5, speedPerUnit: 0.28, speedCap: 9, releaseFrames: 6, life: 110 };
 const MELEE_FRAMES = 6; // the melee anim-strip window (presentational)
 const bare = (s: string): string => (s.startsWith("#") ? s.slice(1) : s); // #energyBeam -> energyBeam (resolveActor key)
+// a #fireBullets spell (energyPulse/beam) streams bullets on release (I8); every other spell is #release
+// (grow-fly-explode, the K2 spell actor). The struct default releaseFunction is #release.
+const isStreaming = (a: AttackData): boolean => a.releaseFunction === "#fireBullets" || a.releaseFunction === "fireBullets";
 
 // PORT CONTROL SCHEME (B2 plan §f.6): Merlin AUTO-MELEES adjacent hostiles with his current MELEE
 // weapon (#punch, upgraded to #merlinSword on pickup) AND holds mouse/space to charge+release magic
@@ -48,12 +53,15 @@ export class PlayerControl extends Component {
   // emit one #bullet draining chargePerUnit until charge<0. (The port's stand-in for the objSpell actor.)
   private stream: { attack: AttackData; charge: number; delay: number; counter: number;
     aimX: number; aimY: number; team: string } | null = null;
+  // K2 spell actor (objSpell): the LIVE charging spell grown over Merlin's head for a #release spell
+  // (energyBlast/cBlast/darkBlast/arcticBlast/healBlast/summons). Released to fly+explode; null otherwise.
+  private spell: Entity | null = null;
 
   override init(cfg: Record<string, any>): void {
     this.strength = typeof cfg["strength"] === "number" ? cfg["strength"] : 8;
     this.strengthInc = typeof cfg["strengthIncLevel"] === "number" ? cfg["strengthIncLevel"] : 0.1;
     this.charge = 0; this.charging = false; this.releaseT = this.meleeT = 0; this.usingSword = false;
-    this.gmgCollected_ = false; this.gmgOn = false; this.stream = null;
+    this.gmgCollected_ = false; this.gmgOn = false; this.stream = null; this.spell = null;
   }
 
   // gmgCollected (modGoldenMachineGun.gmgCollected): collecting the GMG scroll sets collected + turns on.
@@ -132,6 +140,9 @@ export class PlayerControl extends Component {
       m.facingLeft = this.aimLeft;
       const cm = chargeMaxOf(magic, mana, undefined, gmg);
       this.charge = Math.min(cm, this.charge + chargeSpeedOf(magic, mana, gmg));
+      // K2 ensureSpell/chargeSpell (objAiAttack.chargeMagic): a #release spell grows a LIVE objSpell over
+      // Merlin's head each tick (the #fireBullets streamers carry no charge actor — they latch on release).
+      if (!isStreaming(magic)) this.ensureSpell(magic, m).get(SpellActor).setCharge(this.charge, m.x, m.y - 6);
       // I7 auto-fire (objAiPlayer.internalEvent #spellCharged): under GMG with gmgAutoFire, the instant
       // the charge reaches max, release the spell and immediately re-charge (continuous machine-gun fire).
       if (gmg && magic.gmgAutoFire && this.charge >= cm) {
@@ -140,6 +151,7 @@ export class PlayerControl extends Component {
       }
     } else if (this.charging) {
       if (magic) this.castMagic(magic, m, aim, wm); // released or cooled down -> fire at whatever charge was held
+      else if (this.spell) { this.spell.get(SpellActor).discard(); this.spell = null; } // no weapon -> drop the orb
       this.charging = false; this.charge = 0;
     } else if (melee) {
       this.tryMelee(melee, m, wm); // not casting -> auto-swing the melee weapon at anything in reach
@@ -182,14 +194,25 @@ export class PlayerControl extends Component {
     game.audio?.play("spell_release", 0.4);
   }
 
+  // ensureSpell (objAiAttack.ensureSpell): a live objSpell over Merlin's head for a #release spell. Spawns
+  // one if none is charging; carries the spell's team + payload-derived allegiance (heal -> friendly).
+  private ensureSpell(attack: AttackData, m: Movement): Entity {
+    if (this.spell && !(this.spell.send("isFinished") as boolean)) return this.spell;
+    const team = this.entity.send("getTeam") as string;
+    const allegiance = attack.payloadFunction.includes("takeHeal") ? "#friendly" : "#enemy";
+    this.spell = spawnSpell(attack, this.entity.id, m.x, m.y - 6, team, attack.hits, allegiance);
+    this.spell.get(SpellActor).aimDir = this.aimLeft ? -1 : 1;
+    return this.spell;
+  }
+
   private castMagic(attack: AttackData, m: Movement, aim: { x: number; y: number }, wm: WeaponManager): void {
     const c = this.charge; // already >= chargeStart
     const team = this.entity.send("getTeam") as string;
 
     // I8 streaming release (modFireBullets #spellReleased): a releaseFunction:#fireBullets spell does NOT
-    // fire one bolt — it starts a bullet stream draining chargePerUnit per shot over fireDelay frames.
+    // fly+explode — it starts a bullet stream draining chargePerUnit per shot over fireDelay frames.
     // Under GMG, ensureSpell forces fireDelay=0 -> the stream empties in one tick.
-    if (attack.releaseFunction === "#fireBullets" || attack.releaseFunction === "fireBullets") {
+    if (isStreaming(attack)) {
       const delay = this.gmgOn ? 0 : Math.round(attack.fireDelay);
       this.stream = { attack, charge: c, delay, counter: 0, aimX: aim.x, aimY: aim.y, team };
       m.facingLeft = this.aimLeft;
@@ -198,33 +221,16 @@ export class PlayerControl extends Component {
       return;
     }
 
-    const dmg = Math.round(SPELL_FX.dmgPerUnit * c);
-    const speed = Math.min(SPELL_FX.speedCap, SPELL_FX.speedBase + c * SPELL_FX.speedPerUnit);
-    const dirX = aim.x - m.x, dirY = (aim.y - 6) - m.y;
-
-    // SUMMON spell (armySummon/monsterSummon): release summons the highest affordable tier at the cast
-    // loc (modSpellMultistage), then the bolt still fires (faithful — selectPayload keeps payload non-blank).
-    if (attack.explodeFunction === "#summonUnit" || attack.explodeFunction === "summonUnit") {
-      summonUnit(attack, c, m.x, m.y, this.entity.id);
-    }
-
-    // The bolt: arctic/freeze/heal carry a payload list (takeFreeze/takeHeal/takeHit) resolved on hit;
-    // a heal bolt targets friendlies. Plain blasts (energyBlast/cBlast/darkBlast) keep the tuned takeHit.
-    const payloadList = attack.payloadFunction;
-    const isHeal = payloadList.includes("takeHeal");
-    const isStatus = isHeal || payloadList.includes("takeFreeze");
-    if (isStatus) {
-      const allegiance = isHeal ? "#friendly" : "#enemy";
-      const hits = attack.hits.length ? attack.hits : ["#teamMembers", "#teamBuildings"];
-      fireBulletPayload(this.entity.id, m.x, m.y - 6, dirX, dirY, isHeal ? attack.spellSpeed / 6 : speed,
-        dmg, team, attack, hits, allegiance, SPELL_FX.life);
-    } else {
-      fireBullet(this.entity.id, m.x, m.y - 6, dirX, dirY, speed, dmg, team, SPELL_FX.life);
-    }
+    // K2 #release (objAiAttack.releaseMagic -> objSpell.release): release the live spell — it flies to the
+    // aim point and EXPLODES radially on arrival. The summon (armySummon/monsterSummon), freeze, heal and
+    // damage all resolve at the LANDING loc via the spell's explode (no instant bolt). spellSpeed/3 -> px.
+    const spell = this.ensureSpell(attack, m);
+    spell.get(SpellActor).setCharge(c, m.x, m.y - 6);          // final size at release
+    spell.get(SpellActor).release(aim.x, aim.y, Math.max(2, attack.spellSpeed / 3));
+    this.spell = null;
     m.facingLeft = this.aimLeft;
     wm.resetCooldownFor(attack.name); // recast gate = the magic weapon's cooldown counter (cd/manaRegeneration)
     this.releaseT = SPELL_FX.releaseFrames;
-    game.audio?.play(isHeal ? "heal_spell_release" : "spell_release"); // act #releaseSound
   }
 
   private tryMelee(attack: AttackData, m: Movement, wm: WeaponManager): void {
