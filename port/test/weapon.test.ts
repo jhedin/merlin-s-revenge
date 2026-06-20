@@ -91,8 +91,10 @@ describe("charge math reproduces today's energyBlast numbers", () => {
   it("chargeMax = min(999, capacity*0.75 + 5) = 12.5 at base capacity 10", () => {
     expect(chargeMaxOf(eb(), { capacity: 10, flow: 1, burst: 1 })).toBe(12.5);
   });
-  it("chargeStart = min(0 + burst, chargeMax) = 1 at base", () => {
-    expect(chargeStartOf(eb(), { capacity: 10, flow: 1, burst: 1 })).toBe(1);
+  it("K11 faithful: chargeStart = pChargeStart (burst DISCARDED) = 0 for energyBlast", () => {
+    // calcAttackChargeStart's trailing overwrite discards the burst-add (original bug); pChargeStart 0.
+    expect(chargeStartOf(eb(), { capacity: 10, flow: 1, burst: 1 })).toBe(0);
+    expect(chargeStartOf(eb(), { capacity: 10, flow: 1, burst: 5 })).toBe(0); // burst has no effect
   });
   it("chargeSpeed = chargeSpeed * flow = 1 at base; scales with flow", () => {
     expect(chargeSpeedOf(eb(), { capacity: 10, flow: 1, burst: 1 })).toBe(1);
@@ -104,7 +106,9 @@ describe("charge math reproduces today's energyBlast numbers", () => {
   it("chargeSpeedMax clamps a finite cap; chargeStartMax clamps the start", () => {
     const clamped = { ...eb(), chargeSpeedMax: 1.5, chargeStartMax: 0.5 } as AttackData;
     expect(chargeSpeedOf(clamped, { capacity: 10, flow: 5, burst: 1 })).toBe(1.5);
-    expect(chargeStartOf(clamped, { capacity: 10, flow: 1, burst: 1 })).toBe(0.5);
+    // a numeric chargeStartMax caps the start: min(pChargeStart 0, 0.5) = 0 (still burst-independent)
+    expect(chargeStartOf(clamped, { capacity: 10, flow: 1, burst: 1 })).toBe(0);
+    expect(chargeStartOf({ ...clamped, chargeStart: 2 } as AttackData, { capacity: 10, flow: 1, burst: 1 })).toBe(0.5);
   });
 });
 

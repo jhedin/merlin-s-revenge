@@ -48,18 +48,14 @@ export function chargeMaxOf(attack: AttackData, mana: ManaStats, rng?: Rng, gmgO
 export function chargeStartOf(attack: AttackData, mana: ManaStats, gmgOn = false): number {
   // I7: gmgOn assigns pChargeStart = gmgChargeStart flat (energyBeam/Pulse 0, energyBlast 5).
   if (gmgOn) return Math.min(attack.gmgChargeStart, chargeMaxOf(attack, mana, undefined, true));
-  // NOTE (deliberate, per the B2 "spell unchanged" gate): the port keeps today's `chargeStart + burst`
-  // (clamped to chargeMax / chargeStartMax). Raw Lingo calcAttackChargeStart has a trailing
-  // `if pChargeStart <> #none then chargeStart = min(pChargeStart, chargeStartMax)` that OVERWRITES the
-  // burst-added value (so energyBlast actually starts at 0, not 0+burst). Honoring that literally would
-  // change today's numbers (burst no longer raises the starting charge) — the gate forbids that here, so
-  // we reproduce today's behavior. Revisit with the C-phase spell-content pass if burst-start matters.
-  let cs = attack.chargeStart + mana.burst;
-  cs = Math.min(cs, chargeMaxOf(attack, mana));
-  if (attack.chargeStartMax !== "#none" && typeof attack.chargeStartMax === "number") {
-    cs = Math.min(cs, attack.chargeStartMax);
-  }
-  return cs;
+  // K11 — FAITHFUL calcAttackChargeStart (modAttack): the handler computes `pChargeStart + manaBurst`,
+  // then a trailing `if pChargeStart <> #none then chargeStart = min(pChargeStart, chargeStartMax)`
+  // OVERWRITES it (the condition checks the wrong var — an original bug). pChargeStart is always numeric
+  // (structAttack default 1; energyBlast 0), so the overwrite always fires and **mana_burst is discarded**
+  // for the starting charge — behavioral parity with the original (the port previously added burst; this
+  // closes that deviation). chargeStartMax #none = no cap; a numeric one caps the start (summon spells).
+  const cap = typeof attack.chargeStartMax === "number" ? attack.chargeStartMax : Infinity;
+  return Math.min(attack.chargeStart, cap);
 }
 
 export function chargeSpeedOf(attack: AttackData, mana: ManaStats, gmgOn = false): number {
