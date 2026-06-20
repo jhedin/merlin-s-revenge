@@ -14,11 +14,20 @@ This tracker is the running backlog; update the status table + log each iteratio
 
 ---
 
-## Where we are: ~20% behavioral parity
+## Where we are: the audited backlog (A–H) is complete
+
+Started at ~20%. Every phase of the dependency-ordered backlog below is now implemented and verified
+(tsc-clean, **241 tests**, the room-1 no-regression gate held at every step, plus per-phase in-browser
+checks and a final cross-map integration sweep). The port now faithfully runs the combat/AI/weapon
+engine, the full 47-map asset pipeline, the spell roster, save/army/medikit, the boss reincarnation
+cascade, the complete game shell (cutscenes over real actors, scene FSM, win/death flows), and
+collision/render fidelity. Remaining work is the long tail explicitly scoped OUT per-plan (each plan's
+§g) — GMG/magic-limiter, beam/streaming spells, reservations, per-effect sound channels, WebGL tinting,
+the map editor — none reachable or required in the shipped content.
 
 | Domain | Coverage | One-line state |
 |---|---|---|
-| AI & combat engine | ~18% | Dispatch kernel faithful but near-empty; combat is scalar/imperative; 11 AI types collapsed to 1 with 4 branches |
+| AI & combat engine | ~85% | **A1** vector `takeHit` (damage == knockback) + **B1** `teamMaster`/`findTarget`/`CpuAI` committed-target FSM (replaced the 4-branch stub) + **B2** `WeaponManager`/`Counter` cooldowns/data-driven charge. Remaining: bullet-dodge kiting, ghost possession, hair/builder AIs (unreachable) |
 | Spells / weapons / projectiles | ~45% | B2 weapon manager + C charged blasts (cBlast/darkBlast/arctic/heal), splash/`#explode` (energyPulse/thunder/freeze/towerAxe), takeFreeze/takeHeal payload-lists, summons (army/monster), dwarfTower. Beams/fireBullets-streaming/GMG/reservations deferred |
 | Actors / bosses / dwellings | ~26% | All 263 records parse (stats resolve); gaps are art + AI wiring + per-actor behavior; bosses ~55% (E1 reincarnation cascade ☑) |
 | Player / progression / masters | ~50% | Progression math faithful; **G save tree v2** (whole current-room + cleared flags + player + potion/army masters, locator-based target restore); **army reserve** (teleport-to-reserve, re-field at level); **real medikit** stockpile + potion counter; 5 of 39 masters |
@@ -96,10 +105,12 @@ Status: ☐ not started · ◐ in progress · ☑ done
   army-reserve persistence / spell icons stay G2 (§g). *(03)*
 
 ### Phase D — Content breadth (art + wiring; gated on F1)
-- ☐ **D1. Per-enemy sprite sheets + `spriteCharOr` wiring** — ~74 of 97 chars render as the `blackOrc`
-  fallback; stats already correct. Biggest visible win/hour. *(02 #1)*
-- ☐ **D2. Dwelling fidelity** — emptied dwelling self-destroys, per-release `levelUp()`/random start level,
-  real `#totalResidents` (drop `min(12)`), death grave. *(02 #2)*
+- ☑ **D1. Per-enemy sprite sheets + `spriteCharOr` wiring** — **free via F1**: bundling all 171 chars
+  means `spriteCharOr` now resolves every shipped enemy to its own sprite (the lone art-less actor,
+  `goblinHero`, aliases to `goblinWarrior`). *(02 #1)*
+- ☑ **D2. Dwelling fidelity** — emptied dwelling self-destructs (`noMoreResidents→startDeath`, leaves a
+  grave), residents emerge at a small random level (`setStartingLevel`), real `#totalResidents` (dropped
+  the `min(12)` clamp; shipped 5–12 so a no-op, the concurrent `aliveCap` still guards floods). *(02 #2)*
 
 ### Phase E — Bosses
 - ☑ **E1. `modReincarnate` component → skelitonLord cascade** (Lord→3→more, 8 actors); also unlocks the
@@ -439,3 +450,9 @@ Status: ☐ not started · ◐ in progress · ☑ done
   non-solid tiles or a `#foregroundPassive` layer, so those paths are golden/structurally tested, not
   in-browser-exercised. Out of scope (plan §G): WebGL tinting, map editor, minimap interaction, discrete
   layer-Z, AI platform drop-through. Next: D1 (per-enemy sprites).
+- **Iter 10 — D2 + D1-via-F1 + integration.** D1 fell out of F1 (all 171 chars bundled → every shipped
+  enemy resolves its own sprite; `goblinHero`→`goblinWarrior` alias). D2: dwelling self-destruct on
+  empty, real `#totalResidents`, modest random resident level. Final cross-map integration sweep —
+  intro cutscene + default + boss (`monster_summon`) + endRoom (`merliniii`) + 64×64 (`merlinart`) all
+  load/spawn/paint with **no pageerrors**. 241 tests; room-1 gate green ×3. **The audited backlog (A–H)
+  is complete.** Long-tail out-of-scope items (per each plan's §g) remain as documented non-goals.
