@@ -14,6 +14,9 @@ import { Targeting } from "./combat";
 import { WeaponManager, meleeBasePower, enemyMeleeBasePower, resolveAttack, BULLET_DAMAGE_SCALE, type AttackData } from "./weapon";
 import { summonUnit } from "./summon";
 import { chargeMaxOf, chargeStartOf, chargeSpeedOf } from "./charge";
+import { PathFinding } from "./pathFinding";
+import { ColourTransform } from "./colourTransform";
+import { Experience } from "./experience";
 import type { Entity } from "../engine/dispatch";
 
 // Damage/bolt-speed are still tuned per charge-unit to the px slice (PLAN_REVIEW: damage == knockback;
@@ -272,28 +275,51 @@ export class PlayerControl extends Component {
 // COMMITTED as a #target relationship (teamMaster.subscribe), dropped reactively on #leaveGame, and
 // only re-evaluated on a 30-frame throttle or after an attack — not re-scanned every tick (the cardinal
 // behaviour change vs the old per-tick nearest scan). Allegiance/criteria/roles flow from Targeting.
-type CpuMode = "findTarget" | "moveToAttack" | "runReload" | "dazed";
+type CpuMode = "findTarget" | "moveToAttack" | "runReload" | "dazed" | "optimumPosition";
+type GhostMode = "findTarget" | "goToLoc";
+type BuilderMode = "lookForBuilding" | "walkToBuilding" | "build" | "fight";
 
 export class CpuAI extends Component {
   static handles = ["update", "eventLeaveGame", "characterModeChanged", "getAiMode", "getAiTarget",
-    "getTargetDetails", "setAiTarget"];
+    "getTargetDetails", "setAiTarget", "attackActive"];
   reach = 22;          // melee strike reach (targetInReachMelee)
   reachRanged = 150;   // ranged targetInReachRanged (GeomDist < reach)
   power = 8;           // melee-vector strength source (strength); bullet damage uses weapon power
   ranged = false;
   runReload = false;   // getRunReload: kite away after a shot until cooled (ranged casters)
   atkSound = "";       // #attack.sound
-  ghost = false;       // objAiCPUGhost approximation (drift; not a real possessor — out of scope)
+  ghost = false;       // objAiCPUGhost: drifts looking for a #monk to possess (K5)
+  dodgesBullets = false; // K4: objAiCPUSpellCaster — runs the bullet-dodge optimumPosition chain
+  builder = false;     // K8a: objAiCPUBuilder — walk-to-site + incremental dwelling build
+  multiAttack = false; // K6: setMultiAttack — range-based 2-weapon auto-switch (ninja/shrouder)
+  bufferDist = 100;    // K6 #bufferDist (default 100)
+  teamWhenAlive = "";  // K5: the ghost's possess team (#aldevar) — getTeamWhenAlive
   splashBullet: AttackData | null = null; // towerAxe/energyPulse etc: fire a SPLASH bullet, not single-target
   bulletAttack: AttackData | null = null; // K1: a plain (non-splash) ranged weapon's resolved #attack.bullet
+  // K8a builder data (modBuilder): the unitToBuild list, build rate (per-100 advances a frame), and the
+  // buildOne/buildDie/leaveWhenFinished disposition.
+  unitToBuild: string[] = [];
+  buildRate = 100; buildOne = true; buildDie = false; leaveWhenFinished = false;
   private strength = 5;
 
   private mode: CpuMode = "findTarget";
   private target: Entity | null = null;
   private retargetCtr = 0;                  // pRetargetCounter: forced re-eval every 30 frames
   private static readonly RETARGET = 30;
-  private wanderAng = 0; private wanderTimer = 0;
-  private detourT = 0; private detourX = 0; private detourY = 0; // wall-detour (pathfinding fallback)
+  private attackT = 0;                       // #attack-mode window (drives modWeaponTechnique accumulation)
+  private static readonly ATTACK_FRAMES = 6;
+  private path = new PathFinding();          // K3 modPathFinding (beeline→scenic)
+  // K5 ghost FSM
+  private ghostMode: GhostMode = "findTarget";
+  private ghostTargetX = 0; private ghostTargetY = 0;
+  // K8a builder FSM
+  private builderMode: BuilderMode = "lookForBuilding";
+  private building: Entity | null = null;
+  private buildAmount = 0; private builtCount = 0;
+  private static readonly POSSESS_DIST = 10; // pPossessDistance
+  private static readonly BUILD_RANGE = 50;  // pBuildRange
+  private static readonly BULLET_SAFE = 100;  // pBulletSafeDistance
+  private static readonly ENEMY_SAFE = 100;   // pEnemySafeDistance
 
   override init(cfg: Record<string, any>): void {
     this.strength = typeof cfg["strength"] === "number" ? cfg["strength"] : 5;
@@ -303,6 +329,16 @@ export class CpuAI extends Component {
     this.ranged = cfg["ranged"] === true;
     this.runReload = cfg["runReload"] === true; // spellcaster kite
     this.ghost = cfg["ghost"] === true;
+    this.dodgesBullets = cfg["dodgesBullets"] === true;
+    this.builder = cfg["builder"] === true;
+    this.multiAttack = cfg["multiAttack"] === true;
+    this.bufferDist = typeof cfg["bufferDist"] === "number" ? cfg["bufferDist"] : 100;
+    this.teamWhenAlive = typeof cfg["teamWhenAlive"] === "string" ? cfg["teamWhenAlive"] : "";
+    this.unitToBuild = Array.isArray(cfg["unitToBuild"]) ? cfg["unitToBuild"].slice() : [];
+    this.buildRate = typeof cfg["buildRate"] === "number" ? cfg["buildRate"] : 100;
+    this.buildOne = cfg["buildOne"] !== false;
+    this.buildDie = cfg["buildDie"] === true;
+    this.leaveWhenFinished = cfg["leaveWhenFinished"] === true;
     if (typeof cfg["atkReach"] === "number") {
       if (this.ranged) this.reachRanged = Math.min(220, Math.max(60, cfg["atkReach"])); // cap magic's 9999
       else this.reach = Math.max(16, Math.min(40, cfg["atkReach"]));
@@ -311,10 +347,19 @@ export class CpuAI extends Component {
     this.splashBullet = (cfg["splashBullet"] as AttackData | undefined) ?? null; // a ranged CPU's splash bullet (tower)
     this.bulletAttack = (cfg["bulletAttack"] as AttackData | undefined) ?? null; // K1: plain bullet's #attack (power/mult)
     this.retargetCtr = 0;
-    this.mode = "findTarget"; this.target = null;
-    this.wanderAng = 0; this.wanderTimer = 0; this.detourT = 0;
+    this.mode = "findTarget"; this.target = null; this.attackT = 0;
+    this.path.reset();
+    this.ghostMode = "findTarget"; this.ghostTargetX = this.ghostTargetY = 0;
+    this.builderMode = "lookForBuilding"; this.building = null; this.buildAmount = 0; this.builtCount = 0;
   }
-  override reset(): void { this.mode = "findTarget"; this.target = null; this.retargetCtr = 0; }
+  override reset(): void {
+    this.mode = "findTarget"; this.target = null; this.retargetCtr = 0; this.attackT = 0; this.path.reset();
+    this.ghostMode = "findTarget"; this.builderMode = "lookForBuilding"; this.building = null;
+  }
+
+  // attackActive (modWeaponTechnique.update gate: getAI().getMode() == #attack): true during the brief
+  // strike window after an attack fires — when the attack anim plays and technique accumulates.
+  attackActive(): boolean { return this.attackT > 0; }
 
   // Fire gate is now the enemy's single-weapon cooldown counter (modWeaponManager getCooldownFin),
   // reset on FIRE. Recovery #frames preserve the slice's enemy attack feel (effective cooldown derived
@@ -353,7 +398,10 @@ export class CpuAI extends Component {
 
   update(next: NextFn): void {
     const m = this.entity.get(Movement);
+    if (this.attackT > 0) this.attackT--;
     if (this.entity.send("isDead")) { this.idle(m); return next(); }
+    if (this.builder) { this.updateBuilder(m); return next(); }
+    if (this.ghost) { this.updateGhost(m); return next(); }
     switch (this.mode) {
       case "dazed": this.idle(m); break;                       // frozen while reeling/dying
       case "findTarget":
@@ -362,6 +410,7 @@ export class CpuAI extends Component {
         break;
       case "moveToAttack": this.updateMoveToAttack(m); break;
       case "runReload": this.updateRunReload(m); break;
+      case "optimumPosition": this.updateMoveToOptimumPosition(m); break;
     }
     next();
   }
@@ -373,8 +422,7 @@ export class CpuAI extends Component {
   }
 
   // updateMoveToAttack (objAiAttack): tick the retarget throttle, drop dead/gone targets, attack in
-  // reach, else seek toward the ideal attack loc. Ghosts keep the drift approximation (possession is
-  // out of scope), still committing a target so they don't twitch.
+  // reach, else path toward the target (K3 beeline→scenic).
   private updateMoveToAttack(m: Movement): void {
     if (++this.retargetCtr >= CpuAI.RETARGET) {       // pRetargetCounter: periodic forced re-eval
       this.retargetCtr = 0; this.target = null; this.refreshTarget();
@@ -384,9 +432,24 @@ export class CpuAI extends Component {
     const tp = target.send("getPos") as { x: number; y: number };
     const dx = tp.x - m.x, dy = tp.y - m.y;
     const d = Math.hypot(dx, dy) || 1;
-    if (this.ghost) { this.wander(m, dx, dy, d); if (d < this.reach + 6) this.attack(m, dx, dy, target); return; }
+    // K6 setMultiAttack: a 2-weapon CPU (ninja/shrouder) picks ranged weapon 1 beyond bufferDist, melee
+    // weapon 2 within — BEFORE deciding reach/attack, so getCurrentAttack()'s reach/type is correct.
+    if (this.multiAttack) {
+      this.entity.get(WeaponManager).setMultiAttack(this.entity, tp.x, tp.y, m.x, m.y, this.bufferDist);
+      this.syncWeaponMode();
+    }
     if (this.targetInReach(d)) { this.idle(m); this.attack(m, dx, dy, target); }
-    else this.seek(m, dx, dy, d);
+    else this.path.findPathToLoc(m, tp.x, tp.y, game.rng);   // K3 pathfinding (beeline→scenic)
+  }
+
+  // syncWeaponMode (K6): after a weapon switch, re-read whether the current weapon is ranged so reach
+  // gating uses the right band (a ninja in melee uses its short sword reach, at range its shuriken reach).
+  private syncWeaponMode(): void {
+    const ca = this.entity.get(WeaponManager).getCurrentAttack();
+    if (!ca) return;
+    this.ranged = ca.type === "ranged" || ca.type === "magic";
+    this.reachRanged = Math.min(220, Math.max(60, ca.reach));
+    this.reach = Math.max(16, Math.min(40, ca.reach));
   }
 
   private targetInReach(d: number): boolean { return d <= (this.ranged ? this.reachRanged : this.reach); }
@@ -409,10 +472,12 @@ export class CpuAI extends Component {
     else this.target = null;
   }
 
-  // attackFin: after a strike, clear + re-acquire, then runReload (kite) / moveToAttack / findTarget.
+  // attackFin: after a strike, clear + re-acquire (retarget every shot, faithful), then the post-attack
+  // mode: K4 dodgers → optimumPosition, runReload kiters → runReload, else moveToAttack / findTarget.
   private attackFin(m: Movement): void {
     this.target = null; this.refreshTarget();
     if (!this.target) this.goMode("findTarget", m);
+    else if (this.dodgesBullets) this.goMode("optimumPosition", m);
     else if (this.runReload) this.goMode("runReload", m);
     else this.goMode("moveToAttack", m);
   }
@@ -472,28 +537,244 @@ export class CpuAI extends Component {
       game.teamMaster.impactMeleeAttack(this.entity, meleeHitFn(this.entity, this.entity.id, base, mult));
     }
     m.facingLeft = dx < 0;
+    this.attackT = CpuAI.ATTACK_FRAMES; // #attack-mode window: drives modWeaponTechnique accumulation
     if (this.atkSound) game.audio?.play(this.atkSound, 0.5); // #attack.sound (quieter than player)
     wm.resetCooldown(); // restart this weapon's cooldown counter
     this.attackFin(m); // re-acquire / kite
   }
 
-  // Head toward (dx,dy) but, when wedged on a wall (modPathFinding: beeline -> scenic), commit to
-  // a perpendicular detour for a short window so the unit slides around obstacles instead of stalling.
-  private seek(m: Movement, dx: number, dy: number, d: number): void {
-    if (this.detourT > 0) { this.detourT--; m.intentX = this.detourX; m.intentY = this.detourY; return; }
-    if (m.hitX || m.hitY) { // blocked last tick -> sidestep perpendicular to the desired heading
-      const sign = game.rng.next() < 0.5 ? 1 : -1;
-      this.detourX = (-dy / d) * sign; this.detourY = (dx / d) * sign;
-      this.detourT = 18;
-      m.intentX = this.detourX; m.intentY = this.detourY;
-    } else { m.intentX = dx / d; m.intentY = dy / d; }
+  // ── K4 bullet-dodge optimumPosition (objAiCPUSpellCaster.updateMoveToOptimumPosition) ────────────
+  // A spellcaster (reach 9999, always "in reach") drives its positioning here instead of moveToAttack.
+  // Strict priority chain: dodge an incoming bullet (run TANGENT to it) > flee a near enemy > approach
+  // the target (with a buffer ring) > idle. Layers on the existing runReload band for plain ranged enemies.
+  private updateMoveToOptimumPosition(m: Movement): void {
+    const target = this.target;
+    if (!target || target.send("isDead")) { this.target = null; this.goMode("findTarget", m); return; }
+    // 1) runTangentToObjects(findNearestEnemyBullets, bulletSafeDistance): dodge bullets perpendicular.
+    if (this.runTangentToNearestBullet(m)) return;
+    // 2) runFromObjects(findNearestEnemies, enemySafeDistance): flee a near enemy (its midpoint).
+    if (this.runFromNearEnemy(m, target)) return;
+    // 3) runTowardsObject(target): approach if farther than √(safe²+buffer²) (hysteresis).
+    const tp = target.send("getPos") as { x: number; y: number };
+    const distSq = (tp.x - m.x) ** 2 + (tp.y - m.y) ** 2;
+    if (distSq - CpuAI.ENEMY_SAFE * CpuAI.ENEMY_SAFE > 20 * 20) {
+      this.path.findPathToLoc(m, tp.x, tp.y, game.rng);
+      if (this.cooledDown() && distSq <= this.reachRanged * this.reachRanged) this.attack(m, tp.x - m.x, tp.y - m.y, target);
+      return;
+    }
+    // 4) stopMoving — but still fire if cooled and in range (the caster shoots from its safe spot).
+    this.idle(m);
+    if (this.cooledDown()) this.attack(m, tp.x - m.x, tp.y - m.y, target);
   }
 
-  // objAiCPUGhost approximation: drift on a slowly-changing heading biased toward the target.
-  private wander(m: Movement, dx: number, dy: number, d: number): void {
-    if (--this.wanderTimer <= 0) { this.wanderAng = game.rng.next() * Math.PI * 2; this.wanderTimer = 40 + Math.floor(game.rng.next() * 40); }
-    m.intentX = Math.cos(this.wanderAng) * 0.7 + (dx / d) * 0.3;
-    m.intentY = Math.sin(this.wanderAng) * 0.7 + (dy / d) * 0.3;
+  // runTangentToObjects (objAiCPUSpellCaster 171-259): run perpendicular to the nearest incoming bullet,
+  // blended 25-75% with the straight-flee mirror point. Returns true (running) if a bullet was too close.
+  private runTangentToNearestBullet(m: Movement): boolean {
+    const near = game.teamMaster.findNearestEnemyBullets(this.entity, m.x, m.y, 2);
+    const closest = near.closestList[near.closestPos - 1];
+    if (!closest || !closest.obj || closest.dist >= CpuAI.BULLET_SAFE) return false;
+    const b1 = closest.obj.send("getPos") as { x: number; y: number };
+    const second = near.closestList[near.closestPos === 1 ? 1 : 0];
+    // refVect = bulletLoc - myLoc; run perpendicular (swap+negate) away to a point ~2·safe to the side,
+    // with a small safe/5 along-axis nudge — the GeomTangentPoint shape. Side chosen from the 2-bullet geom.
+    const refX = b1.x - m.x, refY = b1.y - m.y;
+    const rl = Math.hypot(refX, refY) || 1;
+    let side = 1;
+    if (second && second.obj) {
+      const b2 = second.obj.send("getPos") as { x: number; y: number };
+      // sign of the cross product me->b1 × b1->b2 picks the side that opens away from both bullets.
+      const cross = refX * (b2.y - b1.y) - refY * (b2.x - b1.x);
+      side = cross >= 0 ? 1 : -1;
+    }
+    const perpX = (-refY / rl) * side, perpY = (refX / rl) * side;       // unit perpendicular
+    const safe = CpuAI.BULLET_SAFE;
+    const tangentX = m.x + perpX * 2 * safe - (refX / rl) * (safe / 5);  // 2·safe to the side, safe/5 back
+    const tangentY = m.y + perpY * 2 * safe - (refY / rl) * (safe / 5);
+    // straight-flee mirror point (away from the bullet) — blend 25-75% (random per call) with the tangent.
+    const mirrorX = m.x - (refX / rl) * safe, mirrorY = m.y - (refY / rl) * safe;
+    const t = 0.25 + game.rng.next() * 0.5;
+    const destX = tangentX * t + mirrorX * (1 - t), destY = tangentY * t + mirrorY * (1 - t);
+    this.path.findPathToLoc(m, destX, destY, game.rng);
+    return true;
+  }
+
+  // runFromObjects(findNearestEnemies, enemySafeDistance): flee the nearest hostile if within the safe ring.
+  private runFromNearEnemy(m: Movement, target: Entity): boolean {
+    const tg = this.entity.send("getTargeting") as { hits: string[]; allegiance: string } | undefined;
+    const near = game.teamMaster.findHostileWithin(this.entity, m.x, m.y, CpuAI.ENEMY_SAFE,
+      tg?.hits ?? ["#teamMembers", "#teamBuildings"], tg?.allegiance ?? "#enemy");
+    if (!near.obj) return false;
+    const ep = near.obj.send("getPos") as { x: number; y: number };
+    const dx = m.x - ep.x, dy = m.y - ep.y; const d = Math.hypot(dx, dy) || 1;
+    // GeomMirrorPoint: run to a point bulletSafe away on the far side from the enemy.
+    this.path.findPathToLoc(m, m.x + (dx / d) * CpuAI.ENEMY_SAFE, m.y + (dy / d) * CpuAI.ENEMY_SAFE, game.rng);
+    void target;
+    return true;
+  }
+
+  // ── K5 ghost possession (objAiCPUGhost) ──────────────────────────────────────────────────────────
+  // Drift aimlessly looking for a #monk to possess. findTarget → goToLoc → (on arrival) attemptPossess.
+  // Where no #monk is rostered on the possess team, findUnitOfType returns null → drift to random map
+  // points forever (faithful: samii places monkGhosts but 0 monks → drift-only there).
+  private updateGhost(m: Movement): void {
+    switch (this.ghostMode) {
+      case "findTarget": this.ghostFindTarget(m); break;          // always fins → goToLoc
+      case "goToLoc": {
+        const arrived = this.ghostGoToLoc(m);
+        if (arrived) this.ghostAttemptPossess(m);
+        break;
+      }
+    }
+  }
+
+  private ghostFindTarget(m: Movement): void {
+    const team = this.teamWhenAlive || (this.entity.send("getTeam") as string);
+    const monk = game.teamMaster.findUnitOfType("#monk", team);
+    if (monk) {
+      this.target = monk; game.teamMaster.subscribe(monk, this.entity);
+      const p = monk.send("getPos") as { x: number; y: number };
+      this.ghostTargetX = p.x; this.ghostTargetY = p.y;
+    } else {
+      this.target = null;
+      // PointRandomInRect(mapRect): a random point anywhere on the map (drift).
+      const g = game.grid;
+      this.ghostTargetX = game.rng.next() * g.cols * g.tilePx;
+      this.ghostTargetY = game.rng.next() * g.rows * g.tilePx;
+    }
+    this.ghostMode = "goToLoc";
+    this.path.reset();
+    void m;
+  }
+
+  // goToLoc: head to the committed monk's live loc (or the random drift loc); done within possessDist.
+  private ghostGoToLoc(m: Movement): boolean {
+    let tx = this.ghostTargetX, ty = this.ghostTargetY;
+    const t = this.target;
+    if (t && !t.send("isDead")) { const p = t.send("getPos") as { x: number; y: number }; tx = p.x; ty = p.y; }
+    this.path.findPathToLoc(m, tx, ty, game.rng);
+    return Math.hypot(tx - m.x, ty - m.y) < CpuAI.POSSESS_DIST;
+  }
+
+  // attemptPossess: a live committed monk within 10px → mergeExperience (full imWorth+gained) + glowPink
+  // + goMode(#finish) (the ghost dies). Else restart findTarget (drift).
+  private ghostAttemptPossess(m: Movement): void {
+    const monk = this.target;
+    if (!monk || monk.send("isDead")) { this.ghostMode = "findTarget"; return; }
+    const p = monk.send("getPos") as { x: number; y: number };
+    if (Math.hypot(p.x - m.x, p.y - m.y) < CpuAI.POSSESS_DIST) {
+      // mergeExperience(targetUnit): full experience = pExperienceImWorth + pExperienceGained, glowPink.
+      const exp = this.entity.tryGet(Experience);
+      const worth = (exp?.imWorth ?? 0) + (exp?.xp ?? 0);
+      monk.send("gainXp", worth);
+      monk.tryGet(ColourTransform)?.glowPink();
+      // goMode(#finish): the ghost finalizes (dies → grave). Route through takeHit so death/leaveGame fire
+      // cleanly via the combat tick (no double #leaveGame), faithful to the existing death-finalize path.
+      this.entity.send("takeHit", 999999, 0, this.entity.id);
+    } else {
+      this.ghostMode = "findTarget";
+    }
+  }
+
+  // ── K8a builder AI (objAiCPUBuilder + modBuilder) ─────────────────────────────────────────────────
+  // lookForBuilding → walkToBuilding (spawn/continue the dwelling preBuilt=false) → build (accrue
+  // buildRate, advance build frames) → on finish, buildOne/buildDie/leaveWhenFinished disposition.
+  // Fallback: a builder with no unitToBuild (or already built its one) fights as a plain CpuAI.
+  private updateBuilder(m: Movement): void {
+    if (this.builderMode === "fight") { this.builderFightFallback(m); return; }
+    switch (this.builderMode) {
+      case "lookForBuilding": this.builderLookForBuilding(m); break;
+      case "walkToBuilding": {
+        const inRange = this.builderWalkToBuilding(m);
+        if (inRange) this.builderMode = "build";
+        break;
+      }
+      case "build": this.builderBuild(m); break;
+    }
+  }
+
+  // startBuilding: if buildOne and we've already built one → fall back to fighting. Otherwise spawn a fresh
+  // dwelling/tower preBuilt=false at loc + point(32,0) and commit to building it.
+  private builderLookForBuilding(m: Movement): void {
+    if (this.unitToBuild.length === 0 || (this.buildOne && this.builtCount >= 1)) {
+      this.builderMode = "fight"; return;
+    }
+    const sym = this.unitToBuild[game.rng.range(0, this.unitToBuild.length - 1)]!; // getUnitToBuild (random)
+    const spawn = game.spawnFromSymbol;
+    if (!spawn) { this.builderMode = "fight"; return; }
+    const b = spawn(sym, m.x + 32, m.y); // startLoc = loc + point(32,0)
+    if (!b) { this.builderMode = "fight"; return; }
+    if (!game.entities.includes(b)) game.entities.push(b); // join the world (RoomManager does this for tile spawns)
+    // build it incrementally (objAICPUBuilder preBuilt=false): mark it "under construction" while building.
+    b.flags.add("underConstruction");
+    this.building = b; this.buildAmount = 0; this.buildProgress = 0;
+    this.builderMode = "walkToBuilding";
+    void m;
+  }
+
+  // walkToBuilding: path to the construction site; in range when within pBuildRange (50px).
+  private builderWalkToBuilding(m: Movement): boolean {
+    const b = this.building;
+    if (!b || b.send("isDead")) { this.building = null; this.builderMode = "lookForBuilding"; return false; }
+    const p = b.send("getPos") as { x: number; y: number };
+    this.path.findPathToLoc(m, p.x, p.y, game.rng);
+    return (p.x - m.x) ** 2 + (p.y - m.y) ** 2 <= CpuAI.BUILD_RANGE * CpuAI.BUILD_RANGE;
+  }
+
+  // updateBuild: accrue buildRate; every full 100 advances one build frame. When the building finishes,
+  // apply the disposition (buildDie/leaveWhenFinished → the builder retires; buildOne → fight; else loop).
+  private builderBuild(m: Movement): void {
+    this.idle(m);
+    const b = this.building;
+    if (!b || b.send("isDead")) { this.building = null; this.builderMode = "lookForBuilding"; return; }
+    this.buildAmount += this.buildRate;
+    const frames = Math.floor(this.buildAmount / 100);
+    this.buildAmount = this.buildAmount % 100;
+    let finished = false;
+    for (let i = 0; i < frames; i++) { if (this.advanceBuildFrame(b)) { finished = true; break; } }
+    if (finished) this.buildingFinished(b, m);
+  }
+
+  // advanceBuildFrame (objDwelling.advanceBuildFrame): a building under construction needs BUILD_FRAMES
+  // advances to finish. We track progress on the building's flag set; on the last frame mark it built.
+  private static readonly BUILD_FRAMES = 8;
+  private buildProgress = 0;
+  private advanceBuildFrame(b: Entity): boolean {
+    this.buildProgress++;
+    if (this.buildProgress >= CpuAI.BUILD_FRAMES) {
+      this.buildProgress = 0;
+      b.flags.delete("underConstruction");   // markBuilt: it's now a live combatant/dwelling
+      return true;
+    }
+    return false;
+  }
+
+  private buildingFinished(b: Entity, m: Movement): void {
+    this.builtCount++;
+    this.building = null; this.buildProgress = 0;
+    if (this.buildDie || this.leaveWhenFinished) {
+      // buildDie (goblinBuilder) / leaveWhenFinished (dwarf): walk to the building and retire (die).
+      const p = b.send("getPos") as { x: number; y: number };
+      m.x = p.x; m.y = p.y;
+      this.entity.send("takeHit", 999999, 0, this.entity.id);   // finalize → grave (no #killedInAction reincarnate)
+      return;
+    }
+    // buildOne → no more building; else look for the next site.
+    this.builderMode = (this.buildOne && this.builtCount >= 1) ? "fight" : "lookForBuilding";
+  }
+
+  // builderFightFallback: a builder that can't (or shouldn't) build any more behaves as a plain CpuAI —
+  // it has a natural #attack (dwarf throwAxe / goblinHammer), so run the standard committed-target loop.
+  private builderFightFallback(m: Movement): void {
+    switch (this.mode) {
+      case "dazed": this.idle(m); break;
+      case "findTarget":
+        this.refreshTarget();
+        if (this.target) this.goMode("moveToAttack", m); else this.idle(m);
+        break;
+      case "moveToAttack": this.updateMoveToAttack(m); break;
+      case "runReload": this.updateRunReload(m); break;
+      case "optimumPosition": this.updateMoveToOptimumPosition(m); break;
+    }
   }
 }
 

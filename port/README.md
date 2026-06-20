@@ -9,8 +9,10 @@ and `../docs/PLAN_REVIEW.md`). Game data and assets come from `../casts`, `../ma
 A complete, playable game on the faithful engine architecture. Title → intro cutscene → a real
 10-room dungeon, all running at a fixed 30 Hz through the component dispatch:
 
-- **Flow**: title, intro **cutscene** (the real `scr_demo_001` DSL), pause **menu**,
-  game-over/restart — a scene state machine.
+- **Flow**: title, intro **cutscene** (the real `scr_demo_001` DSL), pause **menu** (+ show-army /
+  instructions / key-config screens), faded **screen transitions**, game-over/restart — a scene state
+  machine. **Chatter "talking stones"** play their `scr_stonesN` cutscene over the live game on contact;
+  game-complete rolls **credits**.
 - **World**: real maps (per-map sizes), tile collision, **multi-room navigation** + minimap,
   `#objects` **spawn tables** populating the **real actor roster** (17 character sets).
 - **Combat**: melee + **pooled projectiles**, ranged AI, **XP/leveling**, **freeze** status,
@@ -20,9 +22,9 @@ A complete, playable game on the faithful engine architecture. Title → intro c
 
 Controls: **WASD/arrows** move, **space** attack, **Q** summon, **1/2** save/load, **Esc** pause.
 
-Still unported (long-tail content): the key-config menu screens and the bespoke per-actor AI of the
-remaining ~100 actor types (they currently use shared melee/ranged AI). The engine and all major
-systems are in place; what remains is breadth of content.
+Still unported (long-tail content): per-key rebinding (key-config chooses among the shipped schemes) and
+the bespoke per-actor AI of the remaining ~100 actor types (they currently use shared melee/ranged AI).
+The engine and all major systems are in place; what remains is breadth of content.
 
 ## Run
 

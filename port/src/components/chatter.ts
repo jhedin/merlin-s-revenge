@@ -1,31 +1,59 @@
-// Chatter (casts/script_objects/objChatter.txt): a decorative cutscene-trigger NPC ("talking stones").
-// In the original, walking onto it (in nav mode) swaps to its talking member and plays its #scriptToPerform
-// cutscene via cutSceneMaster, then latches pPerformed.
+// Chatter (casts/script_objects/objChatter.txt): a cutscene-trigger NPC ("talking stones"). Walking onto
+// it (in nav mode) swaps to its talking member and plays its #scriptToPerform cutscene via cutSceneMaster,
+// then latches pPerformed (objChatter.collected, :43-61).
 //
-// FAITHFUL FALLBACK (plan §c.5 / §g.8): the #stonesN cutscene scripts (scr_stones1..5) are NOT bundled
-// in the port (only intro/wasted/complete are — see tools/build_assets.ts). The original's own collected
-// handler is gated behind a "temporarily disabled inGame Scripts" note. So rather than fabricate
-// cutscenes, the stones spawn as INERT decorative sprites: they render (visible, non-blocking) and simply
-// don't talk. The component holds the scriptToPerform so a future Pass that bundles the scripts can wire
-// the overlap trigger here without re-plumbing the spawn. type "chatter" keeps them off room-clear.
+// K12: the #stonesN cutscene scripts (scr_stones1..10) are now BUNDLED (tools/build_assets.ts) and play
+// on demand, so the inert-decoration fallback is replaced by the real overlap FSM. Each tick, if not yet
+// performed and the player overlaps the stone's 320-reach trigger box (#collisionRect rect(-320,-320,
+// 320,320)), the stone goes #talking (swap to its talking member) and asks the scene FSM to play its
+// script over the live game (playInGameCutScene). pPerformed latches so it talks ONCE. A second touch
+// while #talking reverts to #finishedTalking (waiting member). type "chatter" keeps stones off room-clear.
 
 import { Component, type NextFn } from "../engine/dispatch";
+import { Movement } from "./movement";
+import { game } from "../game/context";
+
+// the stones' #collisionRect is rect(-320,-320,320,320): a ±320 reach in each axis from the stone center.
+const TRIGGER_REACH = 320;
 
 export class Chatter extends Component {
-  static handles = ["update", "getScriptToPerform", "getPerformed"];
+  static handles = ["update", "getScriptToPerform", "getPerformed", "goMode", "getMode"];
   private scriptToPerform = "";
   private performed = false;
+  private mode = "waiting"; // #waiting -> #talking -> #finishedTalking (objChatter.goMode member swap)
 
   override init(cfg: Record<string, any>): void {
     this.scriptToPerform = typeof cfg["scriptToPerform"] === "string" ? cfg["scriptToPerform"] : "";
     this.performed = false;
+    this.mode = "waiting";
   }
-  override reset(): void { this.performed = false; }
+  override reset(): void { this.performed = false; this.mode = "waiting"; }
 
   getScriptToPerform(): string { return this.scriptToPerform; }
   getPerformed(): boolean { return this.performed; }
+  getMode(): string { return this.mode; }
 
-  // Inert: no overlap trigger (scripts unbundled). Kept as a no-op chain handler so the stone participates
-  // in the entity loop (and renders via Anim). The disabled-script fallback is the faithful state.
-  update(next: NextFn): void { next(); }
+  // goMode (objChatter.goMode): #talking swaps to the talking member; #finishedTalking reverts. The port's
+  // stones ship a single stand strip (no separate talking/waiting art), so this tracks the FSM state only.
+  goMode(mode: string): void { this.mode = mode; }
+
+  // collected (objChatter.collected): on player overlap, if not performed -> #talking + play its script,
+  // latch performed. Honors a #scriptToPerform of "" / "#none" (no script: latch without playing). Skips
+  // re-trigger while an in-game cutscene is already running (the scene gates a second play).
+  update(next: NextFn): void {
+    if (!this.performed && this.overlapsPlayer() && !game.scene?.isInGameCutscene()) {
+      this.goMode("talking");
+      const script = this.scriptToPerform.replace(/^#/, "");
+      if (script && script !== "none") game.scene?.playInGameCutScene(script);
+      this.performed = true;
+    }
+    next();
+  }
+
+  private overlapsPlayer(): boolean {
+    const p = game.player; if (!p) return false;
+    const pm = p.tryGet(Movement); const sm = this.entity.tryGet(Movement);
+    if (!pm || !sm) return false;
+    return Math.abs(pm.x - sm.x) <= TRIGGER_REACH && Math.abs(pm.y - sm.y) <= TRIGGER_REACH;
+  }
 }

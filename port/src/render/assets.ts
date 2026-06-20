@@ -21,6 +21,7 @@ export interface AssetIndex {
   anims: Record<string, AnimMeta>;
   sounds?: Record<string, string>; // SFX name (#attack.sound / collectSound / dieSound) -> file
   music?: Record<string, string>;  // musicName -> file
+  cutscenes?: Record<string, string>; // K12: cutscene script name (stones1..10) -> file (lazy loaded)
 }
 
 export const mapList = mapsIndex as MapMeta[];

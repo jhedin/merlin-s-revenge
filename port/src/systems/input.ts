@@ -82,15 +82,22 @@ export class Input {
 
   /** keyForControl (keyMaster.getKeyFor): the live bound key for a control name, for #key interpolation.
    *  Movement controls resolve to the active scheme's first key; fire/charge map to the primary action. */
-  keyForControl(control: string): string {
+  keyForControl(control: string): string { return this.keyForControlInScheme(control, this.schemeName); }
+
+  /** the bound key for a control under a GIVEN scheme (no mutation) — for the key-config preview table. */
+  keyForControlInScheme(control: string, scheme: SchemeName): string {
+    const keys = SCHEMES[scheme] ?? this.keys;
     const c = control.replace(/^#/, "").toLowerCase();
     const first = (list: string[]) => list[0] ?? "";
     switch (c) {
-      case "up": return first(this.keys.up);
-      case "down": return first(this.keys.down);
-      case "left": return first(this.keys.left);
-      case "right": return first(this.keys.right);
+      case "up": return first(keys.up);
+      case "down": return first(keys.down);
+      case "left": return first(keys.left);
+      case "right": return first(keys.right);
       case "fire": case "attack": case "magic": case "charge": return "mouse"; // hold-to-charge on the mouse/space
+      // summon controls (the stones cutscene interpolates `#key #wizard` / `#key #wizardSelector`):
+      case "wizard": return "Q";          // summon the selected wizard (the documented summon key)
+      case "wizardselector": return "Tab"; // cycle the wizard to summon
       default: return c;
     }
   }

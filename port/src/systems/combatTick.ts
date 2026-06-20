@@ -21,7 +21,14 @@ export function rebuildCombatSubstrate(): void {
   //    Ordering it before the roster reconcile means a #leaveGame fired below (death/exit) sees a
   //    current unit map when its reactive refreshTarget runs — so a hunter re-acquires immediately.
   tm.unitMap.clear();
+  // K4: a parallel broad-phase over live bullets (the pBulletMap) so spellcasters can dodge incoming
+  // bolts (findNearestEnemyBullets). Bullets churn heavily; rebuilt fresh each tick like the unit map.
+  tm.bulletMap.clear();
   for (const e of game.entities) {
+    if (e.type === "bullet" && !e.send("isFinished")) {
+      const p = e.send("getPos") as { x: number; y: number };
+      tm.bulletMap.insert(e, p.x, p.y);
+    }
     if (!isCombatant(e)) continue;
     live.add(e);
     if (e.send("isDead")) continue;

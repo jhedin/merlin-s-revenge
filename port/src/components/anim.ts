@@ -37,8 +37,23 @@ export class Anim extends Component {
   private action = "stand";
   private frame = 0;
   private timer = 0;
+  private extraDelay = 0;   // modWeaponTechnique.frameExtendDelay: extra frames added to the current frame's delay
 
-  override init(cfg: Record<string, any>): void { this.char = cfg["animChar"] ?? "mer"; }
+  override init(cfg: Record<string, any>): void { this.char = cfg["animChar"] ?? "mer"; this.extraDelay = 0; }
+
+  // frameAdvance (modWeaponTechnique.skipFramesForWeaponTechnique → me.big.frameAdvance): step the strip
+  // one frame early (faster attack cadence). Wraps for looped strips, clamps for one-shots; resets the
+  // per-frame timer so the early advance counts as a fresh frame.
+  frameAdvance(): void {
+    const anim = this.animFor(this.action);
+    if (!anim || anim.frames.length <= 1) return;
+    if (this.isLooped(this.action, anim)) this.frame = (this.frame + 1) % anim.frames.length;
+    else this.frame = Math.min(this.frame + 1, anim.frames.length - 1);
+    this.timer = 0;
+  }
+  // frameExtendDelay (modWeaponTechnique.addFramesForWeaponTechnique → me.big.frameExtendDelay): hold the
+  // current frame for `n` extra delay-ticks (slower attack cadence for negative-technique units).
+  frameExtendDelay(n: number): void { this.extraDelay += Math.max(0, n); }
 
   private pickAction(): string {
     if (this.entity.send("isDead")) return "grave";
@@ -55,16 +70,17 @@ export class Anim extends Component {
 
   update(next: NextFn): void {
     const action = this.pickAction();
-    if (action !== this.action) { this.action = action; this.frame = 0; this.timer = 0; }
+    if (action !== this.action) { this.action = action; this.frame = 0; this.timer = 0; this.extraDelay = 0; }
     const anim = this.animFor(action);
     if (anim && anim.frames.length > 1) {
       // per-frame delay (objAnimStrip.moveNextFrame: pDelay.tim[2] = pDelayList.nextValue()): the current
       // frame's own `dela` gates the advance; the counter steps by gGameSpeed (pDelay.inc = 1*gGameSpeed).
       const cur = anim.frames[this.frame % anim.frames.length]!;
-      const frameDelay = Math.max(1, cur.dela ?? anim.delay);
+      // modWeaponTechnique.frameExtendDelay adds `extraDelay` to this frame's own `dela` (slower cadence).
+      const frameDelay = Math.max(1, (cur.dela ?? anim.delay) + this.extraDelay);
       this.timer += game.gameSpeed;
       if (this.timer >= frameDelay) {
-        this.timer = 0;
+        this.timer = 0; this.extraDelay = 0; // the held-extra is spent once this frame finally advances
         // cyclic strips wrap; one-shot strips advance to the last frame and hold (data-driven loop flag)
         if (this.isLooped(action, anim)) this.frame = (this.frame + 1) % anim.frames.length;
         else this.frame = Math.min(this.frame + 1, anim.frames.length - 1);

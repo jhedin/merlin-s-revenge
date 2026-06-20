@@ -32,7 +32,7 @@ thing still inert in mr4Demo is `#player` (the spawn marker, not a mechanic).
 
 | Domain | Coverage | One-line state |
 |---|---|---|
-| AI & combat engine | ~88% | **A1** vector `takeHit` (damage == knockback) + **B1** `teamMaster`/`findTarget`/`CpuAI` committed-target FSM (replaced the 4-branch stub) + **B2** `WeaponManager`/`Counter` cooldowns/data-driven charge + **K1** faithful damage coupling (inertia damps DAMAGE; enemy melee `power·strength·mult·0.18`, enemy bullet `speed·power·mult·0.40`, player melee unchanged ×2.5). Remaining: bullet-dodge kiting, ghost possession, hair/builder AIs (unreachable) |
+| AI & combat engine | ~88% | **A1** vector `takeHit` (damage == knockback) + **B1** `teamMaster`/`findTarget`/`CpuAI` committed-target FSM (replaced the 4-branch stub) + **B2** `WeaponManager`/`Counter` cooldowns/data-driven charge + **K1** faithful damage coupling (inertia damps DAMAGE; enemy melee `power·strength·mult·0.18`, enemy bullet `speed·power·mult·0.40`, player melee unchanged ×2.5) + **K3-K8a** AI completeness (beeline→scenic pathfinding, bullet-dodge kiting, ghost possession, setMultiAttack, weaponTechnique, builder AI). Remaining: K2 spell-actor lifecycle; hair/weapon-seek AIs (unreachable, evidence-backed) |
 | Spells / weapons / projectiles | ~45% | B2 weapon manager + C charged blasts (cBlast/darkBlast/arctic/heal), splash/`#explode` (energyPulse/thunder/freeze/towerAxe), takeFreeze/takeHeal payload-lists, summons (army/monster), dwarfTower. Beams/fireBullets-streaming/GMG/reservations deferred |
 | Actors / bosses / dwellings | ~26% | All 263 records parse (stats resolve); gaps are art + AI wiring + per-actor behavior; bosses ~55% (E1 reincarnation cascade ☑) |
 | Player / progression / masters | ~50% | Progression math faithful; **G save tree v2** (whole current-room + cleared flags + player + potion/army masters, locator-based target restore); **army reserve** (teleport-to-reserve, re-field at level); **real medikit** stockpile + potion counter; 5 of 39 masters |
@@ -653,3 +653,57 @@ Status: ☐ not started · ◐ in progress · ☑ done
   px-scale decoupling (player has no inertia so the lethal direction is uncoupled — `ENEMY_DAMAGE_SCALE`
   is the only player-protection lever); the spell's faithful radial magic vector waits for K2's live spell
   actor. Next: K2 (spell-actor lifecycle) or another Tier-1 backlog item.
+- ☑ **K7. `modWeaponTechnique` (attack-anim speedup accumulator).** New `WeaponTechnique` component: while
+  a CPU is in its `#attack` window (the controller exposes `attackActive()` for the strike frames), each
+  gated cycle accrues `technique` into a running `cache`; every full ±100 is spent — positive →
+  `Anim.frameAdvance()` (skip an attack-anim frame → faster punches), negative → `Anim.frameExtendDelay()`
+  (hold a frame → slower). The remainder persists (only init zeroes it), so a high-technique unit keeps
+  speeding up the longer it attacks; `#levelUp` adds 2. Default 0 → the loop never fires (the player + 26
+  zero-technique actors are unchanged). Wired before `Anim` in the EnemyArchetype; `weaponTechnique` from
+  data (ninja/shrouder 20, kongFuChicken 200, bowOrc/archer/goblinArcher negative). In-browser
+  (`?map=works_mr4Demo`): goblinArcher units carry technique −75 (slower attacks); no pageerrors.
+- ☑ **K3. `modPathFinding` beeline→scenic (NOT A*).** New `PathFinding` helper on `CpuAI` replacing the
+  perpendicular-detour `seek`. Faithful FSM: beeline straight at the goal; on a 5-frame zero-movement stall
+  (read off the actual position delta, the port's `getMoveVect()` stand-in) → `#scenic` with ONE random
+  `±100px` waypoint (`PointRoughly`, clamped to the map rect so a wall-pinned unit can't drift off-map);
+  on the next stall → back to beeline; arrival within 5px. A random-walk-around-obstacles, not a planned
+  path. Open terrain never stalls → straight chase (room-1 unchanged). Unblocks K4/K5/K6/K8a (all issue
+  `findPathToLoc`).
+- ☑ **K4. Bullet-dodge kiting (`objAiCPUSpellCaster.updateMoveToOptimumPosition`).** A second broad-phase
+  `bulletMap` on `TeamMaster` (a parallel `UnitMap`, filled in `combatTick` from live `Projectile`s) +
+  `findNearestEnemyBullets` (nearest 2 HOSTILE-owned bullets, expanding shells). Spellcasters
+  (`dodgesBullets`, set when `aiType==#objAiCPUSpellCaster`) get a new `optimumPosition` mode with the
+  strict priority chain: `runTangentToObjects` (run PERPENDICULAR to the incoming bullet — the
+  `GeomTangentPoint` shape, side from the 2-bullet geometry, blended 25–75% with the straight-flee mirror)
+  > flee a near enemy > approach the target past the buffer ring > idle-and-fire. Layers on the existing
+  `runReload` (kept for plain ranged enemies). `attackFin` retargets every shot.
+- ☑ **K5. Ghost possession (`objAiCPUGhost`).** Replaced the `wander` approximation with the faithful FSM:
+  `findTarget` → `findUnitOfType(#monk, teamWhenAlive)` (first rostered monk on `#aldevar`) → drift via K3
+  `findPathToLoc` → on arrival within 10px `attemptPossess`: `mergeExperience` (monk gains the FULL
+  `imWorth+gained`) + `glowPink()` + the ghost finishes (dies → grave, routed through `takeHit` so
+  `#leaveGame` fires cleanly). Where no monk is rostered (e.g. `samii`: 3 monkGhosts, 0 monks) the ghost
+  drifts to random map points forever — faithful. `teamWhenAlive` (#aldevar) threaded through `spawnEnemy`.
+  In-browser: a monkGhost spawned near a monk drifts to it, **possesses** it (ghost dies, monk XP 0→3); no
+  pageerrors.
+- ☑ **K6. `setMultiAttack` (range-based 2-weapon auto-switch).** A `#multiAttack:true` CPU (ninja, shrouder)
+  now carries BOTH weapons — weapon 1 = its natural ranged `#attack` (shuriken/throwSmoke), weapon 2 = its
+  `#weapon`'s `#attack` (ninjaSword melee / pinShooter ranged) — via a new `attack2` cfg on `WeaponManager`.
+  `WeaponManager.setMultiAttack` (faithful squared compares, the ranged-weapon-2 `bufferDist=reach`
+  override, the melee-target/`dist²>20` poke nuance) picks the current weapon by range each `moveToAttack`
+  tick; `CpuAI.syncWeaponMode` re-reads the band so the unit fires shuriken at range and switches to the
+  sword up close. (`#naturalRanged` isn't globally remapped to "ranged" — scope — so the two weapons' types
+  are set explicitly for the multiAttack carriers.)
+- ☑ **K8a. Builder AI (`objAiCPUBuilder`).** `dwarf`/`goblinBuilder` (placed in `works_mr4Demo`) now build
+  instead of fighting: a builder FSM `lookForBuilding` → `walkToBuilding` (K3 path to the site) → `build`
+  (accrue `buildRate`; every full 100 advances a build frame; the structure spawns `underConstruction` and
+  is marked built when finished) → on finish, `buildOne`/`buildDie`/`leaveWhenFinished` disposition (dwarf
+  builds one `dwarfTower` turret then retires; goblinBuilder builds a `goblinHouse`/`goblinHut`/… dwelling
+  then dies). No buildable site → falls back to the plain `CpuAI` fight (the builders carry a real
+  `#attack`). In-browser: an injected dwarf walks out, **constructs a dwarfTower**, then retires
+  (`leaveWhenFinished`); no pageerrors.
+- ☐ **K8b/K8c (unreachable, no code).** `objAiEnemyTargetSeek` ("hairSeek") and `objAICPUWeaponSeek` carry
+  **0 actor records** (`#AiType` grep empty across all 47 maps), `objAiEnemyTargetSeek`'s base class
+  `objAiEnemy` is absent from the source cast (cannot instantiate), and the weapon-drop economy
+  `objAICPUWeaponSeek` needs is unused. Evidence-backed dead engine code — left unbuilt (per the plan §g).
+  tsc clean; **324 tests** (+36: K3–K8a per-behavior). Room-1 no-regression: `playthrough_smoke` ends
+  `enemies:0, exitsOpen:true, errors:none`. K2 (spell-actor lifecycle) stays for a later pass.

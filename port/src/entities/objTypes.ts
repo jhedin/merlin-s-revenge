@@ -62,9 +62,9 @@ export function spawnRegionMarker(effect: RegionEffect, value: number | string, 
   return e.build({ x, y, walkSpeed: 0, box: 4, effect, value, actorType: actorName });
 }
 
-// Chatter archetype: a decorative stone NPC (static Anim + Team). The #stonesN cutscene scripts are not
-// bundled in the port, so per the original's own "temporarily disabled inGame Scripts" state (plan §g.8)
-// the stones spawn as inert decorative sprites (visible, non-blocking) that simply don't talk.
+// Chatter archetype: a stone cutscene-trigger NPC (static Anim + Team + the Chatter overlap FSM). The
+// #stonesN cutscene scripts are bundled (K12), so on player overlap the stone plays its #scriptToPerform
+// over the live game (playInGameCutScene) and latches. type "chatter" keeps it off room-clear.
 export const ChatterArchetype = new Archetype("chatter",
   [Identity, Movement, Anim, Team, Chatter],
   { defaults: { isDead: false, getTeam: "", getTeamRole: "#teamMembers", energyFrac: 1, getActorType: "" } });

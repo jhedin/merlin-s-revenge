@@ -107,6 +107,18 @@ export class ArmyMaster {
     return out;
   }
 
+  // getReserveArmy (showArmyMaster.start -> armyMaster.getReserveArmy): the displayable reserve roster for
+  // a team (default the player team #aldevar) — a flat list of banked units (one entry per record) sorted
+  // by type then level, for the showArmy paginated grid (K18). Each entry is the unit's display info.
+  getReserveArmy(team = "#aldevar"): { typ: string; team: string; level: number }[] {
+    const byTyp = this.reserve.get(team);
+    if (!byTyp) return [];
+    const out: { typ: string; team: string; level: number }[] = [];
+    for (const [typ, list] of byTyp) for (const d of list) out.push({ typ, team, level: d.level });
+    out.sort((a, b) => a.typ === b.typ ? b.level - a.level : a.typ.localeCompare(b.typ));
+    return out;
+  }
+
   // addSaveData (57-59): the whole nested structure as plain data.
   addSaveData(sd: Record<string, any> = {}): Record<string, any> {
     const out: Record<string, Record<string, ArmyDetails[]>> = {};

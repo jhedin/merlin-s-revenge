@@ -10,6 +10,7 @@ import { Freeze } from "../components/freeze";
 import { PlayerControl, EnemyAI } from "../components/control";
 import { Mana } from "../components/mana";
 import { WeaponManager, resolveAttack } from "../components/weapon";
+import { WeaponTechnique } from "../components/weaponTechnique";
 import { Hurt } from "../components/hurt";
 import { ColourTransform } from "../components/colourTransform";
 import { Reincarnate } from "../components/reincarnate";
@@ -31,7 +32,7 @@ const DEFAULTS = { isDead: false, getTeam: "", getTeamRole: "#teamMembers", ener
 // WeaponManager (modWeaponManager) sits after Mana (so addCooldownCounter reads manaRegeneration at
 // init) and supplies the data-driven #attack/charge/cooldown the control/AI driver dispatches on.
 export const PlayerArchetype = new Archetype("player", [Identity, PlayerControl, Freeze, Mana, WeaponManager, Movement, Anim, ColourTransform, Experience, Energy, Hurt, Medikit, ExtraLives, WastedMode, Team, Targeting], { defaults: { ...DEFAULTS, getActorType: "", getNumOfMedikits: 0, getExtraLives: 0, isWasted: false } });
-export const EnemyArchetype = new Archetype("enemy", [Identity, EnemyAI, Freeze, Mana, WeaponManager, Movement, Anim, ColourTransform, Experience, Energy, Hurt, Reincarnate, Team, Targeting], { defaults: { ...DEFAULTS, getActorType: "", getKilledInAction: false } });
+export const EnemyArchetype = new Archetype("enemy", [Identity, EnemyAI, Freeze, Mana, WeaponManager, WeaponTechnique, Movement, Anim, ColourTransform, Experience, Energy, Hurt, Reincarnate, Team, Targeting], { defaults: { ...DEFAULTS, getActorType: "", getKilledInAction: false } });
 // Dwellings are static (no AI) but reuse Movement for position + Energy/Team so they're targetable.
 export const DwellingArchetype = new Archetype("dwelling", [Identity, Dwelling, Movement, Anim, ColourTransform, Energy, Hurt, Team, Targeting], { defaults: { ...DEFAULTS, getActorType: "" } });
 
@@ -159,7 +160,11 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     }
   }
   const animType = typeof atk["animType"] === "string" ? atk["animType"] : "";
-  const ranged = opts.ranged ?? (animType === "#weaponRanged" || animType === "#magic");
+  // K6: a #multiAttack CPU's natural attack is its RANGED weapon 1 (#naturalRanged shuriken/throwSmoke),
+  // so it fires at range (its FSM is ranged) and switches to the melee weapon 2 up close.
+  const isMulti = d["multiAttack"] === true;
+  const ranged = opts.ranged ?? (animType === "#weaponRanged" || animType === "#magic"
+    || (isMulti && animType === "#naturalRanged"));
   const aiType = str("AiType", "");
   // agility/dexterity seed the WeaponManager cooldown-counter inc (melee=agility, ranged=dexterity).
   const agility = num("agility", 1);
@@ -188,11 +193,39 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
   const enemyAttack = hasAttack
     ? resolveAttack({ ...atk, cooldown: effectiveCooldown })
     : resolveAttack({ name: "#natural", animType: "#naturalMelee", cooldown: fallbackCooldown });
+  // K6: a multiAttack actor's natural attack IS its ranged weapon 1 — force its type so getCurrentAttack()
+  // and setMultiAttack's ranged/melee branch are correct (the global animType map keeps it "melee" for scope).
+  if (isMulti && (animType === "#naturalRanged" || animType === "#weaponRanged")) (enemyAttack as any).type = "ranged";
   // FSM configuration from #AiType: spellcasters/flying-bombers kite (runReload after a shot); the
   // ghost keeps the drift approximation (possession is out of scope). Bombers now run a normal attack
   // loop (no suicide). aiKind/targetTypes are gone — allegiance is data-driven via Targeting.
   const ghost = aiType === "#objAiCPUGhost";
   const runReload = !ghost && ranged && (aiType === "#objAiCPUSpellCaster" || animType === "#magic" || aiType === "#objAiFlyingBomber");
+  // K4: a spellcaster runs the bullet-dodge optimumPosition chain (tangent-run incoming bullets).
+  const dodgesBullets = aiType === "#objAiCPUSpellCaster";
+  // K8a: a builder (dwarf/goblinBuilder) walks to a site + incrementally builds its #unitToBuild dwelling.
+  const builder = aiType === "#objAiCPUBuilder";
+  const unitToBuild = Array.isArray(d["unitToBuild"])
+    ? (d["unitToBuild"] as string[]).filter((s) => typeof s === "string" && s !== "#none").map((s) => s.replace(/^#/, ""))
+    : [];
+  // K6: a #multiAttack:true CPU (ninja/shrouder) carries weapon 1 (natural ranged #attack) + weapon 2
+  // (the #weapon's melee #attack), range-switched by setMultiAttack. Build the second weapon's #attack.
+  const multiAttack = d["multiAttack"] === true;
+  let secondAttack: ReturnType<typeof resolveAttack> | undefined;
+  if (multiAttack && typeof d["weapon"] === "string") {
+    const w2 = objAttack((registry.resolveActor(d["weapon"].replace(/^#/, "")) ?? {})["attack"]);
+    if (w2["animType"]) {
+      // weapon 2 gets the same effective-cooldown calibration as a single weapon of its type.
+      const w2ranged = w2["animType"] === "#weaponRanged" || w2["animType"] === "#naturalRanged" || w2["animType"] === "#magic";
+      const w2raw = typeof w2["cooldown"] === "number" ? w2["cooldown"] : (w2ranged ? 40 : 18);
+      const w2frames = Math.max(1, w2raw + (w2ranged ? 18 : 6));
+      const w2inc = w2ranged ? dexterity : agility;
+      secondAttack = resolveAttack({ ...w2, cooldown: Math.round(w2frames * (w2inc > 0 ? w2inc : 1) + 1) });
+      // K6: #naturalRanged isn't globally mapped to "ranged" (scope), so set the two weapons' TYPES
+      // explicitly for the range-switch (weapon 1 = ranged natural; weapon 2 = its real melee/ranged type).
+      (secondAttack as any).type = w2ranged ? "ranged" : "melee";
+    }
+  }
   // SPLASH-bullet caster (C2): a ranged CPU whose #attack.bullet is a splash/explode bullet (dwarfTower's
   // towerAxe, energyPulse casters) fires the real splash bullet — on land/collide it resolves an AREA hit
   // through SplashDamage instead of single-target. Resolve that bullet's #attack (+ top-level splashDamageOn).
@@ -225,9 +258,19 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     animChar: opts.animChar ?? actorName, box: 14,
     inertia: num("inertia", 0), // resists knockback (modGameObject damping); heavy orcs get shoved less
     ranged, runReload, ghost, splashBullet, bulletAttack,
-    // WeaponManager: the enemy's single weapon (one #attack) + cooldown-counter inc stats. manaRegen
-    // is forwarded so a magic enemy's live counter inc (Mana.regeneration) matches the calibration.
-    attack: enemyAttack, agility, dexterity, mana_regeneration: manaRegen,
+    // K4/K5/K6/K8a AI config: bullet-dodge caster, multi-attack 2-weapon switch, builder build-loop, the
+    // ghost's possess team. Defaults keep every other actor on the existing committed-target FSM.
+    dodgesBullets, multiAttack, builder, unitToBuild,
+    buildRate: num("buildRate", 100), buildOne: d["buildOne"] !== false,
+    buildDie: d["buildDie"] === true, leaveWhenFinished: d["leaveWhenFinished"] === true,
+    bufferDist: num("bufferDist", 100),
+    teamWhenAlive: typeof d["teamWhenAlive"] === "string" ? (d["teamWhenAlive"] as string) : str("team", "#monsters"),
+    // K7 modWeaponTechnique: the attack-anim speedup rating (default 0 = no effect). ninja/shrouder 20,
+    // kongFuChicken 200, bowOrc/archer negative.
+    weaponTechnique: num("weaponTechnique", 0),
+    // WeaponManager: the enemy's weapon(s) + cooldown-counter inc stats. manaRegen is forwarded so a magic
+    // enemy's live counter inc (Mana.regeneration) matches the calibration. attack2 = K6 melee weapon 2.
+    attack: enemyAttack, attack2: secondAttack, agility, dexterity, mana_regeneration: manaRegen,
     // real mana_* so a CPU caster charges to its true ceiling (summon tiers / charge-scaled spell power)
     mana_capacity: num("mana_capacity", 10), mana_flow: num("mana_flow", 1), mana_burst: num("mana_burst", 1),
     atkCooldown: typeof atk["cooldown"] === "number" ? atk["cooldown"] : undefined,

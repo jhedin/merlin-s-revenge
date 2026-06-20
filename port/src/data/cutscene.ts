@@ -71,6 +71,35 @@ function interpretArg(verb: string, words: string[], chars: Record<string, strin
   return { kind: "symbol", sym: words[0]! };
 }
 
+// K12 on-demand cutscene loader: fetch + parse a named cutscene script (stones1..10) lazily on first
+// trigger and cache it by name. The intro/wasted/complete scripts keep eager-loading in main.ts; the
+// stones load lazily here (the generic loader removes the per-script special-case). `urlFor` maps a name
+// to its bundled file via the cutscenes manifest (assets.json), falling back to cutscenes/<name>.txt.
+const cutsceneCache = new Map<string, Cutscene>();
+
+export async function loadCutscene(
+  name: string,
+  manifest: Record<string, string> | undefined,
+  fetchText: (url: string) => Promise<string> = (u) => fetch(u).then((r) => r.text()),
+): Promise<Cutscene | null> {
+  const cached = cutsceneCache.get(name);
+  if (cached) return cached;
+  const file = manifest?.[name] ?? `cutscenes/${name}.txt`;
+  try {
+    const src = await fetchText("/assets/" + file);
+    const cut = parseCutscene(src);
+    cutsceneCache.set(name, cut);
+    return cut;
+  } catch {
+    return null;
+  }
+}
+
+/** test/seam hook: inject a parsed cutscene into the cache (so the engine can play it without a fetch). */
+export function cacheCutscene(name: string, cut: Cutscene): void { cutsceneCache.set(name, cut); }
+/** drop the cutscene cache (test isolation). */
+export function clearCutsceneCache(): void { cutsceneCache.clear(); }
+
 export function parseCutscene(src: string): Cutscene {
   const chars: Record<string, string> = {};
   const steps: CutStep[] = [];

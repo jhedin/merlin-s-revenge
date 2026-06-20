@@ -26,14 +26,15 @@ describe("CpuAI committed-target FSM", () => {
   };
 
   it("commits a target and does NOT twitch-retarget to a closer one before the 30-frame counter", () => {
-    const { orc, t } = setup([0, 200], [250, 200]); // far apart so it stays in moveToAttack (seeks, no attack)
+    const { orc, t } = setup([320, 200], [600, 200]); // far apart so it stays in moveToAttack (seeks, no attack)
     rebuildCombatSubstrate();
     orc.send("update");                                  // findTarget -> commit t -> moveToAttack
     expect(orc.send("getAiMode")).toBe("moveToAttack");
     expect(orc.send("getAiTarget")).toBe(t);
 
-    // introduce a MUCH closer hostile; a per-tick scanner would jump to it immediately.
-    const closer = spawnPlayer(40, 200); closer.get(Team).team = "#aldevar";
+    // introduce a MUCH closer hostile ON the orc's path to t (so it stays nearest after seeking right);
+    // a per-tick scanner would jump to it immediately.
+    const closer = spawnPlayer(360, 200); closer.get(Team).team = "#aldevar";
     game.entities.push(closer);
     for (let i = 0; i < 25; i++) { rebuildCombatSubstrate(); orc.send("update"); } // < 30 frames
     expect(orc.send("getAiTarget")).toBe(t);             // still committed to the original (no twitch)
@@ -43,7 +44,7 @@ describe("CpuAI committed-target FSM", () => {
   });
 
   it("drops its target reactively on #leaveGame (target death) and re-acquires next tick", () => {
-    const { orc, t } = setup([0, 200], [250, 200]);
+    const { orc, t } = setup([320, 200], [560, 200]);
     rebuildCombatSubstrate(); orc.send("update");
     expect(orc.send("getAiTarget")).toBe(t);
 
@@ -55,7 +56,7 @@ describe("CpuAI committed-target FSM", () => {
   });
 
   it("enters #dazed (zero intent) on reel and returns to #findTarget when it clears", () => {
-    const { orc, t } = setup([0, 200], [120, 200]);
+    const { orc, t } = setup([320, 200], [440, 200]);
     rebuildCombatSubstrate(); orc.send("update");
     expect(orc.send("getAiMode")).toBe("moveToAttack");
 
@@ -73,7 +74,7 @@ describe("CpuAI committed-target FSM", () => {
   });
 
   it("attackFin: after a strike it re-acquires (clear + refresh)", () => {
-    const { orc, t } = setup([100, 200], [110, 200]); // adjacent -> in melee reach
+    const { orc, t } = setup([320, 200], [330, 200]); // adjacent -> in melee reach
     rebuildCombatSubstrate(); orc.send("update");        // tick 1: findTarget -> commit -> moveToAttack
     rebuildCombatSubstrate(); orc.send("update");        // tick 2: in reach -> attack -> attackFin re-acquires
     const hp = (t.get(Energy) as any).energy as number;

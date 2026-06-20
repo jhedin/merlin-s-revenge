@@ -39,6 +39,12 @@ export interface GameContext {
   spawnUnit?: (name: string, x: number, y: number, opts?: { animChar?: string; ranged?: boolean }) => Entity;
   /** summon a friendly ally (set in main; used by player summon without an import cycle) */
   spawnAlly?: (name: string, x: number, y: number, animChar?: string) => Entity;
+  /** spawn any tile/actor-type symbol -> Entity (set in main; K8a builder constructs dwellings/towers) */
+  spawnFromSymbol?: (sym: string, x: number, y: number) => Entity | null;
+  /** K12: the scene FSM cutscene trigger. A Chatter stone, on player overlap, plays its #scriptToPerform
+   *  via playInGameCutScene. Minimal surface (just the trigger + the in-game-cutscene gate) — avoids an
+   *  import cycle with sceneManager. */
+  scene?: { playInGameCutScene(name: string): void; isInGameCutscene(): boolean };
 }
 
 export const game: GameContext = {

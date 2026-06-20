@@ -17,17 +17,33 @@ omitted). Worked top-down by fidelity impact. Each item cites where it was defer
 - ☐ **K2. Spell-actor live-growth lifecycle.** `objAiAttack.ensureSpell`/`chargeSpell`/`releaseMagic`: a
   charged spell is a live `objSpell` actor that grows over the caster's head and converts to bullets on
   release (`getCurrentCharge`, `calcChargeLoc`, attack-frame gating, eyestrain). Port currently does
-  instant `fireBullet`-on-release. [B2 §g]
-- ☐ **K3. `modPathFinding` beeline→scenic / A*.** `findPathToLoc`, `moveToLoc` target-mode, `objMoveXY`
-  stall detection. Port uses the `seek`/perpendicular-detour heuristic. [B1 §g]
-- ☐ **K4. Bullet-dodge kiting.** `objAiCPUSpellCaster.updateMoveToOptimumPosition`: `runTangentToObjects`
-  over `findNearestEnemyBullets` (the `bulletMap`). Port kites with the simple `runReload` band. [B1 §g]
-- ☐ **K5. Ghost possession.** `objAiCPUGhost`: `findUnitOfType(#monk)` + drift + `attemptPossess`
-  (`mergeExperience` + `goMode(#finish)`). Port uses the `wander` approximation. [B1 §g]
-- ☐ **K6. setMultiAttack.** Range-based 2-weapon auto-switch for CPUs (ranged weapon 1 + melee weapon 2).
-  [B2 §g]
-- ☐ **K7. modWeaponTechnique.** Attack-anim speedup accumulator. [B2 §g]
-- ☐ **K8. Remaining AIs.** `objAiHairSeek` / builder (`objAiBuilder`) / `objAiWeaponSeek` — MISSING. [B1 §g]
+  instant `fireBullet`-on-release. [B2 §g] *(deferred to a later pass; not in the K3–K8a AI-completeness batch)*
+- ☑ **K3. `modPathFinding` beeline→scenic (NOT A*).** `PathFinding` helper on `CpuAI`: beeline at the goal;
+  on a 5-frame zero-movement stall → `#scenic` with one random `±100px` waypoint (`PointRoughly`, map-rect
+  clamped); next stall → beeline; arrival within 5px. Replaced the `seek`/perpendicular-detour heuristic.
+  Open terrain never stalls (room-1 unchanged). Unblocks K4/K5/K6/K8a.
+- ☑ **K4. Bullet-dodge kiting.** `bulletMap` broad-phase on `TeamMaster` + `findNearestEnemyBullets`
+  (hostile-owned only) + a caster `optimumPosition` mode running `runTangentToObjects` (perpendicular to the
+  incoming bullet, blended 25–75% with the straight-flee mirror) > flee > approach > idle. Layers on
+  `runReload` (kept for plain ranged enemies). Gated by `dodgesBullets` (set for `#objAiCPUSpellCaster`).
+- ☑ **K5. Ghost possession.** `objAiCPUGhost`: `findUnitOfType(#monk, teamWhenAlive)` + drift (K3) +
+  `attemptPossess` (`mergeExperience` = monk gains FULL imWorth+gained, `glowPink`, ghost `#finish`/grave).
+  Replaced `wander`. No-monk maps (samii) drift forever — faithful.
+- ☑ **K6. setMultiAttack.** `WeaponManager.setMultiAttack` + 2-weapon spawn (`attack2`): ninja/shrouder
+  carry ranged weapon 1 + melee weapon 2, range-switched each `moveToAttack` tick (squared compares, the
+  ranged-weapon-2 buffer override, the melee-target poke nuance).
+- ☑ **K7. modWeaponTechnique.** `WeaponTechnique` component: in the `#attack` window, accrue `technique`,
+  spend ±100 → `Anim.frameAdvance`/`frameExtendDelay` (faster/slower attack anim); `#levelUp` +2; default 0
+  = no effect (player + 26 actors unchanged). ninja/shrouder 20, kongFuChicken 200, archers negative.
+- ☑ **K8a. Builder AI (`objAiCPUBuilder`).** `dwarf`/`goblinBuilder` build instead of fighting: walk-to-site
+  (K3) → accrue `buildRate` advancing build frames → spawn the `#unitToBuild` dwelling/tower; dwarf builds
+  one `dwarfTower` then retires (`leaveWhenFinished`), goblinBuilder builds a goblin dwelling then dies
+  (`buildDie`); no site → plain-CpuAI fight fallback. (The K-backlog's "MISSING" was a port gap on reachable
+  actors — placed in `works_mr4Demo`.)
+- ☐ **K8b/K8c. `objAiEnemyTargetSeek` ("hairSeek") + `objAICPUWeaponSeek` — UNREACHABLE (no code).** Both
+  carry **0 actor records** (`#AiType` grep empty across all 47 maps); `objAiEnemyTargetSeek`'s base class
+  `objAiEnemy` is absent from the source cast (cannot instantiate); the weapon-drop economy `objAICPUWeaponSeek`
+  needs is unused. Evidence-backed dead engine code — left unbuilt (per K2-K8 plan §g).
 
 ## Tier 2 — spells / content mechanics
 - ☐ **K9. armySummon reservation requirement.** `createUnit` returns `#none` for `armySummon` with
@@ -36,8 +52,13 @@ omitted). Worked top-down by fidelity impact. Each item cites where it was defer
   charge-wobble in `charge.ts`. [C3]
 - ☐ **K11. `calcAttackChargeStart` faithful overwrite.** Raw Lingo overwrites the start (discards burst
   in one branch); port kept `0+burst` to match the old number. Reconcile. [C, charge.ts note]
-- ☐ **K12. Chatter cutscenes.** Bundle the `scr_stonesN` scripts so stones play their cutscene (port
-  spawns them inert — the original's "disabled inGame scripts" fallback). [I5 §g.8]
+- ☑ **K12. Chatter cutscenes.** Bundled all 10 `scr_stonesN` scripts in `build_assets.ts`; generic
+  `loadCutscene(name)` (lazy fetch+parse+cache); `SceneManager` widened to an arbitrary named scene + a
+  default-finish→resume branch (mirrors `movieMaster.cutSceneFinished` fall-through) + `playInGameCutScene`
+  (`#ingame` env binds the LIVE Merlin, combat paused, ulin spawned, above-head speech bubble); the
+  `Chatter` overlap FSM (320-reach box, `pPerformed` latch, talking-member swap) plays its
+  `#scriptToPerform` over the live game — replacing the inert sprite. Intro/wasted/complete unchanged.
+  Exercised in `?map=works_mr4Demo` (stones1 in room (2,14)). [I5 §g.8]
 - ☐ **K13. recordInRoomState:false.** Fire mines (`#recordInRoomState:false`) shouldn't snapshot into
   pState (re-spawn fresh). [I §c.9 note]
 
@@ -46,11 +67,22 @@ omitted). Worked top-down by fidelity impact. Each item cites where it was defer
   [I8 §g.2]
 - ☐ **K15. `objTransColor` exact tween.** Real speed-33 white→black tween + true `#current`-start colour
   (port uses linear + black-start). [F3]
-- ☐ **K16. Cutscene verbs: prop / walkScroll / random-flash.** Staged no-op; implement. [H1 §f.1]
-- ☐ **K17. Lights/fade per-actor fader.** Per-actor fade counting vs the fixed shared-duration model. [H1]
-- ☐ **K18. Screen content.** credits / profile / showArmy / instructions / key-config overlays (transitions
-  are wired; the screens are stubbed). [H2 §g]
-- ☐ **K19. Screen-transition tweens.** Instant today. [H2/F3]
+- ☑ **K16. Cutscene verbs: prop / walkScroll / random-flash.** Implemented in the Thespian engine:
+  `produceProp`/`putAwayProp`/`dropProp` (a carried character tracks its carrier, #prop suppresses
+  turnToFace), `propAt` sets #prop status, `walkScrollLeft/Right/Stop` (continuous scroll-walk; a #prop
+  rides off), `backgroundColourRandomFlash` (self-restarting random colour loop). Support-only
+  (no shipped script uses them) → golden/unit-tested. [H1 §f.1]
+- ☑ **K17. Lights/fade per-actor fader.** Each cutscene actor has its OWN fade state (alpha + fadeTarget);
+  `lightsUp`/`lightsDown` start a fader on every actor, `fadeDown` on one — the line completes only when
+  the started-fader count reaches zero (objScriptPerformer.pWaitingForPlayers count-to-zero gate), not a
+  fixed shared duration. The host renderer applies each actor's alpha. Intro/wasted lights still look right. [H1]
+- ☑ **K18. Screen content.** `scenes/screens.ts` drives the wired overlay syms: credits (scroll-to-end,
+  complete→credits→title re-route), showArmy (paginate the G2 army reserve via unit stand frames, page
+  shadow guards), instructions (static), key-config (choose among the input schemes via the control→key
+  table / `keyForControlInScheme`). profileMaster is OUT (dev profiler). [H2 §g]
+- ☑ **K19. Screen-transition tweens.** `SceneManager` runs an inter-screen fade tween (screen flips at
+  once; the goScreen ACTION is deferred to finishTransition). `transitionFrames=0` test mode keeps the FSM
+  unit tests synchronous; the host (main) uses a 3-frame fade. [H2/F3]
 - ☐ **K20. Per-effect sound channels.** `soundMaster` 0–255 volume + channel management. [05-audit]
 - ☐ **K21. Grave system + pState graves.** A real grave actor on death + its pState persistence. [G/H]
 - ☐ **K22. Collision edges.** AI one-way-platform drop-through, discrete layer-Z, per-tile screen-exit

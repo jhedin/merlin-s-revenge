@@ -15,6 +15,7 @@ import { registry } from "./game/data";
 import { resolveAttack } from "./components/weapon";
 import { game, initContext } from "./game/context";
 import { spawnPlayer, spawnEnemy, spawnUnit, spawnAlly } from "./entities/archetypes";
+import { spawnFromSymbol } from "./entities/actorSerial";
 import { Anim } from "./components/anim";
 import { Energy } from "./components/combat";
 import { Mana } from "./components/mana";
@@ -24,10 +25,11 @@ import { Projectile } from "./components/projectile";
 import { sweepBullets, bulletPoolStats } from "./systems/bullets";
 import { rebuildCombatSubstrate } from "./systems/combatTick";
 import { saveGame, loadSave, buildSave, clearLegacy, pStateFromSave } from "./systems/save";
-import { parseCutscene } from "./data/cutscene";
+import { parseCutscene, loadCutscene } from "./data/cutscene";
 import { CutscenePlayer } from "./scenes/cutscenePlayer";
 import { Menu } from "./scenes/menu";
 import { SceneManager, type CutScene } from "./scenes/sceneManager";
+import { Screens } from "./scenes/screens";
 
 let flashMsg = ""; let flashUntil = 0;
 const flash = (m: string) => { flashMsg = m; flashUntil = Date.now() + 1200; };
@@ -110,16 +112,23 @@ async function main() {
   // browsers block audio until a user gesture — resume on the first key/click, then play title music
   const unlock = () => { audio.unlock(); audio.playMusic("baroque_rock_v1"); window.removeEventListener("keydown", unlock); window.removeEventListener("pointerdown", unlock); };
   window.addEventListener("keydown", unlock); window.addEventListener("pointerdown", unlock);
-  initContext({ input, assets, audio, tilePx: tile, entities: [], player: null, tick: 0, spawnEnemy, spawnUnit, spawnAlly });
+  initContext({ input, assets, audio, tilePx: tile, entities: [], player: null, tick: 0, spawnEnemy, spawnUnit, spawnAlly, spawnFromSymbol });
   // teamMaster.pUnitMap sizing from the current map (getTileLoc: world loc -> tile, origin 0,0). Rooms
   // render from (0,0) at map.tilePx, so origin 0,0 / tile=map.tilePx (fallback 32) matches getTileLoc.
   game.teamMaster.unitMap.configure(tile || 32, 0, 0);
+  game.teamMaster.bulletMap.configure(tile || 32, 0, 0); // K4: bullet broad-phase, same tiling as unitMap
 
   // --- scene state ---
   let player!: import("./engine/dispatch").Entity;
   let rooms!: RoomManager;
   let cutscene: CutscenePlayer | null = null;
+  let inGameCut: CutscenePlayer | null = null;  // K12: a chatter stones cutscene over the live game view
+  let inGameCutName: string | null = null;
+  let victoryCredits = false; // K18: the credits scroll is running on the victory (game-complete) screen
   let deathT = 0; // die-animation delay before the death pathway resolves (modExtraLives.attemptRespawn)
+
+  // K18 screen content (credits / showArmy / instructions / key-config), drawn over the live game / victory.
+  const screens = new Screens(assets, viewW, viewH);
 
   // cutscene host services (sounds/music/#key) shared by every scene the Thespian plays.
   const cutHost = {
@@ -184,6 +193,9 @@ async function main() {
   }
 
   // SceneManager (movieMaster + screenMaster + gameMaster): the explicit scene FSM (replaces the mode var).
+  // K19: a short inter-screen fade tween (screenMaster #fade); the goScreen action fires at its end. Kept
+  // brief (3 frames ≈ 100ms) so it's visible without delaying the title->intro / victory->title flow.
+  const SCREEN_TRANSITION_FRAMES = 3;
   const scene = new SceneManager({
     startGame: () => { clearLegacy(); freshGame(); },
     playCutScene: (s: CutScene) => {
@@ -205,7 +217,19 @@ async function main() {
     pause: () => { /* simulation is gated on scene.isPaused() in the loop */ },
     resume: () => { /* resume handled by the loop reading scene state */ },
     onTitle: () => audio.playMusic("baroque_rock_v1"),
-  });
+    // K12: play a chatter stone's #scriptToPerform over the LIVE game (the live Merlin bound as `m`,
+    // ulin spawned). loadCutscene fetches+parses+caches the bundled scr_stonesN script on first trigger.
+    playInGameCutScene: (name: string) => {
+      inGameCutName = name;
+      void loadCutscene(name, assets.index.cutscenes).then((cut) => {
+        if (!cut || inGameCutName !== name) { if (inGameCutName === name) scene.cutSceneFinished(name); return; }
+        audio.play("end_screen");
+        inGameCut = CutscenePlayer.withBound(cut, assets, viewW, viewH, { ...cutHost, ingame: true }, { m: player });
+      });
+    },
+  }, SCREEN_TRANSITION_FRAMES);
+  // expose the cutscene trigger to the Chatter overlap FSM (minimal surface; avoids an import cycle).
+  game.scene = { playInGameCutScene: (n) => scene.playInGameCutScene(n), isInGameCutscene: () => scene.isInGameCutscene() };
 
   // title + controls menus (data-driven objMenu)
   const mainTitleMenu = new Menu("", [
@@ -222,11 +246,19 @@ async function main() {
   ]);
   let titleMenu: Menu = mainTitleMenu;
 
+  // open a K18 overlay screen FROM the pause menu (gameMaster.menuOptionSelected -> screenOn). The base
+  // stays paused; the overlay screen draws + handles input until it closes back to the ingame menu.
+  const openScreen = (overlay: "showArmy" | "instructions" | "keyConfig") => () => {
+    screens.open(overlay); scene.screenOn(overlay);
+  };
   // in-game pause menu (objMenu): Save is SHADOWED while a cutscene plays (gameMaster.isMenuItemShadowed).
   const pauseMenu = new Menu("PAUSED", [
     { label: "Resume", action: () => scene.closeOverlay() },
     { label: "Save game", action: () => { doSave(); flash("game saved"); scene.closeOverlay(); }, shadowed: () => scene.isCutscene() },
     { label: "Load game", action: () => { if (doLoad()) flash("game loaded"); scene.closeOverlay(); } },
+    { label: "Show army", action: openScreen("showArmy") },
+    { label: "Instructions", action: openScreen("instructions") },
+    { label: "Choose keys", action: openScreen("keyConfig") },
     { label: "Return to title", action: () => scene.toTitle() },
   ]);
 
@@ -242,6 +274,9 @@ async function main() {
     () => {
       game.tick++;
       if (input.pressed("m")) { flash(audio.toggleMute() ? "sound off" : "sound on"); } // global mute
+      // K19: an inter-screen transition tween is running — advance it (the goScreen action fires at its end)
+      // and swallow this frame's input while it plays (no scene logic mid-transition).
+      if (scene.isTransitioning()) { scene.tickTransition(); input.endTick(); return; }
       const s = scene.current();
       if (s === "title") {
         titleMenu.tick(input);
@@ -255,8 +290,23 @@ async function main() {
           if (which) scene.cutSceneFinished(which);
         }
       } else if (s === "game") {
+        // K12: a chatter stones cutscene plays over the live game (combat paused). Tick it; on finish (or
+        // skip), route through cutSceneFinished -> resume. While its script is still loading, just hold.
+        if (scene.isInGameCutscene()) {
+          if (inGameCut && inGameCut.tick(input)) {
+            const name = inGameCutName; inGameCut = null; inGameCutName = null;
+            if (name) scene.cutSceneFinished(name);
+          }
+          input.endTick(); return;
+        }
         if (scene.isPaused()) {
-          if (input.pressed("escape")) scene.escapePressed(); else pauseMenu.tick(input);
+          const ov = scene.currentOverlay();
+          if (ov === "ingameMenu") {
+            if (input.pressed("escape")) scene.escapePressed(); else pauseMenu.tick(input);
+          } else if (ov) {
+            // a K18 overlay screen (showArmy / instructions / key-config): on close, pop back to the menu.
+            if (screens.handleInput(ov, input)) scene.screenOn("ingameMenu");
+          }
           input.endTick(); return;
         }
         if (input.pressed("escape")) { scene.escapePressed(); input.endTick(); return; }
@@ -276,16 +326,34 @@ async function main() {
         if (player.send("isDead")) { if (deathT === 0) deathT = 1; }
         if (deathT > 0 && ++deathT > 36) { deathT = 0; resolveDeath(); }
       } else if (s === "victory") {
-        if (input.pressed(" ") || input.pressed("enter")) scene.toTitle();
+        // K18: the game-complete cutscene routes to the CREDITS screen (creditsMaster) — scroll to the end,
+        // then to the title. Space/enter skips. (movieMaster: gGameCompleteScript -> #creditsScreen -> title.)
+        if (!victoryCredits) { victoryCredits = true; screens.openCredits(); }
+        const done = screens.tickCredits();
+        if (done || input.pressed(" ") || input.pressed("enter")) { victoryCredits = false; scene.toTitle(); }
       }
       input.endTick();
     },
     () => {
       renderer.clear();
+      renderScene();
+      // K19: the inter-screen fade tween — a black overlay rising 0->1 (off) then falling 1->0 (on) across
+      // the transition, drawn over whatever screen is showing (the screen flips at the midpoint).
+      if (scene.isTransitioning()) {
+        const prog = scene.transitionProgress();                 // 0..1 across off+on
+        const a = 1 - Math.abs(prog - 0.5) * 2;                   // triangle: 0 -> 1 (mid) -> 0
+        renderer.ctx.fillStyle = `rgba(0,0,0,${a.toFixed(3)})`;
+        renderer.ctx.fillRect(0, 0, viewW, viewH);
+      }
+    },
+  );
+
+  function renderScene() {
       const s = scene.current();
       if (s === "title") { drawTitle(renderer, viewW, viewH); titleMenu.render(renderer, viewW, viewH, false); return; }
       if (s === "controls") { drawTitle(renderer, viewW, viewH); controlsMenu.render(renderer, viewW, viewH, false); return; }
       if (scene.isCutscene() && cutscene) { cutscene.render(renderer); return; }
+      if (s === "victory") { screens.renderCredits(renderer); return; } // K18: game-complete -> credits scroll
       if (!rooms) { drawTitle(renderer, viewW, viewH); return; }
       const passive = rooms.room.layer("#backgroundPassive");
       const active = rooms.room.layer("#backgroundActive");
@@ -313,10 +381,12 @@ async function main() {
         map, loc: rooms.loc, cleared: rooms.clearedSet(), infested: rooms.infestedRooms(),
         playerPx: { x: pm.x, y: pm.y }, cursorPx: game.input.cursor(),
       }, viewW);
-      if (s === "victory") drawVictory(renderer, viewW, viewH);
-      if (scene.isPaused()) pauseMenu.render(renderer, viewW, viewH);
-    },
-  );
+      // K12: overlay the in-game chatter cutscene (spawned ulin + speech bubble) over the live game.
+      if (scene.isInGameCutscene() && inGameCut) inGameCut.renderInGame(renderer);
+      // K18 overlays (showArmy / instructions / key-config) draw over the live game via the screens host.
+      else if (scene.currentOverlay() && scene.currentOverlay() !== "ingameMenu") screens.render(renderer, scene.currentOverlay()!);
+      if (scene.currentOverlay() === "ingameMenu") pauseMenu.render(renderer, viewW, viewH);
+  }
   loop.start();
   (window as any).__game = game;
   (window as any).__scene = scene;
@@ -352,19 +422,8 @@ function drawTitle(renderer: Renderer, w: number, h: number) {
   ctx.textAlign = "left";
 }
 
-// (the old "YOU HAVE FALLEN" game-over overlay is gone: death now plays the wasted cutscene -> reload.)
-function drawVictory(renderer: Renderer, w: number, h: number) {
-  const ctx = renderer.ctx;
-  ctx.fillStyle = "rgba(8,16,32,0.78)"; ctx.fillRect(0, 0, w, h);
-  ctx.textAlign = "center";
-  ctx.fillStyle = "#fc4"; ctx.font = "bold 24px serif";
-  ctx.fillText("THE DUNGEON IS CLEARED", w / 2, h / 2 - 6);
-  ctx.fillStyle = "#9cf"; ctx.font = "11px serif";
-  ctx.fillText("Merlin's revenge is complete.", w / 2, h / 2 + 16);
-  ctx.fillStyle = "#fff"; ctx.font = "9px monospace";
-  ctx.fillText("press SPACE to return to the title", w / 2, h / 2 + 40);
-  ctx.textAlign = "left";
-}
+// (the old "YOU HAVE FALLEN" game-over overlay is gone: death now plays the wasted cutscene -> reload;
+// the static victory overlay is replaced by the K18 credits scroll on the victory screen.)
 
 function drawHud(renderer: Renderer, player: import("./engine/dispatch").Entity) {
   const ctx = renderer.ctx;

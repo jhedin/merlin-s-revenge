@@ -151,9 +151,24 @@ if (!maps.some((m) => m.id === DEFAULT_MAP)) console.warn("default map missing:"
 
 // cutscenes (loaded separately by main.ts): the intro, the wasted (gGameOverScript — death flow), and a
 // game-complete script. All are real shipped scr_*/cut_scene scripts the Thespian engine plays (H1/H2).
+const OUT_CUT = join(OUT_ASSETS, "cutscenes");
+mkdirSync(OUT_CUT, { recursive: true });
 copyFileSync(join(DATA, "scr_demo_001.txt"), join(OUT_ASSETS, "intro.txt"));
 copyFileSync(join(DATA, "scr_cut_scene_to_play_when_wasted.txt"), join(OUT_ASSETS, "wasted.txt"));
 copyFileSync(join(REPO, "cut_scenes/mr4Complete.txt"), join(OUT_ASSETS, "complete.txt"));
+
+// K12 chatter cutscenes: bundle every shipped scr_stonesN script so a chatter stone plays its
+// #scriptToPerform on overlap. stones1-5 are placed (×2 maps each, I-plan §h); stones6-10 are dead
+// content (placed in 0 maps) but the on-demand loader is generic, so bundling all 10 removes a special-
+// case. Each lands at cutscenes/stonesN.txt, recorded in the cutscenes manifest for the lazy loader.
+const cutscenes: Record<string, string> = {};
+for (let i = 1; i <= 10; i++) {
+  const srcPath = join(DATA, `scr_stones${i}.txt`);
+  if (!existsSync(srcPath)) { console.warn("missing stones script", `scr_stones${i}.txt`); continue; }
+  const out = `cutscenes/stones${i}.txt`;
+  copyFileSync(srcPath, join(OUT_ASSETS, out));
+  cutscenes[`stones${i}`] = out;
+}
 
 // ── (d) audio: vocabulary-driven SFX map + music ──────────────────────────────────────────────
 // Build the CLOSED set of logical SFX names from casts/data (#sound:/#collectSound:/#dieSound:
@@ -203,7 +218,7 @@ if (existsSync(MUS_SRC)) {
 
 // ── emit + report ─────────────────────────────────────────────────────────────────────────────
 writeFileSync(join(OUT_GEN, "assets.json"),
-  JSON.stringify({ version: 2, defaultMap: DEFAULT_MAP, tilesets, chars, anims, sounds, music }, null, 1));
+  JSON.stringify({ version: 2, defaultMap: DEFAULT_MAP, tilesets, chars, anims, sounds, music, cutscenes }, null, 1));
 writeFileSync(join(OUT_GEN, "maps.json"), JSON.stringify(maps, null, 1));
 
 const charCount = Object.keys(chars).length, animCount = Object.keys(anims).length;
@@ -212,5 +227,6 @@ console.log(`  tilesets: ${Object.keys(tilesets).length}  (${Object.keys(tileset
 console.log(`  chars:    ${charCount}   anims: ${animCount}`);
 console.log(`  maps:     ${maps.length}`);
 console.log(`  sounds:   ${Object.keys(sounds).length}   music: ${Object.keys(music).length}`);
+console.log(`  cutscenes: ${Object.keys(cutscenes).length}  (stones1-10 + intro/wasted/complete)`);
 if (sfxWarnings.length) console.warn("  SFX warnings:\n    " + sfxWarnings.join("\n    "));
 if (missingFromData.length) console.log("  data vocab with no shipped wav (ok): " + missingFromData.join(", "));

@@ -83,7 +83,11 @@ export function typeFromAnimType(animType: string): AttackType {
   switch (animType) {
     case "#weaponRanged": return "ranged";
     case "#magic": return "magic";
-    case "#naturalMelee": case "#weaponMelee": case "#magicMelee": default: return "melee";
+    // NOTE: #naturalRanged is intentionally NOT mapped to "ranged" here — the slice's CpuAI `ranged` flag
+    // (spawnEnemy) and the cooldown calibration treat the bundled #naturalRanged actors as melee-feel
+    // combatants, and globally reclassifying them would shift ~30 actors' fire-rate/behaviour (out of K
+    // scope). K6 (ninja/shrouder) classifies its two weapons explicitly instead (rangedNatural cfg).
+    case "#naturalRanged": case "#naturalMelee": case "#weaponMelee": case "#magicMelee": default: return "melee";
   }
 }
 
@@ -220,6 +224,13 @@ export class WeaponManager extends Component {
     // the resolved weapon #attack for an enemy). cfg.attack is the resolved AttackData passed by spawn*.
     const natural = cfg["attack"] as AttackData | undefined;
     if (natural && natural.name && natural.name !== "#none") this.addWeapon(natural.name, natural);
+    // K6 setMultiAttack: a #multiAttack CPU carries a SECOND weapon (the #weapon's melee #attack) so the
+    // range-based auto-switch has both to choose between (weapon 1 = ranged natural, weapon 2 = melee).
+    const second = cfg["attack2"] as AttackData | undefined;
+    if (second && second.name && second.name !== "#none" && second.name !== natural?.name) {
+      this.addWeapon(second.name, second);
+      this.setCurrentWeapon(natural?.name ?? second.name); // default to weapon 1 (ranged), faithful
+    }
   }
   override reset(): void { this.init({}); }
 
@@ -275,6 +286,38 @@ export class WeaponManager extends Component {
       if (type === "nonMagic") return a.type !== "magic";
       return a.type === type;
     });
+  }
+
+  // setMultiAttack (modWeaponManager.setMultiAttack): range-based 2-weapon auto-switch for a #multiAttack
+  // CPU with ≥2 weapons — natural ranged weapon 1 + melee weapon 2 (ninja: shuriken+ninjaSword, shrouder:
+  // throwSmoke+pinShooter). All compares SQUARED (faithful). targetObj is the AI's committed target (so we
+  // can read its attack type); (tx,ty)/(mx,my) the target/self loc; bufferDist the switch radius (#bufferDist).
+  setMultiAttack(targetObj: import("../engine/dispatch").Entity | null, tx: number, ty: number, mx: number, my: number, bufferDist: number): void {
+    const w1 = this.order[0], w2 = this.order[1];
+    if (!w1 || !w2) return;                         // need ≥2 weapons
+    if (!targetObj) { this.setCurrentWeapon(w1); return; }  // no target → ranged weapon 1
+    const distToTarget = (tx - mx) ** 2 + (ty - my) ** 2;   // GeomDistSqr
+    const a2 = this.weapons.get(w2)!;
+    // if weapon 2 is itself ranged, the buffer is weapon 2's reach.
+    let buf = bufferDist;
+    if (a2.type === "ranged") buf = a2.reach;
+    const attackDist = distToTarget - buf * buf;
+    if (attackDist > 0) { this.setCurrentWeapon(w1); return; }  // target beyond buffer → ranged weapon 1
+    // within the buffer: branch on the TARGET's attack type.
+    const targetType = (targetObj.send("getTargeting") as { hits: string[] } | undefined) ? this.targetAttackType(targetObj) : "melee";
+    if (targetType === "melee") {
+      // a melee target at dist²>20 with our weapon 2 being melee → keep ranged weapon 1 (poke from range).
+      if (distToTarget > 20 && a2.type === "melee") this.setCurrentWeapon(w1);
+      else this.setCurrentWeapon(w2);
+    } else {
+      this.setCurrentWeapon(w2);                    // non-melee target inside buffer → melee weapon 2
+    }
+  }
+
+  // the committed target's own attack type (targetObj.getAttack().type) — drives the melee/non-melee branch.
+  private targetAttackType(targetObj: import("../engine/dispatch").Entity): "melee" | "ranged" | "magic" {
+    const ca = targetObj.send("getCurrentAttack") as AttackData | null | undefined;
+    return ca ? ca.type : "melee";
   }
 
   // getCooldownFin: is the current weapon ready to fire?

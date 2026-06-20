@@ -25,11 +25,15 @@ const isBuilding = (role: string) => role === "#teamBuildings";
 export class TeamMaster {
   private teams = new Map<string, TeamRuntime>();
   unitMap = new UnitMap();
+  // K4 (objAiCPUSpellCaster): a SECOND broad-phase over live bullets, maintained exactly like pUnitMap
+  // but holding Projectile entities keyed by world loc (modListNode.pType = #bullet). Spellcasters query
+  // it via findNearestEnemyBullets to dodge incoming bolts (runTangentToObjects).
+  bulletMap = new UnitMap();
   teamOverride: string | null = null; // gang-up override (calcTargetTeamsOverride); off by default
   private subs = new Map<Entity, Entity[]>(); // #leaveGame: target -> listeners (keepMePosted #once)
   private rostered = new Set<Entity>();        // all currently-registered units (for the room-exit sweep)
 
-  reset(): void { this.teams.clear(); this.subs.clear(); this.teamOverride = null; this.rostered.clear(); }
+  reset(): void { this.teams.clear(); this.subs.clear(); this.teamOverride = null; this.rostered.clear(); this.bulletMap.clear(); }
 
   registeredEntities(): Iterable<Entity> { return this.rostered; }
 
@@ -196,6 +200,51 @@ export class TeamMaster {
       if (dd <= r2 && dd < bd) { bd = dd; best = u; }
     }
     return best ? { obj: best, dist: Math.sqrt(bd) } : { obj: null, dist: 1e9 };
+  }
+
+  // findNearestEnemyBullets (teamMaster.findNearestEnemyBullets → findNearest(obj,#enemy,#teamBullets,2)):
+  // the nearest `n` (default 2) live bullets in `bulletMap` whose OWNER team is hostile to `seeker` (a
+  // bullet's "team" is its owner's team — getTeam on Projectile). Expanding-shell search (min 0, max 3,
+  // faithful). Returns {closestPos, closestList:[{obj,dist}]} mirroring the Lingo's two-nearest payload;
+  // closestList[closestPos] is the nearest, the other slot the second-nearest (or {obj:null} if only one).
+  findNearestEnemyBullets(
+    seeker: Entity, sx: number, sy: number, n = 2,
+  ): { closestPos: number; closestList: Array<{ obj: Entity | null; dist: number }> } {
+    const myTeam = seeker.send("getTeam") as string;
+    const targetTeams = (this.calcTargetTeams(myTeam, "#enemy")[0] ?? [])
+      .filter((t) => t !== "#none" && t !== "#collectables");
+    const teamSet = new Set(targetTeams);
+    const empty = { closestPos: 1, closestList: [{ obj: null, dist: 1e9 }, { obj: null, dist: 1e9 }] };
+    if (teamSet.size === 0) return empty;
+    const cands = this.bulletMap.search(sx, sy, (b) =>
+      teamSet.has(b.send("getTeam") as string), 0, 3);
+    // pick the nearest `n` by squared distance.
+    const scored = cands.map((b) => {
+      const p = b.send("getPos") as { x: number; y: number };
+      return { obj: b, dist: Math.hypot(p.x - sx, p.y - sy) };
+    }).sort((a, b) => a.dist - b.dist);
+    if (scored.length === 0) return empty;
+    const list: Array<{ obj: Entity | null; dist: number }> = [
+      scored[0]!, scored[1] ?? { obj: null, dist: 1e9 },
+    ];
+    void n;
+    return { closestPos: 1, closestList: list };
+  }
+
+  // findUnitOfType (teamMaster.findUnitOfType, objAiCPUGhost): the FIRST rostered member/building of team
+  // `teamName` whose getActorType()==`typ` (no distance sort — first match wins). The ghost's #monk hunt.
+  findUnitOfType(typ: string, teamName: string): Entity | null {
+    const bare = typ.replace(/^#/, "");
+    const t = this.team(teamName);
+    for (const u of t.members) {
+      if (u.send("isDead")) continue;
+      if (((u.send("getActorType") as string) || "") === bare) return u;
+    }
+    for (const u of t.buildings) {
+      if (u.send("isDead")) continue;
+      if (((u.send("getActorType") as string) || "") === bare) return u;
+    }
+    return null;
   }
 
   // impactAreaAttack (teamMaster.impactMeleeAttack/impactAttack core): the team-scoped disc search.
