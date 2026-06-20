@@ -184,7 +184,8 @@ export class PlayerControl extends Component {
 type CpuMode = "findTarget" | "moveToAttack" | "runReload" | "dazed";
 
 export class CpuAI extends Component {
-  static handles = ["update", "eventLeaveGame", "characterModeChanged", "getAiMode", "getAiTarget"];
+  static handles = ["update", "eventLeaveGame", "characterModeChanged", "getAiMode", "getAiTarget",
+    "getTargetDetails", "setAiTarget"];
   reach = 22;          // melee strike reach (targetInReachMelee)
   reachRanged = 150;   // ranged targetInReachRanged (GeomDist < reach)
   power = 8;           // melee-vector strength source (strength); bullet damage uses weapon power
@@ -229,6 +230,19 @@ export class CpuAI extends Component {
 
   getAiMode(): CpuMode { return this.mode; }        // query (tests / debug)
   getAiTarget(): Entity | null { return this.target; }
+
+  // getTargetDetails (objGameObject 542-555): a POSITIONAL locator for my committed target (G1c). Saved
+  // by serializeActor as ActorSave.rel — NEVER an entity id. A dead/absent target returns null.
+  getTargetDetails(): { team: string; role: string; x: number; y: number } | null {
+    const t = this.target;
+    if (!t || (t.send("isDead") as boolean)) return null;
+    const p = t.send("getPos") as { x: number; y: number };
+    return { team: (t.send("getTeam") as string) || "", role: (t.send("getTeamRole") as string) || "#teamMembers", x: p.x, y: p.y };
+  }
+  // setAiTarget (teamMaster.restoreTarget phase-2): commit a re-acquired target and enter moveToAttack.
+  setAiTarget(_next: NextFn, t: Entity): void {
+    this.target = t; this.mode = "moveToAttack"; this.retargetCtr = 0;
+  }
 
   // characterModeChanged (modAi): reel/recoil/die -> #dazed (freeze intent); recovery -> #findTarget.
   characterModeChanged(_next: NextFn, charMode: string): void {

@@ -21,7 +21,7 @@ import { Movement } from "./components/movement";
 import { Projectile } from "./components/projectile";
 import { sweepBullets, bulletPoolStats } from "./systems/bullets";
 import { rebuildCombatSubstrate } from "./systems/combatTick";
-import { saveGame, loadSave } from "./systems/save";
+import { saveGame, loadSave, buildSave, clearLegacy } from "./systems/save";
 import { parseCutscene } from "./data/cutscene";
 import { CutscenePlayer } from "./scenes/cutscenePlayer";
 import { Menu } from "./scenes/menu";
@@ -128,11 +128,36 @@ async function main() {
   ]);
   let titleMenu: Menu = mainTitleMenu;
 
+  // doSave (saveMaster.saveGame): cascade the whole world (current room + cleared set + masters + player).
+  function doSave() {
+    const blob = buildSave({
+      player, mapId: loaded.meta.id, currentRoom: rooms.loc, currentRoomNum: rooms.currentRoomNum(),
+      clearedRooms: rooms.clearedRooms(), currentObjects: rooms.snapshotCurrentRoom(),
+    });
+    saveGame(blob);
+  }
+
+  // doLoad (objMap.restoreFromSave): reject a version mismatch; else restore masters + cleared set + the
+  // player chain, then rebuild the current room from its saved actors (the deferred relationship pass runs
+  // inside restoreInto). The save's map must match the loaded map (single-map slice; cross-map reload is F1).
+  function doLoad(): boolean {
+    const s = loadSave();
+    if (!s) return false;
+    if (s.map !== loaded.meta.id) { flash("save is for a different map"); return false; }
+    game.armyMaster.restoreFromSave(s.army);
+    game.potionMaster.restoreFromSave(s.potions);
+    rooms.restoreCleared(s.rooms.filter((r) => r.cleared).map((r) => r.num));
+    player.send("restoreFromSave", s.player);          // player chain (energy/xp/mana/weapons/medikit)
+    const cur = s.rooms.find((r) => r.num === s.currentRoomNum);
+    rooms.restoreInto(s.currentRoom, cur?.objects ?? []); // tear down + respawn the current room's actors
+    return true;
+  }
+
   function openPause() {
     pauseMenu = new Menu("PAUSED", [
       { label: "Resume", action: () => { mode = "playing"; } },
-      { label: "Save game", action: () => { saveGame(player, rooms.loc); flash("game saved"); mode = "playing"; } },
-      { label: "Load game", action: () => { const s = loadSave(); if (s) { rooms.enter(s.room); player.send("restoreFromSave", s.player); } mode = "playing"; } },
+      { label: "Save game", action: () => { doSave(); flash("game saved"); mode = "playing"; } },
+      { label: "Load game", action: () => { if (doLoad()) flash("game loaded"); mode = "playing"; } },
       { label: "Return to title", action: () => { mode = "title"; audio.playMusic("baroque_rock_v1"); } },
     ]);
     mode = "paused";
@@ -140,12 +165,26 @@ async function main() {
 
   function startGame() {
     game.teamMaster.reset(); // fresh rosters/subscriptions for a new run
+    game.armyMaster.reset(); // empty the reserve bank
+    game.potionMaster.reset(); // zero the potion tally
+    clearLegacy();           // drop any pre-v2 save blob (clean break)
     player = spawnPlayer(viewW / 2, viewH / 2);
     game.player = player;
     game.entities = [player];
     // every room cleared -> the dungeon is won (objMap: last #endRoom #none -> victory)
     rooms = new RoomManager(map, assets, activeKey, objectsKey, viewW, viewH, player,
       () => { mode = "victory"; audio.play("end_level"); audio.playMusic("last_stand_v4"); });
+    // G2 army reserve: bank teleportable allies when leaving a room; re-field them on the next room.
+    rooms.onLeaveRoom = (leaving) => {
+      for (let i = leaving.length - 1; i >= 0; i--) {
+        const e = leaving[i]!;
+        if (game.armyMaster.teleportOut(e)) {
+          const idx = game.entities.indexOf(e);
+          if (idx >= 0) game.entities.splice(idx, 1);
+        }
+      }
+    };
+    rooms.onEnterRoom = (x, y) => { game.armyMaster.refieldAll("#aldevar", x, y); };
     rooms.enter(map.startRoom);
     audio.playMusic("electronic_merlin_v1_02"); // the dungeon theme
     mode = "playing";
@@ -161,11 +200,8 @@ async function main() {
         if (cutscene!.tick(input)) startGame();
       } else if (mode === "playing") {
         if (input.pressed("escape")) { openPause(); input.endTick(); return; }
-        if (input.pressed("1")) { saveGame(player, rooms.loc); flash("game saved"); }
-        if (input.pressed("2")) {
-          const s = loadSave();
-          if (s) { rooms.enter(s.room); player.send("restoreFromSave", s.player); flash("game loaded"); }
-        }
+        if (input.pressed("1")) { doSave(); flash("game saved"); }
+        if (input.pressed("2")) { if (doLoad()) flash("game loaded"); }
         // refresh the team roster + unit-map broad-phase BEFORE AIs run (teamMaster.findTarget /
         // impactMeleeAttack read a current map). Drops dead/left targets, firing #leaveGame.
         rebuildCombatSubstrate();

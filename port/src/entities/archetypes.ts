@@ -12,7 +12,10 @@ import { Mana } from "../components/mana";
 import { WeaponManager, resolveAttack } from "../components/weapon";
 import { Hurt } from "../components/hurt";
 import { Dwelling } from "../components/dwelling";
+import { Identity } from "../components/identity";
+import { Medikit } from "../components/medikit";
 import { Pickup, type PickupEffect } from "../components/pickup";
+export type PickupSym = PickupEffect;
 import { registry } from "../game/data";
 import { game } from "../game/context";
 
@@ -23,17 +26,18 @@ const DEFAULTS = { isDead: false, getTeam: "", getTeamRole: "#teamMembers", ener
 // Team so teamMaster.findTarget / impactMeleeAttack can read it generically.
 // WeaponManager (modWeaponManager) sits after Mana (so addCooldownCounter reads manaRegeneration at
 // init) and supplies the data-driven #attack/charge/cooldown the control/AI driver dispatches on.
-export const PlayerArchetype = new Archetype("player", [PlayerControl, Freeze, Mana, WeaponManager, Movement, Anim, Experience, Energy, Hurt, Team, Targeting], { defaults: DEFAULTS });
-export const EnemyArchetype = new Archetype("enemy", [EnemyAI, Freeze, Mana, WeaponManager, Movement, Anim, Experience, Energy, Hurt, Team, Targeting], { defaults: DEFAULTS });
+export const PlayerArchetype = new Archetype("player", [Identity, PlayerControl, Freeze, Mana, WeaponManager, Movement, Anim, Experience, Energy, Hurt, Medikit, Team, Targeting], { defaults: { ...DEFAULTS, getActorType: "", getNumOfMedikits: 0 } });
+export const EnemyArchetype = new Archetype("enemy", [Identity, EnemyAI, Freeze, Mana, WeaponManager, Movement, Anim, Experience, Energy, Hurt, Team, Targeting], { defaults: { ...DEFAULTS, getActorType: "" } });
 // Dwellings are static (no AI) but reuse Movement for position + Energy/Team so they're targetable.
-export const DwellingArchetype = new Archetype("dwelling", [Dwelling, Movement, Anim, Energy, Hurt, Team, Targeting], { defaults: DEFAULTS });
+export const DwellingArchetype = new Archetype("dwelling", [Identity, Dwelling, Movement, Anim, Energy, Hurt, Team, Targeting], { defaults: { ...DEFAULTS, getActorType: "" } });
 
 /** Summon a friendly unit on Merlin's team that hunts enemies, using the actor's real stats. */
 export function spawnAlly(actorName: string, x: number, y: number, animChar = actorName): Entity {
   const e = spawnEnemy(actorName, x, y, { animChar }); // real energy/strength/walkSpeed/attack from data
   e.type = "ally";
   e.get(Team).team = "#aldevar"; // summoned onto the player's side; #enemy allegiance => hunts #aldevar.hates
-  return e;
+  e.flags.add("teleportable"); // pTeleportable: a SUMMONED ally teleports to reserve on room-leave (G2).
+  return e;                    // tile-spawned #aldevar units (via spawnUnit) are NOT teleportable.
 }
 
 /**
@@ -49,12 +53,12 @@ export function spawnUnit(actorName: string, x: number, y: number, opts: { animC
   return e;
 }
 
-export const PickupArchetype = new Archetype("pickup", [Pickup, Movement], { defaults: { isDead: false, isFinished: false, getTeam: "" } });
+export const PickupArchetype = new Archetype("pickup", [Identity, Pickup, Movement], { defaults: { isDead: false, isFinished: false, getTeam: "", getActorType: "" } });
 
 export function spawnPickup(effect: PickupEffect, x: number, y: number): Entity {
   const e = PickupArchetype.create(makeEntityId());
   e.type = "pickup";
-  return e.build({ x, y, walkSpeed: 0, effect, box: 8 });
+  return e.build({ x, y, walkSpeed: 0, effect, box: 8, actorType: effect });
 }
 
 export function spawnDwelling(actorName: string, x: number, y: number, animChar = actorName): Entity {
@@ -80,7 +84,7 @@ export function spawnDwelling(actorName: string, x: number, y: number, animChar 
   const e = DwellingArchetype.create(makeEntityId());
   e.type = game.teamMaster.isPlayerSide(team) ? "ally" : "enemy"; // targetable/destroyable; a #village hut is friendly
   // a dwelling joins the roster as a #teamBuildings member (so hunters with building-roles can target it)
-  return e.build({ x, y, walkSpeed: 0, energy, team, teamRole: "#teamBuildings", animChar, box: 24, residentGroups: groups, budget, dieSound });
+  return e.build({ x, y, walkSpeed: 0, energy, team, teamRole: "#teamBuildings", animChar, box: 24, residentGroups: groups, budget, dieSound, actorType: actorName });
 }
 
 export function spawnPlayer(x: number, y: number): Entity {
@@ -90,6 +94,7 @@ export function spawnPlayer(x: number, y: number): Entity {
   const num = (src: Record<string, any>, k: string, dflt: number) => (typeof src[k] === "number" ? (src[k] as number) : dflt);
   const e = PlayerArchetype.create(makeEntityId());
   e.type = "player";
+  // actorType set in build cfg below (the respawn key — "player")
   // act_player #punch is Merlin's natural attack (the WeaponManager's first weapon). agility/dexterity
   // seed the per-type cooldown counter inc (act_player: agility 1, dexterity 0.2).
   const punch = resolveAttack(d["attack"] as Record<string, any> | undefined);
@@ -118,6 +123,7 @@ export function spawnPlayer(x: number, y: number): Entity {
     targetAllegiance: "#enemy", targetCriteria: "#closestDistance",
     targetRoles: [["#teamMembers", "#teamBuildings"]],
     hits: ["#teamMembers", "#teamBuildings"], targetReach: 18,
+    actorType: "player",
   });
 }
 
@@ -188,6 +194,7 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
   e.type = "enemy";
   return e.build({
     x, y,
+    actorType: actorName, // the respawn key (objGameObject.getActorType)
     walkSpeed: num("walkSpeed", 3) * 0.6, // engine walk units -> px/tick (tuned to the slice)
     energy: num("energy", 40),
     strength: num("strength", 5),

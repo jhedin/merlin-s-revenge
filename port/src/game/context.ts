@@ -8,6 +8,8 @@ import type { AudioSystem } from "../systems/audio";
 import type { Entity } from "../engine/dispatch";
 import { Rng } from "../engine/math";
 import { TeamMaster } from "../systems/teams";
+import { ArmyMaster } from "../systems/armyMaster";
+import { PotionMaster } from "../systems/potionMaster";
 
 export interface GameContext {
   grid: CollisionGrid;
@@ -21,6 +23,10 @@ export interface GameContext {
   tick: number;
   /** teamMaster: data allegiance + unit-map broad-phase + findTarget/impactMeleeAttack (B1) */
   teamMaster: TeamMaster;
+  /** armyMaster: the summoned-ally reserve bank (teleport-out on room-leave, re-field at saved level) (G2) */
+  armyMaster: ArmyMaster;
+  /** potionMaster: per-type "potions drunk" tally (G3b) */
+  potionMaster: PotionMaster;
   /** spawn an enemy by actor name (set in main; lets Dwelling produce units without an import cycle) */
   spawnEnemy?: (name: string, x: number, y: number, opts?: { animChar?: string; ranged?: boolean }) => Entity;
   /** spawn a unit routed by its real team (ally if friendly, else enemy) — used by dwellings */
@@ -39,6 +45,8 @@ export const game: GameContext = {
   player: null,
   tick: 0,
   teamMaster: new TeamMaster(),
+  armyMaster: new ArmyMaster(),
+  potionMaster: new PotionMaster(),
 };
 
 export function initContext(c: Partial<GameContext>): void { Object.assign(game, c); }

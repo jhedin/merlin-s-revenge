@@ -1,13 +1,14 @@
 import { describe, it, expect } from "vitest";
 import { spawnPlayer, spawnPickup } from "@/entities/archetypes";
 import { Energy } from "@/components/combat";
+import { Medikit } from "@/components/medikit";
 import { Mana } from "@/components/mana";
 import { WeaponManager } from "@/components/weapon";
 import { game } from "@/game/context";
 import { CollisionGrid } from "@/world/collision";
 
 describe("pickups", () => {
-  it("a heal pickup the player overlaps restores energy and is consumed", () => {
+  it("a heal pickup BANKS a medikit (gradual stockpiled heal, not an instant fill) and is consumed", () => {
     game.grid = new CollisionGrid(20, 20, 32);
     const player = spawnPlayer(100, 100);
     game.player = player;
@@ -15,8 +16,15 @@ describe("pickups", () => {
     const pickup = spawnPickup("heal", 100, 100); // on top of the player
     game.entities = [player, pickup];
     pickup.send("update");
-    expect(player.get(Energy).energy).toBe(player.get(Energy).max); // healed
-    expect(pickup.send("isFinished")).toBe(true);                   // consumed
+    // G3a: collecting BANKS a kit (it does NOT instantly fill); the kit heals gradually via Medikit.update.
+    expect(player.send("getNumOfMedikits")).toBe(1);               // banked
+    expect(player.get(Energy).energy).toBe(20);                    // not instantly healed
+    expect(pickup.send("isFinished")).toBe(true);                  // consumed
+    // the kit heals +1 every 5 frames (tick Medikit directly — PlayerControl needs live input)
+    const med = player.get(Medikit);
+    for (let i = 0; i < 30; i++) med.update(() => {});
+    expect(player.get(Energy).energy).toBeGreaterThan(20);         // gradual heal in progress
+    expect(player.get(Energy).energy).toBeLessThan(player.get(Energy).max); // still gradual
   });
   it("a far pickup is not collected", () => {
     game.grid = new CollisionGrid(20, 20, 32);

@@ -3,7 +3,6 @@
 
 import { Component, type NextFn } from "../engine/dispatch";
 import { Movement } from "./movement";
-import { Energy } from "./combat";
 import { Mana } from "./mana";
 import { PlayerControl } from "./control";
 import { resolveAttack } from "./weapon";
@@ -25,7 +24,7 @@ function scrollAttack(effect: string) {
   return resolveAttack((registry.resolveActor(SCROLL_ACTOR[effect]!) ?? {})["attack"] as Record<string, any>);
 }
 
-export type PickupEffect = "heal" | "speed" | "sword" | "spell" | "manaCapacity" | "manaFlow" | "manaBurst"
+export type PickupEffect = "heal" | "maxikit" | "speed" | "sword" | "spell" | "manaCapacity" | "manaFlow" | "manaBurst"
   | "cBlast" | "darkBlast" | "arcticBlast" | "healBlast" | "armySummon" | "monsterSummon" | "energyMines";
 
 export class Pickup extends Component {
@@ -56,8 +55,12 @@ export class Pickup extends Component {
   }
 
   private apply(player: import("../engine/dispatch").Entity): void {
+    // every collected powerup bumps the potionMaster tally for its type (G3b: pPotionsCollected).
+    game.potionMaster?.potionCollected(this.effect);
     switch (this.effect) {
-      case "heal": { const en = player.get(Energy); en.energy = en.max; break; }
+      // real medikit (G3a): BANK a kit (gradual stockpiled heal via Medikit.update), not an instant fill.
+      // maxikit banks 1 too (the original medikitCollected ignores the character — identical mechanics).
+      case "heal": case "maxikit": player.send("medikitCollected", 1); break;
       case "speed": player.get(Movement).maxSpeed += 0.6; break;
       case "sword": player.get(PlayerControl).equipSword(scrollAttack("sword")); break; // merlinSword: addWeapon
       case "spell": player.get(PlayerControl).grantSpell(scrollAttack("spell")); break; // energyBlast: addWeapon magic

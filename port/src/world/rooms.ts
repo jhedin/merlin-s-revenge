@@ -8,36 +8,11 @@ import { tileSymbol, type TileKey } from "../data/tlk";
 import type { Assets } from "../render/assets";
 import type { TileSheet } from "../render/renderer";
 import { game } from "../game/context";
-import { spawnUnit, spawnDwelling, spawnPickup } from "../entities/archetypes";
-import { spriteCharOr } from "../components/anim";
+import { serializeActor, respawnActor, spawnFromSymbol, type ActorSave } from "../entities/actorSerial";
+import { SKIP_SPAWN } from "./spawnTable";
+import { rebuildCombatSubstrate } from "../systems/combatTick";
 import { Movement } from "../components/movement";
-import { registry } from "../game/data";
-import type { PickupEffect } from "../components/pickup";
 import type { Entity } from "../engine/dispatch";
-
-// Powerup tiles -> collectible pickup effect (the effect is a port abstraction; the rest of a
-// spawn's behavior comes from its real actor data — dwellings/units are detected by #objType).
-const PICKUPS: Record<string, PickupEffect> = {
-  "#medikit": "heal", "#maxikit": "heal",
-  "#walkSpeed": "speed",
-  // each mana powerup raises its own stat (objManaCapacity/Burst/Flow), not one generic boost
-  "#manaCapacity": "manaCapacity", "#manaBurst": "manaBurst", "#manaFlow": "manaFlow",
-  "#merlinSword": "sword", // melee weapon upgrade (act_merlinSword, damageMultiplier 16)
-  "#energyBlast": "spell",  // scroll (room 6): grants Merlin's charged magic — he starts punch-only
-  // C spell scrolls (reachable in other maps via F1): each grants a #magic weapon (addWeapon).
-  "#cBlast": "cBlast", "#darkBlast": "darkBlast", "#arcticBlast": "arcticBlast", "#healBlast": "healBlast",
-  "#armySummon": "armySummon", "#monsterSummon": "monsterSummon", "#energyMines": "energyMines",
-};
-
-// Items / spells with no unit/dwelling behavior yet (scrolls, mines, music, towers). Characters
-// (#objCPUCharacter) and dwellings (#objDwelling) are handled by data; this only skips the rest.
-const SKIP_SPAWN = new Set([
-  "#none", "#player", "#musicLastStand",
-  // C spell scrolls are now pickups (PICKUPS). #energyMine is the deposited mine actor (not a scroll);
-  // #energyPulseSpell streaming-release is deferred (§g). #dwarfTower/#garTower are spawned as towers
-  // by the objType==#objCPUCharacter branch below (static ranged turrets firing towerAxe splash).
-  "#energyMine", "#energyPulseSpell", "#energyBeamSpell", "#magicLimit25", "#gmg", "#armySummonStones",
-]);
 
 export class RoomManager {
   loc: Vec2i;
@@ -59,7 +34,17 @@ export class RoomManager {
     this.loc = { ...map.startRoom };
   }
 
-  enter(loc: Vec2i, repositionPlayer?: "left" | "right" | "up" | "down"): void {
+  // onLeaveRoom: called with the live entity list of the room BEING LEFT, before it's torn down. G2
+  // hooks this to teleport summoned allies to the army reserve (armyTeleportOut) instead of despawning.
+  onLeaveRoom: (leaving: Entity[]) => void = () => {};
+  // onEnterRoom: called after a fresh (non-restore) room is populated, with the player drop loc. G2
+  // hooks this to re-field banked reserve allies near the player (armyTeleportIn on the next room).
+  onEnterRoom: (x: number, y: number) => void = () => {};
+  private restoring = false; // suppress onLeaveRoom/onEnterRoom while loadGame tears the world down
+
+  enter(loc: Vec2i, repositionPlayer?: "left" | "right" | "up" | "down", restoreObjects?: ActorSave[]): void {
+    // notify before tearing down the room we're leaving (G2 army teleport-out); skip on a restore.
+    if (!this.restoring) this.onLeaveRoom(game.entities.filter((e) => e.type !== "player"));
     this.loc = loc;
     this.room = this.map.roomAt(loc) ?? this.map.rooms.get(1)!;
     const active = this.room.layer("#backgroundActive");
@@ -72,11 +57,60 @@ export class RoomManager {
 
     // keep only the player; clear enemies/bullets from the previous room
     game.entities = game.entities.filter((e) => e.type === "player");
-    const alreadyClear = this.cleared.has(this.room.num);
-    this.spawnObjects(repositionPlayer, !alreadyClear); // cleared rooms keep their dead
+    if (restoreObjects) {
+      // RESTORE PATH (objRoom.restoreRoomObjects): respawn the saved live actors instead of tile-spawning.
+      this.restoreRoomObjects(restoreObjects, repositionPlayer);
+    } else {
+      const alreadyClear = this.cleared.has(this.room.num);
+      this.spawnObjects(repositionPlayer, !alreadyClear); // cleared rooms keep their dead
+      // re-field banked reserve allies near the player (G2 army teleport-in on the next room).
+      if (!this.restoring) { const pm = this.player.get(Movement); this.onEnterRoom(pm.x, pm.y); }
+    }
     // a room with no hostiles is cleared on entry (objRoom.attemptOpenExits)
-    if (alreadyClear || !this.enemiesAlive()) this.markCleared();
+    if (this.cleared.has(this.room.num) || !this.enemiesAlive()) this.markCleared();
     this.setExits(this.cleared.has(this.room.num));
+  }
+
+  // --- save-tree hooks (G1b) ---
+  /** the num of the current room (the one whose live actors are snapshotted). */
+  currentRoomNum(): number { return this.room.num; }
+  /** the cleared-room flag set (objRoom.pRoomCleared), serialized whole. */
+  clearedRooms(): number[] { return [...this.cleared]; }
+  /** restore the cleared set (loadGame, before entering the current room). */
+  restoreCleared(nums: number[]): void {
+    this.cleared = new Set(nums);
+    // keep `won` latched if the restored set already covers every room (don't re-fire onMapClear).
+    this.won = this.cleared.size >= this.map.rooms.size;
+  }
+  /** snapshot the CURRENT room's live actors (everything but the player) for the save tree. */
+  snapshotCurrentRoom(): ActorSave[] {
+    return game.entities.filter((e) => e.type !== "player").map(serializeActor);
+  }
+  /** loadGame: enter `loc` and rebuild it from saved actors (suppressing the teleport-out hook). */
+  restoreInto(loc: Vec2i, objects: ActorSave[]): void {
+    this.restoring = true;
+    try { this.enter(loc, undefined, objects); } finally { this.restoring = false; }
+  }
+
+  // restoreRoomObjects (objRoom 613-653): respawn each saved actor at rest, then a deferred phase-2
+  // relationship pass re-acquires committed targets POSITIONALLY (G1c) once the world is fully populated.
+  private restoreRoomObjects(objects: ActorSave[], reposition?: "left" | "right" | "up" | "down"): void {
+    const restored: { e: Entity; rel?: ActorSave["rel"] }[] = [];
+    for (const snap of objects) {
+      const e = respawnActor(snap);
+      if (e) { game.entities.push(e); restored.push({ e, rel: snap.rel }); }
+    }
+    // register the freshly-spawned batch into teamMaster's rosters + unit-map (so restoreTarget's spatial
+    // query has a populated world to search) — the per-tick substrate refresh, run once here on restore.
+    rebuildCombatSubstrate();
+    // phase 2: re-link committed targets by spatial query (teamMaster.restoreTarget) — strictly AFTER
+    // every actor exists + is rostered, so the nearest live unit of the saved team+role/loc can win.
+    for (const { e, rel } of restored) {
+      if (rel) game.teamMaster.restoreTarget(e, rel);
+    }
+    // a restore keeps the player at its saved Movement loc (restored from the chain by doLoad) — do NOT
+    // re-center it; pass playerPlaced=true so placePlayer only honors an explicit walk-in reposition.
+    this.placePlayer(reposition, true);
   }
 
   /** open edges only where an adjacent room exists, and only once the room is cleared. */
@@ -130,20 +164,21 @@ export class RoomManager {
             if (!reposition) { m.x = px; m.y = py; m.vx = m.vy = 0; playerPlaced = true; }
           } else if (!spawnActors) {
             // already-cleared room: keep its dead, spawn no actors/pickups
-          } else if (PICKUPS[sym]) {
-            game.entities.push(spawnPickup(PICKUPS[sym]!, px, py));
-          } else if (registry.resolveActor(sym.slice(1))?.["objType"] === "#objDwelling") {
-            const name = sym.slice(1); // a building: its residents come from its own #residentGroups
-            game.entities.push(spawnDwelling(name, px, py, spriteCharOr(name)));
           } else if (!SKIP_SPAWN.has(sym)) {
-            const name = sym.slice(1);
-            // route by team (#aldevar units join Merlin as allies); ranged-ness comes from #attack
-            game.entities.push(spawnUnit(name, px, py, { animChar: spriteCharOr(name) }));
+            // shared symbol routing (spawnFromSymbol): pickups / dwellings / units — same branching as
+            // the save-restore path so first-spawn and restore cannot drift.
+            const e = spawnFromSymbol(sym, px, py);
+            if (e) game.entities.push(e);
           }
         }
       }
     }
-    // reposition the player to the opposite edge after a transition
+    this.placePlayer(reposition, playerPlaced);
+  }
+
+  // reposition the player to the opposite edge after a transition, else center if no #player marker.
+  private placePlayer(reposition: "left" | "right" | "up" | "down" | undefined, playerPlaced: boolean): void {
+    const m = this.player.get(Movement);
     if (reposition === "left") m.x = this.viewW - this.margin;
     else if (reposition === "right") m.x = this.margin;
     else if (reposition === "up") m.y = this.viewH - this.margin;

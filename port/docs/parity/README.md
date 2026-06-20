@@ -21,7 +21,7 @@ This tracker is the running backlog; update the status table + log each iteratio
 | AI & combat engine | ~18% | Dispatch kernel faithful but near-empty; combat is scalar/imperative; 11 AI types collapsed to 1 with 4 branches |
 | Spells / weapons / projectiles | ~45% | B2 weapon manager + C charged blasts (cBlast/darkBlast/arctic/heal), splash/`#explode` (energyPulse/thunder/freeze/towerAxe), takeFreeze/takeHeal payload-lists, summons (army/monster), dwarfTower. Beams/fireBullets-streaming/GMG/reservations deferred |
 | Actors / bosses / dwellings | ~22% | All 263 records parse (stats resolve); gaps are art + AI wiring + per-actor behavior; bosses ~5% |
-| Player / progression / masters | ~35% | Progression math faithful; save persists only room+player; 3 of 39 masters; no army reserve |
+| Player / progression / masters | ~50% | Progression math faithful; **G save tree v2** (whole current-room + cleared flags + player + potion/army masters, locator-based target restore); **army reserve** (teleport-to-reserve, re-field at level); **real medikit** stockpile + potion counter; 5 of 39 masters |
 | World / render / pipeline / shell | ~45% | Asset pipeline complete (F1 ☑): all 10 tilesets / 171 chars / 47 maps, load-any-map, lazy per-map loading; collision = solid-AABB only (F2); cutscene is a reimpl (H1) |
 
 The **data** pipeline is genuinely complete (all 263 actors → `data.json`). Almost everything missing is
@@ -119,11 +119,21 @@ Status: ☐ not started · ◐ in progress · ☑ done
   alpha/blend, `#foregroundPassive` layer, 5-state minimap, configurable tile size. *(05)*
 
 ### Phase G — Systems & persistence
-- ☐ **G1. Full save/load tree** — cascade `currentMap → pRooms[] → pRoomObjects[]` so all actors/dwellings/
-  room-clear flags round-trip, + potion/sound/army master slices. *(04 #1)*
-- ☐ **G2. `armyMaster` + reserve persistence** — teleport-to-reserve, re-summon at saved level; the
-  defining world-progression feature. *(04 #2)*
-- ☐ **G3. Real medikit stockpile + `potionMaster` counter** — gradual heal + HUD + save. *(04 #3)*
+- ☑ **G1. Full save/load tree** — save v2 cascades `map → rooms[] (cleared flags) → current-room
+  objects[]` + player chain + masters. Every actor re-spawns from its `getActorType` symbol + restored
+  chain via a generic `serializeActor`/`respawnActor` (`entities/actorSerial.ts`, shared `spawnFromSymbol`
+  routing). **G1c:** committed `#target`s are saved as a positional locator `{team,role,loc}` (NEVER an
+  entity id) and re-acquired by `teamMaster.restoreTarget` in a deferred phase-2 pass after the batch
+  respawns — closes B1's deferred committed-target-through-save. `SAVE_VERSION=2` rejects (no migrate) old
+  blobs. Option A (current room + cleared set); per-room `pState` for non-current rooms is H3. *(04 #1)*
+- ☑ **G2. `armyMaster` + reserve persistence** — `ArmyMaster` singleton: a SUMMONED ally (teleportable
+  flag, set by `spawnAlly`) teleports to the reserve at its level on room-leave (`teleportOut`) and
+  re-fields at the next room (`createUnit`/`lookupArmyDetails` picks the highest level, rebuilds stats via
+  `forceLevelUp` growth, `restoreUnitToCombat` consumes it). `pReserveArmy` (per team→typ) persists in the
+  save. Tile-spawned room allies are NOT teleportable (stay with their room). *(04 #2)*
+- ☑ **G3. Real medikit stockpile + `potionMaster` counter** — `Medikit` component (`modMedikit`) on the
+  player: collecting BANKS a kit, gradual +1/5-frame heal up to max, `nextMedikit` refill, save slice.
+  `PotionMaster` per-type "potions drunk" tally + save. HUD draw is agent 5 (queries exposed). *(04 #3)*
 
 ### Phase H — Shell & flow
 - ☐ **H1. Cutscene engine over real actors** — `modThespian` ~30 verbs, props, goMode, frame-timed lines,
@@ -238,3 +248,36 @@ Status: ☐ not started · ◐ in progress · ☑ done
   original armySummon requires a reservation; that's G2). Deferred per §g: GMG, magic limiter,
   `modFireBullets` streaming (energyPulseSpell), beams, the energyMines scatter-deposit (the mine
   *explode* path exists), spell-actor live-growth. Next: D1 (sprites) or the deferred streaming/beam spells.
+- **Iter 6** — ☑ G1/G2/G3 shipped (save tree + army reserve + real medikit/potions). **G1a:** every spawned
+  actor now carries its actor-type symbol (`Identity`/`getActorType`, set in the spawn factories); a generic
+  `serializeActor(e)`→`respawnActor(snap)` pair (`entities/actorSerial.ts`) re-spawns any saved actor from
+  its type + saved chain (energy/max/level/xp/position/weapon inventory/team-role) via the SHARED
+  `spawnFromSymbol(sym,x,y)` routing factored out of `RoomManager` (pickup/dwelling/unit) so first-spawn and
+  restore cannot drift. **G1b:** `save.ts` is now v2 — `saveGame` cascades `map → rooms[] (cleared flags) →
+  current-room objects[]` + player chain + potion/army master slices; `SAVE_VERSION=2` gate REJECTS (no
+  migrate) a version/shape mismatch and the pre-v2 `mr_save_v1` blob (returns null, never throws). On load
+  (`main.ts.doLoad`): restore masters + cleared set + player chain, then `rooms.restoreInto` tears down the
+  live actors and respawns the current room from its snapshot. Option A (current room + cleared set);
+  per-room `pState` is H3. **G1c (the load-bearing trick):** NEVER serialize `entity.id` — a committed
+  `#target` (CpuAI) is saved as a positional locator `{team,role,x,y}` (`getTargetDetails`) and re-acquired
+  by a DEFERRED phase-2 pass (`teamMaster.restoreTarget`→nearest-in-team-to-loc) run AFTER every actor in
+  the batch respawns + is rostered. Closes B1's deferred committed-target-through-save. **G2:** `ArmyMaster`
+  singleton — a SUMMONED ally (`teleportable` flag, set only by `spawnAlly`; tile-spawned room allies are
+  NOT) banks to `pReserveArmy[team][typ]` at its level on room-leave (`teleportOut`) and re-fields at the
+  next room (`createUnit`/`lookupArmyDetails` picks highest level, rebuilds stats by re-running `forceLevelUp`
+  growth, `restoreUnitToCombat` consumes the record); empty reserve → null; the bank persists in the save.
+  **G3a:** real `Medikit` component (`modMedikit`) on the player replaces the instant full-heal — collecting
+  BANKS a kit, gradual +1/5-frame heal up to max, `nextMedikit` refill, `getNumOfMedikits` HUD query, save
+  slice (medikit==maxikit mechanically — the original `medikitCollected` ignores the character). **G3b:**
+  `PotionMaster` per-type "potions drunk" tally (every pickup calls `potionCollected`) + save. tsc clean;
+  **172 tests pass** (+17: actor round-trip, summoned-ally/dwelling round-trip, locator-target restore +
+  no-dangling-id assert, army bank/re-field/level/highest-first/empty-null/teleportable-only,
+  medikit cadence/nextMedikit/save-mid-heal, potion tally, full v2 save-tree round-trip, version gate). Room-1
+  no-regression: `playthrough_smoke` ends `enemies:0, exitsOpen:true, errors:none` (identical). In-browser:
+  set player energy/level + bank a medikit + grant merlinSword + summon a level-3 warrior, **Save (1)** →
+  mutate (energy→1, drop ally, +potions) → **Load (2)** → player energy/level/medikit/potion/weapons + the
+  ally + room-clear all restore, no pageerrors; separately, summon a level-4 ally then **walk to the next
+  room** (only the summoned ally follows — re-fielded at level 4 — the 5 tile allies stay), no pageerrors;
+  player position round-trips exactly through save/load. Deviations: Option A (not per-room `pState`, → H3);
+  maxikit banks 1 like medikit (the data shows them identical — no bigger stockpile in the original);
+  sound-slice save deferred (audio domain). Next: H3 (per-room state) or D1 (sprites).

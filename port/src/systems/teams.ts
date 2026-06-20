@@ -147,6 +147,30 @@ export class TeamMaster {
     return { obj: best, dist: best ? bd : 999999 };
   }
 
+  // restoreTarget (teamMaster.txt 1297-1306): re-acquire a committed reference POSITIONALLY on load.
+  // findTargetInTeam(team, loc, #closestDistance, [[role]]) — the nearest LIVE unit of the saved team+role
+  // to the saved location wins. Exact identity isn't preserved (it can't be — ids regenerate); behavioral
+  // parity is (the hunter re-commits to "the unit that was roughly there"). Called by the deferred phase-2
+  // relationship pass AFTER every actor in the restored batch already exists. Returns the re-committed
+  // target (and subscribes the hunter to its #leaveGame, like refreshTarget) or null.
+  restoreTarget(hunter: Entity, rel: { team: string; role: string; x: number; y: number }): Entity | null {
+    const t = this.team(rel.team);
+    const pool = rel.role === "#teamBuildings" ? t.buildings : t.members;
+    let best: Entity | null = null, bd = Infinity;
+    for (const u of pool) {
+      if (u.send("isDead")) continue;
+      const p = u.send("getPos") as { x: number; y: number };
+      const dd = (p.x - rel.x) ** 2 + (p.y - rel.y) ** 2;
+      if (dd < bd) { bd = dd; best = u; }
+    }
+    if (best && (hunter as any).get) {
+      // re-file as the hunter's committed #target via the same path refreshTarget uses.
+      this.subscribe(best, hunter);
+      hunter.send("setAiTarget", best); // CpuAI commits it (no-op for non-AI entities)
+    }
+    return best;
+  }
+
   // impactAreaAttack (teamMaster.impactMeleeAttack/impactAttack core): the team-scoped disc search.
   // Resolves the hostile teams for `attacker` (by its #attack.targetAllegiance), searches the unit map
   // around (cx,cy) out to `radius`, role-filters by `hits`, and invokes hitFn(victim) for every hostile

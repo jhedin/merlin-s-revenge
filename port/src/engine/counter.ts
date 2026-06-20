@@ -41,6 +41,9 @@ export class Counter {
   // CounterOnce(theC): iterate until fin, then stop (no looping). This is what updateCooldowns calls.
   once(): void { if (!this.fin) this.step(); }
 
+  // Counter(theC): one looping advance step (resets+loops once fin). modMedikit.attemptHeal calls this.
+  tick(): void { this.step(); }
+
   save(): { hi: number; inc: number; count: number; fin: boolean } {
     return { hi: this.hi, inc: this.inc, count: this.count, fin: this.fin };
   }
