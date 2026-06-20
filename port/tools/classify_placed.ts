@@ -14,15 +14,16 @@ for (const room of map.rooms.values()) { const o = room.layer("#objects"); if (!
   for (const row of o.grid) for (const n of row) if (n > 0) { const s = tileSymbol(key, n); if (s !== "#none") placed.add(s); } }
 
 const buckets: Record<string, string[]> = { pickup: [], skipped: [], unit: [], dwelling: [], noRecord: [], otherObjType: [] };
+const put = (k: string, v: string) => { (buckets[k] ??= []).push(v); };
 for (const sym of placed) {
   const name = sym.slice(1);
-  if (PICKUPS[sym]) { buckets.pickup.push(name); continue; }
-  if (SKIP_SPAWN.has(sym)) { buckets.skipped.push(name); continue; }
+  if (PICKUPS[sym]) { put("pickup", name); continue; }
+  if (SKIP_SPAWN.has(sym)) { put("skipped", name); continue; }
   const d = registry.resolveActor(name);
-  if (!d) { buckets.noRecord.push(name); continue; }
+  if (!d) { put("noRecord", name); continue; }
   const ot = (d as any).objType as string;
-  if (ot === "#objCPUCharacter" || ot === "#objActorPlayer") buckets.unit.push(name);
-  else if (ot === "#objDwelling") buckets.dwelling.push(name);
-  else buckets.otherObjType.push(`${name}(${ot ?? "no-objType"})`);
+  if (ot === "#objCPUCharacter" || ot === "#objActorPlayer") put("unit", name);
+  else if (ot === "#objDwelling") put("dwelling", name);
+  else put("otherObjType", `${name}(${ot ?? "no-objType"})`);
 }
 for (const [k, v] of Object.entries(buckets)) console.log(`\n[${k}] (${v.length})\n  ${v.sort().join("  ")}`);
