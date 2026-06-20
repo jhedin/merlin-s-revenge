@@ -1,15 +1,29 @@
-// Runtime asset loading: images + the generated assets.json index.
+// Runtime asset loading: images + the generated assets.json index. Loading is LAZY per map: the 10
+// tileset sheets are small and load up front, but the 171 char frame-sets (~14 MB total) load on
+// demand — ensureMapAssets(mapId) loads only the chars a map can spawn + its tilesets, so the
+// default map paints as fast as it ever did. (F1: bundle ALL, load only what a map needs.)
 
-export interface FrameMeta { file: string; w: number; h: number; reg: [number, number]; }
+import mapsIndex from "../generated/maps.json";
+
+export interface FrameMeta { file: string; w: number; h: number; reg: [number, number]; dela?: number; }
 export interface AnimMeta { delay: number; frames: FrameMeta[] }
-export interface TilesetMeta { file: string; w: number; h: number; cols: number; tile: number }
+export interface TilesetMeta { file: string; w: number; h: number; cols: number; tile: number; keyFile?: string }
+export interface MapMeta {
+  id: string; name: string; folder: string; file: string;
+  roomSize: { x: number; y: number }; mapSize: { x: number; y: number }; tilesets: string[];
+}
 export interface AssetIndex {
-  tile: number;
+  version?: number;
+  defaultMap?: string;
+  tile?: number;                                 // legacy global (per-tileset `tile` is authoritative)
   tilesets: Record<string, TilesetMeta>;
+  chars?: Record<string, true>;                  // all bundled animation chars (171)
   anims: Record<string, AnimMeta>;
   sounds?: Record<string, string>; // SFX name (#attack.sound / collectSound / dieSound) -> file
   music?: Record<string, string>;  // musicName -> file
 }
+
+export const mapList = mapsIndex as MapMeta[];
 
 export type Drawable = HTMLCanvasElement;
 
@@ -62,19 +76,55 @@ function keyOutMatte(img: HTMLImageElement, mode: "flood" | "global"): HTMLCanva
 
 export class Assets {
   images = new Map<string, Drawable>();
+  private loadedChars = new Set<string>();
+  private inflight = new Map<string, Promise<void>>();
   constructor(public index: AssetIndex, public base = "/assets/") {}
 
+  /** Load the index + all 10 tileset sheets (small) up front. Char frames load lazily per map. */
   static async load(base = "/assets/"): Promise<Assets> {
     const index = (await import("../generated/assets.json")).default as unknown as AssetIndex;
     const a = new Assets(index, base);
-    const tilesetFiles = new Set(Object.values(index.tilesets).map((t) => t.file));
-    const files = new Set<string>(tilesetFiles);
-    for (const anim of Object.values(index.anims)) for (const f of anim.frames) files.add(f.file);
-    await Promise.all([...files].map(async (f) => {
-      const img = await loadImage(base + f);
-      a.images.set(f, keyOutMatte(img, tilesetFiles.has(f) ? "global" : "flood"));
-    }));
+    await Promise.all(Object.values(index.tilesets).map((t) => a.loadFile(t.file, "global")));
     return a;
+  }
+
+  private async loadFile(file: string, mode: "flood" | "global"): Promise<void> {
+    if (this.images.has(file)) return;
+    const img = await loadImage(this.base + file);
+    this.images.set(file, keyOutMatte(img, mode));
+  }
+
+  /** Load one char's animation frames on demand (deduped; idempotent). */
+  async ensureChar(char: string): Promise<void> {
+    if (this.loadedChars.has(char)) return;
+    let p = this.inflight.get(char);
+    if (!p) {
+      p = (async () => {
+        const files = new Set<string>();
+        const prefix = `${char}_`;
+        for (const [key, anim] of Object.entries(this.index.anims)) {
+          if (!key.startsWith(prefix)) continue;
+          for (const f of anim.frames) files.add(f.file);
+        }
+        await Promise.all([...files].map((f) => this.loadFile(f, "flood")));
+        this.loadedChars.add(char);
+      })().finally(() => this.inflight.delete(char));
+      this.inflight.set(char, p);
+    }
+    await p;
+  }
+
+  /**
+   * Load everything a map needs to render/spawn: its tilesets (already loaded if standard) + every
+   * char that map can spawn. Chars are resolved from the map's #objects-layer spawn symbols by the
+   * caller and passed in; the blackOrc fallback is loaded too as a safety net for unbundled actors.
+   */
+  async ensureMapAssets(tilesetFiles: string[], spawnChars: string[]): Promise<void> {
+    await Promise.all(tilesetFiles.map((f) => this.loadFile(f, "global")));
+    const need = new Set<string>(spawnChars);
+    need.add("mer");       // the player
+    need.add("blackOrc");  // spriteCharOr fallback safety net
+    await Promise.all([...need].map((c) => this.ensureChar(c)));
   }
 
   img(file: string): Drawable {
@@ -82,4 +132,7 @@ export class Assets {
     if (!i) throw new Error("image not loaded: " + file);
     return i;
   }
+
+  /** True once a char's frames are loaded (renderer/anim can fall back if not). */
+  hasChar(char: string): boolean { return this.loadedChars.has(char); }
 }

@@ -22,7 +22,7 @@ This tracker is the running backlog; update the status table + log each iteratio
 | Spells / weapons / projectiles | ~15% | Only `energyBlast` (partial); 1 generic bullet stands in for ~18; 0 summons, 0 splash/beam/mine; no weapon manager |
 | Actors / bosses / dwellings | ~22% | All 263 records parse (stats resolve); gaps are art + AI wiring + per-actor behavior; bosses ~5% |
 | Player / progression / masters | ~35% | Progression math faithful; save persists only room+player; 3 of 39 masters; no army reserve |
-| World / render / pipeline / shell | ~35% | Loads 1 of 47 maps; asset pipeline is a slice-copier; collision = solid-AABB only; cutscene is a reimpl |
+| World / render / pipeline / shell | ~45% | Asset pipeline complete (F1 ☑): all 10 tilesets / 171 chars / 47 maps, load-any-map, lazy per-map loading; collision = solid-AABB only (F2); cutscene is a reimpl (H1) |
 
 The **data** pipeline is genuinely complete (all 263 actors → `data.json`). Almost everything missing is
 *behavior and assets*, not data — consistent with "content is data, not code."
@@ -96,8 +96,12 @@ Status: ☐ not started · ◐ in progress · ☑ done
   *(02 #3)*
 
 ### Phase F — World / render / pipeline
-- ☐ **F1. Complete the asset pipeline** — atlas baking + all 10 tilesets / 171 anim chars / 47 maps (vs
-  3/26/1 today). The lever for "load whatever the data ships." Gates D1. *(05 #1)*
+- ☑ **F1. Complete the asset pipeline** — all 10 tilesets (per-tileset tile size, unique-prefix match) +
+  all 171 anim chars (556 anims; `seperateMembers` + per-frame `reg`/`dela`) + all 47 maps (`maps.json` +
+  `loadMap(id)` load-any-map, `?map=<id>` picker) + vocabulary-driven SFX. Lazy per-map loading
+  (`ensureMapAssets`) keeps first paint fast; `tilePx` resolved per-map. **Atlas baking descoped** (no
+  image lib in the environment, `public/assets/` build-generated — frames stay individual PNGs, renderer
+  unchanged). The lever for "load whatever the data ships." Gates D1. *(05 #1)*
 - ☐ **F2. Collision tile-type breadth** — `#platform`/`#ceiling`/`#wallLeft`/`#wallRight`, per-edge merge,
   corner detection, directional collision events (golden tests first). *(05 #2)*
 - ☐ **F3. Render/anim fidelity** — `modColourTransform` tint/glow (not binary white flash), per-sprite
@@ -166,3 +170,28 @@ Status: ☐ not started · ◐ in progress · ☑ done
   (sword auto-current), melee+knockback land, grant energyBlast → getHasSpell true, charge bar fills to
   ~0.96, release fires a bolt, immediate recast gated, no pageerrors. Out of scope (plan §g): GMG toggle,
   magic limiter master, spell-actor lifecycle, setMultiAttack, weaponSelector UI, C-phase spell content.
+- **Iter 4** — F1 shipped (asset pipeline complete). The slice-copier `build_assets.ts` is now a
+  COMPLETE bundler: **all 10 tilesets** (4 families x {Passive,Active,Objects} + menu, matched by
+  longest-unique-prefix `tlk_<family><Layer>`, each with per-tileset `tile`/`cols`/`keyFile` read from
+  its `_key.txt` -- 32 gameplay, 16 menu); **all 171 anim chars / 556 anims** (member name space-split
+  for `seperateMembers` before the `_`-split; per-frame `reg` + `dela` recorded); **all 47 maps** copied
+  to `maps/<id>.txt` (folder-qualified ids on stem collision) + a `maps.json` manifest; **vocabulary-
+  driven SFX** -- the closed logical-name set scanned from `casts/data` (`#sound`/`#collectSound`/
+  `#dieSound`) union engine effects, each wav de-mangled + matched (all 29 land in the vocabulary, no
+  lossy regex). Builder prints: `tilesets:10 chars:171 anims:556 maps:47 sounds:29 music:8`.
+  **Consumers:** `assets.ts` gains a `chars` index + **lazy per-map loading** -- only the 10 (small)
+  tileset sheets load up front; char frames load on demand via `ensureChar`/`ensureMapAssets` so the
+  default map paints as fast as ever (no 14 MB eager-load). `map.ts` resolves `tilePx` per-map from the
+  active layer's tileset (drops the global 32) and stays graceful on unknown/foreground layers. `main.ts`
+  `loadMap(id)` plays **any** of the 47 maps (resolves its tilesets + per-layer keys + `ensureMapAssets`)
+  with a `?map=<id>` dev picker; default id unchanged. `anim.ts`/`cutscenePlayer.ts` skip-and-lazy-load a
+  frame that isn't loaded yet (summon/cutscene chars) instead of throwing. **Atlas baking descoped** --
+  no image library is available and `public/assets/` is build-generated, so frames stay individual PNGs
+  (renderer draws whole frames, unchanged); the F1 win is COMPLETENESS + load-any-map, not atlasing.
+  tsc clean; **132 tests pass** (+16: `pipeline.test.ts` count gate cross-checked vs a fresh source scan
+  + audio vocabulary coverage + a 7-map structural load smoke incl 64x64 / 37x25 / 50x1 / 30x30 asserting
+  no throw; +1 audio real-key test). Room-1 no-regression: `playthrough_smoke` ends
+  `enemies:0, exitsOpen:true, errors:none` (identical). In-browser: default + `merlinart` (64x64, merlin),
+  `mr4Demo` (15x15, merlinOpen), `merliniii`, `merlinartiii` (35x18) all load and fully paint with **no
+  pageerrors**. Out of scope (deferred): F2 collision tile-types (keys bundled, not interpreted), F3
+  render fidelity, atlasing. Next: D1 (per-enemy sprite wiring -- now unblocked) or F2.

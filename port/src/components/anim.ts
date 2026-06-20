@@ -61,6 +61,9 @@ export class Anim extends Component {
     const anim = this.animFor(this.action);
     if (!anim || anim.frames.length === 0) return null;
     const f = anim.frames[this.frame % anim.frames.length]!;
+    // frames load lazily per map; a char spawned mid-run (e.g. a summon) may not be loaded yet —
+    // kick off its load and skip this frame rather than throwing (it'll draw next tick once ready).
+    if (!game.assets.images.has(f.file)) { void game.assets.ensureChar(this.char); return null; }
     return {
       img: game.assets.img(f.file),
       x: m.x, y: m.y, regX: f.reg[0], regY: f.reg[1],

@@ -25,7 +25,7 @@ shell/scenes/audio 20%.
 |---|---:|---|
 | World / rooms / collision | ~30% | Loads 3-layer maps + flip-screen nav + `#solid` AABB; missing zone tile-types, runtime exit-tile insertion, foreground layer, end-room, minimap status, save-state restore |
 | Render / animation | ~35% | z-sorted display list + regpoints + flip + binary hit-flash; missing the whole `modColourTransform` tint palette, per-frame anim delays, per-strip loop flags, blend/alpha, layer-Z model |
-| Asset + data pipeline | ~45% | **Data** pipeline complete (263/263 actors parsed); **asset** pipeline is a vertical-slice copier: 3 of 10 tilesets, ~26 of 171 anim chars, 1 of 47 maps, no atlas, lossy sound-name mangling |
+| Asset + data pipeline | ~90% | **Data** pipeline complete (263/263 actors parsed); **asset** pipeline complete (F1 ☑): all 10 tilesets, all 171 anim chars, all 47 maps + load-any-map, vocabulary-driven SFX. (No atlas — individual frame PNGs, no image lib available; atlasing dropped from F1 scope.) |
 | Shell / scenes / menus / audio | ~35% | Title/pause/gameover/victory FSM + keyboard menu + SFX/music playback; cutscene engine is a standalone re-impl (not driving real actors); 12+ scene markers, button-DSL menus, transitions, showArmy/credits/instructions/keyconfig absent |
 
 ---
@@ -39,7 +39,7 @@ shell/scenes/audio 20%.
 
 | Feature | Original behavior | Port status | Gap | Effort |
 |---|---|---|---|---|
-| Per-map room/map sizes | `#mapSize`/`#roomSize`/`#roomMapScale` read per map (16×9…64×64; mapSize→30×30) | **FAITHFUL** | `map.ts` reads `roomSize`/`mapSize` from data, computes view from them. `tilePx` hard-coded to 32 (tlk says `tileSize|point(32,32)` — true for all gameplay tlks but menu tlk is 16) | — |
+| Per-map room/map sizes | `#mapSize`/`#roomSize`/`#roomMapScale` read per map (16×9…64×64; mapSize→30×30) | **FAITHFUL** | `map.ts` reads `roomSize`/`mapSize` from data, computes view from them. `tilePx` now **resolved per-map from the active layer's tileset** (`TilePxFor` from the asset index), not hard-coded — 32 for all gameplay tlks, but a non-32 tileset would scale correctly (F1 ☑) | — |
 | Layer set | objRoom doc lists `#backgroundPassive`, `#backgroundActive`(=solid), `#objects`, `#foregroundPassive` | **PARTIAL** | Port handles passive/active/objects; **`#foregroundPassive` (over-actor layer) is silently dropped** by `parseMap` if a map ships one (shipped works/* maps don't, but the loader can't play one that does) | S |
 | Layer rendering order | objRoom.getScaleImage composites passive→active→objects into ONE room image; objects layer **not drawn in #activate mode** (real actors replace it) | **FAITHFUL-ish** | Port draws passive then active tile layers live each frame and spawns actors from the objects layer (never draws it) — matches behavior, different mechanism | — |
 | Objects layer = spawn table | `#objects` tile→symbol via a *different* tlk key; `objTileLayer.activateActors` spawns one actor per non-`#none` tile at tile center | **FAITHFUL** | `rooms.ts spawnObjects` resolves via `objectsKey`, routes player/pickup/dwelling/unit. Pickups are a port abstraction (heal/speed/mana/etc.) rather than real actor spawns; some symbols hard-`SKIP_SPAWN`'d | S |
@@ -93,11 +93,11 @@ Two tools: `parse_data.ts` (Lingo → `generated/data.json`) and `build_assets.t
 |---|---|---|---|---|
 | Lingo data grammar | prop-lists, lists, `[:]`/`[]`, symbols, strings, ints/floats (leading-dot), bools, `point`, `rgb`, `rect`, tagged `member()`/global/`random()` | **FAITHFUL** | `data/lingo.ts` covers all of these incl. `rect`, recursive tagged nodes, two-top-level-values (`parseDataFile`). Matches PLAN_REVIEW §3 | — |
 | All actor/data records | 263 `act_*` + tem/bnd/tlk/scr/etc. (321 total) | **FAITHFUL** | `parse_data.ts` parses every non-scr/tlk record; `data.json` contains all 263 actors. The "blocking data-pipeline bug" (regpoints) is fixed upstream in extraction | — |
-| Tilesets | 10 tlk_ tileset sheets shipped (`merlin`, `merlin4`, `merlinOpen`, `menu`) | **PARTIAL** | `build_assets.ts` bundles **only 3** (`merlin4` passive/active/objects). A map using `merlin`/`merlinOpen`/`menu` tilesets has no sheet → blank render | S |
-| Animations / chars | 2,211 `anm_*` members across **171 distinct chars** | **PARTIAL** | Hard-coded `CHARS` list of ~26 → **125 anims** in `assets.json`. Unbundled actors fall back to `blackOrc` stand-in (`spriteCharOr`). Not "load any actor's anims" | M |
-| Sprite atlases | PLAN §4: pre-bake atlases + manifest | **MISSING** | No atlas baking — each frame is copied as an individual PNG (`public/assets/*.png`). Works, but hundreds of draw-images and HTTP loads; not the planned packed atlas | M |
-| Maps | 47 shipped maps; loader should play any | **PARTIAL** | Pipeline copies **one** map (`descent_into_darkness`) to `map.txt`. The *loader* is the parity unit (see §1); the pipeline just stages one. No map-selection / "play any of the 47" path | S (staging) |
-| Audio SFX | 29 SWA→WAV; keyed by effect name (`#attack.sound`, `collectSound`, `dieSound`) | **PARTIAL** | All 29 copied, but `sfxName()` strips index prefix **and** trailing capital-letter suffixes with regexes — **lossy/heuristic**; some `#attack.sound` keys may not match. soundMaster's per-effect channel-count + default-volume model is collapsed | S–M |
+| Tilesets | 10 tlk_ tileset sheets shipped (`merlin`, `merlin4`, `merlinOpen`, `menu`) | **FAITHFUL** | `build_assets.ts` bundles **all 10** via longest-unique-prefix `tlk_<family><Layer>` match; per-tileset `tile`/`cols`/`keyFile` (32 gameplay, 16 menu). Verified in-browser: merlin / merlin4 / merlinOpen maps all render (F1 ☑) | — |
+| Animations / chars | 2,211 `anm_*` members across **171 distinct chars** | **FAITHFUL** | All **171 chars / 556 anims** bundled (`seperateMembers` space-split honored; per-frame `reg` + `dela` recorded). `chars` index in `assets.json`; `spriteCharOr`'s `blackOrc` fallback kept only as a safety net (F1 ☑) | — |
+| Sprite atlases | (F1 plan originally proposed atlases) | **N/A — descoped** | No image library (sharp/canvas/pngjs/jimp) in the environment and `public/assets/` is build-generated; atlasing dropped from F1. Frames stay individual PNGs (the renderer draws whole frames), loaded **lazily per map** so first paint stays fast. Atlasing can return as a perf item if needed | — |
+| Maps | 47 shipped maps; loader should play any | **FAITHFUL** | Pipeline copies **all 47** to `maps/<id>.txt` + a `maps.json` manifest (`{id,name,folder,file,roomSize,mapSize,tilesets}`). `main.ts loadMap(id)` plays any of them (lazy `ensureMapAssets`); `?map=<id>` dev picker; default unchanged (F1 ☑) | — |
+| Audio SFX | 29 SWA→WAV; keyed by effect name (`#attack.sound`, `collectSound`, `dieSound`) | **FAITHFUL** | All 29 copied; **vocabulary-driven** mapping: the closed logical-name set is scanned from `casts/data` (`#sound`/`#collectSound`/`#dieSound`) ∪ engine effects; each wav de-mangled and matched, warn-on-miss. All 29 land in the vocabulary (F1 ☑). soundMaster's per-effect channel-count/volume model is still collapsed (separate playback item) | S (playback only) |
 | Music | 8 MP3s | **FAITHFUL** | All 8 copied, keyed by basename; `main.ts` references real names (`baroque_rock_v1`, `electronic_merlin_v1_02`, `last_stand_v4`) | — |
 | Cutscene / keymap grammars | `scr_*` DSL + `bnd_*` keymaps need own parsers | **PARTIAL** | `data/cutscene.ts` parses scr DSL (subset of verbs); `bnd_*` Mac-vkey→`KeyboardEvent.code` translation is in input (agent-1/own seam) — only a few schemes wired | M |
 
@@ -139,10 +139,10 @@ editor-authored map that uses any of:
    arrows are absent entirely.
 4. **`#endRoom` win condition** — a map that wins on *reaching* a designated end room (vs clearing
    every room) is mis-scored.
-5. **Tilesets other than `merlin4`** — `merlin`, `merlinOpen`, `menu` sheets aren't bundled, so a
-   map referencing them renders blank (asset-pipeline gap, not loader logic).
-6. **Per-map tile sizes ≠ 32** — `tilePx` is hard-coded 32 (true for all gameplay tlks; the menu
-   tlk is 16). A future 16px or mixed tileset would mis-blit.
+5. ~~**Tilesets other than `merlin4`**~~ — RESOLVED (F1 ☑): all 10 sheets bundled; merlin / merlin4 /
+   merlinOpen maps verified rendering in-browser.
+6. ~~**Per-map tile sizes ≠ 32**~~ — RESOLVED (F1 ☑): `tilePx` resolved per-map from the tileset's
+   `tile` (32 gameplay, 16 menu); a non-32 gameplay tileset would scale correctly.
 7. **Live room-state restore** — re-entering a partially-fought room respawns it fresh (only the
    binary cleared/uncleared persists); actor positions, graves, and reserve units are lost.
 8. **Variable per-frame animation delay & data-driven loop flags** — uniform-per-strip delay and a
@@ -155,9 +155,11 @@ layer, exit-range fidelity, end-room, and the asset bundle.**
 
 ## 6. Prioritized build targets
 
-1. **Complete the asset pipeline (M).** Bundle all 10 tilesets and all 171 anim chars (or generate
-   on demand), bake atlases, and fix the lossy SFX name mapping. This is the single biggest lever:
-   it's what makes "load whatever the data ships" real for art, and unblocks rendering any map/actor.
+1. ~~**Complete the asset pipeline (M).**~~ DONE (F1 ☑). All 10 tilesets + all 171 anim chars + all
+   47 maps now bundle, with lazy per-map loading (`ensureMapAssets`) and load-any-map (`?map=<id>`),
+   and the SFX mapping is vocabulary-driven (no lossy regex). Atlasing was descoped (no image lib in
+   the environment; frames stay individual PNGs — the renderer draws whole frames). This makes "load
+   whatever the data ships" real and unblocks D1 (per-enemy sprites).
 2. **Collision tile-type breadth + directional events (M).** Add `#platform`/`#ceiling`/`#wall*`
    handling and emit `collisionWall/Ceiling/Platform` so any editor-authored map plays; keep golden
    tests. Faithful-first per PLAN §5 (the solver is bespoke/partly-not-understood).

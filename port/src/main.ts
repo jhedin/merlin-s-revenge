@@ -2,14 +2,15 @@
 // component archetypes (all gameplay flows through the four-primitive dispatch), and runs a
 // 30 Hz fixed-timestep loop: data -> world -> entities/dispatch -> render -> input -> combat.
 
-import { Assets } from "./render/assets";
+import { Assets, mapList, type MapMeta } from "./render/assets";
 import { Renderer, type Sprite } from "./render/renderer";
 import { Input } from "./systems/input";
 import { AudioSystem } from "./systems/audio";
 import { GameLoop } from "./engine/loop";
 import { parseMap, type GameMap, type Vec2i } from "./world/map";
-import { parseTileKey } from "./data/tlk";
+import { parseTileKey, tileSymbol, type TileKey } from "./data/tlk";
 import { RoomManager } from "./world/rooms";
+import { registry } from "./game/data";
 import { game, initContext } from "./game/context";
 import { spawnPlayer, spawnEnemy, spawnUnit, spawnAlly } from "./entities/archetypes";
 import { Anim } from "./components/anim";
@@ -28,19 +29,69 @@ import { Menu } from "./scenes/menu";
 let flashMsg = ""; let flashUntil = 0;
 const flash = (m: string) => { flashMsg = m; flashUntil = Date.now() + 1200; };
 
+// A fully-resolved, ready-to-play map: the parsed map + the active/objects tile keys + its assets
+// loaded. loadMap can build ANY of the 47 bundled maps (objMap: "maps are data"); the engine renders
+// whatever the data ships. Per-layer keys come from each tileset's keyFile in the asset index.
+interface LoadedMap { meta: MapMeta; map: GameMap; activeKey: TileKey; objectsKey: TileKey; }
+
+async function loadMap(assets: Assets, id: string): Promise<LoadedMap> {
+  const meta = mapList.find((m) => m.id === id) ?? mapList.find((m) => m.id === assets.index.defaultMap) ?? mapList[0]!;
+  const tilesets = assets.index.tilesets;
+  const tilePxFor = (sym: string) => tilesets[sym]?.tile;
+
+  const src = await fetch("/assets/" + meta.file).then((r) => r.text());
+  const map = parseMap(src, tilePxFor);
+
+  // resolve the active/objects tile keys from the layers' tilesets (fall back to a small empty key).
+  const symFor = (layer: string) => map.layerDefs.find((d) => d.name === layer)?.tileSet ?? "";
+  const fetchKey = async (sym: string): Promise<TileKey> => {
+    const kf = tilesets[sym]?.keyFile;
+    if (!kf) return { tileSize: { w: map.tilePx, h: map.tilePx }, symbols: [] };
+    return parseTileKey(await fetch("/assets/" + kf).then((r) => r.text()));
+  };
+  const [activeKey, objectsKey] = await Promise.all([
+    fetchKey(symFor("#backgroundActive")), fetchKey(symFor("#objects")),
+  ]);
+
+  // collect every char this map can spawn (objects-layer symbols across all rooms) so ensureMapAssets
+  // loads only their frames — not all 171 chars (14 MB). Pickups/skip symbols contribute no char.
+  // (Resolved straight off the index here — game context isn't initialized yet, so spriteCharOr's
+  // game.assets is unavailable; ensureMapAssets always adds the blackOrc fallback anyway.)
+  const hasChar = (name: string) => !!assets.index.anims[`${name}_stand`];
+  const spawnChars = new Set<string>();
+  for (const room of map.rooms.values()) {
+    const objects = room.layer("#objects");
+    if (!objects) continue;
+    for (const row of objects.grid) for (const n of row) {
+      if (n <= 0) continue;
+      const sym = tileSymbol(objectsKey, n);
+      if (sym === "#none" || sym === "#player") continue;
+      const name = sym.slice(1);
+      if (registry.resolveActor(name) && hasChar(name)) spawnChars.add(name);
+    }
+  }
+  const tilesetFiles = meta.tilesets.map((s) => tilesets[s]?.file).filter((f): f is string => !!f);
+  await assets.ensureMapAssets(tilesetFiles, [...spawnChars]);
+  return { meta, map, activeKey, objectsKey };
+}
+
 async function main() {
   const canvas = document.getElementById("game") as HTMLCanvasElement;
   const assets = await Assets.load();
-  const [mapSrc, keySrc, objSrc, introSrc] = await Promise.all([
-    fetch("/assets/map.txt").then((r) => r.text()),
-    fetch("/assets/active_key.txt").then((r) => r.text()),
-    fetch("/assets/objects_key.txt").then((r) => r.text()),
+  // dev map picker: ?map=<id> selects any of the 47 bundled maps; default is unchanged.
+  const wantMap = new URLSearchParams(location.search).get("map") ?? assets.index.defaultMap ?? "";
+  const [loaded, introSrc] = await Promise.all([
+    loadMap(assets, wantMap),
     fetch("/assets/intro.txt").then((r) => r.text()),
   ]);
   const intro = parseCutscene(introSrc);
-  const map = parseMap(mapSrc);
-  const activeKey = parseTileKey(keySrc);
-  const objectsKey = parseTileKey(objSrc);
+  // preload the cutscene cast's frames (small) so the intro renders immediately on first play.
+  const CUT_SYM_CHAR: Record<string, string> = { merlin: "mer", ulin: "uli", berlin: "ber", tv: "tv" };
+  for (const sym of Object.values(intro.chars)) {
+    const name = sym.replace("#", "");
+    void assets.ensureChar(CUT_SYM_CHAR[name] ?? name.slice(0, 3));
+  }
+  const { map, activeKey, objectsKey } = loaded;
   const tile = map.tilePx;
   const viewW = map.roomSize.x * tile, viewH = map.roomSize.y * tile;
   const renderer = new Renderer(canvas, viewW, viewH, 2);
@@ -170,7 +221,7 @@ async function main() {
   (window as any).__mode = () => mode;
   (window as any).__bulletStats = bulletPoolStats;
   (window as any).__audio = audio;
-  console.log("Merlin's Revenge —", map.mapSize.x + "x" + map.mapSize.y, "room dungeon ready (title screen)");
+  console.log("Merlin's Revenge —", loaded.meta.id, map.mapSize.x + "x" + map.mapSize.y, "room dungeon ready (title screen)");
 }
 
 function drawTitle(renderer: Renderer, w: number, h: number) {

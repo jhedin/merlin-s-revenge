@@ -89,6 +89,8 @@ export class CutscenePlayer {
       const anim = this.assets.index.anims[`${a.char}_stand`] ?? this.assets.index.anims[`${a.char}_walk`];
       const f = anim?.frames[0];
       if (!f) continue;
+      // frames load lazily; if this actor's char isn't loaded yet, kick its load and skip the draw.
+      if (!this.assets.images.has(f.file)) { void this.assets.ensureChar(a.char); continue; }
       const img = this.assets.img(f.file);
       const w = f.w * scale, h = f.h * scale;
       const dx = Math.round(a.x - w / 2), dy = Math.round(this.groundY - h);
