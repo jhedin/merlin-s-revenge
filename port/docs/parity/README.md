@@ -598,3 +598,19 @@ Status: ☐ not started · ◐ in progress · ☑ done
   reliably bundled — the line is the acceptable first cut, §g.2); (3) the beam/pulse stream lives on
   PlayerControl, not a live `objSpell` actor (port adaptation, §g.1 — same observable cadence). **Phase I and
   the audited backlog (A–I) are complete.**
+- **Iter 13 — Phase I complete + cross-map audit.** I7 GMG (collect/G-toggle/charge-swap/auto-fire) +
+  I8 beams (modFireBullets streaming release + the stretched/rotated energyBeam render) shipped; latent
+  fix: splash/beam bullets now expose `getTeam` so `resolveSplash` resolves their hostile teams. 275
+  tests. Added `tools/audit_all_maps.ts` — scans ALL 47 maps' object layers: **zero unhandled objTypes**
+  (Phase I's objType dispatch covers everything placed), and the only unresolvable symbols are
+  `ochreWizard`(23)/`scw`(6) — which have **no `act_` record in the original `casts/data` either**, so
+  null-spawning them is faithful (orphan map references; aliasing would be LESS faithful). Remaining real
+  fidelity items: AI-caster heal/summon payload routing (named healer/summoner wizards fire a generic
+  bolt) + energyPunch `#magicMelee` mana term — small refinements, tracked below.
+
+### Phase J — refinements (small, real)
+- ☐ **J1. AI-caster heal/summon payload** — a `#objAiCPUSpellCaster` whose `#weapon` is a heal/summon
+  spell (ulinInGame healBlast, scarletInGame undeadSummon) should heal allies / summon units, not fire a
+  generic bolt. Route CPU casts through the same payload logic the player's `castMagic` uses (C-phase).
+- ☐ **J2. energyPunch `#magicMelee` mana term** — melee adds `(strength + 1.5·manaCapacity)/1.5` for
+  `#magicMelee`; the port uses the B2 `power·strength·MELEE_SCALE`. Honor the mana term (documented B2 deviation).
