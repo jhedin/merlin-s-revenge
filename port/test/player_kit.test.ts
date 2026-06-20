@@ -6,7 +6,13 @@ import { Mana } from "@/components/mana";
 import { Energy } from "@/components/combat";
 import { Anim } from "@/components/anim";
 import { PlayerControl } from "@/components/control";
+import { resolveAttack } from "@/components/weapon";
+import { registry } from "@/game/data";
 import { rebuildCombatSubstrate } from "@/systems/combatTick";
+
+// grant Merlin the energyBlast magic weapon (modWeaponManager.addWeapon), as the room-6 scroll does.
+const energyBlast = () => resolveAttack((registry.resolveActor("energyBlast") ?? {})["attack"] as any);
+const grantSpell = (p: import("@/engine/dispatch").Entity) => p.get(PlayerControl).grantSpell(energyBlast());
 
 // Minimal input stub exposing only what PlayerControl reads.
 function fakeInput(opts: { mouseDown?: boolean; cursor?: { x: number; y: number } | null; held?: Set<string> }) {
@@ -34,7 +40,7 @@ describe("Merlin's charged-magic + punch kit", () => {
   it("holds to charge then casts a bolt at the cursor", () => {
     game.input = fakeInput({ mouseDown: true, cursor: { x: 400, y: 100 } }) as any;
     const p = spawnPlayer(100, 100);
-    p.get(PlayerControl).grantSpell();                    // acquired the energyBlast scroll
+    grantSpell(p);                    // acquired the energyBlast scroll
     game.entities = [p];
 
     for (let i = 0; i < 6; i++) p.send("update");        // hold to charge
@@ -53,7 +59,7 @@ describe("Merlin's charged-magic + punch kit", () => {
   it("a cast bolt damages an enemy it flies into", () => {
     game.input = fakeInput({ mouseDown: true, cursor: { x: 40, y: 94 } }) as any; // aim left
     const p = spawnPlayer(100, 100);
-    p.get(PlayerControl).grantSpell();
+    grantSpell(p);
     const foe = spawnEnemy("swordOrc", 60, 94, { animChar: "swordOrc" }); // hostile (#orcs), on the path
     game.entities = [p, foe];
     const hp0 = foe.get(Energy).energy;
@@ -87,7 +93,7 @@ describe("Merlin's charged-magic + punch kit", () => {
   it("charge ramps then pins at the capacity-derived ceiling (no pool to run out)", () => {
     game.input = fakeInput({ mouseDown: true, cursor: { x: 400, y: 100 } }) as any;
     const p = spawnPlayer(100, 100);
-    p.get(PlayerControl).grantSpell();
+    grantSpell(p);
     game.entities = [p];
     for (let i = 0; i < 3; i++) p.send("update");
     const mid = p.send("chargeFrac") as number;
@@ -99,7 +105,7 @@ describe("Merlin's charged-magic + punch kit", () => {
   it("higher mana.capacity raises the charge ceiling, so a full blast hits harder", () => {
     const fullBlastDamage = (capacity: number): number => {
       game.input = fakeInput({ mouseDown: true, cursor: { x: 40, y: 94 } }) as any; // aim left
-      const p = spawnPlayer(100, 100); p.get(PlayerControl).grantSpell();
+      const p = spawnPlayer(100, 100); grantSpell(p);
       p.get(Mana).capacity = capacity;
       const foe = spawnEnemy("blackOrc", 60, 94, { animChar: "blackOrc" }); // 1200 energy, survives one bolt
       game.entities = [p, foe];
@@ -124,7 +130,7 @@ describe("Merlin's charged-magic + punch kit", () => {
     p.send("update");
     expect(game.entities.filter((e) => e.type === "bullet").length).toBe(0); // no bolt
     expect(p.send("getHasSpell")).toBe(false);
-    p.get(PlayerControl).grantSpell();                    // collect the scroll -> magic enabled
+    grantSpell(p);                    // collect the scroll -> magic enabled
     expect(p.send("getHasSpell")).toBe(true);
   });
 });

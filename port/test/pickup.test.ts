@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { spawnPlayer, spawnPickup } from "@/entities/archetypes";
 import { Energy } from "@/components/combat";
 import { Mana } from "@/components/mana";
-import { PlayerControl } from "@/components/control";
+import { WeaponManager } from "@/components/weapon";
 import { game } from "@/game/context";
 import { CollisionGrid } from "@/world/collision";
 
@@ -40,17 +40,22 @@ describe("pickups", () => {
     expect(mana.flow).toBeGreaterThan(flow0);
     expect(mana.burst).toBeGreaterThan(burst0);
   });
-  it("the merlinSword pickup equips a stronger, longer-reaching melee", () => {
+  it("the merlinSword pickup addWeapon's a #weaponMelee, auto-selected with longer reach", () => {
     game.grid = new CollisionGrid(20, 20, 32);
     const player = spawnPlayer(100, 100); game.player = player;
-    const pc = player.get(PlayerControl);
-    const basePower = pc.power, baseReach = pc.meleeReach;
+    const wm = player.get(WeaponManager);
+    expect(wm.weaponsOfType("nonMagic")).toEqual(["#punch"]);           // starts punch-only
+    const punchReach = wm.getMeleeAttack()!.reach;
     const pickup = spawnPickup("sword", 100, 100);
     game.entities = [player, pickup];
     pickup.send("update");
-    expect(pc.hasSword).toBe(true);
-    expect(pc.power).toBeGreaterThan(basePower);
-    expect(pc.meleeReach).toBeGreaterThan(baseReach);
+    // both melee weapons owned; the sword is auto-selected (setCurrentWeapon) as the current melee
+    expect(wm.weaponsOfType("nonMagic")).toEqual(["#punch", "#merlinSword"]);
+    const sword = wm.getMeleeAttack()!;
+    expect(sword.name).toBe("#merlinSword");
+    expect(sword.damageMultiplier).toBe(16);
+    expect(sword.reach).toBeGreaterThan(punchReach);                 // longer reach (point(12,5))
+    expect(player.send("getHasSpell")).toBe(false);                 // still no magic weapon
     expect(pickup.send("isFinished")).toBe(true);
   });
 });

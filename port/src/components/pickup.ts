@@ -6,7 +6,16 @@ import { Movement } from "./movement";
 import { Energy } from "./combat";
 import { Mana } from "./mana";
 import { PlayerControl } from "./control";
+import { resolveAttack } from "./weapon";
+import { registry } from "../game/data";
 import { game } from "../game/context";
+
+// pickup effect -> the actor whose #attack the scroll grants (modWeaponManager.addWeapon). merlinSword
+// is a #weaponMelee, energyBlast a #magic; resolveActor gives the structAttack-merged #attack.
+const SCROLL_ACTOR: Record<string, string> = { sword: "merlinSword", spell: "energyBlast" };
+function scrollAttack(effect: string) {
+  return resolveAttack((registry.resolveActor(SCROLL_ACTOR[effect]!) ?? {})["attack"] as Record<string, any>);
+}
 
 export type PickupEffect = "heal" | "speed" | "sword" | "spell" | "manaCapacity" | "manaFlow" | "manaBurst";
 
@@ -41,8 +50,8 @@ export class Pickup extends Component {
     switch (this.effect) {
       case "heal": { const en = player.get(Energy); en.energy = en.max; break; }
       case "speed": player.get(Movement).maxSpeed += 0.6; break;
-      case "sword": player.get(PlayerControl).equipSword(); break;       // merlinSword: strong melee weapon
-      case "spell": player.get(PlayerControl).grantSpell(); break;        // energyBlast scroll: unlocks magic
+      case "sword": player.get(PlayerControl).equipSword(scrollAttack("sword")); break; // merlinSword: addWeapon
+      case "spell": player.get(PlayerControl).grantSpell(scrollAttack("spell")); break; // energyBlast: addWeapon magic
       // mana powerups (objManaCapacity/Flow/Burst) each raise their own stat by the real potion inc
       case "manaCapacity": player.get(Mana).incCapacity(); break;
       case "manaFlow": player.get(Mana).incFlow(); break;

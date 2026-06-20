@@ -9,6 +9,7 @@ import { Experience } from "../components/experience";
 import { Freeze } from "../components/freeze";
 import { PlayerControl, EnemyAI } from "../components/control";
 import { Mana } from "../components/mana";
+import { WeaponManager, resolveAttack } from "../components/weapon";
 import { Hurt } from "../components/hurt";
 import { Dwelling } from "../components/dwelling";
 import { Pickup, type PickupEffect } from "../components/pickup";
@@ -20,8 +21,10 @@ const DEFAULTS = { isDead: false, getTeam: "", getTeamRole: "#teamMembers", ener
 // Experience is ordered BEFORE Energy (records attacker before death); Hurt is AFTER Energy
 // (feedback + i-frames arm once the hit has landed). Targeting (the #attack.target* config) sits with
 // Team so teamMaster.findTarget / impactMeleeAttack can read it generically.
-export const PlayerArchetype = new Archetype("player", [PlayerControl, Freeze, Mana, Movement, Anim, Experience, Energy, Hurt, Team, Targeting], { defaults: DEFAULTS });
-export const EnemyArchetype = new Archetype("enemy", [EnemyAI, Freeze, Movement, Anim, Experience, Energy, Hurt, Team, Targeting], { defaults: DEFAULTS });
+// WeaponManager (modWeaponManager) sits after Mana (so addCooldownCounter reads manaRegeneration at
+// init) and supplies the data-driven #attack/charge/cooldown the control/AI driver dispatches on.
+export const PlayerArchetype = new Archetype("player", [PlayerControl, Freeze, Mana, WeaponManager, Movement, Anim, Experience, Energy, Hurt, Team, Targeting], { defaults: DEFAULTS });
+export const EnemyArchetype = new Archetype("enemy", [EnemyAI, Freeze, Mana, WeaponManager, Movement, Anim, Experience, Energy, Hurt, Team, Targeting], { defaults: DEFAULTS });
 // Dwellings are static (no AI) but reuse Movement for position + Energy/Team so they're targetable.
 export const DwellingArchetype = new Archetype("dwelling", [Dwelling, Movement, Anim, Energy, Hurt, Team, Targeting], { defaults: DEFAULTS });
 
@@ -87,11 +90,15 @@ export function spawnPlayer(x: number, y: number): Entity {
   const num = (src: Record<string, any>, k: string, dflt: number) => (typeof src[k] === "number" ? (src[k] as number) : dflt);
   const e = PlayerArchetype.create(makeEntityId());
   e.type = "player";
+  // act_player #punch is Merlin's natural attack (the WeaponManager's first weapon). agility/dexterity
+  // seed the per-type cooldown counter inc (act_player: agility 1, dexterity 0.2).
+  const punch = resolveAttack(d["attack"] as Record<string, any> | undefined);
   return e.build({
     x, y,
     walkSpeed: num(md, "walkSpeed", 4),
     energy: num(d, "energy", 200),
     strength: num(d, "strength", 8),
+    attack: punch, agility: num(d, "agility", 1), dexterity: num(d, "dexterity", 0.2),
     mana_capacity: num(d, "mana_capacity", 10),
     mana_flow: num(d, "mana_flow", 1),
     mana_burst: num(d, "mana_burst", 1),
@@ -130,6 +137,33 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
   const animType = typeof atk["animType"] === "string" ? atk["animType"] : "";
   const ranged = opts.ranged ?? (animType === "#weaponRanged" || animType === "#magic");
   const aiType = str("AiType", "");
+  // agility/dexterity seed the WeaponManager cooldown-counter inc (melee=agility, ranged=dexterity).
+  const agility = num("agility", 1);
+  const dexterity = num("dexterity", 0.2);
+  // The resolved AttackData the enemy's WeaponManager carries. We preserve the slice's enemy attack
+  // FEEL by re-deriving an EFFECTIVE cooldown so the per-weapon counter recovers in the same #frames
+  // the old CpuAI used (atkCooldown + (ranged?18:6)). Recovery = ceil((hi-1)/inc); inc is agility for
+  // melee, dexterity for ranged/magic. So hi = framesWanted*inc + 1. (Faithful power/reach/sound/bullet
+  // pass through unchanged; only the cooldown bound is calibrated — B2 plan §f.3.)
+  const rawCooldown = typeof atk["cooldown"] === "number" ? atk["cooldown"] : (ranged ? 40 : 18);
+  const framesWanted = Math.max(1, rawCooldown + (ranged ? 18 : 6));
+  // the counter inc the WeaponManager will use for THIS weapon's #type (melee=agility, ranged=dexterity,
+  // magic=manaRegeneration). manaRegen is passed into the build below so Mana.regeneration (the live inc)
+  // matches this calibration inc for magic enemies (else a caster with mana_regeneration!=1 would drift).
+  const isMagic = animType === "#magic";
+  const manaRegen = num("mana_regeneration", 1);
+  const counterInc = isMagic ? manaRegen : ranged ? dexterity : agility;
+  const effectiveCooldown = Math.round(framesWanted * (counterInc > 0 ? counterInc : 1) + 1);
+  // An enemy with no #attack/#weapon (e.g. monkGhost, #objAiCPUGhost, energy-only) still melee-contacts.
+  // Give it a synthetic #natural melee so the WeaponManager builds a cooldown counter — otherwise
+  // getCooldownFin() is unconditionally true and the unit attacks EVERY frame (the old code defaulted
+  // its cooldown to 18). The synthetic attack carries no power (CpuAI uses its scalar this.power).
+  const hasAttack = animType !== "" && typeof atk["name"] === "string" && atk["name"] !== "#none";
+  // attackless fallback recovers in the old default 18 frames (cooldownMax 18 for a no-atkCooldown melee).
+  const fallbackCooldown = Math.round(18 * (agility > 0 ? agility : 1) + 1);
+  const enemyAttack = hasAttack
+    ? resolveAttack({ ...atk, cooldown: effectiveCooldown })
+    : resolveAttack({ name: "#natural", animType: "#naturalMelee", cooldown: fallbackCooldown });
   // FSM configuration from #AiType: spellcasters/flying-bombers kite (runReload after a shot); the
   // ghost keeps the drift approximation (possession is out of scope). Bombers now run a normal attack
   // loop (no suicide). aiKind/targetTypes are gone — allegiance is data-driven via Targeting.
@@ -152,6 +186,9 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     animChar: opts.animChar ?? actorName, box: 14,
     inertia: num("inertia", 0), // resists knockback (modGameObject damping); heavy orcs get shoved less
     ranged, runReload, ghost,
+    // WeaponManager: the enemy's single weapon (one #attack) + cooldown-counter inc stats. manaRegen
+    // is forwarded so a magic enemy's live counter inc (Mana.regeneration) matches the calibration.
+    attack: enemyAttack, agility, dexterity, mana_regeneration: manaRegen,
     atkCooldown: typeof atk["cooldown"] === "number" ? atk["cooldown"] : undefined,
     atkReach: typeof atk["reach"] === "number" ? atk["reach"] : undefined,
     atkPower: atkPower || undefined,

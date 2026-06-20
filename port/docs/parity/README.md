@@ -68,8 +68,13 @@ Status: ☐ not started · ◐ in progress · ☑ done
     dazed-on-reel via `characterModeChanged`, `attackFin` re-acquire, bomber un-suicided), PlayerControl
     melee/aim via `TeamMaster`, archetype/context wiring + per-tick `UnitMap`/roster rebuild
     (`combatTick.ts`). Room 1 still clears; +4 CpuAI FSM tests (90 total).
-- ☐ **B2. `modWeaponManager` + data-driven charge/cooldown.** Retire hardcoded `SPELL`/`PUNCH`/`hasSword`/
-  `hasSpell`; real weapon slots so enemies get ranged/magic and spells plug in. *(01 #3, 03 #2)*
+- ☑ **B2. `modWeaponManager` + data-driven charge/cooldown.** Retired hardcoded `SPELL`/`PUNCH`/`hasSword`/
+  `hasSpell`; `WeaponManager` component (`pWeapons`→`AttackData`, per-weapon `Counter` cooldowns inc=agility/
+  dexterity/manaRegeneration), `engine/counter.ts`, `charge.ts` (chargeMax/Start/Speed from data×mana),
+  `resolveAttack`. Pickups `addWeapon` instead of flipping booleans; `getHasSpell`=owns a magic weapon.
+  Player keeps dual-mode auto-melee + hold-charge (port adaptation, plan §f.6); CpuAI gates fire on the
+  per-weapon counter. `damageMultiplier` flows from `#attack` into `takeHit.mult` (player melee). Plan:
+  [`plans/B2-weapon-manager.md`](plans/B2-weapon-manager.md). *(01 #3, 03 #2)*
 
 ### Phase C — Spell / weapon breadth (rides on A+B)
 - ☐ **C1. `modAttack` charge engine generalized** → cBlast/darkBlast/cBlastAi group + faithful
@@ -136,3 +141,26 @@ Status: ☐ not started · ◐ in progress · ☑ done
   clears (`enemies:0, exitsOpen:true, errors:none`); in-browser: orcs commit to player-side targets (30/30),
   0 target flicker over 12 ticks, one swing damages a 2-enemy cluster, no pageerrors. Next: B2 (weapon
   manager) — data-driven charge/cooldown + real weapon slots.
+- **Iter 3** — ☑ B2 shipped. The hardcoded `SPELL`/`PUNCH` constants and `hasSword`/`hasSpell` booleans
+  are gone, replaced by a real `WeaponManager` (modWeaponManager): `pWeapons` (sym→`AttackData`),
+  `pCurrentWeapon`, per-weapon cooldown `Counter`s (`engine/counter.ts`, faithful CounterNew/Counter/
+  Reset/Once) whose `inc` is the per-type skill stat (melee=agility, ranged=dexterity, magic=
+  manaRegeneration). `charge.ts` resolves chargeMax/Start/Speed from each weapon's `#attack` × mana
+  (reproducing energyBlast's old `cap*.75+5` / `0+burst` / `1*flow` exactly, +chargeSpeedMax/StartMax
+  clamps + limitMagic ×magicLimit/100). Pickups call `addWeapon` (= newScrollCollected) instead of
+  flipping flags; `getHasSpell` = owns a magic weapon. **Control scheme preserved** (plan §f.6, a
+  documented port adaptation of the single-current-weapon model): Merlin still auto-melees with his
+  current melee weapon (#punch→#merlinSword on pickup) AND holds to charge magic once owned — both at
+  once; recast/swing each gate on that weapon's own counter, `resetCooldown` on FIRE (no free shot on
+  swap). `damageMultiplier` now flows from `#attack` into `takeHit.mult` for the player's weapons.
+  **Calibration:** MELEE_SCALE=3 pins `#punch`=48 (today's `round(8*4)+8`) exactly; merlinSword=384
+  (one-shots the room-1 15–300-energy band, same effective clear speed). Enemy melee keeps the slice's
+  tuned scalar damage (routing enemy power·strength·mult would inflate lethality 5–25× and break room 1)
+  and enemy cooldowns are re-derived to preserve the old `atkCooldown+(ranged?18:6)` recovery in frames
+  — enemy feel unchanged. A1 inertia→damage coupling stays deferred (reason documented in the A1 plan).
+  tsc clean; 114 tests pass (+24: Counter edge cases, resolveAttack, charge reproduces today,
+  WeaponManager add/select/cooldown/save, melee calibration, spell-fells-300); room 1 clears
+  (`enemies:0, exitsOpen:true, errors:none`); in-browser: sword pickup → both #punch+#merlinSword owned
+  (sword auto-current), melee+knockback land, grant energyBlast → getHasSpell true, charge bar fills to
+  ~0.96, release fires a bolt, immediate recast gated, no pageerrors. Out of scope (plan §g): GMG toggle,
+  magic limiter master, spell-actor lifecycle, setMultiAttack, weaponSelector UI, C-phase spell content.

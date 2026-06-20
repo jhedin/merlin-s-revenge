@@ -52,6 +52,19 @@ are calibrated for that coupling. A1 preserves the port's current (uncoupled) da
 damps **knockback only**; the vector passes through to Energy undamped. Faithful damage-damping arrives
 with the real data attack powers (backlog B2).
 
+> **B2 update (still deferred — with the reason it can't land yet).** B2 shipped the real data-driven
+> `#attack` powers (weapon→char→bullet→victim) and now flows `damageMultiplier` from each weapon's
+> `#attack` into `takeHit`'s `mult` — but it **kept A1's knockback-only damping** and did *not* recouple
+> inertia to damage. Why: the port's attack powers are still *slice-tuned* to the px-scale, not the
+> engine's native units, and only the **player's** melee was calibrated to today's numbers
+> (`#punch`=48 exactly, `merlinSword`≈one-shots the room-1 band). Enemy melee deliberately keeps the
+> slice's tuned scalar (routing enemy `power·strength·mult` would inflate enemy lethality 5–25× and kill
+> the player in room 1). Until a **holistic power-rescale** moves every actor's power into the engine's
+> native units (where the original numbers are calibrated *for* the inertia-damage coupling), turning the
+> coupling on would silently de-rate hits against high-`inertia` actors with no faithfulness payoff. So
+> inertia→damage stays a **C-phase item**, landing *with* that rescale. Room-1 orcs have `inertia:0`, so
+> the coupling is a no-op there but a landmine elsewhere — exactly why it waits for the rescale.
+
 ## Files
 - `components/movement.ts`: `inertia`, `kvx/kvy`, `KNOCK_SCALE`, `knockFriction`; `takeHit` handler
   (damp+impulse, ordered first); integrate `kvx/kvy` (uncapped) in `update`; save/restore knock state.
