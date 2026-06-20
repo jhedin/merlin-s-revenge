@@ -21,15 +21,16 @@ function nearestOfTypes(x: number, y: number, types: readonly string[], ignore?:
 }
 const nearestEnemy = (x: number, y: number) => nearestOfTypes(x, y, ["enemy"]);
 
-// energyBlast (act_player's charged magic): hold to charge at chargeSpeed*flow, release at the
-// cursor. Damage/speed scale with the charge; each cast spends mana. Tuned to the slice's px
-// scale rather than the engine's 9999/spellSpeed-20 units (PLAN_REVIEW: damage == knockback).
-// Damage is scaled to the actors' real engine energy (warrior/swordOrc 300, blackOrc 1200):
-// a full charge fells a rank-and-file enemy, matching the original's "Merlin is powerful" feel.
+// energyBlast (act_energyBlast): hold to charge, release at the cursor. There is NO mana pool
+// (modAttack): the charge grows from chargeStart (+mana.burst) by chargeSpeed (*mana.flow) up to
+// chargeMax = mana.capacity*chargeMaxModifier + chargeMaxBasic; recast is gated by cooldown
+// (/mana.regeneration), not by a resource. As capacity/flow/burst grow (potions, levels) blasts get
+// bigger/faster. chargeMaxModifier(0.75)/chargeMaxBasic(5)/chargeStart(0)/chargeSpeed(1)/cooldown(30)
+// are act_energyBlast's. Damage/bolt-speed are tuned per charge-unit to the px slice (PLAN_REVIEW:
+// damage == knockback; full base charge ~12.5 fells a rank-and-file 300-energy enemy).
 const SPELL = {
-  chargeRate: 0.16, chargeMax: 5, minCharge: 0.8,
-  dmgPerCharge: 65, speedBase: 5.5, speedPerCharge: 0.5, speedCap: 8.5,
-  costPerCharge: 0.5, cooldown: 6, releaseFrames: 6, life: 110,
+  chargeMaxModifier: 0.75, chargeMaxBasic: 5, chargeStart: 0, chargeSpeed: 1, cooldown: 30,
+  dmgPerUnit: 26, speedBase: 4.5, speedPerUnit: 0.28, speedCap: 9, releaseFrames: 6, life: 110,
 };
 // #punch (#naturalMelee): close-range fallback. cooldown 20, reach ~ hypot(7,10).
 const PUNCH = { reach: 18, cooldown: 20, frames: 6 };
@@ -117,14 +118,13 @@ export class PlayerControl extends Component {
     // act_player's only weapon is #punch; modWeaponManager adds spells from #objScroll pickups.
     const mana = this.entity.get(Mana);
     const primary = input.mouseDown() || input.held(" ");
-    if (this.hasSpell && primary && this.fireCd === 0 && mana.has(mana.burst)) {
-      if (!this.charging) game.audio?.play("spell_charge"); // one-shot when the charge begins
+    if (this.hasSpell && primary && this.fireCd === 0) {       // no pool gate — always castable when cooled
+      if (!this.charging) { this.charge = SPELL.chargeStart + mana.burst; game.audio?.play("spell_charge"); }
       this.charging = true;
       m.facingLeft = this.aimLeft;
-      const ceiling = Math.min(SPELL.chargeMax, this.charge + mana.current); // can't charge past the pool
-      this.charge = Math.min(ceiling, this.charge + SPELL.chargeRate * mana.flow);
+      this.charge = Math.min(this.chargeMaxOf(mana), this.charge + SPELL.chargeSpeed * mana.flow);
     } else if (this.charging) {
-      this.castMagic(m, aim, mana); // released, cooled down, or out of mana -> fire
+      this.castMagic(m, aim, mana); // released or cooled down -> fire at whatever charge was held
       this.charging = false; this.charge = 0;
     } else if (this.meleeCd === 0) {
       this.tryPunch(m, target); // no magic (or none acquired yet) -> punch anything in reach
@@ -132,14 +132,17 @@ export class PlayerControl extends Component {
     next();
   }
 
+  private chargeMaxOf(mana: Mana): number { return mana.capacity * SPELL.chargeMaxModifier + SPELL.chargeMaxBasic; }
+
   private castMagic(m: Movement, aim: { x: number; y: number }, mana: Mana): void {
-    const c = Math.max(SPELL.minCharge, this.charge);
-    const dmg = Math.round(SPELL.dmgPerCharge * c);
-    const speed = Math.min(SPELL.speedCap, SPELL.speedBase + c * SPELL.speedPerCharge);
+    const c = this.charge; // already >= chargeStart+burst
+    const dmg = Math.round(SPELL.dmgPerUnit * c);
+    const speed = Math.min(SPELL.speedCap, SPELL.speedBase + c * SPELL.speedPerUnit);
     fireBullet(this.entity.id, m.x, m.y - 6, aim.x - m.x, (aim.y - 6) - m.y, speed, dmg, this.entity.send("getTeam"), SPELL.life);
-    mana.spend(Math.ceil(c * SPELL.costPerCharge));
     m.facingLeft = this.aimLeft;
-    this.fireCd = SPELL.cooldown; this.releaseT = SPELL.releaseFrames;
+    // recast cooldown shortened by mana.regeneration (modCharacterAttackProperties: regen -> cooldown)
+    this.fireCd = Math.max(4, Math.round(SPELL.cooldown / mana.regeneration));
+    this.releaseT = SPELL.releaseFrames;
     game.audio?.play("spell_release"); // act_energyBlast releaseSound
   }
 
@@ -163,7 +166,7 @@ export class PlayerControl extends Component {
     return null;
   }
 
-  chargeFrac(): number { return this.charging ? Math.min(1, this.charge / SPELL.chargeMax) : 0; }
+  chargeFrac(): number { return this.charging ? Math.min(1, this.charge / this.chargeMaxOf(this.entity.get(Mana))) : 0; }
 }
 
 export class EnemyAI extends Component {
