@@ -123,8 +123,19 @@ omitted). Worked top-down by fidelity impact. Each item cites where it was defer
   already inert: out of the unit map, off the team roster, no health bar) — the observable grave behaviour
   (where it falls, behind the living, persists on re-entry/save, none for ghosts) is faithful. Tested in
   `render_f3`. [G/H — resolved]
-- ☐ **K22. Collision edges.** AI one-way-platform drop-through, discrete layer-Z, per-tile screen-exit
-  ranges, exit arrows. [F2/F3 §g — no shipped map uses non-solid tiles, but support + AI hook]
+- ☑ **K22. Collision edges — exit arrows (+ dead-code parts documented).** `RoomManager.exitArrowRects()`
+  ports `objRoom.drawExitArrows` → `modScreenExits`: per edge with an adjacent room, contiguous PASSABLE
+  edge-cell runs (`CollisionGrid.passableCell`, = not `#solid`, `convertExitTilesToRangesEdge` match `#none`)
+  collapse to arrow rects (`convertExitRangesToArrowRectsEdge` — thickness on the perpendicular axis, range
+  along the edge); GREEN when the exit is usable (room cleared → `grid.open[edge]`), else RED
+  (`drawExitArrowsOnImage`'s green/red-by-`surroundingHostiles`, mapped to the port's actual exit-gating
+  signal). The 8 arrow members (`arrow_{green,red}_{left,up,right,down}`, `structMaster.txt`) are converted
+  (tif→png) + bundled (`build_assets.ts`, guarded no-op if unavailable); `main.ts` tiles them over the room
+  after `#foregroundPassive`. Visually confirmed (green arrow on the open edge at the wall gap). The OTHER
+  K22 parts are **confirmed dead/already-handled**: one-way `#platform` drop-through is commented-out engine
+  code from another game (`objCollisionMap.txt:218`); per-tile exit RANGES are already enforced by the
+  collision grid (the player can only cross at passable gaps); discrete layer-Z is unused by shipped maps.
+  Tested in `exit_arrows`. [F2/F3 §g — resolved]
 
 ## Genuinely out of scope (engine-not-game; confirmed)
 Map editor (`mapEditMaster`, separate executable), copy-protection, the `ochreWizard`/`scw` orphan symbols
@@ -136,6 +147,8 @@ Map editor (`mapEditMaster`, separate executable), copy-protection, the `ochreWi
 - Tier 2 closed: K9 (armySummon → G2 reserve), K10 (randomSummon wobble), K11 (chargeStart overwrite),
   K12 (chatter cutscenes), K13 (recordInRoomState:false).
 - Tier 3 closed: K14 (beam sprite-strip), K15 (objTransColor faithful tween), K16–K19 (cutscene verbs /
-  faders / screens / transitions), K20 (sound channels), K21 (grave system). The K14/K15/K20 passes were
-  built by worktree-isolated agents and reviewed + cherry-picked here. **Only K22 (collision edges) and
-  K2 (spell-actor live-growth) remain open.** 336 tests green, tsc clean, room-1 gate green.
+  faders / screens / transitions), K20 (sound channels), K21 (grave system), K22 (exit arrows). The
+  K14/K15/K20/K22 passes were built by worktree-isolated agents and reviewed + cherry-picked here.
+  **Only K2 (spell-actor live-growth) remains open** — the balance-critical finale (energyBlast's faithful
+  grow-fly-explode-radially lifecycle, recoupling magic damage to K1's scale). 343 tests green, tsc clean,
+  room-1 gate green; exit arrows visually confirmed.
