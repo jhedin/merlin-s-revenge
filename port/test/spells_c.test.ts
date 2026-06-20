@@ -12,6 +12,7 @@ import { chargeMaxOf } from "@/components/charge";
 import { geomMoveVector, collisionCalcVect, Rng } from "@/engine/math";
 import { resolveSplash, applyPayload } from "@/components/splash";
 import { selectTier, summonUnit } from "@/components/summon";
+import { Experience } from "@/components/experience";
 import { spawnUnit, spawnAlly } from "@/entities/archetypes";
 import { registry } from "@/game/data";
 import { game } from "@/game/context";
@@ -201,28 +202,42 @@ describe("C3 — randomSummon charge wobble (calcAttackChargeMax)", () => {
   });
 });
 
-describe("C3 — summon spawns a fresh unit on the right team via spawnUnit", () => {
+describe("C3 — summon fields a unit on the right team", () => {
   beforeEach(() => {
     game.grid = new CollisionGrid(40, 40, 32); game.entities = [];
     game.assets = { index: { anims: {} }, img: () => null } as any;
-    game.teamMaster.reset(); game.teamMaster.unitMap.configure(32, 0, 0);
-  });
-  it("releasing armySummon at charge 15 spawns one friendly archer at the cast loc, bolt still fires", () => {
-    // exercise the cast path directly via summonUnit (the castMagic release calls this).
+    game.teamMaster.reset(); game.armyMaster.reset(); game.teamMaster.unitMap.configure(32, 0, 0);
     game.spawnUnit = spawnUnit; game.spawnAlly = spawnAlly;
+  });
+
+  // K9 — armySummon REQUIRES a reservation (createUnit returns #none for armySummon w/ armyDetails=#none).
+  it("armySummon with an EMPTY reserve summons nothing (the spell fizzles to its bolt only)", () => {
     const player = spawnPlayer(100, 100); game.entities.push(player); game.player = player;
-    const a = atkOf("armySummon");
     const before = game.entities.length;
-    const u = summonUnit(a, 15, 100, 100, player.id); // tier for charge 15 = archer
+    const u = summonUnit(atkOf("armySummon"), 15, 100, 100, player.id); // would-be archer tier
+    expect(u).toBeNull();
+    expect(game.entities.length).toBe(before); // nothing fielded
+  });
+  it("armySummon withdraws a banked reserve unit and re-fields it at its saved level, consuming the record", () => {
+    const player = spawnPlayer(100, 100); game.entities.push(player); game.player = player;
+    // bank an archer (the charge-15 tier of armySummon) onto the player's army reserve at level 2.
+    const banked = spawnAlly("archer", 0, 0); banked.get(Experience).level = 2;
+    expect(game.armyMaster.teleportOut(banked)).toBe(true);
+    expect(game.armyMaster.reserveCount("#aldevar", "archer")).toBe(1);
+
+    const before = game.entities.length;
+    const u = summonUnit(atkOf("armySummon"), 15, 100, 100, player.id);
     expect(u).not.toBeNull();
     expect(game.entities.length).toBe(before + 1);
-    expect(u!.send("getTeam")).toBe("#aldevar"); // archer's own #team (residentTeamCategory) is #aldevar
+    expect(u!.send("getTeam")).toBe("#aldevar");
     expect(u!.type).toBe("ally");
+    expect(u!.get(Experience).level).toBe(2);                            // re-fielded at the banked level
+    expect(game.armyMaster.reserveCount("#aldevar", "archer")).toBe(0);   // record consumed
   });
-  it("monsterSummon summons a #monsterSummon unit (player-side team that hates real monsters)", () => {
-    game.spawnUnit = spawnUnit;
+  it("monsterSummon summons a FRESH #monsterSummon unit (no reserve needed — player-side team that hates real monsters)", () => {
     const player = spawnPlayer(100, 100); game.entities.push(player); game.player = player;
     const u = summonUnit(atkOf("monsterSummon"), 12, 100, 100, player.id); // tier 12 = summonArcher
+    expect(u).not.toBeNull();
     expect(u!.send("getTeam")).toBe("#monsterSummon");
   });
 });

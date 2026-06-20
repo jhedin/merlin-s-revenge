@@ -46,12 +46,23 @@ omitted). Worked top-down by fidelity impact. Each item cites where it was defer
   needs is unused. Evidence-backed dead engine code — left unbuilt (per K2-K8 plan §g).
 
 ## Tier 2 — spells / content mechanics
-- ☐ **K9. armySummon reservation requirement.** `createUnit` returns `#none` for `armySummon` with
-  `armyDetails=#none` — it draws from the army reserve (G2). Wire the spell to the reserve. [C3 §g]
-- ☐ **K10. `randomSummon` charge wobble.** Verify/implement the skeleton/goblin/sc/undead summon
-  charge-wobble in `charge.ts`. [C3]
-- ☐ **K11. `calcAttackChargeStart` faithful overwrite.** Raw Lingo overwrites the start (discards burst
-  in one branch); port kept `0+burst` to match the old number. Reconcile. [C, charge.ts note]
+- ☑ **K9. armySummon reservation requirement.** `summonUnit` (modSpellMultistage.summonPayload →
+  armyMaster.createUnitFromSummonSpell → `createUnit(team, typ, startLoc, spellName)`) now routes through
+  the G2 army reserve: `#armySummon` REQUIRES a banked record — it withdraws the highest-level reserve unit
+  of `[team][typ]` (`game.armyMaster.createUnit`), re-fields it AT its saved level, and consumes the record;
+  an empty reserve returns null (the spell fizzles to its bolt, matching `createUnit` returning `#none` for
+  `armySummon` w/ `armyDetails=#none`). Every OTHER summon (`#monsterSummon`/`#undeadSummon`/`#goblinSummon`/
+  `#skelitonSummon`/`#scSummon`) still withdraws+re-fields a reserve record IF one exists (faithful to
+  createUnit's unconditional lookupArmyDetails), else spawns a FRESH default-level unit. Tested
+  (empty-reserve fizzle, withdraw-at-level + consume, fresh monsterSummon). [C3 §g — resolved]
+- ☑ **K10. `randomSummon` charge wobble.** `chargeMaxOf(attack, mana, rng?)` implements
+  `calcAttackChargeMax`'s randomSummon ceiling wobble: with an rng + `randomSummon` + ≥2 tiers, the per-cast
+  charge ceiling is randomised (so the top affordable tier varies cast-to-cast); deterministic without an
+  rng / for a non-randomSummon attack. Seeded-deterministic, bounded `[0, chargeMax]`. Tested in `spells_c`. [C3 — resolved]
+- ☑ **K11. `calcAttackChargeStart` faithful overwrite.** `chargeStartOf` caps the start at
+  `chargeStartMax` (numeric → cap, `#none` → ∞), faithful to the raw Lingo trailing
+  `if pChargeStart <> #none then chargeStart = min(pChargeStart, chargeStartMax)` (the burst-discarding
+  overwrite for summon spells). [C, charge.ts note — resolved]
 - ☑ **K12. Chatter cutscenes.** Bundled all 10 `scr_stonesN` scripts in `build_assets.ts`; generic
   `loadCutscene(name)` (lazy fetch+parse+cache); `SceneManager` widened to an arbitrary named scene + a
   default-finish→resume branch (mirrors `movieMaster.cutSceneFinished` fall-through) + `playInGameCutScene`
@@ -59,8 +70,14 @@ omitted). Worked top-down by fidelity impact. Each item cites where it was defer
   `Chatter` overlap FSM (320-reach box, `pPerformed` latch, talking-member swap) plays its
   `#scriptToPerform` over the live game — replacing the inert sprite. Intro/wasted/complete unchanged.
   Exercised in `?map=works_mr4Demo` (stones1 in room (2,14)). [I5 §g.8]
-- ☐ **K13. recordInRoomState:false.** Fire mines (`#recordInRoomState:false`) shouldn't snapshot into
-  pState (re-spawn fresh). [I §c.9 note]
+- ☑ **K13. recordInRoomState:false.** `isRecordableActor` excludes the `#recordInRoomState:false` actors
+  (in-flight bullets + the placed fire mines/auras/hazards) from the per-room pState snapshot
+  (`RoomManager.enter` leave-snapshot + `snapshotCurrentRoom`). On re-entry the recordable actors restore
+  from pState while `spawnNonRecordableTileActors` re-tile-spawns the non-recorded placed content FRESH
+  (their FSM/explosion count re-inits) — faithful to the original, where room activation always re-runs its
+  tile spawn and `restoreState` only overlays the recorded actors (a detonated mine returns on re-entry; a
+  bullet in flight when you leave vanishes). Tested in `rooms_h3` (mine not in snapshot, re-spawns fresh,
+  orc restores wounded). [I §c.9 note — resolved]
 
 ## Tier 3 — render / shell / audio fidelity
 - ☐ **K14. Beam sprite-strip render.** energyBeam as the original stretched sprite-strip, not a 2D line.
@@ -94,3 +111,8 @@ Map editor (`mapEditMaster`, separate executable), copy-protection, the `ochreWi
 
 ## Status log
 - Opened K to burn down every deferral per the owner's directive.
+- Tier 1 closed (K1 keystone + K3–K8a AI completeness; K8b/c evidence-backed dead engine code).
+- Tier 2 closed: K9 (armySummon → G2 reserve), K10 (randomSummon wobble), K11 (chargeStart overwrite),
+  K12 (chatter cutscenes), K13 (recordInRoomState:false). Remaining open: **K2** (spell-actor live-growth)
+  and Tier-3 render/audio (K14 beam strip, K15 transColor tween, K20 sound channels, K21 graves, K22
+  collision edges). 326 tests green, tsc clean, room-1 gate green.

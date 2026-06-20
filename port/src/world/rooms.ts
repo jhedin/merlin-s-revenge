@@ -8,18 +8,18 @@ import { tileSymbol, type TileKey } from "../data/tlk";
 import type { Assets } from "../render/assets";
 import type { TileSheet } from "../render/renderer";
 import { game } from "../game/context";
-import { serializeActor, respawnActor, spawnFromSymbol, type ActorSave } from "../entities/actorSerial";
+import { serializeActor, respawnActor, spawnFromSymbol, isRecordableActor, symbolIsNonRecordable, type ActorSave } from "../entities/actorSerial";
 import { SKIP_SPAWN } from "./spawnTable";
 import { rebuildCombatSubstrate } from "../systems/combatTick";
 import { Movement } from "../components/movement";
 import type { Entity } from "../engine/dispatch";
 
-// NOTE on #recordInRoomState (objGameObject): some placed actors (fire mines) opt OUT of the per-room
-// snapshot in the original — they re-tile-spawn fresh on re-entry. The port's pState restore replaces
-// tile-spawning wholesale, so to avoid dropping content (a missing mine on re-entry) the port snapshots
-// them like any other recordable actor; since a mine's FSM (and explosion count) re-inits on respawn,
-// the on-re-entry state is equivalent to a fresh spawn — behavioral parity, save-bookkeeping deviation
-// noted (plan §a.1 "minor"). The flag is preserved in data for a later strict-snapshot pass.
+// #recordInRoomState (objGameObject, K13): transient combat objects (in-flight bullets and the placed
+// fire mines / auras / hazards flagged #recordInRoomState:false) are NOT frozen into the per-room pState
+// snapshot. On re-entry the recordable actors restore from pState exactly as left, and the non-recordable
+// placed actors re-tile-spawn FRESH (their FSM/explosion count re-inits) — matching the original, where
+// room activation always re-runs its tile spawn and restoreState only overlays the recorded actors. So a
+// detonated mine comes back on re-entry (fresh), and a bullet in flight when you leave simply vanishes.
 
 export class RoomManager {
   loc: Vec2i;
@@ -62,7 +62,7 @@ export class RoomManager {
       // room's recordable actors AFTER the teleport-out hook (so a reserve-banked ally is excluded —
       // it lives in the army reserve, not pState — avoiding a double-spawn on re-entry, plan §f.4).
       if (leavingNum !== undefined) {
-        this.pState.set(leavingNum, game.entities.filter((e) => e.type !== "player").map(serializeActor));
+        this.pState.set(leavingNum, game.entities.filter((e) => e.type !== "player" && isRecordableActor(e)).map(serializeActor));
       }
     }
     // room-scoped region effects (I1/I3): reset the magic limiter + team override to their defaults
@@ -129,7 +129,7 @@ export class RoomManager {
   }
   /** snapshot the CURRENT room's live actors (everything but the player) for the save tree. */
   snapshotCurrentRoom(): ActorSave[] {
-    return game.entities.filter((e) => e.type !== "player").map(serializeActor);
+    return game.entities.filter((e) => e.type !== "player" && isRecordableActor(e)).map(serializeActor);
   }
   /** the full per-room pState (H3): every visited room's snapshot + the live current room. The current
    *  room's slot is taken fresh from the live world (it may be mid-fight, not yet frozen into pState). */
@@ -168,9 +168,33 @@ export class RoomManager {
     for (const { e, rel } of restored) {
       if (rel) game.teamMaster.restoreTarget(e, rel);
     }
+    // K13: the #recordInRoomState:false placed actors (fire mines/auras/hazards) were excluded from the
+    // snapshot — re-tile-spawn them FRESH now (the original's room activation always re-runs its tile
+    // spawn; restoreState only overlays the recorded actors). Detonated mines thus return on re-entry.
+    this.spawnNonRecordableTileActors();
     // a restore keeps the player at its saved Movement loc (restored from the chain by doLoad) — do NOT
     // re-center it; pass playerPlaced=true so placePlayer only honors an explicit walk-in reposition.
     this.placePlayer(reposition, true);
+  }
+
+  // spawnNonRecordableTileActors (K13): spawn just the placed #recordInRoomState:false actors from the
+  // room's #objects layer (fire mines / auras / hazards) — used on the restore path, where the recorded
+  // actors come from pState but the non-recorded placed content must re-spawn fresh.
+  private spawnNonRecordableTileActors(): void {
+    const objects = this.room.layer("#objects");
+    if (!objects) return;
+    const t = this.map.tilePx;
+    for (let r = 0; r < objects.grid.length; r++) {
+      const row = objects.grid[r]!;
+      for (let c = 0; c < row.length; c++) {
+        const n = row[c]!;
+        if (n <= 0) continue;
+        const sym = tileSymbol(this.objectsKey, n);
+        if (SKIP_SPAWN.has(sym) || !symbolIsNonRecordable(sym)) continue;
+        const e = spawnFromSymbol(sym, c * t + t / 2, r * t + t / 2);
+        if (e) game.entities.push(e);
+      }
+    }
   }
 
   /** open edges only where an adjacent room exists, and only once the room is cleared. */

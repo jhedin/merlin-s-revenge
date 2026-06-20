@@ -55,6 +55,25 @@ export function spawnFromSymbol(sym: string, x: number, y: number): Entity | nul
   return null;
 }
 
+// isRecordableActor (objGameObject #recordInRoomState, K13): only actors that opt INTO the per-room
+// snapshot are frozen into pState on room-leave. Transient combat objects — in-flight bullets and the
+// #recordInRoomState:false placed actors (fire mines, auras, hazards) — are NOT recorded; they re-spawn
+// fresh from the tile layer on re-entry instead of being frozen mid-flight/mid-cycle.
+export function isRecordableActor(e: Entity): boolean {
+  if (e.type === "bullet") return false; // pooled projectiles carry no actor-type; all are :false
+  const typ = bare((e.send("getActorType") as string) || "");
+  const rec = typ ? registry.resolveActor(typ) : undefined;
+  return rec?.["recordInRoomState"] !== false;
+}
+
+// symbolIsNonRecordable (K13): a placed tile-symbol whose resolved actor opts OUT of the snapshot — these
+// re-tile-spawn fresh on every room activation (the original room re-runs its tile spawn on restoreState).
+export function symbolIsNonRecordable(sym: string): boolean {
+  const name = bare(sym);
+  if (PICKUPS["#" + name] || isPickupEffect(name)) return false; // pickups persist via the snapshot
+  return registry.resolveActor(name)?.["recordInRoomState"] === false;
+}
+
 const PICKUP_EFFECTS = new Set<string>([
   "heal", "speed", "sword", "spell", "energyPunch", "manaCapacity", "manaFlow", "manaBurst",
   "cBlast", "darkBlast", "arcticBlast", "healBlast", "armySummon", "monsterSummon", "energyMines",

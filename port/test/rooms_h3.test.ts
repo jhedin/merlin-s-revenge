@@ -18,8 +18,8 @@ function setupWorld() {
   game.teamMaster.unitMap.configure(TILE, 0, 0);
 }
 
-// objects key: tile 1 = #player, tile 2 = #blackOrc.
-const objectsKey: TileKey = { tileSize: { w: TILE, h: TILE }, symbols: ["#player", "#blackOrc"] };
+// objects key: tile 1 = #player, tile 2 = #blackOrc, tile 3 = #fire (a #recordInRoomState:false mine).
+const objectsKey: TileKey = { tileSize: { w: TILE, h: TILE }, symbols: ["#player", "#blackOrc", "#fire"] };
 const activeKey: TileKey = { tileSize: { w: TILE, h: TILE }, symbols: ["#solid"] };
 
 // build a layer grid sized rows x cols (default empty).
@@ -126,6 +126,30 @@ describe("H3: per-room pState restore round-trip", () => {
     rm.enter({ x: 1, y: 1 });
     const liveEnemies = game.entities.filter((e) => e.type === "enemy" && !e.send("isDead"));
     expect(liveEnemies.length).toBe(0); // no fresh re-spawn
+  });
+
+  // K13: a placed #recordInRoomState:false actor (a fire mine) is NOT snapshotted — it re-tile-spawns
+  // fresh on re-entry, while the recordable orc restores from pState.
+  it("a non-recordable placed mine re-spawns FRESH on re-entry (not frozen into pState), orc restores wounded", () => {
+    const map = mkMap(undefined);
+    // overwrite room 1's #objects to add a #fire mine at (r4,c4) alongside the orc and player marker.
+    map.rooms.get(1)!.layers.find((l) => l.name === "#objects")!.grid[4]![4] = 3;
+    const player = spawnPlayer(0, 0); game.player = player;
+    game.entities = [player];
+    const rm = new RoomManager(map, game.assets, activeKey, objectsKey, viewW, viewH, player, () => {});
+    rm.enter({ x: 1, y: 1 });
+    expect(game.entities.filter((e) => e.type === "mine").length).toBe(1); // fresh-spawned on first entry
+    const orc = game.entities.find((e) => e.type === "enemy")!;
+    orc.get(Energy).energy = 5; // wound it (keep alive)
+
+    rm.enter({ x: 1, y: 2 }); // leave -> room 1 frozen: orc recorded, the mine excluded
+    const frozen = rm.fullPState()[1]!;
+    expect(frozen.some((s) => s.type === "mine")).toBe(false); // mine NOT in the snapshot
+    expect(frozen.some((s) => s.type === "enemy")).toBe(true); // orc IS in the snapshot
+
+    rm.enter({ x: 1, y: 1 }); // return -> orc restores from pState, mine re-tile-spawns fresh
+    expect(game.entities.find((e) => e.type === "enemy")!.get(Energy).energy).toBe(5); // saved HP
+    expect(game.entities.filter((e) => e.type === "mine").length).toBe(1); // exactly one fresh mine (no dup)
   });
 
   it("the full pState map round-trips through save/restore (every visited room)", () => {
