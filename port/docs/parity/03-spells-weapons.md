@@ -44,12 +44,12 @@ approximated/missing sub-behaviour; **MISSING** = unported. "Placed?" = appears 
 | Spell | Original effect | Placed? | Port | Gap | Eff |
 |---|---|---|---|---|---|
 | `energyBlast` | Charged bolt; chargeMaxModifier .75/Basic 5/start 0/speed 1; cd 30; `#bullet:energyBlastBullet`; `limitMagic:true`; power .75; gmg 15/5/5 autofire | **YES** (room) | **PARTIAL** (B2) | Charge math now flows from the resolved `#attack` × mana via `charge.ts` (chargeMax `min(999,cap*.75+5)`, chargeStart `0+burst`, chargeSpeed `1*flow`, +clamps), not the inline `SPELL` constant; recast gated by the magic weapon's `Counter` (cooldown 30 / manaRegeneration). `limitMagic` honored structurally (×magicLimit/100, limiter defaults 100). Still: damage a tuned `dmgPerUnit*charge` (not vect·power·mult), GMG branch absent, bullet not the named `energyBlastBullet` actor | M |
-| `cBlast` | Slow charge (.1), `chargeMaxBasic:999`/`Modifier:0`, power .5; effectively "always huge" | no | **MISSING** | unbuilt | S |
-| `cBlastAi` | AI variant of cBlast (chargeMaxModifier 3, Basic 18) | no | MISSING | unbuilt (AI caster content) | S |
-| `arcticBlast` | energyBlast + freeze: `payloadFunction:[#takeFreeze,#takeHit]`, `glowTeal`, `freezeMultiplier` via bullet, slow charge .25 | no | **MISSING** | freeze status exists (`Freeze`) but no arctic spell wired; payload-list (two functions) unmodelled | M |
-| `darkBlast` | Fast cheap blast: start 5, cd 15, Basic 10, Modifier .5, power 3, not limited | no | MISSING | unbuilt | S |
-| `healBlast` | Heals friendlies: `payloadFunction:#takeHeal`, `targetAllegiance:#friendly`, `targetCriteria:#lowestHealth`, power 1, cd 50, not limited | no | **MISSING** | no `#takeHeal` path; no friendly-targeting cast | M |
-| `energyMines` | Charged then `explodeFunction:#depositMines` scatters N `energyMine` actors (`charge/chargePerUnit`) at random offsets; limited; gmg | no | **MISSING** | needs `modSpellMultistage.depositMines` + the mine actor | L |
+| `cBlast` | Slow charge (.1), `chargeMaxBasic:999`/`Modifier:0`, power .5; effectively "always huge" | no | **FAITHFUL** (C1) | `addWeapon` pickup row; `charge.ts` reproduces the always-999 ceiling (unit-tested). In-browser: collected + fired on winterland_test | S |
+| `cBlastAi` | AI variant of cBlast (chargeMaxModifier 3, Basic 18) | no | **FAITHFUL** (C1) | resolves to the cited charge data; **dead** as a placed scroll (0 maps) — unit-tested only | S |
+| `arcticBlast` | energyBlast + freeze: `payloadFunction:[#takeFreeze,#takeHit]`, `glowTeal`, `freezeMultiplier` via bullet, slow charge .25 | no | **FAITHFUL** (C1 bolt + C2 freeze) | bolt-half free on B2; freeze-half via the vector `takeFreeze` + payload-LIST (`applyPayload` runs both off one vector). Reachable: AutoSummonTest/mr4Demo | M |
+| `darkBlast` | Fast cheap blast: start 5, cd 15, Basic 10, Modifier .5, power 3, not limited | no | **FAITHFUL** (C1) | `addWeapon` pickup row (start-5/cd-15/power-3 unit-tested); **dead** as a placed scroll (0 maps) | S |
+| `healBlast` | Heals friendlies: `payloadFunction:#takeHeal`, `targetAllegiance:#friendly`, `targetCriteria:#lowestHealth`, power 1, cd 50, not limited | no | **FAITHFUL** (C2) | `#takeHeal` = `(|vx|+|vy|)·2` + gold glow; player heal bolt targets friendlies (radial heal-on-hit). CPU `#lowestHealth` auto-target uses the existing `findTarget` allegiance=friendly path | M |
+| `energyMines` | Charged then `explodeFunction:#depositMines` scatters N `energyMine` actors (`charge/chargePerUnit`) at random offsets; limited; gmg | no | **PARTIAL** (C1 scroll) | scroll grants via `addWeapon`; the `energyMine` *explode* (`#explode` radius-50 splash) is built (C2). The `#depositMines` scatter-deposit is the remaining follow-on | L |
 | `energyPulseSpell` | `releaseFunction:#fireBullets`: on release, streams `energyPulse` bullets (`fireDelay 5`, `chargePerUnit 2`) until charge spent; `throwType:#fullstrength` | **YES** (placed in map) | **MISSING** | placed but `SKIP_SPAWN`'d; needs `modFireBullets` streaming-release loop | L |
 | `energyBeamSpell` | Like pulse but `beam:true` → `performBeamAttack` (random-jittered targeted beam); chargePerUnit 5 | no | MISSING | needs beam attack path | L |
 
@@ -57,12 +57,12 @@ approximated/missing sub-behaviour; **MISSING** = unported. "Placed?" = appears 
 
 | Spell | Original effect | Placed? | Port | Gap | Eff |
 |---|---|---|---|---|---|
-| `armySummon` | Friendly multistage: charge tiers → `[warrior10,archer15,monk20,dwarf25,kingInGame32]`; reservation/permission via `reservationsMaster`; `payloadFunction:#armyTeleportOut`; experience .5; gmg | no | **PARTIAL** | `control.ts` has an ad-hoc `E`-key "summon warrior" (single unit, cooldown 90) — not the charge-tier/reservation model | L |
-| `monsterSummon` | Enemy multistage `[summonArcher12…summonGolem31]`; `targetTileWhenNotBlank`; limited | no | MISSING | summon-spell mechanic unbuilt | L |
-| `goblinSummon` | `[goblinWarrior15…blackOrc36]`, `randomSummon:true` | no | MISSING | + randomSummon charge wobble (`modAttack.calcAttackChargeMax`) | L |
-| `skelitonSummon` | `[skelitonFootSoldier10…skelitonLord35]`, random | no | MISSING | unbuilt | L |
-| `undeadSummon` | `[skeletonWarrior15…skelitonLord38]`, random, power 2 | no | MISSING | unbuilt | L |
-| `scSummon` | `[scWarrior16,scArcher17,scMonk20]`, random | no | MISSING | unbuilt | L |
+| `armySummon` | Friendly multistage: charge tiers → `[warrior10,archer15,monk20,dwarf25,kingInGame32]`; reservation/permission via `reservationsMaster`; `payloadFunction:#armyTeleportOut`; experience .5; gmg | no | **PARTIAL** (C3) | `selectTier`→`summonUnit` spawns the affordable tier on cast (replaces the `E`-key hack); fresh default-level unit on #aldevar, +0.5 xp. Reservations/permission = G2 (always-permitted deviation). In-browser: AutoSummonTest, charge≥10 → ally appears | L |
+| `monsterSummon` | Enemy multistage `[summonArcher12…summonGolem31]`; `targetTileWhenNotBlank`; limited | no | **PARTIAL** (C3) | same summon path; units join their `#monsterSummon` residentTeamCategory (player-side team that hates real monsters), unit-tested | L |
+| `goblinSummon` | `[goblinWarrior15…blackOrc36]`, `randomSummon:true` | no | **PARTIAL** (C3) | summon path + `randomSummon` charge wobble (`charge.ts`, seeded-deterministic); **dead** (0 maps) — unit-tested only | L |
+| `skelitonSummon` | `[skelitonFootSoldier10…skelitonLord35]`, random | no | **PARTIAL** (C3) | as above; **dead** (0 maps) | L |
+| `undeadSummon` | `[skeletonWarrior15…skelitonLord38]`, random, power 2 | no | **PARTIAL** (C3) | as above; **dead** (0 maps) | L |
+| `scSummon` | `[scWarrior16,scArcher17,scMonk20]`, random | no | **PARTIAL** (C3) | as above; **dead** (0 maps) | L |
 | `armySummonStones` | Chatter prop that runs `#collectArmySummon` (grants the armySummon scroll on touch) | no | MISSING | acquisition trigger, not a spell | S |
 
 > The brief listed `summonArcher/Warrior/Orc/Golem/Boulder` and `tem_monsterSummon`. Those are the
@@ -75,7 +75,7 @@ approximated/missing sub-behaviour; **MISSING** = unported. "Placed?" = appears 
 
 | Actor | Original effect | Placed? | Port | Gap | Eff |
 |---|---|---|---|---|---|
-| `dwarfTower` | Static `objCPUCharacter` (walkSpeed 0), fires `#towerAxe` at `firingType:#proportional`, reach 600, cd 10 | no | MISSING (`SKIP_SPAWN`) | tower = ranged CPU w/ splash axe; dwelling archetype exists but no auto-fire turret | M |
+| `dwarfTower` | Static `objCPUCharacter` (walkSpeed 0), fires `#towerAxe` at `firingType:#proportional`, reach 600, cd 10 | no | **FAITHFUL** (C2) | spawns as a static ranged `CpuAI` (walkSpeed 0) firing the `towerAxe` SPLASH bullet (`fireSplashBullet` → `resolveSplash` area hit). In-browser: spawned among 10 enemies, splash damaged a cluster | M |
 | `garTower` | Static tower firing `#scArcherArrow` `#fullstrength`, reach 180, cd 60; reincarnateAs goblinArcher | no | MISSING | as above | M |
 | `summonBoulder` (boulderMonster) | CPU that throws `#boulder` bullets, reach 220 | no | MISSING | a normal ranged CPU; covered if `spawnEnemy` ranged path is reused | S |
 
@@ -100,7 +100,7 @@ hit applies `vect·power·damageMultiplier`. The port has ONE generic pooled bul
 |---|---|---|---|
 | `energyBlastBullet` | the player blast bolt (referenced by every spell's `#bullet`) | **PARTIAL** | port bullet is generic; not the named actor, no charge→size, no `#explode` |
 | `archerArrow` 4/.6, `goblinArrow` 3/.5, `scArcherArrow`, `crossBolt` 4/.7, `acid` 4/.6, `skelitonMissile` 10/.3, `shuriken` 5/.5, `needle` 6/.2, `fireBall` 6/.2, `batBullet` 3/.6, `laser` 10/.3, `boulder` 1/2, `dwarfAxe` 4/1, `fangBunnyBabyBullet`, `smokePin`, `blueFlame` | straight bullets, vary by `friction`/`weight`/`damageMultiplier` | **PARTIAL** | one generic bullet; per-actor `damageMultiplier`, friction, weight, rotation not modelled; enemy damage = ad-hoc `power*2` |
-| **Splash bullets** `towerAxe` (mult 10, `splashDamageOn`+`splashGraveOn`), `energyPulse` (mult 5, `#explode`, rotational), `energyBeam` (mult 10, `beam`), `freezeBlast` (power .25, `[#takeFreeze,#takeHit]`, `#explode`, freezeMult 3), `thunderBlast` (power .5, `#explode`), `energyMine` (mult 5, `#explode` on `#mineTriggered`) | radius hit (`modSplashDamage.calcAttackHitSplash`: dist² < power²) hitting ALL in range, optional grave | **MISSING** | no splash/radius damage; no `#explode` mode; no mine trigger |
+| **Splash bullets** `towerAxe` (mult 10, `splashDamageOn`+`splashGraveOn`), `energyPulse` (mult 5, `#explode`, rotational), `energyBeam` (mult 10, `beam`), `freezeBlast` (power .25, `[#takeFreeze,#takeHit]`, `#explode`, freezeMult 3), `thunderBlast` (power .5, `#explode`), `energyMine` (mult 5, `#explode` on `#mineTriggered`) | radius hit (`modSplashDamage.calcAttackHitSplash`: dist² < power²) hitting ALL in range, optional grave | **FAITHFUL** (C2, ex-beam/grave) | `splash.ts` `resolveSplash`: `#explode` (radius=explodeCharge/2) + `#splashDamageOn` (radius=power) hit ALL in the disc via the same `(|vx|+|vy|)·mult` vector (radial falloff). `freezeBlast`/`thunderBlast`/`energyPulse`/`towerAxe` faithful. `energyBeam` (beam) deferred (§g); `splashGraveOn` decal = F3; mine *explode* built, proximity-trigger actor is a follow-on |
 
 ### Charge / weapon / limit infrastructure
 
@@ -111,11 +111,11 @@ hit applies `vect·power·damageMultiplier`. The port has ONE generic pooled bul
 | `modGoldenMachineGun` + `gmgMaster` | collect→toggle→swap to `gmg*` charge fields, auto-fire, HUD | **MISSING** | brief notes deliberately unbuilt (GMG not in map) | M |
 | `magicLimitMaster` + `objMagicLimit` (`magicLimit`/`1/25/50/75`) | global `getMagicLimit()` scales every `limitMagic` spell's chargeMax | **MISSING** | brief notes unbuilt; `#magicLimit25` IS in some object keys but not this map | S |
 | `reservationsMaster` (+ `old_`) | army headcount/permission gating for `armySummon` | **MISSING** | unbuilt (army-reserve persistence, agent-2/4 seam) | L |
-| `modSpellMultistage` | charge-tier payload selection, summon/deposit, reservation, icons | **MISSING** | core of all summon spells + energyMines | L |
-| `modFireBullets` | streaming release (energyPulse/beam) | **MISSING** | — | M |
-| `modSplashDamage` | radius damage + grave on land/mineTriggered | **MISSING** | — | M |
-| `modFreeze` `takeFreeze` | slows speed 0.5×, teal glow, time = (|vx|+|vy|)·freezeMult·4 | **PARTIAL** | `Freeze` slows + teal, but `takeFreeze(ticks)` takes a scalar — not the vect·multiplier formula | S |
-| `modMedikit` `#takeHeal` / healBlast | heal-over-time / spell heal | **PARTIAL** | pickups heal instantly; no `#takeHeal` payload, no heal-spell | M |
+| `modSpellMultistage` | charge-tier payload selection, summon/deposit, reservation, icons | **PARTIAL** (C3) | `selectTier` (selectPayload) + `summonUnit` (summon path) built; reservations/icons = G2, `#depositMines` scatter is a follow-on | L |
+| `modFireBullets` | streaming release (energyPulse/beam) | **MISSING** | deferred (§g); the `energyPulse` *bullet* splash is done | M |
+| `modSplashDamage` | radius damage + grave on land/mineTriggered | **FAITHFUL** (C2) | `splash.ts` + `impactAreaAttack`; grave decal = F3 | M |
+| `modFreeze` `takeFreeze` | slows speed 0.5×, teal glow, time = (|vx|+|vy|)·freezeMult·4 | **FAITHFUL** (C2) | `takeFreeze(vx,vy,…)` = `(|vx|+|vy|)·freezeMultiplier·4`, **accumulate** not max, 0.5× speed via `freezeFactor()`, teal latch, defrost on 0 (unit-tested) | S |
+| `modMedikit` `#takeHeal` / healBlast | heal-over-time / spell heal | **PARTIAL** (C2) | `Energy.takeHeal(vx,vy)` = `(|vx|+|vy|)·2` + gold glow (healBlast routed through it); pickup heal-over-time still instant | M |
 
 ## 2. Headline coverage for this domain
 

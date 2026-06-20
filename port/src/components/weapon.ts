@@ -40,6 +40,34 @@ export interface AttackData {
   chargeStart: number; chargeSpeed: number;
   chargeSpeedMax: number | string; chargeStartMax: number | string;
   limitMagic: boolean;
+  // C2 splash / explode / status payload (modSplashDamage / modExploder / CallPayloadFunction)
+  attackType: string;                 // raw #attack.type (#explode / #bullet / #melee / #magic / #auto)
+  explodeCharge: number;              // #explode radius source (radius = explodeCharge/2)
+  splashDamageOn: boolean;            // #splashDamageOn bullet (radius = power)
+  payloadFunction: string[];          // CallPayloadFunction list (#takeHit/#takeFreeze/#takeHeal/...)
+  freezeMultiplier: number;           // #takeFreeze magnitude scale
+  glowTeal: boolean;                  // teal status overlay on first freeze
+  // C3 summon (modSpellMultistage)
+  explodeFunction: string;            // #summonUnit / #depositMines / #none
+  multistage: Array<{ type: string; chargeRequired: number }>; // charge tier -> unit type
+  randomSummon: boolean;              // charge-wobble flavour (skeleton/goblin/sc/undead)
+  residentTeamCategory: string;       // the team a summoned unit joins (#aldevar / #monsterSummon)
+  chargePerUnit: number;              // #depositMines: numMines = charge/chargePerUnit
+}
+
+// normalize a #payloadFunction (symbol | list | #none) into a clean string[] of function names.
+function normPayload(v: any): string[] {
+  const one = (s: any): string => (typeof s === "string" ? s.replace(/^#/, "") : "");
+  const arr = Array.isArray(v) ? v.map(one) : [one(v)];
+  return arr.filter((s) => s && s !== "none" && s !== "void");
+}
+// normalize #multistage (a proplist {type:chargeRequired}) into ordered ascending tiers.
+function normMultistage(v: any): Array<{ type: string; chargeRequired: number }> {
+  if (!v || typeof v !== "object" || Array.isArray(v)) return [];
+  return Object.entries(v)
+    .map(([type, charge]) => ({ type, chargeRequired: Number(charge) }))
+    .filter((t) => Number.isFinite(t.chargeRequired))
+    .sort((a, b) => a.chargeRequired - b.chargeRequired);
 }
 
 // AttackSetTypeFromAnimType: naturalMelee/weaponMelee/magicMelee -> melee; weaponRanged -> ranged;
@@ -78,8 +106,11 @@ export function meleeBasePower(attack: AttackData, strength: number): number {
 // resolveAttack(raw): build an AttackData from a (possibly partial) #attack proplist, filling from
 // structAttack defaults. `raw` is normally already structAttack-merged by registry.resolveActor, but we
 // re-default defensively so a bare {name,power} also resolves.
-export function resolveAttack(raw: Record<string, any> | undefined): AttackData {
+// resolveAttack(raw, owner?): owner is the resolved ACTOR record (for top-level #splashDamageOn /
+// #explodeEvents that live OUTSIDE the #attack proplist — towerAxe/energyPulse/energyMine bullets).
+export function resolveAttack(raw: Record<string, any> | undefined, owner?: Record<string, any>): AttackData {
   const r = raw ?? {};
+  const o = owner ?? {};
   const d = STRUCT_ATTACK;
   const animType = strOr(r["animType"], d["animType"] as string);
   // #power may be a point(x,y) (melee) or a scalar (bullet/spell). Keep both views.
@@ -113,6 +144,18 @@ export function resolveAttack(raw: Record<string, any> | undefined): AttackData 
     chargeSpeedMax: (r["chargeSpeedMax"] ?? d["chargeSpeedMax"]) as number | string,
     chargeStartMax: (r["chargeStartMax"] ?? d["chargeStartMax"]) as number | string,
     limitMagic: r["limitMagic"] === true,
+    // C2/C3: raw #type drives the splash resolver branch; splashDamageOn is a top-level actor prop.
+    attackType: strOr(r["type"], d["type"] as string),
+    explodeCharge: numOr(r["explodeCharge"], d["explodeCharge"] as number),
+    splashDamageOn: o["splashDamageOn"] === true || r["splashDamageOn"] === true,
+    payloadFunction: normPayload(r["payloadFunction"] ?? d["payloadFunction"]),
+    freezeMultiplier: numOr(r["freezeMultiplier"], d["freezeMultiplier"] as number),
+    glowTeal: r["glowTeal"] === true,
+    explodeFunction: strOr(r["explodeFunction"], d["explodeFunction"] as string),
+    multistage: normMultistage(r["multistage"]),
+    randomSummon: r["randomSummon"] === true,
+    residentTeamCategory: strOr(r["residentTeamCategory"], d["residentTeamCategory"] as string),
+    chargePerUnit: numOr(r["chargePerUnit"], d["chargePerUnit"] as number),
   };
 }
 

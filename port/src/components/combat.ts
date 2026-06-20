@@ -6,8 +6,9 @@ import { Component, type NextFn } from "../engine/dispatch";
 import { game } from "../game/context";
 
 export class Energy extends Component {
-  static handles = ["takeHit", "update", "levelUp", "isDead", "energyFrac", "addSaveData", "restoreFromSave"];
+  static handles = ["takeHit", "takeHeal", "update", "levelUp", "isDead", "energyFrac", "glowGold", "addSaveData", "restoreFromSave"];
   energy = 100; max = 100; dead = false; dieSound = "";
+  goldGlow = 0;               // glowGold() frames (cosmetic, rendered as a gold tint)
   private baseEnergy = 100;   // original energy, for the per-level increment
   private incPct = 0;         // energyIncPercentage (max grows by this % of baseEnergy per level)
   private recoverDelay = 0;   // energyRecoverDelay (0 = no passive regen)
@@ -40,8 +41,20 @@ export class Energy extends Component {
     next(vx, vy, attackerId, mult);
   }
 
+  // modEnergy.takeHeal: healAmount = (|vx|+|vy|)·2 (same L1-of-vector shape as damage, ×2), clamp to
+  // max, gold glow. Friendly — no i-frames. The vector is the SAME radial collision vector the splash
+  // resolver builds, so a friendly nearer the heal-blast centre heals more (cite modEnergy.txt 256-265).
+  takeHeal(next: NextFn, vx = 0, vy = 0, _healerId = -1): void {
+    if (this.dead) return;
+    const healAmount = (Math.abs(vx) + Math.abs(vy)) * 2;
+    if (healAmount > 0) { this.energy = Math.min(this.max, this.energy + healAmount); this.goldGlow = 12; }
+    next(vx, vy, _healerId);
+  }
+  glowGold(): void { this.goldGlow = 12; }
+
   // recoverEnergy: trickle +1 every energyRecoverDelay ticks while below max (modEnergy)
   update(next: NextFn): void {
+    if (this.goldGlow > 0) this.goldGlow--;
     if (!this.dead && this.recoverDelay > 0 && this.energy < this.max) {
       if (++this.recoverCtr >= this.recoverDelay) { this.recoverCtr = 0; this.energy++; }
     }

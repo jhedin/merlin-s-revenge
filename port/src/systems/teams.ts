@@ -147,25 +147,38 @@ export class TeamMaster {
     return { obj: best, dist: best ? bd : 999999 };
   }
 
-  // impactMeleeAttack: team-scoped AREA resolution. Find hostiles within `reach` around the attacker,
-  // filter by the attack's #hits roles, and invoke hitFn(victim) for each — which builds the aimed
-  // collision vector and calls A1's takeHit. teamMaster decides WHO; A1 decides what the hit does.
+  // impactAreaAttack (teamMaster.impactMeleeAttack/impactAttack core): the team-scoped disc search.
+  // Resolves the hostile teams for `attacker` (by its #attack.targetAllegiance), searches the unit map
+  // around (cx,cy) out to `radius`, role-filters by `hits`, and invokes hitFn(victim) for every hostile
+  // strictly inside the disc — which builds the collision vector and runs the payload. Both melee
+  // (radius=reach, center=attacker) and splash (radius=explodeCharge/2 or power, center=bullet loc)
+  // share this loop; only the radius + per-victim vector differ. (cite teamMaster.txt 1041-1123.)
+  impactAreaAttack(
+    attacker: Entity, cx: number, cy: number, radius: number, hits: string[],
+    allegiance: string, hitFn: (victim: Entity) => void,
+  ): void {
+    const myTeam = attacker.send("getTeam") as string;
+    const targetTeams = (this.calcTargetTeams(myTeam, allegiance)[0] ?? []).filter((n) => n !== "#collectables");
+    if (targetTeams.length === 0) return;
+    const teamSet = new Set(targetTeams);
+    const radius2 = radius * radius;
+    const maxShell = Math.max(1, Math.ceil(radius / this.unitMap.tileSize) + 1);
+    const cands = this.unitMap.search(cx, cy, (u) =>
+      teamSet.has(u.send("getTeam") as string) && !u.send("isDead") && hits.includes(this.roleOf(u)),
+      maxShell, maxShell); // sweep the whole radius (not nearest-only) for an area hit
+    for (const u of cands) {
+      const p = u.send("getPos") as { x: number; y: number };
+      if ((p.x - cx) ** 2 + (p.y - cy) ** 2 <= radius2) hitFn(u);
+    }
+  }
+
+  // impactMeleeAttack: the melee special case of impactAreaAttack (radius=reach, centered on attacker).
+  // teamMaster decides WHO; A1 (the hitFn) decides what the hit does.
   impactMeleeAttack(attacker: Entity, hitFn: (victim: Entity) => void): void {
     const tg = attacker.send("getTargeting") as TargetConfig | undefined;
     if (!tg) return;
-    const myTeam = attacker.send("getTeam") as string;
-    const targetTeams = (this.calcTargetTeams(myTeam, tg.allegiance)[0] ?? []).filter((n) => n !== "#collectables");
-    const teamSet = new Set(targetTeams);
     const pos = attacker.send("getPos") as { x: number; y: number };
-    const reach2 = tg.reach * tg.reach;
-    const maxShell = Math.max(1, Math.ceil(tg.reach / this.unitMap.tileSize) + 1);
-    const cands = this.unitMap.search(pos.x, pos.y, (u) =>
-      teamSet.has(u.send("getTeam") as string) && !u.send("isDead") && tg.hits.includes(this.roleOf(u)),
-      maxShell, maxShell); // sweep the whole reach radius (not nearest-only) for an area hit
-    for (const u of cands) {
-      const p = u.send("getPos") as { x: number; y: number };
-      if ((p.x - pos.x) ** 2 + (p.y - pos.y) ** 2 <= reach2) hitFn(u);
-    }
+    this.impactAreaAttack(attacker, pos.x, pos.y, tg.reach, tg.hits, tg.allegiance, hitFn);
   }
 }
 

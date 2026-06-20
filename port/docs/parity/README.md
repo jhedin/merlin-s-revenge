@@ -19,7 +19,7 @@ This tracker is the running backlog; update the status table + log each iteratio
 | Domain | Coverage | One-line state |
 |---|---|---|
 | AI & combat engine | ~18% | Dispatch kernel faithful but near-empty; combat is scalar/imperative; 11 AI types collapsed to 1 with 4 branches |
-| Spells / weapons / projectiles | ~15% | Only `energyBlast` (partial); 1 generic bullet stands in for ~18; 0 summons, 0 splash/beam/mine; no weapon manager |
+| Spells / weapons / projectiles | ~45% | B2 weapon manager + C charged blasts (cBlast/darkBlast/arctic/heal), splash/`#explode` (energyPulse/thunder/freeze/towerAxe), takeFreeze/takeHeal payload-lists, summons (army/monster), dwarfTower. Beams/fireBullets-streaming/GMG/reservations deferred |
 | Actors / bosses / dwellings | ~22% | All 263 records parse (stats resolve); gaps are art + AI wiring + per-actor behavior; bosses ~5% |
 | Player / progression / masters | ~35% | Progression math faithful; save persists only room+player; 3 of 39 masters; no army reserve |
 | World / render / pipeline / shell | ~45% | Asset pipeline complete (F1 ☑): all 10 tilesets / 171 chars / 47 maps, load-any-map, lazy per-map loading; collision = solid-AABB only (F2); cutscene is a reimpl (H1) |
@@ -77,12 +77,23 @@ Status: ☐ not started · ◐ in progress · ☑ done
   [`plans/B2-weapon-manager.md`](plans/B2-weapon-manager.md). *(01 #3, 03 #2)*
 
 ### Phase C — Spell / weapon breadth (rides on A+B)
-- ☐ **C1. `modAttack` charge engine generalized** → cBlast/darkBlast/cBlastAi group + faithful
-  `energyBlast`; GMG toggle + magic limiter drop in cheaply. *(03 #2)*
-- ☐ **C2. `modSplashDamage` + `#explode`** → energyPulse, thunderBlast, freezeBlast, towerAxe, beams, mine
-  triggers; pair with `takeFreeze` + `#takeHeal`/healBlast status formulas. *(03 #3)*
-- ☐ **C3. Summons** — armySummon, monsterSummon, skelitonSummon, summonArcher/Warrior/Orc/Golem/Boulder,
-  `tem_monsterSummon`. *(03)*
+- ☑ **C1. Charged blasts (data wiring).** `cBlast`/`darkBlast`/`cBlastAi` + the bolt-halves of
+  `arcticBlast`/`healBlast` are `#magic` weapons differing from `energyBlast` only in `#attack` numbers —
+  FREE on the B2 engine. Added their `addWeapon` pickup rows (`pickup.ts` + `rooms.ts`); no new code.
+  GMG toggle + magic limiter stay deferred (§g). Plan: [`plans/C-spell-roster.md`](plans/C-spell-roster.md). *(03 #2)*
+- ☑ **C2. `SplashDamage` + `#explode` + status payloads.** `impactAreaAttack` factored out of
+  `impactMeleeAttack` (the team-scoped disc search) and reused for splash; `splash.ts` resolves
+  `#explode` (radius=explodeCharge/2) + `#splashDamageOn` (radius=power) area hits through the SAME
+  `(|vx|+|vy|)·mult` A1 vector scale (no separate formula — falloff shape + centre-lethality pinned by
+  tests). `CallPayloadFunction` port (`applyPayload`, sym|LIST). `Freeze.takeFreeze(vx,vy,…)` =
+  `(|vx|+|vy|)·freezeMultiplier·4`, accumulate, 0.5× speed, teal. `Energy.takeHeal(vx,vy)` =
+  `(|vx|+|vy|)·2` + gold glow. Unlocks `energyPulse`/`thunderBlast`/`freezeBlast`/`towerAxe`/`arcticBlast`
+  (freeze)/`healBlast` + `dwarfTower` (static ranged CPU firing splash). *(03 #3)*
+- ☑ **C3. Summons.** `selectTier(charge, multistage)` → `summonUnit` spawns a fresh default-level unit via
+  the existing `spawnUnit`/`spawnAlly` path (`createUnit`'s newActor, no reserve), replacing the ad-hoc
+  `E`-key summon. `randomSummon` charge wobble in `charge.ts`. armySummon/monsterSummon faithful;
+  skeleton/goblin/undead/sc summons build-for-completeness (dead content, unit-tested). Reservations /
+  army-reserve persistence / spell icons stay G2 (§g). *(03)*
 
 ### Phase D — Content breadth (art + wiring; gated on F1)
 - ☐ **D1. Per-enemy sprite sheets + `spriteCharOr` wiring** — ~74 of 97 chars render as the `blackOrc`
@@ -195,3 +206,35 @@ Status: ☐ not started · ◐ in progress · ☑ done
   `mr4Demo` (15x15, merlinOpen), `merliniii`, `merlinartiii` (35x18) all load and fully paint with **no
   pageerrors**. Out of scope (deferred): F2 collision tile-types (keys bundled, not interpreted), F3
   render fidelity, atlasing. Next: D1 (per-enemy sprite wiring -- now unblocked) or F2.
+- **Iter 5** — ☑ C1/C2/C3 shipped (spell roster). **C1 (FREE):** `cBlast`/`darkBlast`/`cBlastAi` +
+  arctic/heal bolt-halves are `#magic` weapons differing from `energyBlast` only in `#attack` numbers --
+  added their `addWeapon` pickup rows (`pickup.ts` effects + `rooms.ts` scroll->pickup map), zero new
+  mechanics; `charge.ts`/`WeaponManager` fire them as-is (unit-tested: cBlast's always-999 ceiling,
+  darkBlast's start-5/cd-15/power-3). **C2 (new engine):** factored `impactAreaAttack(attacker,cx,cy,
+  radius,hits,allegiance,hitFn)` out of `impactMeleeAttack` (the team-scoped disc search) and reused it
+  for splash; new `splash.ts` `resolveSplash` handles `#explode` (radius=explodeCharge/2, hit-all-in-disc,
+  `(hitRange-dist)*power` radial vector via `geomMoveVector`) and `#splashDamageOn` (radius=power,
+  `collisionCalcVect`) -- both routed through the SAME `(|vx|+|vy|)*mult` A1 collision-vector scale B2
+  calibrated (NO separate damage formula; falloff shape + centre-lethality pinned by tests); `applyPayload`
+  ports `CallPayloadFunction` (symbol|LIST so one arctic hit runs `[#takeFreeze,#takeHit]`);
+  `Freeze.takeFreeze` is now a VECTOR (`(|vx|+|vy|)*freezeMultiplier*4`, **accumulate** not max, 0.5x speed
+  via `freezeFactor()`, teal latch); `Energy.takeHeal(vx,vy)`=`(|vx|+|vy|)*2`+gold glow; `Projectile`
+  gained splash + single-target-payload trigger modes; `dwarfTower` spawns as a static ranged CPU firing
+  the `towerAxe` splash bullet. **Splash calibration:** energyPulse centre hit = hitRange(17)*power(1)*
+  mult(5) ~ **85 dmg**, falling to ~0 at the rim -- squarely in B2's single-target room-1 band (15-325);
+  thunderBlast(31)/towerAxe(power 50 x mult 10, heavy turret) likewise scale by the radial-vector L1, never
+  a bespoke formula. **C3:** `selectTier`->`summonUnit` spawns a fresh default-level unit via `spawnUnit`
+  (correct `residentTeamCategory` team: army->#aldevar, monster->#monsterSummon), replacing the ad-hoc
+  `E`-key summon; `randomSummon` wobble added to `charge.ts.chargeMaxOf` (seeded-deterministic). tsc clean;
+  **155 tests pass** (+23: C1 charge data, geometry falloff, splash area/falloff/centre-lethality band,
+  payload-list runs both, takeFreeze accumulate+slow, takeHeal clamp, selectTier, randomSummon bounded,
+  summon spawns right team; freeze tests updated for the `(vx,vy)` signature). Room-1 no-regression:
+  `playthrough_smoke` ends `enemies:0, exitsOpen:true, errors:none` (identical). In-browser (F1 `?map=`):
+  **cBlast@winterland_test** (collect scroll -> getHasSpell -> charge+release fires a bolt),
+  **armySummon@AutoSummonTest** (charge>=10 -> a friendly #aldevar ally appears, 0->1), **dwarfTower
+  towerAxe splash@samii** (spawned among 10 enemies -> splash bullets damage a cluster) -- all with **no
+  pageerrors**. Dead-content (build-for-completeness, unit-tested only): `darkBlast`/`cBlastAi` (placed in
+  0 maps), skeleton/goblin/undead/sc random-summons. Deviation: C3 summons are always-permitted (the
+  original armySummon requires a reservation; that's G2). Deferred per §g: GMG, magic limiter,
+  `modFireBullets` streaming (energyPulseSpell), beams, the energyMines scatter-deposit (the mine
+  *explode* path exists), spell-actor live-growth. Next: D1 (sprites) or the deferred streaming/beam spells.

@@ -55,6 +55,32 @@ export class Rng {
   state(): number { return this.s; }
 }
 
+// geomMoveVector (general_functions/GeomMoveVector): a vector from (sx,sy) toward (ex,ey) whose
+// EUCLIDEAN magnitude equals `speed` (numOfFrames = dist/speed; moveVector = moveXY / numOfFrames).
+// Used by calcCollisionVectSpell for #explode radial falloff. Coincident points -> (0,0).
+export function geomMoveVector(sx: number, sy: number, ex: number, ey: number, speed: number): { x: number; y: number } {
+  const dx = ex - sx, dy = ey - sy;
+  if (dx === 0 && dy === 0) return { x: 0, y: 0 };
+  const dist = Math.hypot(dx, dy);
+  const numFrames = dist / speed;       // speed>0 guaranteed by callers (they gate speed>0)
+  return { x: dx / numFrames, y: dy / numFrames };
+}
+
+// collisionCalcVect (general_functions/CollisionCalcVect): the #splashDamageOn bullet vector. Faithful
+// to the Lingo arg order used by calcCollisionVectSplash — CollisionCalcVect(targetLoc, attackLoc, power)
+// so inside the fn attackLoc:=victimLoc, targetLoc:=bulletLoc and distXY = bulletLoc - victimLoc (the
+// knockback points from the victim toward the bullet). outputPower = power - dist; magnitude = outputPower
+// (radial falloff: full at the bullet, 0 at the rim). dist 0 -> point(0,1) seed. <=0 -> (0,0).
+export function collisionCalcVect(victimX: number, victimY: number, bulletX: number, bulletY: number, power: number): { x: number; y: number } {
+  let dist = Math.hypot(bulletX - victimX, bulletY - victimY);
+  let dxX = bulletX - victimX, dxY = bulletY - victimY;
+  if (dist === 0) { dist = 1; dxX = 0; dxY = 1; }
+  const outputPower = power - dist;
+  if (outputPower <= 0) return { x: 0, y: 0 };
+  const numFrames = dist / outputPower;
+  return { x: dxX / numFrames, y: dxY / numFrames };
+}
+
 // A collision vector aimed along (dx,dy) whose L1 magnitude (|x|+|y|) equals `dmg`. takeHit derives
 // damage = (|vx|+|vy|)*damageMultiplier from this (modEnergy), and the same vector is the knockback
 // direction (objGameObject) — so building the vector this way keeps damage == the intended number while

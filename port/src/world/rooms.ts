@@ -24,14 +24,19 @@ const PICKUPS: Record<string, PickupEffect> = {
   "#manaCapacity": "manaCapacity", "#manaBurst": "manaBurst", "#manaFlow": "manaFlow",
   "#merlinSword": "sword", // melee weapon upgrade (act_merlinSword, damageMultiplier 16)
   "#energyBlast": "spell",  // scroll (room 6): grants Merlin's charged magic — he starts punch-only
+  // C spell scrolls (reachable in other maps via F1): each grants a #magic weapon (addWeapon).
+  "#cBlast": "cBlast", "#darkBlast": "darkBlast", "#arcticBlast": "arcticBlast", "#healBlast": "healBlast",
+  "#armySummon": "armySummon", "#monsterSummon": "monsterSummon", "#energyMines": "energyMines",
 };
 
 // Items / spells with no unit/dwelling behavior yet (scrolls, mines, music, towers). Characters
 // (#objCPUCharacter) and dwellings (#objDwelling) are handled by data; this only skips the rest.
 const SKIP_SPAWN = new Set([
   "#none", "#player", "#musicLastStand",
-  // unplaced-or-unreachable spell scrolls (none appear in the map except #energyBlast, now a pickup)
-  "#energyMines", "#energyMine", "#energyPulseSpell", "#armySummon", "#dwarfTower",
+  // C spell scrolls are now pickups (PICKUPS). #energyMine is the deposited mine actor (not a scroll);
+  // #energyPulseSpell streaming-release is deferred (§g). #dwarfTower/#garTower are spawned as towers
+  // by the objType==#objCPUCharacter branch below (static ranged turrets firing towerAxe splash).
+  "#energyMine", "#energyPulseSpell", "#energyBeamSpell", "#magicLimit25", "#gmg", "#armySummonStones",
 ]);
 
 export class RoomManager {

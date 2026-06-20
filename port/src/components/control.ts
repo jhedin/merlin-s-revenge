@@ -7,10 +7,11 @@ import { Component, type NextFn } from "../engine/dispatch";
 import { Movement } from "./movement";
 import { Mana } from "./mana";
 import { game } from "../game/context";
-import { fireBullet } from "../systems/bullets";
+import { fireBullet, fireSplashBullet, fireBulletPayload } from "../systems/bullets";
 import { meleeHitFn } from "../systems/teams";
 import { Targeting } from "./combat";
 import { WeaponManager, meleeBasePower, type AttackData } from "./weapon";
+import { summonUnit } from "./summon";
 import { chargeMaxOf, chargeStartOf, chargeSpeedOf } from "./charge";
 import type { Entity } from "../engine/dispatch";
 
@@ -28,7 +29,6 @@ export class PlayerControl extends Component {
   static handles = ["update", "levelUp", "animAction", "chargeFrac", "addSaveData", "restoreFromSave"];
   private strength = 8;
   private strengthInc = 0.1;
-  private summonCd = 0;
   private charge = 0;
   private charging = false;
   private releaseT = 0;
@@ -39,7 +39,6 @@ export class PlayerControl extends Component {
   override init(cfg: Record<string, any>): void {
     this.strength = typeof cfg["strength"] === "number" ? cfg["strength"] : 8;
     this.strengthInc = typeof cfg["strengthIncLevel"] === "number" ? cfg["strengthIncLevel"] : 0.1;
-    this.summonCd = 0;
     this.charge = 0; this.charging = false; this.releaseT = this.meleeT = 0; this.usingSword = false;
   }
 
@@ -68,7 +67,6 @@ export class PlayerControl extends Component {
   levelUp(next: NextFn): void { this.strength += this.strengthInc; next(); }
 
   update(next: NextFn): void {
-    if (this.summonCd > 0) this.summonCd--;
     if (this.releaseT > 0) this.releaseT--;
     if (this.meleeT > 0) this.meleeT--;
     if (this.entity.send("isDead")) { const m = this.entity.get(Movement); m.intentX = m.intentY = 0; return next(); }
@@ -85,12 +83,6 @@ export class PlayerControl extends Component {
     const aim = cur ?? (target ? target.send("getPos") as { x: number; y: number }
       : { x: m.x + (m.facingLeft ? -100 : 100), y: m.y });
     this.aimLeft = aim.x < m.x;
-
-    if (input.pressed("e") && this.summonCd === 0 && game.spawnAlly) { // summon an army ally (E)
-      const a = game.rng.next() * Math.PI * 2;
-      game.entities.push(game.spawnAlly("warrior", m.x + Math.cos(a) * 24, m.y + Math.sin(a) * 24));
-      this.summonCd = 90;
-    }
 
     const wm = this.wm();
     const mana = this.entity.get(Mana);
@@ -119,11 +111,32 @@ export class PlayerControl extends Component {
     const c = this.charge; // already >= chargeStart
     const dmg = Math.round(SPELL_FX.dmgPerUnit * c);
     const speed = Math.min(SPELL_FX.speedCap, SPELL_FX.speedBase + c * SPELL_FX.speedPerUnit);
-    fireBullet(this.entity.id, m.x, m.y - 6, aim.x - m.x, (aim.y - 6) - m.y, speed, dmg, this.entity.send("getTeam"), SPELL_FX.life);
+    const team = this.entity.send("getTeam") as string;
+    const dirX = aim.x - m.x, dirY = (aim.y - 6) - m.y;
+
+    // SUMMON spell (armySummon/monsterSummon): release summons the highest affordable tier at the cast
+    // loc (modSpellMultistage), then the bolt still fires (faithful — selectPayload keeps payload non-blank).
+    if (attack.explodeFunction === "#summonUnit" || attack.explodeFunction === "summonUnit") {
+      summonUnit(attack, c, m.x, m.y, this.entity.id);
+    }
+
+    // The bolt: arctic/freeze/heal carry a payload list (takeFreeze/takeHeal/takeHit) resolved on hit;
+    // a heal bolt targets friendlies. Plain blasts (energyBlast/cBlast/darkBlast) keep the tuned takeHit.
+    const payloadList = attack.payloadFunction;
+    const isHeal = payloadList.includes("takeHeal");
+    const isStatus = isHeal || payloadList.includes("takeFreeze");
+    if (isStatus) {
+      const allegiance = isHeal ? "#friendly" : "#enemy";
+      const hits = attack.hits.length ? attack.hits : ["#teamMembers", "#teamBuildings"];
+      fireBulletPayload(this.entity.id, m.x, m.y - 6, dirX, dirY, isHeal ? attack.spellSpeed / 6 : speed,
+        dmg, team, attack, hits, allegiance, SPELL_FX.life);
+    } else {
+      fireBullet(this.entity.id, m.x, m.y - 6, dirX, dirY, speed, dmg, team, SPELL_FX.life);
+    }
     m.facingLeft = this.aimLeft;
     wm.resetCooldownFor(attack.name); // recast gate = the magic weapon's cooldown counter (cd/manaRegeneration)
     this.releaseT = SPELL_FX.releaseFrames;
-    game.audio?.play("spell_release"); // act_energyBlast releaseSound
+    game.audio?.play(isHeal ? "heal_spell_release" : "spell_release"); // act #releaseSound
   }
 
   private tryMelee(attack: AttackData, m: Movement, wm: WeaponManager): void {
@@ -179,6 +192,7 @@ export class CpuAI extends Component {
   runReload = false;   // getRunReload: kite away after a shot until cooled (ranged casters)
   atkSound = "";       // #attack.sound
   ghost = false;       // objAiCPUGhost approximation (drift; not a real possessor — out of scope)
+  splashBullet: AttackData | null = null; // towerAxe/energyPulse etc: fire a SPLASH bullet, not single-target
   private strength = 5;
 
   private mode: CpuMode = "findTarget";
@@ -201,6 +215,7 @@ export class CpuAI extends Component {
       else this.reach = Math.max(16, Math.min(40, cfg["atkReach"]));
     }
     this.atkSound = typeof cfg["atkSound"] === "string" ? cfg["atkSound"] : "";
+    this.splashBullet = (cfg["splashBullet"] as AttackData | undefined) ?? null; // a ranged CPU's splash bullet (tower)
     this.retargetCtr = 0;
     this.mode = "findTarget"; this.target = null;
     this.wanderAng = 0; this.wanderTimer = 0; this.detourT = 0;
@@ -301,7 +316,16 @@ export class CpuAI extends Component {
     const wm = this.entity.get(WeaponManager);
     if (!wm.getCooldownFin()) return;
     if (this.ranged) {
-      fireBullet(this.entity.id, m.x, m.y - 6, dx, dy, 4.5, this.power * 2, this.entity.send("getTeam"));
+      const team = this.entity.send("getTeam") as string;
+      if (this.splashBullet) {
+        // a static turret (dwarfTower) / splash caster fires its real splash bullet (towerAxe): on
+        // land/collide it resolves an AREA hit through SplashDamage (same A1 vector scale).
+        const tg = this.entity.send("getTargeting") as { hits: string[]; allegiance: string } | undefined;
+        fireSplashBullet(this.entity.id, m.x, m.y - 6, dx, dy, 5, this.splashBullet, team,
+          this.splashBullet.hits, tg?.allegiance ?? "#enemy", 140);
+      } else {
+        fireBullet(this.entity.id, m.x, m.y - 6, dx, dy, 4.5, this.power * 2, team);
+      }
     } else {
       // performMeleeAttack -> teamMaster.impactMeleeAttack: AREA resolution (every hostile in reach,
       // role-filtered by #hits), each via A1's aimed-vector takeHit. NO-REGRESSION CHOICE (B2 §f.1):

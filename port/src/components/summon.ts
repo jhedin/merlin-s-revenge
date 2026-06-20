@@ -1,0 +1,43 @@
+// Summon (modSpellMultistage summon path, C3): a summon spell (#explodeFunction:#summonUnit) maps charge
+// tiers -> unit types via #multistage. On release, selectTier(charge) picks the highest affordable tier
+// and summonUnit spawns ONE fresh default-level unit of that type at the cast loc — armyMaster.createUnit's
+// actorMaster.newActor({typ,startLoc}) with armyDetails=#none (no reserve). The bolt still fires (the
+// energyBlastBullet with #takeHit) so a summon cast also damages — faithful (selectPayload keeps the
+// payload non-blank).
+//
+// OUT OF SCOPE (plan §g, G2): reservations/permission (obtainPermissionOrHalt/chargeReinIn), spell icons,
+// armyTeleportIn/restoreArmyDetails (reserve persistence), displayNextSummons. C3 summons fresh default-
+// level units, always permitted, no headcount gating — faithful to the no-reserve slice. NOTE the original
+// armySummon REQUIRES a reservation (createUnit returns #none for armySummon w/ armyDetails=#none); C3
+// deviates deliberately (always spawns) so the spell is playable before G2.
+
+import type { Entity } from "../engine/dispatch";
+import { game } from "../game/context";
+import type { AttackData } from "./weapon";
+
+// selectTier (modSpellMultistage.selectPayload): the highest tier whose chargeRequired <= charge; null
+// below the first tier (cast fizzles into a plain bolt). Tiers are pre-sorted ascending by resolveAttack.
+export function selectTier(charge: number, multistage: Array<{ type: string; chargeRequired: number }>): string | null {
+  let picked: string | null = null;
+  for (const tier of multistage) {
+    if (tier.chargeRequired <= charge) picked = tier.type;
+    else break;
+  }
+  return picked;
+}
+
+// summonUnit: spawn the selected unit on the spell's residentTeamCategory team. The unit carries its OWN
+// #team in act data (warrior->#aldevar, summonArcher->#monsterSummon) which equals residentTeamCategory,
+// so spawnUnit (routes render-type by isPlayerSide) puts the unit on the correct side — a monsterSummon
+// monster joins #monsterSummon (a player-side team that hates the real monsters), faithful to tem_*.
+export function summonUnit(attack: AttackData, charge: number, x: number, y: number, ownerId: number): Entity | null {
+  if (attack.explodeFunction !== "summonUnit" && attack.explodeFunction !== "#summonUnit") return null;
+  const type = selectTier(charge, attack.multistage);
+  if (!type || !game.spawnUnit) return null;
+  const e = game.spawnUnit(type, x, y, {});
+  game.entities.push(e);
+  // owner gains +0.5 experience (pExperienceGain) — same gainXp chain a kill uses.
+  const owner = game.entities.find((u) => u.id === ownerId);
+  owner?.send("gainXp", 0.5);
+  return e;
+}

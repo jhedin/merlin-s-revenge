@@ -16,7 +16,7 @@ import { Pickup, type PickupEffect } from "../components/pickup";
 import { registry } from "../game/data";
 import { game } from "../game/context";
 
-const DEFAULTS = { isDead: false, getTeam: "", getTeamRole: "#teamMembers", energyFrac: 1, getLevel: 1, isFrozen: false, isInvince: false, isHurt: false };
+const DEFAULTS = { isDead: false, getTeam: "", getTeamRole: "#teamMembers", energyFrac: 1, getLevel: 1, isFrozen: false, freezeFactor: 1, isInvince: false, isHurt: false };
 
 // Experience is ordered BEFORE Energy (records attacker before death); Hurt is AFTER Energy
 // (feedback + i-frames arm once the hit has landed). Targeting (the #attack.target* config) sits with
@@ -169,6 +169,15 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
   // loop (no suicide). aiKind/targetTypes are gone — allegiance is data-driven via Targeting.
   const ghost = aiType === "#objAiCPUGhost";
   const runReload = !ghost && ranged && (aiType === "#objAiCPUSpellCaster" || animType === "#magic" || aiType === "#objAiFlyingBomber");
+  // SPLASH-bullet caster (C2): a ranged CPU whose #attack.bullet is a splash/explode bullet (dwarfTower's
+  // towerAxe, energyPulse casters) fires the real splash bullet — on land/collide it resolves an AREA hit
+  // through SplashDamage instead of single-target. Resolve that bullet's #attack (+ top-level splashDamageOn).
+  let splashBullet: ReturnType<typeof resolveAttack> | undefined;
+  if (ranged && typeof atk["bullet"] === "string" && atk["bullet"] !== "#none") {
+    const bulletActor = registry.resolveActor(atk["bullet"].replace(/^#/, ""));
+    const ba = bulletActor ? resolveAttack(bulletActor["attack"] as Record<string, any>, bulletActor) : undefined;
+    if (ba && (ba.attackType === "#explode" || ba.splashDamageOn)) splashBullet = ba;
+  }
   const pw = atk["power"];
   const atkPower = pw && typeof pw === "object" && "x" in pw ? Math.abs(pw.x) + Math.abs(pw.y) : 0;
   // #attack target fields (default structAttack): allegiance/criteria/roles/hits + reach (point -> radius)
@@ -185,7 +194,7 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     team: str("team", "#monsters"), teamRole: "#teamMembers",
     animChar: opts.animChar ?? actorName, box: 14,
     inertia: num("inertia", 0), // resists knockback (modGameObject damping); heavy orcs get shoved less
-    ranged, runReload, ghost,
+    ranged, runReload, ghost, splashBullet,
     // WeaponManager: the enemy's single weapon (one #attack) + cooldown-counter inc stats. manaRegen
     // is forwarded so a magic enemy's live counter inc (Mana.regeneration) matches the calibration.
     attack: enemyAttack, agility, dexterity, mana_regeneration: manaRegen,
