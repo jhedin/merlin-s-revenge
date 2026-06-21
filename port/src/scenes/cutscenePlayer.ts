@@ -77,7 +77,8 @@ export class CutscenePlayer {
       if (p.wasted) { dy = Math.round(m.y - h * 0.6); } // modWastedMode squash (h=60%)
       ctx.save();
       // K17 per-actor fade alpha (lightsUp/Down fade each actor under its own fader) × the wasted blend.
-      ctx.globalAlpha = t.actorAlpha(p) * (p.wasted ? 0.4 : 1);
+      // modWastedMode.wastedModeOn: setBlend(30) -> 0.30 opacity (the squashed ghost is mostly translucent).
+      ctx.globalAlpha = t.actorAlpha(p) * (p.wasted ? 0.3 : 1);
       if (m.facingLeft) { ctx.translate(dx + w, dy); ctx.scale(-1, 1); ctx.drawImage(img, 0, 0, w, p.wasted ? h * 0.6 : h); }
       else ctx.drawImage(img, dx, dy, w, p.wasted ? h * 0.6 : h);
       ctx.restore();

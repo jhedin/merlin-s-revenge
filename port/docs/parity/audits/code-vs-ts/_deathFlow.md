@@ -1,5 +1,14 @@
 # Death / End-Game Flow Parity Audit
 
+## Triage outcome (2026-06-21)
+
+- **GAP1 (wasted-mode blend) — PARTIALLY FIXED.** `setBlend(30)` → 0.30 opacity; the port used 0.40 (too bright). Fixed in `cutscenePlayer.ts:80` (`p.wasted ? 0.3 : 1`). The height squash (original `setSpriteHeight(60)` absolute vs the port's `h * 0.6` of the 2×-scaled sprite) is left as a tolerated cosmetic approximation — the port scales whole actors 2× and anchors at the ground line, so an absolute 60 px is not directly portable and the 60 % squash reads equivalently.
+- **GAP4 (graves drawn as sprites vs baked into the room bitmap) — NON-GAP.** Confirmed observationally equivalent (graves persist behind live actors, save/restore + ghost-exclusion correct & tested). The bitmap-bake is an implementation detail, not player-visible behaviour.
+- **GAP2 (modStretchDeath) — CATALOGUED scope item.** The vertical stretch-to-50px + simultaneous fade-to-0 death animation is not ported (a fixed 36-tick delay + normal die-anim stands in). Moderate cosmetic feature; deferred, not auto-built.
+- **GAP3 (modStarReleaser + objStar) — CATALOGUED scope item (sizable feature).** In the original, a kill spawns a rising `#experienceStar` particle the player must walk into to collect XP; the port awards XP silently/instantly on kill. This is a genuine multi-system gameplay mechanic (a `starMaster`, star particles, a walk-into pickup loop) — catalogued for a user scope decision alongside the wizard/army summon-helper and the hover-health UI, rather than auto-built.
+
+---
+
 **Scope:** `modWastedMode`, `modStretchDeath`, `modStarReleaser`, `objStar`, `modRoomGraves`
 **Authority:** extracted bytecode `MovieScript 1 - GameSpecific.ls` for globals;
 `ParentScript 59/52/169` (`.ls`) as decompiled ground truth.

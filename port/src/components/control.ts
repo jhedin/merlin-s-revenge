@@ -120,6 +120,15 @@ export class PlayerControl extends Component {
       return next();
     }
 
+    // objAiPlayer.update interprets keys ONLY in #playerControl/#attack/#freeze/#release — never in
+    // #dazed. A hit drives characterModeChanged(#reel/#die) -> goMode(#dazed), so during the reel the
+    // player can't move or act, only slide from the knockback. Mirror that: freeze intent + skip input
+    // for the reel window (isHurt). The 18-frame i-frames outlast the 6-frame reel, so it can't chain-lock.
+    if (this.entity.send("isHurt")) {
+      const m = this.entity.get(Movement); m.intentX = m.intentY = 0;
+      return next();
+    }
+
     const input = game.input;
     const m = this.entity.get(Movement);
     const mv = input.moveVector();

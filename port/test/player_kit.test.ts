@@ -3,6 +3,7 @@ import { game } from "@/game/context";
 import { CollisionGrid } from "@/world/collision";
 import { spawnPlayer, spawnEnemy, spawnUnit } from "@/entities/archetypes";
 import { Mana } from "@/components/mana";
+import { Movement } from "@/components/movement";
 import { Energy } from "@/components/combat";
 import { Anim } from "@/components/anim";
 import { PlayerControl } from "@/components/control";
@@ -135,6 +136,31 @@ describe("Merlin's charged-magic + punch kit", () => {
       return hp0 - foe.get(Energy).energy;
     };
     expect(fullBlastDamage(30)).toBeGreaterThan(fullBlastDamage(10)); // capacity 30 -> bigger blast
+  });
+
+  it("freezes the player during the reel after a hit (objAiPlayer #dazed: no key interpretation)", () => {
+    // objAiPlayer.update only interprets keys in #playerControl/#attack/#freeze/#release. A hit drives
+    // characterModeChanged(#reel) -> goMode(#dazed), so for the reel window the player can't act.
+    const inp = fakeInput({}) as any;
+    inp.moveVector = () => ({ x: 1, y: 0 });  // hold "move right" the whole time
+    game.input = inp;
+    const p = spawnPlayer(100, 100);
+    game.entities = [p];
+    const m = p.get(Movement);
+
+    p.send("update");
+    expect(m.intentX).toBe(1);               // not hurt -> input is honoured
+
+    p.send("takeHit", 5, 0, -1, 1);          // a hit -> reel (isHurt) + knockback
+    expect(p.send("isHurt")).toBe(true);
+    p.send("update");
+    expect(m.intentX).toBe(0);               // dazed -> the held "move right" is IGNORED
+
+    // ride out the 6-frame reel; once it clears, control returns.
+    for (let i = 0; i < 8; i++) p.send("update");
+    expect(p.send("isHurt")).toBe(false);
+    p.send("update");
+    expect(m.intentX).toBe(1);               // controllable again
   });
 
   it("starts punch-only: holding fire casts nothing until the energyBlast scroll is collected", () => {

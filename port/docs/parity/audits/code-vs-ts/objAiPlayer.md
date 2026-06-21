@@ -260,9 +260,15 @@ Lingo: calls `ancestor.restoreFromSave(sd)` then sets `pUnstickSpell = true`. TS
 
 ## Summary of gaps
 
-| # | Handler | Gap | Severity |
-|---|---|---|---|
-| GAP-1 | `characterModeChanged(#dazed,#die)` | Player can move/attack during reel; `isHurt()` not checked in PlayerControl.update | LOW-MEDIUM |
-| GAP-2 | `internalEvent(#gmgTurnedOn/Off)` | Toggling GMG mid-charge does not release/recharge the in-flight spell | LOW |
-| GAP-3 | `interpretCheatKeys` | `#invincibility`/`#killAll`/`#medikit`/`#testHit` keys absent (intentional; debug-only) | LOW (intentional) |
-| GAP-4 | `#freeze` mode → `AIisTryingToMove` | In-game dialogue not skippable by move/click; only Escape/Space/Enter | LOW-MEDIUM |
+| # | Handler | Gap | Severity | Resolution |
+|---|---|---|---|---|
+| GAP-1 | `characterModeChanged(#dazed,#die)` | Player can move/attack during reel; `isHurt()` not checked in PlayerControl.update | LOW-MEDIUM | **FIXED** |
+| GAP-2 | `internalEvent(#gmgTurnedOn/Off)` | Toggling GMG mid-charge does not release/recharge the in-flight spell | LOW | catalogued (minor) |
+| GAP-3 | `interpretCheatKeys` | `#invincibility`/`#killAll`/`#medikit`/`#testHit` keys absent (intentional; debug-only) | LOW (intentional) | non-gap |
+| GAP-4 | `#freeze` mode → `AIisTryingToMove` | In-game dialogue not skippable by move/click; only Escape/Space/Enter | LOW-MEDIUM | catalogued (minor) |
+
+### GAP-1 FIX (2026-06-21)
+
+Verified against `objAiPlayer.txt:344–357`: `update` interprets keys ONLY when `pMode` ∈ `{#attack,#playerControl,#freeze,#release}`. A hit drives `characterModeChanged(#reel/#die)` → `goMode(#dazed)` (line 42–46), so during the reel NO key interpretation runs — the player is frozen and only slides from the knockback. `PlayerControl.update` (control.ts) now mirrors this: when `isHurt()` (the 6-frame reel window) it zeroes movement intent and skips input, returning early after the in-flight stream/timer ticks. The player's 18-frame post-hit i-frames (archetypes.ts:135) outlast the 6-frame reel, so the freeze cannot chain-lock. Covered by `port/test/player_kit.test.ts` ("freezes the player during the reel after a hit").
+
+**GAP-2 / GAP-4 left as catalogued minor items:** GAP-2 (GMG toggle mid-charge re-firing the spell) is a cosmetic micro-optimisation of the fire cadence; GAP-4 (cancel an in-game dialogue by trying to move) is a minor convenience. Both are low-severity polish, deferred rather than auto-built.
