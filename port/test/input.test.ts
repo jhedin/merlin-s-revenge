@@ -18,4 +18,18 @@ describe("input control schemes", () => {
     press(t, "d"); expect(inp.moveVector()).toEqual({ x: 0, y: 0 });
     press(t, "arrowright"); expect(inp.moveVector()).toEqual({ x: 1, y: 0 });
   });
+  // scr_stones6..10 interpolate `#key #spell1` / `#key #weaponSelector` in the magic tutorial. The
+  // bound-key lookup must resolve to a real key, not echo the raw control name back ("SPELL1").
+  it("keyForControl resolves cutscene action controls (no raw-string echo)", () => {
+    const inp = new Input(new EventTarget()); inp.setScheme("wasd");
+    expect(inp.keyForControl("#spell1")).toBe("1");
+    expect(inp.keyForControl("#spell2")).toBe("2");
+    expect(inp.keyForControl("#spell9")).toBe("9");
+    expect(inp.keyForControl("#weaponSelector")).toBe("Q");
+    expect(inp.keyForControl("#army")).toBe("C");
+    expect(inp.keyForControl("#gmg")).toBe("G");
+    // none of these may leak the lowercased control name through the default branch
+    for (const c of ["spell1", "weaponselector", "army", "gmg"])
+      expect(inp.keyForControl("#" + c).toLowerCase()).not.toBe(c);
+  });
 });

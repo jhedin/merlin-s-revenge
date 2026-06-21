@@ -505,6 +505,9 @@ export class CpuAI extends Component {
 
   // updateRunReload (kite): back away from the target until the shot has cooled, then re-engage.
   private updateRunReload(m: Movement): void {
+    if (++this.retargetCtr >= CpuAI.RETARGET) {       // objAiCPU.updateRunReload ticks pRetargetCounter while kiting too
+      this.retargetCtr = 0; this.target = null; this.refreshTarget();
+    }
     const target = this.target;
     if (!target || target.send("isDead")) { this.target = null; this.goMode("findTarget", m); return; }
     const tp = target.send("getPos") as { x: number; y: number };

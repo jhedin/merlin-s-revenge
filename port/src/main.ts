@@ -428,7 +428,7 @@ function drawTitle(renderer: Renderer, w: number, h: number) {
   ctx.fillText("MERLIN'S REVENGE", w / 2, h / 2 - 48);
   ctx.fillStyle = "#566"; ctx.font = "8px monospace";
   ctx.fillText("move: WASD/arrows   aim: mouse   hold to charge magic, release to cast   punch: auto", w / 2, h - 26);
-  ctx.fillText("summon: E   save/load: 1/2   pause: Esc   mute: M", w / 2, h - 14);
+  ctx.fillText("spells: 1-9   save/load: F5/F9   pause: Esc   mute: M", w / 2, h - 14);
   ctx.textAlign = "left";
 }
 
