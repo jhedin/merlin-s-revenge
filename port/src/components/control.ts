@@ -578,8 +578,19 @@ export class CpuAI extends Component {
           fireBulletPayload(this.entity.id, m.x, m.y - 6, dx, dy, ca.spellSpeed / 6,
             Math.round(SPELL_FX.dmgPerUnit * (ca.chargeMaxBasic || 5)), team, ca,
             tgc?.hits ?? ["#teamMembers"], "#friendly", SPELL_FX.life);
+        } else if (ca && ca.type === "magic" && !isStreaming(ca)) {
+          // FAITHFUL CPU damage/status caster (energyBlast/darkBlast/cBlastAi/arcticBlast): release a real
+          // objSpell (grow-fly-explode) toward the target, exactly like the player's castMagic — the
+          // explosion's radial damage (and any takeFreeze) scales with the caster's CHARGE ceiling
+          // (capacity·chargeMaxModifier + chargeMaxBasic via chargeMaxOf), not a fixed per-actor bolt. So a
+          // high-mana / leveled caster hits harder, matching objAiCPUSpellCaster (released at full charge).
+          const tgc = this.entity.send("getTargeting") as { hits: string[]; allegiance: string } | undefined;
+          const hits = ca.hits && ca.hits.length ? ca.hits : ["#teamMembers", "#teamBuildings"];
+          const spell = spawnSpell(ca, this.entity.id, m.x, m.y - 6, team, hits, tgc?.allegiance ?? "#enemy");
+          const sa = spell.get(SpellActor);
+          sa.setCharge(chargeMaxOf(ca, this.entity.get(Mana)), m.x, m.y - 6); // full charge at release
+          sa.release(m.x + dx, m.y + dy, Math.max(2, ca.spellSpeed / 3));
         } else {
-          // K1 — faithful plain bullet: damage = speed·power·mult·BULLET_DAMAGE_SCALE carried as the
           // bullet's collision-vector L1 (= power·speed·BULLET_DAMAGE_SCALE), with mult from the bullet's
           // damageMultiplier. archerArrow (power 0.6, mult 4) etc. The bullet's #attack is resolved once
           // at spawn (bulletAttack). When the fired bolt has NO data record (energyBlastBullet — mageOrc's

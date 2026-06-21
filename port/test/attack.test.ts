@@ -23,6 +23,19 @@ describe("CPU beam weapon — techMech fires an instant stretched beam (objAiCPU
   });
 });
 
+describe("CPU damage-caster releases a charge-scaled objSpell (not a fixed bolt)", () => {
+  it("goblinMage (energyBlast) spawns a real spell actor that flies+explodes, charge-scaled by mana", () => {
+    game.grid = new CollisionGrid(40, 40, 32); game.entities = [];
+    game.assets = { index: { anims: {} }, img: () => null } as any;
+    game.teamMaster.reset(); game.armyMaster.reset(); game.teamMaster.unitMap.configure(32, 0, 0);
+    const player = spawnPlayer(300, 200); game.player = player; game.entities.push(player);
+    const mage = spawnEnemy("goblinMage", 440, 200); game.entities.push(mage); // #objAiCPUSpellCaster / energyBlast
+    let sawSpell = false;
+    for (let t = 0; t < 200 && !sawSpell; t++) { rebuildCombatSubstrate(); mage.send("update"); sawSpell = game.entities.some((e) => e.type === "spell"); }
+    expect(sawSpell).toBe(true); // released a real objSpell (grow-fly-explode), NOT a generic immediate bullet
+  });
+});
+
 describe("#firingType velocity — a #fullstrength thrower fires its bullet at strength px/tick", () => {
   it("fangBunnyBaby (#fullstrength, strength 8) throws at ~8 px/tick, NOT the old fixed 4.5", () => {
     game.grid = new CollisionGrid(40, 40, 32); game.entities = [];

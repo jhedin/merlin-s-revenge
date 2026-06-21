@@ -29,6 +29,15 @@ Only behavioral/real gaps (property-coverage non-gaps are catalogued in ../data-
   spellActor.explode() (player) + CpuAI.attack() (CPU caster at target loc). modSpellMultistage.txt:124 |
   summon.ts + spellActor.ts + control.ts.
 
+- [x] **CPU damage-caster damage decoupled from charge (user-approved "fully faithful")** (energyBlast/
+  darkBlast/cBlastAi/arcticBlast casters: berlin/goblinMage/friendlyGoblinMage/darkMage/garonlin/flaetorlin/
+  amotonlin). objAiCPUSpellCaster releases the SAME objSpell the player does — explode damage scales with the
+  charge ceiling (mana_capacity·chargeMaxModifier + chargeMaxBasic). The port fired a FIXED per-actor bolt, so
+  CPU caster damage didn't grow with mana/level. FIXED: CPU #release magic damage/status casters now release a
+  real spell actor (grow-fly-explode) toward the target via spawnSpell+SpellActor.release at full charge,
+  unifying with the player's castMagic — radial damage + takeFreeze now charge-scaled. casts objAiCPUSpellCaster
+  + modAttack calcCollisionVectSpell | port/src/components/control.ts (attack magic-#release branch).
+
 - [x] **#randomSummon tier-wobble never invoked (SYSTEMIC — all summoners)** (mageOrc/goblinMage →
   goblinSummon, necromancer/greyGhost → undeadSummon, sc/skeleton summon). calcAttackChargeMax wobbles the
   charge ceiling per cast for #randomSummon spells so a summoner doesn't always reach the TOP tier. The port's
