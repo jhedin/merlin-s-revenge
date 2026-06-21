@@ -22,6 +22,13 @@ describe("dwelling residents (objDwelling / modResidents)", () => {
     const residents = game.entities.filter((e) => e !== hut && e.type === "enemy");
     expect(residents.length).toBeGreaterThan(0);
     expect(residents.every((e) => e.send("getTeam") === "#goblins")).toBe(true);
+    // modResidents: the dwelling levels up once per release (me.big.levelUp), so the FIRST resident emerges
+    // unleveled (random(0)=0) but later ones escalate (setStartingLevel(random(level))). Resident N's level
+    // is bounded by its release index N (random(N) <= N), and the run as a whole must show escalation.
+    const levels = residents.map((e) => e.send("getLevel") as number);
+    expect(levels[0]).toBe(0);                                  // first resident: dwelling level 0
+    expect(levels.every((lv, i) => lv >= 0 && lv <= i)).toBe(true); // random(i) <= i
+    expect(Math.max(...levels)).toBeGreaterThan(0);             // escalation actually happened
   });
 
   it("stops once the lifetime budget is spent (does not produce forever)", () => {

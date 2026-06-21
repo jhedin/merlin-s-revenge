@@ -20,12 +20,14 @@ const after = await p.evaluate(`(() => {
   return { count: units.length, withSprite };
 })()`) as any;
 
-// Sword pickup: equip via collection in room 1, check punch power jumps
+// Sword pickup: walk onto the merlinSword pickup in room 1, check the WeaponManager addWeapon'd it
 const sword = await p.evaluate(`(() => { const g = window.__game; window.__rooms().enter({x:1,y:1});
-  const pc = g.player.comps.find(c=>c.constructor.name==="PlayerControl");
-  const before = pc.power;
-  pc.equipSword();
-  return { before, after: pc.power, hasSword: pc.hasSword, reach: pc.meleeReach };
+  const pl = g.player; const m = pl.comps.find(c=>"x"in c);
+  const before = pl.send("getWeapons","nonMagic");
+  const pk = g.entities.find(e => e.type==="pickup" && e.send("getEffect")==="sword");
+  if (pk) { const q = pk.send("getPos"); m.x = q.x; m.y = q.y; pk.send("update"); }
+  const cur = pl.send("getCurrentAttack");
+  return { before, after: pl.send("getWeapons","nonMagic"), current: cur && cur.name };
 })()`) as any;
 
 await b.close();

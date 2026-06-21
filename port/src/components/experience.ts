@@ -9,7 +9,7 @@ import { Component, type NextFn } from "../engine/dispatch";
 import { game } from "../game/context";
 
 export class Experience extends Component {
-  static handles = ["takeHit", "gainXp", "getLevel", "getReward", "addSaveData", "restoreFromSave"];
+  static handles = ["takeHit", "gainXp", "getLevel", "getReward", "forceLevelUp", "addSaveData", "restoreFromSave"];
   xp = 0;                 // cumulative experience gained
   level = 0;
   imWorth = 3;            // experience this unit is worth to its killer
@@ -25,10 +25,10 @@ export class Experience extends Component {
     this.imWorth = typeof cfg["experienceImWorth"] === "number" ? cfg["experienceImWorth"] : 3;
   }
 
-  // ordered before Energy: record who hit us, then forward
-  takeHit(next: NextFn, dmg: number, attackerId = -1): void {
+  // ordered before Energy: record who hit us, then forward the (vx,vy,attacker,mult) collision payload
+  takeHit(next: NextFn, vx = 0, vy = 0, attackerId = -1, mult = 1): void {
     if (attackerId >= 0) this.lastAttacker = attackerId;
-    next(dmg, attackerId);
+    next(vx, vy, attackerId, mult);
   }
 
   gainXp(_next: NextFn, amount: number): void {
@@ -41,6 +41,19 @@ export class Experience extends Component {
 
   getLevel(): number { return this.level; }
   frac(): number { const span = this.threshold - this.lastThreshold; return span > 0 ? (this.xp - this.lastThreshold) / span : 0; }
+
+  // forceLevelUp (armyMaster.restoreArmyDetails route i, plan §C.4): advance the unit ONE level and fan
+  // out #levelUp (Energy/Mana/control grow), WITHOUT requiring accumulated XP — used to re-field a banked
+  // reserve unit at its saved level (levelUpToStartingLevel semantics). Threshold advances like a real
+  // level so future XP gates stay consistent.
+  forceLevelUp(next: NextFn): void {
+    const L = this.level;
+    this.lastThreshold = this.threshold;
+    this.threshold = (L * L * L + L * L + this.threshold / (L + 1)) + 5 + this.initThreshold;
+    this.level++;
+    this.entity.send("levelUp");
+    next();
+  }
 
   private attemptLevelUp(): boolean {
     if (this.xp < this.threshold) return false;

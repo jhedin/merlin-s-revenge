@@ -58,6 +58,11 @@ export interface DataFileLike { header: { [k: string]: Lingo }; data: Lingo; }
 export class Registry {
   /** type -> (name -> record) */
   private partitions = new Map<string, Map<string, Record_>>();
+  // Lingo symbol/property names are CASE-INSENSITIVE (#iceBoulder == #iceboulder), but the data carries
+  // inconsistent casing (e.g. iceRock's `#bullet:#iceboulder` vs the actor `act_iceBoulder`). A parallel
+  // lowercase index gives the same case-insensitive resolution the original engine had — exact match wins,
+  // lowercase is the fallback — so a case-mismatched reference still resolves instead of silently failing.
+  private lcPartitions = new Map<string, Map<string, Record_>>();
   private inheritCache = new Map<string, Record_>();
 
   /** Load parsed data files keyed by base filename (e.g. "act_blackOrc"). */
@@ -68,14 +73,20 @@ export class Registry {
       if (!type) continue;
       const name = base.slice(4); // after "act_"
       if (name.includes("key") || name.includes("properties")) continue; // pNamesToSkip
+      if (!isPlainObject(file.data)) continue;
       let part = this.partitions.get(type);
       if (!part) { part = new Map(); this.partitions.set(type, part); }
-      if (isPlainObject(file.data)) part.set(name, file.data);
+      part.set(name, file.data);
+      let lc = this.lcPartitions.get(type);
+      if (!lc) { lc = new Map(); this.lcPartitions.set(type, lc); }
+      if (!lc.has(name.toLowerCase())) lc.set(name.toLowerCase(), file.data); // first wins (stable)
     }
   }
 
   raw(type: string, name: string): Record_ | undefined {
-    return this.partitions.get(type)?.get(name.replace(/^#/, ""));
+    const bare = name.replace(/^#/, "");
+    return this.partitions.get(type)?.get(bare)
+      ?? this.lcPartitions.get(type)?.get(bare.toLowerCase()); // case-insensitive fallback (Lingo semantics)
   }
 
   /** retrieveActorData: resolve #inherit chain + #attack schema, memoized. */

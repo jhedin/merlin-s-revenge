@@ -1,20 +1,31 @@
-// Animation component (modAnimSet): picks an action strip from the entity's mode (dead->grave,
-// moving->walk, else stand) and advances frames on a tick delay. One-shot actions (a swing, a
-// cast, a death) play once and hold the last frame; cyclic ones (walk/charge) loop. Sprites are
-// mirrored by facing direction. Provides the render Sprite.
+// Animation component (modAnimSet + objAnimStrip): picks an action strip from the entity's mode
+// (dead->grave, moving->walk, else stand) and advances frames on a PER-FRAME delay (objAnimStrip's
+// pDelayList: each frame carries its own `dela`), scaled by gGameSpeed (pDelay.inc = 1*gGameSpeed).
+// Loop vs one-shot is DATA-DRIVEN (anim.loop from assets.json, derived from the action classification
+// in the builder — see plan §C.3.2): cyclic strips wrap, one-shot strips advance-and-hold. Sprites
+// are mirrored by facing direction. Provides the render Sprite (tint/alpha from ColourTransform).
 
 import { Component, type NextFn } from "../engine/dispatch";
 import { Movement } from "./movement";
+import { ColourTransform } from "./colourTransform";
 import { game } from "../game/context";
 import type { Sprite } from "../render/renderer";
 
+// A few actors carry no bundled art of their own (e.g. goblinHero inherits #CPUCharacter with no
+// #character); map them to the closest kin sprite instead of the generic blackOrc stand-in.
+const CHAR_ALIAS: Record<string, string> = { goblinHero: "goblinWarrior" };
+
 /** The sprite character for an actor, or a stand-in ("blackOrc") when its anims aren't bundled. */
 export function spriteCharOr(name: string, fallback = "blackOrc"): string {
-  return game.assets.index.anims[`${name}_stand`] ? name : fallback;
+  if (game.assets.index.anims[`${name}_stand`]) return name;
+  const alias = CHAR_ALIAS[name];
+  if (alias && game.assets.index.anims[`${alias}_stand`]) return alias;
+  return fallback;
 }
 
-// Actions that play through once and hold their final frame (vs walk/charge which cycle).
-const ONE_SHOT = new Set([
+// Fallback one-shot classification when an anim's `loop` flag is absent (old assets.json). Mirrors the
+// builder's ONE_SHOT_ACTIONS so behaviour is identical pre/post-rebuild. The data flag (anim.loop) wins.
+const ONE_SHOT_FALLBACK = new Set([
   "grave", "die", "reel",
   "naturalMelee", "weaponMelee", "magicMelee", "weaponMagic",
   "release", "weaponRanged", "naturalRanged",
@@ -26,8 +37,23 @@ export class Anim extends Component {
   private action = "stand";
   private frame = 0;
   private timer = 0;
+  private extraDelay = 0;   // modWeaponTechnique.frameExtendDelay: extra frames added to the current frame's delay
 
-  override init(cfg: Record<string, any>): void { this.char = cfg["animChar"] ?? "mer"; }
+  override init(cfg: Record<string, any>): void { this.char = cfg["animChar"] ?? "mer"; this.extraDelay = 0; }
+
+  // frameAdvance (modWeaponTechnique.skipFramesForWeaponTechnique → me.big.frameAdvance): step the strip
+  // one frame early (faster attack cadence). Wraps for looped strips, clamps for one-shots; resets the
+  // per-frame timer so the early advance counts as a fresh frame.
+  frameAdvance(): void {
+    const anim = this.animFor(this.action);
+    if (!anim || anim.frames.length <= 1) return;
+    if (this.isLooped(this.action, anim)) this.frame = (this.frame + 1) % anim.frames.length;
+    else this.frame = Math.min(this.frame + 1, anim.frames.length - 1);
+    this.timer = 0;
+  }
+  // frameExtendDelay (modWeaponTechnique.addFramesForWeaponTechnique → me.big.frameExtendDelay): hold the
+  // current frame for `n` extra delay-ticks (slower attack cadence for negative-technique units).
+  frameExtendDelay(n: number): void { this.extraDelay += Math.max(0, n); }
 
   private pickAction(): string {
     if (this.entity.send("isDead")) return "grave";
@@ -36,16 +62,28 @@ export class Anim extends Component {
     return this.entity.get(Movement).moving() ? "walk" : "stand";
   }
 
+  // looped (objAnimStrip.getLooped via modAnimSet): true if the strip cycles. Data-driven from
+  // anim.loop; falls back to the action-name classification if the flag is missing.
+  private isLooped(action: string, anim: { loop?: boolean }): boolean {
+    return anim.loop ?? !ONE_SHOT_FALLBACK.has(action);
+  }
+
   update(next: NextFn): void {
     const action = this.pickAction();
-    if (action !== this.action) { this.action = action; this.frame = 0; this.timer = 0; }
+    if (action !== this.action) { this.action = action; this.frame = 0; this.timer = 0; this.extraDelay = 0; }
     const anim = this.animFor(action);
     if (anim && anim.frames.length > 1) {
-      if (++this.timer >= Math.max(1, anim.delay)) {
-        this.timer = 0;
-        // one-shot strips advance to the last frame and hold; cyclic strips wrap
-        if (ONE_SHOT.has(action)) this.frame = Math.min(this.frame + 1, anim.frames.length - 1);
-        else this.frame = (this.frame + 1) % anim.frames.length;
+      // per-frame delay (objAnimStrip.moveNextFrame: pDelay.tim[2] = pDelayList.nextValue()): the current
+      // frame's own `dela` gates the advance; the counter steps by gGameSpeed (pDelay.inc = 1*gGameSpeed).
+      const cur = anim.frames[this.frame % anim.frames.length]!;
+      // modWeaponTechnique.frameExtendDelay adds `extraDelay` to this frame's own `dela` (slower cadence).
+      const frameDelay = Math.max(1, (cur.dela ?? anim.delay) + this.extraDelay);
+      this.timer += game.gameSpeed;
+      if (this.timer >= frameDelay) {
+        this.timer = 0; this.extraDelay = 0; // the held-extra is spent once this frame finally advances
+        // cyclic strips wrap; one-shot strips advance to the last frame and hold (data-driven loop flag)
+        if (this.isLooped(action, anim)) this.frame = (this.frame + 1) % anim.frames.length;
+        else this.frame = Math.min(this.frame + 1, anim.frames.length - 1);
       }
     }
     next();
@@ -58,15 +96,34 @@ export class Anim extends Component {
 
   sprite(): Sprite | null {
     const m = this.entity.get(Movement);
+    // modGrave: a DEAD actor is its own grave. A ghost (pGraveOn=false) leaves NO grave — it vanishes when
+    // finished; every other dead actor holds the #grave frame BEHIND the living (the original draws it into
+    // the room background — modelled here as a low render-z) and faces RIGHT (drawGrave: setFlipFromDir(1)).
+    // getGraveOn is undefined for the player (no grave system — its in-game death plays on the normal path).
+    const dead = this.entity.send("isDead") === true;
+    const graveOn = this.entity.send("getGraveOn"); // true=leaves grave, false=ghost, undefined=player
+    if (dead && graveOn === false) return null;     // ghost: no grave, vanishes
+    const isGrave = dead && graveOn === true;
     const anim = this.animFor(this.action);
     if (!anim || anim.frames.length === 0) return null;
     const f = anim.frames[this.frame % anim.frames.length]!;
+    // frames load lazily per map; a char spawned mid-run (e.g. a summon) may not be loaded yet —
+    // kick off its load and skip this frame rather than throwing (it'll draw next tick once ready).
+    if (!game.assets.images.has(f.file)) { void game.assets.ensureChar(this.char); return null; }
+    // tint: the real modColourTransform palette (white flick on hit, glowRed/Teal/Gold). Falls back to
+    // the binary white flash (isHurt) only when no ColourTransform component is present on this archetype.
+    const ct = this.entity.tryGet(ColourTransform);
+    const tint = ct ? ct.getColourTransform() : (this.entity.send("isHurt") === true ? { rgb: [255, 255, 255] as [number, number, number], strength: 0.85, additive: false } : null);
+    const alpha = this.entity.send("getAlpha"); // per-sprite alpha (globalAlpha), default opaque
     return {
       img: game.assets.img(f.file),
       x: m.x, y: m.y, regX: f.reg[0], regY: f.reg[1],
-      z: m.y, // simple painter's depth by world-y
-      flip: m.facingLeft, // mirror to face the movement/aim direction (SpriteGetFlipHAsDir)
-      flash: this.entity.send("isHurt") === true, // white hit-flash (modFlasher)
+      // painter's depth by world-y; a grave sits BEHIND every live actor (room-background blit) while still
+      // ordering grave-vs-grave by y — a large negative bias keeps it under the living band.
+      z: isGrave ? m.y - 100000 : m.y,
+      flip: isGrave ? false : m.facingLeft, // graves face right (setFlipFromDir(1)); else mirror to aim dir
+      tint: tint ?? undefined,
+      alpha: typeof alpha === "number" ? alpha : undefined,
     };
   }
 }

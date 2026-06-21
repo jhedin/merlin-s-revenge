@@ -40,3 +40,36 @@ describe("cutscene DSL parser", () => {
     expect(c.steps[0]).toMatchObject({ kind: "say", alias: "u", text: "Merlin: you are out of shape." });
   });
 });
+
+describe("cutscene DSL: faithful interpretLineArgs (typed args)", () => {
+  it("interprets rgb / point / bare-number / symbol / actor / text / sound args", () => {
+    const c = parseCutscene(`characters
+#merlin - m
+#ulin - u
+lines
+backgroundColourTo rgb(22,92,7)
+m at 300
+m walkTo point(120,40)
+m goMode #look
+m turnToFace u
+showTitle You Got Wasted!
+wait 60
+playMusic #electronic_merlin_v1_02 200
+`);
+    const cmd = (i: number) => c.steps[i] as Extract<typeof c.steps[number], { kind: "cmd" }>;
+    expect(cmd(0).arg).toMatchObject({ kind: "rgb", r: 22, g: 92, b: 7 });
+    expect(cmd(1).arg).toMatchObject({ kind: "number", n: 300 });        // at -> interpretLoc bare x
+    expect(cmd(2).arg).toMatchObject({ kind: "point", x: 120, y: 40 });   // walkTo point
+    expect(cmd(3).arg).toMatchObject({ kind: "symbol", sym: "#look" });   // goMode symbol
+    expect(cmd(4).arg).toMatchObject({ kind: "actor", alias: "u" });      // turnToFace actor
+    expect(cmd(5).arg).toMatchObject({ kind: "text", text: "You Got Wasted!" }); // showTitle raw text
+    expect(cmd(6).arg).toMatchObject({ kind: "number", n: 60 });          // wait frame count
+    expect(cmd(7).arg).toMatchObject({ kind: "sound", member: "electronic_merlin_v1_02", volume: 200 });
+  });
+
+  it("speakLine (`:`) wins over a verb; word2-command when word1 is a character", () => {
+    const c = parseCutscene(`characters\n#merlin - m\nlines\nm: hi\nm goWastedMode\n`);
+    expect(c.steps[0]).toMatchObject({ kind: "say", alias: "m", text: "hi" });
+    expect(c.steps[1]).toMatchObject({ kind: "cmd", actor: "m", verb: "goWastedMode" });
+  });
+});

@@ -15,18 +15,25 @@ export interface Layer {
 export interface Room {
   num: number;
   layers: Layer[];
+  // #miniMapStatus (objRoom.getMiniMapStatus): a data-set per-room status (#fre/#spe), when present.
+  // None of the 47 shipped maps set it (they default to #clr / live-derived #inf); parsed for fidelity.
+  miniMapStatus?: string;
   layer(name: string): Layer | undefined;
 }
 
 export interface GameMap {
   mapSize: Vec2i;        // rooms across/down
   roomSize: Vec2i;       // tiles across/down (e.g. 18x9)
-  tilePx: number;        // 32 in shipped data
+  tilePx: number;        // gameplay tile px, resolved from the map's tilesets (32 for all shipped maps)
   startRoom: Vec2i;
+  endRoom?: Vec2i;       // #endRoom (objMap.txt:79): reaching+clearing this room wins; #none -> undefined
   layerDefs: { name: string; tileSet: string }[];
   rooms: Map<number, Room>;
   roomAt(loc: Vec2i): Room | undefined;
 }
+
+/** Resolve a tileset symbol -> its tile px (from the assets index). */
+export type TilePxFor = (tileSet: string) => number | undefined;
 
 type L = Lingo | undefined;
 const asObj = (v: L): Record<string, Lingo> =>
@@ -38,7 +45,7 @@ const asPoint = (v: L): Vec2i => {
   const o = asObj(v); return { x: asNum(o["x"], 1), y: asNum(o["y"], 1) };
 };
 
-export function parseMap(src: string): GameMap {
+export function parseMap(src: string, tilePxFor?: TilePxFor): GameMap {
   const root = asObj(parseLingo(src));
   const m = asObj(root["map"]);
   const roomSize = asPoint(m["roomSize"]);
@@ -47,6 +54,12 @@ export function parseMap(src: string): GameMap {
     return { name: asStr(o["name"]), tileSet: asStr(o["tileSet"]) };
   });
   const tileSetFor = (name: string) => layerDefs.find((d) => d.name === name)?.tileSet ?? "";
+
+  // gameplay tile px = the active layer's tileset tile size (all gameplay tlks are 32; resolve, don't
+  // hard-code, so a map referencing a non-32 tileset would scale correctly). Falls back to 32 when no
+  // resolver is supplied (e.g. unit tests that parse a map without the asset index).
+  const activeSym = tileSetFor("#backgroundActive") || tileSetFor("#backgroundPassive");
+  const tilePx = (tilePxFor && tilePxFor(activeSym)) || 32;
 
   const rooms = new Map<number, Room>();
   for (const rv of asArr(m["rooms"])) {
@@ -58,12 +71,18 @@ export function parseMap(src: string): GameMap {
       const grid = asArr(lo["map"]).map((rowv) => asArr(rowv).map((c) => asNum(c)));
       return { name, tileSet: tileSetFor(name), grid };
     });
-    rooms.set(num, { num, layers, layer(n) { return this.layers.find((l) => l.name === n); } });
+    const miniMapStatus = typeof ro["miniMapStatus"] === "string" ? asStr(ro["miniMapStatus"]) : undefined;
+    rooms.set(num, { num, layers, miniMapStatus, layer(n) { return this.layers.find((l) => l.name === n); } });
   }
 
   const mapSize = asPoint(m["mapSize"]);
+  // #endRoom (objMap.txt:79): the designated end room. #none (a symbol, not a point) -> undefined, so
+  // isEndRoom is never true and the map wins only on clear-all. A real point -> the end-room win trigger.
+  const endRoomRaw = m["endRoom"];
+  const endRoom = (endRoomRaw && typeof endRoomRaw === "object" && !Array.isArray(endRoomRaw))
+    ? asPoint(endRoomRaw) : undefined;
   return {
-    mapSize, roomSize, tilePx: 32, startRoom: asPoint(m["startRoom"]),
+    mapSize, roomSize, tilePx, startRoom: asPoint(m["startRoom"]), endRoom,
     layerDefs, rooms,
     roomAt(loc) {
       // rooms are stored by 1-based incremental num, row-major across mapSize
