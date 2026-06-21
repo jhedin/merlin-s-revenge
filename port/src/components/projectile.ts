@@ -11,6 +11,7 @@ import { game } from "../game/context";
 import { aimedVect } from "../engine/math";
 import type { AttackData } from "./weapon";
 import { resolveSplash, applyPayload } from "./splash";
+import { spawnFromSymbol } from "../entities/actorSerial";
 
 export class Projectile extends Component {
   static handles = ["update", "isFinished", "getTeam"];
@@ -26,6 +27,10 @@ export class Projectile extends Component {
   // its sprite stretched to the caster->target distance + rotated, detonating its explode #attack on the
   // first frame. beamDist/beamAngle/beamCasterX/Y drive the renderer's stretched-line draw.
   beam = false; beamDist = 0; beamAngle = 0; beamCasterX = 0; beamCasterY = 0; beamLife = 0;
+  // bullet #reincarnateAs (objBullet.reincarnate): on death the bullet spawns these actors at its corpse
+  // loc — flamingRock -> #fire (a lingering fire mine), lizardEgg -> #bug, ostrichEgg -> #babyOstrich (eggs
+  // HATCH into creatures). Empty for ordinary bolts. Each child uses its OWN act-data (team/objType).
+  reincarnateAs: string[] = [];
 
   configure(power: number, team: string, ownerId: number, maxLife = 100, freeze = 0, mult = 1): void {
     this.life = 0; this.power = power; this.team = team; this.ownerId = ownerId;
@@ -55,7 +60,7 @@ export class Projectile extends Component {
     this.beam = true; this.beamDist = dist; this.beamAngle = angle; this.beamCasterX = casterX; this.beamCasterY = casterY;
     this.beamLife = 4; // a few frames so the line is visible before it sweeps out
   }
-  override reset(): void { this.done = false; this.life = 0; this.ownerId = -1; this.freeze = 0; this.mult = 1; this.splash = null; this.payload = null; this.beam = false; }
+  override reset(): void { this.done = false; this.life = 0; this.ownerId = -1; this.freeze = 0; this.mult = 1; this.splash = null; this.payload = null; this.beam = false; this.reincarnateAs = []; }
   isFinished(): boolean { return this.done; }
   // a splash/beam bullet IS the attacker passed to resolveSplash; expose its owner team so the area
   // search resolves the right hostile teams (calcTargetTeams reads attacker.getTeam). objBullet.setTeam.
@@ -65,7 +70,20 @@ export class Projectile extends Component {
     const a = this.splash!;
     resolveSplash(this.entity, a, x, y, this.ownerId, this.splashHits, this.splashAllegiance);
     if (a.attackType === "#explode") game.audio?.play("spell_explode", 0.5);
+    this.finish(x, y);
+  }
+
+  // finish: the single death choke-point — latch `done` (idempotent so a bullet can't finalize twice) and
+  // spawn any #reincarnateAs children at the corpse loc (objBullet.reincarnate: fire mine / hatched egg).
+  private finish(x: number, y: number): void {
+    if (this.done) return;
     this.done = true;
+    for (let i = 0; i < this.reincarnateAs.length; i++) {
+      const typ = this.reincarnateAs[i]!;
+      if (!typ || typ === "none") continue;
+      const child = spawnFromSymbol(typ, x, y);
+      if (child) game.entities.push(child);
+    }
   }
 
   // a heal-payload bolt targets FRIENDLIES (same team), every other bolt targets non-team hostiles.
@@ -89,7 +107,7 @@ export class Projectile extends Component {
     }
     // objBullet does NOT collide with terrain (passThrough) — a bullet flies through walls and dies only on
     // a target hit or when it expires (the port's maxLife stands in for the original's friction-stall/land).
-    if (++this.life > this.maxLife) { if (this.splash) this.detonate(m.x, m.y); else this.done = true; return next(); }
+    if (++this.life > this.maxLife) { if (this.splash) this.detonate(m.x, m.y); else this.finish(m.x, m.y); return next(); }
     for (const e of game.entities) {
       if (e.id === this.ownerId || (e.type !== "player" && e.type !== "enemy" && e.type !== "ally")) continue;
       if (e.send("isDead") || !this.isTarget(e)) continue;
@@ -106,7 +124,7 @@ export class Projectile extends Component {
           e.send("takeHit", v.x, v.y, this.ownerId, this.mult);
           if (this.freeze > 0) e.send("takeFreeze", this.freeze, 0, this.ownerId, 1, false); // legacy scalar path
         }
-        this.done = true;
+        this.finish(m.x, m.y);
         break;
       }
     }

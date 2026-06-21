@@ -38,7 +38,7 @@ const DEFAULT_DEPTH = 12;
 let pendingDepth = DEFAULT_DEPTH;
 
 /** Normalize #reincarnateAs / #reincarnateInto to a string[] of bare actor keys, #none entries kept. */
-function parseReincarnate(v: unknown): string[] {
+export function parseReincarnate(v: unknown): string[] {
   const one = (s: unknown): string | null => (typeof s === "string" ? s.replace(/^#/, "") : null);
   if (typeof v === "string") { const s = one(v); return s ? [s] : []; }   // bare symbol (hydra3 -> #hydra2)
   if (Array.isArray(v)) return v.map(one).filter((s): s is string => s !== null);

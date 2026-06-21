@@ -10,6 +10,7 @@ import { SpellActor } from "./spellActor";
 import { Mana } from "./mana";
 import { game } from "../game/context";
 import { fireBullet, fireSplashBullet, fireBulletPayload, performBeamAttack } from "../systems/bullets";
+import { Projectile } from "./projectile";
 import { registry } from "../game/data";
 import { meleeHitFn } from "../systems/teams";
 import { Targeting } from "./combat";
@@ -309,6 +310,7 @@ export class CpuAI extends Component {
   teamWhenAlive = "";  // K5: the ghost's possess team (#aldevar) — getTeamWhenAlive
   splashBullet: AttackData | null = null; // towerAxe/energyPulse etc: fire a SPLASH bullet, not single-target
   bulletAttack: AttackData | null = null; // K1: a plain (non-splash) ranged weapon's resolved #attack.bullet
+  bulletReincarnate: string[] = [];       // bullet #reincarnateAs (flamingRock->fire, eggs->creature): hatch on death
   // K8a builder data (modBuilder): the unitToBuild list, build rate (per-100 advances a frame), and the
   // buildOne/buildDie/leaveWhenFinished disposition.
   unitToBuild: string[] = [];
@@ -361,6 +363,7 @@ export class CpuAI extends Component {
     this.atkSound = typeof cfg["atkSound"] === "string" ? cfg["atkSound"] : "";
     this.splashBullet = (cfg["splashBullet"] as AttackData | undefined) ?? null; // a ranged CPU's splash bullet (tower)
     this.bulletAttack = (cfg["bulletAttack"] as AttackData | undefined) ?? null; // K1: plain bullet's #attack (power/mult)
+    this.bulletReincarnate = (cfg["bulletReincarnate"] as string[] | undefined) ?? []; // bullet hatch/leave-behind list
     this.retargetCtr = 0; this.noTargetCtr = 0;
     this.mode = "findTarget"; this.target = null; this.attackT = 0;
     this.path.reset();
@@ -534,8 +537,9 @@ export class CpuAI extends Component {
         // a static turret (dwarfTower) / splash caster fires its real splash bullet (towerAxe): on
         // land/collide it resolves an AREA hit through SplashDamage (same A1 vector scale).
         const tg = this.entity.send("getTargeting") as { hits: string[]; allegiance: string } | undefined;
-        fireSplashBullet(this.entity.id, m.x, m.y - 6, dx, dy, throwSpeed, this.splashBullet, team,
+        const sb = fireSplashBullet(this.entity.id, m.x, m.y - 6, dx, dy, throwSpeed, this.splashBullet, team,
           this.splashBullet.hits, tg?.allegiance ?? "#enemy", 140);
+        if (this.bulletReincarnate.length) sb.get(Projectile).reincarnateAs = this.bulletReincarnate; // flamingRock -> #fire
       } else {
         // J1: a magic-weapon CPU caster routes by its #attack payload, like the player's castMagic —
         // a summoner spawns a unit, a healer fires a heal bolt at its (friendly) target — instead of
@@ -568,13 +572,15 @@ export class CpuAI extends Component {
           // ([#takeFreeze,#takeHit]) off the same collision vector. (We do NOT reproduce objBullet.updateFly's
           // direct-takeHit + payload-takeHit double-damage bug — applyPayload runs the list once.)
           const status = ba && (ba.payloadFunction.includes("takeFreeze") || ba.payloadFunction.includes("takeHeal"));
+          let pb: Entity;
           if (status && ba) {
             const alleg = ba.payloadFunction.includes("takeHeal") ? "#friendly" : "#enemy";
             const hits = ba.hits.length ? ba.hits : ["#teamMembers", "#teamBuildings"];
-            fireBulletPayload(this.entity.id, m.x, m.y - 6, dx, dy, speed, l1, team, ba, hits, alleg, 100);
+            pb = fireBulletPayload(this.entity.id, m.x, m.y - 6, dx, dy, speed, l1, team, ba, hits, alleg, 100);
           } else {
-            fireBullet(this.entity.id, m.x, m.y - 6, dx, dy, speed, l1, team, 100, 0, bmult);
+            pb = fireBullet(this.entity.id, m.x, m.y - 6, dx, dy, speed, l1, team, 100, 0, bmult);
           }
+          if (this.bulletReincarnate.length) pb.get(Projectile).reincarnateAs = this.bulletReincarnate; // lizardEgg->#bug, ostrichEgg->#babyOstrich
         }
       }
     } else {

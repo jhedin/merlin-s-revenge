@@ -17,6 +17,20 @@ Only behavioral/real gaps (property-coverage non-gaps are catalogued in ../data-
   regression). casts/script_objects/modAttack.txt:743 + master_objects/structMaster.txt:181 |
   port/src/components/weapon.ts (AttackData.firingType) + control.ts (attack).
 
+- [x] **bullet #reincarnateAs dropped (SYSTEMIC — flamingRock + eggs)** (lavaDarkGolem/lavaGolem flamingRock;
+  lizard lizardEgg; ostrich ostrichEgg). objBullet.reincarnate spawns the bullet's #reincarnateAs at its death
+  loc — flamingRock leaves a #fire mine, lizardEgg HATCHES a #bug, ostrichEgg HATCHES a #babyOstrich. The
+  port's pooled BulletArchetype had no reincarnation, so flaming rocks left no fire and eggs never hatched.
+  FIXED: Projectile carries #reincarnateAs and its death choke-point (finish) spawns each child via
+  spawnFromSymbol; threaded from the bullet actor's data through archetypes/EnemyAI. casts/data/act_flamingRock.txt:23,
+  act_lizardEgg.txt, act_ostrichEgg.txt + objBullet.txt:282 | port/src/components/projectile.ts + control.ts + archetypes.ts.
+
+- [x] **audio channel leak on missing/#none buffer (engine bug, side-find from hydra1)** — Audio.play()
+  claimed a channel (busy=true) but never attached onended when the buffer was #none/not-loaded, so the
+  channel leaked permanently; after SOUND_CHANNELS such calls (many actors carry dieSound #none) every real
+  SFX is dropped. FIXED: #none/empty name is a no-op (claims no channel, faithful to soundMaster filtering
+  #none); a genuine missing-buffer miss frees the channel. port/src/systems/audio.ts.
+
 - [x] **#runReload data property ignored** (bat, caveBat, evilTv, vultureGuard — all #objAiCPU+#naturalRanged).
   Original gates kiting purely on the #runReload data flag (objCPUCharacter getRunReload, default false);
   the port DERIVED runReload from AiType only, so these 4 explicit kiters stood still after firing instead

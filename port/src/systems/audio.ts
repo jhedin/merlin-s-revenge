@@ -143,6 +143,10 @@ export class AudioSystem {
    * (defaulting to pDefaultVolume = 150) instead. Returns the channel used (0 = dropped, all busy).
    */
   play(name: string, volume = 1, vol255?: number): number {
+    // soundMaster filters #none before ever calling playSound — a #none/empty name is a no-op that must
+    // NOT claim a channel (otherwise the channel leaks: no buffer → no onended → busy stays true forever,
+    // and after SOUND_CHANNELS such calls every real SFX is dropped). Many actors carry dieSound #none.
+    if (!name || name === "#none") return 0;
     // Allocation runs even with no backend so the channel bookkeeping (and tests) stay consistent.
     const chan = this.allocateChannel();
     if (chan <= 0) return 0;                  // all SFX channels busy -> dropped (matches soundMaster)
@@ -153,7 +157,10 @@ export class AudioSystem {
     slot.name = name;
     if (this.muted || !this.ctx || !this.master) { slot.src = null; slot.gain = null; return chan; }
     const buf = this.buffers.get(name);
-    if (!buf) { slot.src = null; slot.gain = null; return chan; } // not loaded -> silent, channel still claimed
+    // not loaded in a live context -> silent, and FREE the channel: no source means no onended will ever
+    // fire to clear `busy`, so holding it would leak the channel (vs the muted/headless path above, which
+    // intentionally keeps the claim for stopSound()-driven test bookkeeping).
+    if (!buf) { slot.busy = false; slot.src = null; slot.gain = null; slot.name = "empty"; return chan; }
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
     const g = this.ctx.createGain();

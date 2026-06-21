@@ -13,7 +13,7 @@ import { WeaponManager, resolveAttack } from "../components/weapon";
 import { WeaponTechnique } from "../components/weaponTechnique";
 import { Hurt } from "../components/hurt";
 import { ColourTransform } from "../components/colourTransform";
-import { Reincarnate } from "../components/reincarnate";
+import { Reincarnate, parseReincarnate as parseReincarnateList } from "../components/reincarnate";
 import { Grave } from "../components/grave";
 import { Dwelling } from "../components/dwelling";
 import { Identity } from "../components/identity";
@@ -243,11 +243,15 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
   // power·mult the CpuAI fires as speed·power·mult·BULLET_DAMAGE_SCALE. energyBlastBullet has no record
   // (-> undefined here -> CpuAI falls back to the caster's power).
   let bulletAttack: ReturnType<typeof resolveAttack> | undefined;
+  // a fired bullet's #reincarnateAs (objBullet.reincarnate): flamingRock -> #fire, lizardEgg -> #bug,
+  // ostrichEgg -> #babyOstrich. The bullet hatches/leaves these at its death loc — threaded to Projectile.
+  let bulletReincarnate: string[] = [];
   if (ranged && typeof atk["bullet"] === "string" && atk["bullet"] !== "#none") {
     const bulletActor = registry.resolveActor(atk["bullet"].replace(/^#/, ""));
     const ba = bulletActor ? resolveAttack(bulletActor["attack"] as Record<string, any>, bulletActor) : undefined;
     if (ba && (ba.attackType === "#explode" || ba.splashDamageOn)) splashBullet = ba;
     else if (ba) bulletAttack = ba;
+    bulletReincarnate = parseReincarnateList(bulletActor?.["reincarnateAs"] ?? bulletActor?.["reincarnateInto"]);
   }
   const pw = atk["power"];
   const atkPower = pw && typeof pw === "object" && "x" in pw ? Math.abs(pw.x) + Math.abs(pw.y) : 0;
@@ -266,7 +270,7 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     team: str("team", "#monsters"), teamRole: "#teamMembers",
     animChar: opts.animChar ?? actorName, box: 14,
     inertia: num("inertia", 0), // resists knockback (modGameObject damping); heavy orcs get shoved less
-    ranged, runReload, ghost, splashBullet, bulletAttack,
+    ranged, runReload, ghost, splashBullet, bulletAttack, bulletReincarnate,
     // K4/K5/K6/K8a AI config: bullet-dodge caster, multi-attack 2-weapon switch, builder build-loop, the
     // ghost's possess team. Defaults keep every other actor on the existing committed-target FSM.
     dodgesBullets, multiAttack, builder, unitToBuild,
