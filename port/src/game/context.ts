@@ -12,6 +12,7 @@ import { ArmyMaster } from "../systems/armyMaster";
 import { PotionMaster } from "../systems/potionMaster";
 import { MagicLimitMaster } from "../systems/magicLimit";
 import { Effects } from "../render/effects";
+import { WizardMaster } from "../systems/wizardMaster";
 
 export interface GameContext {
   grid: CollisionGrid;
@@ -36,6 +37,8 @@ export interface GameContext {
   magicLimit: MagicLimitMaster;
   /** effects: cosmetic particle layer (starMaster.experienceStar level-up stars) — no combat interaction */
   effects: Effects;
+  /** wizardMaster: the found-wizards registry for the #wizard/#wizardSelector summon-helper system */
+  wizardMaster: WizardMaster;
   /** weaponPalette: modWeaponSelector overlay (the #weaponSelector key opens a click-to-pick weapon palette) */
   weaponPalette?: { displaying: boolean; open(p: Entity): void; tick(input: Input, p: Entity): void };
   /** spawn an enemy by actor name (set in main; lets Dwelling produce units without an import cycle) */
@@ -70,6 +73,7 @@ export const game: GameContext = {
   potionMaster: new PotionMaster(),
   magicLimit: new MagicLimitMaster(),
   effects: new Effects(),
+  wizardMaster: new WizardMaster(),
 };
 
 export function initContext(c: Partial<GameContext>): void { Object.assign(game, c); }

@@ -176,6 +176,7 @@ async function main() {
   function freshGame() {
     game.teamMaster.reset(); // fresh rosters/subscriptions for a new run
     game.armyMaster.reset(); // empty the reserve bank
+    game.wizardMaster.reset(); // forget found wizards (new game)
     game.potionMaster.reset(); // zero the potion tally
     player = spawnPlayer(viewW / 2, viewH / 2);
     game.player = player;

@@ -67,6 +67,8 @@ export class ArmyMaster {
   // checkUnitAvailability (65-78): an #armySummon is only castable if a reserve record of typ exists.
   hasReserve(team: string, typ: string): boolean { return (this.reserve.get(team)?.get(typ)?.length ?? 0) > 0; }
   reserveCount(team: string, typ: string): number { return this.reserve.get(team)?.get(typ)?.length ?? 0; }
+  /** the unit types currently banked for a team (modAutoSummon.summonArmy enumerates the battalion). */
+  reserveTypes(team: string): string[] { return [...(this.reserve.get(team)?.keys() ?? [])].filter((t) => this.reserveCount(team, t) > 0); }
 
   // createUnit (80-108): withdraw the best reserve record, spawn the unit, re-field it AT its saved level
   // (re-running level-up growth), and remove the consumed record (restoreUnitToCombat). Empty reserve ->

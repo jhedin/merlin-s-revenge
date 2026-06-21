@@ -9,6 +9,7 @@ import { spawnSpell } from "../systems/spells";
 import { SpellActor } from "./spellActor";
 import { Mana } from "./mana";
 import { game } from "../game/context";
+import type { Input } from "../systems/input";
 import { fireBullet, fireSplashBullet, fireBulletPayload, performBeamAttack } from "../systems/bullets";
 import { Projectile } from "./projectile";
 import { registry } from "../game/data";
@@ -86,6 +87,38 @@ export class PlayerControl extends Component {
   /** energyBlast scroll (room 6): addWeapon the charged magic (modWeaponManager.addWeapon). */
   grantSpell(attack: AttackData): void { this.wm().addWeapon(attack.name, attack); }
 
+  // summonWizard (modSummonWizard): toggle the selected found wizard in/out of combat at the cursor.
+  // Out already -> unsummon (armyTeleportOut). Else summon it from the reserve (banked) or a fresh spawn.
+  summonWizard(input: Input): void {
+    const wm = game.wizardMaster;
+    const active = game.entities.find((e) => e.id === wm.activeWizardId && !e.send("isDead"));
+    if (active) { game.armyMaster.teleportOut(active); active.flags.add("left"); wm.clearActive(); return; }
+    const typ = wm.currentActorType();           // "<wiz>InGame"
+    if (!typ) return;                            // no wizard found yet
+    const team = this.entity.send("getTeam") as string;
+    const at = input.cursor() ?? this.entity.get(Movement);
+    let wiz = game.armyMaster.createUnit(team, typ, at.x, at.y); // re-field from the reserve when banked
+    if (!wiz && game.spawnUnit) {                                 // else summon a fresh copy of the found wizard
+      wiz = game.spawnUnit(typ.replace(/^#/, ""), at.x, at.y);
+      if (!game.entities.includes(wiz)) game.entities.push(wiz);
+    }
+    if (wiz) wm.setActive(wiz.id);
+  }
+
+  // summonArmy (modAutoSummon.summonArmy): re-field a battalion of the player's banked reserve at the
+  // cursor, spread around it, respecting the team capacity (gMaxFriends).
+  summonArmy(input: Input): void {
+    const team = this.entity.send("getTeam") as string;
+    const at = input.cursor() ?? this.entity.get(Movement);
+    const types = game.armyMaster.reserveTypes(team);
+    let i = 0;
+    for (const typ of types) {
+      if (game.teamMaster.atCapacity(team)) break;
+      const ang = (i++ / Math.max(1, types.length)) * Math.PI * 2;
+      game.armyMaster.createUnit(team, typ, at.x + Math.cos(ang) * 20, at.y + Math.sin(ang) * 20);
+    }
+  }
+
   // weapon inventory persists via WeaponManager.addSaveData/restoreFromSave (no booleans here anymore).
   // The GMG collected/on flags persist (modGoldenMachineGun.addSaveData) — a held GMG survives save/load.
   addSaveData(next: NextFn, sd: Record<string, any>): Record<string, any> {
@@ -148,6 +181,12 @@ export class PlayerControl extends Component {
     // palette; while it's up, a click picks a weapon (so the primary fire is suppressed, below).
     if (input.pressed("e")) game.weaponPalette?.open(this.entity);
     if (game.weaponPalette?.displaying) game.weaponPalette.tick(input, this.entity);
+
+    // the summon-helper system (modSummonWizard / modAutoSummon): Q summons/unsummons the selected found
+    // wizard at the cursor, Tab cycles which wizard, C summons a battalion from the reserve.
+    if (input.pressed("q")) this.summonWizard(input);
+    if (input.pressed("tab")) game.wizardMaster.selectNext();
+    if (input.pressed("c")) this.summonArmy(input);
 
     // aim point: the cursor in world space, else the auto-acquired target (teamMaster.findTarget over
     // data allegiance/roles — same logic every unit uses), else current facing

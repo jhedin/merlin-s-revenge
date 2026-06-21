@@ -32,7 +32,7 @@ export class Input {
       const k = (e as KeyboardEvent).key.toLowerCase();
       if (!this.down.has(k)) this.pressedThisTick.add(k);
       this.down.add(k);
-      if (this.isMoveKey(k) || k === " ") e.preventDefault();
+      if (this.isMoveKey(k) || k === " " || k === "tab") e.preventDefault(); // Tab cycles wizards (don't shift focus)
     });
     target.addEventListener("keyup", (e) => this.down.delete((e as KeyboardEvent).key.toLowerCase()));
   }

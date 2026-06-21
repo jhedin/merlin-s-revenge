@@ -56,6 +56,9 @@ export function spawnUnit(actorName: string, x: number, y: number, opts: { animC
   const team = typeof d["team"] === "string" ? (d["team"] as string) : "#monsters";
   const e = spawnEnemy(actorName, x, y, opts);
   if (game.teamMaster.isPlayerSide(team)) e.type = "ally";
+  // newWizardFound (objGameObject.init params.wizard): a #wizard:true ally registers as a summonable wizard
+  // and is teleportable so it banks to the reserve on room-leave (then summonWizard can re-field it).
+  if (d["wizard"] === true) { game.wizardMaster?.register(actorName); e.flags.add("teleportable"); }
   return e;
 }
 
