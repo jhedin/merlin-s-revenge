@@ -299,6 +299,10 @@ export class RoomManager {
     if (this.won) return;
     const endRoomWin = this.isEndRoom();                        // reached + cleared the end room
     const clearAllWin = this.cleared.size >= this.map.rooms.size; // cleared every room
+    // objRoom.attemptOpenExits: on the FIRST clear of a non-final room, play pRoomClearedSound ("end_screen").
+    // Skip it on the clear that WINS the map (a game-complete sound plays instead — original gates on
+    // `if not isMapClear`).
+    if (firstClear && !(endRoomWin || clearAllWin)) game.audio?.play("end_screen");
     if (endRoomWin || clearAllWin) { this.won = true; this.onMapClear(); }
   }
 

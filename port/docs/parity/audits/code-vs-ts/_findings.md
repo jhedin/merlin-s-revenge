@@ -122,3 +122,18 @@ objAiCPUGhost, objAiCPUSummoner, actorMaster, structMaster (48 #attack defaults 
 ## CLEAN (cont.)
 modCharacterAttackProperties (all per-level stat growth faithful incl. the walkSpeed fix), cutSceneMaster
 (all 31 cutscene verbs implemented), armyMaster (bank/withdraw/re-field reserve faithful).
+
+- [x] **room-cleared sound missing (objRoom.attemptOpenExits pRoomClearedSound)** — on the FIRST clear of a
+  non-final room the original plays pRoomClearedSound ("end_screen"); the port's markCleared was silent.
+  FIXED: RoomManager.markCleared plays "end_screen" on first clear unless that clear wins the map (a
+  game-complete sound plays then, matching `if not isMapClear`). "end_screen" is a shipped asset.
+  casts objRoom.txt:64,200-207 | port/src/world/rooms.ts (markCleared).
+
+## NON-GAPS — different game (Rapunzel's Escape, same engine), out of scope for Merlin's Revenge
+- modExtraLives lifePowerUpCollected (100 #hairGem powerups -> 1 life): a Rapunzel feature; gPlayerHair=0 in
+  Merlin's GameSpecific and NO Merlin pickup is a #hairGem. Core lives/respawn/game-over is CLEAN.
+- objPowerUp hair powerups (hairGem/hairPotion/etc.) and timed expiration (#timeAlive): hair = Rapunzel;
+  timeAlive defaults 0 and NO Merlin pickup sets it -> Merlin pickups never auto-vanish (port faithful).
+
+## CLEAN (cont.)
+objRoom (after sound fix), modScreenExits, mapMaster, collisionMaster, objPowerUp (Merlin-relevant paths).
