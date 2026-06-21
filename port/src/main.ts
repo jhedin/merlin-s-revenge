@@ -327,6 +327,7 @@ async function main() {
           // `left`: a #leaveWhenFinished ally that teleported out (already banked to the reserve) — remove it.
           if ((e.type === "pickup" && e.send("isFinished")) || e.flags.has("left")) game.entities.splice(i, 1);
         }
+        game.effects.update(); // advance level-up star particles (modStarReleaser)
         rooms.update();
         // death: let the die animation play (deathT frames) before resolving respawn/game-over.
         if (player.send("isDead")) { if (deathT === 0) deathT = 1; }
@@ -365,6 +366,7 @@ async function main() {
       const active = rooms.room.layer("#backgroundActive");
       if (passive && rooms.passiveSheet) renderer.drawTileLayer(passive, rooms.passiveSheet);
       if (active && rooms.activeSheet) renderer.drawTileLayer(active, rooms.activeSheet);
+      game.effects.draw(renderer); // level-up stars (starMaster setLocZ-1: behind the actors)
       const sprites = game.entities
         .filter((e) => e.type !== "bullet" && e.type !== "pickup" && e.type !== "marker" && e.type !== "spell")
         .map((e) => e.get(Anim).sprite()).filter((sp): sp is Sprite => sp !== null);

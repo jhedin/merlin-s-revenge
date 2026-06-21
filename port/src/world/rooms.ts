@@ -92,6 +92,7 @@ export class RoomManager {
     // restoring the default on room-leave). A dimmed region or a gang-up override can't leak rooms (§g.5).
     game.magicLimit.setDefault();
     game.teamMaster.teamOverride = null;
+    game.effects.clear(); // drop any in-flight level-up stars from the room we're leaving
     this.loc = loc;
     this.room = this.map.roomAt(loc) ?? this.map.rooms.get(1)!;
     const active = this.room.layer("#backgroundActive");

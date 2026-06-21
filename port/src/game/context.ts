@@ -11,6 +11,7 @@ import { TeamMaster } from "../systems/teams";
 import { ArmyMaster } from "../systems/armyMaster";
 import { PotionMaster } from "../systems/potionMaster";
 import { MagicLimitMaster } from "../systems/magicLimit";
+import { Effects } from "../render/effects";
 
 export interface GameContext {
   grid: CollisionGrid;
@@ -33,6 +34,8 @@ export interface GameContext {
   potionMaster: PotionMaster;
   /** magicLimit: the room-scoped magic charge-limiter (objMagicLimit regions dim limitMagic spells) (I1) */
   magicLimit: MagicLimitMaster;
+  /** effects: cosmetic particle layer (starMaster.experienceStar level-up stars) — no combat interaction */
+  effects: Effects;
   /** spawn an enemy by actor name (set in main; lets Dwelling produce units without an import cycle) */
   spawnEnemy?: (name: string, x: number, y: number, opts?: { animChar?: string; ranged?: boolean }) => Entity;
   /** spawn a unit routed by its real team (ally if friendly, else enemy) — used by dwellings */
@@ -64,6 +67,7 @@ export const game: GameContext = {
   armyMaster: new ArmyMaster(),
   potionMaster: new PotionMaster(),
   magicLimit: new MagicLimitMaster(),
+  effects: new Effects(),
 };
 
 export function initContext(c: Partial<GameContext>): void { Object.assign(game, c); }
