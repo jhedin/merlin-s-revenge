@@ -203,7 +203,13 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
   // ghost keeps the drift approximation (possession is out of scope). Bombers now run a normal attack
   // loop (no suicide). aiKind/targetTypes are gone — allegiance is data-driven via Targeting.
   const ghost = aiType === "#objAiCPUGhost";
-  const runReload = !ghost && ranged && (aiType === "#objAiCPUSpellCaster" || animType === "#magic" || aiType === "#objAiFlyingBomber");
+  // runReload (objCPUCharacter pRunReload, default false): kite away after a shot. The ORIGINAL gates this
+  // purely on the #runReload data property (getRunReload). bat/caveBat/evilTv/vultureGuard set it true and
+  // were previously ignored. We OR the data flag with the AiType approximations the port leans on for AI
+  // kinds it doesn't fully model (spellcaster optimumPosition / flyingbomber kiting) — additive, so the 4
+  // data-driven kiters now kite without disturbing the existing spellcaster/bomber behaviour.
+  const runReload = !ghost && ranged && (d["runReload"] === true
+    || aiType === "#objAiCPUSpellCaster" || animType === "#magic" || aiType === "#objAiFlyingBomber");
   // K4: a spellcaster runs the bullet-dodge optimumPosition chain (tangent-run incoming bullets).
   const dodgesBullets = aiType === "#objAiCPUSpellCaster";
   // K8a: a builder (dwarf/goblinBuilder) walks to a site + incrementally builds its #unitToBuild dwelling.

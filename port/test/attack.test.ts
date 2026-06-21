@@ -53,6 +53,34 @@ describe("data-driven attacks (real #attack via #weapon)", () => {
   });
 });
 
+import { WeaponManager } from "@/components/weapon";
+describe("#firingType — ranged throw velocity model (modAttack performRangedAttack)", () => {
+  it("defaults to #proportional and reads #fullstrength overrides", () => {
+    // structMaster default is #proportional; fangBunnyBaby explicitly overrides to #fullstrength.
+    const baby = spawnEnemy("fangBunnyBaby", 0, 0).get(WeaponManager).getCurrentAttack();
+    expect(baby?.firingType.toLowerCase()).toBe("#fullstrength");
+    // dwarfTower's #attack explicitly carries #proportional (= the structMaster default).
+    const tower = spawnEnemy("dwarfTower", 0, 0).get(WeaponManager).getCurrentAttack();
+    expect(tower?.firingType.toLowerCase()).toBe("#proportional");
+    // archerBow's weapon record sets #fullstrength → the resolved current attack carries it (read from data).
+    const archer = spawnEnemy("archer", 0, 0).get(WeaponManager).getCurrentAttack();
+    expect(archer?.firingType.toLowerCase()).toBe("#fullstrength");
+  });
+});
+
+describe("#runReload — data-driven kiting (objCPUCharacter getRunReload)", () => {
+  it("the 4 actors that set #runReload:true kite, even though they are plain #objAiCPU", () => {
+    // bat/caveBat/evilTv/vultureGuard are #objAiCPU + #naturalRanged (NOT spellcaster/magic/bomber), so the
+    // old AiType-only derivation missed them. The data property #runReload:true must drive the kite.
+    for (const a of ["bat", "caveBat", "evilTv", "vultureGuard"]) {
+      const ai = spawnEnemy(a, 0, 0).get(EnemyAI);
+      expect.soft(ai.runReload, `${a} should kite (data #runReload:true)`).toBe(true);
+    }
+    // a plain ranged enemy with no #runReload key (archer) does NOT kite.
+    expect(spawnEnemy("archer", 0, 0).get(EnemyAI).runReload).toBe(false);
+  });
+});
+
 import { EnemyAI as AI2 } from "@/components/control";
 describe("FSM configuration from #AiType", () => {
   it("maps spellcaster->ranged+runReload, ghost->drift, cpu->melee beeline", () => {

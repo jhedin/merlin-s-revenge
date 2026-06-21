@@ -32,7 +32,7 @@ caveBat is a ranged-thrower variant of bat, differing only in experience value (
 
 | Property | Value | Port Handling | Status |
 |----------|-------|------------------|--------|
-| `runReload` | true | ranged kiting: moves to attack, fires, retreats; set in spawnEnemy (line 206) | ✓ |
+| `runReload` | true | ranged kiting — was initially MISSED (port derived runReload from AiType only; caveBat is #objAiCPU). **FIXED**: archetypes.ts:206 now reads the #runReload data property. | ✓ |
 | `energy` | 50 | health pool | ✓ |
 | `strength` | 6 | melee/spell power scale (not used for ranged bullet damage) | ✓ |
 | `experienceImWorth` | **10** | XP reward when killed (vs bat's 4); read and passed to Experience component (archetypes.ts:290) | ✓ |

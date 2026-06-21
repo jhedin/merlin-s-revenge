@@ -33,6 +33,10 @@ export interface AttackData {
   hits: string[];
   sound: string;
   bullet: string;
+  // #firingType (structMaster default #proportional): the ranged THROW velocity model (modAttack
+  // performRangedAttack). #proportional → throwVect = distToTarget/10 (always arrives in ~10 frames);
+  // #fullstrength → speed = the attacker's strength (constant-speed projectile). Drives travel time.
+  firingType: string;
   spellSpeed: number;
   releaseSound: string;
   // charge (modAttack) — read by charge.ts
@@ -172,6 +176,7 @@ export function resolveAttack(raw: Record<string, any> | undefined, owner?: Reco
     hits: Array.isArray(r["hits"]) ? r["hits"] : (d["hits"] as string[]),
     sound: strOr(r["sound"], d["sound"] as string),
     bullet: strOr(r["bullet"], d["bullet"] as string),
+    firingType: strOr(r["firingType"], strOr(d["firingType"] as string, "#proportional")),
     spellSpeed: numOr(r["spellSpeed"], d["spellSpeed"] as number),
     releaseSound: strOr(r["releaseSound"], d["releaseSound"] as string),
     chargeMax: numOr(r["chargeMax"], d["chargeMax"] as number),

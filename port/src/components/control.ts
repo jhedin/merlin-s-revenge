@@ -520,11 +520,21 @@ export class CpuAI extends Component {
     if (!wm.getCooldownFin()) return;
     if (this.ranged) {
       const team = this.entity.send("getTeam") as string;
+      // #firingType (modAttack performRangedAttack): the THROW velocity. #proportional (the structMaster
+      // default) → throwVect = distToTarget/10, so the projectile always crosses the gap in ~10 frames
+      // (near targets get a slow lob, far targets a fast one). #fullstrength → constant speed = the
+      // attacker's strength. This governs travel time only; the bullet's damage stays on the calibrated
+      // K1 reference (the original couples damage to |getVect()|, but the port's tuned damage model is a
+      // deliberate abstraction at a fixed reference speed — kept stable so balance/tests don't shift).
+      const ftAttack = wm.getCurrentAttack();
+      const throwDist = Math.hypot(dx, dy) || 1;
+      const isFullStrength = (ftAttack?.firingType ?? "#proportional").toLowerCase() === "#fullstrength";
+      const throwSpeed = isFullStrength ? Math.max(1, this.strength) : Math.max(0.5, throwDist / 10);
       if (this.splashBullet) {
         // a static turret (dwarfTower) / splash caster fires its real splash bullet (towerAxe): on
         // land/collide it resolves an AREA hit through SplashDamage (same A1 vector scale).
         const tg = this.entity.send("getTargeting") as { hits: string[]; allegiance: string } | undefined;
-        fireSplashBullet(this.entity.id, m.x, m.y - 6, dx, dy, 5, this.splashBullet, team,
+        fireSplashBullet(this.entity.id, m.x, m.y - 6, dx, dy, throwSpeed, this.splashBullet, team,
           this.splashBullet.hits, tg?.allegiance ?? "#enemy", 140);
       } else {
         // J1: a magic-weapon CPU caster routes by its #attack payload, like the player's castMagic —
@@ -547,10 +557,11 @@ export class CpuAI extends Component {
           // at spawn (bulletAttack). When the fired bolt has NO data record (energyBlastBullet — mageOrc's
           // goblinSummon), fall back to the caster spell's power·this.strength (objBullet spawned from the
           // spell), so a record-less magic bolt still does ≈ today's damage.
-          const speed = 4.5;
+          const speed = throwSpeed;                      // firingType-derived travel velocity (above)
+          const dmgRef = 4.5;                            // calibrated K1 damage reference (decoupled from travel speed)
           const ba = this.bulletAttack;
-          const l1 = ba ? ba.powerScalar * speed * BULLET_DAMAGE_SCALE
-            : this.power * speed * BULLET_DAMAGE_SCALE;   // record-less bolt -> caster power (this.power)
+          const l1 = ba ? ba.powerScalar * dmgRef * BULLET_DAMAGE_SCALE
+            : this.power * dmgRef * BULLET_DAMAGE_SCALE;  // record-less bolt -> caster power (this.power)
           const bmult = ba ? ba.damageMultiplier : 1;
           // a bullet carrying a STATUS payload (iceBoulder/freezeBlast: #takeFreeze) applies it on hit, not
           // just damage — route through the payload path so applyPayload runs the bullet's payloadFunction
