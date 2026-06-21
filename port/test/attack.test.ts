@@ -4,6 +4,23 @@ import { EnemyAI } from "@/components/control";
 import { game } from "@/game/context";
 import { CollisionGrid } from "@/world/collision";
 import { rebuildCombatSubstrate } from "@/systems/combatTick";
+import { Movement } from "@/components/movement";
+
+describe("#firingType velocity — a #fullstrength thrower fires its bullet at strength px/tick", () => {
+  it("fangBunnyBaby (#fullstrength, strength 8) throws at ~8 px/tick, NOT the old fixed 4.5", () => {
+    game.grid = new CollisionGrid(40, 40, 32); game.entities = [];
+    game.assets = { index: { anims: {} }, img: () => null } as any;
+    game.teamMaster.reset(); game.armyMaster.reset(); game.teamMaster.unitMap.configure(32, 0, 0);
+    const player = spawnPlayer(300, 200); game.player = player; game.entities.push(player);
+    const thrower = spawnEnemy("fangBunnyBaby", 360, 200); game.entities.push(thrower); // 60px < reach 125
+    let bullet: any;
+    for (let t = 0; t < 90 && !bullet; t++) { rebuildCombatSubstrate(); thrower.send("update"); bullet = game.entities.find((e) => e.type === "bullet"); }
+    expect(bullet).toBeTruthy();
+    const m = bullet.get(Movement);
+    const speed = Math.hypot(m.vx, m.vy);
+    expect(speed).toBeCloseTo(8, 0);   // = strength (firingType #fullstrength), proves the throw-velocity wiring
+  });
+});
 
 describe("#leaveWhenFinished — a summoned ally retires (teleports out + banks) when the room is clear", () => {
   it("a leaveWhenFinished ally with no targets banks to the reserve and is removed", () => {
