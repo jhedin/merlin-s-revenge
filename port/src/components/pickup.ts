@@ -22,7 +22,7 @@ const SCROLL_ACTOR: Record<string, string> = {
   // I8 beams: each grants a #magic weapon with a #releaseFunction:#fireBullets streaming release.
   energyBeam: "energyBeamSpell", energyPulse: "energyPulseSpell",
 };
-function scrollAttack(effect: string) {
+export function scrollAttack(effect: string) {
   return resolveAttack((registry.resolveActor(SCROLL_ACTOR[effect]!) ?? {})["attack"] as Record<string, any>);
 }
 

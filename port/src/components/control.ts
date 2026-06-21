@@ -128,6 +128,11 @@ export class PlayerControl extends Component {
     // G key (objAiPlayer.interpretGameKeys -> setGmg): toggle the Golden Machine Gun on/off (edge).
     if (input.pressed("g")) this.setGmg();
 
+    // #spell1..#spell9 hotkeys (objAiPlayer:157-187 -> selectSpell(n)): number keys 1-9 switch the current
+    // magic weapon (energyBlast/armySummon/...). Without this the player was stuck on the last-collected
+    // spell. selectSpell is 0-indexed, so #spellN -> n-1. (Save/load moved off 1/2 to F5/F9 in main.ts.)
+    for (let n = 1; n <= 9; n++) if (input.pressed(String(n))) this.wm().selectSpell(n - 1);
+
     // aim point: the cursor in world space, else the auto-acquired target (teamMaster.findTarget over
     // data allegiance/roles — same logic every unit uses), else current facing
     const cur = input.cursor();

@@ -63,3 +63,16 @@ flagged "missing filter" was a shallow over-flag; verified present).
   on game.navMode. extracted/.../GameSpecific.ls + objRoom.txt:209 + modNavMode.txt:48 + objMoveXY.txt:173 +
   objAiChatter.checkPossibleToTalk | port/src/world/rooms.ts + components/movement.ts + chatter.ts +
   game/context.ts. navmode.test.ts (player 3x in nav, enemies unaffected, chatter combat-gate).
+
+- [x] **spell hotkeys 1-9 not wired — player couldn't switch spells (objAiPlayer.selectSpell)** —
+  objAiPlayer:157-187 reads #spell1..#spell9 -> selectSpell(1..9), switching the current magic weapon. The
+  port had WeaponManager.selectSpell(n) but NOTHING called it, so after collecting a 2nd spell (e.g.
+  armySummon) the player was STUCK on it — couldn't switch back to energyBlast (the collectArmySummon cutscene
+  literally instructs "press #spell1 to change back"). FIXED: PlayerControl reads number keys 1-9 ->
+  selectSpell(n-1); debug save/load moved off 1/2 to F5/F9. casts objAiPlayer.txt:157-187 |
+  port/src/components/control.ts + main.ts. spell_select.test.ts.
+
+## CLEAN / non-gaps (cont.)
+objAiAttack, objAiCPUSpellCaster CLEAN. objChatter gaps 2/3 (the gate sub-parts) folded into the nav-mode fix;
+gap 4 (second-touch re-trigger) is a defensible one-fire (documented minor). objPlayerCharacter gap 2
+(walk-speed lever) = fix #15; gap 4 (potion lever) = documented deviation.

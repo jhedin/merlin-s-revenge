@@ -312,8 +312,9 @@ async function main() {
           input.endTick(); return;
         }
         if (input.pressed("escape")) { scene.escapePressed(); input.endTick(); return; }
-        if (input.pressed("1")) { doSave(); flash("game saved"); }
-        if (input.pressed("2")) { if (doLoad()) flash("game loaded"); }
+        // debug save/load: moved off 1/2 (now #spell1/#spell2 hotkeys) to F5/F9.
+        if (input.pressed("f5")) { doSave(); flash("game saved"); }
+        if (input.pressed("f9")) { if (doLoad()) flash("game loaded"); }
         // refresh the team roster + unit-map broad-phase BEFORE AIs run (teamMaster.findTarget /
         // impactMeleeAttack read a current map). Drops dead/left targets, firing #leaveGame.
         rebuildCombatSubstrate();
