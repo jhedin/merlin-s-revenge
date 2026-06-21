@@ -17,6 +17,18 @@ Only behavioral/real gaps (property-coverage non-gaps are catalogued in ../data-
   regression). casts/script_objects/modAttack.txt:743 + master_objects/structMaster.txt:181 |
   port/src/components/weapon.ts (AttackData.firingType) + control.ts (attack).
 
+- [x] **CPU beam attacks not executed (techMech)** — objAiCPU inherits objAiAttack.attack which dispatches
+  #ranged+#beam → performBeamAttack (instant stretched beam spawned at the target). The port's CpuAI.attack()
+  had no beam branch, so techMech (laserBeam) fired a travelling splash bullet. FIXED: CpuAI checks
+  currentAttack.beam → performBeamAttack at the target loc. objAiAttack.txt:308 | control.ts attack ranged.
+
+- [x] **#depositMines not implemented (player energyMines AND verdanlinInGame)** — modSpellMultistage.depositMines
+  drops numMines = charge/chargePerUnit #energyMine actors scattered VarRoughly(loc, charge/2). The port's
+  spellActor.explode() handled only #summonUnit and CpuAI had no mine branch, so energyMines just did the
+  radial explode with NO mines deposited. FIXED: shared depositMines() helper (summon.ts) wired into
+  spellActor.explode() (player) + CpuAI.attack() (CPU caster at target loc). modSpellMultistage.txt:124 |
+  summon.ts + spellActor.ts + control.ts.
+
 - [x] **#randomSummon tier-wobble never invoked (SYSTEMIC — all summoners)** (mageOrc/goblinMage →
   goblinSummon, necromancer/greyGhost → undeadSummon, sc/skeleton summon). calcAttackChargeMax wobbles the
   charge ceiling per cast for #randomSummon spells so a summoner doesn't always reach the TOP tier. The port's

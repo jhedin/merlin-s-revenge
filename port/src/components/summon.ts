@@ -19,6 +19,23 @@
 import type { Entity } from "../engine/dispatch";
 import { game } from "../game/context";
 import type { AttackData } from "./weapon";
+import { spawnFromSymbol } from "../entities/actorSerial";
+
+// depositMines (modSpellMultistage.depositMines): an #explodeFunction:#depositMines spell (energyMines)
+// drops numMines = charge/chargePerUnit #energyMine actors, each scattered VarRoughly(loc, charge/2) around
+// the explode loc. The energyMine carries its own #team (#aldevar) so it triggers on the caster's enemies.
+// Used by the player energyMines spell (spellActor.explode) AND CPU mine-casters (verdanlinInGame).
+export function depositMines(attack: AttackData, charge: number, x: number, y: number): void {
+  if (attack.explodeFunction !== "depositMines" && attack.explodeFunction !== "#depositMines") return;
+  const perUnit = attack.chargePerUnit > 0 ? attack.chargePerUnit : 5;
+  const numMines = Math.floor(charge / perUnit);
+  const slack = Math.max(0, Math.floor(charge / 2));            // possibleDistance = charge/2
+  const rough = (v: number): number => (slack > 0 ? v - slack + game.rng.int(2 * slack) : v); // VarRoughly
+  for (let i = 0; i < numMines; i++) {
+    const mine = spawnFromSymbol("energyMine", rough(x), rough(y));
+    if (mine) game.entities.push(mine);
+  }
+}
 
 // selectTier (modSpellMultistage.selectPayload): the highest tier whose chargeRequired <= charge; null
 // below the first tier (cast fizzles into a plain bolt). Tiers are pre-sorted ascending by resolveAttack.

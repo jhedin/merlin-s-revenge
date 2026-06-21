@@ -15,7 +15,7 @@ import { registry } from "../game/data";
 import { meleeHitFn } from "../systems/teams";
 import { Targeting } from "./combat";
 import { WeaponManager, meleeBasePower, enemyMeleeBasePower, resolveAttack, BULLET_DAMAGE_SCALE, type AttackData } from "./weapon";
-import { summonUnit } from "./summon";
+import { summonUnit, depositMines } from "./summon";
 import { chargeMaxOf, chargeStartOf, chargeSpeedOf } from "./charge";
 import { PathFinding } from "./pathFinding";
 import { ColourTransform } from "./colourTransform";
@@ -543,7 +543,14 @@ export class CpuAI extends Component {
       const throwDist = Math.hypot(dx, dy) || 1;
       const isFullStrength = (ftAttack?.firingType ?? "#proportional").toLowerCase() === "#fullstrength";
       const throwSpeed = isFullStrength ? Math.max(1, this.strength) : Math.max(0.5, throwDist / 10);
-      if (this.splashBullet) {
+      if (ftAttack?.beam && this.splashBullet) {
+        // techMech (#objAiCPU + laserBeam, #beam): objAiAttack dispatches #ranged+beam -> performBeamAttack.
+        // The beam spawns AT the target loc (stretched/rotated), detonating its explode #attack on the first
+        // frame — an INSTANT hit, not a travelling bullet. (faithful: objAiCPU inherits objAiAttack.attack.)
+        const tg = this.entity.send("getTargeting") as { hits: string[]; allegiance: string } | undefined;
+        performBeamAttack(this.entity.id, m.x, m.y - 6, m.x + dx, m.y + dy, this.splashBullet, team,
+          this.splashBullet.hits, tg?.allegiance ?? "#enemy");
+      } else if (this.splashBullet) {
         // a static turret (dwarfTower) / splash caster fires its real splash bullet (towerAxe): on
         // land/collide it resolves an AREA hit through SplashDamage (same A1 vector scale).
         const tg = this.entity.send("getTargeting") as { hits: string[]; allegiance: string } | undefined;
@@ -562,6 +569,10 @@ export class CpuAI extends Component {
           // a one-shot at the summon release (cooldown-gated), so it can't jitter.
           const sc = chargeMaxOf(ca, this.entity.get(Mana), game.rng);
           summonUnit(ca, sc, m.x, m.y, this.entity.id); // summon at the caster's loc
+        } else if (ca && ca.type === "magic" && (ca.explodeFunction === "#depositMines" || ca.explodeFunction === "depositMines")) {
+          // verdanlinInGame energyMines: deposit charge/chargePerUnit #energyMine actors at the target loc
+          // (the spell's would-be landing point). The mines carry #aldevar so they hit the caster's enemies.
+          depositMines(ca, chargeMaxOf(ca, this.entity.get(Mana)), m.x + dx, m.y + dy);
         } else if (ca && ca.type === "magic" && ca.payloadFunction.includes("takeHeal")) {
           const tgc = this.entity.send("getTargeting") as { hits: string[]; allegiance: string } | undefined;
           fireBulletPayload(this.entity.id, m.x, m.y - 6, dx, dy, ca.spellSpeed / 6,

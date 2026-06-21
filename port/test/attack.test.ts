@@ -6,6 +6,23 @@ import { CollisionGrid } from "@/world/collision";
 import { rebuildCombatSubstrate } from "@/systems/combatTick";
 import { Movement } from "@/components/movement";
 
+describe("CPU beam weapon — techMech fires an instant stretched beam (objAiCPU inherits objAiAttack beam dispatch)", () => {
+  it("a #beam weapon spawns a beam bullet (at the target, zero velocity), not a travelling bullet", () => {
+    game.grid = new CollisionGrid(40, 40, 32); game.entities = [];
+    game.assets = { index: { anims: {} }, img: () => null } as any;
+    game.teamMaster.reset(); game.armyMaster.reset(); game.teamMaster.unitMap.configure(32, 0, 0);
+    const player = spawnPlayer(300, 200); game.player = player; game.entities.push(player);
+    const mech = spawnEnemy("techMech", 360, 200); game.entities.push(mech); // 60px < laserBeam reach 150
+    let bullet: any;
+    for (let t = 0; t < 90 && !bullet; t++) { rebuildCombatSubstrate(); mech.send("update"); bullet = game.entities.find((e) => e.type === "bullet"); }
+    expect(bullet).toBeTruthy();
+    const p = bullet.get(Movement);
+    // performBeamAttack spawns the bullet AT the target loc with zero velocity (not a travelling projectile).
+    expect(Math.hypot(p.vx, p.vy)).toBe(0);
+    expect(Math.abs(p.x - 300)).toBeLessThan(12); // landed at/near the target (player), not at the caster
+  });
+});
+
 describe("#firingType velocity — a #fullstrength thrower fires its bullet at strength px/tick", () => {
   it("fangBunnyBaby (#fullstrength, strength 8) throws at ~8 px/tick, NOT the old fixed 4.5", () => {
     game.grid = new CollisionGrid(40, 40, 32); game.entities = [];

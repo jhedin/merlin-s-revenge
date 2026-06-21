@@ -22,7 +22,7 @@ import { Component, type NextFn } from "../engine/dispatch";
 import { game } from "../game/context";
 import { Movement } from "./movement";
 import { resolveSplash } from "./splash";
-import { summonUnit } from "./summon";
+import { summonUnit, depositMines } from "./summon";
 import type { AttackData } from "./weapon";
 
 // px-scale calibration: the radial centre magnitude (charge·chargeExplodeFactor/2 + TARGET_RADIUS)·power is
@@ -125,6 +125,9 @@ export class SpellActor extends Component {
     // payload still resolves below (selectPayload keeps the payload non-blank).
     if (this.attack.explodeFunction === "#summonUnit" || this.attack.explodeFunction === "summonUnit") {
       summonUnit(this.attack, this.charge, m.x, m.y, this.ownerId);
+    } else if (this.attack.explodeFunction === "#depositMines" || this.attack.explodeFunction === "depositMines") {
+      // energyMines: drop charge/chargePerUnit #energyMine actors scattered around the landing loc.
+      depositMines(this.attack, this.charge, m.x, m.y);
     }
 
     // the radial area hit: reuse resolveSplash's #explode shape with the GROWN charge as the radius source
