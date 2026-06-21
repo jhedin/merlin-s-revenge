@@ -39,7 +39,10 @@ export class Mine extends Component {
   override init(cfg: Record<string, any>): void {
     this.attack = cfg["attack"] as AttackData;
     this.triggerRadius = typeof cfg["triggerRadius"] === "number" ? cfg["triggerRadius"] : 20;
-    this.dieOnExplode = cfg["dieOnExplode"] === true;
+    // objMine default i[#dieOnExplode] = true (single-shot, e.g. energyMine). Only the re-arming mines
+    // (fire/pitMonster/iceAura/orcAura/snowAura/quadAura/undeadAura) set it false. Default TRUE when unset —
+    // the prior `=== true` wrongly made an unset energyMine RE-ARM forever instead of being consumed once.
+    this.dieOnExplode = cfg["dieOnExplode"] !== false;
     this.dieOnExplodeNumber = typeof cfg["dieOnExplodeNumber"] === "number" ? cfg["dieOnExplodeNumber"] : 0;
     this.explodeSound = typeof cfg["explodeSound"] === "string" ? cfg["explodeSound"] : "";
     const timeToPrime = typeof cfg["timeToPrime"] === "number" ? cfg["timeToPrime"] : 30;

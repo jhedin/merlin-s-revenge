@@ -42,7 +42,7 @@ export function spawnMine(actorName: string, x: number, y: number): Entity {
     actorType: actorName,
     attack,
     triggerRadius: num(d, "triggerRadius", 20),
-    dieOnExplode: d["dieOnExplode"] === true,
+    dieOnExplode: d["dieOnExplode"] !== false, // objMine default true (single-shot, e.g. energyMine); only re-arming mines set false
     dieOnExplodeNumber: num(d, "dieOnExplodeNumber", 0),
     explodeSound: str(d, "explodeSound", "") === "#none" ? "" : str(d, "explodeSound", ""),
     timeToPrime: num(d, "timeToPrime", 30),

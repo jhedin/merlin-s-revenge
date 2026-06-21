@@ -29,6 +29,13 @@ Only behavioral/real gaps (property-coverage non-gaps are catalogued in ../data-
   spellActor.explode() (player) + CpuAI.attack() (CPU caster at target loc). modSpellMultistage.txt:124 |
   summon.ts + spellActor.ts + control.ts.
 
+- [x] **energyMine re-armed forever (objMine dieOnExplode default wrong)** — objMine default
+  i[#dieOnExplode]=true (single-shot, e.g. energyMine); only the re-arming mines (fire/pitMonster/auras) set
+  it false. The port's spawnMine + Mine.init used `=== true`, so an UNSET dieOnExplode became false →
+  energyMine (which sets none) re-armed forever instead of being consumed after one blast. FIXED: default
+  TRUE when unset (`!== false`) in both spots; re-arming mines (explicit false) unaffected.
+  casts/script_objects/objMine.txt:18 | port/src/entities/objTypes.ts:45 + components/mine.ts:42.
+
 - [x] **Dwelling residents over-levelled (SYSTEMIC — all dwellings)** — modResidents.setStartingLevel(
   random(dwelling experienceLevel)); a dwelling's level = its #startingLevel (dwellings gain no XP) and NO
   shipped dwelling sets one → level 0 → 0 level-ups. The port gave each resident a flat 50% chance of +1
