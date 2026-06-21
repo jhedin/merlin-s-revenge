@@ -11,7 +11,7 @@
 | # | Property | Original (casts/) | Resolved (port/src/) | Handling | ✓/✗ |
 |---|----------|-------------------|----------------------|----------|-----|
 | 1 | `#animType` | `#weaponMelee` (act_kingSword.txt:8) | `#weaponMelee` (data.json) | Classification → `typeFromAnimType()` maps to `type: "melee"` | ✓ |
-| 2 | `#cooldown` | `5` (act_kingSword.txt:10) | `5` (data.json) | Counter with cooldown 5; effective cooldown re-derived for enemies (K1: 180 = 5·30+30 for agility=30—kingInGame dexterity=3, so ~53 frames in combat) | ✓ |
+| 2 | `#cooldown` | `5` (act_kingSword.txt:10) | `5` (data.json) | Counter with cooldown 5; effective cooldown re-derived for enemies via K1 formula: `ceil((rawCooldown + 6) · counterInc + 1)` = `ceil((5 + 6) · 1 + 1)` = 12 frames (counterInc=agility=1 for melee, kingInGame dexterity=3 unused here) | ✓ |
 | 3 | `#damageMultiplier` | `3` (act_kingSword.txt:11) | `3` (data.json) | Passed to `meleeHitFn()` as `mult`; applied as `dmg = (|vx|+|vy|)·mult` in Energy.takeHit (weapon.ts:178, control.ts:269, combat.ts:35) | ✓ |
 | 4 | `#hits` | `[#teamMembers, #teamBuildings]` (act_kingSword.txt:12) | `["#teamMembers", "#teamBuildings"]` (data.json) | Target role filter; melee swing filters victims by this list (control.ts:269, teams.ts impactMeleeAttack) | ✓ |
 | 5 | `#name` | `#kingSword` (act_kingSword.txt:14) | `#kingSword` (data.json) | Weapon registry key; used in WeaponManager.addWeapon(name, attack); enemies track current weapon by name | ✓ |
@@ -61,7 +61,7 @@ registry.resolveActor("kingInGame")
 1. `spawnEnemy("kingInGame", x, y)` reads registry
 2. kingInGame has no own #attack → uses #weapon's attack
 3. `atk = resolveActor("kingSword")["attack"]`
-4. `enemyAttack = resolveAttack({ ...atk, cooldown: 53 })` — K1 effective cooldown re-derived per enemy skill stats
+4. `enemyAttack = resolveAttack({ ...atk, cooldown: 12 })` — K1 effective cooldown re-derived per enemy skill stats (from 5 → 12 via agility 1 formula)
 
 **Attack Execution (control.ts:623–631):**
 ```typescript
@@ -89,7 +89,7 @@ this.energy -= dmg;
 |--------|----------|------|----------|
 | **Classification** | `#animType: #weaponMelee` | Maps to `type: "melee"` | `typeFromAnimType("#weaponMelee") → "melee"` (weapon.ts:94–102) |
 | **Reach** | Default 25 (not in source) | Default 25 (not in JSON, computed at resolveAttack) | `STRUCT_ATTACK.reach = 25` (registry.ts:29); `numOr(r["reach"], 25)` (weapon.ts:172) |
-| **Cooldown Re-derivation** | 5 frames raw; scaled by enemy agility for effective frames | Effective cooldown = ceil((rawCooldown + 6) · agility + 1) | K1 plan: `framesWanted = 5 + 6 = 11; effectiveCooldown = round(11 · 1 + 1) = 12` for agility 1; kingInGame has dexterity 3 (melee uses agility default 1) → ~12 frame effective cooldown (archetypes.ts:176–188) |
+| **Cooldown Re-derivation** | 5 frames raw; scaled by enemy agility for effective frames | Effective cooldown = round((rawCooldown + 6) · agility + 1) | K1 plan: framesWanted = 5 + 6 = 11; counterInc = agility = 1 (melee default); effectiveCooldown = round(11 · 1 + 1) = 12 frames (kingInGame dexterity=3 is only for ranged, not used here) (archetypes.ts:176–188) |
 | **Damage Formula** | `power · strength · scale · mult` → L1 of vector | `(powerScalar · strength · ENEMY_DAMAGE_SCALE) · damageMultiplier` | 0.5 · 15 · 0.18 · 3 = 4.05 per hit (weapon.ts:149, combat.ts:35) |
 | **Sound** | `#sound: "skeleton_fire"` on swing | Played via CpuAI or PlaySound component | `atkSound = "skeleton_fire"` forwarded to execution |
 
