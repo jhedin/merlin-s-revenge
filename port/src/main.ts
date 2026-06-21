@@ -320,9 +320,10 @@ async function main() {
         for (let i = 0, n = game.entities.length; i < n; i++) game.entities[i]!.send("update");
         sweepBullets();
         sweepSpells(); // K2: return exploded spell actors to the pool
-        for (let i = game.entities.length - 1; i >= 0; i--) { // sweep collected pickups
+        for (let i = game.entities.length - 1; i >= 0; i--) { // sweep collected pickups + retired allies
           const e = game.entities[i]!;
-          if (e.type === "pickup" && e.send("isFinished")) game.entities.splice(i, 1);
+          // `left`: a #leaveWhenFinished ally that teleported out (already banked to the reserve) — remove it.
+          if ((e.type === "pickup" && e.send("isFinished")) || e.flags.has("left")) game.entities.splice(i, 1);
         }
         rooms.update();
         // death: let the die animation play (deathT frames) before resolving respawn/game-over.

@@ -319,6 +319,8 @@ export class CpuAI extends Component {
   private target: Entity | null = null;
   private retargetCtr = 0;                  // pRetargetCounter: forced re-eval every 30 frames
   private static readonly RETARGET = 30;
+  private noTargetCtr = 0;                  // frames with no target (leaveWhenFinished retire grace)
+  private static readonly LEAVE_GRACE = 60; // ~2s of no targets before a leaveWhenFinished ally retires
   private attackT = 0;                       // #attack-mode window (drives modWeaponTechnique accumulation)
   private static readonly ATTACK_FRAMES = 6;
   private path = new PathFinding();          // K3 modPathFinding (beeline→scenic)
@@ -359,7 +361,7 @@ export class CpuAI extends Component {
     this.atkSound = typeof cfg["atkSound"] === "string" ? cfg["atkSound"] : "";
     this.splashBullet = (cfg["splashBullet"] as AttackData | undefined) ?? null; // a ranged CPU's splash bullet (tower)
     this.bulletAttack = (cfg["bulletAttack"] as AttackData | undefined) ?? null; // K1: plain bullet's #attack (power/mult)
-    this.retargetCtr = 0;
+    this.retargetCtr = 0; this.noTargetCtr = 0;
     this.mode = "findTarget"; this.target = null; this.attackT = 0;
     this.path.reset();
     this.ghostMode = "findTarget"; this.ghostTargetX = this.ghostTargetY = 0;
@@ -419,7 +421,14 @@ export class CpuAI extends Component {
       case "dazed": this.idle(m); break;                       // frozen while reeling/dying
       case "findTarget":
         this.refreshTarget();
-        if (this.target) this.goMode("moveToAttack", m); else this.idle(m);
+        if (this.target) { this.noTargetCtr = 0; this.goMode("moveToAttack", m); }
+        else {
+          this.idle(m);
+          // objAiCPU #noTargetFound (232-237): a #leaveWhenFinished ally with NO targets left (room clear)
+          // teleports OUT — armyTeleportOut banks it to the reserve and removes it (it doesn't linger). The
+          // grace counter avoids retiring before the room's enemies have spawned/registered.
+          if (this.leaveWhenFinished && ++this.noTargetCtr >= CpuAI.LEAVE_GRACE) this.leaveGame();
+        }
         break;
       case "moveToAttack": this.updateMoveToAttack(m); break;
       case "runReload": this.updateRunReload(m); break;
@@ -432,6 +441,15 @@ export class CpuAI extends Component {
     this.mode = mode;
     if (mode === "moveToAttack") this.retargetCtr = 0; // CounterReset(pRetargetCounter)
     if (mode === "dazed" || mode === "findTarget") this.idle(m);
+  }
+
+  // leaveGame (objCharacter.leaveGame -> objAiCPU #noTargetFound.armyTeleportOut): a #leaveWhenFinished ally
+  // retires when the room is clear — banked to the army reserve (if teleportable) and removed (no grave,
+  // not killedInAction). The main loop sweeps the `left`-flagged entity out of game.entities.
+  private leaveGame(): void {
+    if (this.entity.flags.has("left")) return;
+    game.armyMaster.teleportOut(this.entity);  // armyTeleportOut: bank to the reserve if it's a teleportable ally
+    this.entity.flags.add("left");
   }
 
   // updateMoveToAttack (objAiAttack): tick the retarget throttle, drop dead/gone targets, attack in

@@ -1,6 +1,24 @@
 import { describe, it, expect } from "vitest";
-import { spawnEnemy } from "@/entities/archetypes";
+import { spawnEnemy, spawnAlly, spawnPlayer } from "@/entities/archetypes";
 import { EnemyAI } from "@/components/control";
+import { game } from "@/game/context";
+import { CollisionGrid } from "@/world/collision";
+import { rebuildCombatSubstrate } from "@/systems/combatTick";
+
+describe("#leaveWhenFinished — a summoned ally retires (teleports out + banks) when the room is clear", () => {
+  it("a leaveWhenFinished ally with no targets banks to the reserve and is removed", () => {
+    game.grid = new CollisionGrid(40, 40, 32); game.entities = [];
+    game.assets = { index: { anims: {} }, img: () => null } as any;
+    game.teamMaster.reset(); game.armyMaster.reset(); game.teamMaster.unitMap.configure(32, 0, 0);
+    const player = spawnPlayer(200, 200); game.player = player; game.entities.push(player);
+    const w = spawnAlly("warrior", 240, 200); game.entities.push(w);       // warrior = #leaveWhenFinished
+    expect(w.flags.has("left")).toBe(false);
+    // no enemies -> after the no-target grace (60 frames) the ally teleports out (objAiCPU #noTargetFound).
+    for (let t = 0; t < 65; t++) { rebuildCombatSubstrate(); w.send("update"); }
+    expect(w.flags.has("left")).toBe(true);                                 // flagged for removal by the main loop
+    expect(game.armyMaster.reserveCount("#aldevar", "warrior")).toBe(1);    // banked (armyTeleportOut), re-fields next room
+  });
+});
 
 describe("data-driven attacks (real #attack via #weapon)", () => {
   it("archer resolves to a ranged attack with long reach", () => {
