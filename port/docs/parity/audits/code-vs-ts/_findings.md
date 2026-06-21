@@ -28,3 +28,14 @@
 
 ## CLEAN
 modAttack, modEnergy, modExperience, modMoveToLoc, objCharacter, objBullet, objGameObject (after fixes).
+
+- [x] **reincarnation didn't transfer parent XP (modExperience.transferExperience)** — modReincarnate fires
+  #reincarnated per child -> transferExperience -> each child gains gainExperienceFromTransfer(pExperienceGained/2),
+  i.e. HALF the parent's accumulated kill-XP. The port inherited NOTHING. Usually ~0 (enemies rarely accumulate
+  kill-XP), but a boss/miniboss that killed player summons passed its XP down so the next stage wasn't reset to
+  level 0. FIXED: Reincarnate reads the parent's Experience.xp and sends gainXp(xp/2) to each spawned child.
+  casts modReincarnate.txt:66 + modExperience.transferExperience | port/src/components/reincarnate.ts.
+  reincarnate.test.ts (each child gets half; zero-XP parent transfers nothing).
+
+## CLEAN (cont.)
+objMine, objCPUCharacter, objDwelling, objSpell (orb phases via direct position-advance — non-gap).

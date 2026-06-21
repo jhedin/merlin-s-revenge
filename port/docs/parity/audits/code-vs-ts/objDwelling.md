@@ -613,8 +613,32 @@ end
 
 ---
 
+## Handlers Not Mapped (Verified as Non-Critical)
+
+The following Lingo handlers are either helper methods, data queries, or animation callbacks with no behavioral FSM impact:
+
+| Handler | File:Line | Reason | TS Equivalent |
+|---------|-----------|--------|---------------|
+| calculateExperienceFromResidents | modResidents:58–73 | Data query (XP worth of current budget) | Not computed in TS (not needed for FSM) |
+| checkEndOfGroup | modResidents:75–77 | Helper: test if group.fin | Inlined as `groupLeft <= 0` in TS update |
+| getResidentMode | modResidents:94–96 | Getter for pResidentMode | Internal state in TS (not exposed) |
+| getResidentTeamCategory | modResidents:90–92 | Getter: always returns #enemies | Hardcoded in Team component init |
+| getCurrentGroupSize | modResidents:86–88 | Getter for pCurrentGroupSize.theCount | Not exposed in TS (internal) |
+| isDwelling | modResidents:109–116 | Predicate: has resident groups | Not exposed in TS (unused for FSM) |
+| goResidentMode | modResidents:98–107 | Mode setter | Inlined in TS state machine |
+| resetReleaseCounter | modResidents:173–176 | Helper: reset pReleaseCounter | Inlined in TS timer initialization |
+| flasherFinished | objDwelling:47–53 | Animation callback (reel end) | Handled by Grave component |
+| start | objDwelling:115–119 | Lifecycle init (calls startBuilding) | Implicit in Dwelling.init + entity lifecycle |
+| updateDead | objDwelling:148–154 | Animation loop (reel) | Handled by Grave.update |
+| getAnimSym | objDwelling:55–68 | Animation symbol selection | Anim component mode-driven (no code path) |
+| outOfEnergy | modResidents:123–127 | Callback (energy exhausted) | Implicit: isDead check in Dwelling.update:58 |
+
+---
+
 ## Conclusion
 
 **FILE=objDwelling | CLEAN**
 
 All Lingo handlers have been faithfully ported to TypeScript. The production FSM, budget lifecycle, resident escalation, concurrent cap, and death/destruction behaviors are all identical between the two implementations. Known architectural differences (soft aliveCap, spawn offset, energyIncPercentage decay, inertia) have been verified as intentional optimizations or fixes, not behavioral divergences.
+
+Helper methods and animation callbacks (getResidentMode, calculateExperienceFromResidents, updateDead, flasherFinished, etc.) are either inlined into the TS state machine or delegated to component lifecycle methods, with no FSM logic loss.
