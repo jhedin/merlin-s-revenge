@@ -6,6 +6,7 @@ import { Assets, mapList, type MapMeta } from "./render/assets";
 import { Renderer, type Sprite } from "./render/renderer";
 import { drawMinimap } from "./render/minimap";
 import { healthBarColour } from "./render/healthBar";
+import { drawHealthRollover } from "./render/rollover";
 import { Input } from "./systems/input";
 import { AudioSystem } from "./systems/audio";
 import { GameLoop } from "./engine/loop";
@@ -382,10 +383,16 @@ async function main() {
       // green/red directional arrows on each exit edge, OVER the room layers. Pure overlay — no effect on
       // collision/transition. No-ops when the arrow art wasn't bundled (assets.arrowImg → undefined).
       drawExitArrows(renderer, assets, rooms.exitArrowRects());
+      // modFreeze frost overlay stays always-on (a status indicator). Merlin's Revenge has NO always-on
+      // health bars (gEnemyEnergyMasterOn=0); health/level/XP show only on mouse-hover (rollover, below).
       for (const e of game.entities) {
-        if (e.type === "enemy") drawEnemyBar(renderer, e, "#e44");
-        else if (e.type === "ally") drawEnemyBar(renderer, e, "#4d6");
+        if ((e.type === "enemy" || e.type === "ally") && !e.send("isDead") && e.send("isFrozen")) {
+          const p = e.send("getPos") as { x: number; y: number };
+          renderer.ctx.fillStyle = "rgba(80,220,255,0.35)";
+          renderer.ctx.fillRect(p.x - 9, p.y - 20, 18, 22);
+        }
       }
+      drawHealthRollover(renderer, game.input.cursor(), game.entities); // characterEnergyRollOverMaster (gCharacterEnergyRolloverOn=1)
       drawCharge(renderer, player);
       drawHud(renderer, player);
       // 5-state minimap (modMiniMap): #cur/#clr/#inf (+ data #fre/#spe) with a proximity distance blend.
@@ -593,17 +600,5 @@ function beamSprite(proj: Projectile): Sprite | null {
   };
 }
 
-function drawEnemyBar(renderer: Renderer, e: import("./engine/dispatch").Entity, color: string) {
-  if (e.send("isDead")) return;
-  const p = e.send("getPos") as { x: number; y: number };
-  const ctx = renderer.ctx;
-  if (e.send("isFrozen")) { // modFreeze: teal frost overlay
-    ctx.fillStyle = "rgba(80,220,255,0.35)";
-    ctx.fillRect(p.x - 9, p.y - 20, 18, 22);
-  }
-  const frac = e.get(Energy).energyFrac();
-  ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(p.x - 11, p.y - 26, 22, 4);
-  ctx.fillStyle = color; ctx.fillRect(p.x - 10, p.y - 25, 20 * frac, 2);
-}
 
 main().catch((e) => { console.error(e); document.body.append(Object.assign(document.createElement("pre"), { textContent: String(e), style: "color:#f88" })); });

@@ -1,5 +1,8 @@
 # HUD Bars Cluster Parity Audit
 
+> **Follow-up (2026-06-21) — hover-health BUILT, and a correction.** The extracted globals settle the per-unit bar question: `gEnemyEnergyMasterOn = 0` (the always-on enemy bars are a Rapunzel feature, OFF here) and `gCharacterEnergyRolloverOn = 1` (hovering a character shows its energy + level + XP). So the port's previous **always-on** `drawEnemyBar` was the unfaithful part. Replaced with a hover **rollover** (`port/src/render/rollover.ts`, `characterEnergyRollOverMaster`): the mouse picks the character under the cursor and floats its energy (multicolour bar) + level (star pips) + experience bar at the unit; the modFreeze frost overlay stays always-on (it's a status indicator, not a health bar). Covered by `port/test/rollover.test.ts`.
+>
+> **gMapBoundary visual line — genuine NON-GAP in the port's render model.** `modBoundary` fills the 128px margin OUTSIDE the map rect (to mask off-map area when Director's stage was larger than the room). The port sizes the canvas to exactly one room (`viewW = roomSize.x * tile`), with no camera/margin and the player clamped inside — so the boundary bands at +128px are entirely off-canvas and would never render. Not built (it would be invisible rectangles); documented as structurally moot.
 **Files audited (Lingo):**
 - `casts/script_objects/objEnergyBar.txt`
 - `casts/script_objects/objMulticolourEnergyBar.txt`
