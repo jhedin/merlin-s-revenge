@@ -137,3 +137,19 @@ modCharacterAttackProperties (all per-level stat growth faithful incl. the walkS
 
 ## CLEAN (cont.)
 objRoom (after sound fix), modScreenExits, mapMaster, collisionMaster, objPowerUp (Merlin-relevant paths).
+
+- [x] **invincibility had no visual (modInvince.invinceOn -> pulseWhite never wired)** — the activation-lens
+  re-audit caught it: ColourTransform.pulseWhite() existed but had NO caller. modInvince.invinceOn(:52) ->
+  pulseWhite, invinceOff(:58) -> pulseWhiteStop: the player VISIBLY pulses white while temp-invincible (the
+  200-frame pickup window, fix #19). The port granted the i-frames but showed nothing. FIXED: Hurt.grantInvince
+  arms pulseWhite + a `pulsing` latch; Hurt.update calls stopPulseWhite when the window ends.
+  casts modInvince.txt:49-58 | port/src/components/hurt.ts. pickup.test.ts (current=="pulseWhite" then cleared).
+
+## NON-GAPS (verified)
+- modFlasher: startFlasher is DEAD CODE in the ORIGINAL too (added as a module to objCPUCharacter/objDwelling
+  but never invoked anywhere). The real hit-flash is flickWhite (modEnergy.loseEnergy:203), which the port
+  reproduces faithfully (hurt.ts:46, speed 33). The flagged "30-frame" duration is modFlasher's unused
+  flasherTime, not the live flash. Non-gap.
+
+## CLEAN (cont.)
+modProp (cutscene prop verbs wired), minimap (activation-traced: drawn every frame with correct data/colours).

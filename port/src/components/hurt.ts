@@ -11,13 +11,14 @@ export class Hurt extends Component {
   reelProof = false; // #reelProof: knockback/reel-immune (skelitonHead) — still takes damage, no reel
   private flashT = 0;
   private invinceT = 0;
+  private pulsing = false; // modInvince.invinceOn->pulseWhite: the temp-invince white pulse is active
 
   override init(cfg: Record<string, any>): void {
     this.invinceFrames = typeof cfg["invince"] === "number" ? cfg["invince"] : 0;
     this.reelProof = cfg["reelProof"] === true;
-    this.flashT = 0; this.invinceT = 0;
+    this.flashT = 0; this.invinceT = 0; this.pulsing = false;
   }
-  override reset(): void { this.flashT = 0; this.invinceT = 0; }
+  override reset(): void { this.flashT = 0; this.invinceT = 0; this.pulsing = false; }
 
   update(next: NextFn): void {
     if (this.flashT > 0) {
@@ -26,6 +27,8 @@ export class Hurt extends Component {
       if (this.flashT === 0 && !this.entity.send("isDead")) this.entity.send("characterModeChanged", "#walk");
     }
     if (this.invinceT > 0) this.invinceT--;
+    // invinceOff (modInvince): when the temp-invince window ends, stop the white pulse.
+    if (this.pulsing && this.invinceT === 0) { this.entity.tryGet(ColourTransform)?.stopPulseWhite(); this.pulsing = false; }
     next();
   }
 
@@ -51,8 +54,14 @@ export class Hurt extends Component {
   }
 
   // startTempInvince (modInvince): a pickup collect grants pTempInvinceTime=200 frames of invincibility
-  // (the post-hit i-frame window is separate/shorter). Latches the longer of the two.
-  grantInvince(next: NextFn, frames = 200): void { this.invinceT = Math.max(this.invinceT, frames); next(); }
+  // (the post-hit i-frame window is separate/shorter). Latches the longer of the two, and arms the white
+  // pulse (invinceOn -> pulseWhite) so the player VISIBLY flashes while invincible.
+  grantInvince(next: NextFn, frames = 200): void {
+    this.invinceT = Math.max(this.invinceT, frames);
+    this.pulsing = true;
+    this.entity.tryGet(ColourTransform)?.pulseWhite();
+    next();
+  }
 
   isInvince(): boolean { return this.invinceT > 0; }
   isHurt(): boolean { return this.flashT > 0; }
