@@ -1,0 +1,56 @@
+name: Deploy Pages
+
+# Rebuilds the self-contained single-file HTML5 build from source (casts/gfx/extracted/maps
+# -> generated data + assets -> one inlined index.html) and publishes it to GitHub Pages on
+# every push to main (i.e. every merge), plus manual runs.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never run two deploys at once; let an in-progress one finish (don't cancel a live publish).
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: port
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: port/package-lock.json
+      - uses: actions/configure-pages@v5
+      - run: npm ci
+      - run: npm run parse-data
+      - run: npm run build-assets
+      - run: npx vite build --config vite.singlefile.config.ts
+      - run: npx tsx tools/pack_singlefile.ts
+      - name: Assemble site
+        run: |
+          mkdir -p _site
+          cp dist/merlins-revenge.html _site/index.html
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: port/_site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
