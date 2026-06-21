@@ -263,9 +263,19 @@ Lingo: calls `ancestor.restoreFromSave(sd)` then sets `pUnstickSpell = true`. TS
 | # | Handler | Gap | Severity | Resolution |
 |---|---|---|---|---|
 | GAP-1 | `characterModeChanged(#dazed,#die)` | Player can move/attack during reel; `isHurt()` not checked in PlayerControl.update | LOW-MEDIUM | **FIXED** |
-| GAP-2 | `internalEvent(#gmgTurnedOn/Off)` | Toggling GMG mid-charge does not release/recharge the in-flight spell | LOW | catalogued (minor) |
+| GAP-2 | `internalEvent(#gmgTurnedOn/Off)` | Toggling GMG mid-charge does not release the in-flight spell | LOW | **FIXED** |
 | GAP-3 | `interpretCheatKeys` | `#invincibility`/`#killAll`/`#medikit`/`#testHit` keys absent (intentional; debug-only) | LOW (intentional) | non-gap |
-| GAP-4 | `#freeze` mode → `AIisTryingToMove` | In-game dialogue not skippable by move/click; only Escape/Space/Enter | LOW-MEDIUM | catalogued (minor) |
+| GAP-4 | `#freeze` mode → `AIisTryingToMove` | In-game dialogue not skippable by move/click; only Escape/Space/Enter | LOW-MEDIUM | **FIXED** |
+
+### GAP-2 FIX (2026-06-21)
+
+`PlayerControl.update` now mirrors `objAiPlayer.internalEvent #gmgTurnedOn/#gmgTurnedOff`: toggling the GMG (G key) while a charge is held releases it immediately (playerAttackRelease) instead of carrying it across the mode switch. The `#gmgTurnedOff` follow-up `playerAttackCharge` resumes naturally while fire is still held (gated by the weapon cooldown), so the observable outcome matches without an unsafe same-frame double-fire. Covered by `player_kit.test.ts` ("toggling GMG mid-charge releases the held spell").
+
+### GAP-4 FIX (2026-06-21)
+
+`CutscenePlayer.tick` now mirrors `objAiPlayer.interpretMoveKeys/interpretMouse → modThespian.AIisTryingToMove`: in an `#ingame` dialogue, once the `pSkipCounter` grace has elapsed (`skipDuration = 30` frames, confirmed in casts + extracted bytecode), trying to MOVE or CLICK cancels the script — exactly as Escape/Space/Enter already did. Full-screen cutscenes (intro/wasted) keep the key-only skip (they are not `#ingame`). The in-game skip hint now reads "move/click/esc: skip".
+
+**GAP-3 (cheat keys) remains a genuine non-gap:** the original's `interpretCheatKeys` are debug-only cheats (`#invincibility`/`#killAll`/`#medikit`/`#testHit`), not player-facing gameplay; intentionally unported.
 
 ### GAP-1 FIX (2026-06-21)
 

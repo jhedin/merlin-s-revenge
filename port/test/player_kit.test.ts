@@ -163,6 +163,28 @@ describe("Merlin's charged-magic + punch kit", () => {
     expect(m.intentX).toBe(1);               // controllable again
   });
 
+  it("toggling GMG mid-charge releases the held spell (objAiPlayer internalEvent #gmgTurnedOn/Off)", () => {
+    const inp = fakeInput({ mouseDown: true, cursor: { x: 400, y: 100 } }) as any;
+    let gPressed = false;
+    inp.pressed = (k: string) => (k === "g" ? gPressed : false);
+    game.input = inp;
+    const p = spawnPlayer(100, 100); grantSpell(p);
+    const pc = p.get(PlayerControl);
+    pc.gmgCollected(); pc.setGmg();            // GMG collected, then toggled back OFF
+    game.entities = [p];
+
+    for (let i = 0; i < 5; i++) p.send("update");   // hold to charge a live spell orb
+    expect(p.send("chargeFrac")).toBeGreaterThan(0);
+    const spell = game.entities.find((e) => e.type === "spell")!;
+    expect(spell).toBeDefined();
+
+    gPressed = true; p.send("update"); gPressed = false; // tap G -> #gmgTurnedOn -> release the held charge
+    expect(p.send("chargeFrac")).toBe(0);               // the charge was fired, not carried across the toggle
+    const x0 = (spell.send("getPos") as { x: number }).x;
+    for (let i = 0; i < 5; i++) spell.send("update");   // the released spell flies toward the cursor (right)
+    expect((spell.send("getPos") as { x: number }).x).toBeGreaterThan(x0);
+  });
+
   it("starts punch-only: holding fire casts nothing until the energyBlast scroll is collected", () => {
     game.input = fakeInput({ mouseDown: true, cursor: { x: 400, y: 100 } }) as any;
     const p = spawnPlayer(100, 100);

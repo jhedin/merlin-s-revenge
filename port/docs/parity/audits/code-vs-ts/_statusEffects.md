@@ -1,5 +1,7 @@
 # Status Effects & Player Feedback Parity Audit
 
+> **Follow-up (2026-06-21):** the one flagged gap — "no direct test verifying the objMagicLimit region reduces a #limitMagic spell's charge ceiling" — is now closed by `port/test/magic_limit.test.ts` (default 100 = unscaled; magicLimit-50 halves, -25 quarters; a non-#limitMagic spell is untouched; room-leave `setDefault` restores the full ceiling). The behaviour itself (`charge.ts:32`) was already correct.
+
 **Audit Scope:** Behavioral parity between Lingo source (`casts/script_objects/`) and TypeScript port (`port/src/`) for player-status and effect mechanics.
 
 **Target Files:**

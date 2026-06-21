@@ -1,5 +1,10 @@
 # Behavioral Parity Audit: Specialized Enemy AI Variants
 
+> **Follow-up triage (2026-06-21) — the two builder gaps, re-verified, kept as deliberate divergences:**
+> - **GAP-BUILDER-2 (leave grace):** `objAiCPU.#noTargetFound` (objAiCPU.txt:232–237) teleports a `leaveWhenFinished` unit out the instant `getRoomClear()`/`isTargetsDead()` is true; the port retires after `LEAVE_GRACE` (60f) of sustained no-target (control.ts:469). The port's grace deliberately guards a room-LOAD race the original's `getRoomClear()` settles differently — removing it risks summoned allies retiring during a between-wave lull (the port's `findTarget` already counts live hostile *buildings*, so the null-target state is a reasonable room-clear proxy after the load settles). Net effect: summoned allies linger ~2s after a clear vs immediately. Kept as a documented, sound divergence rather than risk a premature-retire regression.
+> - **GAP-BUILDER-1 (interrupted build on restore):** saving mid-construction doesn't resume that exact in-progress build on load — a save-state-only corner case with no in-session player impact. Left as documented.
+> - The builder build-to-completion + retire FSM is now covered by `port/test/builder.test.ts`.
+
 **Target files (Lingo):**
 - `casts/script_objects/objAiEnemyTargetSeek.txt`
 - `casts/script_objects/objAiFlyingBomber.txt`

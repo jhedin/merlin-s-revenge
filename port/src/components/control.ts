@@ -135,7 +135,9 @@ export class PlayerControl extends Component {
     m.intentX = mv.x; m.intentY = mv.y;
 
     // G key (objAiPlayer.interpretGameKeys -> setGmg): toggle the Golden Machine Gun on/off (edge).
+    const gmgBefore = this.gmgOn;
     if (input.pressed("g")) this.setGmg();
+    const gmgToggled = this.gmgOn !== gmgBefore;
 
     // #spell1..#spell9 hotkeys (objAiPlayer:157-187 -> selectSpell(n)): number keys 1-9 switch the current
     // magic weapon (energyBlast/armySummon/...). Without this the player was stuck on the last-collected
@@ -156,6 +158,16 @@ export class PlayerControl extends Component {
     const melee = wm.getMeleeAttack();           // the current melee weapon (#punch / #merlinSword)
     const primary = input.mouseDown() || input.held(" ");
     const gmg = this.gmgOn;
+
+    // objAiPlayer.internalEvent #gmgTurnedOn/#gmgTurnedOff: toggling the GMG while a charge is held
+    // RELEASES it immediately (playerAttackRelease) instead of holding it across the mode switch. (The
+    // #gmgTurnedOff follow-up playerAttackCharge resumes naturally while fire is still held — gated by the
+    // weapon cooldown — so the observable outcome matches without an unsafe same-frame double-fire.)
+    if (gmgToggled && this.charging && magic) {
+      this.castMagic(magic, m, aim, wm);
+      this.charging = false; this.charge = 0; this.spell = null;
+      return next();
+    }
 
     // hold-to-charge magic — only once Merlin owns a magic weapon. No pool gate; the recast gate is the
     // magic weapon's own cooldown counter (getCooldownFin), reset on FIRE.

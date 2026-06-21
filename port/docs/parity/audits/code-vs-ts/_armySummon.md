@@ -1,5 +1,7 @@
 # Audit: Army/Summon/Construction Mechanics Cluster
 
+> **Follow-up (2026-06-21):** the flagged gap — "Builder NPC (modBuilder) FSM lacks test coverage" — is now closed by `port/test/builder.test.ts`: a `dwarf` spawns its `#dwarfTower` site (marked `#underConstruction`), accrues `buildRate` to completion (markBuilt clears the flag), then retires via `leaveWhenFinished`; a builder with no symbol-spawner falls back to fighting without crashing. The builder FSM itself was already faithful.
+
 **Target Lingo Files:**
 - `casts/script_objects/modArmyUnit.txt` (197 lines)
 - `casts/script_objects/modAutoSummon.txt` (129 lines)
