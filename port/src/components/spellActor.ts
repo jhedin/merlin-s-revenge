@@ -142,7 +142,7 @@ export class SpellActor extends Component {
     // impactAttack(me): the spell IS the attacker (its #team = the owner's), but the takeHit attackerId is
     // the OWNER's id so kills credit the caster's experience (objSpell.gainExperience defers to the owner).
     resolveSplash(this.entity, explodeAttack, m.x, m.y, this.ownerId, this.hits, this.allegiance);
-    game.audio?.play("spell_explode");                       // act #explodeSound
+    if (this.attack.explodeSound && this.attack.explodeSound !== "#none") game.audio?.play(this.attack.explodeSound); // act #explodeSound (data-driven: healBlast→heal_spell_explode, etc.)
     this.done = true; // startQuickFade -> finish (collapsed): swept back to the pool next sweep
   }
 }

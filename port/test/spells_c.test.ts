@@ -25,6 +25,15 @@ import { spawnPlayer } from "@/entities/archetypes";
 const atkOf = (actor: string): AttackData => resolveAttack(((registry.resolveActor(actor) ?? {})["attack"]) as any, registry.resolveActor(actor) as any);
 
 // ───────────────────────────── C1: charged-blast data wiring (free on B2) ─────────────────────────
+describe("#explodeSound — data-driven detonation sound (was hardcoded 'spell_explode')", () => {
+  it("reads the actor's top-level #explodeSound; #none/unset = silent", () => {
+    expect(atkOf("cracks").explodeSound).toBe("darkGolem_fire");        // sumo's ground cracks
+    expect(atkOf("healBlast").explodeSound).toBe("heal_spell_explode"); // heal spell, distinct sound
+    expect(atkOf("darkRock").explodeSound).toBe("spell_explode");       // the common case
+    expect(atkOf("energyPulse").explodeSound).toBe("#none");            // silent (port no longer plays a spurious sound)
+  });
+});
+
 describe("C1 — charged blasts resolve to the cited #attack data (no new code)", () => {
   it("cBlast: chargeMaxBasic 999 / Modifier 0 -> chargeMax always 999 regardless of capacity", () => {
     const a = atkOf("cBlast");

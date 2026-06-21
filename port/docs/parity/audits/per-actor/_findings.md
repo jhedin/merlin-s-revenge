@@ -29,6 +29,14 @@ Only behavioral/real gaps (property-coverage non-gaps are catalogued in ../data-
   spellActor.explode() (player) + CpuAI.attack() (CPU caster at target loc). modSpellMultistage.txt:124 |
   summon.ts + spellActor.ts + control.ts.
 
+- [x] **#explodeSound hardcoded "spell_explode" (SYSTEMIC — all splash/spell detonations)** — the original
+  plays the actor's top-level #explodeSound (structMaster default #none); the port hardcoded "spell_explode",
+  so cracks (darkGolem_fire) / healBlast (heal_spell_explode) played the wrong sound and energyPulse / towerAxe
+  / fire / pitMonster (#none) fired a SPURIOUS explosion sound (audible noise — energyPulse streams, pitMonster
+  re-arms). FIXED: AttackData carries #explodeSound (actor top-level, ignoring the merged "#none" attack
+  default); projectile.detonate + spellActor explode play it data-driven, silent on #none. (Mines already
+  read it.) casts #explodeSound + structMaster.txt:177 | port/src/components/{weapon,projectile,spellActor}.ts.
+
 - [x] **+25 collect-bonus energy missing on ALL pickups; maxikit not a full heal (SYSTEMIC — pickups)** —
   objPlayerMerlinCharacter: medikitCollected/newScrollCollected/potionCollected all end with
   `increaseEnergy(pBonusEnergy=25)` → collecting ANY medikit/scroll/sword/potion grants a flat +25 health

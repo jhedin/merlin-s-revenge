@@ -39,6 +39,10 @@ export interface AttackData {
   firingType: string;
   spellSpeed: number;
   releaseSound: string;
+  // #explodeSound (structMaster default #none): the sound a splash/explode resolution plays on detonation.
+  // Data-driven so cracks→darkGolem_fire, healBlast→heal_spell_explode, energyPulse/towerAxe→#none (silent)
+  // play faithfully instead of a hardcoded "spell_explode".
+  explodeSound: string;
   // charge (modAttack) — read by charge.ts
   chargeMax: number; chargeMaxModifier: number; chargeMaxBasic: number;
   chargeStart: number; chargeSpeed: number;
@@ -179,6 +183,9 @@ export function resolveAttack(raw: Record<string, any> | undefined, owner?: Reco
     firingType: strOr(r["firingType"], strOr(d["firingType"] as string, "#proportional")),
     spellSpeed: numOr(r["spellSpeed"], d["spellSpeed"] as number),
     releaseSound: strOr(r["releaseSound"], d["releaseSound"] as string),
+    // #explodeSound lives top-level on the ACTOR (o); the merged #attack default is "#none". Pick the first
+    // REAL (non-#none) sound from either source so cracks→darkGolem_fire wins over the attack's "#none".
+    explodeSound: ([o["explodeSound"], r["explodeSound"]].find((v) => typeof v === "string" && v !== "#none") as string) ?? "#none",
     chargeMax: numOr(r["chargeMax"], d["chargeMax"] as number),
     chargeMaxModifier: numOr(r["chargeMaxModifier"], d["chargeMaxModifier"] as number),
     chargeMaxBasic: numOr(r["chargeMaxBasic"], d["chargeMaxBasic"] as number),

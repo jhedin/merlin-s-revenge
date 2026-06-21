@@ -69,7 +69,7 @@ export class Projectile extends Component {
   private detonate(x: number, y: number): void {
     const a = this.splash!;
     resolveSplash(this.entity, a, x, y, this.ownerId, this.splashHits, this.splashAllegiance);
-    if (a.attackType === "#explode") game.audio?.play("spell_explode", 0.5);
+    if (a.attackType === "#explode" && a.explodeSound && a.explodeSound !== "#none") game.audio?.play(a.explodeSound, 0.5);
     this.finish(x, y);
   }
 
