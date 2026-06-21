@@ -22,6 +22,9 @@ describe("dwelling residents (objDwelling / modResidents)", () => {
     const residents = game.entities.filter((e) => e !== hut && e.type === "enemy");
     expect(residents.length).toBeGreaterThan(0);
     expect(residents.every((e) => e.send("getTeam") === "#goblins")).toBe(true);
+    // modResidents.setStartingLevel(random(dwellingLevel)): a level-0 dwelling (none set #startingLevel)
+    // emerges its residents UNleveled — faithful (the old flat 50%-of-+1 over-levelled them).
+    expect(residents.every((e) => (e.send("getLevel") as number) === 0)).toBe(true);
   });
 
   it("stops once the lifetime budget is spent (does not produce forever)", () => {

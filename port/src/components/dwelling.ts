@@ -23,10 +23,12 @@ export class Dwelling extends Component {
   private group: ResidentGroup | null = null;
   private groupLeft = 0;     // units still to release in the current group
   private residents: Entity[] = [];
+  private level = 0;         // the dwelling's experience level (= its #startingLevel; dwellings gain no XP)
 
   override init(cfg: Record<string, any>): void {
     this.groups = Array.isArray(cfg["residentGroups"]) ? cfg["residentGroups"] : [];
     this.budget = typeof cfg["budget"] === "number" ? cfg["budget"] : 10;
+    this.level = typeof cfg["startingLevel"] === "number" ? cfg["startingLevel"] : 0;
     this.residents = [];
     this.startProduction();
   }
@@ -72,8 +74,13 @@ export class Dwelling extends Component {
     const m = this.entity.get(Movement);
     const a = game.rng.next() * Math.PI * 2, r = 20 + game.rng.next() * 16;
     const e = spawn(this.group.typ, m.x + Math.cos(a) * r, m.y + Math.sin(a) * r, { animChar: spriteCharOr(this.group.typ) });
-    // modResidents.setStartingLevel: residents emerge at a small random level (kept modest at slice scale)
-    if (game.rng.next() < 0.5) e.send("forceLevelUp");
+    // modResidents: setStartingLevel(random(getExperienceLevel)). A dwelling's level = its #startingLevel
+    // (dwellings gain no XP), and NO shipped dwelling sets one → level 0 → random(0) = 0 level-ups. So
+    // residents emerge UNleveled (the prior flat 50%-of-+1 made them stronger than the original). Faithful
+    // general case: random(level) = 1..level for level>0 (always 0 for the shipped level-0 dwellings).
+    const draw = game.rng.next();                       // one rng draw (keeps the per-unit rng stream stable)
+    const ups = this.level > 0 ? 1 + Math.floor(draw * this.level) : 0;
+    for (let i = 0; i < ups; i++) e.send("forceLevelUp");
     game.entities.push(e);
     this.residents.push(e);
   }

@@ -29,6 +29,14 @@ Only behavioral/real gaps (property-coverage non-gaps are catalogued in ../data-
   spellActor.explode() (player) + CpuAI.attack() (CPU caster at target loc). modSpellMultistage.txt:124 |
   summon.ts + spellActor.ts + control.ts.
 
+- [x] **Dwelling residents over-levelled (SYSTEMIC — all dwellings)** — modResidents.setStartingLevel(
+  random(dwelling experienceLevel)); a dwelling's level = its #startingLevel (dwellings gain no XP) and NO
+  shipped dwelling sets one → level 0 → 0 level-ups. The port gave each resident a flat 50% chance of +1
+  level, making them stronger than the original. FIXED: residents emerge at random(dwellingLevel) (0 for all
+  shipped level-0 dwellings). casts modResidents.txt:160 | port/src/components/dwelling.ts.
+  (NOT changed: resident spawn ±30px offset = a deliberate anti-overlap-with-solid choice; original uses
+  exact loc but staggered release + collision make these equivalent — documented minor deviation.)
+
 - [x] **CPU damage-caster damage decoupled from charge (user-approved "fully faithful")** (energyBlast/
   darkBlast/cBlastAi/arcticBlast casters: berlin/goblinMage/friendlyGoblinMage/darkMage/garonlin/flaetorlin/
   amotonlin). objAiCPUSpellCaster releases the SAME objSpell the player does — explode damage scales with the
