@@ -295,6 +295,15 @@ describe("G1b/H3: save tree v3 (full per-room pState) + version gate", () => {
     expect(s.potions.pPotionsCollected.find((r: any) => r.character === "manaFlow").numCollected).toBe(1);
   });
 
+  it("persists the sound mute state (soundMaster slice)", () => {
+    const player = spawnPlayer(0, 0); game.player = player; game.entities = [player];
+    const prev = game.audio;
+    game.audio = { muted: true } as any;                 // muted before saving
+    const blob = buildSave({ player, mapId: "m", currentRoom: { x: 1, y: 1 }, currentRoomNum: 1, clearedRooms: [], currentObjects: [] });
+    game.audio = prev;
+    expect(blob.sound?.muted).toBe(true);                 // the mute state round-trips in the save blob
+  });
+
   it("H3: serializes the FULL per-room pState map (every visited room, not just the current one)", () => {
     const player = spawnPlayer(0, 0); game.player = player;
     const orcA = spawnEnemy("blackOrc", 10, 10); orcA.get(Energy).energy = 5;

@@ -48,10 +48,12 @@ describe("player stretch death (modStretchDeath)", () => {
   it("the transform completes (fully faded, fully stretched) by the end of its duration", () => {
     const p = spawnPlayer(100, 100); game.player = p; game.entities = [p];
     p.get(Energy).dead = true;
+    expect(p.get(Anim).stretchDeathDone()).toBe(false); // not done at the very start of the death
     for (let i = 0; i < 40; i++) p.get(Anim).update(() => {});
     const sp = p.get(Anim).sprite()!;
     expect(sp.alpha!).toBeCloseTo(0, 5);             // fully faded
     expect(sp.scaleY!).toBeCloseTo(1.7, 5);          // fully stretched (1 + 0.7)
+    expect(p.get(Anim).stretchDeathDone()).toBe(true); // #stretchDeathFin: the death-resolution signal
   });
 
   it("reviving (extra-life respawn in place) resets the transform for the next death", () => {

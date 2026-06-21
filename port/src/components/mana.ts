@@ -14,7 +14,9 @@ export class Mana extends Component {
   burst = 1;           // mana_burst      -> starting-charge bonus
   regeneration = 1;    // mana_regeneration -> cooldown divisor (higher = faster recast)
   // per-level increments (modCharacterAttackProperties): one is rolled each level-up
-  private capInc = 0.5; private flowInc = 0.1; private burstInc = 0.1; private regenInc = 0.1;
+  // modCharacterAttackProperties defaults: capacity +1/level, the rest +0.1 (the player overrides capacity
+  // to 0.5 via act_player; an enemy CPU caster without its own value uses this 1.0 fallback).
+  private capInc = 1; private flowInc = 0.1; private burstInc = 0.1; private regenInc = 0.1;
 
   override init(cfg: Record<string, any>): void {
     if (typeof cfg["mana_capacity"] === "number") this.capacity = cfg["mana_capacity"];

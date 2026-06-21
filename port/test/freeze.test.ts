@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { Archetype } from "@/engine/dispatch";
 import { Freeze } from "@/components/freeze";
+import { ColourTransform } from "@/components/colourTransform";
 
 describe("freeze (modFreeze) — vector takeFreeze", () => {
   const arch = new Archetype("c", [Freeze], { defaults: { isFrozen: false, freezeFactor: 1 } });
@@ -50,5 +51,22 @@ describe("freeze (modFreeze) — vector takeFreeze", () => {
     expect(e.send("freezeFactor")).toBe(0.5); // 0.5x movement while frozen
     e.send("takeFreeze", 5, 0, -1, 1, false); // accumulates, stays frozen
     expect(e.get(Freeze).frozen).toBe(true);
+  });
+
+  it("the teal glow is HELD for the freeze duration (re-armed on #colourTransformFin), not a 2-frame flash", () => {
+    // glowTeal is non-pingpong (speed 100) so it finishes in ~1 tick; modFreeze re-arms it each time it
+    // finishes. ColourTransform ordered BEFORE Freeze so its update() finish fans #colourTransformFin to Freeze.
+    const arch2 = new Archetype("c2", [ColourTransform, Freeze], { defaults: { isFrozen: false, freezeFactor: 1 } });
+    const e = arch2.create(5).build();
+    e.send("takeFreeze", 30, 0, -1, 1, true);          // (30)·1·4 = 120 ticks of freeze, with glowTeal
+    for (let i = 0; i < 20; i++) e.send("update");     // well past the ~2-tick glowTeal cycle
+    const tint = e.send("getColourTransform") as { rgb: [number, number, number] } | null;
+    expect(tint).not.toBeNull();                       // STILL glowing teal 20 ticks in (re-armed)
+    expect(tint!.rgb[1]).toBeGreaterThan(150);         // teal = high green
+    expect(tint!.rgb[2]).toBeGreaterThan(150);         // teal = high blue
+    expect(tint!.rgb[0]).toBeLessThan(120);            // low red
+    for (let i = 0; i < 110; i++) e.send("update");    // thaw out fully
+    expect(e.send("isFrozen")).toBe(false);
+    expect(e.send("getColourTransform")).toBeNull();   // defrost -> stopGlowTeal, no tint
   });
 });

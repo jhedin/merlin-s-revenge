@@ -56,7 +56,18 @@ describe("pickups", () => {
     pickup.send("update");
     expect(player.get(Energy).energy).toBe(player.get(Energy).max); // filled to MAX instantly
     expect(player.send("getNumOfMedikits")).toBe(0);               // NOT banked (no gradual kit)
+    expect(player.get(Energy).goldGlow).toBe(0);                   // increaseEnergy, NOT takeHeal -> NO gold glow
     expect(pickup.send("isFinished")).toBe(true);
+  });
+  it("collecting an item does NOT gold-glow: the +25 bonus is increaseEnergy(25), not a heal-spell impact", () => {
+    game.grid = new CollisionGrid(20, 20, 32);
+    const player = spawnPlayer(100, 100); game.player = player;
+    player.get(Energy).energy = 50;
+    const pickup = spawnPickup("spell", 100, 100);  // a scroll: grants the weapon + the flat +25 bonus
+    game.entities = [player, pickup];
+    pickup.send("update");
+    expect(player.get(Energy).energy).toBe(75);     // +25 bonus applied
+    expect(player.get(Energy).goldGlow).toBe(0);    // but NO gold glow (only takeHeal/healBlast glows gold)
   });
   it("a far pickup is not collected", () => {
     game.grid = new CollisionGrid(20, 20, 32);

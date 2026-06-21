@@ -5,6 +5,7 @@
 import type { GameMap, Room, Vec2i } from "./map";
 import { CollisionGrid } from "./collision";
 import { tileSymbol, type TileKey } from "../data/tlk";
+import { registry } from "../game/data";
 import type { Assets } from "../render/assets";
 import type { TileSheet } from "../render/renderer";
 import { game } from "../game/context";
@@ -84,7 +85,11 @@ export class RoomManager {
       // room's recordable actors AFTER the teleport-out hook (so a reserve-banked ally is excluded —
       // it lives in the army reserve, not pState — avoiding a double-spawn on re-entry, plan §f.4).
       if (leavingNum !== undefined) {
-        this.pState.set(leavingNum, game.entities.filter((e) => e.type !== "player" && isRecordableActor(e)).map(serializeActor));
+        // Exclude `left` (reserve-banked) allies explicitly — they live in the army reserve, not pState.
+        // onLeaveRoom already splices them out, but filtering on the flag too removes the load-bearing
+        // splice-before-snapshot ordering invariant (a banked ally can never be double-recorded here).
+        this.pState.set(leavingNum, game.entities.filter((e) =>
+          e.type !== "player" && !e.flags.has("left") && isRecordableActor(e)).map(serializeActor));
       }
     }
     // room-scoped region effects (I1/I3): reset the magic limiter + team override to their defaults
@@ -121,9 +126,9 @@ export class RoomManager {
       // re-field banked reserve allies near the player (G2 army teleport-in on the next room).
       if (!this.restoring) { const pm = this.player.get(Movement); this.onEnterRoom(pm.x, pm.y); }
     }
-    // a room with no hostiles is cleared on entry (objRoom.attemptOpenExits)
-    if (this.cleared.has(this.room.num) || !this.enemiesAlive()) this.markCleared();
-    this.setExits(this.cleared.has(this.room.num));
+    // a room with no hostiles is cleared on entry; otherwise we open into combat (exits shut, nav off).
+    if (this.cleared.has(this.room.num) || !this.enemiesAlive()) this.onRoomCleared();
+    else this.setExits(false);
   }
 
   // --- save-tree hooks (G1b) ---
@@ -144,6 +149,28 @@ export class RoomManager {
     }
     return inf;
   }
+  // objRoom.getHostile (objRoom.txt:342): does a room currently hold hostiles (#inf-status actors)? Used
+  // for the exit-arrow colour — GREEN to a safe neighbour, RED to one that still holds a fight. Mirrors the
+  // original's three cases: cleared -> no; visited (pState) -> any live enemy in the snapshot; unvisited ->
+  // scan its #objects layer for any actor whose data #miniMapStatus is #inf (an enemy).
+  private roomHasHostiles(room: Room): boolean {
+    if (this.cleared.has(room.num)) return false;
+    if (room.num === this.room.num) return this.enemiesAlive(); // the live current room
+    const snap = this.pState.get(room.num);
+    if (snap) return snap.some((s) => s.type === "enemy");      // visited: read the saved state
+    const objects = room.layer("#objects");                     // unvisited: peek its objects layer
+    if (!objects) return false;
+    for (const row of objects.grid) {
+      for (const n of row) {
+        if (n <= 0) continue;
+        const sym = tileSymbol(this.objectsKey, n);
+        const d = registry.resolveActor(sym.replace(/^#/, ""));
+        if (d && d["miniMapStatus"] === "#inf") return true;
+      }
+    }
+    return false;
+  }
+
   /** restore the cleared set (loadGame, before entering the current room). */
   restoreCleared(nums: number[]): void {
     this.cleared = new Set(nums);
@@ -152,7 +179,7 @@ export class RoomManager {
   }
   /** snapshot the CURRENT room's live actors (everything but the player) for the save tree. */
   snapshotCurrentRoom(): ActorSave[] {
-    return game.entities.filter((e) => e.type !== "player" && isRecordableActor(e)).map(serializeActor);
+    return game.entities.filter((e) => e.type !== "player" && !e.flags.has("left") && isRecordableActor(e)).map(serializeActor);
   }
   /** the full per-room pState (H3): every visited room's snapshot + the live current room. The current
    *  room's slot is taken fresh from the live world (it may be mid-fight, not yet frozen into pState). */
@@ -272,14 +299,27 @@ export class RoomManager {
     ];
     for (const { edge, nbr } of edges) {
       if (!nbr) continue; // no arrow on an edge with no neighbouring room
-      // GREEN once the neighbour is cleared (safe), RED while it still holds hostiles (uncleared/unvisited).
-      const colour: "green" | "red" = this.cleared.has(nbr.num) ? "green" : "red";
+      // objRoom.getHostile: GREEN to a SAFE neighbour (no #inf actors — cleared, or only friendly/empty),
+      // RED while it still holds a fight. Keys off the NEIGHBOUR's hostiles, not merely the cleared set, so
+      // an enemy-less room (NPC/story) reads green even before it's visited.
+      const colour: "green" | "red" = this.roomHasHostiles(nbr) ? "red" : "green";
+      // ListCombineExitTiles (modScreenExits): a position carries an arrow only if BOTH this room's edge tile
+      // AND the neighbour's FACING edge tile are passable (#none). Build the neighbour's edge grid and AND it,
+      // so an arrow never marks a spot that's walled off on the other side.
+      const nbrActive = nbr.layer("#backgroundActive");
+      const nbrGrid = nbrActive ? CollisionGrid.fromActiveLayer(nbrActive, this.activeKey, t) : null;
       // passable run of edge cells (match #none) → ranges, in px along the edge axis.
       const horizontal = edge === "up" || edge === "down";
       const n = horizontal ? cols : rows;
-      const passable = (i: number): boolean =>
-        horizontal ? this.grid.passableCell(i, edge === "up" ? 0 : rows - 1)
-                    : this.grid.passableCell(edge === "left" ? 0 : cols - 1, i);
+      const passable = (i: number): boolean => {
+        const here = horizontal ? this.grid.passableCell(i, edge === "up" ? 0 : rows - 1)
+                                : this.grid.passableCell(edge === "left" ? 0 : cols - 1, i);
+        if (!here || !nbrGrid) return here;
+        // the neighbour's facing edge (opposite side, same axis index).
+        const there = horizontal ? nbrGrid.passableCell(i, edge === "up" ? rows - 1 : 0)
+                                 : nbrGrid.passableCell(edge === "left" ? cols - 1 : 0, i);
+        return there;
+      };
       for (const [start, end] of runs(n, passable, t)) {
         // convertExitRangesToArrowRectsEdge: thickness on the perpendicular axis, range along the edge.
         const rect = edge === "left" ? { x: 0, y: start, w: th, h: end - start }
@@ -314,10 +354,21 @@ export class RoomManager {
     if (endRoomWin || clearAllWin) { this.won = true; this.onMapClear(); }
   }
 
+  // onRoomCleared (objRoom.attemptOpenExits): the SINGLE choke-point for the room-clear transition. When a
+  // room's hostiles die (or an enemy-less room is entered) this fires ONCE, atomically owning the whole
+  // bundle the original couples: record the clear (+win/cleared-sound, markCleared), open the exits AND enter
+  // nav mode (setExits -> game.navMode, which drives the player speed boost, the minimap reveal, and the
+  // chatter gate). The exit-arrow rects and the minimap both DERIVE from this state (exitsOpen / game.navMode)
+  // — no caller pokes those piecemeal, so the six room-clear signals can't drift relative to each other.
+  private onRoomCleared(): void {
+    this.markCleared();
+    this.setExits(true);
+  }
+
   /** Transition on edge crossing; gate exits behind clearing the room; returns true on room change. */
   update(): boolean {
     // open the exits the moment the room's hostiles are dead (objRoom.attemptOpenExits)
-    if (!this.exitsOpen && !this.enemiesAlive()) { this.markCleared(); this.setExits(true); }
+    if (!this.exitsOpen && !this.enemiesAlive()) this.onRoomCleared();
     const m = this.player.get(Movement);
     const o = this.grid.open;
     if (m.x < 0 && o.left) { this.enter({ x: this.loc.x - 1, y: this.loc.y }, "left"); return true; }

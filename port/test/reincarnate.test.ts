@@ -210,14 +210,16 @@ describe("skelitonLord full tree (real data)", () => {
     expect(live.length).toBe(0);
   });
 
-  it("skelitonHead is reel-proof: it takes damage but no knockback impulse", () => {
+  it("skelitonHead is reel-proof: it takes damage and is STILL shoved, but doesn't enter the reel mode", () => {
+    // modReel.takeHit: ancestor.takeHit (objGameObject) shoves EVERY unit; reelProof only gates goDamageMode
+    // (the stagger). So a reel-proof unit still gets the knockback impulse — it just never reels.
     const head = spawnUnit("skelitonHead", 100, 100, {});
-    head.get(Movement).x = 100; head.get(Movement).y = 100;
+    head.get(Movement).inertia = 0; // undamped, so the shove is visible
     const before = head.get(Energy).energy;
     head.send("takeHit", 5, 0, -1, 1);
     expect(head.get(Energy).energy).toBeLessThan(before); // damage landed
-    expect(head.get(Movement).kvx).toBe(0);               // no knockback impulse (reelProof)
-    expect(head.get(Movement).kvy).toBe(0);
+    expect(head.get(Movement).kvx).toBeGreaterThan(0);    // STILL shoved along the hit (objGameObject.takeHit)
+    expect(head.send("isHurt")).toBe(false);              // but no reel stagger (reelProof gates goDamageMode)
   });
 
   // modExperience.transferExperience (#reincarnated): each child inherits HALF the parent's accumulated XP.

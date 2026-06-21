@@ -28,6 +28,7 @@ export interface SaveDataV3 {
   player: Record<string, any>; // the player's component chain (energy/xp/mana/weaponMgr/medikit/lives)
   potions: Record<string, any>;// g_potionMaster slice (G3b)
   army: Record<string, any>;   // g_armyMaster slice (G2)
+  sound?: { muted: boolean };  // g_soundMaster.pActive (saveMaster saves the sound state too)
 }
 // back-compat alias for callers that import the type name
 export type SaveDataV2 = SaveDataV3;
@@ -63,6 +64,7 @@ export function buildSave(args: {
     player: playerChain,
     potions: game.potionMaster ? game.potionMaster.addSaveData({}) : {},
     army: game.armyMaster ? game.armyMaster.addSaveData({}) : {},
+    sound: { muted: !!game.audio?.muted }, // soundMaster.addSaveData: persist the mute state across save/load
   };
 }
 

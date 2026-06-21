@@ -152,6 +152,32 @@ describe("K22: exit-arrow ranges", () => {
     expect(arr.find((r) => r.edge === "right")?.colour).toBe("red");  // room3 still holds a fight
   });
 
+  it("an unvisited enemy-LESS neighbour shows GREEN (getHostile: no #inf actors), before it's visited", () => {
+    const map = mkStrip(ROWS, COLS, {}, [2]); // only room2 (the one we clear) holds an orc
+    const rm = newRM(map);
+    rm.enter({ x: 2, y: 1 }); clearRoom(); rm.update();          // clear room2
+    const arr = rm.exitArrowRects();
+    expect(arr.find((r) => r.edge === "left")?.colour).toBe("green");  // room1: no enemies -> safe
+    expect(arr.find((r) => r.edge === "right")?.colour).toBe("green"); // room3: no enemies -> safe
+  });
+
+  it("an unvisited neighbour that HOLDS an enemy shows RED (objects-layer #inf scan)", () => {
+    const map = mkStrip(ROWS, COLS, {}, [2, 3]); // room3 (right neighbour) holds an orc, never visited
+    const rm = newRM(map);
+    rm.enter({ x: 2, y: 1 }); clearRoom(); rm.update();
+    expect(rm.exitArrowRects().find((r) => r.edge === "right")?.colour).toBe("red");
+  });
+
+  it("bilateral edges (ListCombineExitTiles): a wall on the NEIGHBOUR's facing edge suppresses the arrow", () => {
+    const wall1 = emptyGrid(ROWS, COLS);
+    for (let r = 0; r < ROWS; r++) wall1[r]![COLS - 1] = 1; // room1's RIGHT column solid (faces room2's left)
+    const map = mkStrip(ROWS, COLS, { 1: wall1 });
+    const rm = newRM(map);
+    rm.enter({ x: 2, y: 1 }); // room2 is an open box, no enemies -> auto-clears
+    expect(byEdge(rm.exitArrowRects(), "left")).toHaveLength(0);  // blocked from room1's side -> no arrow
+    expect(byEdge(rm.exitArrowRects(), "right")).toHaveLength(1); // room3 open both sides -> arrow
+  });
+
   it("top/bottom edges: range runs along the horizontal axis, thickness on the vertical", () => {
     // a vertical 1×3 strip so the middle room has up + down neighbours.
     const rooms = new Map<number, Room>();

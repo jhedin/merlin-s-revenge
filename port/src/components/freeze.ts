@@ -16,7 +16,7 @@ import { ColourTransform } from "./colourTransform";
 const FREEZE_MAX = 1000;
 
 export class Freeze extends Component {
-  static handles = ["update", "takeFreeze", "isFrozen", "freezeFactor"];
+  static handles = ["update", "takeFreeze", "isFrozen", "freezeFactor", "colourTransformFin"];
   ticks = 0;            // remaining freeze ticks (the "count below 1000" the original tracks down)
   frozen = false;       // pFrozen: first-hit latch (slow + teal applied once)
   glowTeal = false;     // pGlowTeal: teal overlay active
@@ -37,6 +37,14 @@ export class Freeze extends Component {
     }
     const add = (Math.abs(vx) + Math.abs(vy)) * freezeMultiplier * 4;
     this.ticks = Math.min(FREEZE_MAX, this.ticks + add);  // bounded by the original's tim[2]=1000 ceiling
+  }
+
+  // modFreeze.internalEvent #colourTransformFin (55-58): glowTeal is non-pingpong, so it FINISHES in ~1 tick
+  // (speed 100). Re-arm it each time it finishes to HOLD the teal glow for the whole freeze duration —
+  // without this the frozen unit only flashes teal for ~2 frames instead of staying tinted while frozen.
+  colourTransformFin(next: NextFn): any {
+    if (this.glowTeal && this.ticks > 0) this.entity.tryGet(ColourTransform)?.glowTeal();
+    return next();
   }
 
   isFrozen(): boolean { return this.ticks > 0; }

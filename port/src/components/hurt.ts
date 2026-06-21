@@ -65,7 +65,7 @@ export class Hurt extends Component {
 
   isInvince(): boolean { return this.invinceT > 0; }
   isHurt(): boolean { return this.flashT > 0; }
-  isReelProof(): boolean { return this.reelProof; } // Movement reads this to skip the knockback impulse
+  isReelProof(): boolean { return this.reelProof; } // gates the reel STAGGER only — the knockback still lands
 
   // brief "reel" override (modReel) — falls back to stand for chars with no reel strip
   animAction(next: NextFn): any { return this.flashT > 0 ? "reel" : next(); }

@@ -28,7 +28,7 @@ import { sweepBullets, bulletPoolStats } from "./systems/bullets";
 import { sweepSpells } from "./systems/spells";
 import { SpellActor } from "./components/spellActor";
 import { rebuildCombatSubstrate } from "./systems/combatTick";
-import { saveGame, loadSave, buildSave, clearLegacy, pStateFromSave } from "./systems/save";
+import { saveGame, loadSave, buildSave, clearLegacy, pStateFromSave, hasSave } from "./systems/save";
 import { parseCutscene, loadCutscene } from "./data/cutscene";
 import { CutscenePlayer } from "./scenes/cutscenePlayer";
 import { WeaponPalette } from "./scenes/weaponPalette";
@@ -165,6 +165,7 @@ async function main() {
     if (s.map !== loaded.meta.id) { flash("save is for a different map"); return false; }
     game.armyMaster.restoreFromSave(s.army);
     game.potionMaster.restoreFromSave(s.potions);
+    if (s.sound) audio.setMuted(!!s.sound.muted); // soundMaster.restoreFromSave: restore the mute state
     rooms.restoreCleared(s.rooms.filter((r) => r.cleared).map((r) => r.num));
     rooms.restorePState(pStateFromSave(s));            // every visited room's exact state (H3)
     player.send("restoreFromSave", s.player);          // player chain (energy/xp/mana/weapons/medikit/lives)
@@ -263,7 +264,7 @@ async function main() {
   const pauseMenu = new Menu("PAUSED", [
     { label: "Resume", action: () => scene.closeOverlay() },
     { label: "Save game", action: () => { doSave(); flash("game saved"); scene.closeOverlay(); }, shadowed: () => scene.isCutscene() },
-    { label: "Load game", action: () => { if (doLoad()) flash("game loaded"); scene.closeOverlay(); } },
+    { label: "Load game", action: () => { if (doLoad()) flash("game loaded"); scene.closeOverlay(); }, shadowed: () => !hasSave() },
     { label: "Show army", action: openScreen("showArmy") },
     { label: "Instructions", action: openScreen("instructions") },
     { label: "Choose keys", action: openScreen("keyConfig") },
@@ -334,9 +335,12 @@ async function main() {
         }
         game.effects.update(); // advance level-up star particles (modStarReleaser)
         rooms.update();
-        // death: let the die animation play (deathT frames) before resolving respawn/game-over.
+        // death resolution (modStretchDeath -> #stretchDeathFin -> gameOver/respawn): drive it off the
+        // stretch-death FINISHING — one signal, not a second hand-tuned timer that can desync from the
+        // anim's STRETCH_DURATION. deathT is just a "death started" latch + a hard safety cap (a non-stretch
+        // actor, or a stuck anim, still resolves at the cap).
         if (player.send("isDead")) { if (deathT === 0) deathT = 1; }
-        if (deathT > 0 && ++deathT > 36) { deathT = 0; resolveDeath(); }
+        if (deathT > 0) { deathT++; if (player.get(Anim).stretchDeathDone() || deathT > 40) { deathT = 0; resolveDeath(); } }
       } else if (s === "victory") {
         // K18: the game-complete cutscene routes to the CREDITS screen (creditsMaster) — scroll to the end,
         // then to the title. Space/enter skips. (movieMaster: gGameCompleteScript -> #creditsScreen -> title.)
@@ -371,6 +375,10 @@ async function main() {
       const active = rooms.room.layer("#backgroundActive");
       if (passive && rooms.passiveSheet) renderer.drawTileLayer(passive, rooms.passiveSheet);
       if (active && rooms.activeSheet) renderer.drawTileLayer(active, rooms.activeSheet);
+      // K22 exit arrows (objRoom.drawExitArrows → modScreenExits.drawExitArrowsOnImage): the original bakes
+      // these INTO the backgroundActive image, so actors draw OVER them. Draw here (after the active layer,
+      // before the actor sprites) to match that z-order. No-op when the arrow art wasn't bundled.
+      drawExitArrows(renderer, assets, rooms.exitArrowRects());
       game.effects.draw(renderer); // level-up stars (starMaster setLocZ-1: behind the actors)
       const sprites = game.entities
         .filter((e) => e.type !== "bullet" && e.type !== "pickup" && e.type !== "marker" && e.type !== "spell")
@@ -383,10 +391,6 @@ async function main() {
       // draws it OVER the actors (after drawSprites). pFrontLayerBlendLevel=128 -> globalAlpha 0.5 default.
       const fg = rooms.room.layer("#foregroundPassive");
       if (fg && rooms.foregroundSheet) renderer.drawTileLayer(fg, rooms.foregroundSheet, 0, 0, 0.5);
-      // K22 exit arrows (objRoom.drawExitArrows → modScreenExits.drawExitArrowsOnImage): overlay the
-      // green/red directional arrows on each exit edge, OVER the room layers. Pure overlay — no effect on
-      // collision/transition. No-ops when the arrow art wasn't bundled (assets.arrowImg → undefined).
-      drawExitArrows(renderer, assets, rooms.exitArrowRects());
       // modFreeze frost overlay stays always-on (a status indicator). Merlin's Revenge has NO always-on
       // health bars (gEnemyEnergyMasterOn=0); health/level/XP show only on mouse-hover (rollover, below).
       for (const e of game.entities) {
@@ -401,8 +405,10 @@ async function main() {
       weaponPalette.render(renderer, player, assets); // modWeaponSelector palette (over the world, under the HUD)
       drawHud(renderer, player);
       // 5-state minimap (modMiniMap): #cur/#clr/#inf (+ data #fre/#spe) with a proximity distance blend.
+      // modMiniMap is OFF by default (pShowMiniMap=false); goNavMode shows it, leaveNavMode hides it — so it
+      // appears ONLY once the room is cleared (nav mode), as a "room safe" cue, not during combat.
       const pm = player.get(Movement);
-      drawMinimap(renderer, {
+      if (game.navMode) drawMinimap(renderer, {
         map, loc: rooms.loc, cleared: rooms.clearedSet(), infested: rooms.infestedRooms(),
         playerPx: { x: pm.x, y: pm.y }, cursorPx: game.input.cursor(),
       }, viewW);
