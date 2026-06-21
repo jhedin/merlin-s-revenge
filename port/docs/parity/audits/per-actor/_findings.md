@@ -29,6 +29,14 @@ Only behavioral/real gaps (property-coverage non-gaps are catalogued in ../data-
   spellActor.explode() (player) + CpuAI.attack() (CPU caster at target loc). modSpellMultistage.txt:124 |
   summon.ts + spellActor.ts + control.ts.
 
+- [x] **+25 collect-bonus energy missing on ALL pickups; maxikit not a full heal (SYSTEMIC — pickups)** —
+  objPlayerMerlinCharacter: medikitCollected/newScrollCollected/potionCollected all end with
+  `increaseEnergy(pBonusEnergy=25)` → collecting ANY medikit/scroll/sword/potion grants a flat +25 health
+  (NOT maxikit/gmg). The port granted none. AND maxikit's #maxikit branch is an INSTANT FULL heal
+  (increaseEnergy(maxEnergy-energy)), but the port banked it as a gradual kit like medikit. FIXED: pickup.ts
+  grants +25 on every collect except maxikit/gmg, and maxikit now instant-fills to max (no bank).
+  casts objPlayerMerlinCharacter.txt:152-160,166,200 | port/src/components/pickup.ts. pickup.test.ts covers both.
+
 - [x] **energyMine re-armed forever (objMine dieOnExplode default wrong)** — objMine default
   i[#dieOnExplode]=true (single-shot, e.g. energyMine); only the re-arming mines (fire/pitMonster/auras) set
   it false. The port's spawnMine + Mine.init used `=== true`, so an UNSET dieOnExplode became false →

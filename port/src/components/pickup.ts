@@ -61,9 +61,11 @@ export class Pickup extends Component {
     // every collected powerup bumps the potionMaster tally for its type (G3b: pPotionsCollected).
     game.potionMaster?.potionCollected(this.effect);
     switch (this.effect) {
-      // real medikit (G3a): BANK a kit (gradual stockpiled heal via Medikit.update), not an instant fill.
-      // maxikit banks 1 too (the original medikitCollected ignores the character — identical mechanics).
-      case "heal": case "maxikit": player.send("medikitCollected", 1); break;
+      // real medikit (G3a): BANK a kit (gradual stockpiled heal via Medikit.update) + a flat +25 below.
+      case "heal": player.send("medikitCollected", 1); break;
+      // maxikit (objPlayerMerlinCharacter.medikitCollected #maxikit branch): an INSTANT FULL heal
+      // (increaseEnergy(maxEnergy-energy)) — NOT a banked gradual kit, and NOT the +25 bonus.
+      case "maxikit": player.send("takeHeal", 1e9, 0, -1); break;
       case "speed": player.get(Movement).maxSpeed += 0.6; break;
       case "sword": player.get(PlayerControl).equipSword(scrollAttack("sword")); break; // merlinSword: addWeapon
       // energyPunch (I4): a #magicMelee melee-weapon scroll (newScrollCollected -> addWeapon). Granted
@@ -89,5 +91,10 @@ export class Pickup extends Component {
       case "manaFlow": player.get(Mana).incFlow(); break;
       case "manaBurst": player.get(Mana).incBurst(); break;
     }
+    // medikitCollected / newScrollCollected / potionCollected ALL end with increaseEnergy(pBonusEnergy=25):
+    // collecting ANY medikit/scroll/sword/potion grants a flat +25 health. EXCEPT maxikit (its full heal
+    // supersedes the bonus) and gmg (gmgCollected has no bonus). takeHeal(12.5,0) = (12.5+0)·2 = +25, capped
+    // at maxEnergy. objPlayerMerlinCharacter.txt:156,166,200.
+    if (this.effect !== "maxikit" && this.effect !== "gmg") player.send("takeHeal", 12.5, 0, -1);
   }
 }
