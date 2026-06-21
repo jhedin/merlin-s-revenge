@@ -156,3 +156,17 @@ Implements overlap-triggered script execution:
 - Port spawn: `/home/user/merlin-s-revenge/port/src/entities/actorSerial.ts:39-56`
 - Port chatter spawn: `/home/user/merlin-s-revenge/port/src/entities/objTypes.ts:72-83`
 - Port chatter FSM: `/home/user/merlin-s-revenge/port/src/components/chatter.ts:19-59`
+
+---
+
+## Reviewer note (sweep lead): verified — stone does NOT grant the spell
+
+Confirmed in both trees: objChatter.collected() dispatches EVERY #scriptToPerform via
+`g.cutSceneMaster.playCutScene(pScriptToPerform)` (casts/script_objects/objChatter.txt:51) —
+identical to the port's chatter firing `playInGameCutScene(script)`. #collectArmySummon is
+therefore just a cutscene-script NAME, and that script
+(in_game_scenes.../collectArmySummon.txt) is PURE DIALOGUE (Ulin explaining the spell-select
+keys) — it grants nothing. The army-summon spell itself is a SEPARATE collectable scroll
+(act_armySummon), not this stone. So the stone triggers only a tutorial cutscene; no
+gameplay-state change is lost. The un-shipped dialogue script is content-scope (stones1-10 only),
+behaviourally a graceful no-op. **Behavioral verdict: CLEAN.**
