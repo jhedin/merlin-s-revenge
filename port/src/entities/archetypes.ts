@@ -274,6 +274,10 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     actorType: actorName, // the respawn key (objGameObject.getActorType)
     walkSpeed: num("walkSpeed", 3) * 0.6, // engine walk units -> px/tick (tuned to the slice)
     walkSpeedIncLevel: num("walkSpeed", 3) > 0 ? 0.075 * 0.6 : 0, // modMoveToLoc.incWalkSpeedLevel (engine 0.075 ×0.6 conv)
+    // #collisionDetection:false (bat/greyGhost/summonArcher/Warrior/Orc/Golem/Boulder/skelitonSword) and the
+    // #objAiCPUGhost (monkGhost, via modGhost.initGhost -> collisionDetectionOff) DRIFT THROUGH terrain —
+    // objGameObject.checkCollisions only runs when pCollisionDetection. Map to passThrough (no moveBox).
+    passThrough: d["collisionDetection"] === false || ghost,
     energy: num("energy", 40),
     strength: num("strength", 5),
     team: str("team", "#monsters"), teamRole: "#teamMembers",
