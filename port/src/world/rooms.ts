@@ -85,7 +85,11 @@ export class RoomManager {
       // room's recordable actors AFTER the teleport-out hook (so a reserve-banked ally is excluded —
       // it lives in the army reserve, not pState — avoiding a double-spawn on re-entry, plan §f.4).
       if (leavingNum !== undefined) {
-        this.pState.set(leavingNum, game.entities.filter((e) => e.type !== "player" && isRecordableActor(e)).map(serializeActor));
+        // Exclude `left` (reserve-banked) allies explicitly — they live in the army reserve, not pState.
+        // onLeaveRoom already splices them out, but filtering on the flag too removes the load-bearing
+        // splice-before-snapshot ordering invariant (a banked ally can never be double-recorded here).
+        this.pState.set(leavingNum, game.entities.filter((e) =>
+          e.type !== "player" && !e.flags.has("left") && isRecordableActor(e)).map(serializeActor));
       }
     }
     // room-scoped region effects (I1/I3): reset the magic limiter + team override to their defaults
@@ -175,7 +179,7 @@ export class RoomManager {
   }
   /** snapshot the CURRENT room's live actors (everything but the player) for the save tree. */
   snapshotCurrentRoom(): ActorSave[] {
-    return game.entities.filter((e) => e.type !== "player" && isRecordableActor(e)).map(serializeActor);
+    return game.entities.filter((e) => e.type !== "player" && !e.flags.has("left") && isRecordableActor(e)).map(serializeActor);
   }
   /** the full per-room pState (H3): every visited room's snapshot + the live current room. The current
    *  room's slot is taken fresh from the live world (it may be mid-fight, not yet frozen into pState). */
