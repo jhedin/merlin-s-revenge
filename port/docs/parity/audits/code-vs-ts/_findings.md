@@ -1,0 +1,30 @@
+# Lingo code-vs-TS audit — CONFIRMED real gaps (verified, fixed)
+
+- [x] **walk speed never grew per level (modMoveToLoc.incWalkSpeedLevel)** — objCharacter:51 adds modMoveToLoc
+  to ALL characters; its internalEvent #levelUp fires incWalkSpeed(0.075). Enemies move at walkSpeed
+  (PointFrameMove), so they speed up per level; the player's cap rises over a playthrough. The port never
+  applied it. FIXED: Movement handles #levelUp -> maxSpeed += px-converted increment (player 0.075 @1:1,
+  enemy 0.045 @×0.6), fanned out from Experience.levelUp. casts modMoveToLoc.txt:255,289 |
+  port/src/components/movement.ts + entities/archetypes.ts. experience.test.ts.
+
+- [x] **collisionDetection:false / ghost units collided with terrain** — objGameObject.checkCollisions(:248)
+  runs only when pCollisionDetection. bat/greyGhost/skelitonSword/summonArcher/Warrior/Orc/Golem/Boulder set
+  #collisionDetection:false, and #objAiCPUGhost (monkGhost) runs modGhost.collisionDetectionOff -> all DRIFT
+  THROUGH walls. The port collided them. FIXED: enemy/unit archetype maps collisionDetection:false || ghost
+  -> Movement.passThrough (no moveBox). casts objGameObject.txt:248 + modGhost.txt:32 |
+  port/src/entities/archetypes.ts + components/movement.ts. knockback.test.ts.
+
+- [x] **ghost units could drift off-map (autoConstrainToPlayArea)** — autoConstrainToPlayArea(:164) sets
+  constrainToPlayArea=true exactly when collisionDetection=false: a wall-ignoring ghost is still clamped to
+  the room bounds. FIXED: Movement clamps passThrough UNITS (not bullets) to the grid extent (inset by box/2).
+  casts objGameObject.txt:164,351 | port/src/components/movement.ts. knockback.test.ts.
+
+## Non-gaps confirmed (catalogued, not fixed)
+- objGameObject frictionReel/frictionNormal/frictionStrong mode switch: subsumed by the port's px-tuned
+  knockback channel (A1 calibration: KNOCK_SCALE/MAX/FRICTION). Same reel-slide role, deliberately recalibrated.
+- objGameObject exitedPlayArea #screenExit notification: no port consumer; projectiles despawn via maxLife,
+  ghost units clamped. Functionally equivalent.
+- modGameObject.txt: does not exist — the takeHit/inertia keystone lives in objGameObject.txt (audited).
+
+## CLEAN
+modAttack, modEnergy, modExperience, modMoveToLoc, objCharacter, objBullet, objGameObject (after fixes).

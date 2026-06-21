@@ -1481,3 +1481,24 @@ if (this.intentY === 0) this.vy *= this.friction;
 
 ---
 
+
+---
+
+## Reviewer resolution (sweep lead)
+
+Of the 4 flagged items, 2 were REAL and are now FIXED, 2 are non-gaps:
+
+1. **collisionDetectionOn/Off (ghosts pass through terrain) — FIXED.** bat/greyGhost/skelitonSword/summon*
+   (#collisionDetection:false) and #objAiCPUGhost (monkGhost via modGhost.collisionDetectionOff) now map to
+   Movement.passThrough in the enemy/unit archetype. Verified terrain-only (objGameObject:248) — hittability
+   unaffected. (knockback.test.ts)
+2. **autoConstrainToPlayArea — FIXED.** autoConstrainToPlayArea(:164) sets constrainToPlayArea=true exactly
+   when collisionDetection=false: ghosts ignore walls but are clamped to the room bounds. Movement now clamps
+   passThrough UNITS (not bullets) to the grid extent. (knockback.test.ts)
+3. **exitedPlayArea notification — NON-GAP.** The original notifies on screen-exit / clamps; the port despawns
+   projectiles via maxLife (documented friction-stall stand-in) and clamps ghost units (above). The internal
+   #screenExit event has no port consumer. Functionally equivalent.
+4. **frictionReel/frictionNormal/frictionStrong mode switch — NON-GAP.** The port replaces the original's
+   per-mode walk-friction switch with a separate px-tuned knockback channel (KNOCK_SCALE 0.06 / KNOCK_MAX 5 /
+   KNOCK_FRICTION 0.78, the documented A1 calibration, movement.ts:11-16). The reel-slide is carried by that
+   channel rather than by switching walk friction. Same role, deliberately recalibrated.

@@ -26,6 +26,9 @@ export class Movement extends Component {
   // #walkSpeedIncLevel (engine 0.075) per level — enemies move faster (PointFrameMove at walkSpeed) and the
   // player's top speed rises over a playthrough. Stored already px-converted (player 1:1, enemy ×0.6).
   walkSpeedIncLevel = 0;
+  // autoConstrainToPlayArea: a collisionDetection:false UNIT (ghost) is clamped to the room bounds (it
+  // ignores walls but can't leave the play area). Bullets pass through AND exit freely (not set).
+  constrainToArea = false;
   facingLeft = false;
   hitX = false; hitY = false;  // wall contact this tick (projectiles read these)
   // objBullet.checkCollisions: bullets do NOT collide with terrain (gBulletsCollideWithBackground is never
@@ -44,6 +47,7 @@ export class Movement extends Component {
     if (typeof cfg["box"] === "number") this.box = cfg["box"];
     if (typeof cfg["inertia"] === "number") this.inertia = Math.max(0, Math.min(100, cfg["inertia"]));
     this.walkSpeedIncLevel = typeof cfg["walkSpeedIncLevel"] === "number" ? cfg["walkSpeedIncLevel"] : 0;
+    this.constrainToArea = cfg["constrainToArea"] === true;
   }
 
   // modMoveToLoc.internalEvent #levelUp -> incWalkSpeedLevel: bump the walk-speed cap by the per-level
@@ -101,12 +105,22 @@ export class Movement extends Component {
     if (Math.abs(this.vy) < 0.05) this.vy = 0;
     if (this.vx < 0) this.facingLeft = true; else if (this.vx > 0) this.facingLeft = false;
 
-    // passThrough (bullets): integrate position with NO terrain collision — fly straight through walls
-    // (objBullet never collides with the background), dying only on target-hit / expiry.
+    // passThrough (bullets + ghosts): integrate position with NO terrain collision — fly straight through
+    // walls (objBullet never collides with the background; ghost units run collisionDetectionOff), dying
+    // only on target-hit / expiry.
     if (this.passThrough) {
       this.x += this.vx + this.kvx; this.y += this.vy + this.kvy;
       this.hitX = this.hitY = false;
       this.kvx *= KNOCK_FRICTION; this.kvy *= KNOCK_FRICTION;
+      // autoConstrainToPlayArea (objGameObject:164): a collisionDetection:false UNIT (ghost) is clamped to
+      // the play area so it can't drift off-map (bullets don't set this — they exit and expire). Bounds are
+      // the room grid extent, inset by the unit's half-box.
+      if (this.constrainToArea && game.grid) {
+        const b = this.box / 2;
+        const w = game.grid.cols * game.grid.tilePx, h = game.grid.rows * game.grid.tilePx;
+        this.x = Math.max(b, Math.min(w - b, this.x));
+        this.y = Math.max(b, Math.min(h - b, this.y));
+      }
       return next();
     }
 

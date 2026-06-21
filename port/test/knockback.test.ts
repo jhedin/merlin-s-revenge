@@ -104,4 +104,12 @@ describe("ghost/no-collision units pass through terrain (collisionDetection:fals
     for (let i = 0; i < 60; i++) { m.intentX = 1; (m as any).update(() => {}); }
     expect(m.x).toBeGreaterThan(21 * 32); // crossed the wall column instead of stalling on it
   });
+
+  it("a ghost is clamped to the play area (autoConstrainToPlayArea), can't drift off-map", () => {
+    const ghost = spawnEnemy("greyGhost", 5 * 32, 64, { animChar: "greyGhost" });
+    const m = ghost.get(Movement); m.maxSpeed = 8;
+    // drive it WEST past the left edge (x=0); the clamp must hold it inside [box/2, ...].
+    for (let i = 0; i < 80; i++) { m.intentX = -1; (m as any).update(() => {}); }
+    expect(m.x).toBeGreaterThanOrEqual(m.box / 2 - 0.001); // clamped at the left bound, not gone negative
+  });
 });

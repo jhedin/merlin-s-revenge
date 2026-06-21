@@ -278,6 +278,7 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     // #objAiCPUGhost (monkGhost, via modGhost.initGhost -> collisionDetectionOff) DRIFT THROUGH terrain —
     // objGameObject.checkCollisions only runs when pCollisionDetection. Map to passThrough (no moveBox).
     passThrough: d["collisionDetection"] === false || ghost,
+    constrainToArea: d["collisionDetection"] === false || ghost, // autoConstrainToPlayArea: ghosts stay on-map
     energy: num("energy", 40),
     strength: num("strength", 5),
     team: str("team", "#monsters"), teamRole: "#teamMembers",
