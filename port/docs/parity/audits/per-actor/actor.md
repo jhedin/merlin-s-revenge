@@ -630,3 +630,18 @@ class BaseActorDefaults extends Component {
 ---
 
 ACTOR=actor | GAPS=18 | collisionDetection (terrain collision OFF by default), friction (movement deceleration undefined), weight (velocity scaling broken), recordInRoomState (save persistence lost), inertia/stallSpeed/frictionReel (knockback physics broken), initMode/initFaceDir (animation state undefined), character/teamRole (team identification broken), constrainToPlayArea/createOnSolid/allowScreenExit (screen/spawn clipping undefined), minCollisionSpeed/collisionUseMiddle/keepVect (collision/movement response undefined), wizard (discovery logic broken)
+
+---
+
+## Reviewer note (sweep lead): the 18 "gaps" are OVER-FLAGGED — verified non-gaps
+
+This audit assumed every objGameObject default must appear in generated/data.json's act_actor record. It
+does not: the port supplies these defaults in the COMPONENT / ARCHETYPE / room layers, which the audit didn't
+inspect. Spot-verified in both trees:
+- friction(0.6), inertia(0), box(12), maxSpeed, passThrough — class-field defaults in movement.ts:24,31,36.
+- collisionDetection ON by default — non-passThrough actors collide with terrain (movement.ts moveBox); room-1
+  enemies do not walk through walls (smoke gate).
+- recordInRoomState — implemented at the room layer (world/rooms.ts), not a per-actor default.
+- wizard — handled in control.ts / archetypes.ts / screens.ts (weaponSelector discovery).
+The engine demonstrably applies friction, knockback, terrain collision, room persistence and wizard logic
+across 367 passing tests + the room-1 smoke. None of the 18 are live behavioral gaps. **Verdict: CLEAN.**

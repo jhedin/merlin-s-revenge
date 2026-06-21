@@ -188,3 +188,18 @@ To achieve full parity, the port must either:
 3. **Re-baseline the port's design** if the original values are considered unintended (e.g., energy 40 is a deliberate balance change).
 
 Current status: **BEHAVIORAL GAPS PRESENT** — Characters do not recover energy by default, cannot jump, and charge spells from wrong locations.
+
+---
+
+## Reviewer note (sweep lead): verified — energyRecoverDelay fixed elsewhere; rest are non-gaps
+
+- energyRecoverDelay: the faithful CPU default is 300 (objCPUCharacter overrides objCharacter's 30), now FIXED
+  for the enemy archetype (finding #13). The agent's "30" is the objCharacter value, not the CPU value.
+- energy 40-vs-100: VERIFIED unreachable — 0 living CPU units resolve without an explicit #energy, so the
+  enemy-archetype default never applies to a real unit (checked every act_ with a living objType). Non-gap.
+- jumpPower (-7): platforming property; this is a top-down game with no jump mechanic. Non-gap.
+- dieVolume (100): audio volume — excluded category (cosmetic).
+- chargeLoc / gmgChargeLoc / chargeOffsetSide #top: spell-orb placement; the port's SpellActor already
+  defaults offsetSide #top and positions the orb over the caster (calcChargeOffset). Cosmetic, non-gap.
+
+**Verdict: CLEAN** (the one real item, CPU energyRecoverDelay, is fixed under finding #13).
