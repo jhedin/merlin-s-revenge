@@ -534,7 +534,18 @@ export class CpuAI extends Component {
           const l1 = ba ? ba.powerScalar * speed * BULLET_DAMAGE_SCALE
             : this.power * speed * BULLET_DAMAGE_SCALE;   // record-less bolt -> caster power (this.power)
           const bmult = ba ? ba.damageMultiplier : 1;
-          fireBullet(this.entity.id, m.x, m.y - 6, dx, dy, speed, l1, team, 100, 0, bmult);
+          // a bullet carrying a STATUS payload (iceBoulder/freezeBlast: #takeFreeze) applies it on hit, not
+          // just damage — route through the payload path so applyPayload runs the bullet's payloadFunction
+          // ([#takeFreeze,#takeHit]) off the same collision vector. (We do NOT reproduce objBullet.updateFly's
+          // direct-takeHit + payload-takeHit double-damage bug — applyPayload runs the list once.)
+          const status = ba && (ba.payloadFunction.includes("takeFreeze") || ba.payloadFunction.includes("takeHeal"));
+          if (status && ba) {
+            const alleg = ba.payloadFunction.includes("takeHeal") ? "#friendly" : "#enemy";
+            const hits = ba.hits.length ? ba.hits : ["#teamMembers", "#teamBuildings"];
+            fireBulletPayload(this.entity.id, m.x, m.y - 6, dx, dy, speed, l1, team, ba, hits, alleg, 100);
+          } else {
+            fireBullet(this.entity.id, m.x, m.y - 6, dx, dy, speed, l1, team, 100, 0, bmult);
+          }
         }
       }
     } else {

@@ -87,7 +87,8 @@ export class Projectile extends Component {
       if (++this.life >= this.beamLife) this.done = true;
       return next();
     }
-    if (m.hitX || m.hitY) { if (this.splash) this.detonate(m.x, m.y); else this.done = true; return next(); } // wall / land
+    // objBullet does NOT collide with terrain (passThrough) — a bullet flies through walls and dies only on
+    // a target hit or when it expires (the port's maxLife stands in for the original's friction-stall/land).
     if (++this.life > this.maxLife) { if (this.splash) this.detonate(m.x, m.y); else this.done = true; return next(); }
     for (const e of game.entities) {
       if (e.id === this.ownerId || (e.type !== "player" && e.type !== "enemy" && e.type !== "ally")) continue;

@@ -18,6 +18,21 @@ describe("data-driven attacks (real #attack via #weapon)", () => {
     expect(ai.ranged).toBe(true);
     expect(ai.reachRanged).toBeLessThanOrEqual(220);
   });
+
+  it("#naturalRanged throwers are RANGED and resolve their #bullet (not mis-classified as melee)", () => {
+    // bat throws batBullet, dwarfTower throws towerAxe (splash), iceRock throws a FREEZING iceBoulder.
+    const bat = spawnEnemy("bat", 0, 0).get(EnemyAI) as any;
+    expect(bat.ranged).toBe(true);
+    expect(bat.bulletAttack?.payloadFunction).toContain("takeHit");
+    const tower = spawnEnemy("dwarfTower", 0, 0).get(EnemyAI) as any;
+    expect(tower.ranged).toBe(true);
+    expect(tower.splashBullet).toBeTruthy();          // towerAxe is #explode -> the splash path
+    const ice = spawnEnemy("iceRock", 0, 0).get(EnemyAI) as any;
+    expect(ice.ranged).toBe(true);
+    // #bullet:#iceboulder resolves to act_iceBoulder despite the case mismatch (case-insensitive registry),
+    // carrying the freeze payload so iceRock's throw freezes its target.
+    expect(ice.bulletAttack?.payloadFunction).toContain("takeFreeze");
+  });
 });
 
 import { EnemyAI as AI2 } from "@/components/control";

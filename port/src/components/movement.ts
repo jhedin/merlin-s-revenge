@@ -24,11 +24,16 @@ export class Movement extends Component {
   accel = 1.4; friction = 0.6; maxSpeed = 4; box = 12; inertia = 0;
   facingLeft = false;
   hitX = false; hitY = false;  // wall contact this tick (projectiles read these)
+  // objBullet.checkCollisions: bullets do NOT collide with terrain (gBulletsCollideWithBackground is never
+  // set, so the ancestor collision check never runs) — they fly THROUGH walls and die only by stalling /
+  // hitting a target / expiring. passThrough integrates position with no moveBox so a bullet isn't stopped
+  // dead at a wall. Default false (actors collide as before).
+  passThrough = false;
 
   override init(cfg: Record<string, any>): void {
     this.x = cfg["x"] ?? 0; this.y = cfg["y"] ?? 0;
     this.vx = 0; this.vy = 0; this.kvx = 0; this.kvy = 0; this.intentX = 0; this.intentY = 0;
-    this.accel = 1.4; this.friction = 0.6; this.maxSpeed = 4; this.inertia = 0;
+    this.accel = 1.4; this.friction = 0.6; this.maxSpeed = 4; this.inertia = 0; this.passThrough = cfg["passThrough"] === true;
     if (typeof cfg["walkSpeed"] === "number") this.maxSpeed = cfg["walkSpeed"];
     if (typeof cfg["accel"] === "number") this.accel = cfg["accel"];
     if (typeof cfg["friction"] === "number") this.friction = cfg["friction"];
@@ -83,6 +88,15 @@ export class Movement extends Component {
     if (Math.abs(this.vx) < 0.05) this.vx = 0;
     if (Math.abs(this.vy) < 0.05) this.vy = 0;
     if (this.vx < 0) this.facingLeft = true; else if (this.vx > 0) this.facingLeft = false;
+
+    // passThrough (bullets): integrate position with NO terrain collision — fly straight through walls
+    // (objBullet never collides with the background), dying only on target-hit / expiry.
+    if (this.passThrough) {
+      this.x += this.vx + this.kvx; this.y += this.vy + this.kvy;
+      this.hitX = this.hitY = false;
+      this.kvx *= KNOCK_FRICTION; this.kvy *= KNOCK_FRICTION;
+      return next();
+    }
 
     // integrate walk velocity (capped, above) + knockback impulse (uncapped) together, then decay knockback
     const b = this.box;

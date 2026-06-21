@@ -85,13 +85,12 @@ function normMultistage(v: any): Array<{ type: string; chargeRequired: number }>
 // magic -> magic. (Unknown -> melee, the safe default for a contact attack.)
 export function typeFromAnimType(animType: string): AttackType {
   switch (animType) {
-    case "#weaponRanged": return "ranged";
+    // #naturalRanged (throwers: bat/golem/iceRock/dwarfTower/lizardSoldier/…) and #weaponRanged (archers)
+    // are both RANGED — they fire the actor's #bullet at range. (An early slice treated #naturalRanged as
+    // melee-feel "out of scope"; that mis-classified ~30 thrower enemies as meleers — corrected here.)
+    case "#weaponRanged": case "#naturalRanged": return "ranged";
     case "#magic": return "magic";
-    // NOTE: #naturalRanged is intentionally NOT mapped to "ranged" here — the slice's CpuAI `ranged` flag
-    // (spawnEnemy) and the cooldown calibration treat the bundled #naturalRanged actors as melee-feel
-    // combatants, and globally reclassifying them would shift ~30 actors' fire-rate/behaviour (out of K
-    // scope). K6 (ninja/shrouder) classifies its two weapons explicitly instead (rangedNatural cfg).
-    case "#naturalRanged": case "#naturalMelee": case "#weaponMelee": case "#magicMelee": default: return "melee";
+    case "#naturalMelee": case "#weaponMelee": case "#magicMelee": default: return "melee";
   }
 }
 

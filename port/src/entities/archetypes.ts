@@ -164,8 +164,10 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
   // K6: a #multiAttack CPU's natural attack is its RANGED weapon 1 (#naturalRanged shuriken/throwSmoke),
   // so it fires at range (its FSM is ranged) and switches to the melee weapon 2 up close.
   const isMulti = d["multiAttack"] === true;
+  // a thrower (#naturalRanged) / archer (#weaponRanged) / caster (#magic) fights at RANGE, firing its
+  // #bullet — its FSM is ranged (moveToAttack to within reach, then fire), not melee-contact.
   const ranged = opts.ranged ?? (animType === "#weaponRanged" || animType === "#magic"
-    || (isMulti && animType === "#naturalRanged"));
+    || animType === "#naturalRanged");
   const aiType = str("AiType", "");
   // agility/dexterity seed the WeaponManager cooldown-counter inc (melee=agility, ranged=dexterity).
   const agility = num("agility", 1);

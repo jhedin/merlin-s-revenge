@@ -16,7 +16,7 @@ export function fireBullet(
 ): Entity {
   const b = pool.acquire();
   b.type = "bullet";
-  b.build({ x, y, friction: 1, accel: 0, walkSpeed: 999, box: 6 }); // no friction/accel => constant velocity
+  b.build({ x, y, friction: 1, accel: 0, walkSpeed: 999, box: 6, passThrough: true }); // no friction/accel => constant velocity
   const d = Math.hypot(dirX, dirY) || 1;
   const m = b.get(Movement);
   m.vx = (dirX / d) * speed; m.vy = (dirY / d) * speed;
@@ -36,7 +36,7 @@ export function fireBulletPayload(
 ): Entity {
   const b = pool.acquire();
   b.type = "bullet";
-  b.build({ x, y, friction: 1, accel: 0, walkSpeed: 999, box: 6 });
+  b.build({ x, y, friction: 1, accel: 0, walkSpeed: 999, box: 6, passThrough: true });
   const d = Math.hypot(dirX, dirY) || 1;
   const m = b.get(Movement);
   m.vx = (dirX / d) * speed; m.vy = (dirY / d) * speed;
@@ -54,7 +54,7 @@ export function fireSplashBullet(
 ): Entity {
   const b = pool.acquire();
   b.type = "bullet";
-  b.build({ x, y, friction: 1, accel: 0, walkSpeed: 999, box: 6 });
+  b.build({ x, y, friction: 1, accel: 0, walkSpeed: 999, box: 6, passThrough: true });
   const d = Math.hypot(dirX, dirY) || 1;
   const m = b.get(Movement);
   m.vx = (dirX / d) * speed; m.vy = (dirY / d) * speed;
@@ -82,7 +82,7 @@ export function performBeamAttack(
   const angle = Math.atan2(distY, distX);         // GeomAngle(distXY) for setSpriteRotation
   const b = pool.acquire();
   b.type = "bullet";
-  b.build({ x: targetX, y: targetY, friction: 1, accel: 0, walkSpeed: 999, box: 6 });
+  b.build({ x: targetX, y: targetY, friction: 1, accel: 0, walkSpeed: 999, box: 6, passThrough: true });
   const m = b.get(Movement);
   m.vx = 0; m.vy = 0; // spawned AT the target, not travelling
   b.get(Projectile).configureBeam(attack, team, ownerId, hits, allegiance, dist, angle, cx, cy);
