@@ -122,9 +122,9 @@ export class RoomManager {
       // re-field banked reserve allies near the player (G2 army teleport-in on the next room).
       if (!this.restoring) { const pm = this.player.get(Movement); this.onEnterRoom(pm.x, pm.y); }
     }
-    // a room with no hostiles is cleared on entry (objRoom.attemptOpenExits)
-    if (this.cleared.has(this.room.num) || !this.enemiesAlive()) this.markCleared();
-    this.setExits(this.cleared.has(this.room.num));
+    // a room with no hostiles is cleared on entry; otherwise we open into combat (exits shut, nav off).
+    if (this.cleared.has(this.room.num) || !this.enemiesAlive()) this.onRoomCleared();
+    else this.setExits(false);
   }
 
   // --- save-tree hooks (G1b) ---
@@ -350,10 +350,21 @@ export class RoomManager {
     if (endRoomWin || clearAllWin) { this.won = true; this.onMapClear(); }
   }
 
+  // onRoomCleared (objRoom.attemptOpenExits): the SINGLE choke-point for the room-clear transition. When a
+  // room's hostiles die (or an enemy-less room is entered) this fires ONCE, atomically owning the whole
+  // bundle the original couples: record the clear (+win/cleared-sound, markCleared), open the exits AND enter
+  // nav mode (setExits -> game.navMode, which drives the player speed boost, the minimap reveal, and the
+  // chatter gate). The exit-arrow rects and the minimap both DERIVE from this state (exitsOpen / game.navMode)
+  // — no caller pokes those piecemeal, so the six room-clear signals can't drift relative to each other.
+  private onRoomCleared(): void {
+    this.markCleared();
+    this.setExits(true);
+  }
+
   /** Transition on edge crossing; gate exits behind clearing the room; returns true on room change. */
   update(): boolean {
     // open the exits the moment the room's hostiles are dead (objRoom.attemptOpenExits)
-    if (!this.exitsOpen && !this.enemiesAlive()) { this.markCleared(); this.setExits(true); }
+    if (!this.exitsOpen && !this.enemiesAlive()) this.onRoomCleared();
     const m = this.player.get(Movement);
     const o = this.grid.open;
     if (m.x < 0 && o.left) { this.enter({ x: this.loc.x - 1, y: this.loc.y }, "left"); return true; }
