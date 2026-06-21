@@ -5,6 +5,7 @@
 import { Assets, mapList, type MapMeta } from "./render/assets";
 import { Renderer, type Sprite } from "./render/renderer";
 import { drawMinimap } from "./render/minimap";
+import { healthBarColour } from "./render/healthBar";
 import { Input } from "./systems/input";
 import { AudioSystem } from "./systems/audio";
 import { GameLoop } from "./engine/loop";
@@ -440,7 +441,7 @@ function drawHud(renderer: Renderer, player: import("./engine/dispatch").Entity)
   const hp = player.get(Energy).energyFrac();
   const hasSpell = player.send("getHasSpell") as boolean;
   ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(6, 6, 104, 24);
-  ctx.fillStyle = hp > 0.3 ? "#3c9" : "#e44"; ctx.fillRect(8, 8, 100 * hp, 6);   // health (energy)
+  ctx.fillStyle = healthBarColour(hp); ctx.fillRect(8, 8, 100 * hp, 6);          // health (energy)
   const xp = player.get(Experience);
   ctx.fillStyle = "#fc4"; ctx.fillRect(8, 18, 100 * Math.min(1, xp.frac()), 4);   // experience
   // no mana bar: magic has no pool (charge is shown by the ring at the cursor); flag once acquired
