@@ -23,7 +23,10 @@ export class Dwelling extends Component {
   private group: ResidentGroup | null = null;
   private groupLeft = 0;     // units still to release in the current group
   private residents: Entity[] = [];
-  private level = 0;         // the dwelling's experience level (= its #startingLevel; dwellings gain no XP)
+  // the dwelling's experience level. Seeded from #startingLevel, then INCREMENTED once per resident released
+  // (modResidents.releaseResident:170 me.big.levelUp()) — so successive residents emerge progressively
+  // stronger (setStartingLevel(random(level))) and the dwelling's own max energy decays (energyIncPercentage).
+  private level = 0;
 
   override init(cfg: Record<string, any>): void {
     this.groups = Array.isArray(cfg["residentGroups"]) ? cfg["residentGroups"] : [];
@@ -74,14 +77,20 @@ export class Dwelling extends Component {
     const m = this.entity.get(Movement);
     const a = game.rng.next() * Math.PI * 2, r = 20 + game.rng.next() * 16;
     const e = spawn(this.group.typ, m.x + Math.cos(a) * r, m.y + Math.sin(a) * r, { animChar: spriteCharOr(this.group.typ) });
-    // modResidents: setStartingLevel(random(getExperienceLevel)). A dwelling's level = its #startingLevel
-    // (dwellings gain no XP), and NO shipped dwelling sets one → level 0 → random(0) = 0 level-ups. So
-    // residents emerge UNleveled (the prior flat 50%-of-+1 made them stronger than the original). Faithful
-    // general case: random(level) = 1..level for level>0 (always 0 for the shipped level-0 dwellings).
+    // modResidents.releaseResident: setStartingLevel(random(getExperienceLevel)) uses the dwelling's level
+    // BEFORE this release. random(level) = 1..level for level>0 (Lingo random(n) ∈ 1..n); 0 when level 0.
+    // A fresh (level-0) dwelling fields its first resident unleveled; later residents escalate as the
+    // dwelling levels up below.
     const draw = game.rng.next();                       // one rng draw (keeps the per-unit rng stream stable)
     const ups = this.level > 0 ? 1 + Math.floor(draw * this.level) : 0;
     for (let i = 0; i < ups; i++) e.send("forceLevelUp");
     game.entities.push(e);
     this.residents.push(e);
+    // me.big.levelUp() (modResidents.releaseResident:170): the dwelling gains a level per release, so the
+    // NEXT resident draws from a higher random(level), and the dwelling's own max energy decays by
+    // energyIncPercentage (-1%/level). The dwelling entity has no Experience component, so advance the
+    // tracked level and fan out #levelUp directly (only Energy responds, applying the decay).
+    this.level++;
+    this.entity.send("levelUp");
   }
 }

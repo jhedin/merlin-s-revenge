@@ -92,6 +92,29 @@ Only behavioral/real gaps (property-coverage non-gaps are catalogued in ../data-
   SFX is dropped. FIXED: #none/empty name is a no-op (claims no channel, faithful to soundMaster filtering
   #none); a genuine missing-buffer miss frees the channel. port/src/systems/audio.ts.
 
+- [x] **CPU/enemy passive energy regen missing — energyRecoverDelay defaulted 0, not 300 (SYSTEMIC, ~98 CPU
+  actors)** — objCharacter sets i[#energyRecoverDelay]=30 but objCPUCharacter OVERRIDES it to 300
+  (objCPUCharacter.txt:22): every AI unit trickles +1 energy per 300 ticks (modEnergy.recoverEnergy:216,
+  increaseEnergy(1)) unless its data overrides. NO shipped enemy sets it, so 300 is the live default. The
+  port's enemy archetype defaulted to 0 (`num("energyRecoverDelay",0) || undefined`) → enemies NEVER healed
+  passively (player path was already correct at 30). FIXED: enemy archetype defaults energyRecoverDelay to 300
+  (an explicit data value still wins). casts objCPUCharacter.txt:22 + modEnergy.txt:216 |
+  port/src/entities/archetypes.ts:302. hurt.test.ts (wounded swordOrc heals +1 on the 300th tick).
+
+- [x] **Dwelling inertia / energyIncPercentage / per-release level-up dropped (SYSTEMIC — all dwellings)** —
+  act_dwelling inherits #inertia 80 and #energyIncPercentage -1, and modResidents.releaseResident:170 calls
+  me.big.levelUp() after EACH resident release. So a dwelling (a) resists knockback (inertia 80), (b) levels
+  up once per release → successive residents emerge progressively stronger (setStartingLevel(random(level)),
+  random(n)∈1..n), and (c) its own max energy decays 1%/level (energyIncPercentage -1). resolveActor merges
+  inertia/energyIncPercentage onto every dwelling, but spawnDwelling forwarded neither, and Dwelling.releaseOne
+  never levelled the building (it pinned level at #startingLevel=0 → all residents level 0 — my earlier fix #8
+  was INCOMPLETE here). FIXED: spawnDwelling passes inertia(80)/energyIncPercentage(-1)/startingLevel;
+  releaseOne increments the dwelling level and fans out #levelUp per release; Energy.levelUp now applies a
+  NEGATIVE increment (was guarded inc>0, silently dropping the dwelling decay; floored at max≥1). casts
+  act_dwelling.txt + modResidents.txt:159-170 + modEnergy levelUpEnergy | port/src/entities/archetypes.ts
+  (spawnDwelling) + components/dwelling.ts (releaseOne) + components/combat.ts (levelUp). dwelling.test.ts
+  (resident escalation: first level 0, later escalate, level≤release index).
+
 - [x] **Chatter trigger reach hardcoded ±320 — ignored per-actor #collisionRect (kingStones/armySummonStones/
   berlinTV)** — objChatter fires via checkForCollisionWithPlayer → CollisionCheck(me.big, player)
   (objGameObject.txt:271), testing the player against the chatter's OWN #collisionRect (expanded by the

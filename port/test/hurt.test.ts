@@ -43,6 +43,23 @@ describe("Hurt feedback (flash + i-frames)", () => {
     expect(en.energy).toBe(hp0 - 20);        // continuous damage
   });
 
+  // objCPUCharacter overrides objCharacter's energyRecoverDelay(30) -> 300: a wounded enemy slowly trickles
+  // +1 energy per 300 ticks (modEnergy.recoverEnergy) unless its data sets otherwise. swordOrc sets none, so
+  // it must regenerate — the port previously defaulted CPU regen to 0 (never healed).
+  it("a wounded CPU enemy slowly regenerates (energyRecoverDelay defaults to 300, not 0)", () => {
+    const e = spawnEnemy("swordOrc", 0, 0, { animChar: "swordOrc" });
+    e.get(Movement).inertia = 0;
+    game.entities = [e];
+    const en = e.get(Energy); const full = en.energy;
+    e.send("takeHit", 30, 0, -1);
+    const wounded = en.energy;
+    expect(wounded).toBe(full - 30);
+    for (let i = 0; i < 299; i++) e.send("update");
+    expect(en.energy).toBe(wounded);          // not yet — the 300-tick counter hasn't fired
+    e.send("update");
+    expect(en.energy).toBe(wounded + 1);      // +1 trickle on the 300th tick
+  });
+
   it("a one-shot action (grave) holds its last frame instead of looping", () => {
     // grave is one-shot; a dead entity routes through it deterministically via pickAction
     game.assets = { index: { anims: { foo_grave: { delay: 1, frames: [{}, {}, {}] }, foo_stand: { delay: 1, frames: [{}] } } }, img: () => ({}) } as any;

@@ -89,8 +89,15 @@ export function spawnDwelling(actorName: string, x: number, y: number, animChar 
   const dieSound = typeof d["dieSound"] === "string" ? (d["dieSound"] as string) : undefined;
   const e = DwellingArchetype.create(makeEntityId());
   e.type = game.teamMaster.isPlayerSide(team) ? "ally" : "enemy"; // targetable/destroyable; a #village hut is friendly
+  // act_dwelling inherits #inertia 80 (knockback-resistant building) and #energyIncPercentage -1 (its max
+  // energy shrinks 1% each time it levels up — i.e. per resident released). Both come through resolveActor
+  // but were not forwarded to build; pass them so a dwelling resists reel and decays as it spawns.
+  const num = (k: string, dflt: number) => (typeof d[k] === "number" ? (d[k] as number) : dflt);
   // a dwelling joins the roster as a #teamBuildings member (so hunters with building-roles can target it)
-  return e.build({ x, y, walkSpeed: 0, energy, team, teamRole: "#teamBuildings", animChar, box: 24, residentGroups: groups, budget, dieSound, actorType: actorName });
+  return e.build({ x, y, walkSpeed: 0, energy, team, teamRole: "#teamBuildings", animChar, box: 24,
+    inertia: num("inertia", 80), energyIncPercentage: num("energyIncPercentage", -1),
+    startingLevel: num("startingLevel", 0),
+    residentGroups: groups, budget, dieSound, actorType: actorName });
 }
 
 export function spawnPlayer(x: number, y: number): Entity {
@@ -299,7 +306,11 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     dieSound: typeof d["dieSound"] === "string" ? d["dieSound"] : undefined,  // played on death
     experienceImWorth: num("experienceImWorth", 0) || undefined,             // XP this unit grants
     energyIncPercentage: num("energyIncPercentage", 0) || undefined,
-    energyRecoverDelay: num("energyRecoverDelay", 0) || undefined,
+    // objCPUCharacter overrides objCharacter's energyRecoverDelay(30) -> 300 (objCPUCharacter.txt:22): every
+    // CPU/enemy/ally unit slowly regens +1 energy per 300 ticks (modEnergy.recoverEnergy) unless it sets its
+    // own. No shipped enemy sets it in data, so the inherited 300 is the live default — NOT 0 (which would
+    // give enemies no passive regen at all). An explicit data value still wins.
+    energyRecoverDelay: num("energyRecoverDelay", 300),
     // E1 reincarnation: on a lethal death, split into these actors at the corpse loc (Reincarnate).
     // Both #reincarnateAs and #reincarnateInto are honored; #none entries skipped; bare symbol -> [one].
     reincarnateAs: d["reincarnateAs"],

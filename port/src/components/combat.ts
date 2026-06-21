@@ -92,10 +92,13 @@ export class Energy extends Component {
     next();
   }
 
-  // levelUpEnergy: max += baseEnergy * energyIncPercentage/100, heal by the same increment
+  // levelUpEnergy (modEnergy): max += baseEnergy * energyIncPercentage/100, heal by the same increment.
+  // The increment can be NEGATIVE: dwellings carry energyIncPercentage -1, so each level (= each resident
+  // released) shrinks their max. Apply inc != 0 (was inc > 0, which silently dropped the dwelling decay);
+  // floor max at 1 so a long-lived dwelling can't collapse to a non-positive cap.
   levelUp(next: NextFn): void {
     const inc = Math.round(this.baseEnergy * this.incPct / 100);
-    if (inc > 0) { this.max += inc; this.energy = Math.min(this.max, this.energy + inc); }
+    if (inc !== 0) { this.max = Math.max(1, this.max + inc); this.energy = Math.min(this.max, this.energy + inc); }
     next();
   }
 
