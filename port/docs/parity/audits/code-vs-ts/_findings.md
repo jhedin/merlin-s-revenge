@@ -76,3 +76,10 @@ flagged "missing filter" was a shallow over-flag; verified present).
 objAiAttack, objAiCPUSpellCaster CLEAN. objChatter gaps 2/3 (the gate sub-parts) folded into the nav-mode fix;
 gap 4 (second-touch re-trigger) is a defensible one-fire (documented minor). objPlayerCharacter gap 2
 (walk-speed lever) = fix #15; gap 4 (potion lever) = documented deviation.
+
+## CONFIRMED gaps NOT yet fixed (surfaced for scope decision)
+- [ ] **character energy roll-over UI missing (gCharacterEnergyRolloverOn=1)** — characterEnergyRollOverMaster
+  displays a unit's health/level/XP bars when the MOUSE ROLLS OVER it (on in Merlin's Revenge per
+  GameSpecific.ls; off in the generic template). The port has NO implementation (no hover-health UI). This is
+  a UI-layer feature (no gameplay-mechanic effect), so it's catalogued here pending a scope decision rather
+  than auto-built (it needs mouse-over hit-testing + bar rendering). casts/master_objects/characterEnergyRollOverMaster.txt.
