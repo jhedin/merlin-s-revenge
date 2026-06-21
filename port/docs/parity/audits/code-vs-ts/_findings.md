@@ -99,3 +99,15 @@ gap 4 (second-touch re-trigger) is a defensible one-fire (documented minor). obj
   gMaxFriends -> FIXED (#22). gBounceyWalls=0 -> matches (both off; non-gap). gMapBoundary=128 -> a visual
   play-area boundary line; render/UI scope, deferred. gBulletsCollideWithBackground=0 -> matches (bullets
   pass through walls). g3DMode=0 -> matches. gExitArrows=1 -> port has exit arrows.
+
+- [x] **ghost damage immunity missing (objCPUCharacter.takeHit amGhost gate)** — objCPUCharacter.takeHit:200
+  `if me.amGhost() then return` — a true #ghost (monkGhost, #ghost:true) takes NO hit from attacks; it's
+  INVULNERABLE and ends only by possessing a monk. The port's ghosts took normal damage (killable). FIXED:
+  Movement.takeHit ignores external attacks for a ghost (attackerId != self), while the possession
+  self-finish (CpuAI sends takeHit with attackerId == its own id) still lands. greyGhost/bat are
+  collisionDetection:false (pass walls) but NOT #ghost, so they stay damageable. casts objCPUCharacter.txt:198-200
+  | port/src/components/movement.ts + entities/archetypes.ts. knockback.test.ts (monkGhost immune to external,
+  dies to self-finish; greyGhost damageable).
+
+## CLEAN (cont.)
+objAiCPUGhost, objAiCPUSummoner, actorMaster, structMaster (48 #attack defaults all match).

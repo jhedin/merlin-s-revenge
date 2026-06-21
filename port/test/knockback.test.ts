@@ -113,3 +113,29 @@ describe("ghost/no-collision units pass through terrain (collisionDetection:fals
     expect(m.x).toBeGreaterThanOrEqual(m.box / 2 - 0.001); // clamped at the left bound, not gone negative
   });
 });
+
+// objCPUCharacter.takeHit amGhost gate: a true #ghost (monkGhost) is invulnerable to external attacks;
+// only its own possession-finish (attackerId == self) lands. (greyGhost/bat pass walls but ARE damageable.)
+describe("ghost damage immunity (#ghost amGhost gate)", () => {
+  beforeEach(() => {
+    game.grid = new CollisionGrid(40, 40, 32);
+    game.entities = [];
+    game.assets = { index: { anims: {} }, img: () => null } as any;
+  });
+
+  it("monkGhost ignores external attacks but dies to its own possession-finish; greyGhost stays damageable", () => {
+    const ghost = spawnEnemy("monkGhost", 100, 100, { animChar: "monkGhost" });
+    const en = ghost.get(Energy); const hp0 = en.energy;
+    ghost.send("takeHit", 99999, 0, 42, 1);          // external attacker (id 42)
+    expect(en.energy).toBe(hp0);                       // no damage — immune
+    expect(ghost.send("isDead")).toBe(false);
+    ghost.send("takeHit", 99999, 0, ghost.id, 1);      // its OWN possession-finish (attackerId == self)
+    expect(ghost.send("isDead")).toBe(true);           // lands -> dies
+
+    const grey = spawnEnemy("greyGhost", 200, 200, { animChar: "greyGhost" });
+    grey.get(Movement).inertia = 0;
+    const ge = grey.get(Energy); const gh0 = ge.energy;
+    grey.send("takeHit", 5, 0, 42, 1);                 // collisionDetection:false but NOT #ghost -> damageable
+    expect(ge.energy).toBeLessThan(gh0);
+  });
+});

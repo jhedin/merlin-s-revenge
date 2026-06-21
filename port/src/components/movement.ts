@@ -33,6 +33,9 @@ export class Movement extends Component {
   // autoConstrainToPlayArea: a collisionDetection:false UNIT (ghost) is clamped to the room bounds (it
   // ignores walls but can't leave the play area). Bullets pass through AND exit freely (not set).
   constrainToArea = false;
+  // #ghost (objCPUCharacter.takeHit: `if me.amGhost() then return`): a true ghost (monkGhost) takes NO hit
+  // from external attackers — it's invulnerable; only its own possession-finish (attackerId == self) lands.
+  ghost = false;
   facingLeft = false;
   hitX = false; hitY = false;  // wall contact this tick (projectiles read these)
   // objBullet.checkCollisions: bullets do NOT collide with terrain (gBulletsCollideWithBackground is never
@@ -52,6 +55,7 @@ export class Movement extends Component {
     if (typeof cfg["inertia"] === "number") this.inertia = Math.max(0, Math.min(100, cfg["inertia"]));
     this.walkSpeedIncLevel = typeof cfg["walkSpeedIncLevel"] === "number" ? cfg["walkSpeedIncLevel"] : 0;
     this.constrainToArea = cfg["constrainToArea"] === true;
+    this.ghost = cfg["ghost"] === true;
   }
 
   // modMoveToLoc.internalEvent #levelUp -> incWalkSpeedLevel: bump the walk-speed cap by the per-level
@@ -72,6 +76,9 @@ export class Movement extends Component {
   // coupling. Player inertia is 0 (undamped attacking); heavy orcs (inertia 60–80) take ~20–40% — tanky.
   // See docs/parity/plans/K1-faithful-damage.md.
   takeHit(next: NextFn, vx = 0, vy = 0, attackerId = -1, mult = 1): any {
+    // amGhost gate (objCPUCharacter.takeHit:200): a ghost ignores ALL external attacks (no damage, no
+    // knockback, no chain) — only its OWN possession-finish (attackerId == its id) is allowed through.
+    if (this.ghost && attackerId !== this.entity.id) return;
     const d = (100 - this.inertia) / 100;
     const dvx = vx * d, dvy = vy * d;                 // the inertia-damped collision vector (modGameObject)
     if (!this.entity.send("isReelProof")) {           // #reelProof: no knockback impulse (still takes damage)
