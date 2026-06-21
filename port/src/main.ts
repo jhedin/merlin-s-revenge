@@ -28,7 +28,7 @@ import { sweepBullets, bulletPoolStats } from "./systems/bullets";
 import { sweepSpells } from "./systems/spells";
 import { SpellActor } from "./components/spellActor";
 import { rebuildCombatSubstrate } from "./systems/combatTick";
-import { saveGame, loadSave, buildSave, clearLegacy, pStateFromSave } from "./systems/save";
+import { saveGame, loadSave, buildSave, clearLegacy, pStateFromSave, hasSave } from "./systems/save";
 import { parseCutscene, loadCutscene } from "./data/cutscene";
 import { CutscenePlayer } from "./scenes/cutscenePlayer";
 import { WeaponPalette } from "./scenes/weaponPalette";
@@ -165,6 +165,7 @@ async function main() {
     if (s.map !== loaded.meta.id) { flash("save is for a different map"); return false; }
     game.armyMaster.restoreFromSave(s.army);
     game.potionMaster.restoreFromSave(s.potions);
+    if (s.sound) audio.setMuted(!!s.sound.muted); // soundMaster.restoreFromSave: restore the mute state
     rooms.restoreCleared(s.rooms.filter((r) => r.cleared).map((r) => r.num));
     rooms.restorePState(pStateFromSave(s));            // every visited room's exact state (H3)
     player.send("restoreFromSave", s.player);          // player chain (energy/xp/mana/weapons/medikit/lives)
@@ -263,7 +264,7 @@ async function main() {
   const pauseMenu = new Menu("PAUSED", [
     { label: "Resume", action: () => scene.closeOverlay() },
     { label: "Save game", action: () => { doSave(); flash("game saved"); scene.closeOverlay(); }, shadowed: () => scene.isCutscene() },
-    { label: "Load game", action: () => { if (doLoad()) flash("game loaded"); scene.closeOverlay(); } },
+    { label: "Load game", action: () => { if (doLoad()) flash("game loaded"); scene.closeOverlay(); }, shadowed: () => !hasSave() },
     { label: "Show army", action: openScreen("showArmy") },
     { label: "Instructions", action: openScreen("instructions") },
     { label: "Choose keys", action: openScreen("keyConfig") },

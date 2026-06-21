@@ -224,10 +224,12 @@ export class AudioSystem {
     this.channelAt(MUSIC_CHANNEL).name = "empty";
   }
 
-  toggleMute(): boolean {
-    this.muted = !this.muted;
+  toggleMute(): boolean { this.setMuted(!this.muted); return this.muted; }
+
+  /** soundMaster restoreFromSave: apply a persisted mute state (and re-gain the live channels). */
+  setMuted(m: boolean): void {
+    this.muted = m;
     if (this.master) this.master.gain.value = this.muted ? 0 : 1;
     if (this.musicEl) this.musicEl.volume = this.muted ? 0 : this.musicVol;
-    return this.muted;
   }
 }
