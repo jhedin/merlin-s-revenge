@@ -117,6 +117,24 @@ describe("K12 chatter cutscenes", () => {
     expect(fired).toEqual([]);
     expect(stone.send("getPerformed")).toBe(false);
   });
+
+  // The trigger box is per-actor, not a shared ±320: kingStones carries rect(-100,-50,100,50), so its reach
+  // is ±112 x / ±62 y (half-extent + player edge 12). A player 200px away — well WITHIN a stone's ±332 box —
+  // must NOT trip kingStones, but a player at ±100/±55 must. Guards the hardcoded-reach regression.
+  it("the Chatter trigger box honors the per-actor #collisionRect (kingStones is small, not ±320)", () => {
+    const fired: string[] = [];
+    game.scene = { playInGameCutScene: (n) => fired.push(n), isInGameCutscene: () => false };
+    const player = spawnPlayer(300, 200); game.player = player; game.entities.push(player);
+    // 200px to the right: inside a stones' ±332 box, but outside kingStones' ±112 x reach -> no trigger.
+    const ks = spawnChatter("kingStones", 100, 200); game.entities.push(ks);
+    ks.send("update");
+    expect(fired).toEqual([]);
+    expect(ks.send("getPerformed")).toBe(false);
+    // move the player to within kingStones' actual zone (±112 x / ±62 y) -> it fires.
+    player.get(Movement).x = 195; player.get(Movement).y = 245; // dx=95<=112, dy=45<=62
+    ks.send("update");
+    expect(fired).toEqual(["rescueKing"]);
+  });
 });
 
 // ── K16: cutscene verbs (prop / walkScroll / random-flash) ───────────────────────────────────────

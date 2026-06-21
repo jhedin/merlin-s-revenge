@@ -79,5 +79,6 @@ export function spawnChatter(actorName: string, x: number, y: number): Entity {
     animChar: spriteCharOr(actorName, "blackOrc"),
     actorType: actorName,
     scriptToPerform: str(d, "scriptToPerform", ""),
+    collisionRect: d["collisionRect"], // per-actor trigger box (objChatter checkForCollisionWithPlayer)
   });
 }

@@ -92,6 +92,17 @@ Only behavioral/real gaps (property-coverage non-gaps are catalogued in ../data-
   SFX is dropped. FIXED: #none/empty name is a no-op (claims no channel, faithful to soundMaster filtering
   #none); a genuine missing-buffer miss frees the channel. port/src/systems/audio.ts.
 
+- [x] **Chatter trigger reach hardcoded ±320 — ignored per-actor #collisionRect (kingStones/armySummonStones/
+  berlinTV)** — objChatter fires via checkForCollisionWithPlayer → CollisionCheck(me.big, player)
+  (objGameObject.txt:271), testing the player against the chatter's OWN #collisionRect (expanded by the
+  player's edge). The stones carry rect(-320,-320,320,320), but kingStones is rect(-100,-50,100,50),
+  armySummonStones rect(-16,-16,16,16), berlinTV rect(-100,-1,100,100) — DIFFERENT trigger zones. The port's
+  Chatter hardcoded TRIGGER_REACH=320 for ALL of them, so kingStones/armySummonStones would have fired their
+  cutscene from ~3–20x too far away (out of context). FIXED: Chatter derives per-axis reach from the actor's
+  #collisionRect half-extent + the player edge (12); falls back to ±320 only if an actor carries no rect.
+  Threaded collisionRect through spawnChatter. casts/general_functions/CollisionCheck().txt + objGameObject.txt:271 |
+  port/src/components/chatter.ts + entities/objTypes.ts (spawnChatter). phase_k_shell.test.ts kingStones case.
+
 - [x] **#runReload data property ignored** (bat, caveBat, evilTv, vultureGuard — all #objAiCPU+#naturalRanged).
   Original gates kiting purely on the #runReload data flag (objCPUCharacter getRunReload, default false);
   the port DERIVED runReload from AiType only, so these 4 explicit kiters stood still after firing instead
