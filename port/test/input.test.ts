@@ -25,7 +25,7 @@ describe("input control schemes", () => {
     expect(inp.keyForControl("#spell1")).toBe("1");
     expect(inp.keyForControl("#spell2")).toBe("2");
     expect(inp.keyForControl("#spell9")).toBe("9");
-    expect(inp.keyForControl("#weaponSelector")).toBe("Q");
+    expect(inp.keyForControl("#weaponSelector")).toBe("E");
     expect(inp.keyForControl("#army")).toBe("C");
     expect(inp.keyForControl("#gmg")).toBe("G");
     // none of these may leak the lowercased control name through the default branch

@@ -36,6 +36,8 @@ export interface GameContext {
   magicLimit: MagicLimitMaster;
   /** effects: cosmetic particle layer (starMaster.experienceStar level-up stars) — no combat interaction */
   effects: Effects;
+  /** weaponPalette: modWeaponSelector overlay (the #weaponSelector key opens a click-to-pick weapon palette) */
+  weaponPalette?: { displaying: boolean; open(p: Entity): void; tick(input: Input, p: Entity): void };
   /** spawn an enemy by actor name (set in main; lets Dwelling produce units without an import cycle) */
   spawnEnemy?: (name: string, x: number, y: number, opts?: { animChar?: string; ranged?: boolean }) => Entity;
   /** spawn a unit routed by its real team (ally if friendly, else enemy) — used by dwellings */

@@ -144,6 +144,11 @@ export class PlayerControl extends Component {
     // spell. selectSpell is 0-indexed, so #spellN -> n-1. (Save/load moved off 1/2 to F5/F9 in main.ts.)
     for (let n = 1; n <= 9; n++) if (input.pressed(String(n))) this.wm().selectSpell(n - 1);
 
+    // #weaponSelector (objAiPlayer.interpretGameKeys -> displayWeaponSelector): the E key opens the weapon
+    // palette; while it's up, a click picks a weapon (so the primary fire is suppressed, below).
+    if (input.pressed("e")) game.weaponPalette?.open(this.entity);
+    if (game.weaponPalette?.displaying) game.weaponPalette.tick(input, this.entity);
+
     // aim point: the cursor in world space, else the auto-acquired target (teamMaster.findTarget over
     // data allegiance/roles — same logic every unit uses), else current facing
     const cur = input.cursor();
@@ -156,7 +161,8 @@ export class PlayerControl extends Component {
     const mana = this.entity.get(Mana);
     const magic = wm.getMagicAttack();           // the owned magic weapon (energyBlast), or null
     const melee = wm.getMeleeAttack();           // the current melee weapon (#punch / #merlinSword)
-    const primary = input.mouseDown() || input.held(" ");
+    // suppress fire while the weapon palette is open (a click there picks a weapon, it doesn't cast).
+    const primary = (input.mouseDown() || input.held(" ")) && !game.weaponPalette?.displaying;
     const gmg = this.gmgOn;
 
     // objAiPlayer.internalEvent #gmgTurnedOn/#gmgTurnedOff: toggling the GMG while a charge is held

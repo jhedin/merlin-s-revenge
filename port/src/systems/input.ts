@@ -103,7 +103,7 @@ export class Input {
       // WASD bindings (keyMaster: #weaponSelector=Q key12, #army=C key8, #gmg=G key14) for faithful display.
       case "gmg": return "G";
       case "army": return "C";
-      case "weaponselector": return "Q";
+      case "weaponselector": return "E"; // the port binds the weapon palette to E (Q is the wizard-summon key)
       default: {
         const sp = /^spell([1-9])$/.exec(c);
         if (sp) return sp[1]!;            // #spell1..#spell9 -> "1".."9"

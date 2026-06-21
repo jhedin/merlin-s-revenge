@@ -31,6 +31,7 @@ import { rebuildCombatSubstrate } from "./systems/combatTick";
 import { saveGame, loadSave, buildSave, clearLegacy, pStateFromSave } from "./systems/save";
 import { parseCutscene, loadCutscene } from "./data/cutscene";
 import { CutscenePlayer } from "./scenes/cutscenePlayer";
+import { WeaponPalette } from "./scenes/weaponPalette";
 import { Menu } from "./scenes/menu";
 import { SceneManager, type CutScene } from "./scenes/sceneManager";
 import { Screens } from "./scenes/screens";
@@ -117,6 +118,8 @@ async function main() {
   const unlock = () => { audio.unlock(); audio.playMusic("baroque_rock_v1"); window.removeEventListener("keydown", unlock); window.removeEventListener("pointerdown", unlock); };
   window.addEventListener("keydown", unlock); window.addEventListener("pointerdown", unlock);
   initContext({ input, assets, audio, tilePx: tile, entities: [], player: null, tick: 0, spawnEnemy, spawnUnit, spawnAlly, spawnFromSymbol });
+  const weaponPalette = new WeaponPalette();
+  game.weaponPalette = weaponPalette; // modWeaponSelector overlay (opened by the E key in PlayerControl)
   // teamMaster.pUnitMap sizing from the current map (getTileLoc: world loc -> tile, origin 0,0). Rooms
   // render from (0,0) at map.tilePx, so origin 0,0 / tile=map.tilePx (fallback 32) matches getTileLoc.
   game.teamMaster.unitMap.configure(tile || 32, 0, 0);
@@ -394,6 +397,7 @@ async function main() {
       }
       drawHealthRollover(renderer, game.input.cursor(), game.entities); // characterEnergyRollOverMaster (gCharacterEnergyRolloverOn=1)
       drawCharge(renderer, player);
+      weaponPalette.render(renderer, player, assets); // modWeaponSelector palette (over the world, under the HUD)
       drawHud(renderer, player);
       // 5-state minimap (modMiniMap): #cur/#clr/#inf (+ data #fre/#spe) with a proximity distance blend.
       const pm = player.get(Movement);
