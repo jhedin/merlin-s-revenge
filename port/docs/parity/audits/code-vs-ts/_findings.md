@@ -111,3 +111,14 @@ gap 4 (second-touch re-trigger) is a defensible one-fire (documented minor). obj
 
 ## CLEAN (cont.)
 objAiCPUGhost, objAiCPUSummoner, actorMaster, structMaster (48 #attack defaults all match).
+
+## CONFIRMED gaps NOT yet fixed (surfaced for scope decision)
+- [ ] **extra-life pickup accumulation not ported (modExtraLives.lifePowerUpCollected)** — collecting
+  #lifePowerUp (=#hairGem) powerups accumulates toward an extra life (numPowerUpsPerLife=100). objPowerUp.txt:67
+  calls player.lifePowerUpCollected(); the port has addExtraLife (direct) but not the 100-per-life FSM.
+  REACHABILITY UNCERTAIN: gPlayerHair=0 (GameSpecific) — confirm whether #hairGem actually spawns before
+  building the accumulator. Core lives/respawn/game-over flow is CLEAN (modExtraLives audit). Deferred.
+
+## CLEAN (cont.)
+modCharacterAttackProperties (all per-level stat growth faithful incl. the walkSpeed fix), cutSceneMaster
+(all 31 cutscene verbs implemented), armyMaster (bank/withdraw/re-field reserve faithful).
