@@ -83,3 +83,19 @@ gap 4 (second-touch re-trigger) is a defensible one-fire (documented minor). obj
   GameSpecific.ls; off in the generic template). The port has NO implementation (no hover-health UI). This is
   a UI-layer feature (no gameplay-mechanic effect), so it's catalogued here pending a scope decision rather
   than auto-built (it needs mouse-over hit-testing + bar rendering). casts/master_objects/characterEnergyRollOverMaster.txt.
+
+- [x] **per-team concurrent cap not enforced (gMaxEnemies=16 / gMaxFriends=12, reservationsMaster)** —
+  reservationsMaster.getPermissionToRelease caps each team at maxMembers (gMaxFriends=12 player side,
+  gMaxEnemies=16 enemy; teamOverride halves a cap>5). Dwellings and summons must get permission so a team
+  can't flood past its cap. The port only had a per-dwelling soft cap of 6 and NO per-team cap — so the
+  player could summon UNLIMITED allies (summon.ts was explicitly "never headcount-gated") and multiple
+  dwellings could overflow the enemy cap. FIXED: teamMaster.atCapacity(team, pending) (12/16, teamOverride
+  halving); Dwelling.releaseOne and summonUnit gate on it. casts reservationsMaster.txt:56-65 +
+  GameSpecific.ls (gMaxEnemies/gMaxFriends) | port/src/systems/teams.ts + components/dwelling.ts + summon.ts.
+  team_cap.test.ts.
+
+## GameSpecific globals cross-check (extracted/.../GameSpecific.ls)
+- gNavMode=1 -> FIXED (#20). gCharacterEnergyRolloverOn=1 -> catalogued UI gap (unbuilt). gMaxEnemies/
+  gMaxFriends -> FIXED (#22). gBounceyWalls=0 -> matches (both off; non-gap). gMapBoundary=128 -> a visual
+  play-area boundary line; render/UI scope, deferred. gBulletsCollideWithBackground=0 -> matches (bullets
+  pass through walls). g3DMode=0 -> matches. gExitArrows=1 -> port has exit arrows.

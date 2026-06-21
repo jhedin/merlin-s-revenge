@@ -62,6 +62,11 @@ export function summonUnit(attack: AttackData, charge: number, x: number, y: num
   const team = (owner?.send("getTeam") as string) || attack.residentTeamCategory || "#aldevar";
   const isArmySummon = attack.name === "#armySummon" || attack.name === "armySummon";
 
+  // reservationsMaster.getPermissionToRelease: a summon can't push the team past its concurrent cap
+  // (gMaxFriends=12 player-side / gMaxEnemies=16). At capacity the spell fizzles (no fresh spawn, no
+  // reserve withdrawal) — faithful to createUnit returning #none when there's no free slot.
+  if (game.teamMaster.atCapacity(team)) return null;
+
   // armyMaster.createUnit's lookupArmyDetails branch: a banked record (highest level) is withdrawn,
   // re-fielded at its saved level, and consumed. #armySummon REQUIRES one (else #none); other summons fall
   // through to a fresh spawn when the reserve is empty.
