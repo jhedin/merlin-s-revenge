@@ -7,7 +7,7 @@ import { game } from "../game/context";
 import { ColourTransform } from "./colourTransform";
 
 export class Energy extends Component {
-  static handles = ["takeHit", "takeHeal", "update", "levelUp", "isDead", "getKilledInAction", "energyFrac", "glowGold", "restoreEnergy", "reviveFull", "colourTransformFin", "addSaveData", "restoreFromSave"];
+  static handles = ["takeHit", "takeHeal", "increaseEnergy", "update", "levelUp", "isDead", "getKilledInAction", "energyFrac", "glowGold", "restoreEnergy", "reviveFull", "colourTransformFin", "addSaveData", "restoreFromSave"];
   private ct(): ColourTransform | undefined { return this.entity.tryGet(ColourTransform); }
   energy = 100; max = 100; dead = false; dieSound = "";
   goldGlow = 0;               // glowGold() frames (cosmetic, rendered as a gold tint)
@@ -78,6 +78,14 @@ export class Energy extends Component {
   // glowGold (modEnergy.glowGold): plays the gold->fadeGoldBlack heal tint via ColourTransform.
   glowGold(next: NextFn): void { this.goldGlow = 12; this.ct()?.glowGold(); return next(); }
 
+  // modEnergy.increaseEnergy (133-147): add `amount` to energy (capped at max), and stop the low-health red
+  // glow once back above the threshold. Crucially NO gold glow — that belongs to takeHeal (heal-SPELL
+  // impacts) only. The pickup +25 bonus and the maxikit full-heal go through HERE, not takeHeal.
+  increaseEnergy(next: NextFn, amount = 0): any {
+    this.energy = Math.min(this.max, this.energy + amount);
+    if (this.max > 0 && (this.energy / this.max) * 100 >= Energy.GLOW_RED_PCT) this.ct()?.stopGlowRed();
+    return next(amount);
+  }
   // modEnergy.restoreEnergy: refill to max (used by modExtraLives.respawn after death).
   restoreEnergy(next: NextFn): void { this.energy = this.max; next(); }
   // reviveFull: clear the dead latch + refill (an in-place respawn brings the actor back to life).

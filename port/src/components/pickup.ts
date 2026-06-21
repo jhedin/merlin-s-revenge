@@ -65,7 +65,7 @@ export class Pickup extends Component {
       case "heal": player.send("medikitCollected", 1); break;
       // maxikit (objPlayerMerlinCharacter.medikitCollected #maxikit branch): an INSTANT FULL heal
       // (increaseEnergy(maxEnergy-energy)) — NOT a banked gradual kit, and NOT the +25 bonus.
-      case "maxikit": player.send("takeHeal", 1e9, 0, -1); break;
+      case "maxikit": player.send("increaseEnergy", 1e9); break; // full top-up via increaseEnergy (NO gold glow)
       case "speed": player.get(Movement).maxSpeed += 0.6; break;
       case "sword": player.get(PlayerControl).equipSword(scrollAttack("sword")); break; // merlinSword: addWeapon
       // energyPunch (I4): a #magicMelee melee-weapon scroll (newScrollCollected -> addWeapon). Granted
@@ -93,9 +93,9 @@ export class Pickup extends Component {
     }
     // medikitCollected / newScrollCollected / potionCollected ALL end with increaseEnergy(pBonusEnergy=25):
     // collecting ANY medikit/scroll/sword/potion grants a flat +25 health. EXCEPT maxikit (its full heal
-    // supersedes the bonus) and gmg (gmgCollected has no bonus). takeHeal(12.5,0) = (12.5+0)·2 = +25, capped
-    // at maxEnergy. objPlayerMerlinCharacter.txt:156,166,200.
-    if (this.effect !== "maxikit" && this.effect !== "gmg") player.send("takeHeal", 12.5, 0, -1);
+    // supersedes the bonus) and gmg (gmgCollected has no bonus). Goes through increaseEnergy, NOT takeHeal —
+    // the original's pickup bonus is increaseEnergy(25) with NO gold glow (that's heal-spell-only).
+    if (this.effect !== "maxikit" && this.effect !== "gmg") player.send("increaseEnergy", 25);
     // startTempInvince (objPlayerMerlinCharacter:153,170,199): collecting ANY pickup grants
     // pTempInvinceTime=200 frames of invincibility (a safety window, distinct from the post-hit i-frames).
     player.send("grantInvince", 200);
