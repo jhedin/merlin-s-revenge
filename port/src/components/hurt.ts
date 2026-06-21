@@ -6,7 +6,7 @@ import { Component, type NextFn } from "../engine/dispatch";
 import { ColourTransform } from "./colourTransform";
 
 export class Hurt extends Component {
-  static handles = ["update", "takeHit", "isInvince", "isHurt", "isReelProof", "animAction"];
+  static handles = ["update", "takeHit", "isInvince", "isHurt", "isReelProof", "animAction", "grantInvince"];
   invinceFrames = 0; // >0 for the player; enemies flash but take continuous damage
   reelProof = false; // #reelProof: knockback/reel-immune (skelitonHead) — still takes damage, no reel
   private flashT = 0;
@@ -49,6 +49,10 @@ export class Hurt extends Component {
     }
     return r;
   }
+
+  // startTempInvince (modInvince): a pickup collect grants pTempInvinceTime=200 frames of invincibility
+  // (the post-hit i-frame window is separate/shorter). Latches the longer of the two.
+  grantInvince(next: NextFn, frames = 200): void { this.invinceT = Math.max(this.invinceT, frames); next(); }
 
   isInvince(): boolean { return this.invinceT > 0; }
   isHurt(): boolean { return this.flashT > 0; }

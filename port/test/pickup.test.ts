@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { spawnPlayer, spawnPickup } from "@/entities/archetypes";
+import { Hurt } from "@/components/hurt";
 import { Energy } from "@/components/combat";
 import { Medikit } from "@/components/medikit";
 import { Mana } from "@/components/mana";
@@ -26,6 +27,20 @@ describe("pickups", () => {
     for (let i = 0; i < 30; i++) med.update(() => {});
     expect(player.get(Energy).energy).toBeGreaterThan(45);         // gradual heal in progress
     expect(player.get(Energy).energy).toBeLessThan(player.get(Energy).max); // still gradual
+  });
+  it("collecting a pickup grants 200 frames of invincibility (startTempInvince)", () => {
+    game.grid = new CollisionGrid(20, 20, 32);
+    const player = spawnPlayer(100, 100); game.player = player;
+    expect(player.send("isInvince")).toBe(false);
+    const pickup = spawnPickup("heal", 100, 100);
+    game.entities = [player, pickup];
+    pickup.send("update");
+    expect(player.send("isInvince")).toBe(true);       // armed on collect
+    const hurt = player.get(Hurt);
+    for (let i = 0; i < 199; i++) (hurt as any).update(() => {});
+    expect(player.send("isInvince")).toBe(true);       // still up near the end of the 200-frame window
+    (hurt as any).update(() => {});
+    expect(player.send("isInvince")).toBe(false);      // expires after 200 frames
   });
   it("a maxikit is an INSTANT FULL heal (medikitCollected #maxikit), not a banked kit", () => {
     game.grid = new CollisionGrid(20, 20, 32);

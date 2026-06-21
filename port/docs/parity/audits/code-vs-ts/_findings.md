@@ -39,3 +39,14 @@ modAttack, modEnergy, modExperience, modMoveToLoc, objCharacter, objBullet, objG
 
 ## CLEAN (cont.)
 objMine, objCPUCharacter, objDwelling, objSpell (orb phases via direct position-advance — non-gap).
+
+- [x] **pickup collect didn't grant temp invincibility (startTempInvince)** — objPlayerMerlinCharacter's
+  medikitCollected/newScrollCollected/potionCollected (153,170,199) all call startTempInvince ->
+  pTempInvinceTime=200 frames of invincibility on collecting ANY pickup (a safety window, separate from the
+  shorter post-hit i-frames). The port granted none. FIXED: Hurt.grantInvince(frames) latches the longer
+  window; pickup.apply() calls grantInvince(200) on every collect. casts modInvince.txt:30,81 +
+  objPlayerMerlinCharacter.txt:153,170,199 | port/src/components/hurt.ts + pickup.ts. pickup.test.ts.
+
+## CLEAN (cont.)
+modSpellMultistage, modFreeze, modHeal, objAiCPU (heal 100%-health skip ALREADY at teams.ts:132 — the
+flagged "missing filter" was a shallow over-flag; verified present).
