@@ -85,10 +85,12 @@ export class ArmyMaster {
     return e;
   }
 
-  // restoreArmyDetails (modArmyUnit.restoreFromArmyDetails): re-field a default-level unit AT its saved
-  // level by re-running the per-level growth (forceLevelUp) `level` times (plan §C.4 route i).
+  // restoreArmyDetails (modArmyUnit.restoreFromArmyDetails): re-field a unit AT its saved level by running
+  // the per-level growth (forceLevelUp) up to `level`. The unit may already be at its #startingLevel from
+  // spawn (e.g. a banked goblinHero spawns at level 20), so level UP FROM the current level — not from 0 —
+  // to avoid double-counting the starting level (the banked level already includes it).
   private restoreArmyDetails(e: Entity, details: ArmyDetails): void {
-    for (let i = 0; i < details.level; i++) e.send("forceLevelUp");
+    for (let cur = (e.send("getLevel") as number) || 0; cur < details.level; cur++) e.send("forceLevelUp");
   }
 
   // re-field every banked unit of a team (e.g. on entering a new room) at its saved level, at `at`.

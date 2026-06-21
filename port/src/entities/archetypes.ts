@@ -251,7 +251,7 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     : (rch && typeof rch === "object" && "x" in rch ? Math.hypot(rch.x, rch.y) : undefined);
   const e = EnemyArchetype.create(makeEntityId());
   e.type = "enemy";
-  return e.build({
+  e.build({
     x, y,
     actorType: actorName, // the respawn key (objGameObject.getActorType)
     walkSpeed: num("walkSpeed", 3) * 0.6, // engine walk units -> px/tick (tuned to the slice)
@@ -300,4 +300,11 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     // #reelProof: knockback/reel-immune (skelitonHead) — Hurt skips the reel feedback (still takes damage).
     reelProof: d["reelProof"] === true || undefined,
   });
+  // modExperience #startingLevel: a pre-levelled unit (goblinHero 20, the big golems 5, iceRock 3, …)
+  // spawns at its data level (init runs `repeat 1 to pStartingLevel: levelUp`). Apply it AFTER build so
+  // every component's #levelUp handler (Energy/strength/Mana growth) exists. experienceImWorth is NOT
+  // raised, so a pre-levelled unit is worth the same XP as a fresh one (faithful to the property note).
+  const startLevel = num("startingLevel", 0);
+  for (let i = 0; i < startLevel; i++) e.send("forceLevelUp");
+  return e;
 }
