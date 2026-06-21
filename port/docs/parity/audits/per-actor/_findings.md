@@ -17,6 +17,15 @@ Only behavioral/real gaps (property-coverage non-gaps are catalogued in ../data-
   regression). casts/script_objects/modAttack.txt:743 + master_objects/structMaster.txt:181 |
   port/src/components/weapon.ts (AttackData.firingType) + control.ts (attack).
 
+- [x] **#randomSummon tier-wobble never invoked (SYSTEMIC — all summoners)** (mageOrc/goblinMage →
+  goblinSummon, necromancer/greyGhost → undeadSummon, sc/skeleton summon). calcAttackChargeMax wobbles the
+  charge ceiling per cast for #randomSummon spells so a summoner doesn't always reach the TOP tier. The port's
+  chargeMaxOf implements it but only when passed an rng — and NO caller passed one, so every summon was the
+  deterministic top tier. FIXED: the CpuAI summon release passes game.rng (one-shot, cooldown-gated → no
+  jitter); the player charge caches a per-cast wobbled ceiling (calcAttackChargeMax fires once, not per-frame
+  — also more faithful: the ceiling no longer drifts with mid-charge mana regen). casts modAttack
+  calcAttackChargeMax | port/src/components/control.ts (attack + player charge) + charge.ts.
+
 - [x] **bullet #reincarnateAs dropped (SYSTEMIC — flamingRock + eggs)** (lavaDarkGolem/lavaGolem flamingRock;
   lizard lizardEgg; ostrich ostrichEgg). objBullet.reincarnate spawns the bullet's #reincarnateAs at its death
   loc — flamingRock leaves a #fire mine, lizardEgg HATCHES a #bug, ostrichEgg HATCHES a #babyOstrich. The

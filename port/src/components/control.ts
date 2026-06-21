@@ -42,6 +42,10 @@ export class PlayerControl extends Component {
   private strengthInc = 0.1;
   private charge = 0;
   private charging = false;
+  // the charge CEILING for the current cast, computed ONCE when charging starts (calcAttackChargeMax sets
+  // pChargeMax once, not per-frame). For a #randomSummon spell this bakes in the per-cast tier wobble; for
+  // every other spell it equals the deterministic chargeMaxOf (the wobble branch needs randomSummon).
+  private chargeCeil = 0;
   private releaseT = 0;
   private meleeT = 0;
   private aimLeft = false;
@@ -61,7 +65,7 @@ export class PlayerControl extends Component {
   override init(cfg: Record<string, any>): void {
     this.strength = typeof cfg["strength"] === "number" ? cfg["strength"] : 8;
     this.strengthInc = typeof cfg["strengthIncLevel"] === "number" ? cfg["strengthIncLevel"] : 0.1;
-    this.charge = 0; this.charging = false; this.releaseT = this.meleeT = 0; this.usingSword = false;
+    this.charge = 0; this.charging = false; this.chargeCeil = 0; this.releaseT = this.meleeT = 0; this.usingSword = false;
     this.gmgCollected_ = false; this.gmgOn = false; this.stream = null; this.spell = null;
   }
 
@@ -143,10 +147,14 @@ export class PlayerControl extends Component {
     // magic weapon's own cooldown counter (getCooldownFin), reset on FIRE.
     const magicReady = magic ? wm.cooldownFinFor(magic.name) : false;
     if (magic && primary && magicReady) {
-      if (!this.charging) { this.charge = chargeStartOf(magic, mana, gmg); game.audio?.play("spell_charge"); }
+      if (!this.charging) {
+        this.charge = chargeStartOf(magic, mana, gmg); game.audio?.play("spell_charge");
+        // calcAttackChargeMax fires ONCE per cast → bake the (possibly #randomSummon-wobbled) ceiling now.
+        this.chargeCeil = chargeMaxOf(magic, mana, game.rng, gmg);
+      }
       this.charging = true;
       m.facingLeft = this.aimLeft;
-      const cm = chargeMaxOf(magic, mana, undefined, gmg);
+      const cm = this.chargeCeil;
       this.charge = Math.min(cm, this.charge + chargeSpeedOf(magic, mana, gmg));
       // K2 ensureSpell/chargeSpell (objAiAttack.chargeMagic): a #release spell grows a LIVE objSpell over
       // Merlin's head each tick (the #fireBullets streamers carry no charge actor — they latch on release).
@@ -279,7 +287,9 @@ export class PlayerControl extends Component {
     if (!this.charging) return 0;
     const magic = this.wm().getMagicAttack();
     if (!magic) return 0;
-    return Math.min(1, this.charge / chargeMaxOf(magic, this.entity.get(Mana)));
+    // use the per-cast cached ceiling so the orb ratio matches a wobbled #randomSummon ceiling.
+    const ceil = this.chargeCeil > 0 ? this.chargeCeil : chargeMaxOf(magic, this.entity.get(Mana));
+    return Math.min(1, this.charge / ceil);
   }
 }
 
@@ -546,8 +556,11 @@ export class CpuAI extends Component {
         // every caster firing a generic damage bolt. Plain bolt-casters (energyBlast/dark/arctic) unchanged.
         const ca = this.entity.get(WeaponManager).getCurrentAttack();
         if (ca && ca.type === "magic" && (ca.explodeFunction === "#summonUnit" || ca.explodeFunction === "summonUnit")) {
-          // summon the multistage tier the caster's mana affords (chargeMaxOf = its real charge ceiling)
-          const sc = chargeMaxOf(ca, this.entity.get(Mana));
+          // summon the multistage tier the caster's mana affords (chargeMaxOf = its real charge ceiling).
+          // Pass game.rng so a #randomSummon spell (goblin/undead/sc/skeleton summon) wobbles the tier
+          // per cast (calcAttackChargeMax) instead of always reaching the deterministic top tier — this is
+          // a one-shot at the summon release (cooldown-gated), so it can't jitter.
+          const sc = chargeMaxOf(ca, this.entity.get(Mana), game.rng);
           summonUnit(ca, sc, m.x, m.y, this.entity.id); // summon at the caster's loc
         } else if (ca && ca.type === "magic" && ca.payloadFunction.includes("takeHeal")) {
           const tgc = this.entity.send("getTargeting") as { hits: string[]; allegiance: string } | undefined;

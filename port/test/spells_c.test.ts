@@ -189,6 +189,13 @@ describe("C3 — randomSummon charge wobble (calcAttackChargeMax)", () => {
     const cm2 = chargeMaxOf(a, { capacity: 10, flow: 1, burst: 1 }, new Rng(2));
     expect(cm1).toBe(cm2);
   });
+  it("the CPU summon spells resolve randomSummon=true (the tier-wobble must be live for them)", () => {
+    // mageOrc/goblinMage -> goblinSummon, necromancer/greyGhost -> undeadSummon, etc. The CpuAI summon
+    // release now passes game.rng to chargeMaxOf so these wobble per cast (control.ts attack()).
+    for (const s of ["goblinSummon", "undeadSummon", "scSummon", "skelitonSummon"]) {
+      expect.soft(atkOf(s).randomSummon, `${s} should be randomSummon`).toBe(true);
+    }
+  });
   it("a randomSummon attack wobbles within [0, chargeMax] and is seeded-deterministic", () => {
     // synthetic random summon (no placed actor carries one): tiers 10/15, capacity drives a big ceiling
     const a = resolveAttack({
