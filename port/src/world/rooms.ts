@@ -247,25 +247,32 @@ export class RoomManager {
   // here it's the current room's clear state — the port's actual exit-gating signal — see plan note K22.)
   private static readonly ARROW_THICKNESS = 16; // the arrow art is 16×16 (no gExitArrowThickness in cast)
 
-  /** Arrow overlay rects for the current room, in room pixel space. Empty when the room has no exits. */
+  /** Arrow overlay rects for the current room, in room pixel space. Empty until the room is CLEARED. */
   exitArrowRects(): ExitArrowRect[] {
     const out: ExitArrowRect[] = [];
+    // attemptOpenExits gate (objRoom.txt:192 `if isPlayerEnemiesDead`): the exit arrows are drawn ONLY once
+    // the room is cleared — never during combat. So they read as the "exits just opened" signal, not a
+    // persistent overlay. Empty while hostiles remain.
+    if (!this.exitsOpen) return out;
     const { x, y } = this.loc;
     const cols = this.grid.cols, rows = this.grid.rows, t = this.grid.tilePx;
     const th = RoomManager.ARROW_THICKNESS;
     const imgW = cols * t, imgH = rows * t;
     type Edge = "left" | "up" | "right" | "down";
-    // (edge, adjacent room exists?, the column/row of cells along that edge).
-    const edges: { edge: Edge; adj: boolean }[] = [
-      { edge: "left", adj: !!this.map.roomAt({ x: x - 1, y }) },
-      { edge: "up", adj: !!this.map.roomAt({ x, y: y - 1 }) },
-      { edge: "right", adj: !!this.map.roomAt({ x: x + 1, y }) },
-      { edge: "down", adj: !!this.map.roomAt({ x, y: y + 1 }) },
+    // (edge, the NEIGHBOUR room beyond that edge). getSurroundingHostiles (objMap.txt:457 +
+    // modScreenExits colour map): the arrow's colour reflects what's behind THAT door — GREEN if the
+    // neighbour is already cleared/safe, RED if it still holds hostiles (a fight awaits). This is the
+    // neighbour's threat, NOT the current room's state.
+    const edges: { edge: Edge; nbr: Room | undefined }[] = [
+      { edge: "left", nbr: this.map.roomAt({ x: x - 1, y }) },
+      { edge: "up", nbr: this.map.roomAt({ x, y: y - 1 }) },
+      { edge: "right", nbr: this.map.roomAt({ x: x + 1, y }) },
+      { edge: "down", nbr: this.map.roomAt({ x, y: y + 1 }) },
     ];
-    for (const { edge, adj } of edges) {
-      if (!adj) continue; // no arrow on an edge with no neighbouring room
-      const open = this.grid.open[edge];
-      const colour: "green" | "red" = open ? "green" : "red";
+    for (const { edge, nbr } of edges) {
+      if (!nbr) continue; // no arrow on an edge with no neighbouring room
+      // GREEN once the neighbour is cleared (safe), RED while it still holds hostiles (uncleared/unvisited).
+      const colour: "green" | "red" = this.cleared.has(nbr.num) ? "green" : "red";
       // passable run of edge cells (match #none) → ranges, in px along the edge axis.
       const horizontal = edge === "up" || edge === "down";
       const n = horizontal ? cols : rows;

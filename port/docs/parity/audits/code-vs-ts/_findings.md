@@ -153,3 +153,19 @@ objRoom (after sound fix), modScreenExits, mapMaster, collisionMaster, objPowerU
 
 ## CLEAN (cont.)
 modProp (cutscene prop verbs wired), minimap (activation-traced: drawn every frame with correct data/colours).
+
+- [x] **exit arrows: wrong timing + wrong colour semantics + no observable test (SONNET 4-lens re-audit
+  caught what two Haiku passes missed)** — objRoom.attemptOpenExits(:192) draws arrows ONLY when the room is
+  cleared (isPlayerEnemiesDead); the port drew them every frame incl. during combat. AND modScreenExits
+  colours each arrow by the NEIGHBOUR's threat (getSurroundingHostiles: green=neighbour safe, red=neighbour
+  has hostiles — "what's behind THIS door"); the port coloured by the CURRENT room's grid.open state, so all
+  arrows were the same colour and the per-door threat signal was lost. AND no test asserted the arrows' actual
+  rendered pixels — only exitArrowRects() state — so a broken render was invisible to CI. FIXED:
+  exitArrowRects gates on exitsOpen (no arrows in combat) and colours by `cleared.has(neighbour.num)`
+  (green=cleared/safe, red=fight); the playthrough smoke now reads back the canvas and requires coloured
+  arrow pixels after clear. casts objRoom.txt:192,233-253 + modScreenExits.txt:206-228 + objMap.txt:457 |
+  port/src/world/rooms.ts (exitArrowRects) + tools/playthrough_smoke.ts. exit_arrows.test.ts (combat-gate +
+  per-neighbour green/red).
+  METHODOLOGY NOTE: caught only by Sonnet WITH the draw-order/timing/semantics + missing-observable-test
+  lenses. Two Haiku passes (per-handler + reachability) and even a Sonnet PLAYER-POV pass returned CLEAN —
+  visibility alone says CLEAN when the signal is present but WRONG; the semantic+timing lens is what caught it.
