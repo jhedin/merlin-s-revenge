@@ -81,12 +81,13 @@ export class Movement extends Component {
     if (this.ghost && attackerId !== this.entity.id) return;
     const d = (100 - this.inertia) / 100;
     const dvx = vx * d, dvy = vy * d;                 // the inertia-damped collision vector (modGameObject)
-    if (!this.entity.send("isReelProof")) {           // #reelProof: no knockback impulse (still takes damage)
-      let kx = dvx * KNOCK_SCALE, ky = dvy * KNOCK_SCALE;
-      const km = Math.hypot(kx, ky);
-      if (km > KNOCK_MAX) { kx = (kx / km) * KNOCK_MAX; ky = (ky / km) * KNOCK_MAX; }
-      this.kvx += kx; this.kvy += ky;
-    }
+    // objGameObject.takeHit applies the knockback impulse to EVERY unit. #reelProof (modReel.takeHit:111)
+    // only gates goDamageMode() — the reel STAGGER, handled in Hurt — NOT the shove. So a reel-proof unit
+    // (skelitonHead/towers/plant) is still pushed back by a hit; it just doesn't enter the reel animation.
+    let kx = dvx * KNOCK_SCALE, ky = dvy * KNOCK_SCALE;
+    const km = Math.hypot(kx, ky);
+    if (km > KNOCK_MAX) { kx = (kx / km) * KNOCK_MAX; ky = (ky / km) * KNOCK_MAX; }
+    this.kvx += kx; this.kvy += ky;
     return next(dvx, dvy, attackerId, mult);          // damped vector -> Energy/Freeze/Heal (the coupling)
   }
 
