@@ -50,6 +50,18 @@ export class TeamMaster {
     return t;
   }
 
+  // reservationsMaster.getPermissionToRelease: a team can hold at most team.maxMembers LIVE units —
+  // gMaxFriends=12 for the player side, gMaxEnemies=16 otherwise (GameSpecific.ls). teamOverride halves a
+  // cap >5 (gang-up). Dwelling releases and summons gate on this so a team can't flood past its cap.
+  // pending = units about to be released (default 1 — the common "may I release one more?" query). Blocked
+  // when currentMembers + pending > cap, matching reservationsMaster's `current + numToRelease <= maxMembers`.
+  atCapacity(teamName: string, pending = 1): boolean {
+    const t = this.team(teamName);
+    let cap = this.isPlayerSide(teamName) ? 12 : 16;
+    if (this.teamOverride && cap > 5) cap = Math.floor(cap / 2);
+    return t.members.size + pending > cap;
+  }
+
   // joinTeam / leaveTeam: roster membership (drives cullTeamList + findTarget candidates)
   register(e: Entity, teamName: string, role: string): void {
     const t = this.team(teamName);

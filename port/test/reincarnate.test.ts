@@ -4,6 +4,7 @@ import { CollisionGrid } from "@/world/collision";
 import { EnemyArchetype, spawnEnemy, spawnUnit } from "@/entities/archetypes";
 import { Movement } from "@/components/movement";
 import { Energy, Team } from "@/components/combat";
+import { Experience } from "@/components/experience";
 import type { Entity } from "@/engine/dispatch";
 
 // E1 modReincarnate: a REAL combat death (killed-in-action) splits an actor into its #reincarnateAs
@@ -217,5 +218,26 @@ describe("skelitonLord full tree (real data)", () => {
     expect(head.get(Energy).energy).toBeLessThan(before); // damage landed
     expect(head.get(Movement).kvx).toBe(0);               // no knockback impulse (reelProof)
     expect(head.get(Movement).kvy).toBe(0);
+  });
+
+  // modExperience.transferExperience (#reincarnated): each child inherits HALF the parent's accumulated XP.
+  it("a reincarnating parent transfers half its accumulated XP to each child", () => {
+    const a = makeChain(["#skelitonUpper", "#skelitonSword"], 300, 300);
+    game.entities = [a];
+    a.send("gainXp", 40);                       // parent earned 40 kill-XP during the fight
+    const parentXp = a.get(Experience).xp;      // cumulative (stays 40 across any level-ups)
+    kill(a);
+    a.send("update");                           // splits -> two children
+    const kids = game.entities.filter((e) => e !== a);
+    expect(kids.length).toBe(2);
+    for (const kid of kids) expect(kid.get(Experience).xp).toBeCloseTo(parentXp / 2, 5); // each gets half
+  });
+
+  it("a parent with zero accumulated XP transfers nothing (children start fresh)", () => {
+    const a = makeChain(["#skelitonUpper"], 300, 300);
+    game.entities = [a];
+    kill(a); a.send("update");
+    const kid = game.entities.find((e) => e !== a)!;
+    expect(kid.get(Experience).xp).toBe(0);     // no spurious XP when the parent never killed anything
   });
 });

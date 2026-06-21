@@ -32,7 +32,7 @@ export class Input {
       const k = (e as KeyboardEvent).key.toLowerCase();
       if (!this.down.has(k)) this.pressedThisTick.add(k);
       this.down.add(k);
-      if (this.isMoveKey(k) || k === " ") e.preventDefault();
+      if (this.isMoveKey(k) || k === " " || k === "tab") e.preventDefault(); // Tab cycles wizards (don't shift focus)
     });
     target.addEventListener("keyup", (e) => this.down.delete((e as KeyboardEvent).key.toLowerCase()));
   }
@@ -98,7 +98,17 @@ export class Input {
       // summon controls (the stones cutscene interpolates `#key #wizard` / `#key #wizardSelector`):
       case "wizard": return "Q";          // summon the selected wizard (the documented summon key)
       case "wizardselector": return "Tab"; // cycle the wizard to summon
-      default: return c;
+      // action controls referenced by the magic-tutorial cutscenes (scr_stones6..10 `#key` interpolation).
+      // spell1..9 are wired to the number keys in the port (control.ts); the rest mirror the original
+      // WASD bindings (keyMaster: #weaponSelector=Q key12, #army=C key8, #gmg=G key14) for faithful display.
+      case "gmg": return "G";
+      case "army": return "C";
+      case "weaponselector": return "E"; // the port binds the weapon palette to E (Q is the wizard-summon key)
+      default: {
+        const sp = /^spell([1-9])$/.exec(c);
+        if (sp) return sp[1]!;            // #spell1..#spell9 -> "1".."9"
+        return c;
+      }
     }
   }
 

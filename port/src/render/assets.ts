@@ -25,6 +25,8 @@ export interface AssetIndex {
   // K22 exit arrows (structMaster #exitArrowMembers): colour ("green"|"red") -> edge -> png file.
   // Empty/absent when the .tif→png conversion was unavailable at build time (overlay then no-ops).
   arrows?: Record<string, Record<string, string>>;
+  // modWeaponSelector palette: weapon symbol (energyBlast/merlinSword/...) + greenBox/yellowBox -> icon png.
+  weaponIcons?: Record<string, string>;
 }
 
 export const mapList = mapsIndex as MapMeta[];
@@ -94,6 +96,8 @@ export class Assets {
     // no-ops (collision/transition behaviour is unaffected either way).
     const arrowFiles = Object.values(index.arrows ?? {}).flatMap((edges) => Object.values(edges));
     await Promise.all(arrowFiles.map((f) => a.loadFile(f, "flood")));
+    // modWeaponSelector icons: ~24 tiny PNGs, loaded up front (flood-keyed white matte like the arrows).
+    await Promise.all(Object.values(index.weaponIcons ?? {}).map((f) => a.loadFile(f, "flood")));
     return a;
   }
 
@@ -101,6 +105,12 @@ export class Assets {
    *  or undefined when the art wasn't bundled (the renderer skips the arrow). */
   arrowImg(colour: "green" | "red", edge: "left" | "up" | "right" | "down"): Drawable | undefined {
     const file = this.index.arrows?.[colour]?.[edge];
+    return file ? this.images.get(file) : undefined;
+  }
+
+  /** modWeaponSelector: the loaded icon for a weapon symbol (or greenBox/yellowBox), or undefined. */
+  weaponIcon(sym: string): Drawable | undefined {
+    const file = this.index.weaponIcons?.[sym.replace(/^#/, "")];
     return file ? this.images.get(file) : undefined;
   }
 

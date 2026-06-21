@@ -14,14 +14,28 @@ export interface Pos { x: number; y: number; }
 const KNOCK_SCALE = 0.06;   // px-scale factor on the (damped) collision vector
 const KNOCK_MAX = 5;        // clamp a single hit's shove so big spells don't fling units
 const KNOCK_FRICTION = 0.78; // per-tick decay of the knockback impulse
+// nav-mode speed multiplier: objRoom.goNavMode swaps the player's walkAcceleration 2->6 (pNavModeAcceleration)
+// in a cleared room. With friction applied every tick the original terminal velocity scales with accel, so
+// nav ≈ 3x combat speed (the tile-size move cap ~31px/tick never binds). The port applies it as a maxSpeed x3.
+const NAV_SPEED_MULT = 3;
 
 export class Movement extends Component {
-  static handles = ["update", "takeHit", "getPos", "addSaveData", "restoreFromSave"];
+  static handles = ["update", "takeHit", "getPos", "levelUp", "addSaveData", "restoreFromSave"];
   x = 0; y = 0;
   vx = 0; vy = 0;           // walk velocity (intent-driven, speed-capped)
   kvx = 0; kvy = 0;         // knockback impulse (uncapped, friction-decayed)
   intentX = 0; intentY = 0;
   accel = 1.4; friction = 0.6; maxSpeed = 4; box = 12; inertia = 0;
+  // modMoveToLoc.incWalkSpeedLevel (internalEvent #levelUp): every character's walk speed grows by
+  // #walkSpeedIncLevel (engine 0.075) per level — enemies move faster (PointFrameMove at walkSpeed) and the
+  // player's top speed rises over a playthrough. Stored already px-converted (player 1:1, enemy ×0.6).
+  walkSpeedIncLevel = 0;
+  // autoConstrainToPlayArea: a collisionDetection:false UNIT (ghost) is clamped to the room bounds (it
+  // ignores walls but can't leave the play area). Bullets pass through AND exit freely (not set).
+  constrainToArea = false;
+  // #ghost (objCPUCharacter.takeHit: `if me.amGhost() then return`): a true ghost (monkGhost) takes NO hit
+  // from external attackers — it's invulnerable; only its own possession-finish (attackerId == self) lands.
+  ghost = false;
   facingLeft = false;
   hitX = false; hitY = false;  // wall contact this tick (projectiles read these)
   // objBullet.checkCollisions: bullets do NOT collide with terrain (gBulletsCollideWithBackground is never
@@ -39,6 +53,16 @@ export class Movement extends Component {
     if (typeof cfg["friction"] === "number") this.friction = cfg["friction"];
     if (typeof cfg["box"] === "number") this.box = cfg["box"];
     if (typeof cfg["inertia"] === "number") this.inertia = Math.max(0, Math.min(100, cfg["inertia"]));
+    this.walkSpeedIncLevel = typeof cfg["walkSpeedIncLevel"] === "number" ? cfg["walkSpeedIncLevel"] : 0;
+    this.constrainToArea = cfg["constrainToArea"] === true;
+    this.ghost = cfg["ghost"] === true;
+  }
+
+  // modMoveToLoc.internalEvent #levelUp -> incWalkSpeedLevel: bump the walk-speed cap by the per-level
+  // increment. Fans out from Experience.levelUp alongside Energy/Mana growth.
+  levelUp(next: NextFn): void {
+    this.maxSpeed += this.walkSpeedIncLevel;
+    next();
   }
   override reset(): void {
     this.vx = this.vy = this.kvx = this.kvy = this.intentX = this.intentY = 0; this.hitX = this.hitY = false;
@@ -52,6 +76,9 @@ export class Movement extends Component {
   // coupling. Player inertia is 0 (undamped attacking); heavy orcs (inertia 60–80) take ~20–40% — tanky.
   // See docs/parity/plans/K1-faithful-damage.md.
   takeHit(next: NextFn, vx = 0, vy = 0, attackerId = -1, mult = 1): any {
+    // amGhost gate (objCPUCharacter.takeHit:200): a ghost ignores ALL external attacks (no damage, no
+    // knockback, no chain) — only its OWN possession-finish (attackerId == its id) is allowed through.
+    if (this.ghost && attackerId !== this.entity.id) return;
     const d = (100 - this.inertia) / 100;
     const dvx = vx * d, dvy = vy * d;                 // the inertia-damped collision vector (modGameObject)
     if (!this.entity.send("isReelProof")) {           // #reelProof: no knockback impulse (still takes damage)
@@ -82,19 +109,33 @@ export class Movement extends Component {
     this.vy += this.intentY * this.accel;
     if (this.intentX === 0) this.vx *= this.friction;
     if (this.intentY === 0) this.vy *= this.friction;
-    const cap = this.maxSpeed * (this.entity.send("freezeFactor") as number ?? 1); // modFreeze (0.5x frozen)
+    // nav mode (objRoom.goNavMode, gNavMode=1): in a CLEARED room the player accelerates at 6 vs combat 2 —
+    // ~3x faster. The port's hard-cap model folds this into a maxSpeed multiplier, player-only (goNavMode
+    // only swaps the player's walkAcceleration). Combat (uncleared room) is unchanged.
+    const nav = this.entity.type === "player" && game.navMode ? NAV_SPEED_MULT : 1;
+    const cap = this.maxSpeed * nav * (this.entity.send("freezeFactor") as number ?? 1); // modFreeze (0.5x frozen)
     const sp = Math.hypot(this.vx, this.vy);
     if (sp > cap) { this.vx = (this.vx / sp) * cap; this.vy = (this.vy / sp) * cap; }
     if (Math.abs(this.vx) < 0.05) this.vx = 0;
     if (Math.abs(this.vy) < 0.05) this.vy = 0;
     if (this.vx < 0) this.facingLeft = true; else if (this.vx > 0) this.facingLeft = false;
 
-    // passThrough (bullets): integrate position with NO terrain collision — fly straight through walls
-    // (objBullet never collides with the background), dying only on target-hit / expiry.
+    // passThrough (bullets + ghosts): integrate position with NO terrain collision — fly straight through
+    // walls (objBullet never collides with the background; ghost units run collisionDetectionOff), dying
+    // only on target-hit / expiry.
     if (this.passThrough) {
       this.x += this.vx + this.kvx; this.y += this.vy + this.kvy;
       this.hitX = this.hitY = false;
       this.kvx *= KNOCK_FRICTION; this.kvy *= KNOCK_FRICTION;
+      // autoConstrainToPlayArea (objGameObject:164): a collisionDetection:false UNIT (ghost) is clamped to
+      // the play area so it can't drift off-map (bullets don't set this — they exit and expire). Bounds are
+      // the room grid extent, inset by the unit's half-box.
+      if (this.constrainToArea && game.grid) {
+        const b = this.box / 2;
+        const w = game.grid.cols * game.grid.tilePx, h = game.grid.rows * game.grid.tilePx;
+        this.x = Math.max(b, Math.min(w - b, this.x));
+        this.y = Math.max(b, Math.min(h - b, this.y));
+      }
       return next();
     }
 

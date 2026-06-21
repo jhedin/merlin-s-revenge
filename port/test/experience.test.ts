@@ -1,7 +1,10 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { Archetype } from "@/engine/dispatch";
 import { Experience } from "@/components/experience";
 import { Energy } from "@/components/combat";
+import { Movement } from "@/components/movement";
+import { spawnEnemy, spawnPlayer } from "@/entities/archetypes";
+import { CollisionGrid } from "@/world/collision";
 import { game } from "@/game/context";
 
 // modExperience: cumulative XP, rising absolute threshold (L^3+L^2+prev/(L+1)+5+init), levels at 0.
@@ -44,5 +47,68 @@ describe("experience: XP + leveling (faithful curve)", () => {
     expect(victim.send("isDead")).toBe(true);
     expect(victim.get(Experience).lastAttacker).toBe(killer.id);
     expect(killer.get(Experience).xp).toBe(6); // imWorth 6 + floor(0/2)
+  });
+});
+
+// modMoveToLoc.incWalkSpeedLevel (internalEvent #levelUp): every character's walk-speed cap grows by
+// #walkSpeedIncLevel (engine 0.075) per level. Port: player 1:1 (+0.075), enemy ×0.6 (+0.045).
+describe("walk-speed grows with level (modMoveToLoc.incWalkSpeedLevel)", () => {
+  beforeEach(() => {
+    game.grid = new CollisionGrid(20, 20, 32);
+    game.entities = [];
+    game.assets = { index: { anims: {} }, img: () => null } as any;
+  });
+
+  it("an enemy's maxSpeed rises 0.045 per level", () => {
+    const e = spawnEnemy("swordOrc", 0, 0, { animChar: "swordOrc" });
+    const m = e.get(Movement); const base = m.maxSpeed;
+    e.send("forceLevelUp");
+    expect(m.maxSpeed).toBeCloseTo(base + 0.045, 5);
+    e.send("forceLevelUp");
+    expect(m.maxSpeed).toBeCloseTo(base + 0.09, 5);
+  });
+
+  it("the player's maxSpeed rises 0.075 per level", () => {
+    const p = spawnPlayer(100, 100); game.player = p;
+    const m = p.get(Movement); const base = m.maxSpeed;
+    p.send("forceLevelUp");
+    expect(m.maxSpeed).toBeCloseTo(base + 0.075, 5);
+  });
+});
+
+// modStarReleaser + starMaster.experienceStar: a real XP-driven level-up releases a rising star particle
+// (pReleaseStarOnLevel, default true). The re-field path (forceLevelUp) does NOT — stars are toggled off
+// while re-fielding a banked unit at its saved level (levelUpToStartingLevel).
+describe("level-up star (modStarReleaser)", () => {
+  beforeEach(() => {
+    game.grid = new CollisionGrid(20, 20, 32);
+    game.entities = [];
+    game.assets = { index: { anims: {} }, img: () => null } as any;
+    game.effects.clear();
+  });
+
+  it("an XP-driven level-up releases at least one rising star at the unit", () => {
+    const e = spawnEnemy("swordOrc", 100, 100, { animChar: "swordOrc" });
+    game.entities = [e];
+    expect(game.effects.count).toBe(0);
+    e.send("gainXp", 100000);                 // force several level-ups
+    expect(game.effects.count).toBeGreaterThan(0);
+  });
+
+  it("re-fielding a banked unit (forceLevelUp) releases NO star", () => {
+    const e = spawnEnemy("swordOrc", 100, 100, { animChar: "swordOrc" });
+    game.entities = [e];
+    e.send("forceLevelUp");
+    expect(game.effects.count).toBe(0);       // levelUpToStartingLevel toggles stars off
+  });
+
+  it("a star rises and expires after its lifeCount (30 frames)", () => {
+    const e = spawnEnemy("swordOrc", 100, 100, { animChar: "swordOrc" });
+    game.entities = [e];
+    e.send("gainXp", 10);                      // exactly one level -> one star
+    const n = game.effects.count;
+    expect(n).toBeGreaterThan(0);
+    for (let i = 0; i < 30; i++) game.effects.update();
+    expect(game.effects.count).toBe(0);        // #lifeCount 30 -> vanished
   });
 });

@@ -5,6 +5,8 @@
 import { Assets, mapList, type MapMeta } from "./render/assets";
 import { Renderer, type Sprite } from "./render/renderer";
 import { drawMinimap } from "./render/minimap";
+import { healthBarColour } from "./render/healthBar";
+import { drawHealthRollover } from "./render/rollover";
 import { Input } from "./systems/input";
 import { AudioSystem } from "./systems/audio";
 import { GameLoop } from "./engine/loop";
@@ -29,6 +31,7 @@ import { rebuildCombatSubstrate } from "./systems/combatTick";
 import { saveGame, loadSave, buildSave, clearLegacy, pStateFromSave } from "./systems/save";
 import { parseCutscene, loadCutscene } from "./data/cutscene";
 import { CutscenePlayer } from "./scenes/cutscenePlayer";
+import { WeaponPalette } from "./scenes/weaponPalette";
 import { Menu } from "./scenes/menu";
 import { SceneManager, type CutScene } from "./scenes/sceneManager";
 import { Screens } from "./scenes/screens";
@@ -115,6 +118,8 @@ async function main() {
   const unlock = () => { audio.unlock(); audio.playMusic("baroque_rock_v1"); window.removeEventListener("keydown", unlock); window.removeEventListener("pointerdown", unlock); };
   window.addEventListener("keydown", unlock); window.addEventListener("pointerdown", unlock);
   initContext({ input, assets, audio, tilePx: tile, entities: [], player: null, tick: 0, spawnEnemy, spawnUnit, spawnAlly, spawnFromSymbol });
+  const weaponPalette = new WeaponPalette();
+  game.weaponPalette = weaponPalette; // modWeaponSelector overlay (opened by the E key in PlayerControl)
   // teamMaster.pUnitMap sizing from the current map (getTileLoc: world loc -> tile, origin 0,0). Rooms
   // render from (0,0) at map.tilePx, so origin 0,0 / tile=map.tilePx (fallback 32) matches getTileLoc.
   game.teamMaster.unitMap.configure(tile || 32, 0, 0);
@@ -171,6 +176,7 @@ async function main() {
   function freshGame() {
     game.teamMaster.reset(); // fresh rosters/subscriptions for a new run
     game.armyMaster.reset(); // empty the reserve bank
+    game.wizardMaster.reset(); // forget found wizards (new game)
     game.potionMaster.reset(); // zero the potion tally
     player = spawnPlayer(viewW / 2, viewH / 2);
     game.player = player;
@@ -312,8 +318,9 @@ async function main() {
           input.endTick(); return;
         }
         if (input.pressed("escape")) { scene.escapePressed(); input.endTick(); return; }
-        if (input.pressed("1")) { doSave(); flash("game saved"); }
-        if (input.pressed("2")) { if (doLoad()) flash("game loaded"); }
+        // debug save/load: moved off 1/2 (now #spell1/#spell2 hotkeys) to F5/F9.
+        if (input.pressed("f5")) { doSave(); flash("game saved"); }
+        if (input.pressed("f9")) { if (doLoad()) flash("game loaded"); }
         // refresh the team roster + unit-map broad-phase BEFORE AIs run (teamMaster.findTarget /
         // impactMeleeAttack read a current map). Drops dead/left targets, firing #leaveGame.
         rebuildCombatSubstrate();
@@ -325,6 +332,7 @@ async function main() {
           // `left`: a #leaveWhenFinished ally that teleported out (already banked to the reserve) — remove it.
           if ((e.type === "pickup" && e.send("isFinished")) || e.flags.has("left")) game.entities.splice(i, 1);
         }
+        game.effects.update(); // advance level-up star particles (modStarReleaser)
         rooms.update();
         // death: let the die animation play (deathT frames) before resolving respawn/game-over.
         if (player.send("isDead")) { if (deathT === 0) deathT = 1; }
@@ -363,6 +371,7 @@ async function main() {
       const active = rooms.room.layer("#backgroundActive");
       if (passive && rooms.passiveSheet) renderer.drawTileLayer(passive, rooms.passiveSheet);
       if (active && rooms.activeSheet) renderer.drawTileLayer(active, rooms.activeSheet);
+      game.effects.draw(renderer); // level-up stars (starMaster setLocZ-1: behind the actors)
       const sprites = game.entities
         .filter((e) => e.type !== "bullet" && e.type !== "pickup" && e.type !== "marker" && e.type !== "spell")
         .map((e) => e.get(Anim).sprite()).filter((sp): sp is Sprite => sp !== null);
@@ -378,11 +387,18 @@ async function main() {
       // green/red directional arrows on each exit edge, OVER the room layers. Pure overlay — no effect on
       // collision/transition. No-ops when the arrow art wasn't bundled (assets.arrowImg → undefined).
       drawExitArrows(renderer, assets, rooms.exitArrowRects());
+      // modFreeze frost overlay stays always-on (a status indicator). Merlin's Revenge has NO always-on
+      // health bars (gEnemyEnergyMasterOn=0); health/level/XP show only on mouse-hover (rollover, below).
       for (const e of game.entities) {
-        if (e.type === "enemy") drawEnemyBar(renderer, e, "#e44");
-        else if (e.type === "ally") drawEnemyBar(renderer, e, "#4d6");
+        if ((e.type === "enemy" || e.type === "ally") && !e.send("isDead") && e.send("isFrozen")) {
+          const p = e.send("getPos") as { x: number; y: number };
+          renderer.ctx.fillStyle = "rgba(80,220,255,0.35)";
+          renderer.ctx.fillRect(p.x - 9, p.y - 20, 18, 22);
+        }
       }
+      drawHealthRollover(renderer, game.input.cursor(), game.entities); // characterEnergyRollOverMaster (gCharacterEnergyRolloverOn=1)
       drawCharge(renderer, player);
+      weaponPalette.render(renderer, player, assets); // modWeaponSelector palette (over the world, under the HUD)
       drawHud(renderer, player);
       // 5-state minimap (modMiniMap): #cur/#clr/#inf (+ data #fre/#spe) with a proximity distance blend.
       const pm = player.get(Movement);
@@ -427,7 +443,7 @@ function drawTitle(renderer: Renderer, w: number, h: number) {
   ctx.fillText("MERLIN'S REVENGE", w / 2, h / 2 - 48);
   ctx.fillStyle = "#566"; ctx.font = "8px monospace";
   ctx.fillText("move: WASD/arrows   aim: mouse   hold to charge magic, release to cast   punch: auto", w / 2, h - 26);
-  ctx.fillText("summon: E   save/load: 1/2   pause: Esc   mute: M", w / 2, h - 14);
+  ctx.fillText("spells: 1-9   save/load: F5/F9   pause: Esc   mute: M", w / 2, h - 14);
   ctx.textAlign = "left";
 }
 
@@ -439,7 +455,7 @@ function drawHud(renderer: Renderer, player: import("./engine/dispatch").Entity)
   const hp = player.get(Energy).energyFrac();
   const hasSpell = player.send("getHasSpell") as boolean;
   ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(6, 6, 104, 24);
-  ctx.fillStyle = hp > 0.3 ? "#3c9" : "#e44"; ctx.fillRect(8, 8, 100 * hp, 6);   // health (energy)
+  ctx.fillStyle = healthBarColour(hp); ctx.fillRect(8, 8, 100 * hp, 6);          // health (energy)
   const xp = player.get(Experience);
   ctx.fillStyle = "#fc4"; ctx.fillRect(8, 18, 100 * Math.min(1, xp.frac()), 4);   // experience
   // no mana bar: magic has no pool (charge is shown by the ring at the cursor); flag once acquired
@@ -589,17 +605,5 @@ function beamSprite(proj: Projectile): Sprite | null {
   };
 }
 
-function drawEnemyBar(renderer: Renderer, e: import("./engine/dispatch").Entity, color: string) {
-  if (e.send("isDead")) return;
-  const p = e.send("getPos") as { x: number; y: number };
-  const ctx = renderer.ctx;
-  if (e.send("isFrozen")) { // modFreeze: teal frost overlay
-    ctx.fillStyle = "rgba(80,220,255,0.35)";
-    ctx.fillRect(p.x - 9, p.y - 20, 18, 22);
-  }
-  const frac = e.get(Energy).energyFrac();
-  ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(p.x - 11, p.y - 26, 22, 4);
-  ctx.fillStyle = color; ctx.fillRect(p.x - 10, p.y - 25, 20 * frac, 2);
-}
 
 main().catch((e) => { console.error(e); document.body.append(Object.assign(document.createElement("pre"), { textContent: String(e), style: "color:#f88" })); });

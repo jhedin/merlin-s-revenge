@@ -38,8 +38,18 @@ export class Anim extends Component {
   private frame = 0;
   private timer = 0;
   private extraDelay = 0;   // modWeaponTechnique.frameExtendDelay: extra frames added to the current frame's delay
+  // modStretchDeath (act_player #stretchDeath): a magical death — the body stretches vertically + fades to
+  // transparent over STRETCH_DURATION frames instead of switching to a grave, then resolves (gameOver).
+  private stretchDeath = false;
+  private deathT = 0;
+  private static readonly STRETCH_DURATION = 33; // blendSpeed 3: ~100/3 frames to fade out
+  private static readonly STRETCH_AMOUNT = 0.7;  // scaleY 1 -> 1.7 (stretchHeight 50, anchored at the feet)
 
-  override init(cfg: Record<string, any>): void { this.char = cfg["animChar"] ?? "mer"; this.extraDelay = 0; }
+  override init(cfg: Record<string, any>): void {
+    this.char = cfg["animChar"] ?? "mer"; this.extraDelay = 0;
+    this.stretchDeath = cfg["stretchDeath"] === true; this.deathT = 0;
+  }
+  override reset(): void { this.deathT = 0; }
 
   // frameAdvance (modWeaponTechnique.skipFramesForWeaponTechnique → me.big.frameAdvance): step the strip
   // one frame early (faster attack cadence). Wraps for looped strips, clamps for one-shots; resets the
@@ -56,6 +66,8 @@ export class Anim extends Component {
   frameExtendDelay(n: number): void { this.extraDelay += Math.max(0, n); }
 
   private pickAction(): string {
+    // modStretchDeath: a stretch-death unit keeps its BODY frame while it stretches+fades (no grave swap).
+    if (this.entity.send("isDead") && this.stretchDeath) return this.action === "grave" ? "stand" : this.action;
     if (this.entity.send("isDead")) return "grave";
     const override = this.entity.send("animAction"); // control may force charge/release/punch
     if (typeof override === "string") return override;
@@ -69,6 +81,12 @@ export class Anim extends Component {
   }
 
   update(next: NextFn): void {
+    // modStretchDeath transform progress: advance while the stretch-death unit is dead; reset on revive
+    // (extra-life respawn in place) so the next death stretches from scratch.
+    if (this.stretchDeath) {
+      if (this.entity.send("isDead")) { if (this.deathT <= Anim.STRETCH_DURATION) this.deathT++; }
+      else if (this.deathT > 0) this.deathT = 0;
+    }
     const action = this.pickAction();
     if (action !== this.action) { this.action = action; this.frame = 0; this.timer = 0; this.extraDelay = 0; }
     const anim = this.animFor(action);
@@ -102,7 +120,8 @@ export class Anim extends Component {
     // getGraveOn is undefined for the player (no grave system — its in-game death plays on the normal path).
     const dead = this.entity.send("isDead") === true;
     const graveOn = this.entity.send("getGraveOn"); // true=leaves grave, false=ghost, undefined=player
-    if (dead && graveOn === false) return null;     // ghost: no grave, vanishes
+    const stretching = dead && this.stretchDeath;   // modStretchDeath: stretch+fade instead of grave/vanish
+    if (dead && graveOn === false && !stretching) return null; // ghost: no grave, vanishes
     const isGrave = dead && graveOn === true;
     const anim = this.animFor(this.action);
     if (!anim || anim.frames.length === 0) return null;
@@ -115,6 +134,9 @@ export class Anim extends Component {
     const ct = this.entity.tryGet(ColourTransform);
     const tint = ct ? ct.getColourTransform() : (this.entity.send("isHurt") === true ? { rgb: [255, 255, 255] as [number, number, number], strength: 0.85, additive: false } : null);
     const alpha = this.entity.send("getAlpha"); // per-sprite alpha (globalAlpha), default opaque
+    // modStretchDeath transforms: startTransBlend(out) fades opacity 1->0; startStretchHeight stretches the
+    // body taller (anchored at the feet via the reg point) — both over STRETCH_DURATION.
+    const prog = stretching ? Math.min(1, this.deathT / Anim.STRETCH_DURATION) : 0;
     return {
       img: game.assets.img(f.file),
       x: m.x, y: m.y, regX: f.reg[0], regY: f.reg[1],
@@ -123,7 +145,8 @@ export class Anim extends Component {
       z: isGrave ? m.y - 100000 : m.y,
       flip: isGrave ? false : m.facingLeft, // graves face right (setFlipFromDir(1)); else mirror to aim dir
       tint: tint ?? undefined,
-      alpha: typeof alpha === "number" ? alpha : undefined,
+      scaleY: stretching ? 1 + prog * Anim.STRETCH_AMOUNT : undefined,
+      alpha: stretching ? 1 - prog : (typeof alpha === "number" ? alpha : undefined),
     };
   }
 }

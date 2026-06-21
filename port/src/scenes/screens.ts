@@ -36,11 +36,12 @@ const INSTRUCTIONS = [
   "Move with WASD or the arrow keys.",
   "Hold the mouse / space to charge magic; release to cast.",
   "Punching is automatic when an enemy is in reach.",
-  "Press Q to summon a wizard ally; Tab cycles which wizard.",
+  "1-9 pick a spell; E opens the weapon palette.",
+  "Q summons a found wizard ally (Tab cycles); C summons your army.",
   "Clear every room (or reach the end room) to win.",
   "Walk onto a glowing stone to hear its tale.",
   "",
-  "1 / 2 save & load   Esc pause   M mute",
+  "F5 / F9 save & load   Esc pause   M mute",
 ];
 
 // the shipped credits text (creditsMaster falls back to the local txt_credits member; the net path is

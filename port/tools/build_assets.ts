@@ -265,9 +265,26 @@ if (existsSync(GFX_ARROWS)) {
 }
 if (!arrowsOk) { for (const k of Object.keys(arrows)) delete arrows[k]; }
 
+// ── (f) weapon-selector icons (modWeaponSelector): per-weapon icons `<sym>_ws*.png` + the green/yellow
+// selection boxes. The icons ship as plain PNGs in extracted/engine/bitmaps (white-matte keyed out at
+// load like the other gfx). Bundled to weaponIcons/<sym>.png; the palette looks them up by weapon symbol.
+const OUT_WICONS = join(OUT_ASSETS, "weaponIcons");
+const weaponIcons: Record<string, string> = {};
+mkdirSync(OUT_WICONS, { recursive: true });
+for (const b of bitmaps) {
+  const m = /^(.+)_ws[A-Za-z]*$/.exec(b.name); // energyBlast_wsC -> energyBlast ; greenBox_wsC -> greenBox
+  if (!m) continue;
+  const sym = m[1]!;
+  const src = join(EXTRACTED, b.file);
+  if (!existsSync(src)) continue;
+  const outName = `weaponIcons/${sym}.png`;
+  copyFileSync(src, join(OUT_ASSETS, outName));
+  weaponIcons[sym] = outName;
+}
+
 // ── emit + report ─────────────────────────────────────────────────────────────────────────────
 writeFileSync(join(OUT_GEN, "assets.json"),
-  JSON.stringify({ version: 2, defaultMap: DEFAULT_MAP, tilesets, chars, anims, sounds, music, cutscenes, arrows }, null, 1));
+  JSON.stringify({ version: 2, defaultMap: DEFAULT_MAP, tilesets, chars, anims, sounds, music, cutscenes, arrows, weaponIcons }, null, 1));
 writeFileSync(join(OUT_GEN, "maps.json"), JSON.stringify(maps, null, 1));
 
 const charCount = Object.keys(chars).length, animCount = Object.keys(anims).length;

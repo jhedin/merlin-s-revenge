@@ -11,6 +11,8 @@ import { TeamMaster } from "../systems/teams";
 import { ArmyMaster } from "../systems/armyMaster";
 import { PotionMaster } from "../systems/potionMaster";
 import { MagicLimitMaster } from "../systems/magicLimit";
+import { Effects } from "../render/effects";
+import { WizardMaster } from "../systems/wizardMaster";
 
 export interface GameContext {
   grid: CollisionGrid;
@@ -33,6 +35,12 @@ export interface GameContext {
   potionMaster: PotionMaster;
   /** magicLimit: the room-scoped magic charge-limiter (objMagicLimit regions dim limitMagic spells) (I1) */
   magicLimit: MagicLimitMaster;
+  /** effects: cosmetic particle layer (starMaster.experienceStar level-up stars) — no combat interaction */
+  effects: Effects;
+  /** wizardMaster: the found-wizards registry for the #wizard/#wizardSelector summon-helper system */
+  wizardMaster: WizardMaster;
+  /** weaponPalette: modWeaponSelector overlay (the #weaponSelector key opens a click-to-pick weapon palette) */
+  weaponPalette?: { displaying: boolean; open(p: Entity): void; tick(input: Input, p: Entity): void };
   /** spawn an enemy by actor name (set in main; lets Dwelling produce units without an import cycle) */
   spawnEnemy?: (name: string, x: number, y: number, opts?: { animChar?: string; ranged?: boolean }) => Entity;
   /** spawn a unit routed by its real team (ally if friendly, else enemy) — used by dwellings */
@@ -45,6 +53,9 @@ export interface GameContext {
    *  via playInGameCutScene. Minimal surface (just the trigger + the in-game-cutscene gate) — avoids an
    *  import cycle with sceneManager. */
   scene?: { playInGameCutScene(name: string): void; isInGameCutscene(): boolean };
+  /** gNavMode (GameSpecific=1): true while the current room is CLEARED — the player moves ~3x faster
+   *  (objRoom.goNavMode: walkAcceleration 6 vs combat 2) and chatter stones may trigger (talkOnlyOnNavMode). */
+  navMode?: boolean;
 }
 
 export const game: GameContext = {
@@ -61,6 +72,8 @@ export const game: GameContext = {
   armyMaster: new ArmyMaster(),
   potionMaster: new PotionMaster(),
   magicLimit: new MagicLimitMaster(),
+  effects: new Effects(),
+  wizardMaster: new WizardMaster(),
 };
 
 export function initContext(c: Partial<GameContext>): void { Object.assign(game, c); }

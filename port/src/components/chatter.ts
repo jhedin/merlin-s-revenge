@@ -58,7 +58,10 @@ export class Chatter extends Component {
   // latch performed. Honors a #scriptToPerform of "" / "#none" (no script: latch without playing). Skips
   // re-trigger while an in-game cutscene is already running (the scene gates a second play).
   update(next: NextFn): void {
-    if (!this.performed && this.overlapsPlayer() && !game.scene?.isInGameCutscene()) {
+    // talkOnlyOnNavMode (objChatter default true, no stone overrides; objAiChatter.checkPossibleToTalk):
+    // a stone only triggers while the player is in NAV mode (room cleared) — it must not interrupt active
+    // combat. game.navMode is set by the RoomManager on clear. (undefined -> treat as nav, e.g. unit tests.)
+    if (!this.performed && game.navMode !== false && this.overlapsPlayer() && !game.scene?.isInGameCutscene()) {
       this.goMode("talking");
       const script = this.scriptToPerform.replace(/^#/, "");
       if (script && script !== "none") game.scene?.playInGameCutScene(script);

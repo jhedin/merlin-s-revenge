@@ -135,22 +135,21 @@ describe("K22: exit-arrow ranges", () => {
     expect(byEdge(rm.exitArrowRects(), "right")).toHaveLength(1); // right edge is open
   });
 
-  it("colour is RED while the room is uncleared, GREEN once cleared (open[edge])", () => {
-    // room2 spawns a live orc → it does NOT auto-clear on entry → exits closed.
-    const map = mkStrip(ROWS, COLS, {}, [2]);
+  it("NO arrows during combat (objRoom gate); once cleared, colour reflects the NEIGHBOUR's threat", () => {
+    // all three rooms hold a live orc. Clear the LEFT neighbour (room 1) first so it is 'safe'.
+    const map = mkStrip(ROWS, COLS, {}, [1, 2, 3]);
     const rm = newRM(map);
+    rm.enter({ x: 1, y: 1 }); clearRoom(); rm.update(); // room1 now cleared (a safe neighbour)
+    // enter room 2 (still holds its orc) → combat → the arrows are SUPPRESSED entirely (GAP1).
     rm.enter({ x: 2, y: 1 });
     expect(rm.exitsOpen).toBe(false);
-    const red = rm.exitArrowRects();
-    expect(red.length).toBeGreaterThan(0);
-    expect(red.every((r) => r.colour === "red")).toBe(true);
-    // clear the room → exits open → arrows GREEN.
-    clearRoom();
-    rm.update();
+    expect(rm.exitArrowRects()).toHaveLength(0);        // no exit arrows while hostiles remain
+    // clear room 2 → arrows appear, coloured per-door by the NEIGHBOUR's threat (GAP2):
+    clearRoom(); rm.update();
     expect(rm.exitsOpen).toBe(true);
-    const green = rm.exitArrowRects();
-    expect(green.length).toBeGreaterThan(0);
-    expect(green.every((r) => r.colour === "green")).toBe(true);
+    const arr = rm.exitArrowRects();
+    expect(arr.find((r) => r.edge === "left")?.colour).toBe("green"); // room1 cleared → safe behind the door
+    expect(arr.find((r) => r.edge === "right")?.colour).toBe("red");  // room3 still holds a fight
   });
 
   it("top/bottom edges: range runs along the horizontal axis, thickness on the vertical", () => {

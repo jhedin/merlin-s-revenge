@@ -56,6 +56,9 @@ export function spawnUnit(actorName: string, x: number, y: number, opts: { animC
   const team = typeof d["team"] === "string" ? (d["team"] as string) : "#monsters";
   const e = spawnEnemy(actorName, x, y, opts);
   if (game.teamMaster.isPlayerSide(team)) e.type = "ally";
+  // newWizardFound (objGameObject.init params.wizard): a #wizard:true ally registers as a summonable wizard
+  // and is teleportable so it banks to the reserve on room-leave (then summonWizard can re-field it).
+  if (d["wizard"] === true) { game.wizardMaster?.register(actorName); e.flags.add("teleportable"); }
   return e;
 }
 
@@ -114,6 +117,7 @@ export function spawnPlayer(x: number, y: number): Entity {
   return e.build({
     x, y,
     walkSpeed: num(md, "walkSpeed", 4),
+    walkSpeedIncLevel: 0.075, // modMoveToLoc.incWalkSpeedLevel: the player's walk cap grows 0.075/level (1:1)
     energy: num(d, "energy", 200),
     strength: num(d, "strength", 8),
     attack: punch, agility: num(d, "agility", 1), dexterity: num(d, "dexterity", 0.2),
@@ -131,6 +135,7 @@ export function spawnPlayer(x: number, y: number): Entity {
     energyIncPercentage: num(d, "energyIncPercentage", 2),
     energyRecoverDelay: num(d, "energyRecoverDelay", 30),
     team: "#aldevar", teamRole: "#teamMembers", animChar: "mer", box: 12,
+    stretchDeath: d["stretchDeath"] === true, // act_player #stretchDeath: magical stretch+fade death (modStretchDeath)
     invince: 18, // brief i-frames so overlapping enemies can't chain-kill
     // act_player #punch targeting: auto-aim/melee at enemies (#aldevar.hates), reach = punch reach.
     targetAllegiance: "#enemy", targetCriteria: "#closestDistance",
@@ -272,10 +277,18 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     x, y,
     actorType: actorName, // the respawn key (objGameObject.getActorType)
     walkSpeed: num("walkSpeed", 3) * 0.6, // engine walk units -> px/tick (tuned to the slice)
+    walkSpeedIncLevel: num("walkSpeed", 3) > 0 ? 0.075 * 0.6 : 0, // modMoveToLoc.incWalkSpeedLevel (engine 0.075 ×0.6 conv)
+    // #collisionDetection:false (bat/greyGhost/summonArcher/Warrior/Orc/Golem/Boulder/skelitonSword) and the
+    // #objAiCPUGhost (monkGhost, via modGhost.initGhost -> collisionDetectionOff) DRIFT THROUGH terrain —
+    // objGameObject.checkCollisions only runs when pCollisionDetection. Map to passThrough (no moveBox).
+    passThrough: d["collisionDetection"] === false || ghost,
+    constrainToArea: d["collisionDetection"] === false || ghost, // autoConstrainToPlayArea: ghosts stay on-map
+    // (#ghost is already passed below for the AI; Movement.init reads it for the takeHit amGhost gate)
     energy: num("energy", 40),
     strength: num("strength", 5),
     team: str("team", "#monsters"), teamRole: "#teamMembers",
     animChar: opts.animChar ?? actorName, box: 14,
+    stretchDeath: d["stretchDeath"] === true, // greyGhost #stretchDeath: magical stretch+fade death (modStretchDeath)
     inertia: num("inertia", 0), // resists knockback (modGameObject damping); heavy orcs get shoved less
     ranged, runReload, ghost, splashBullet, bulletAttack, bulletReincarnate,
     // K4/K5/K6/K8a AI config: bullet-dodge caster, multi-attack 2-weapon switch, builder build-loop, the

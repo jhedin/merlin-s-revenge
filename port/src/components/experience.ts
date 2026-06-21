@@ -63,6 +63,10 @@ export class Experience extends Component {
     this.level++;
     this.entity.send("levelUp"); // Energy/Mana/control respond (modEnergy/modCharacterAttackProperties)
     if (this.entity.type === "player") game.audio?.play("level_up");
+    // modExperience.levelUp (pReleaseStarOnLevel, default true): release a star to signify the level-up.
+    // starMaster.experienceStar spawns it at the unit, rising — for EVERY unit, not just the player.
+    const pos = this.entity.send("getPos") as { x: number; y: number } | undefined;
+    if (pos) game.effects?.spawnLevelUpStar(pos.x, pos.y);
     return true;
   }
 

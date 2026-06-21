@@ -9,6 +9,7 @@ import { spawnSpell } from "../systems/spells";
 import { SpellActor } from "./spellActor";
 import { Mana } from "./mana";
 import { game } from "../game/context";
+import type { Input } from "../systems/input";
 import { fireBullet, fireSplashBullet, fireBulletPayload, performBeamAttack } from "../systems/bullets";
 import { Projectile } from "./projectile";
 import { registry } from "../game/data";
@@ -86,6 +87,38 @@ export class PlayerControl extends Component {
   /** energyBlast scroll (room 6): addWeapon the charged magic (modWeaponManager.addWeapon). */
   grantSpell(attack: AttackData): void { this.wm().addWeapon(attack.name, attack); }
 
+  // summonWizard (modSummonWizard): toggle the selected found wizard in/out of combat at the cursor.
+  // Out already -> unsummon (armyTeleportOut). Else summon it from the reserve (banked) or a fresh spawn.
+  summonWizard(input: Input): void {
+    const wm = game.wizardMaster;
+    const active = game.entities.find((e) => e.id === wm.activeWizardId && !e.send("isDead"));
+    if (active) { game.armyMaster.teleportOut(active); active.flags.add("left"); wm.clearActive(); return; }
+    const typ = wm.currentActorType();           // "<wiz>InGame"
+    if (!typ) return;                            // no wizard found yet
+    const team = this.entity.send("getTeam") as string;
+    const at = input.cursor() ?? this.entity.get(Movement);
+    let wiz = game.armyMaster.createUnit(team, typ, at.x, at.y); // re-field from the reserve when banked
+    if (!wiz && game.spawnUnit) {                                 // else summon a fresh copy of the found wizard
+      wiz = game.spawnUnit(typ.replace(/^#/, ""), at.x, at.y);
+      if (!game.entities.includes(wiz)) game.entities.push(wiz);
+    }
+    if (wiz) wm.setActive(wiz.id);
+  }
+
+  // summonArmy (modAutoSummon.summonArmy): re-field a battalion of the player's banked reserve at the
+  // cursor, spread around it, respecting the team capacity (gMaxFriends).
+  summonArmy(input: Input): void {
+    const team = this.entity.send("getTeam") as string;
+    const at = input.cursor() ?? this.entity.get(Movement);
+    const types = game.armyMaster.reserveTypes(team);
+    let i = 0;
+    for (const typ of types) {
+      if (game.teamMaster.atCapacity(team)) break;
+      const ang = (i++ / Math.max(1, types.length)) * Math.PI * 2;
+      game.armyMaster.createUnit(team, typ, at.x + Math.cos(ang) * 20, at.y + Math.sin(ang) * 20);
+    }
+  }
+
   // weapon inventory persists via WeaponManager.addSaveData/restoreFromSave (no booleans here anymore).
   // The GMG collected/on flags persist (modGoldenMachineGun.addSaveData) — a held GMG survives save/load.
   addSaveData(next: NextFn, sd: Record<string, any>): Record<string, any> {
@@ -120,13 +153,40 @@ export class PlayerControl extends Component {
       return next();
     }
 
+    // objAiPlayer.update interprets keys ONLY in #playerControl/#attack/#freeze/#release — never in
+    // #dazed. A hit drives characterModeChanged(#reel/#die) -> goMode(#dazed), so during the reel the
+    // player can't move or act, only slide from the knockback. Mirror that: freeze intent + skip input
+    // for the reel window (isHurt). The 18-frame i-frames outlast the 6-frame reel, so it can't chain-lock.
+    if (this.entity.send("isHurt")) {
+      const m = this.entity.get(Movement); m.intentX = m.intentY = 0;
+      return next();
+    }
+
     const input = game.input;
     const m = this.entity.get(Movement);
     const mv = input.moveVector();
     m.intentX = mv.x; m.intentY = mv.y;
 
     // G key (objAiPlayer.interpretGameKeys -> setGmg): toggle the Golden Machine Gun on/off (edge).
+    const gmgBefore = this.gmgOn;
     if (input.pressed("g")) this.setGmg();
+    const gmgToggled = this.gmgOn !== gmgBefore;
+
+    // #spell1..#spell9 hotkeys (objAiPlayer:157-187 -> selectSpell(n)): number keys 1-9 switch the current
+    // magic weapon (energyBlast/armySummon/...). Without this the player was stuck on the last-collected
+    // spell. selectSpell is 0-indexed, so #spellN -> n-1. (Save/load moved off 1/2 to F5/F9 in main.ts.)
+    for (let n = 1; n <= 9; n++) if (input.pressed(String(n))) this.wm().selectSpell(n - 1);
+
+    // #weaponSelector (objAiPlayer.interpretGameKeys -> displayWeaponSelector): the E key opens the weapon
+    // palette; while it's up, a click picks a weapon (so the primary fire is suppressed, below).
+    if (input.pressed("e")) game.weaponPalette?.open(this.entity);
+    if (game.weaponPalette?.displaying) game.weaponPalette.tick(input, this.entity);
+
+    // the summon-helper system (modSummonWizard / modAutoSummon): Q summons/unsummons the selected found
+    // wizard at the cursor, Tab cycles which wizard, C summons a battalion from the reserve.
+    if (input.pressed("q")) this.summonWizard(input);
+    if (input.pressed("tab")) game.wizardMaster.selectNext();
+    if (input.pressed("c")) this.summonArmy(input);
 
     // aim point: the cursor in world space, else the auto-acquired target (teamMaster.findTarget over
     // data allegiance/roles — same logic every unit uses), else current facing
@@ -140,8 +200,19 @@ export class PlayerControl extends Component {
     const mana = this.entity.get(Mana);
     const magic = wm.getMagicAttack();           // the owned magic weapon (energyBlast), or null
     const melee = wm.getMeleeAttack();           // the current melee weapon (#punch / #merlinSword)
-    const primary = input.mouseDown() || input.held(" ");
+    // suppress fire while the weapon palette is open (a click there picks a weapon, it doesn't cast).
+    const primary = (input.mouseDown() || input.held(" ")) && !game.weaponPalette?.displaying;
     const gmg = this.gmgOn;
+
+    // objAiPlayer.internalEvent #gmgTurnedOn/#gmgTurnedOff: toggling the GMG while a charge is held
+    // RELEASES it immediately (playerAttackRelease) instead of holding it across the mode switch. (The
+    // #gmgTurnedOff follow-up playerAttackCharge resumes naturally while fire is still held — gated by the
+    // weapon cooldown — so the observable outcome matches without an unsafe same-frame double-fire.)
+    if (gmgToggled && this.charging && magic) {
+      this.castMagic(magic, m, aim, wm);
+      this.charging = false; this.charge = 0; this.spell = null;
+      return next();
+    }
 
     // hold-to-charge magic — only once Merlin owns a magic weapon. No pool gate; the recast gate is the
     // magic weapon's own cooldown counter (getCooldownFin), reset on FIRE.
@@ -500,6 +571,9 @@ export class CpuAI extends Component {
 
   // updateRunReload (kite): back away from the target until the shot has cooled, then re-engage.
   private updateRunReload(m: Movement): void {
+    if (++this.retargetCtr >= CpuAI.RETARGET) {       // objAiCPU.updateRunReload ticks pRetargetCounter while kiting too
+      this.retargetCtr = 0; this.target = null; this.refreshTarget();
+    }
     const target = this.target;
     if (!target || target.send("isDead")) { this.target = null; this.goMode("findTarget", m); return; }
     const tp = target.send("getPos") as { x: number; y: number };

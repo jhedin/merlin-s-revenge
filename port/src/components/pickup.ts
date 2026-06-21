@@ -22,7 +22,7 @@ const SCROLL_ACTOR: Record<string, string> = {
   // I8 beams: each grants a #magic weapon with a #releaseFunction:#fireBullets streaming release.
   energyBeam: "energyBeamSpell", energyPulse: "energyPulseSpell",
 };
-function scrollAttack(effect: string) {
+export function scrollAttack(effect: string) {
   return resolveAttack((registry.resolveActor(SCROLL_ACTOR[effect]!) ?? {})["attack"] as Record<string, any>);
 }
 
@@ -96,5 +96,8 @@ export class Pickup extends Component {
     // supersedes the bonus) and gmg (gmgCollected has no bonus). takeHeal(12.5,0) = (12.5+0)·2 = +25, capped
     // at maxEnergy. objPlayerMerlinCharacter.txt:156,166,200.
     if (this.effect !== "maxikit" && this.effect !== "gmg") player.send("takeHeal", 12.5, 0, -1);
+    // startTempInvince (objPlayerMerlinCharacter:153,170,199): collecting ANY pickup grants
+    // pTempInvinceTime=200 frames of invincibility (a safety window, distinct from the post-hit i-frames).
+    player.send("grantInvince", 200);
   }
 }

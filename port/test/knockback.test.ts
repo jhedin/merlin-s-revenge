@@ -78,3 +78,64 @@ describe("damage == knockback (collision vector)", () => {
     expect(h).toEqual({ x: 12, y: 0 });
   });
 });
+
+// objGameObject.checkCollisions runs only when pCollisionDetection. #collisionDetection:false units
+// (greyGhost/bat/summon*) and #objAiCPUGhost (monkGhost) DRIFT THROUGH walls -> port passThrough.
+describe("ghost/no-collision units pass through terrain (collisionDetection:false)", () => {
+  beforeEach(() => {
+    game.grid = new CollisionGrid(40, 40, 32);
+    game.entities = [];
+    game.assets = { index: { anims: {} }, img: () => null } as any;
+  });
+
+  it("collisionDetection:false and ghost-AI units get passThrough; normal units don't", () => {
+    expect((spawnEnemy("greyGhost", 0, 0, { animChar: "greyGhost" }).get(Movement) as any).passThrough).toBe(true);
+    expect((spawnEnemy("bat", 0, 0, { animChar: "bat" }).get(Movement) as any).passThrough).toBe(true);
+    expect((spawnEnemy("monkGhost", 0, 0, { animChar: "monkGhost" }).get(Movement) as any).passThrough).toBe(true);
+    expect((spawnEnemy("summonWarrior", 0, 0, { animChar: "summonWarrior" }).get(Movement) as any).passThrough).toBe(true);
+    expect((spawnEnemy("swordOrc", 0, 0, { animChar: "swordOrc" }).get(Movement) as any).passThrough).toBe(false);
+  });
+
+  it("a passThrough unit's Movement integrates through a solid wall tile (no moveBox stall)", () => {
+    for (let ty = 0; ty < 40; ty++) game.grid.set(20, ty, true); // vertical wall at tile x=20
+    const ghost = spawnEnemy("greyGhost", 19 * 32, 64, { animChar: "greyGhost" });
+    const m = ghost.get(Movement); m.maxSpeed = 4;
+    // drive Movement directly (bypass the AI, which rezeroes intent with no target): hold intent east.
+    for (let i = 0; i < 60; i++) { m.intentX = 1; (m as any).update(() => {}); }
+    expect(m.x).toBeGreaterThan(21 * 32); // crossed the wall column instead of stalling on it
+  });
+
+  it("a ghost is clamped to the play area (autoConstrainToPlayArea), can't drift off-map", () => {
+    const ghost = spawnEnemy("greyGhost", 5 * 32, 64, { animChar: "greyGhost" });
+    const m = ghost.get(Movement); m.maxSpeed = 8;
+    // drive it WEST past the left edge (x=0); the clamp must hold it inside [box/2, ...].
+    for (let i = 0; i < 80; i++) { m.intentX = -1; (m as any).update(() => {}); }
+    expect(m.x).toBeGreaterThanOrEqual(m.box / 2 - 0.001); // clamped at the left bound, not gone negative
+  });
+});
+
+// objCPUCharacter.takeHit amGhost gate: a true #ghost (monkGhost) is invulnerable to external attacks;
+// only its own possession-finish (attackerId == self) lands. (greyGhost/bat pass walls but ARE damageable.)
+describe("ghost damage immunity (#ghost amGhost gate)", () => {
+  beforeEach(() => {
+    game.grid = new CollisionGrid(40, 40, 32);
+    game.entities = [];
+    game.assets = { index: { anims: {} }, img: () => null } as any;
+  });
+
+  it("monkGhost ignores external attacks but dies to its own possession-finish; greyGhost stays damageable", () => {
+    const ghost = spawnEnemy("monkGhost", 100, 100, { animChar: "monkGhost" });
+    const en = ghost.get(Energy); const hp0 = en.energy;
+    ghost.send("takeHit", 99999, 0, 42, 1);          // external attacker (id 42)
+    expect(en.energy).toBe(hp0);                       // no damage — immune
+    expect(ghost.send("isDead")).toBe(false);
+    ghost.send("takeHit", 99999, 0, ghost.id, 1);      // its OWN possession-finish (attackerId == self)
+    expect(ghost.send("isDead")).toBe(true);           // lands -> dies
+
+    const grey = spawnEnemy("greyGhost", 200, 200, { animChar: "greyGhost" });
+    grey.get(Movement).inertia = 0;
+    const ge = grey.get(Energy); const gh0 = ge.energy;
+    grey.send("takeHit", 5, 0, 42, 1);                 // collisionDetection:false but NOT #ghost -> damageable
+    expect(ge.energy).toBeLessThan(gh0);
+  });
+});

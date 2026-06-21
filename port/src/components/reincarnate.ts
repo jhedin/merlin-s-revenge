@@ -22,11 +22,15 @@
 //       The original has NO guard (its data is acyclic); the cap is a port-only safety that never fires on
 //       the shipped acyclic chains (the deepest is 4).
 //
-// Team & level come from each CHILD's own act-data (spawnUnit resolves the child's #team/#startingLevel) —
-// NOTHING is inherited from the parent (faithful: newActor carries only typ + startLoc).
+// Team & level come from each CHILD's own act-data (spawnUnit resolves the child's #team/#startingLevel).
+// XP TRANSFER (modReincarnate.txt:66 + modExperience.transferExperience): the parent fires #reincarnated
+// per child, transferring HALF its accumulated kill-XP (pExperienceGained/2) to EACH spawned child via
+// gainExperienceFromTransfer -> gainExperience. Usually ~0 (enemies rarely accumulate kill-XP), but a
+// boss/miniboss that killed player summons passes its earned XP down so the next stage isn't reset to 0.
 
 import { Component, type NextFn } from "../engine/dispatch";
 import { game } from "../game/context";
+import { Experience } from "./experience";
 
 // Default depth budget: deeper than any shipped chain (4) with headroom. A cyclic data typo terminates
 // here instead of spawning forever. Not a behavioural cap on real content (which never reaches it).
@@ -78,6 +82,9 @@ export class Reincarnate extends Component {
     const pos = this.entity.send("getPos") as { x: number; y: number }; // still-valid corpse loc
     if (!game.spawnUnit) return;
     const childDepth = this.depth - 1;    // one tier shallower than me (the guard)
+    // pExperienceGained/2 transferred to EACH child (modExperience.transferExperience). Read the parent's
+    // accumulated XP now, before it's swept.
+    const xfer = (this.entity.tryGet(Experience)?.xp ?? 0) / 2;
     let spawned = 0;
     for (let i = 0; i < this.reincarnateAs.length; i++) {
       const typ = this.reincarnateAs[i]!;
@@ -93,6 +100,7 @@ export class Reincarnate extends Component {
       pendingDepth = childDepth;          // hand the budget to the child's Reincarnate.init
       const child = game.spawnUnit(typ, pos.x + dx, pos.y + dy, {});
       pendingDepth = DEFAULT_DEPTH;       // restore (top-level / non-reincarnate spawns get the full budget)
+      if (xfer > 0) child.send("gainXp", xfer); // transferExperience: each child inherits half the parent's XP
       game.entities.push(child);
       spawned++;
     }

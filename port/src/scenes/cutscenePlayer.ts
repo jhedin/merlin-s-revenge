@@ -16,16 +16,30 @@ import type { Entity } from "../engine/dispatch";
 
 export class CutscenePlayer {
   private thespian: Thespian;
+  private readonly ingame: boolean;
+  // modThespian pSkipCounter: an #ingame dialogue can only be walked/clicked away AFTER skipDuration
+  // frames (i[#skipDuration]=30) — so brushing a movement key as the scene opens doesn't instantly skip it.
+  private skipGrace = 30;
 
   constructor(cut: Cutscene, private assets: Assets, private viewW: number, private viewH: number,
     host: Partial<ThespianHost> = {}) {
     const full: ThespianHost = { viewW, viewH, ...host };
+    this.ingame = host.ingame === true;
     this.thespian = new Thespian(cut, full);
   }
 
   /** advance one tick; returns true when the cutscene is finished (or skipped). */
   tick(input: Input): boolean {
-    if (input.pressed("escape") || input.pressed(" ") || input.pressed("enter")) this.thespian.cancel();
+    if (this.skipGrace > 0) this.skipGrace--;
+    // ESC / space / enter always cancel the whole scene.
+    let skip = input.pressed("escape") || input.pressed(" ") || input.pressed("enter");
+    // objAiPlayer.interpretMoveKeys/interpretMouse -> modThespian.AIisTryingToMove: in an #ingame dialogue,
+    // once the skip grace has elapsed, TRYING TO MOVE or CLICK cancels the script (scriptCancelled).
+    if (this.ingame && this.skipGrace === 0) {
+      const mv = input.moveVector();
+      if (mv.x !== 0 || mv.y !== 0 || input.mousePressed()) skip = true;
+    }
+    if (skip) this.thespian.cancel();
     return this.thespian.tick();
   }
 
@@ -55,7 +69,7 @@ export class CutscenePlayer {
       const pos = t.speakerPos(speech.alias) ?? { x: this.viewW / 2, y: 40 };
       drawBubble(ctx, speech.text, pos.x, pos.y - 28, this.viewW);
     }
-    ctx.fillStyle = "#445"; ctx.font = "8px monospace"; ctx.fillText("esc/space: skip", 12, 14);
+    ctx.fillStyle = "#445"; ctx.font = "8px monospace"; ctx.fillText("move/click/esc: skip", 12, 14);
   }
 
   render(renderer: Renderer): void {
@@ -77,7 +91,8 @@ export class CutscenePlayer {
       if (p.wasted) { dy = Math.round(m.y - h * 0.6); } // modWastedMode squash (h=60%)
       ctx.save();
       // K17 per-actor fade alpha (lightsUp/Down fade each actor under its own fader) × the wasted blend.
-      ctx.globalAlpha = t.actorAlpha(p) * (p.wasted ? 0.4 : 1);
+      // modWastedMode.wastedModeOn: setBlend(30) -> 0.30 opacity (the squashed ghost is mostly translucent).
+      ctx.globalAlpha = t.actorAlpha(p) * (p.wasted ? 0.3 : 1);
       if (m.facingLeft) { ctx.translate(dx + w, dy); ctx.scale(-1, 1); ctx.drawImage(img, 0, 0, w, p.wasted ? h * 0.6 : h); }
       else ctx.drawImage(img, dx, dy, w, p.wasted ? h * 0.6 : h);
       ctx.restore();

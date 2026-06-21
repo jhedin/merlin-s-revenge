@@ -9,6 +9,7 @@ import { Component, type NextFn } from "../engine/dispatch";
 import { Movement } from "./movement";
 import { spriteCharOr } from "./anim";
 import { game } from "../game/context";
+import { registry } from "../game/data";
 import type { Entity } from "../engine/dispatch";
 
 interface ResidentGroup { typ: string; buildTime: [number, number]; groupSize: [number, number]; releaseInterval: [number, number]; }
@@ -62,7 +63,14 @@ export class Dwelling extends Component {
     if (this.mode === "produce") {
       this.mode = "release"; this.timer = this.rnd(this.group!.releaseInterval);
     } else { // release
-      if (this.residents.length >= this.aliveCap) { this.timer = this.rnd(this.group!.releaseInterval); return next(); } // await permission
+      // reservationsMaster.getPermissionToRelease: hold if my own wave cap is hit OR the resident's TEAM is
+      // already at its global concurrent cap (gMaxEnemies 16 / gMaxFriends 12). The latter is the faithful
+      // per-team headcount that stops multiple dwellings from flooding a team past the original's limit.
+      const resTeam = registry.resolveActor(this.group!.typ)?.["team"];
+      if (this.residents.length >= this.aliveCap ||
+        (typeof resTeam === "string" && game.teamMaster.atCapacity(resTeam))) {
+        this.timer = this.rnd(this.group!.releaseInterval); return next(); // await permission
+      }
       this.releaseOne();
       this.budget--; this.groupLeft--;
       if (this.groupLeft <= 0) this.startProduction();              // next group (or empty)
