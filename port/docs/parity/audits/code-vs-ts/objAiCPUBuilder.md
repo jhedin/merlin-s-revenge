@@ -697,3 +697,13 @@ The **most significant divergence** is the building re-acquisition path, which a
 | control.ts | 845–857 | buildingFinished() — dispositions |
 | control.ts | 861–872 | builderFightFallback() — fallback |
 
+
+---
+
+## Reviewer note (sweep lead): flagged item is a minor save/restore corner — deferred
+
+The flag (Lingo queries teamMaster.getBuildingOfType to RESUME an interrupted unfinished building; the port
+spawns fresh) only manifests when a builder (dwarf/goblinBuilder) is interrupted mid-build across a
+save/restore or cull. In normal play the builder completes its structure in one go. Low playthrough impact;
+the port's build FSM (lookForBuilding -> building) is otherwise faithful. Documented as a minor deferral
+rather than fixed (no behavioural divergence in continuous play).
