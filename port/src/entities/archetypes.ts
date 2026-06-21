@@ -132,6 +132,7 @@ export function spawnPlayer(x: number, y: number): Entity {
     energyIncPercentage: num(d, "energyIncPercentage", 2),
     energyRecoverDelay: num(d, "energyRecoverDelay", 30),
     team: "#aldevar", teamRole: "#teamMembers", animChar: "mer", box: 12,
+    stretchDeath: d["stretchDeath"] === true, // act_player #stretchDeath: magical stretch+fade death (modStretchDeath)
     invince: 18, // brief i-frames so overlapping enemies can't chain-kill
     // act_player #punch targeting: auto-aim/melee at enemies (#aldevar.hates), reach = punch reach.
     targetAllegiance: "#enemy", targetCriteria: "#closestDistance",
@@ -284,6 +285,7 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     strength: num("strength", 5),
     team: str("team", "#monsters"), teamRole: "#teamMembers",
     animChar: opts.animChar ?? actorName, box: 14,
+    stretchDeath: d["stretchDeath"] === true, // greyGhost #stretchDeath: magical stretch+fade death (modStretchDeath)
     inertia: num("inertia", 0), // resists knockback (modGameObject damping); heavy orcs get shoved less
     ranged, runReload, ghost, splashBullet, bulletAttack, bulletReincarnate,
     // K4/K5/K6/K8a AI config: bullet-dodge caster, multi-attack 2-weapon switch, builder build-loop, the
