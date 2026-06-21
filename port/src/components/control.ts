@@ -106,7 +106,14 @@ export class PlayerControl extends Component {
     // I8: tick any in-flight bullet stream (modFireBullets) regardless of input/death — it owns its
     // own residual charge and drains independently once released.
     if (this.stream) this.tickStream();
-    if (this.entity.send("isDead")) { const m = this.entity.get(Movement); m.intentX = m.intentY = 0; return next(); }
+    if (this.entity.send("isDead")) {
+      const m = this.entity.get(Movement); m.intentX = m.intentY = 0;
+      // dying mid-charge: drop the held charge orb so it doesn't hang frozen in the world (it never
+      // releases/finishes, so sweepSpells would never reap it) — and clear the charge latch.
+      if (this.spell) { this.spell.get(SpellActor).discard(); this.spell = null; }
+      this.charging = false; this.charge = 0;
+      return next();
+    }
 
     const input = game.input;
     const m = this.entity.get(Movement);

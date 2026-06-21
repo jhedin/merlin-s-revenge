@@ -59,6 +59,18 @@ describe("Merlin's charged-magic + punch kit", () => {
     expect(x1).toBeGreaterThan(x0);
   });
 
+  it("dying mid-charge discards the held spell (no frozen-orb leak)", () => {
+    game.input = fakeInput({ mouseDown: true, cursor: { x: 400, y: 100 } }) as any;
+    const p = spawnPlayer(100, 100); grantSpell(p); game.entities = [p];
+    for (let i = 0; i < 4; i++) p.send("update");        // charge -> a live spell actor exists
+    const spell = game.entities.find((e) => e.type === "spell")!;
+    expect(spell).toBeDefined();
+    p.get(Energy).dead = true;                           // die while still holding the charge
+    p.send("update");                                    // death branch must drop the orb
+    expect(spell.send("isFinished")).toBe(true);         // discarded -> sweepSpells reaps it (no leak)
+    expect(p.send("chargeFrac")).toBe(0);                // charge latch cleared
+  });
+
   it("a released spell explodes on arrival, damaging an enemy in the blast", () => {
     game.input = fakeInput({ mouseDown: true, cursor: { x: 40, y: 94 } }) as any; // aim left
     const p = spawnPlayer(100, 100);

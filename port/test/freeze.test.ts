@@ -31,6 +31,16 @@ describe("freeze (modFreeze) — vector takeFreeze", () => {
     expect(e.get(Freeze).ticks).toBe(12);
   });
 
+  it("the accumulated freeze is CAPPED at the original's tim[2]=1000 (no permanent freeze-lock)", () => {
+    const e = arch.create(31).build();
+    // a heavy hit alone exceeds the cap: (200+200)·5·4 = 8000 -> clamped to 1000.
+    e.send("takeFreeze", 200, 200, -1, 5, false);
+    expect(e.get(Freeze).ticks).toBe(1000);
+    // further freeze-spam can't push it past the ceiling (modFreeze counter clamps to tim[2]).
+    e.send("takeFreeze", 200, 200, -1, 5, false);
+    expect(e.get(Freeze).ticks).toBe(1000);
+  });
+
   it("first hit latches frozen + applies 0.5x speed factor + teal; later hits don't re-latch", () => {
     const e = arch.create(4).build();
     expect(e.send("freezeFactor")).toBe(1);
