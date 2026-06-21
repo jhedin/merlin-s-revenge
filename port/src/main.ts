@@ -335,9 +335,12 @@ async function main() {
         }
         game.effects.update(); // advance level-up star particles (modStarReleaser)
         rooms.update();
-        // death: let the die animation play (deathT frames) before resolving respawn/game-over.
+        // death resolution (modStretchDeath -> #stretchDeathFin -> gameOver/respawn): drive it off the
+        // stretch-death FINISHING — one signal, not a second hand-tuned timer that can desync from the
+        // anim's STRETCH_DURATION. deathT is just a "death started" latch + a hard safety cap (a non-stretch
+        // actor, or a stuck anim, still resolves at the cap).
         if (player.send("isDead")) { if (deathT === 0) deathT = 1; }
-        if (deathT > 0 && ++deathT > 36) { deathT = 0; resolveDeath(); }
+        if (deathT > 0) { deathT++; if (player.get(Anim).stretchDeathDone() || deathT > 40) { deathT = 0; resolveDeath(); } }
       } else if (s === "victory") {
         // K18: the game-complete cutscene routes to the CREDITS screen (creditsMaster) — scroll to the end,
         // then to the title. Space/enter skips. (movieMaster: gGameCompleteScript -> #creditsScreen -> title.)

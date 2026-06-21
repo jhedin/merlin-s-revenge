@@ -51,6 +51,14 @@ export class Anim extends Component {
   }
   override reset(): void { this.deathT = 0; }
 
+  /** modStretchDeath #stretchDeathFin: true once the stretch+fade transform has fully played out — the
+   *  death-resolution signal (the original fires gameOver/respawn HERE, not on a separate hand-tuned timer).
+   *  False for a non-stretch-death actor, so the caller falls back to its own delay. */
+  stretchDeathDone(): boolean {
+    return this.stretchDeath && this.entity.send("isDead") === true && this.deathT >= Anim.STRETCH_DURATION;
+  }
+  hasStretchDeath(): boolean { return this.stretchDeath; }
+
   // frameAdvance (modWeaponTechnique.skipFramesForWeaponTechnique → me.big.frameAdvance): step the strip
   // one frame early (faster attack cadence). Wraps for looped strips, clamps for one-shots; resets the
   // per-frame timer so the early advance counts as a fresh frame.
