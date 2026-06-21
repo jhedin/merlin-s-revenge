@@ -45,6 +45,9 @@ export interface GameContext {
    *  via playInGameCutScene. Minimal surface (just the trigger + the in-game-cutscene gate) — avoids an
    *  import cycle with sceneManager. */
   scene?: { playInGameCutScene(name: string): void; isInGameCutscene(): boolean };
+  /** gNavMode (GameSpecific=1): true while the current room is CLEARED — the player moves ~3x faster
+   *  (objRoom.goNavMode: walkAcceleration 6 vs combat 2) and chatter stones may trigger (talkOnlyOnNavMode). */
+  navMode?: boolean;
 }
 
 export const game: GameContext = {

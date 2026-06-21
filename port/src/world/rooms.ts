@@ -222,6 +222,10 @@ export class RoomManager {
   /** open edges only where an adjacent room exists, and only once the room is cleared. */
   private setExits(open: boolean): void {
     this.exitsOpen = open;
+    // gNavMode=1 (GameSpecific): a CLEARED room puts the player in nav mode (objRoom.goNavMode ->
+    // player.setWalkAcceleration(pNavModeAcceleration 6) vs combat walkAcceleration 2 -> ~3x faster). The
+    // player Movement reads game.navMode for the speed boost; Chatter gates its trigger on it (talkOnlyOnNavMode).
+    game.navMode = open;
     const { x, y } = this.loc;
     this.grid.open = open ? {
       left: !!this.map.roomAt({ x: x - 1, y }), right: !!this.map.roomAt({ x: x + 1, y }),

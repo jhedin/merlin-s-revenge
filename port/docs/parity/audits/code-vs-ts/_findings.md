@@ -50,3 +50,16 @@ objMine, objCPUCharacter, objDwelling, objSpell (orb phases via direct position-
 ## CLEAN (cont.)
 modSpellMultistage, modFreeze, modHeal, objAiCPU (heal 100%-health skip ALREADY at teams.ts:132 — the
 flagged "missing filter" was a shallow over-flag; verified present).
+
+- [x] **NAV MODE entirely missing (objRoom.goNavMode / gNavMode=1) — SYSTEMIC, playthrough-visible** —
+  GameSpecific.ls sets gNavMode=1 (verified vs the generic main.ls template; gExitArrows=1 etc. match the
+  port). When a room is CLEARED, objRoom calls goNavMode -> the player's walkAcceleration swaps 2 -> 6
+  (pNavModeAcceleration). With friction applied every tick (objMoveXY) the terminal velocity scales with
+  accel, and the only speed clamp (gMoveSpeedLimit = ±tilesize ~31px/tick) never binds — so the player moves
+  ~3x FASTER in a cleared room than in combat. Additionally objChatter (talkOnlyOnNavMode default true, no
+  override) only triggers its cutscene IN nav mode — stones must not interrupt combat. The port modelled
+  NONE of this (uniform player speed; chatter fired regardless of combat). FIXED: RoomManager.setExits sets
+  game.navMode (=cleared); Movement applies a player-only maxSpeed x3 in nav mode; Chatter gates its trigger
+  on game.navMode. extracted/.../GameSpecific.ls + objRoom.txt:209 + modNavMode.txt:48 + objMoveXY.txt:173 +
+  objAiChatter.checkPossibleToTalk | port/src/world/rooms.ts + components/movement.ts + chatter.ts +
+  game/context.ts. navmode.test.ts (player 3x in nav, enemies unaffected, chatter combat-gate).

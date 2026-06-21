@@ -14,6 +14,10 @@ export interface Pos { x: number; y: number; }
 const KNOCK_SCALE = 0.06;   // px-scale factor on the (damped) collision vector
 const KNOCK_MAX = 5;        // clamp a single hit's shove so big spells don't fling units
 const KNOCK_FRICTION = 0.78; // per-tick decay of the knockback impulse
+// nav-mode speed multiplier: objRoom.goNavMode swaps the player's walkAcceleration 2->6 (pNavModeAcceleration)
+// in a cleared room. With friction applied every tick the original terminal velocity scales with accel, so
+// nav ≈ 3x combat speed (the tile-size move cap ~31px/tick never binds). The port applies it as a maxSpeed x3.
+const NAV_SPEED_MULT = 3;
 
 export class Movement extends Component {
   static handles = ["update", "takeHit", "getPos", "levelUp", "addSaveData", "restoreFromSave"];
@@ -98,7 +102,11 @@ export class Movement extends Component {
     this.vy += this.intentY * this.accel;
     if (this.intentX === 0) this.vx *= this.friction;
     if (this.intentY === 0) this.vy *= this.friction;
-    const cap = this.maxSpeed * (this.entity.send("freezeFactor") as number ?? 1); // modFreeze (0.5x frozen)
+    // nav mode (objRoom.goNavMode, gNavMode=1): in a CLEARED room the player accelerates at 6 vs combat 2 —
+    // ~3x faster. The port's hard-cap model folds this into a maxSpeed multiplier, player-only (goNavMode
+    // only swaps the player's walkAcceleration). Combat (uncleared room) is unchanged.
+    const nav = this.entity.type === "player" && game.navMode ? NAV_SPEED_MULT : 1;
+    const cap = this.maxSpeed * nav * (this.entity.send("freezeFactor") as number ?? 1); // modFreeze (0.5x frozen)
     const sp = Math.hypot(this.vx, this.vy);
     if (sp > cap) { this.vx = (this.vx / sp) * cap; this.vy = (this.vy / sp) * cap; }
     if (Math.abs(this.vx) < 0.05) this.vx = 0;
