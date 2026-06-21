@@ -1,7 +1,10 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { Archetype } from "@/engine/dispatch";
 import { Experience } from "@/components/experience";
 import { Energy } from "@/components/combat";
+import { Movement } from "@/components/movement";
+import { spawnEnemy, spawnPlayer } from "@/entities/archetypes";
+import { CollisionGrid } from "@/world/collision";
 import { game } from "@/game/context";
 
 // modExperience: cumulative XP, rising absolute threshold (L^3+L^2+prev/(L+1)+5+init), levels at 0.
@@ -44,5 +47,31 @@ describe("experience: XP + leveling (faithful curve)", () => {
     expect(victim.send("isDead")).toBe(true);
     expect(victim.get(Experience).lastAttacker).toBe(killer.id);
     expect(killer.get(Experience).xp).toBe(6); // imWorth 6 + floor(0/2)
+  });
+});
+
+// modMoveToLoc.incWalkSpeedLevel (internalEvent #levelUp): every character's walk-speed cap grows by
+// #walkSpeedIncLevel (engine 0.075) per level. Port: player 1:1 (+0.075), enemy ×0.6 (+0.045).
+describe("walk-speed grows with level (modMoveToLoc.incWalkSpeedLevel)", () => {
+  beforeEach(() => {
+    game.grid = new CollisionGrid(20, 20, 32);
+    game.entities = [];
+    game.assets = { index: { anims: {} }, img: () => null } as any;
+  });
+
+  it("an enemy's maxSpeed rises 0.045 per level", () => {
+    const e = spawnEnemy("swordOrc", 0, 0, { animChar: "swordOrc" });
+    const m = e.get(Movement); const base = m.maxSpeed;
+    e.send("forceLevelUp");
+    expect(m.maxSpeed).toBeCloseTo(base + 0.045, 5);
+    e.send("forceLevelUp");
+    expect(m.maxSpeed).toBeCloseTo(base + 0.09, 5);
+  });
+
+  it("the player's maxSpeed rises 0.075 per level", () => {
+    const p = spawnPlayer(100, 100); game.player = p;
+    const m = p.get(Movement); const base = m.maxSpeed;
+    p.send("forceLevelUp");
+    expect(m.maxSpeed).toBeCloseTo(base + 0.075, 5);
   });
 });

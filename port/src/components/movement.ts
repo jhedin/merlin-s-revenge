@@ -16,12 +16,16 @@ const KNOCK_MAX = 5;        // clamp a single hit's shove so big spells don't fl
 const KNOCK_FRICTION = 0.78; // per-tick decay of the knockback impulse
 
 export class Movement extends Component {
-  static handles = ["update", "takeHit", "getPos", "addSaveData", "restoreFromSave"];
+  static handles = ["update", "takeHit", "getPos", "levelUp", "addSaveData", "restoreFromSave"];
   x = 0; y = 0;
   vx = 0; vy = 0;           // walk velocity (intent-driven, speed-capped)
   kvx = 0; kvy = 0;         // knockback impulse (uncapped, friction-decayed)
   intentX = 0; intentY = 0;
   accel = 1.4; friction = 0.6; maxSpeed = 4; box = 12; inertia = 0;
+  // modMoveToLoc.incWalkSpeedLevel (internalEvent #levelUp): every character's walk speed grows by
+  // #walkSpeedIncLevel (engine 0.075) per level — enemies move faster (PointFrameMove at walkSpeed) and the
+  // player's top speed rises over a playthrough. Stored already px-converted (player 1:1, enemy ×0.6).
+  walkSpeedIncLevel = 0;
   facingLeft = false;
   hitX = false; hitY = false;  // wall contact this tick (projectiles read these)
   // objBullet.checkCollisions: bullets do NOT collide with terrain (gBulletsCollideWithBackground is never
@@ -39,6 +43,14 @@ export class Movement extends Component {
     if (typeof cfg["friction"] === "number") this.friction = cfg["friction"];
     if (typeof cfg["box"] === "number") this.box = cfg["box"];
     if (typeof cfg["inertia"] === "number") this.inertia = Math.max(0, Math.min(100, cfg["inertia"]));
+    this.walkSpeedIncLevel = typeof cfg["walkSpeedIncLevel"] === "number" ? cfg["walkSpeedIncLevel"] : 0;
+  }
+
+  // modMoveToLoc.internalEvent #levelUp -> incWalkSpeedLevel: bump the walk-speed cap by the per-level
+  // increment. Fans out from Experience.levelUp alongside Energy/Mana growth.
+  levelUp(next: NextFn): void {
+    this.maxSpeed += this.walkSpeedIncLevel;
+    next();
   }
   override reset(): void {
     this.vx = this.vy = this.kvx = this.kvy = this.intentX = this.intentY = 0; this.hitX = this.hitY = false;

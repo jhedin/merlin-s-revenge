@@ -114,6 +114,7 @@ export function spawnPlayer(x: number, y: number): Entity {
   return e.build({
     x, y,
     walkSpeed: num(md, "walkSpeed", 4),
+    walkSpeedIncLevel: 0.075, // modMoveToLoc.incWalkSpeedLevel: the player's walk cap grows 0.075/level (1:1)
     energy: num(d, "energy", 200),
     strength: num(d, "strength", 8),
     attack: punch, agility: num(d, "agility", 1), dexterity: num(d, "dexterity", 0.2),
@@ -272,6 +273,7 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     x, y,
     actorType: actorName, // the respawn key (objGameObject.getActorType)
     walkSpeed: num("walkSpeed", 3) * 0.6, // engine walk units -> px/tick (tuned to the slice)
+    walkSpeedIncLevel: num("walkSpeed", 3) > 0 ? 0.075 * 0.6 : 0, // modMoveToLoc.incWalkSpeedLevel (engine 0.075 ×0.6 conv)
     energy: num("energy", 40),
     strength: num("strength", 5),
     team: str("team", "#monsters"), teamRole: "#teamMembers",
