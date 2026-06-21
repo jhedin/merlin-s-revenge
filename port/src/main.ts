@@ -371,6 +371,10 @@ async function main() {
       const active = rooms.room.layer("#backgroundActive");
       if (passive && rooms.passiveSheet) renderer.drawTileLayer(passive, rooms.passiveSheet);
       if (active && rooms.activeSheet) renderer.drawTileLayer(active, rooms.activeSheet);
+      // K22 exit arrows (objRoom.drawExitArrows → modScreenExits.drawExitArrowsOnImage): the original bakes
+      // these INTO the backgroundActive image, so actors draw OVER them. Draw here (after the active layer,
+      // before the actor sprites) to match that z-order. No-op when the arrow art wasn't bundled.
+      drawExitArrows(renderer, assets, rooms.exitArrowRects());
       game.effects.draw(renderer); // level-up stars (starMaster setLocZ-1: behind the actors)
       const sprites = game.entities
         .filter((e) => e.type !== "bullet" && e.type !== "pickup" && e.type !== "marker" && e.type !== "spell")
@@ -383,10 +387,6 @@ async function main() {
       // draws it OVER the actors (after drawSprites). pFrontLayerBlendLevel=128 -> globalAlpha 0.5 default.
       const fg = rooms.room.layer("#foregroundPassive");
       if (fg && rooms.foregroundSheet) renderer.drawTileLayer(fg, rooms.foregroundSheet, 0, 0, 0.5);
-      // K22 exit arrows (objRoom.drawExitArrows → modScreenExits.drawExitArrowsOnImage): overlay the
-      // green/red directional arrows on each exit edge, OVER the room layers. Pure overlay — no effect on
-      // collision/transition. No-ops when the arrow art wasn't bundled (assets.arrowImg → undefined).
-      drawExitArrows(renderer, assets, rooms.exitArrowRects());
       // modFreeze frost overlay stays always-on (a status indicator). Merlin's Revenge has NO always-on
       // health bars (gEnemyEnergyMasterOn=0); health/level/XP show only on mouse-hover (rollover, below).
       for (const e of game.entities) {
@@ -401,8 +401,10 @@ async function main() {
       weaponPalette.render(renderer, player, assets); // modWeaponSelector palette (over the world, under the HUD)
       drawHud(renderer, player);
       // 5-state minimap (modMiniMap): #cur/#clr/#inf (+ data #fre/#spe) with a proximity distance blend.
+      // modMiniMap is OFF by default (pShowMiniMap=false); goNavMode shows it, leaveNavMode hides it — so it
+      // appears ONLY once the room is cleared (nav mode), as a "room safe" cue, not during combat.
       const pm = player.get(Movement);
-      drawMinimap(renderer, {
+      if (game.navMode) drawMinimap(renderer, {
         map, loc: rooms.loc, cleared: rooms.clearedSet(), infested: rooms.infestedRooms(),
         playerPx: { x: pm.x, y: pm.y }, cursorPx: game.input.cursor(),
       }, viewW);

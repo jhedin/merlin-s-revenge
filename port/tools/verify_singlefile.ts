@@ -37,6 +37,6 @@ const assetReqFails = errs.filter((e) => e.includes("/assets/"));
 console.log("pageerrors:", errs.filter((e) => e.startsWith("PAGEERROR")).join(" | ") || "none");
 console.log("asset request failures:", assetReqFails.length);
 console.log("state:", JSON.stringify(state));
-const ok = state.ok && errs.filter((e) => e.startsWith("PAGEERROR")).length === 0 && assetReqFails.length === 0;
+const ok = (state as { ok?: boolean }).ok && errs.filter((e) => e.startsWith("PAGEERROR")).length === 0 && assetReqFails.length === 0;
 console.log(ok ? "VERIFY: PASS" : "VERIFY: FAIL");
 process.exit(ok ? 0 : 1);

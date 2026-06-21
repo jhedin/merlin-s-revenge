@@ -5,6 +5,7 @@
 import type { GameMap, Room, Vec2i } from "./map";
 import { CollisionGrid } from "./collision";
 import { tileSymbol, type TileKey } from "../data/tlk";
+import { registry } from "../game/data";
 import type { Assets } from "../render/assets";
 import type { TileSheet } from "../render/renderer";
 import { game } from "../game/context";
@@ -144,6 +145,28 @@ export class RoomManager {
     }
     return inf;
   }
+  // objRoom.getHostile (objRoom.txt:342): does a room currently hold hostiles (#inf-status actors)? Used
+  // for the exit-arrow colour — GREEN to a safe neighbour, RED to one that still holds a fight. Mirrors the
+  // original's three cases: cleared -> no; visited (pState) -> any live enemy in the snapshot; unvisited ->
+  // scan its #objects layer for any actor whose data #miniMapStatus is #inf (an enemy).
+  private roomHasHostiles(room: Room): boolean {
+    if (this.cleared.has(room.num)) return false;
+    if (room.num === this.room.num) return this.enemiesAlive(); // the live current room
+    const snap = this.pState.get(room.num);
+    if (snap) return snap.some((s) => s.type === "enemy");      // visited: read the saved state
+    const objects = room.layer("#objects");                     // unvisited: peek its objects layer
+    if (!objects) return false;
+    for (const row of objects.grid) {
+      for (const n of row) {
+        if (n <= 0) continue;
+        const sym = tileSymbol(this.objectsKey, n);
+        const d = registry.resolveActor(sym.replace(/^#/, ""));
+        if (d && d["miniMapStatus"] === "#inf") return true;
+      }
+    }
+    return false;
+  }
+
   /** restore the cleared set (loadGame, before entering the current room). */
   restoreCleared(nums: number[]): void {
     this.cleared = new Set(nums);
@@ -272,14 +295,27 @@ export class RoomManager {
     ];
     for (const { edge, nbr } of edges) {
       if (!nbr) continue; // no arrow on an edge with no neighbouring room
-      // GREEN once the neighbour is cleared (safe), RED while it still holds hostiles (uncleared/unvisited).
-      const colour: "green" | "red" = this.cleared.has(nbr.num) ? "green" : "red";
+      // objRoom.getHostile: GREEN to a SAFE neighbour (no #inf actors — cleared, or only friendly/empty),
+      // RED while it still holds a fight. Keys off the NEIGHBOUR's hostiles, not merely the cleared set, so
+      // an enemy-less room (NPC/story) reads green even before it's visited.
+      const colour: "green" | "red" = this.roomHasHostiles(nbr) ? "red" : "green";
+      // ListCombineExitTiles (modScreenExits): a position carries an arrow only if BOTH this room's edge tile
+      // AND the neighbour's FACING edge tile are passable (#none). Build the neighbour's edge grid and AND it,
+      // so an arrow never marks a spot that's walled off on the other side.
+      const nbrActive = nbr.layer("#backgroundActive");
+      const nbrGrid = nbrActive ? CollisionGrid.fromActiveLayer(nbrActive, this.activeKey, t) : null;
       // passable run of edge cells (match #none) → ranges, in px along the edge axis.
       const horizontal = edge === "up" || edge === "down";
       const n = horizontal ? cols : rows;
-      const passable = (i: number): boolean =>
-        horizontal ? this.grid.passableCell(i, edge === "up" ? 0 : rows - 1)
-                    : this.grid.passableCell(edge === "left" ? 0 : cols - 1, i);
+      const passable = (i: number): boolean => {
+        const here = horizontal ? this.grid.passableCell(i, edge === "up" ? 0 : rows - 1)
+                                : this.grid.passableCell(edge === "left" ? 0 : cols - 1, i);
+        if (!here || !nbrGrid) return here;
+        // the neighbour's facing edge (opposite side, same axis index).
+        const there = horizontal ? nbrGrid.passableCell(i, edge === "up" ? rows - 1 : 0)
+                                 : nbrGrid.passableCell(edge === "left" ? cols - 1 : 0, i);
+        return there;
+      };
       for (const [start, end] of runs(n, passable, t)) {
         // convertExitRangesToArrowRectsEdge: thickness on the perpendicular axis, range along the edge.
         const rect = edge === "left" ? { x: 0, y: start, w: th, h: end - start }
