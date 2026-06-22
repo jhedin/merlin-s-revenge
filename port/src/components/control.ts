@@ -25,6 +25,9 @@ import { Experience } from "./experience";
 import { Anim } from "./anim";
 import type { Entity } from "../engine/dispatch";
 
+// K6 multiAttack: a per-weapon bullet record (render char + splash/plain #attack + reincarnate list).
+type BulletData = { splashBullet?: AttackData; bulletAttack?: AttackData; bulletChar: string; bulletReincarnate: string[] };
+
 // Damage/bolt-speed are still tuned per charge-unit to the px slice (PLAN_REVIEW: damage == knockback;
 // full base charge ~12.5 fells a rank-and-file 300-energy enemy). The CHARGE math (chargeMax/Start/Speed)
 // now flows from the magic weapon's #attack × Mana via charge.ts instead of an inline SPELL constant.
@@ -444,6 +447,9 @@ export class CpuAI extends Component {
   bulletAttack: AttackData | null = null; // K1: a plain (non-splash) ranged weapon's resolved #attack.bullet
   bulletChar = "";                         // the fired bullet's sprite char (archerArrow/axe…) for `<char>_fly`
   bulletReincarnate: string[] = [];       // bullet #reincarnateAs (flamingRock->fire, eggs->creature): hatch on death
+  // K6 multiAttack: a 2-ranged-weapon CPU (shrouder) carries a bullet record per weapon keyed by #bullet name;
+  // syncWeaponMode swaps the active bullet on a weapon switch so each weapon fires ITS OWN projectile.
+  bulletByKey: Record<string, BulletData> | null = null;
   // K8a builder data (modBuilder): the unitToBuild list, build rate (per-100 advances a frame), and the
   // buildOne/buildDie/leaveWhenFinished disposition.
   unitToBuild: string[] = [];
@@ -513,6 +519,7 @@ export class CpuAI extends Component {
     this.bulletAttack = (cfg["bulletAttack"] as AttackData | undefined) ?? null; // K1: plain bullet's #attack (power/mult)
     this.bulletChar = typeof cfg["bulletChar"] === "string" ? cfg["bulletChar"] : "";
     this.bulletReincarnate = (cfg["bulletReincarnate"] as string[] | undefined) ?? []; // bullet hatch/leave-behind list
+    this.bulletByKey = (cfg["bulletByKey"] as Record<string, BulletData> | undefined) ?? null; // K6 multiAttack: per-weapon bullet
     this.retargetCtr = 0; this.noTargetCtr = 0;
     this.mode = "findTarget"; this.target = null; this.attackT = 0;
     this.path.reset();
@@ -680,6 +687,15 @@ export class CpuAI extends Component {
   private syncWeaponMode(): void {
     const ca = this.entity.get(WeaponManager).getCurrentAttack();
     if (!ca) return;
+    // K6 multiAttack: fire the CURRENT weapon's bullet (modAttack params.typ = me.getAttack().bullet). Swap
+    // the active bullet record by the current attack's #bullet name so weapon 2 fires its own projectile.
+    if (this.bulletByKey) {
+      const bd = this.bulletByKey[(ca.bullet ?? "").replace(/^#/, "")];
+      if (bd) {
+        this.splashBullet = bd.splashBullet ?? null; this.bulletAttack = bd.bulletAttack ?? null;
+        this.bulletChar = bd.bulletChar; this.bulletReincarnate = bd.bulletReincarnate;
+      }
+    }
     this.ranged = ca.type === "ranged" || ca.type === "magic";
     this.reachRanged = Math.min(CpuAI.MAX_RANGED_REACH, Math.max(16, ca.reach));
     // melee reach = the strike point (collisionLoc.x), same as spawn — NOT #reach (ranged-only). Keeps a
