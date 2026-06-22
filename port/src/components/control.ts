@@ -465,6 +465,7 @@ export class CpuAI extends Component {
   private attackFrames: number[] = [];           // the weapon's #animframe firing frames (1-based)
   private attackFired = false;                    // did at least one shot land this attack (fallback guard)
   private attackAnimates = false;                 // the attack strip has >1 frame, so the animation drives it
+  private releasePhase = false;                   // caster: after the #charge wind-up, playing the brief #release fire strip
   private path = new PathFinding();          // K3 modPathFinding (beeline→scenic)
   // K5 ghost FSM
   private ghostMode: GhostMode = "findTarget";
@@ -555,12 +556,15 @@ export class CpuAI extends Component {
     const at = this.entity.get(WeaponManager).getCurrentAttack();
     let act = typeof at?.animType === "string" ? at.animType.replace(/^#/, "") : "";
     if (act === "magic" || act === "weaponMagic" || act === "magicMelee") {
-      // objAiAttack.chargeMagic: a caster spends the attack window in #charge (the wind-up — orb growing over
-      // its head) before the brief #release. So PREFER the `charge` strip (the visible bulk); fall back to
-      // `release` for casters that ship no charge strip. Either way it ANIMATES instead of standing still.
+      // objAiAttack: a caster spends the wind-up in #charge (the orb growing over its head), then plays
+      // #release at the fire frame (chargeMagic ensureMode(#charge) → releaseMagic goMode(#release)). Mirror
+      // that: #charge during the window, then #release once releasePhase is armed (set when the charge strip
+      // completes and the cast fires). Fall back to whichever strip is bundled.
       const char = this.entity.tryGet(Anim)?.char ?? "";
-      act = game.assets.index.anims[`${char}_charge`] ? "charge"
-        : game.assets.index.anims[`${char}_release`] ? "release" : "release";
+      const hasCharge = !!game.assets.index.anims[`${char}_charge`];
+      const hasRelease = !!game.assets.index.anims[`${char}_release`];
+      act = this.releasePhase && hasRelease ? "release"
+        : hasCharge ? "charge" : hasRelease ? "release" : "release";
     }
     return act;
   }
@@ -734,6 +738,7 @@ export class CpuAI extends Component {
     this.committedTarget = _target;
     this.attackFrames = wm.getCurrentAttack()?.animFrame ?? [];
     this.attackFired = false;
+    this.releasePhase = false;                    // start in #charge; the #release strip arms at wind-up completion
     const an = this.entity.tryGet(Anim);
     an?.restart();
     // will the ATTACK strip animate (>1 frame)? check it directly — Anim's current action is still walk/stand
@@ -755,7 +760,23 @@ export class CpuAI extends Component {
       // strip completed: if nothing fired yet (a magic weapon's #animframe is #none -> empty list, so no
       // frame crossing ever fires), cast NOW on completion — else casters would play the release strip and
       // leave attack mode without ever attacking. Melee/ranged already fired on their crossings.
-      if (an.looped()) { if (!this.attackFired) this.performAttack(m); this.attackT = 0; this.attackFin(m); return; }
+      if (an.looped()) {
+        // a caster's #charge wind-up just completed: fire the cast, then play the brief #release fire strip
+        // (objAiAttack releaseMagic goMode(#release)) before leaving attack mode. Only when a charge strip
+        // was playing and a DISTINCT release strip exists; melee/ranged (no charge) fall straight to attackFin.
+        if (!this.releasePhase) {
+          const ca = this.entity.get(WeaponManager).getCurrentAttack();
+          const char = an.char;
+          if (ca?.type === "magic" && game.assets.index.anims[`${char}_charge`] && game.assets.index.anims[`${char}_release`]) {
+            if (!this.attackFired) this.performAttack(m);   // the cast fires at the charge→release transition
+            this.releasePhase = true;
+            an.restart();                                   // play #release from frame 0 (attackAction now returns it)
+            this.attackT = this.attackAnimTicks("release") + 2;
+            return;
+          }
+        }
+        if (!this.attackFired) this.performAttack(m); this.attackT = 0; this.attackFin(m); return;
+      }
     }
     if (--this.attackT <= 0) {                   // safety / non-animating strip: fire once, then leave
       if (!this.attackFired) this.performAttack(m);

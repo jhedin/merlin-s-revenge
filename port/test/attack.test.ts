@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { spawnEnemy, spawnAlly, spawnPlayer, spawnUnit } from "@/entities/archetypes";
 import { EnemyAI } from "@/components/control";
+import { Anim } from "@/components/anim";
 import { game } from "@/game/context";
 import { CollisionGrid } from "@/world/collision";
 import { rebuildCombatSubstrate } from "@/systems/combatTick";
@@ -186,6 +187,27 @@ describe("burst fire: one shot per #animframe crossing (animation-driven attack)
     let summoned = false;
     for (let t = 0; t < 80 && !summoned; t++) { rebuildCombatSubstrate(); mage.send("update"); summoned = game.entities.length > n0; }
     expect(summoned).toBe(true); // the caster summoned (fired on release-strip completion), not nothing
+  });
+
+  it("a caster with BOTH charge+release strips plays #charge (wind-up) then #release (fire), and still casts", () => {
+    // objAiAttack: ensureMode(#charge) during the wind-up, then goMode(#release) at the fire frame. The port
+    // preferred #charge always, so the #release fire flash never showed (greyGhost/mageOrc/darkMage… 18 chars).
+    game.grid = new CollisionGrid(60, 60, 32); game.entities = [];
+    game.assets = { index: { anims: {
+      mageOrc_charge: { delay: 1, frames: Array.from({ length: 6 }, () => ({ dela: 1 })) },
+      mageOrc_release: { delay: 1, frames: Array.from({ length: 3 }, () => ({ dela: 1 })) },
+      mageOrc_stand: { delay: 1, frames: [{}] },
+    } }, img: () => null } as any;
+    game.teamMaster.reset(); game.armyMaster.reset(); game.teamMaster.unitMap.configure(32, 0, 0);
+    game.spawnEnemy = spawnEnemy; game.spawnUnit = spawnUnit; game.spawnAlly = spawnAlly;
+    const player = spawnPlayer(400, 400); game.player = player; game.entities.push(player);
+    const mage = spawnEnemy("mageOrc", 540, 400); game.entities.push(mage);
+    const n0 = game.entities.length;
+    const seen = new Set<string>(); let summoned = false;
+    for (let t = 0; t < 120; t++) { rebuildCombatSubstrate(); mage.send("update"); seen.add((mage.get(Anim) as any).action); if (game.entities.length > n0) summoned = true; }
+    expect(seen.has("charge")).toBe(true);   // the wind-up plays
+    expect(seen.has("release")).toBe(true);  // the fire-frame flash now shows (was missing)
+    expect(summoned).toBe(true);             // and the cast still fires
   });
 });
 
