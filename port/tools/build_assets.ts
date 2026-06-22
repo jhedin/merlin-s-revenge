@@ -282,9 +282,37 @@ for (const b of bitmaps) {
   weaponIcons[sym] = outName;
 }
 
+// ── (g) static gfx members (non-anm bitmaps the renderer composites directly): pickup potions
+// (objPotion #member), the minimap status tiles (modMiniMap), the rollover level stars
+// (objMoveableLevelBar), the health-bar surround and the medikit-display icons. Director member names
+// are mangled with a trailing matte/format suffix (e.g. "medikit_potionC9D_L"), so match each clean name
+// to the SHORTEST bitmap whose name === it or starts with it (the closest, least-suffixed candidate).
+interface Member { file: string; w: number; h: number; reg: [number, number]; }
+const members: Record<string, Member> = {};
+const MEMBER_NAMES = [
+  // pickup potions (objPotion / objMedikit #member: member("<x>_potion","gfx"))
+  "medikit_potion", "maxikit_potion", "walkSpeed_potion", "manaBurst_potion", "manaCapacity_potion", "manaFlow_potion",
+  // pickup scrolls (objScroll #member: member("<x>_scroll","gfx"))
+  "merlinSword_scroll", "energyBlast_scroll", "cBlast_scroll", "arcticBlast_scroll", "healBlast_scroll",
+  "armySummon_scroll", "monsterSummon_scroll", "energyMines_scroll", "energyPunch_scroll", "gmg_scroll",
+  "energyBeamSpell_scroll", "energyPulseSpell_scroll",
+  // minimap status tiles (modMiniMap 4×4)
+  "miniInfested", "miniCurrent", "miniClear", "miniSpecial", "miniFriendly",
+  // rollover level stars (objMoveableLevelBar)
+  "star_tiny", "star_medium", "star_large",
+  // HUD: health-bar surround + medikit display icons
+  "health_bar_surround", "medikit_on", "medikit_off",
+];
+for (const name of MEMBER_NAMES) {
+  const cands = bitmaps.filter((b) => b.name === name || b.name.startsWith(name)).sort((a, b) => a.name.length - b.name.length);
+  const b = cands[0];
+  if (!b) { console.warn("missing gfx member:", name); continue; }
+  members[name] = { file: copy(b), w: b.w, h: b.h, reg: b.reg };
+}
+
 // ── emit + report ─────────────────────────────────────────────────────────────────────────────
 writeFileSync(join(OUT_GEN, "assets.json"),
-  JSON.stringify({ version: 2, defaultMap: DEFAULT_MAP, tilesets, chars, anims, sounds, music, cutscenes, arrows, weaponIcons }, null, 1));
+  JSON.stringify({ version: 2, defaultMap: DEFAULT_MAP, tilesets, chars, anims, sounds, music, cutscenes, arrows, weaponIcons, members }, null, 1));
 writeFileSync(join(OUT_GEN, "maps.json"), JSON.stringify(maps, null, 1));
 
 const charCount = Object.keys(chars).length, animCount = Object.keys(anims).length;

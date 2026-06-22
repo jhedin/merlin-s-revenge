@@ -88,15 +88,32 @@ describe("Merlin's charged-magic + punch kit", () => {
     expect(foe.get(Energy).energy).toBeLessThan(hp0);
   });
 
-  it("auto-punches an adjacent enemy when not casting", () => {
-    game.input = fakeInput({ mouseDown: false, cursor: null }) as any;
+  it("punches an adjacent enemy while the fire button is HELD (no magic weapon -> melee)", () => {
+    game.input = fakeInput({ mouseDown: true, cursor: null }) as any; // hold fire (click-to-attack)
     const p = spawnPlayer(100, 100);
     const foe = spawnEnemy("swordOrc", 110, 100, { animChar: "swordOrc" }); // hostile, within punch reach
     game.entities = [p, foe];
     const hp0 = foe.get(Energy).energy;
     rebuildCombatSubstrate(); // roster + unit map (auto-aim + area melee both read teamMaster now)
-    p.send("update"); // melee fires on the first eligible tick
+    p.send("update"); // melee fires on the first eligible tick while fire is held
     expect(foe.get(Energy).energy).toBeLessThan(hp0);
+  });
+
+  it("ONE swing = ONE hit — holding fire through the swing window doesn't re-hit every frame", () => {
+    // merlinSword #cooldown:0 recovers within a tick; the re-hit gate is the swing animation (meleeT), so a
+    // foe must take exactly one hit per swing, not N (the 'orcs die in one hit' multi-hit bug).
+    game.input = fakeInput({ mouseDown: true, cursor: null }) as any; // hold fire the whole time
+    const p = spawnPlayer(100, 100);
+    const foe = spawnEnemy("blackOrc", 110, 100, { animChar: "blackOrc" }); // big HP so it survives one hit
+    foe.get(Movement).inertia = 0;
+    game.entities = [p, foe];
+    rebuildCombatSubstrate();
+    p.send("update");
+    const afterOne = foe.get(Energy).energy;          // damage from the single swing
+    const dmg1 = (foe.get(Energy).max) - afterOne;
+    for (let i = 0; i < 5; i++) p.send("update");     // still mid-swing window (sword swing is 12 ticks)
+    expect(foe.get(Energy).energy).toBe(afterOne);    // NO further damage — the swing can't re-hit
+    expect(dmg1).toBeGreaterThan(0);
   });
 
   it("routes objects-layer units by team: #aldevar -> ally, hostile -> enemy", () => {
@@ -138,9 +155,9 @@ describe("Merlin's charged-magic + punch kit", () => {
     expect(fullBlastDamage(30)).toBeGreaterThan(fullBlastDamage(10)); // capacity 30 -> bigger blast
   });
 
-  it("freezes the player during the reel after a hit (objAiPlayer #dazed: no key interpretation)", () => {
-    // objAiPlayer.update only interprets keys in #playerControl/#attack/#freeze/#release. A hit drives
-    // characterModeChanged(#reel) -> goMode(#dazed), so for the reel window the player can't act.
+  it("the player KEEPS control on a hit — never dazed (objPlayerMerlinCharacter.takeHit overrides modReel)", () => {
+    // Unlike a CPU unit (which goes #dazed for the reel window), Merlin's takeHit immediately goMode(#walk),
+    // so a hit never locks input — the held key is honoured the same frame (he just also slides from knockback).
     const inp = fakeInput({}) as any;
     inp.moveVector = () => ({ x: 1, y: 0 });  // hold "move right" the whole time
     game.input = inp;
@@ -149,18 +166,11 @@ describe("Merlin's charged-magic + punch kit", () => {
     const m = p.get(Movement);
 
     p.send("update");
-    expect(m.intentX).toBe(1);               // not hurt -> input is honoured
+    expect(m.intentX).toBe(1);               // input honoured
 
-    p.send("takeHit", 5, 0, -1, 1);          // a hit -> reel (isHurt) + knockback
-    expect(p.send("isHurt")).toBe(true);
+    p.send("takeHit", 5, 0, -1, 1);          // a hit -> white flash (isHurt) + knockback, but NO daze
     p.send("update");
-    expect(m.intentX).toBe(0);               // dazed -> the held "move right" is IGNORED
-
-    // ride out the 6-frame reel; once it clears, control returns.
-    for (let i = 0; i < 8; i++) p.send("update");
-    expect(p.send("isHurt")).toBe(false);
-    p.send("update");
-    expect(m.intentX).toBe(1);               // controllable again
+    expect(m.intentX).toBe(1);               // still controllable mid-flash — the held "move right" is honoured
   });
 
   it("toggling GMG mid-charge releases the held spell (objAiPlayer internalEvent #gmgTurnedOn/Off)", () => {

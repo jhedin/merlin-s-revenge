@@ -136,7 +136,9 @@ export function spawnPlayer(x: number, y: number): Entity {
     energyRecoverDelay: num(d, "energyRecoverDelay", 30),
     team: "#aldevar", teamRole: "#teamMembers", animChar: "mer", box: 12,
     stretchDeath: d["stretchDeath"] === true, // act_player #stretchDeath: magical stretch+fade death (modStretchDeath)
-    invince: 18, // brief i-frames so overlapping enemies can't chain-kill
+    // NO post-hit i-frames: modInvince fires only on a PICKUP collect (startTempInvince), never from a hit,
+    // and objPlayerMerlinCharacter.takeHit cancels the reel (goMode #walk). So Merlin takes every cooldown-
+    // gated swing in full — faithful (was invince:18, a port-invented anti-chain-kill cushion).
     // act_player #punch targeting: auto-aim/melee at enemies (#aldevar.hates), reach = punch reach.
     targetAllegiance: "#enemy", targetCriteria: "#closestDistance",
     targetRoles: [["#teamMembers", "#teamBuildings"]],
@@ -258,8 +260,14 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
   // a fired bullet's #reincarnateAs (objBullet.reincarnate): flamingRock -> #fire, lizardEgg -> #bug,
   // ostrichEgg -> #babyOstrich. The bullet hatches/leaves these at its death loc — threaded to Projectile.
   let bulletReincarnate: string[] = [];
+  let bulletChar = "";
   if (ranged && typeof atk["bullet"] === "string" && atk["bullet"] !== "#none") {
-    const bulletActor = registry.resolveActor(atk["bullet"].replace(/^#/, ""));
+    bulletChar = atk["bullet"].replace(/^#/, ""); // the bullet actor KEY (e.g. #dwarfAxe)
+    const bulletActor = registry.resolveActor(bulletChar);
+    // modAnimSet keys the sprite by the actor's #name, NOT its key: dwarfAxe -> "axe" (axe_fly), goblinArrow
+    // -> "gobarrow" (gobarrow_fly). Most bullets carry name===key, but these two diverge — so resolve the
+    // sprite char off #name or the fly strip is missed and the bolt falls back to a flat dot.
+    if (bulletActor && typeof bulletActor["name"] === "string" && bulletActor["name"]) bulletChar = bulletActor["name"];
     const ba = bulletActor ? resolveAttack(bulletActor["attack"] as Record<string, any>, bulletActor) : undefined;
     if (ba && (ba.attackType === "#explode" || ba.splashDamageOn)) splashBullet = ba;
     else if (ba) bulletAttack = ba;
@@ -286,11 +294,13 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     // (#ghost is already passed below for the AI; Movement.init reads it for the takeHit amGhost gate)
     energy: num("energy", 40),
     strength: num("strength", 5),
+    strengthIncLevel: num("strengthIncLevel", 0.1), // melee strength growth per level (CpuAI.levelUp)
+    eyestrain: num("eyestrain", 0),                 // ranged/magic aim scatter (objAiAttack.modifyLocWithEyestrain)
     team: str("team", "#monsters"), teamRole: "#teamMembers",
     animChar: opts.animChar ?? actorName, box: 14,
     stretchDeath: d["stretchDeath"] === true, // greyGhost #stretchDeath: magical stretch+fade death (modStretchDeath)
     inertia: num("inertia", 0), // resists knockback (modGameObject damping); heavy orcs get shoved less
-    ranged, runReload, ghost, splashBullet, bulletAttack, bulletReincarnate,
+    ranged, runReload, ghost, splashBullet, bulletAttack, bulletReincarnate, bulletChar,
     // K4/K5/K6/K8a AI config: bullet-dodge caster, multi-attack 2-weapon switch, builder build-loop, the
     // ghost's possess team. Defaults keep every other actor on the existing committed-target FSM.
     dodgesBullets, multiAttack, builder, unitToBuild,
@@ -318,6 +328,7 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     targetReach: targetReach ?? (ranged ? 150 : 22),
     dieSound: typeof d["dieSound"] === "string" ? d["dieSound"] : undefined,  // played on death
     experienceImWorth: num("experienceImWorth", 0) || undefined,             // XP this unit grants
+    experienceAmountForNextLevel: num("experienceAmountForNextLevel", 0),    // first-level XP threshold (Lingo default 0)
     energyIncPercentage: num("energyIncPercentage", 0) || undefined,
     // objCPUCharacter overrides objCharacter's energyRecoverDelay(30) -> 300 (objCPUCharacter.txt:22): every
     // CPU/enemy/ally unit slowly regens +1 energy per 300 ticks (modEnergy.recoverEnergy) unless it sets its

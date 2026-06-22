@@ -7,10 +7,15 @@
 
 import type { GameMap, Vec2i } from "../world/map";
 import type { Renderer } from "./renderer";
+import type { Assets } from "./assets";
 
 export type MiniStatus = "#clr" | "#cur" | "#fre" | "#inf" | "#spe";
 
-// the status-image palette as solid colours (no bundled minimap bitmaps).
+// modMiniMap statusImages: each room-status renders a 4×4 bitmap tile (miniClear/miniCurrent/…).
+const STATUS_MEMBER: Record<MiniStatus, string> = {
+  "#clr": "miniClear", "#cur": "miniCurrent", "#fre": "miniFriendly", "#inf": "miniInfested", "#spe": "miniSpecial",
+};
+// fallback solid colours if the bitmaps aren't bundled.
 const STATUS_COLOR: Record<MiniStatus, string> = {
   "#clr": "#69a", // cleared / clear room
   "#cur": "#fff", // current room
@@ -46,7 +51,7 @@ export function statusFor(inp: MinimapInputs, x: number, y: number): MiniStatus 
   return "#clr";
 }
 
-export function drawMinimap(renderer: Renderer, inp: MinimapInputs, viewW: number): void {
+export function drawMinimap(renderer: Renderer, inp: MinimapInputs, viewW: number, assets?: Assets): void {
   const ctx = renderer.ctx;
   const { map } = inp;
   const cell = 5;
@@ -66,8 +71,11 @@ export function drawMinimap(renderer: Renderer, inp: MinimapInputs, viewW: numbe
   for (let y = 0; y < map.mapSize.y; y++) {
     for (let x = 0; x < map.mapSize.x; x++) {
       const st = statusFor(inp, x + 1, y + 1);
-      ctx.fillStyle = st ? STATUS_COLOR[st] : "#222"; // no room here -> dim background
-      ctx.fillRect(ox + x * cell, oy + y * cell, cell - 1, cell - 1);
+      const px = ox + x * cell, py = oy + y * cell;
+      const tile = st && assets?.member(STATUS_MEMBER[st]); // the real 4×4 status bitmap
+      if (tile) { ctx.drawImage(tile.img, px, py); continue; }
+      ctx.fillStyle = st ? STATUS_COLOR[st] : "#222"; // no room here / art absent -> solid cell
+      ctx.fillRect(px, py, cell - 1, cell - 1);
     }
   }
   ctx.globalAlpha = prevAlpha;

@@ -22,8 +22,10 @@ import type { Entity } from "../engine/dispatch";
 // room activation always re-runs its tile spawn and restoreState only overlays the recorded actors. So a
 // detonated mine comes back on re-entry (fresh), and a bullet in flight when you leave simply vanishes.
 
+type Edge = "left" | "right" | "up" | "down";
+
 // K22: one arrow overlay rect (room pixel space) + which edge it sits on and its green/red colour.
-export interface ExitArrowRect { x: number; y: number; w: number; h: number; edge: "left" | "up" | "right" | "down"; colour: "green" | "red"; }
+export interface ExitArrowRect { x: number; y: number; w: number; h: number; edge: Edge; colour: "green" | "red"; }
 
 // convertExitTilesToRangesEdge (modScreenExits ~149): collapse a 1-D run of matching (passable) edge cells
 // into [startPx, endPx] ranges. A range opens at the first matching cell's start ((i)*tileLen) and closes at
@@ -259,6 +261,42 @@ export class RoomManager {
       left: !!this.map.roomAt({ x: x - 1, y }), right: !!this.map.roomAt({ x: x + 1, y }),
       up: !!this.map.roomAt({ x, y: y - 1 }), down: !!this.map.roomAt({ x, y: y + 1 }),
     } : { left: false, right: false, up: false, down: false };
+    // Carve the BILATERAL exit masks (objCollisionMap.openExits): the player may cross an open edge ONLY at
+    // the doorway cells where this room AND the facing neighbour are both passable — otherwise you could walk
+    // off the wall part of an open edge (e.g. an open-field room beside a walled one) and reappear embedded in
+    // the neighbour's wall. Collision (solidCell) and the exit arrows both read THIS mask, so they can't drift.
+    this.grid.exitMask = open ? {
+      left: this.edgeExitMask("left"), right: this.edgeExitMask("right"),
+      up: this.edgeExitMask("up"), down: this.edgeExitMask("down"),
+    } : { left: null, right: null, up: null, down: null };
+  }
+
+  // edgeExitMask (ListCombineExitTiles): the per-index bilateral passability of an edge — 1 where BOTH this
+  // room's edge cell and the neighbour's facing edge cell are passable (#none). null when there's no neighbour
+  // beyond that edge. The single source the collision mask and the exit-arrow runs both derive from.
+  private edgeExitMask(edge: Edge): Uint8Array | null {
+    const { x, y } = this.loc;
+    const nbr = edge === "left" ? this.map.roomAt({ x: x - 1, y })
+      : edge === "right" ? this.map.roomAt({ x: x + 1, y })
+      : edge === "up" ? this.map.roomAt({ x, y: y - 1 })
+      : this.map.roomAt({ x, y: y + 1 });
+    if (!nbr) return null;
+    const cols = this.grid.cols, rows = this.grid.rows, t = this.grid.tilePx;
+    const nbrActive = nbr.layer("#backgroundActive");
+    const nbrGrid = nbrActive ? CollisionGrid.fromActiveLayer(nbrActive, this.activeKey, t) : null;
+    const horizontal = edge === "up" || edge === "down";
+    const n = horizontal ? cols : rows;
+    const mask = new Uint8Array(n);
+    for (let i = 0; i < n; i++) {
+      const here = horizontal ? this.grid.passableCell(i, edge === "up" ? 0 : rows - 1)
+                              : this.grid.passableCell(edge === "left" ? 0 : cols - 1, i);
+      if (!here) continue;                       // this room walls it off
+      if (!nbrGrid) { mask[i] = 1; continue; }    // no neighbour grid -> honour this room's gap
+      const there = horizontal ? nbrGrid.passableCell(i, edge === "up" ? rows - 1 : 0)
+                               : nbrGrid.passableCell(edge === "left" ? cols - 1 : 0, i);
+      if (there) mask[i] = 1;                      // both sides open -> a real doorway cell
+    }
+    return mask;
   }
 
   private enemiesAlive(): boolean {
@@ -286,7 +324,6 @@ export class RoomManager {
     const cols = this.grid.cols, rows = this.grid.rows, t = this.grid.tilePx;
     const th = RoomManager.ARROW_THICKNESS;
     const imgW = cols * t, imgH = rows * t;
-    type Edge = "left" | "up" | "right" | "down";
     // (edge, the NEIGHBOUR room beyond that edge). getSurroundingHostiles (objMap.txt:457 +
     // modScreenExits colour map): the arrow's colour reflects what's behind THAT door — GREEN if the
     // neighbour is already cleared/safe, RED if it still holds hostiles (a fight awaits). This is the
@@ -303,23 +340,13 @@ export class RoomManager {
       // RED while it still holds a fight. Keys off the NEIGHBOUR's hostiles, not merely the cleared set, so
       // an enemy-less room (NPC/story) reads green even before it's visited.
       const colour: "green" | "red" = this.roomHasHostiles(nbr) ? "red" : "green";
-      // ListCombineExitTiles (modScreenExits): a position carries an arrow only if BOTH this room's edge tile
-      // AND the neighbour's FACING edge tile are passable (#none). Build the neighbour's edge grid and AND it,
-      // so an arrow never marks a spot that's walled off on the other side.
-      const nbrActive = nbr.layer("#backgroundActive");
-      const nbrGrid = nbrActive ? CollisionGrid.fromActiveLayer(nbrActive, this.activeKey, t) : null;
-      // passable run of edge cells (match #none) → ranges, in px along the edge axis.
+      // the arrow runs derive from the SAME bilateral exit mask the collision crossing uses (set in setExits),
+      // so an arrow can never mark a spot the player can't actually walk through, and vice-versa.
+      const mask = this.grid.exitMask[edge];
+      if (!mask) continue;
       const horizontal = edge === "up" || edge === "down";
       const n = horizontal ? cols : rows;
-      const passable = (i: number): boolean => {
-        const here = horizontal ? this.grid.passableCell(i, edge === "up" ? 0 : rows - 1)
-                                : this.grid.passableCell(edge === "left" ? 0 : cols - 1, i);
-        if (!here || !nbrGrid) return here;
-        // the neighbour's facing edge (opposite side, same axis index).
-        const there = horizontal ? nbrGrid.passableCell(i, edge === "up" ? rows - 1 : 0)
-                                 : nbrGrid.passableCell(edge === "left" ? cols - 1 : 0, i);
-        return there;
-      };
+      const passable = (i: number): boolean => mask[i] === 1;
       for (const [start, end] of runs(n, passable, t)) {
         // convertExitRangesToArrowRectsEdge: thickness on the perpendicular axis, range along the edge.
         const rect = edge === "left" ? { x: 0, y: start, w: th, h: end - start }

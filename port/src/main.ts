@@ -383,27 +383,29 @@ async function main() {
       const sprites = game.entities
         .filter((e) => e.type !== "bullet" && e.type !== "pickup" && e.type !== "marker" && e.type !== "spell")
         .map((e) => e.get(Anim).sprite()).filter((sp): sp is Sprite => sp !== null);
+      // pickups (objPotion/objScroll) sit at gGameObjectLayer=50 — z-sorted WITH the actors (a unit standing
+      // in front occludes a ground pickup), NOT a flat overlay on top. Member-less pickups fall back to a diamond.
+      const pickupFallback: import("./engine/dispatch").Entity[] = [];
+      for (const e of game.entities) {
+        if (e.type !== "pickup") continue;
+        const sp = pickupSprite(e, assets);
+        if (sp) sprites.push(sp); else pickupFallback.push(e);
+      }
       renderer.drawSprites(sprites);
+      if (pickupFallback.length) drawPickupFallback(renderer, pickupFallback);
       drawBullets(renderer);
       drawSpells(renderer); // K2: the growing/flying charge orbs (objSpell), over the actors
-      drawPickups(renderer);
       // #foregroundPassive (objRoom layer, gMapLayer over the actor band): F1 preserved the data; this
       // draws it OVER the actors (after drawSprites). pFrontLayerBlendLevel=128 -> globalAlpha 0.5 default.
       const fg = rooms.room.layer("#foregroundPassive");
       if (fg && rooms.foregroundSheet) renderer.drawTileLayer(fg, rooms.foregroundSheet, 0, 0, 0.5);
-      // modFreeze frost overlay stays always-on (a status indicator). Merlin's Revenge has NO always-on
-      // health bars (gEnemyEnergyMasterOn=0); health/level/XP show only on mouse-hover (rollover, below).
-      for (const e of game.entities) {
-        if ((e.type === "enemy" || e.type === "ally") && !e.send("isDead") && e.send("isFrozen")) {
-          const p = e.send("getPos") as { x: number; y: number };
-          renderer.ctx.fillStyle = "rgba(80,220,255,0.35)";
-          renderer.ctx.fillRect(p.x - 9, p.y - 20, 18, 22);
-        }
-      }
-      drawHealthRollover(renderer, game.input.cursor(), game.entities); // characterEnergyRollOverMaster (gCharacterEnergyRolloverOn=1)
-      drawCharge(renderer, player);
+      // The freeze visual is the entity's OWN teal-tinted sprite (modFreeze.glowTeal -> modColourTransform,
+      // carried through Anim.sprite()'s tint), NOT a separate overlay — so no box is drawn here (the original
+      // has no freeze-overlay object). Merlin's Revenge also has NO always-on health bars (gEnemyEnergyMasterOn
+      // =0); health/level/XP show only on mouse-hover (rollover, below).
+      drawHealthRollover(renderer, game.input.cursor(), game.entities, assets); // characterEnergyRollOverMaster (gCharacterEnergyRolloverOn=1)
       weaponPalette.render(renderer, player, assets); // modWeaponSelector palette (over the world, under the HUD)
-      drawHud(renderer, player);
+      drawHud(renderer, player, assets);
       // 5-state minimap (modMiniMap): #cur/#clr/#inf (+ data #fre/#spe) with a proximity distance blend.
       // modMiniMap is OFF by default (pShowMiniMap=false); goNavMode shows it, leaveNavMode hides it — so it
       // appears ONLY once the room is cleared (nav mode), as a "room safe" cue, not during combat.
@@ -411,7 +413,7 @@ async function main() {
       if (game.navMode) drawMinimap(renderer, {
         map, loc: rooms.loc, cleared: rooms.clearedSet(), infested: rooms.infestedRooms(),
         playerPx: { x: pm.x, y: pm.y }, cursorPx: game.input.cursor(),
-      }, viewW);
+      }, viewW, assets);
       // K12: overlay the in-game chatter cutscene (spawned ulin + speech bubble) over the live game.
       if (scene.isInGameCutscene() && inGameCut) inGameCut.renderInGame(renderer);
       // K18 overlays (showArmy / instructions / key-config) draw over the live game via the screens host.
@@ -456,53 +458,73 @@ function drawTitle(renderer: Renderer, w: number, h: number) {
 // (the old "YOU HAVE FALLEN" game-over overlay is gone: death now plays the wasted cutscene -> reload;
 // the static victory overlay is replaced by the K18 credits scroll on the victory screen.)
 
-function drawHud(renderer: Renderer, player: import("./engine/dispatch").Entity) {
+function drawHud(renderer: Renderer, player: import("./engine/dispatch").Entity, assets: Assets) {
   const ctx = renderer.ctx;
   const hp = player.get(Energy).energyFrac();
   const hasSpell = player.send("getHasSpell") as boolean;
-  ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(6, 6, 104, 24);
-  ctx.fillStyle = healthBarColour(hp); ctx.fillRect(8, 8, 100 * hp, 6);          // health (energy)
+  // health_bar_surround (objPlayerCharacter): the real bar frame composited over the energy fill (its keyed
+  // white interior lets the fill show through). Falls back to the procedural box if the art isn't bundled.
+  const surround = assets.member("health_bar_surround");
+  if (surround) {
+    ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(8, 6, surround.w, surround.h);
+    ctx.fillStyle = healthBarColour(hp); ctx.fillRect(8, 10, Math.round(surround.w * hp), 6); // energy fill
+    ctx.drawImage(surround.img, 8, 6);
+  } else {
+    ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(6, 6, 104, 24);
+    ctx.fillStyle = healthBarColour(hp); ctx.fillRect(8, 8, 100 * hp, 6);
+  }
   const xp = player.get(Experience);
-  ctx.fillStyle = "#fc4"; ctx.fillRect(8, 18, 100 * Math.min(1, xp.frac()), 4);   // experience
-  // no mana bar: magic has no pool (charge is shown by the ring at the cursor); flag once acquired
+  ctx.fillStyle = "#fc4"; ctx.fillRect(8, 22, 100 * Math.min(1, xp.frac()), 4);   // experience
+  // no mana bar: magic has no pool (charge is shown by the orb over the head); flag once acquired
   ctx.fillStyle = "#fff"; ctx.font = "8px monospace";
-  ctx.fillText("HP", 114, 13);
   ctx.fillText("Lv " + xp.level, 114, 24);
-  if (hasSpell) { ctx.fillStyle = "#fc8"; ctx.fillText("✦", 100, 13); } // magic acquired
-  if (Date.now() < flashUntil) { ctx.fillStyle = "#ff4"; ctx.fillText(flashMsg, 8, 44); }
+  if (hasSpell) { ctx.fillStyle = "#fc8"; ctx.fillText("✦", 114, 13); } // magic acquired
+  // medikit bank (medikitMaster.objMedikitDisplayer): a row of on/off kit icons for the banked count.
+  const kits = (player.send("getNumOfMedikits") as number) || 0;
+  const onImg = assets.member("medikit_on"), offImg = assets.member("medikit_off");
+  if (onImg && offImg) {
+    const slots = Math.max(3, kits); // at least the 3 default slots, grows if the player banks more
+    for (let i = 0; i < slots; i++) ctx.drawImage((i < kits ? onImg : offImg).img, 8 + i * 10, 30);
+  } else if (kits > 0) { ctx.fillStyle = "#f88"; ctx.fillText("Kits " + kits, 8, 38); }
+  // extra lives (modExtraLives): no extraLives_text bitmap shipped, so a plain counter.
+  const lives = (player.send("getExtraLives") as number) || 0;
+  if (lives > 0) { ctx.fillStyle = "#fff"; ctx.fillText("♥ " + lives, 8, 50); }
+  if (Date.now() < flashUntil) { ctx.fillStyle = "#ff4"; ctx.fillText(flashMsg, 8, 60); }
 }
 
-// the charge meter follows the cursor while a spell is being held (gmgChargeLoc feedback)
-function drawCharge(renderer: Renderer, player: import("./engine/dispatch").Entity) {
-  const frac = player.send("chargeFrac") as number;
-  if (frac <= 0) return;
-  const aim = game.input.cursor();
-  const m = player.get(Movement);
-  const x = aim ? aim.x : m.x, y = aim ? aim.y : m.y - 18;
-  const ctx = renderer.ctx;
-  ctx.strokeStyle = "rgba(120,180,255,0.5)"; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.arc(x, y, 9, 0, Math.PI * 2); ctx.stroke();
-  ctx.strokeStyle = "#9cf"; ctx.lineWidth = 3;
-  ctx.beginPath(); ctx.arc(x, y, 9, -Math.PI / 2, -Math.PI / 2 + frac * Math.PI * 2); ctx.stroke();
-  ctx.lineWidth = 1;
-}
-
+// pickup effect -> its static gfx member (objPotion/objMedikit #member: "<x>_potion"; objScroll #member:
+// "<x>_scroll"). The scroll names key off the granted actor (SCROLL_ACTOR): spell->energyBlast, sword->
+// merlinSword. darkBlast shares energyBlast's scroll art (act_darkBlast #member). These render as real
+// bitmaps z-sorted with the actors (gGameObjectLayer), replacing the old procedural diamond.
+const PICKUP_MEMBER: Record<string, string> = {
+  heal: "medikit_potion", maxikit: "maxikit_potion", speed: "walkSpeed_potion",
+  manaCapacity: "manaCapacity_potion", manaFlow: "manaFlow_potion", manaBurst: "manaBurst_potion",
+  sword: "merlinSword_scroll", spell: "energyBlast_scroll", cBlast: "cBlast_scroll",
+  darkBlast: "energyBlast_scroll", arcticBlast: "arcticBlast_scroll", healBlast: "healBlast_scroll",
+  armySummon: "armySummon_scroll", monsterSummon: "monsterSummon_scroll", energyMines: "energyMines_scroll",
+  energyPunch: "energyPunch_scroll", gmg: "gmg_scroll", energyBeam: "energyBeamSpell_scroll",
+  energyPulse: "energyPulseSpell_scroll",
+};
 const PICKUP_COLOR: Record<string, string> = {
   heal: "#3d6", speed: "#4cf", power: "#c5f", sword: "#fe8", spell: "#fc8",
   manaCapacity: "#48f", manaFlow: "#4cf", manaBurst: "#88f",
 };
-function drawPickups(renderer: Renderer) {
+// a pickup's display sprite (its #member bitmap at the pickup loc), or null when the art isn't bundled.
+function pickupSprite(e: import("./engine/dispatch").Entity, assets: Assets): Sprite | null {
+  const mem = assets.member(PICKUP_MEMBER[e.send("getEffect") as string] ?? "");
+  if (!mem) return null;
+  const m = e.get(Movement);
+  return { img: mem.img, x: m.x, y: m.y, regX: mem.reg[0], regY: mem.reg[1], z: m.y };
+}
+// fallback for any pickup whose art wasn't bundled: the old coloured diamond.
+function drawPickupFallback(renderer: Renderer, pickups: import("./engine/dispatch").Entity[]) {
   const ctx = renderer.ctx;
-  for (const e of game.entities) {
-    if (e.type !== "pickup") continue;
+  for (const e of pickups) {
     const m = e.get(Movement);
-    const blink = (Math.floor(Date.now() / 250) % 2) ? 1 : 0.6;
-    ctx.globalAlpha = blink;
     ctx.fillStyle = PICKUP_COLOR[e.send("getEffect") as string] ?? "#fff";
     ctx.beginPath(); // diamond
     ctx.moveTo(m.x, m.y - 5); ctx.lineTo(m.x + 5, m.y); ctx.lineTo(m.x, m.y + 5); ctx.lineTo(m.x - 5, m.y);
     ctx.closePath(); ctx.fill();
-    ctx.globalAlpha = 1;
   }
 }
 
@@ -511,6 +533,7 @@ function drawPickups(renderer: Renderer) {
 // rotates it to GeomAngle(caster,target), pivoting at the caster anchor. Loaded lazily (the spell is a
 // pickup, so the char isn't in the map's spawn set); until the frame is in memory we fall back to a line.
 const BEAM_ANIM = "energyBeam_fly";
+const SPELL_ANIM = "spell_charge"; // act_spell #character:#spell -> the generic charge-orb anim (tinted per spell)
 
 // K22: tile each arrow member across its exit rect (modScreenExits.drawExitArrowsOnImage → ImageDrawRepeated).
 // The member image is repeated to fill the rect; clipped to the rect so a partial tile at the far end crops
@@ -534,17 +557,35 @@ function drawExitArrows(renderer: Renderer, assets: Assets, rects: ExitArrowRect
   }
 }
 
-// K2 (objSpell render / updateSize): the charge orb — a glowing disc of radius size/2 (size = charge·
-// chargeSize) in the spell's #chargeColour, growing as it charges and travelling on release. A soft outer
-// glow + bright core read as an energy ball at any size.
+// K2 (objSpell render / modAnimSet + updateSize + setSpriteColour): a spell IS the generic `spell_charge`
+// orb sprite (act_spell #character:#spell; getAnimSym maps charge/fly/explode -> #charge), TINTED to the
+// spell's #chargeColour (setSpriteColour) and SCALED so its width/height = size = charge·chargeSize
+// (updateSize). Falls back to the procedural gradient orb only when the art hasn't lazy-loaded yet.
 function drawSpells(renderer: Renderer) {
   const ctx = renderer.ctx;
+  const spellSprites: Sprite[] = [];
+  const anim = game.assets.index.anims[SPELL_ANIM];
+  const f = anim?.frames[0];
+  const ready = !!f && game.assets.images.has(f.file);
+  if (f && !ready) void game.assets.ensureChar("spell");
   for (const e of game.entities) {
     if (e.type !== "spell") continue;
     const sa = e.get(SpellActor);
     const m = e.get(Movement);
-    const r = Math.max(2, sa.size() / 2);
+    const size = Math.max(4, sa.size());
     const [cr, cg, cb] = sa.attack.chargeColour;
+    if (ready) {
+      // setSpriteWidth/Height(size): scale the native frame to the live charge size about its centred reg.
+      spellSprites.push({
+        img: game.assets.img(f!.file)!,
+        x: m.x, y: m.y, regX: f!.reg[0], regY: f!.reg[1], z: m.y,
+        scaleX: size / Math.max(1, f!.w), scaleY: size / Math.max(1, f!.h),
+        tint: { rgb: [cr, cg, cb], strength: 1, additive: false }, // setSpriteColour: tint the white orb
+      });
+      continue;
+    }
+    // fallback (art not yet loaded): the soft gradient orb, radius size/2.
+    const r = size / 2;
     ctx.save();
     const grad = ctx.createRadialGradient(m.x, m.y, 0, m.x, m.y, r * 1.6);
     grad.addColorStop(0, `rgba(255,255,255,0.95)`);
@@ -554,6 +595,7 @@ function drawSpells(renderer: Renderer) {
     ctx.beginPath(); ctx.arc(m.x, m.y, r * 1.6, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
   }
+  if (spellSprites.length) renderer.drawSprites(spellSprites);
 }
 
 function drawBullets(renderer: Renderer) {
@@ -580,10 +622,35 @@ function drawBullets(renderer: Renderer) {
       ctx.restore();
       continue;
     }
-    ctx.fillStyle = proj.team === "#aldevar" ? "#9cf" : "#fd6";
-    ctx.beginPath(); ctx.arc(m.x, m.y, 3, 0, Math.PI * 2); ctx.fill();
+    // objBullet sprite: the `<char>_fly` strip (archerArrow/gobarrow/axe/crossBolt…) rotated to the flight
+    // direction (modRotational + GeomAngle). Falls back to a coloured dot only when the bullet has no sprite
+    // char or its art hasn't lazy-loaded yet — so a thrown axe/arrow finally LOOKS like one (was a 3px dot).
+    if (!drawBulletSprite(renderer, proj.char, m.x, m.y, m.vx, m.vy, proj.life)) {
+      ctx.fillStyle = proj.team === "#aldevar" ? "#9cf" : "#fd6";
+      ctx.beginPath(); ctx.arc(m.x, m.y, 3, 0, Math.PI * 2); ctx.fill();
+    }
   }
   if (beamSprites.length) renderer.drawSprites(beamSprites);
+}
+
+// render a bullet's `<char>_fly` frame, animated over its life and rotated to its velocity (GeomAngle).
+// Returns false (caller draws the dot) when there's no char or the art isn't loaded yet.
+function drawBulletSprite(renderer: Renderer, char: string, x: number, y: number, vx: number, vy: number, life: number): boolean {
+  if (!char) return false;
+  const anim = game.assets.index.anims[char + "_fly"];
+  if (!anim || anim.frames.length === 0) return false;
+  const dela = Math.max(1, anim.frames[0]!.dela ?? anim.delay ?? 1);
+  const f = anim.frames[Math.floor(life / dela) % anim.frames.length]!;
+  if (!game.assets.images.has(f.file)) { void game.assets.ensureChar(char); return false; }
+  const img = game.assets.img(f.file) as CanvasImageSource | null;
+  if (!img) return false;
+  const ctx = renderer.ctx;
+  ctx.save();
+  ctx.translate(Math.round(x), Math.round(y));
+  if (vx !== 0 || vy !== 0) ctx.rotate(Math.atan2(vy, vx)); // art faces +x; rotate to the flight angle
+  ctx.drawImage(img, -f.reg[0], -f.reg[1]);
+  ctx.restore();
+  return true;
 }
 
 // beamSprite: build the energyBeam fly sprite anchored at the caster anchor, stretched to the beam

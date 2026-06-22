@@ -54,6 +54,13 @@ export class CollisionGrid {
   private hasTypedTiles = false;   // true once any non-#solid collision tile was placed (typed path active)
   /** edges that lead to an adjacent room are passable (the player exits through them) */
   open: OpenEdges = { left: false, right: false, up: false, down: false };
+  // Per-edge BILATERAL exit mask (objCollisionMap.openExits/insertExitTiles): the exit is carved only at the
+  // doorway tiles where BOTH this room's edge cell AND the neighbour's facing cell are passable. Index runs
+  // along the edge axis (rows for left/right, cols for up/down); 1 = a passable doorway cell. null = this
+  // edge has no neighbour mask wired (fall back to this room's own edge-cell solidity). Set by the room on
+  // setExits so collision crossing and the exit arrows derive from ONE source and cannot drift.
+  exitMask: { left: Uint8Array | null; right: Uint8Array | null; up: Uint8Array | null; down: Uint8Array | null } =
+    { left: null, right: null, up: null, down: null };
 
   constructor(cols: number, rows: number, tilePx: number) {
     this.cols = cols; this.rows = rows; this.tilePx = tilePx;
@@ -179,15 +186,26 @@ export class CollisionGrid {
     }
   }
 
-  /** Out-of-bounds is solid (2-tile border in the original) unless the edge is an open exit. */
+  /** Out-of-bounds is solid (2-tile border in the original) unless the edge is an open exit — and then
+   *  ONLY at the doorway gap, not anywhere along the edge. objCollisionMap.openExits (insertExitTiles)
+   *  carves passable (#none) only the specific EXIT TILES of the edge; the rest of the border stays #solid
+   *  (closeExits = initMap re-solidifies the whole frame). So a player may leave only where THIS room's
+   *  facing border cell is itself a gap — mirroring the exit-arrow run. Otherwise you could walk off the
+   *  wall part of an open edge and reappear embedded in the next room's wall ("odd spot"). */
   solidCell(c: number, r: number): boolean {
     if (c < 0 || c >= this.cols) {
       const exit = c < 0 ? this.open.left : this.open.right;
-      return !(exit && r >= 0 && r < this.rows);
+      if (!exit || r < 0 || r >= this.rows) return true;          // closed edge / corner -> solid border
+      const mask = c < 0 ? this.exitMask.left : this.exitMask.right;
+      if (mask) return mask[r] !== 1;                             // open only at a bilateral doorway cell
+      return this.solid[r * this.cols + (c < 0 ? 0 : this.cols - 1)] === 1; // fallback: this room's edge cell
     }
     if (r < 0 || r >= this.rows) {
       const exit = r < 0 ? this.open.up : this.open.down;
-      return !(exit && c >= 0 && c < this.cols);
+      if (!exit || c < 0 || c >= this.cols) return true;
+      const mask = r < 0 ? this.exitMask.up : this.exitMask.down;
+      if (mask) return mask[c] !== 1;
+      return this.solid[(r < 0 ? 0 : this.rows - 1) * this.cols + c] === 1;
     }
     return this.solid[r * this.cols + c] === 1;
   }

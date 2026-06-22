@@ -12,7 +12,7 @@ const pool = new Pool(BulletArchetype);
 
 export function fireBullet(
   ownerId: number, x: number, y: number, dirX: number, dirY: number,
-  speed: number, power: number, team: string, maxLife = 100, freeze = 0, mult = 1,
+  speed: number, power: number, team: string, maxLife = 100, freeze = 0, mult = 1, char = "",
 ): Entity {
   const b = pool.acquire();
   b.type = "bullet";
@@ -22,7 +22,7 @@ export function fireBullet(
   m.vx = (dirX / d) * speed; m.vy = (dirY / d) * speed;
   // K1: mult (the bullet's damageMultiplier) flows into the bullet's takeHit; damage = (|vx|+|vy|)·mult,
   // where the bullet's collision-vector L1 == `power`. Player bolts pass mult=1 (unchanged).
-  b.get(Projectile).configure(power, team, ownerId, maxLife, freeze, mult);
+  const proj = b.get(Projectile); proj.configure(power, team, ownerId, maxLife, freeze, mult); proj.char = char;
   game.entities.push(b);
   return b;
 }
@@ -50,7 +50,7 @@ export function fireBulletPayload(
 // hit through SplashDamage instead of a single-target takeHit. `hits`/`allegiance` scope the disc.
 export function fireSplashBullet(
   ownerId: number, x: number, y: number, dirX: number, dirY: number, speed: number,
-  attack: AttackData, team: string, hits: string[], allegiance: string, maxLife = 100,
+  attack: AttackData, team: string, hits: string[], allegiance: string, maxLife = 100, char = "",
 ): Entity {
   const b = pool.acquire();
   b.type = "bullet";
@@ -58,7 +58,7 @@ export function fireSplashBullet(
   const d = Math.hypot(dirX, dirY) || 1;
   const m = b.get(Movement);
   m.vx = (dirX / d) * speed; m.vy = (dirY / d) * speed;
-  b.get(Projectile).configureSplash(attack, team, ownerId, maxLife, hits, allegiance);
+  const proj = b.get(Projectile); proj.configureSplash(attack, team, ownerId, maxLife, hits, allegiance); proj.char = char || attack.name.replace(/^#/, "");
   game.entities.push(b);
   return b;
 }

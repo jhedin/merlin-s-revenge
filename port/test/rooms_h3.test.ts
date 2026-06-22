@@ -152,6 +152,32 @@ describe("H3: per-room pState restore round-trip", () => {
     expect(game.entities.filter((e) => e.type === "mine").length).toBe(1); // exactly one fresh mine (no dup)
   });
 
+  it("bilateral exit mask: a walled edge with a gap, facing an open neighbour, opens ONLY at the gap", () => {
+    const map = mkMap(undefined);
+    // room 1's BOTTOM active row (row 5) is solid except a doorway gap at column 3; room 2's top row is open.
+    const active1 = map.rooms.get(1)!.layers.find((l) => l.name === "#backgroundActive")!.grid;
+    for (let c = 0; c < active1[0]!.length; c++) active1[5]![c] = c === 3 ? 0 : 1; // 1 = #solid, gap at col 3
+    const player = spawnPlayer(0, 0); game.player = player;
+    game.entities = [player];
+    const rm = new RoomManager(map, game.assets, activeKey, objectsKey, viewW, viewH, player, () => {});
+    rm.enter({ x: 1, y: 1 });
+    for (const e of game.entities) if (e.type === "enemy") e.get(Energy).dead = true; // clear -> exits open
+    rm.update();
+    expect(rm.exitsOpen).toBe(true);
+    // the DOWN edge mask is passable ONLY at the doorway column (3) — both sides open there, walled elsewhere.
+    const mask = game.grid.exitMask.down!;
+    expect(mask).toBeTruthy();
+    expect([...mask]).toEqual([0, 0, 0, 1, 0, 0]);
+    // solidCell honours it: crossing the bottom edge is solid except below the gap column.
+    expect(game.grid.solidCell(0, 6)).toBe(true);   // below a wall column -> blocked
+    expect(game.grid.solidCell(3, 6)).toBe(false);  // below the doorway -> open
+    // and the exit arrow derives from the SAME mask: a single down-edge rect over the gap column.
+    const down = rm.exitArrowRects().filter((r) => r.edge === "down");
+    expect(down.length).toBe(1);
+    expect(down[0]!.x).toBe(3 * TILE);
+    expect(down[0]!.w).toBe(TILE);
+  });
+
   it("the full pState map round-trips through save/restore (every visited room)", () => {
     const map = mkMap(undefined);
     const player = spawnPlayer(0, 0); game.player = player;

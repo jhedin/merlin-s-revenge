@@ -15,19 +15,19 @@ describe("Hurt feedback (flash + i-frames)", () => {
       mousePressed: () => false, mouseReleased: () => false, held: () => false, pressed: () => false, endTick() {} } as any;
   });
 
-  it("player i-frames let the landing hit through but block immediate follow-ups", () => {
+  it("the player has NO post-hit i-frames — consecutive hits all land (modInvince is pickup-only)", () => {
     const p = spawnPlayer(100, 100); game.player = p; game.entities = [p];
     const en = p.get(Energy); const hp0 = en.energy;
     p.send("takeHit", 20, 0, -1);
     expect(en.energy).toBe(hp0 - 20);     // first hit lands
+    expect(p.send("isInvince")).toBe(false); // no hit-invincibility (faithful: objPlayerMerlinCharacter)
+    p.send("takeHit", 20, 0, -1);
+    expect(en.energy).toBe(hp0 - 40);     // immediate follow-up ALSO lands (no i-frame block)
+    // a PICKUP collect still grants temp-invince (modInvince.startTempInvince) — that path is unchanged.
+    p.send("grantInvince", 200);
     expect(p.send("isInvince")).toBe(true);
-    expect(p.send("isHurt")).toBe(true);
     p.send("takeHit", 20, 0, -1);
-    expect(en.energy).toBe(hp0 - 20);     // blocked by i-frames
-    for (let i = 0; i < 18; i++) p.send("update"); // i-frames decay
-    expect(p.send("isInvince")).toBe(false);
-    p.send("takeHit", 20, 0, -1);
-    expect(en.energy).toBe(hp0 - 40);     // takes damage again
+    expect(en.energy).toBe(hp0 - 40);     // blocked by the PICKUP invince
   });
 
   it("enemies flash but have no i-frames (take continuous damage)", () => {
@@ -60,14 +60,15 @@ describe("Hurt feedback (flash + i-frames)", () => {
     expect(en.energy).toBe(wounded + 1);      // +1 trickle on the 300th tick
   });
 
-  it("a one-shot action (grave) holds its last frame instead of looping", () => {
-    // grave is one-shot; a dead entity routes through it deterministically via pickAction
+  it("a grave holds a SINGLE static frame (modGrave: a one-time background blit, never animating)", () => {
+    // a dead grave-leaving actor freezes: the original captures getAnimMemberFromStrip(#grave) ONCE and
+    // blits it into the room background, so the corpse neither advances frames nor loops.
     game.assets = { index: { anims: { foo_grave: { delay: 1, frames: [{}, {}, {}] }, foo_stand: { delay: 1, frames: [{}] } } }, img: () => ({}) } as any;
     const e = spawnEnemy("swordOrc", 0, 0, { animChar: "foo" });
     game.entities = [e];
     e.send("takeHit", 999999, 0, -1);          // kill it -> pickAction returns "grave"
     const anim = e.get(Anim);
     for (let i = 0; i < 12; i++) (anim as any).update(() => {});
-    expect((anim as any).frame).toBe(2);    // clamped at last of 3 frames, not wrapped back to 0
+    expect((anim as any).frame).toBe(0);    // static — held at the grave frame, not advanced or looped
   });
 });

@@ -14,6 +14,7 @@ import { fireBullet, fireSplashBullet, fireBulletPayload, performBeamAttack } fr
 import { Projectile } from "./projectile";
 import { registry } from "../game/data";
 import { meleeHitFn } from "../systems/teams";
+import { aimWithEyestrain } from "../engine/math";
 import { Targeting } from "./combat";
 import { WeaponManager, meleeBasePower, enemyMeleeBasePower, resolveAttack, BULLET_DAMAGE_SCALE, type AttackData } from "./weapon";
 import { summonUnit, depositMines } from "./summon";
@@ -153,14 +154,11 @@ export class PlayerControl extends Component {
       return next();
     }
 
-    // objAiPlayer.update interprets keys ONLY in #playerControl/#attack/#freeze/#release — never in
-    // #dazed. A hit drives characterModeChanged(#reel/#die) -> goMode(#dazed), so during the reel the
-    // player can't move or act, only slide from the knockback. Mirror that: freeze intent + skip input
-    // for the reel window (isHurt). The 18-frame i-frames outlast the 6-frame reel, so it can't chain-lock.
-    if (this.entity.send("isHurt")) {
-      const m = this.entity.get(Movement); m.intentX = m.intentY = 0;
-      return next();
-    }
+    // objPlayerMerlinCharacter.takeHit OVERRIDES modReel: after the hit it immediately goMode(#walk), so
+    // Merlin NEVER reels/dazes — he takes the damage (and the knockback slide) but keeps FULL control the
+    // same frame (unlike a CPU unit, which goes #dazed). And modInvince grants i-frames only from PICKUPS,
+    // never from a hit — so there is no post-hit input-lock and no hit-invincibility here (faithful: a swarm
+    // can damage Merlin every cooldown-gated swing). The white flash (modFlasher) still plays for feedback.
 
     const input = game.input;
     const m = this.entity.get(Movement);
@@ -240,8 +238,11 @@ export class PlayerControl extends Component {
       if (magic) this.castMagic(magic, m, aim, wm); // released or cooled down -> fire at whatever charge was held
       else if (this.spell) { this.spell.get(SpellActor).discard(); this.spell = null; } // no weapon -> drop the orb
       this.charging = false; this.charge = 0;
-    } else if (melee) {
-      this.tryMelee(melee, m, wm); // not casting -> auto-swing the melee weapon at anything in reach
+    } else if (melee && primary) {
+      // objAiPlayer.interpretMouse: a swing fires ONLY while the fire button is held (#pressed ->
+      // playerAttackCharge -> attack; #notPressed does nothing). So melee is click/hold-to-attack — it
+      // autofires on cooldown WHILE held (into empty air, target-independent), and stops when you release.
+      this.tryMelee(melee, m, wm);
     }
     next();
   }
@@ -320,13 +321,25 @@ export class PlayerControl extends Component {
     this.releaseT = SPELL_FX.releaseFrames;
   }
 
+  // the swing's full animation length in ticks (sum of per-frame delays). The re-swing cadence is this
+  // window, NOT the weapon cooldown: merlinSword #cooldown:0 recovers within a tick, so without this gate
+  // the hit would re-apply EVERY frame (objAiAttack.attackMelee ensureMode(#attack) only re-triggers the
+  // swing once the previous #attack animation completes — the damage lands once per swing via #animframe).
+  private swingTicks(attack: AttackData): number {
+    const action = attack.animType === "#weaponMelee" ? "weaponMelee" : "naturalMelee";
+    const anim = game.assets.index.anims["mer_" + action];
+    if (!anim || anim.frames.length === 0) return MELEE_FRAMES;
+    return anim.frames.reduce((s, f) => s + Math.max(1, f.dela ?? anim.delay ?? 1), 0);
+  }
+
   private tryMelee(attack: AttackData, m: Movement, wm: WeaponManager): void {
+    if (this.meleeT > 0) return;                                  // a swing is still animating — no re-hit
     if (!wm.cooldownFinFor(attack.name)) return;                 // per-weapon cooldown counter gate
-    const target = game.teamMaster.findTarget(this.entity).obj;
-    if (!target) return;
-    const p = target.send("getPos") as { x: number; y: number };
-    if (Math.hypot(p.x - m.x, p.y - m.y) > attack.reach) return; // swing only when something's in reach
-    m.facingLeft = p.x < m.x;
+    // objAiPlayer: "#melee and #ranged will autofire" — the player swings on cooldown UNCONDITIONALLY
+    // (objAiAttack.attack/attackMelee gate only on getCooldownFin, never on a target/reach). The swing
+    // animates + sounds into empty air; `reach` is only the damage AREA, so impactMeleeAttack just whiffs
+    // when nothing's there. (Was wrongly target+reach-gated, so Merlin wouldn't punch unless next to a foe.)
+    m.facingLeft = this.aimLeft;                                 // swing toward the aim
     // performMeleeAttack -> teamMaster.impactMeleeAttack: area resolution. A swing knocks back EVERY
     // hostile (role #hits) within reach, each via A1's aimed-vector takeHit. Damage = power·strength·SCALE
     // carried as the vector L1, times damageMultiplier as `mult` (now data-driven from the weapon).
@@ -339,7 +352,7 @@ export class PlayerControl extends Component {
     const base = meleeBasePower(attack, effStrength);
     game.teamMaster.impactMeleeAttack(this.entity, meleeHitFn(this.entity, this.entity.id, base, attack.damageMultiplier));
     wm.resetCooldownFor(attack.name);
-    this.meleeT = MELEE_FRAMES;
+    this.meleeT = this.swingTicks(attack); // hold the swing for its full animation (gates the next hit)
     this.usingSword = attack.type === "melee" && attack.animType === "#weaponMelee";
     game.audio?.play(this.usingSword ? "skeleton_fire" : "wizard_punch"); // #attack.sound: merlinSword / #punch
   }
@@ -375,7 +388,7 @@ type GhostMode = "findTarget" | "goToLoc";
 type BuilderMode = "lookForBuilding" | "walkToBuilding" | "build" | "fight";
 
 export class CpuAI extends Component {
-  static handles = ["update", "eventLeaveGame", "characterModeChanged", "getAiMode", "getAiTarget",
+  static handles = ["update", "levelUp", "eventLeaveGame", "characterModeChanged", "getAiMode", "getAiTarget",
     "getTargetDetails", "setAiTarget", "attackActive"];
   reach = 22;          // melee strike reach (targetInReachMelee)
   reachRanged = 150;   // ranged targetInReachRanged (GeomDist < reach)
@@ -391,12 +404,15 @@ export class CpuAI extends Component {
   teamWhenAlive = "";  // K5: the ghost's possess team (#aldevar) — getTeamWhenAlive
   splashBullet: AttackData | null = null; // towerAxe/energyPulse etc: fire a SPLASH bullet, not single-target
   bulletAttack: AttackData | null = null; // K1: a plain (non-splash) ranged weapon's resolved #attack.bullet
+  bulletChar = "";                         // the fired bullet's sprite char (archerArrow/axe…) for `<char>_fly`
   bulletReincarnate: string[] = [];       // bullet #reincarnateAs (flamingRock->fire, eggs->creature): hatch on death
   // K8a builder data (modBuilder): the unitToBuild list, build rate (per-100 advances a frame), and the
   // buildOne/buildDie/leaveWhenFinished disposition.
   unitToBuild: string[] = [];
   buildRate = 100; buildOne = true; buildDie = false; leaveWhenFinished = false;
   private strength = 5;
+  private strengthInc = 0.1; // modCharacterAttackProperties #strengthIncLevel: melee strength grows per level
+  private eyestrain = 0;     // modCharacterAttackProperties #eyestrain: ranged/magic aim scatter (px at max range)
 
   private mode: CpuMode = "findTarget";
   private target: Entity | null = null;
@@ -421,6 +437,8 @@ export class CpuAI extends Component {
 
   override init(cfg: Record<string, any>): void {
     this.strength = typeof cfg["strength"] === "number" ? cfg["strength"] : 5;
+    this.strengthInc = typeof cfg["strengthIncLevel"] === "number" ? cfg["strengthIncLevel"] : 0.1;
+    this.eyestrain = typeof cfg["eyestrain"] === "number" ? cfg["eyestrain"] : 0;
     const strPow = this.strength / 3;
     const atkPow = typeof cfg["atkPower"] === "number" ? cfg["atkPower"] : 0;
     this.power = Math.max(4, Math.round(strPow + atkPow));
@@ -444,6 +462,7 @@ export class CpuAI extends Component {
     this.atkSound = typeof cfg["atkSound"] === "string" ? cfg["atkSound"] : "";
     this.splashBullet = (cfg["splashBullet"] as AttackData | undefined) ?? null; // a ranged CPU's splash bullet (tower)
     this.bulletAttack = (cfg["bulletAttack"] as AttackData | undefined) ?? null; // K1: plain bullet's #attack (power/mult)
+    this.bulletChar = typeof cfg["bulletChar"] === "string" ? cfg["bulletChar"] : "";
     this.bulletReincarnate = (cfg["bulletReincarnate"] as string[] | undefined) ?? []; // bullet hatch/leave-behind list
     this.retargetCtr = 0; this.noTargetCtr = 0;
     this.mode = "findTarget"; this.target = null; this.attackT = 0;
@@ -455,6 +474,11 @@ export class CpuAI extends Component {
     this.mode = "findTarget"; this.target = null; this.retargetCtr = 0; this.attackT = 0; this.path.reset();
     this.ghostMode = "findTarget"; this.builderMode = "lookForBuilding"; this.building = null;
   }
+
+  // levelUp (modCharacterAttackProperties.incStrength via #levelUp): an enemy/ally CPU's melee strength grows
+  // per level, like the player's. Without this an enemy that levels (now from its first kill, threshold 0)
+  // would deal the same melee damage forever. Fans out alongside Energy/Mana/walk-speed growth.
+  levelUp(next: NextFn): any { this.strength += this.strengthInc; return next(); }
 
   // attackActive (modWeaponTechnique.update gate: getAI().getMode() == #attack): true during the brief
   // strike window after an attack fires — when the attack anim plays and technique accumulates.
@@ -614,6 +638,9 @@ export class CpuAI extends Component {
       // K1 reference (the original couples damage to |getVect()|, but the port's tuned damage model is a
       // deliberate abstraction at a fixed reference speed — kept stable so balance/tests don't shift).
       const ftAttack = wm.getCurrentAttack();
+      // objAiAttack.modifyLocWithEyestrain: scatter the aim, scaled by dist/reach, so the player can DODGE
+      // ranged/magic CPU fire at distance (without it every shot lands dead-on). The player aims by cursor.
+      ({ dx, dy } = aimWithEyestrain(dx, dy, this.eyestrain, ftAttack?.reach ?? this.reachRanged, game.rng));
       const throwDist = Math.hypot(dx, dy) || 1;
       const isFullStrength = (ftAttack?.firingType ?? "#proportional").toLowerCase() === "#fullstrength";
       const throwSpeed = isFullStrength ? Math.max(1, this.strength) : Math.max(0.5, throwDist / 10);
@@ -629,7 +656,7 @@ export class CpuAI extends Component {
         // land/collide it resolves an AREA hit through SplashDamage (same A1 vector scale).
         const tg = this.entity.send("getTargeting") as { hits: string[]; allegiance: string } | undefined;
         const sb = fireSplashBullet(this.entity.id, m.x, m.y - 6, dx, dy, throwSpeed, this.splashBullet, team,
-          this.splashBullet.hits, tg?.allegiance ?? "#enemy", 140);
+          this.splashBullet.hits, tg?.allegiance ?? "#enemy", 140, this.bulletChar);
         if (this.bulletReincarnate.length) sb.get(Projectile).reincarnateAs = this.bulletReincarnate; // flamingRock -> #fire
       } else {
         // J1: a magic-weapon CPU caster routes by its #attack payload, like the player's castMagic —
@@ -687,7 +714,7 @@ export class CpuAI extends Component {
             const hits = ba.hits.length ? ba.hits : ["#teamMembers", "#teamBuildings"];
             pb = fireBulletPayload(this.entity.id, m.x, m.y - 6, dx, dy, speed, l1, team, ba, hits, alleg, 100);
           } else {
-            pb = fireBullet(this.entity.id, m.x, m.y - 6, dx, dy, speed, l1, team, 100, 0, bmult);
+            pb = fireBullet(this.entity.id, m.x, m.y - 6, dx, dy, speed, l1, team, 100, 0, bmult, this.bulletChar);
           }
           if (this.bulletReincarnate.length) pb.get(Projectile).reincarnateAs = this.bulletReincarnate; // lizardEgg->#bug, ostrichEgg->#babyOstrich
         }

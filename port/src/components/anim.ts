@@ -11,9 +11,15 @@ import { ColourTransform } from "./colourTransform";
 import { game } from "../game/context";
 import type { Sprite } from "../render/renderer";
 
-// A few actors carry no bundled art of their own (e.g. goblinHero inherits #CPUCharacter with no
-// #character); map them to the closest kin sprite instead of the generic blackOrc stand-in.
-const CHAR_ALIAS: Record<string, string> = { goblinHero: "goblinWarrior" };
+// A few actors carry no bundled art of their own (#inherit:CPUCharacter, no #character, and no extracted
+// sprite — e.g. the dwelling residents goblinArcher / swordNinja / skeletonWarrior and the friendly goblin
+// variants). Map them to their closest bundled KIN sprite so a goblin/skeleton/ninja spawner produces the
+// right FAMILY, not the generic blackOrc stand-in ("wrong enemies" from spawners).
+const CHAR_ALIAS: Record<string, string> = {
+  goblinHero: "goblinWarrior",
+  goblinArcher: "goblinWarrior", friendlyGoblinWarrior: "goblinWarrior", friendlyGoblinArcher: "goblinWarrior",
+  friendlyGoblinMage: "goblinMage", skeletonWarrior: "skeletonArcher", swordNinja: "ninja",
+};
 
 /** The sprite character for an actor, or a stand-in ("blackOrc") when its anims aren't bundled. */
 export function spriteCharOr(name: string, fallback = "blackOrc"): string {
@@ -98,7 +104,10 @@ export class Anim extends Component {
     const action = this.pickAction();
     if (action !== this.action) { this.action = action; this.frame = 0; this.timer = 0; this.extraDelay = 0; }
     const anim = this.animFor(action);
-    if (anim && anim.frames.length > 1) {
+    // A grave holds a SINGLE static frame (modGrave.drawGrave captures getAnimMemberFromStrip(#grave) — the
+    // current member — once at death; the corpse is then background, not an animating sprite). Don't advance.
+    const isGrave = this.entity.send("isDead") === true && this.entity.send("getGraveOn") === true;
+    if (!isGrave && anim && anim.frames.length > 1) {
       // per-frame delay (objAnimStrip.moveNextFrame: pDelay.tim[2] = pDelayList.nextValue()): the current
       // frame's own `dela` gates the advance; the counter steps by gGameSpeed (pDelay.inc = 1*gGameSpeed).
       const cur = anim.frames[this.frame % anim.frames.length]!;
