@@ -532,6 +532,14 @@ export class CpuAI extends Component {
   // this, an enemy had NO animAction handler so it only ever showed walk/stand (no attack animation at all).
   // Forwards (next) when not attacking, so the Hurt component's reel strip still applies on a hit.
   animAction(next: NextFn): any {
+    // modAnimSet.getAnimSym #build: a builder in range of its site plays the #build strip (construction
+    // animation) instead of stand/walk. builderMode==="build" already implies in-range (the FSM enters it
+    // only after walkToBuilding succeeds, and the builder stands still while accruing). Falls back to
+    // stand/walk (next) for a char that ships no build strip.
+    if (this.builder && this.builderMode === "build") {
+      const char = this.entity.tryGet(Anim)?.char ?? "";
+      if (game.assets.index.anims[`${char}_build`]) return "build";
+    }
     if (this.attackT > 0) { const act = this.attackAction(); if (act) return act; }
     return next();
   }
