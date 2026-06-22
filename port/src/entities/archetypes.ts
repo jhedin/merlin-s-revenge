@@ -323,6 +323,8 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     team: str("team", "#monsters"), teamRole: str("teamRole", "#teamMembers"),
     animChar: opts.animChar ?? actorName, box: 14,
     stretchDeath: d["stretchDeath"] === true, // greyGhost #stretchDeath: magical stretch+fade death (modStretchDeath)
+    graveOn: d["graveOn"] !== false, // modGrave: #graveOn:false (sumo/skelitonLord/Upper/orc+undeadInvasion) → vanish, no grave
+
     inertia: num("inertia", 0), // resists knockback (modGameObject damping); heavy orcs get shoved less
     damageSpeed: num("damageSpeed", 5), // modEnergy #damageSpeed: wall-slam bonus threshold (was never forwarded)
     // #frictionReel point: per-actor knockback-slide friction (heavies skid less). Forward the x component.

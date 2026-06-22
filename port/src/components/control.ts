@@ -504,7 +504,7 @@ export class CpuAI extends Component {
     this.buildDie = cfg["buildDie"] === true;
     this.leaveWhenFinished = cfg["leaveWhenFinished"] === true;
     if (typeof cfg["atkReach"] === "number") {
-      if (this.ranged) this.reachRanged = Math.min(CpuAI.MAX_RANGED_REACH, Math.max(60, cfg["atkReach"])); // honor finite reach; cap magic's 9999 to room scale
+      if (this.ranged) this.reachRanged = Math.min(CpuAI.MAX_RANGED_REACH, Math.max(16, cfg["atkReach"])); // honor finite reach (sumo's point-blank 25); cap magic's 9999 to room scale
       else this.reach = Math.max(16, Math.min(90, cfg["atkReach"])); // melee strike reach = collisionLoc.x (no 40 clip)
     }
     this.atkSound = typeof cfg["atkSound"] === "string" ? cfg["atkSound"] : "";
@@ -677,7 +677,7 @@ export class CpuAI extends Component {
     const ca = this.entity.get(WeaponManager).getCurrentAttack();
     if (!ca) return;
     this.ranged = ca.type === "ranged" || ca.type === "magic";
-    this.reachRanged = Math.min(CpuAI.MAX_RANGED_REACH, Math.max(60, ca.reach));
+    this.reachRanged = Math.min(CpuAI.MAX_RANGED_REACH, Math.max(16, ca.reach));
     // melee reach = the strike point (collisionLoc.x), same as spawn — NOT #reach (ranged-only). Keeps a
     // multiAttack unit's melee standoff faithful after a weapon switch (ninjaSword collisionLoc 15 -> 16).
     this.reach = ca.type === "melee" && ca.collisionLoc.x
