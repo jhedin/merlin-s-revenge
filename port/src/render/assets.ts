@@ -131,7 +131,12 @@ export class Assets {
   private async loadFile(file: string, mode: "flood" | "global"): Promise<void> {
     if (this.images.has(file)) return;
     const img = await loadImage(this.base + file);
-    this.images.set(file, keyOutMatte(img, mode));
+    const c = keyOutMatte(img, mode);
+    // stamp a STABLE identity: sprite canvases have no `.src`, so the renderer's tint cache would otherwise
+    // key on WxH alone and COLLIDE — two same-size sprites flashing the same colour would share one cached
+    // tinted canvas, rendering one unit as another (e.g. Merlin flashing as a blue warrior on a hit).
+    (c as unknown as { __id: string }).__id = file;
+    this.images.set(file, c);
   }
 
   /** Load one char's animation frames on demand (deduped; idempotent). */
