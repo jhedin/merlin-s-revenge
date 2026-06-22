@@ -260,8 +260,12 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
   let bulletReincarnate: string[] = [];
   let bulletChar = "";
   if (ranged && typeof atk["bullet"] === "string" && atk["bullet"] !== "#none") {
-    bulletChar = atk["bullet"].replace(/^#/, ""); // the bullet actor name -> its `<char>_fly` sprite strip
+    bulletChar = atk["bullet"].replace(/^#/, ""); // the bullet actor KEY (e.g. #dwarfAxe)
     const bulletActor = registry.resolveActor(bulletChar);
+    // modAnimSet keys the sprite by the actor's #name, NOT its key: dwarfAxe -> "axe" (axe_fly), goblinArrow
+    // -> "gobarrow" (gobarrow_fly). Most bullets carry name===key, but these two diverge — so resolve the
+    // sprite char off #name or the fly strip is missed and the bolt falls back to a flat dot.
+    if (bulletActor && typeof bulletActor["name"] === "string" && bulletActor["name"]) bulletChar = bulletActor["name"];
     const ba = bulletActor ? resolveAttack(bulletActor["attack"] as Record<string, any>, bulletActor) : undefined;
     if (ba && (ba.attackType === "#explode" || ba.splashDamageOn)) splashBullet = ba;
     else if (ba) bulletAttack = ba;

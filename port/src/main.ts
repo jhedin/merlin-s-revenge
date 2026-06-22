@@ -391,17 +391,11 @@ async function main() {
       // draws it OVER the actors (after drawSprites). pFrontLayerBlendLevel=128 -> globalAlpha 0.5 default.
       const fg = rooms.room.layer("#foregroundPassive");
       if (fg && rooms.foregroundSheet) renderer.drawTileLayer(fg, rooms.foregroundSheet, 0, 0, 0.5);
-      // modFreeze frost overlay stays always-on (a status indicator). Merlin's Revenge has NO always-on
-      // health bars (gEnemyEnergyMasterOn=0); health/level/XP show only on mouse-hover (rollover, below).
-      for (const e of game.entities) {
-        if ((e.type === "enemy" || e.type === "ally") && !e.send("isDead") && e.send("isFrozen")) {
-          const p = e.send("getPos") as { x: number; y: number };
-          renderer.ctx.fillStyle = "rgba(80,220,255,0.35)";
-          renderer.ctx.fillRect(p.x - 9, p.y - 20, 18, 22);
-        }
-      }
+      // The freeze visual is the entity's OWN teal-tinted sprite (modFreeze.glowTeal -> modColourTransform,
+      // carried through Anim.sprite()'s tint), NOT a separate overlay — so no box is drawn here (the original
+      // has no freeze-overlay object). Merlin's Revenge also has NO always-on health bars (gEnemyEnergyMasterOn
+      // =0); health/level/XP show only on mouse-hover (rollover, below).
       drawHealthRollover(renderer, game.input.cursor(), game.entities); // characterEnergyRollOverMaster (gCharacterEnergyRolloverOn=1)
-      drawCharge(renderer, player);
       weaponPalette.render(renderer, player, assets); // modWeaponSelector palette (over the world, under the HUD)
       drawHud(renderer, player);
       // 5-state minimap (modMiniMap): #cur/#clr/#inf (+ data #fre/#spe) with a proximity distance blend.
@@ -473,20 +467,6 @@ function drawHud(renderer: Renderer, player: import("./engine/dispatch").Entity)
 }
 
 // the charge meter follows the cursor while a spell is being held (gmgChargeLoc feedback)
-function drawCharge(renderer: Renderer, player: import("./engine/dispatch").Entity) {
-  const frac = player.send("chargeFrac") as number;
-  if (frac <= 0) return;
-  const aim = game.input.cursor();
-  const m = player.get(Movement);
-  const x = aim ? aim.x : m.x, y = aim ? aim.y : m.y - 18;
-  const ctx = renderer.ctx;
-  ctx.strokeStyle = "rgba(120,180,255,0.5)"; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.arc(x, y, 9, 0, Math.PI * 2); ctx.stroke();
-  ctx.strokeStyle = "#9cf"; ctx.lineWidth = 3;
-  ctx.beginPath(); ctx.arc(x, y, 9, -Math.PI / 2, -Math.PI / 2 + frac * Math.PI * 2); ctx.stroke();
-  ctx.lineWidth = 1;
-}
-
 const PICKUP_COLOR: Record<string, string> = {
   heal: "#3d6", speed: "#4cf", power: "#c5f", sword: "#fe8", spell: "#fc8",
   manaCapacity: "#48f", manaFlow: "#4cf", manaBurst: "#88f",
