@@ -1,183 +1,132 @@
 # Actor Parity Audit: skeletonComando
 
-**Date:** 2026-06-22
+**Date:** 2026-06-22 (re-audit; supersedes the earlier DIVERGENCES=1 report — that root divergence is now FIXED)
 **Actor:** skeletonComando
 **Sources:** casts/data/act_skeletonComando.txt, casts/data/act_skeletonComandoSword.txt,
   casts/script_objects/objAiCPU.txt, casts/script_objects/objAiAttack.txt,
-  casts/script_objects/modAttack.txt, casts/script_objects/objCPUCharacter.txt,
-  casts/script_objects/modEnergy.txt, port/src/entities/archetypes.ts
-**Probe:** port/tools/_audit_skeletonComando.ts (run 2026-06-22, deleted after run)
-**Probe result:** 66 PASS, 13 FAIL (all 13 are cascades of one root divergence)
+  casts/script_objects/objCPUCharacter.txt, casts/script_objects/modEnergy.txt,
+  casts/script_objects/modWeaponTechnique.txt, casts/master_objects/structMaster.txt,
+  port/src/entities/archetypes.ts, port/src/components/weapon.ts, port/src/components/control.ts
+**Probe:** port/tools/_audit_skeletonComando.ts (RUN 2026-06-22 against the real src/generated/assets.json bundle; DELETED after run)
+
+**Result: CLEAN — 0 PORT DIVERGENCES.** (1 faithful original-game quirk: the `dammageMultiplier` typo, documented WONTFIX.)
 
 ---
 
-## 1. Derived (Original)
+## 1. Derived correct behavior (from the ORIGINAL cast/data)
 
-### Identity and Team
-- `#objType: #objCPUCharacter`, `#AiType: #objAiCPU`
-- `#inherit: #CPUCharacter` (adds frictionReel point(10,10), pathfinding, walkType:#anyDirSpeed)
-- `#team: #undead` — hostile to #aldevar
-- No `#collisionDetection:false`, no `#reincarnateAs`, no `#leaveWhenFinished`
+### Identity / team
+- `#objType: #objCPUCharacter`, `#AiType: #objAiCPU`, `#inherit: #CPUCharacter`
+  (CPUCharacter adds `frictionReel point(10,10)`, `pathfinding`, `walkType:#anyDirSpeed`, base walkSpeed 3 — overridden).
+- `#team: #undead` (hostile to #aldevar).
+- No `#collisionDetection:false`, no `#reincarnateAs`, no `#minEnergy`, no `#leaveWhenFinished`, no `#multiAttack`, no `#runReload`, not a ghost.
 
-### Stats
-| Property | Value | Source |
-|----------|-------|--------|
-| energy | 275 | act_skeletonComando |
-| strength | 12 | act_skeletonComando |
-| dexterity | 4 | act_skeletonComando |
-| eyestrain | 30 | act_skeletonComando |
-| inertia | 65 | act_skeletonComando |
-| walkSpeed | 8 | act_skeletonComando (overrides CPUCharacter 3) |
-| experienceImWorth | 20 | act_skeletonComando |
-| damageSpeed | 5 | act_skeletonComando |
-| stallSpeed | 4 | act_skeletonComando |
-| frictionReel | point(10,10) | from #CPUCharacter |
+### Stats (act_skeletonComando.txt)
+| Property | Value |
+|----------|-------|
+| energy | 275 |
+| strength | 12 |
+| dexterity | 4 |
+| eyestrain | 30 |
+| inertia | 65 |
+| walkSpeed | 8 (overrides CPUCharacter 3) |
+| experienceImWorth | 20 |
+| damageSpeed | 5 |
+| stallSpeed | 4 |
+| frictionReel | point(10,10) (inherited) |
 
-### Sprite / Animations
-Art char is `skeletonComando`. Confirmed bundled strips:
-- `skeletonComando_stand` (1 frame), `skeletonComando_walk` (7 frames)
-- `skeletonComando_weaponMelee` (7 frames, dela=1 each)
-- `skeletonComando_reel` (2 frames), `skeletonComando_grave` (2 frames)
+### Sprite char (`#data #name`)
+Art char = **`skeletonComando`** (`#name: "skeletonComando"`). modAnimSet keys strips off `#name`.
+Bundled strips (src/generated/assets.json `anims`): `skeletonComando_stand`, `_walk`, `_weaponMelee`, `_reel`, `_grave` — ALL present.
 No death strip; death plays the grave strip (`objCPUCharacter.flasherFinished` → `drawGrave`).
 
-### AI (objAiCPU / objAiAttack)
-Committed-target melee FSM: `findTarget → moveToAttack → attack (weaponMelee strip) → attackFin → findTarget`.
-- `targetInReachMelee`: checks `calcStrikePoint(±1)` inside target's collision rect.
-- `calcStrikePoint`: `loc + collisionLoc`, so reach = |collisionLoc.x| = 27 px.
-- No `#runReload`, no `#multiAttack`, not ranged, not a ghost.
+### Weapon: skeletonComandoSword (act_skeletonComandoSword.txt — `#objPowerUp #inherit #weapon`)
+| Field | Value | Meaning |
+|-------|-------|---------|
+| `#animType` | `#weaponMelee` | melee-contact attack |
+| `#animframe` | 3 | hit fires on the (1-based) frame-3 crossing → exactly ONE hit per swing |
+| `#cooldown` | 0 | raw |
+| `#collisionLoc` | point(27, -3) | strike point → melee reach = |x| = 27 px |
+| `#power` | point(1, 0) | melee knockback magnitude (scalar 1) |
+| `#hits` | [#teamMembers, #teamBuildings] | strikes units AND buildings |
+| `#sound` | "skeleton_fire" | swing sound |
+| `#dammageMultiplier` | 14 | **MISSPELLED — see §3 WONTFIX (never read)** |
 
-### Weapon: skeletonComandoSword (act_skeletonComandoSword.txt)
-| Field | Original value | Notes |
-|-------|---------------|-------|
-| `#animType` | `#weaponMelee` | → attack type melee |
-| `#animframe` | 3 | hit fires on strip frame 3 (1-based) |
-| `#cooldown` | 0 | raw; effective = rawCooldown+6 frames × agility(1) + 1 = 7 |
-| `#collisionLoc` | point(27, -3) | strike point offset; melee reach = 27 px |
-| `#power` | point(1, 0) | melee knockback magnitude |
-| `#hits` | [#teamMembers, #teamBuildings] | targets buildings too |
-| `#sound` | "skeleton_fire" | plays on swing |
-| `#dammageMultiplier` | 14 | **TYPO — see WONTFIX below** |
+### Cadence (modWeaponTechnique / WeaponManager)
+weaponTechnique 0 → no frame add/skip. The swing-to-swing cadence = effective melee cooldown
+(rawCooldown 0 + 6-frame buffer, scaled by agility 1) + the weaponMelee strip play.
 
-### damageMultiplier WONTFIX
-`act_skeletonComandoSword.txt` has `#dammageMultiplier: 14` (double-m).
-`modEnergy.txt:276` reads `attackingObj.getAttack().damageMultiplier` (correctly spelled).
-The `deepModify` in registry merges the typo'd key `dammageMultiplier` into the structAttack record, but
-`structAttack.damageMultiplier` (correct spelling) stays at its default value 1.
-`resolveAttack` reads `r["damageMultiplier"]` (correct) → 1.
-Result: the multiplier the engine actually uses is **1** in both the original engine and the port.
-The typo key `dammageMultiplier:14` is dead code in both. **Port is faithful. WONTFIX.**
-
-### Death / Grave / Reincarnation
-On lethal hit: `flasherFinished` → `goMode(#finish)` + `drawGrave()` + `setDead(true)`.
-Grave strip: `skeletonComando_grave` (2 frames).
-No `#reincarnateAs`, no `#minEnergy` — standard single-stage death.
-No `#leaveWhenFinished` — does not teleport out on room clear.
+### AI / death
+- Committed-target melee FSM (objAiCPU): `findTarget → moveToAttack → attack(weaponMelee strip) → attackFin`.
+- `targetInReachMelee` gates on the strike point (collisionLoc.x = 27 px), NOT `#reach` (ranged-only).
+- Lethal hit → `flasherFinished` → `goMode(#finish)` + `drawGrave()` + `setDead(true)`; leaves a grave (graveOn default true).
 
 ---
 
-## 2. Reproduce (Probe Results)
+## 2. Reproduced in the PORT (probe RUN, 200 ticks)
 
-Probe ran 200 frames with a player at 260px and skeletonComando at 200px. Key observations:
+Harness: real `src/generated/assets.json` bundle; `CollisionGrid(80,80,32)`; `unitMap.configure(32,0,0)`;
+`rebuildCombatSubstrate()` each tick; skeletonComando spawned at (400,400) with a pinned live victim at (470,400).
 
-| Check | Expected | Got | Status |
-|-------|----------|-----|--------|
-| entity.type | "enemy" | "enemy" | PASS |
-| team | "#undead" | "#undead" | PASS |
-| energy | 275 | 275 | PASS |
-| walkSpeed (px/tick) | 4.8 | 4.8 | PASS |
-| inertia | 65 | 65 | PASS |
-| damageSpeed | 5 | 5 | PASS |
-| frictionReel | 10 | 10 | PASS |
-| EnemyAI.ranged | false | false | PASS |
-| EnemyAI.runReload | false | false | PASS |
-| EnemyAI.ghost | false | false | PASS |
-| EnemyAI.reach | 27 | 27 | PASS |
-| EnemyAI.eyestrain | 30 | 30 | PASS |
-| attack.damageMultiplier | 1 | 1 | PASS (WONTFIX typo) |
-| Grave present + active | true | true | PASS |
-| Experience.imWorth | 20 | 20 | PASS |
-| All 5 animation strips | present | present | PASS |
-| No bullets spawned (melee) | true | true | PASS |
-| Hits landed on player | >0 | 11/200t | PASS |
-| FSM enters moveToAttack | true | true | PASS |
-| **attack.animType** | **#weaponMelee** | **#naturalMelee** | **FAIL** |
-| **attack.animFrame** | **[3]** | **[2]** | **FAIL** |
-| **attack.cooldown** | **7** | **19** | **FAIL** |
-| **attack.powerX/Y** | **1, 0** | **5, -1** | **FAIL** |
-| **attack.powerScalar** | **1** | **6** | **FAIL** |
-| **attack.collisionLoc** | **{27,-3}** | **{25,0}** | **FAIL** |
-| **attack.hits[1]** | **#teamBuildings** | **undefined** | **FAIL** |
-| **attack.sound** | **skeleton_fire** | **#none** | **FAIL** |
-| **attack.cooldown effective** | **7** | **19** | **FAIL** |
-| **animAction during swing** | **"weaponMelee"** | **(not seen)** | **FAIL** |
-| **avg damage/hit** | **~2.16** | **~12.96** | **FAIL** |
+| Observable | Derived-correct | Observed (port) | Status |
+|------------|-----------------|-----------------|--------|
+| anim char resolves to real strip (NOT blackOrc) | `skeletonComando` | `skeletonComando` (blackOrc fallback = false) | ✅ |
+| attack.animType | `#weaponMelee` | `#weaponMelee` (type=melee) | ✅ |
+| attack.animFrame | `[3]` | `[3]` | ✅ |
+| hit COUNT per #animframe | 1 hit / swing | 18 swings / 18 disc-hits / 18 damaging-hits over 200t (1 per ~11t) | ✅ |
+| collisionLoc | {27,-3} | {27,-3} | ✅ |
+| reach (CpuAI / impact disc) | 27 (strike pt) / 25 (attack.reach) | CpuAI.reach=27, Targeting disc=27 | ✅ |
+| power | scalar 1 | powerScalar 1 | ✅ |
+| sound | skeleton_fire | skeleton_fire | ✅ |
+| hits roles | [#teamMembers,#teamBuildings] | [#teamMembers,#teamBuildings] | ✅ |
+| damageMultiplier (effective) | 1 (typo → default) | 1 | ✅ (faithful quirk) |
+| per-hit damage | ~2.16 (power·str·scale·mult=1) | firstHitDmg 2.16 | ✅ |
+| ranged / runReload / ghost | false / false / false | false / false / false | ✅ |
+| FSM | findTarget→moveToAttack→attack | moveToAttack (+dazed on reel) observed; closes to in-reach and swings | ✅ |
+| facing toward target at +x | faces right (facingLeft=false) | facingLeft=false | ✅ |
+| death + grave | dies, leaves grave | isDead=true, getGraveOn=true, grave strip bundled | ✅ |
+| team / energy | #undead / 275 | #undead / 275 | ✅ |
+
+Every derived behavior reproduced faithfully. No FAILs.
+(Probe note: an early "0 hits" reading was a harness artifact — the probe was resetting the victim's energy
+BEFORE sampling it. Once the read was booked before the per-tick restore, 18 damaging hits matched the 18 swings.)
 
 ---
 
-## 3. Divergences
+## 3. Divergences & quirks
 
-### DIVERGENCE 1 (root): `hasAttack` guard rejects weapon attack when `#name` is a `$global` reference
+### NO PORT DIVERGENCES.
 
-**File:** `port/src/entities/archetypes.ts`, line 207
-**Root cause:** `act_skeletonComandoSword.txt` uses an unquoted bare symbol for `#name`:
-```
-#name: skeletonComandoSword   (no quotes — Lingo bare symbol -> resolves as a global variable)
-```
-The data parser serialises this as `{ "$global": "skeletonComandoSword" }` in `data.json`. The
-`hasAttack` guard at archetypes.ts:207 checks:
+### Prior report DIV-1 is now FIXED (verified, not inherited)
+The earlier audit reported a root divergence: the `hasAttack` guard rejected the weapon because
+`act_skeletonComandoSword.txt` declares an unquoted bare-symbol `#name: skeletonComandoSword`, which the
+data parser serialises as `{ "$global": "skeletonComandoSword" }` (an object, not a string). The old guard
+required `typeof atk["name"] === "string"`, so `hasAttack` went false and the unit fell back to a synthetic
+`#naturalMelee` attack (wrong animType/animFrame/cooldown/power/collisionLoc/hits/sound).
+
+**Current code already handles this** — `port/src/entities/archetypes.ts:215-219` normalises a `$global`
+name object to `"#" + name` before the guard:
 ```typescript
-typeof atk["name"] === "string" && atk["name"] !== "#none"
+const atkNameRaw = atk["name"];
+const atkName = typeof atkNameRaw === "string" ? atkNameRaw
+  : atkNameRaw && typeof atkNameRaw === "object" && "$global" in (atkNameRaw as Record<string, unknown>)
+    ? "#" + String((atkNameRaw as Record<string, string>)["$global"]) : "";
+const hasAttack = animType !== "" && atkName !== "" && atkName !== "#none";
 ```
-`atk["name"]` is `{ $global: "skeletonComandoSword" }` (an object), so `typeof ... === "string"` is
-`false`, making `hasAttack = false`. The code then falls back to the synthetic attack:
-```typescript
-resolveAttack({ name: "#natural", animType: "#naturalMelee", cooldown: fallbackCooldown })
-```
-with `fallbackCooldown = Math.round(18 * 1 + 1) = 19`.
+The live probe confirms the weapon attack now resolves correctly (animType `#weaponMelee`, animFrame `[3]`,
+collisionLoc {27,-3}, sound `skeleton_fire`, power 1). The prior DIVERGENCES=1 finding no longer reproduces.
 
-**All 13 failed checks are cascades of this single guard:**
-
-| Diverged property | Original | Port gets (fallback) |
-|-------------------|----------|---------------------|
-| animType | `#weaponMelee` | `#naturalMelee` |
-| animFrame | `[3]` | `[2]` (structAttack default) |
-| effectiveCooldown | 7 (rawCooldown 0 + 6 = 6 × 1 + 1) | 19 (fallback 18×1+1) |
-| powerX / powerY | 1, 0 | 5, −1 (structAttack default) |
-| powerScalar | 1 | 6 |
-| collisionLoc | {27, −3} | {25, 0} (structAttack default) |
-| hits[1] | "#teamBuildings" | absent (structAttack hits=[#teamMembers]) |
-| sound | "skeleton_fire" | "#none" |
-| animAction during swing | "weaponMelee" | not visible (naturalMelee, probe checks exact string) |
-| damage per hit | ~2.16 | ~12.96 (powerScalar 6 × str 12 × 0.18) |
-
-**Fix:** In `archetypes.ts:207`, broaden the name check to accept `$global` objects (extract the
-string value) or simply accept any non-null `name` field when `animType` is already set:
-```typescript
-// Before:
-const hasAttack = animType !== "" && typeof atk["name"] === "string" && atk["name"] !== "#none";
-// After (tolerate $global name references — Lingo bare-symbol names in weapon records):
-const nameVal = atk["name"];
-const nameStr = typeof nameVal === "string" ? nameVal
-  : (nameVal && typeof nameVal === "object" && "$global" in nameVal)
-    ? String((nameVal as any)["$global"]) : "";
-const hasAttack = animType !== "" && nameStr !== "" && nameStr !== "none" && nameStr !== "#none";
-```
-This makes `hasAttack = true` for skeletonComandoSword and any other weapon whose Lingo `#name` was
-an unquoted bare symbol, restoring all 13 failed checks to their correct values.
-
----
-
-## 4. Non-Divergences / WONTFIX
-
-### dammageMultiplier typo (WONTFIX)
-Original cast: `#dammageMultiplier: 14` (double-m). Engine reads `damageMultiplier` (correct spelling)
-at `modEnergy.txt:276`. The typo key is dead in the original. `structAttack.damageMultiplier` defaults
-to 1 in both original and port. Port is faithful — the probe confirmed `attack.damageMultiplier = 1`.
-
-### findTarget not observed in 200-tick probe (non-issue)
-The probe's `modesSeen` set did not include `"findTarget"` because on tick 0 the target was already
-found and the mode immediately entered `moveToAttack`. This is a timing artefact of the short probe
-window, not a behavioural divergence.
+### WONTFIX — FAITHFUL original-game bug: the `dammageMultiplier` typo
+- **Original data** (`casts/data/act_skeletonComandoSword.txt:14`): `#dammageMultiplier: 14` (double-m typo).
+- **Original engine** (`casts/script_objects/modEnergy.txt:276`): `multiplier = attackingObj.getAttack().damageMultiplier` — reads the CORRECTLY-spelled key.
+- **Original default** (`casts/master_objects/structMaster.txt:171`): `a[#damageMultiplier] = 1`.
+- Because the `#attack` proplist is structAttack-merged, the typo `#dammageMultiplier:14` lands as a separate,
+  never-read property; `#damageMultiplier` stays at its default **1**. So in the ORIGINAL GAME this sword
+  swings at multiplier **1, not 14** — its intended 14× was lost to the typo.
+- **Port** (`port/src/components/weapon.ts:194` reads `r["damageMultiplier"]`; `port/src/data/registry.ts:26`
+  STRUCT_ATTACK default `damageMultiplier: 1`): resolves to **1** too. Probe confirmed `attack.damageMultiplier = 1`.
+- This is a candidate ORIGINAL-GAME bug, faithfully reproduced. **Do NOT "fix" to 14** — that would diverge from the original.
+- (The sibling `act_skeletonGiantSword.txt` carries the identical `#dammageMultiplier:8` typo — same WONTFIX class.)
 
 ---
 
@@ -185,15 +134,13 @@ window, not a behavioural divergence.
 
 | Category | Count |
 |----------|-------|
-| Real divergences (root causes) | 1 |
-| Cascade failures from that root | 12 |
-| WONTFIX (faithful to original) | 1 |
-| Total probe checks: PASS | 66 |
-| Total probe checks: FAIL | 13 |
+| Real PORT divergences | 0 |
+| Faithful original-game quirks (WONTFIX) | 1 (dammageMultiplier typo → mult 1) |
+| Prior reported divergences now FIXED & re-verified | 1 ($global name guard) |
 
-**Status: DIVERGENCES=1** (one root cause; 12 cascades; all fixable by one line change in archetypes.ts)
+**Status: DIVERGENCES=0** — skeletonComando is parity-clean; behavior reproduced faithfully against the real bundle.
 
 ---
 
-`skeletonComando | DIVERGENCES=1`
-- DIV-1: `hasAttack` guard in `archetypes.ts:207` rejects weapon when `#name` is a `$global` object (bare Lingo symbol `skeletonComandoSword`) — all weapon params fall back to synthetic `#natural` attack (wrong animType, animFrame, cooldown, power, collisionLoc, hits, sound)
+`skeletonComando | DIVERGENCES=0`
+- No port divergences. Faithful quirk: `#dammageMultiplier:14` typo in act_skeletonComandoSword.txt is never read by the engine (modEnergy reads `damageMultiplier`); effective multiplier is 1 in both original and port (WONTFIX). The prior `$global` weapon-name guard divergence is already fixed at archetypes.ts:215-219.

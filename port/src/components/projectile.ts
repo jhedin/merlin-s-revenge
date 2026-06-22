@@ -17,6 +17,12 @@ export class Projectile extends Component {
   static handles = ["update", "isFinished", "getTeam"];
   life = 0; maxLife = 100; power = 10; team = ""; ownerId = -1; done = false; freeze = 0; mult = 1;
   char = ""; // objBullet sprite char (archerArrow/gobarrow/axe/crossBolt…) -> the `<char>_fly` strip, rotated to flight
+  // #friction (objMoveXY): percent of speed lost each frame (exponential decay). When speed falls below
+  // STALL_SPEED for STALL_FRAMES, the bullet has come to a natural halt — splash detonates / plain lands.
+  friction = 0;
+  private stallCtr = 0;
+  private static readonly STALL_SPEED = 0.2;  // pStallSpeed
+  private static readonly STALL_FRAMES = 10;  // pStallCount.tim = [1,10]
   // splash payload (C2): when set, the bullet resolves an area hit on trigger instead of single-target.
   private splash: AttackData | null = null;
   private splashHits: string[] = ["#teamMembers", "#teamBuildings"];
@@ -36,7 +42,7 @@ export class Projectile extends Component {
   configure(power: number, team: string, ownerId: number, maxLife = 100, freeze = 0, mult = 1): void {
     this.life = 0; this.power = power; this.team = team; this.ownerId = ownerId;
     this.maxLife = maxLife; this.freeze = freeze; this.mult = mult; this.done = false;
-    this.splash = null; this.payload = null;
+    this.splash = null; this.payload = null; this.friction = 0; this.stallCtr = 0;
   }
   // configurePayload: a single-target bolt whose hit runs the spell's payloadFunction list. `power` is
   // the L1 magnitude carried as the collision vector (the tuned spell damage). Heal bolts pass a friendly
@@ -45,12 +51,14 @@ export class Projectile extends Component {
     this.life = 0; this.power = power; this.team = team; this.ownerId = ownerId; this.maxLife = maxLife;
     this.done = false; this.splash = null; this.payload = attack;
     this.splashHits = hits; this.splashAllegiance = allegiance;
+    this.friction = attack.friction; this.stallCtr = 0;
   }
   // configureSplash: this bullet carries a splash/explode attack (towerAxe/energyPulse/thunder/freeze).
   // It still flies as a straight bullet; on trigger it resolves the area hit via SplashDamage.
   configureSplash(attack: AttackData, team: string, ownerId: number, maxLife = 100, hits?: string[], allegiance = "#enemy"): void {
     this.life = 0; this.team = team; this.ownerId = ownerId; this.maxLife = maxLife; this.done = false;
     this.splash = attack; this.splashHits = hits ?? attack.hits; this.splashAllegiance = allegiance;
+    this.friction = attack.friction; this.stallCtr = 0;
   }
   // configureBeam: an energyBeam shot — spawned at the target loc, stretched/rotated, detonates its
   // explode #attack on the first frame (a one-frame beam line from caster to target).
@@ -61,7 +69,7 @@ export class Projectile extends Component {
     this.beam = true; this.beamDist = dist; this.beamAngle = angle; this.beamCasterX = casterX; this.beamCasterY = casterY;
     this.beamLife = 4; // a few frames so the line is visible before it sweeps out
   }
-  override reset(): void { this.done = false; this.life = 0; this.ownerId = -1; this.freeze = 0; this.mult = 1; this.splash = null; this.payload = null; this.beam = false; this.reincarnateAs = []; this.char = ""; }
+  override reset(): void { this.done = false; this.life = 0; this.ownerId = -1; this.freeze = 0; this.mult = 1; this.splash = null; this.payload = null; this.beam = false; this.reincarnateAs = []; this.char = ""; this.friction = 0; this.stallCtr = 0; }
   isFinished(): boolean { return this.done; }
   // a splash/beam bullet IS the attacker passed to resolveSplash; expose its owner team so the area
   // search resolves the right hostile teams (calcTargetTeams reads attacker.getTeam). objBullet.setTeam.
@@ -106,9 +114,25 @@ export class Projectile extends Component {
       if (++this.life >= this.beamLife) this.done = true;
       return next();
     }
-    // objBullet does NOT collide with terrain (passThrough) — a bullet flies through walls and dies only on
-    // a target hit or when it expires (the port's maxLife stands in for the original's friction-stall/land).
+    // objBullet does NOT collide with terrain (passThrough) — a bullet flies through walls and dies on a
+    // target hit, when it STALLS (friction decay below pStallSpeed), or when its maxLife backstop expires.
     if (++this.life > this.maxLife) { if (this.splash) this.detonate(m.x, m.y); else this.finish(m.x, m.y); return next(); }
+    // objMoveXY friction: lose `friction`% of the speed each frame (exponential decay, scaled by gGameSpeed),
+    // and when the bullet slows below pStallSpeed for STALL_FRAMES it has come to a natural halt — a splash
+    // bullet detonates where it landed (bomb/rock lob), a plain bullet lands. Beams (friction 0) never decay.
+    if (this.friction > 0) {
+      const speed = Math.abs(m.vx) + Math.abs(m.vy);
+      if (speed <= Projectile.STALL_SPEED) {
+        if (++this.stallCtr >= Projectile.STALL_FRAMES) {
+          if (this.splash) this.detonate(m.x, m.y); else this.finish(m.x, m.y);
+          return next();
+        }
+      } else {
+        this.stallCtr = 0;
+        const factor = Math.max(0, 1 - (this.friction / 100) * game.gameSpeed); // VarValRange: friction% of speed
+        m.vx *= factor; m.vy *= factor;
+      }
+    }
     for (const e of game.entities) {
       if (e.id === this.ownerId || (e.type !== "player" && e.type !== "enemy" && e.type !== "ally")) continue;
       if (e.send("isDead") || !this.isTarget(e)) continue;

@@ -12,17 +12,17 @@ const pool = new Pool(BulletArchetype);
 
 export function fireBullet(
   ownerId: number, x: number, y: number, dirX: number, dirY: number,
-  speed: number, power: number, team: string, maxLife = 100, freeze = 0, mult = 1, char = "",
+  speed: number, power: number, team: string, maxLife = 100, freeze = 0, mult = 1, char = "", friction = 0,
 ): Entity {
   const b = pool.acquire();
   b.type = "bullet";
-  b.build({ x, y, friction: 1, accel: 0, walkSpeed: 999, box: 6, passThrough: true }); // no friction/accel => constant velocity
+  b.build({ x, y, friction: 1, accel: 0, walkSpeed: 999, box: 6, passThrough: true }); // Movement friction:1 => no walk decay; the bullet's own objMoveXY friction lives on Projectile
   const d = Math.hypot(dirX, dirY) || 1;
   const m = b.get(Movement);
   m.vx = (dirX / d) * speed; m.vy = (dirY / d) * speed;
   // K1: mult (the bullet's damageMultiplier) flows into the bullet's takeHit; damage = (|vx|+|vy|)·mult,
   // where the bullet's collision-vector L1 == `power`. Player bolts pass mult=1 (unchanged).
-  const proj = b.get(Projectile); proj.configure(power, team, ownerId, maxLife, freeze, mult); proj.char = char;
+  const proj = b.get(Projectile); proj.configure(power, team, ownerId, maxLife, freeze, mult); proj.char = char; proj.friction = friction;
   game.entities.push(b);
   return b;
 }

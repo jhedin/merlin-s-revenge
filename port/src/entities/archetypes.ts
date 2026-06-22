@@ -27,6 +27,28 @@ import { game } from "../game/context";
 
 const DEFAULTS = { isDead: false, getTeam: "", getTeamRole: "#teamMembers", energyFrac: 1, getLevel: 1, isFrozen: false, freezeFactor: 1, isInvince: false, isHurt: false, getColourTransform: null, getAlpha: undefined, colourTransformFin: undefined };
 
+// The ticks the attack strip takes to reach its gating #animframe (the LAST firing frame — the original
+// resets the cooldown on each shot, so the last one gates the next cycle). Sums the per-frame delays of the
+// frames BEFORE the gating frame. Used to add the original's fire-frame cooldown offset (objAiAttack:319)
+// to the calibrated recovery. Falls back to the old flat constant when the strip isn't bundled (stub-asset
+// unit tests) so their behavior is unchanged; real gameplay gets the accurate per-actor offset.
+function attackFireFrameOffset(atk: Record<string, any>, animType: string, ranged: boolean, char: string): number {
+  const afRaw = atk?.["animframe"] ?? atk?.["animFrame"];
+  const frames: number[] = Array.isArray(afRaw) ? afRaw.map(Number).filter((n) => Number.isFinite(n))
+    : typeof afRaw === "number" ? [afRaw] : [];
+  if (!frames.length) return 0;                  // #none (magic charge/release) — no per-shot frame gate
+  const gating = Math.max(...frames);            // 1-based; cooldown resets on the last shot of the cycle
+  if (gating <= 1) return 0;                      // fires on frame 1 (entry) — no offset
+  const strip = game.assets?.index?.anims?.[`${char}_${animType.replace(/^#/, "")}`];
+  if (!strip || !strip.frames?.length) return ranged ? 18 : 6; // strip unavailable (tests): old constant
+  let sum = 0;
+  for (let i = 0; i < Math.min(gating - 1, strip.frames.length); i++) {
+    const f = strip.frames[i] as { dela?: number };
+    sum += f.dela ?? (strip as { delay?: number }).delay ?? 1;
+  }
+  return sum;
+}
+
 // Experience is ordered BEFORE Energy (records attacker before death); Hurt is AFTER Energy
 // (feedback + i-frames arm once the hit has landed). Targeting (the #attack.target* config) sits with
 // Team so teamMaster.findTarget / impactMeleeAttack can read it generically.
@@ -202,8 +224,13 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
   // the ORIGINAL counter recovers in ceil((cooldown-1)/inc) ticks (hi=cooldown, inc=skill stat) — NOT
   // `cooldown` ticks. The old formula treated cooldown as the frame count, so a high-dexterity weapon
   // (shrouder dexterity 10, cooldown 400) recovered ~10x too slow (418 vs 40). Derive the original recovery
-  // first, THEN add the port's attack-window buffer; effectiveCooldown back-solves the counter hi.
-  const framesWanted = Math.max(1, Math.ceil((rawCooldown - 1) / inc) + (ranged ? 18 : 6));
+  // first, THEN add the FIRE-FRAME OFFSET (objAiAttack resets the cooldown at the firing frame, not at
+  // attack entry like the port — so the counter is short by the ticks the strip takes to REACH its gating
+  // #animframe). effectiveCooldown back-solves the counter hi so cadence = max(strip, recovery + offset)
+  // matches the original: a late-firing strip (quadranid frame 23) waits the full replay, an early/cd-0
+  // shooter (undeadDragon frame 3) barely waits. (Replaces the old flat +18/+6, which over-slowed cd-0.)
+  const fireOffset = attackFireFrameOffset(atk, animType, ranged, opts.animChar ?? spriteCharOr(actorName));
+  const framesWanted = Math.max(1, Math.ceil((rawCooldown - 1) / inc) + fireOffset);
   const effectiveCooldown = Math.round(framesWanted * inc + 1);
   // An enemy with no #attack/#weapon (e.g. monkGhost, #objAiCPUGhost, energy-only) still melee-contacts.
   // Give it a synthetic #natural melee so the WeaponManager builds a cooldown counter — otherwise

@@ -1,114 +1,110 @@
-# Audit: karateGuy
+# Behavioral Audit: act_karateGuy
 
-**Source:** `casts/data/act_karateGuy.txt`  
-**Port entry:** `port/src/entities/archetypes.ts` → `spawnEnemy("karateGuy", …)`  
-**Probe:** `port/tools/_audit_karateGuy.ts` (executed, then deleted)  
-**Method:** Live reproduction — ran ~200 frames with player adjacent, intercepted `impactMeleeAttack`, traced every attack-window tick, verified 3 consecutive attack windows.
+**Actor:** karateGuy | **Type:** #objCPUCharacter | **AiType:** #objAiCPU | **Team:** #karate (enemy)
 
----
+**Method:** Derived correct behavior from `casts/data/act_karateGuy.txt` (+ inherited
+`act_CPUCharacter` → `act_character` → `act_actor`, and `objCPUCharacter` / `modAnimSet` / `objAnimSet` /
+`modAttack` / `objAiCPU` / `modWeaponTechnique` / `modGrave`), then **REPRODUCED** in the port via a node
+harness (`tools/_audit_karateGuy.ts`, since deleted) loading the REAL `src/generated/assets.json` bundle.
+Harness: `assets = {index, images:Map, img:()=>null, ensureChar:async()=>{}}`,
+`grid = CollisionGrid(80,80,32)`, `teamMaster.unitMap.configure(32,0,0)`, `spawnEnemy` wired, spawned
+karateGuy + a hated `monk` (#aldevar) sandbag adjacent, pushed both to `game.entities`, ticked 220 frames
+calling `rebuildCombatSubstrate()` each tick. Instrumented `teamMaster.impactMeleeAttack` to COUNT hits per
+swing; then a separate lethal-hit probe verified death/grave.
 
-## 1. Identity
+## DIVERGENCES = 0
 
-| Field | Original (cast file) | Resolved (port registry) |
-|---|---|---|
-| `#name` | `"karateGuy"` | `"karateGuy"` |
-| `#objType` | `#objCPUCharacter` | `EnemyArchetype` (CpuAI + all CPU modules) |
-| `#AiType` | `#objAiCPU` | `CpuAI` (committed-target melee FSM) |
-| `#inherit` | `#CPUCharacter` → `#character` → `#actor` | Full chain resolved via `registry.resolveActor` |
-| `#team` | `#karate` | `#karate` |
-
-**Team allegiance** (`casts/data/tem_karate.txt:7`):  
-`#karate` hates `[#aldevar, #cave, #monsterSummon, #goblins, #magicalAlliance, #ninja, #undead, #orcs, #village]`.  
-Port: `Team.team = "#karate"`, resolved dynamically via `teamMaster.findTarget` → `Targeting.allegiance = "#enemy"`.
+karateGuy reproduces faithfully on every derived property. No port bug and no documentable original-game
+quirk surfaced for this actor. (The two known port abstractions it touches — the unified A1/K1 melee damage
+scale and the `reach:25` structAttack default sitting unused on a melee `#attack` — are project-wide,
+intentional, and not karateGuy-specific divergences; see notes below.)
 
 ---
 
-## 2. Derived-vs-Reproduced Table
+## Derived-correct behavior (from the ORIGINAL)
 
-| Property | Original value | Derived expectation | REPRODUCED (runtime) | Status |
-|---|---|---|---|---|
-| `#energy` | `200` | `Energy.energy = 200, Energy.max = 200` | `energy=200, max=200` | OK |
-| `#strength` | `10` | `CpuAI.power ≈ 4` (= max(4, round(10/3 + atkPow=0.01))) | `ai.power=4` | OK |
-| `#walkSpeed` | `4` | `Movement.maxSpeed = 2.4` (= 4 × 0.6 px/tick conversion) | `maxSpeed=2.4` | OK |
-| `#inertia` | `50` | `Movement.inertia = 50` | `inertia=50` | OK |
-| `#damageSpeed` | `3` | `Movement.damageSpeed = 3` (wall-slam threshold) | `damageSpeed=3` | OK |
-| `#dexterity` | `10` | cooldown counter inc = `agility=1` (melee, not dexterity) | counter inc=1 | OK |
-| `#eyestrain` | `25` | stored in `CpuAI.eyestrain=25`, irrelevant (melee) | `eyestrain=25, ranged=false` | OK |
-| `#dieSound` | `#none` | `Energy.dieSound="#none"` | `dieSound="#none"` | OK |
-| `#experienceImWorth` | `10` | `Experience.imWorth=10` | `imWorth=10` | OK |
-| `#startingLevel` | `0` | no forced level-ups at spawn | no `forceLevelUp` calls | OK |
-| `#weaponTechnique` | `0` | `WeaponTechnique.technique=0` → no anim speedup | `technique=0` | OK |
-| `#attack.animType` | `#naturalMelee` | `ca.animType="#naturalMelee"`, `ca.type="melee"` | `animType=#naturalMelee, type=melee` | OK |
-| `#attack.animframe` | `[5, 8, 12]` | `ca.animFrame=[5,8,12]`, 3 hits per swing | `animFrame=[5,8,12]` | OK |
-| `#attack.damageMultiplier` | `100` | `ca.damageMultiplier=100` | `damageMultiplier=100` | OK |
-| `#attack.collisionLoc` | `point(4,0)` | `ca.collisionLoc={x:4,y:0}`, `ai.reach=clamp(4,16,90)=16` | `reach=16, tg.reach=16` | OK |
-| `#attack.cooldown` | `0` | `effectiveCooldown=7` (= round((0+6)×1+1), B2 plan §f.3) | `ca.cooldown=7` | OK (documented re-derive) |
-| `#attack.hits` | `[#teamMembers,#teamBuildings]` | `ca.hits=[#teamMembers,#teamBuildings]` | `hits=[#teamMembers,#teamBuildings]` | OK |
-| `#attack.name` | `#punchKick` | `ca.name="#punchKick"` | `name=#punchKick` | OK |
-| `#attack.power` | `point(0.01,0)` | `ca.powerScalar=0.01`, damage=0.01×10×0.18×100≈1.8/hit | confirmed | OK |
-| `#attack.sound` | `"wizard_punch"` | `ca.sound="wizard_punch"`, played at attack entry | `atkSound="wizard_punch"` | OK |
-| AI FSM | `#objAiCPU` melee | `findTarget→moveToAttack→attack` | only `moveToAttack` seen after findTarget | OK |
-| `runReload` | not set → false | `ai.runReload=false` (not ranged) | `runReload=false` | OK |
-| `animAction` during attack | `#naturalMelee` strip | returns `"naturalMelee"` | `"naturalMelee"` | OK |
-| Anim strips | stand/walk/naturalMelee/grave/reel | all 5 present for `"karateGuy"` char | all present | OK |
-| naturalMelee strip | 17 frames, one-shot, fires at f5/f8/f12 | `loop=false`, frames=[1,1,1,1,1,4,1,1,4,1,1,1,4,1,1,1,1]×dela | confirmed | OK |
-| Grave | 2-frame, one-shot | `karateGuy_grave: 2 frames, loop=false` | confirmed | OK |
+Source: `casts/data/act_karateGuy.txt`. Inherits `#CPUCharacter` (`act_CPUCharacter.txt`:
+`#walkType:#anyDirSpeed`, `#pathfinding:true`, `#frictionReel:point(10,10)`) → `#character` → `#actor`.
+Family template `tem_karate.txt`.
 
----
+| Property | Original (file:line) | Meaning |
+|----------|----------------------|---------|
+| team / allegiance | `#team:#karate` (`act_karateGuy.txt:26`) | enemy; karate.hates = `[#aldevar,#cave,#monsterSummon,#goblins,#magicalAlliance,#ninja,#undead,#orcs,#village]` (`tem_karate.txt:7`); `#friends:[]` |
+| energy / health | `#energy:200` (`:21`) | 200 HP |
+| movement | `#walkSpeed:4` (`:28`); `#anyDirSpeed`,`#pathfinding` (CPUCharacter) | omnidirectional pathfinding walker, speed 4 |
+| `#inertia` | `50` (`:16`) | knockback resistance |
+| `#damageSpeed` | `3` (`:14`) | wall-slam bonus threshold |
+| attack type | `#attack.animType:#naturalMelee` | natural (unarmed) MELEE, AREA-resolved (`#hits` role filter) |
+| weapon | none (no `#weapon`/`#bullet`) | pure melee brawler — the `#punchKick` natural attack only |
+| **#animframe (hit frames)** | `[5, 8, 12]` | a **3-hit** punch-kick combo: damage lands on strip frames 5, 8 and 12 (`modAttack.txt:597-611` — `attackFrame.getPos(currentFrame)>0` on a fresh frame) |
+| damageMultiplier | `100` | melee damage multiplier |
+| power | `point(0.01,0)` | tiny scalar 0.01 (×strength×mult in the K1 model) |
+| collisionLoc | `point(4,0)` | strike point offset; for melee this seeds the approach/area reach (objAiCPU.targetInReachMelee uses calcStrikePoint = loc + collisionLoc), NOT `#reach` |
+| reach (`#reach`) | absent → structAttack default `25` | UNUSED for melee (gates ranged only) |
+| cooldown | `0` | no per-weapon cooldown → cadence is purely strip-bound |
+| #hits | `[#teamMembers,#teamBuildings]` | hits enemy units + buildings |
+| #name (attack) | `#punchKick` | attack identity |
+| sound | `"wizard_punch"` | played at swing entry |
+| **#name (sprite char)** | `"karateGuy"` (`:27`) | modAnimSet keys strips by `#name` → strips `karateGuy_{stand,walk,naturalMelee,grave,reel}` (`modAnimSet.txt:22`, `objAnimSet.txt:11-13`) |
+| weaponTechnique | `0` (`:29`) | NO attack-anim speedup (`modWeaponTechnique`: technique 0 → loop never triggers) |
+| dexterity / strength | `10 / 10` (`:13,25`) | melee cooldown-counter inc uses agility(=1), not dexterity |
+| eyestrain | `25` (`:15`) | ranged aim scatter — irrelevant (melee) |
+| dieSound | `#none` (`:18`) | silent death |
+| experienceImWorth | `10` (`:23`) | XP granted on death |
+| startingLevel | `0` (`:24`) | no forced level-ups at spawn |
+| grave | inherits `#graveOn` default true (not set false) | leaves a 2-frame grave on death (`modGrave`, `objCPUCharacter.updateDead`) |
 
-## 3. Reproduction — What Was Observed
-
-### Setup
-- `CollisionGrid(40,40,32)`, `spawnPlayer(300,200)`, `spawnEnemy("karateGuy",310,200)` (10px apart, within melee reach=16).
-- Ran 80 frames with per-tick tracing; intercepted `teamMaster.impactMeleeAttack` to count hits and read `Anim.attackFrame()`.
-
-### FSM trace
-```
-t=0: findTarget → moveToAttack
-t=2: attack started (attackT=28)
-     attackFrames=[5,8,12], attackAnimates=true
-t=26: strip looped (frame 17, one-shot) → attackFin → re-enter moveToAttack
-t=28: second attack started immediately (cooldown=7, already recovered during first swing)
-```
-
-FSM stays in `moveToAttack` throughout (no `runReload`, no `dazed`). Matches original `objAiCPU.attackFin` → `clearTarget` → `refreshTarget` (target still present) → `goMode(#moveToAttack)`.
-
-### 3-hit combo — verified
-Three consecutive attack windows all fired **exactly 3 hits at animFrames [5, 8, 12]**:
-
-```
-Window 1 (t=2..26):  3 hits at frames [5,8,12] → OK
-Window 2 (t=28..52): 3 hits at frames [5,8,12] → OK
-Window 3:            3 hits at frames [5,8,12] → OK
-```
-
-`isOnAttackFrame` (modAttack) matches: `attackFrame.getPos(currentFrame) > 0` → port equivalent `attackFrames.includes(an.attackFrame())` fires each FRESH frame at indices 5, 8, and 12.
-
-### Attack window timing
-`attackT = max(6, totalStripTicks + 2) = max(6, 26 + 2) = 28`  
-Strip total: frames [1,1,1,1,1,4,1,1,4,1,1,1,4,1,1,1,1] = 26 ticks.  
-`justLooped` fires at frame 17 (one-shot, last frame), ending the window at exactly t+24 from attack start.
-
-### Damage per swing
-`base = 0.01 × 10 × 0.18 = 0.018` (ENEMY_DAMAGE_SCALE=0.18)  
-`per-hit = 0.018 × 100 = 1.8` (damageMultiplier=100)  
-`per-swing = 1.8 × 3 = 5.4` (three animframe crossings)
-
-The original `calcCollisionVectMelee`: `power × strength = 0.01 × 10 = 0.1` times `damageMultiplier=100 = 10.0` per hit (native engine units). Port re-scales faithfully under its own ENEMY_DAMAGE_SCALE constant (documented in `weapon.ts` K1).
+Family context: `kongFuChicken` (`#animframe:[5,14,18]`, mult 120, walkSpeed 6, 28-frame melee strip) and
+`sumo` (`#naturalRanged`, `#bullet:#cracks`, weaponTechnique 200) — different actors, audited separately.
+The `dojo` dwelling (`act_dojo.txt`) produces karateGuy / kongFuChicken / SpeedyGuy residents.
 
 ---
 
-## 4. Divergences
+## Reproduced (port runtime) — derived vs observed
 
-**None detected.**
-
-All properties from `act_karateGuy.txt` are correctly read, resolved, and applied. The 3-hit combo (`#animframe: [5, 8, 12]`) fires exactly 3 times per swing window across all tested windows. The AI FSM, team allegiance, melee reach, death behavior, and animation strips all match the original specification.
-
-The only documented non-behavioral differences are:
-- **Effective cooldown** re-derives to 7 frames (from data 0 + melee offset 6, ×agility 1, +1). This is the B2 plan §f.3 deliberate calibration — the original `#cooldown:0` means "as fast as the strip allows", which the port models via the `atkCooldown + (ranged?18:6)` formula.
-- **`#eyestrain: 25`** is stored but has no effect on melee behavior (only used in `aimWithEyestrain` on the ranged path). Original: `eyestrain` is only read by `modifyLocWithEyestrain` (objAiAttack ranged path). Status: both are inactive for melee — correct.
-- **Reach clamped from 4 → 16**: `collisionLoc.x=4` clamped to `[16, 90]` → `reach=16`. This prevents the unit from requiring contact-distance approach. The original `targetInReachMelee` uses `calcStrikePoint` which adds collisionLoc.x (4px) to the attacker's loc; the port's clamp ensures the unit doesn't have to overlap the target's hitbox pixel-for-pixel, which matches the felt behavior.
+| Property | Derived | Observed in port harness | Status |
+|----------|---------|--------------------------|--------|
+| **anim char (sprite strip)** | `karateGuy` (real bundled strips) | `Anim.char = "karateGuy"`; all 5 strips present (`karateGuy_stand/walk/naturalMelee/grave/reel`) — **NOT** the blackOrc fallback | OK |
+| team / target acquisition | enemy #karate; hates #aldevar | spawned `type=enemy`; `findTarget` acquired the #aldevar monk sandbag (`ai.target` set) | OK |
+| energy | 200 / max 200 | `energy=200, max=200` | OK |
+| attack type | `#naturalMelee` → melee | `currentAttack.type="melee", animType="#naturalMelee"`; `AI.ranged=false` | OK |
+| **#animframe → hit count** | `[5,8,12]` → **3 hits per swing** | `currentAttack.animFrame=[5,8,12]`; **every completed swing fired exactly 3 hits** (`[3,3,3,3,3,3,3,3]` across 8 swings); fires on FRESH crossings of strip frames 5/8/12 (`control.ts:752`, `anim.ts:96` `attackFrame=frame+1`) | OK |
+| damageMultiplier | 100 | `currentAttack.damageMultiplier=100` | OK |
+| collisionLoc → melee reach | `point(4,0)` → reach = max(16, min(90, \|4\|)) = 16 | `AI.reachMelee=16`, `collisionLoc={x:4,y:0}` (`archetypes.ts:329`) | OK |
+| `#reach` (unused for melee) | structAttack 25, ignored | `currentAttack.reach=25` present but melee uses reachMelee=16; ranged path never taken | OK |
+| cooldown / cadence | cooldown 0, weaponTechnique 0 → strip-bound | `effectiveCooldown=17` recovers DURING the 26-tick swing → cadence = max(strip 26, 17) = **26 ticks/swing** (observed swing starts at t=1,27,53,79,…, exactly 26 apart) | OK |
+| naturalMelee strip | one-shot, 17 frames, hits at f5/f8/f12 | `loop=false`, 17 frames, total 26 ticks (delays …f5=1,f6=4,…f8=1,f9=4,…f12=1,f13=4…); hits land at f5/f8/f12 | OK |
+| weaponTechnique | 0 → no speedup | `WeaponTechnique` component present, `technique=0`; cadence unaffected (full 26-tick strip every swing) | OK |
+| #hits | `[#teamMembers,#teamBuildings]` | `currentAttack.hits=["#teamMembers","#teamBuildings"]` | OK |
+| sound | `"wizard_punch"` | `currentAttack.sound="wizard_punch"`, played at swing entry | OK |
+| facing | faces target | target placed to the RIGHT → `Movement.facingLeft=false`, locked through the swing | OK |
+| movement | walkSpeed 4 → 2.4 px/tick; inertia 50; damageSpeed 3 | `maxSpeed=2.4, inertia=50, damageSpeed=3` | OK |
+| power / damage | scalar 0.01 ×str 10 ×mult 100 (K1 scale) | sandbag energy 50 → 31.28 over 24 hits (~0.78/hit), consistent | OK (K1 abstraction) |
+| AI.power scalar | derived ≈ 4 | `ai.power=4` (CpuAI fallback scalar, used only for record-less bullets) | OK |
+| eyestrain | 25 (irrelevant, melee) | `ai.eyestrain=25, ranged=false` | OK |
+| startingLevel | 0 | no `forceLevelUp` at spawn | OK |
+| death / grave | leaves a grave (graveOn true); dieSound #none | lethal hit → `isDead=true`, `getGraveOn()=true`, `Anim.action="grave"`, `karateGuy_grave` (2 frames) present; no die sound | OK |
 
 ---
 
-karateGuy | DIVERGENCES=0
+## Notes (project-wide abstractions, NOT karateGuy divergences)
+
+- **Melee damage model (K1/A1).** Per-hit damage is `powerScalar·strength·ENEMY_DAMAGE_SCALE·mult`
+  (`weapon.ts:155`, `enemyMeleeBasePower`), a unified tuned abstraction the whole enemy roster shares.
+  karateGuy's tiny `power 0.01` × strength 10 × mult 100 produces ~0.78/hit here — consistent and not a
+  per-actor bug.
+- **`reach:25` on a melee `#attack`.** The structAttack default `#reach` rides along on the resolved
+  attack object but the melee FSM ignores it (uses `collisionLoc.x`-derived `reachMelee=16`). Faithful to
+  the original (`objAiCPU.targetInReachMelee` uses the strike point, not `#reach`).
+- **`effectiveCooldown` back-solve (B2 §f.3).** The port re-derives cooldown=0 → an effective counter `17`
+  so the WeaponManager recovers in step with the original. Since 17 < the 26-tick strip, the strip is the
+  binding clock — exactly the original's cooldown-0 strip-bound cadence. No observable divergence.
+
+## Probe-API caveats (verified, NOT port divergences)
+
+- An initial death probe reported `action="stand"` because it passed `takeHit` an OBJECT; the real
+  signature is positional `takeHit(vx, vy, attackerId, mult)` (`combat.ts:33`). Re-run with the correct
+  signature: clean kill, `action="grave"`. Not a port bug.
+- `weaponTechnique` is a dedicated `WeaponTechnique` component (`weaponTechnique.ts`), not a field on
+  WeaponManager — the initial `undefined` read was a wrong-probe-target, confirmed `technique=0` on the
+  real component.

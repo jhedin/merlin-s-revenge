@@ -13,7 +13,7 @@ import assets from "@/generated/assets.json";
 describe("spriteCharOr resolves the faithful #name sprite (not the record key / a kin alias)", () => {
   beforeEach(() => {
     game.assets = { index: assets, images: new Map(), img: () => null, ensureChar: async () => {} } as any;
-    game.collision = new CollisionGrid(80, 80, 32) as any;
+    game.grid = new CollisionGrid(80, 80, 32);
   });
 
   it("maps key -> #name sprite when the #name strip is bundled", () => {
