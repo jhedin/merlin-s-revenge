@@ -1,7 +1,6 @@
 # Per-Actor Parity Audit: `darkMage`
 
-**Method:** Derived from `casts/data/act_darkMage.txt` + full inherit chain + AI scripts, then reproduced in
-the port by running `tools/_audit_darkMage.ts` (300-frame + 600-frame probes; probe deleted after audit).
+**Method:** Derived from `casts/data/act_darkMage.txt` + full inherit chain (`#CPUCharacter` → `#character` → `#actor`) + `objAiCPUSpellCaster.txt`, `objAiCPU.txt`, `objAiAttack.txt`, `modAttack.txt`, `modSpellMultistage.txt`, `act_darkBlast.txt`. Reproduced via `tools/_audit_darkMage.ts` (300-frame probe, real asset bundle, player + darkMage on 80×80 grid; probe deleted after audit).
 
 ---
 
@@ -13,27 +12,24 @@ the port by running `tools/_audit_darkMage.ts` (300-frame + 600-frame probes; pr
 | `#AiType` | `#objAiCPUSpellCaster` | `objAiCPUSpellCaster` extends `objAiCPU` | `dodgesBullets=true`, `runReload=true`, `optimumPosition` mode | ✓ |
 | `#character` | `#darkMage` | `#darkMage` | `animChar="darkMage"` | ✓ |
 | `#team` | `#undead` | `#undead` | `team="#undead"` | ✓ |
-| `#weapon` | `#darkBlast` | → `act_darkBlast.txt` magic spell | primary attack resolves to darkBlast | ✓ |
+| `#weapon` | `#darkBlast` | → `act_darkBlast.txt` magic spell | primary attack resolves to darkBlast; animType `#magic`, type `magic` | ✓ |
 | `#strength` | `1` | `1` | `strength=1` | ✓ |
 | `#dexterity` | `3` | `3` | `dexterity=3` | ✓ |
-| `#energy` | `150` | `150` | `energy=150, max=150` | ✓ |
+| `#energy` | `150` | `150` | `energy=150` | ✓ |
 | `#inertia` | `60` | `60` | `inertia=60` | ✓ |
-| `#walkSpeed` | `3.5` | `3.5` | `maxSpeed=2.1` (3.5×0.6 slice-scale) | ✓ |
+| `#walkSpeed` | `3.5` | `3.5` | `maxSpeed≈2.1` (3.5×0.6 slice-scale) | ✓ |
 | `#damageSpeed` | `4` | `4` | `damageSpeed=4` | ✓ |
-| `#chargeOffsetSide` | `#top` | `#top` | cosmetic muzzle; forwarded to SpellActor | ✓ |
+| `#chargeOffsetSide` | `#top` | `#top` | cosmetic muzzle; SpellActor defaults to `"#top"` | ✓ |
 | `#experienceImWorth` | `40` | `40` | `imWorth=40` | ✓ |
 | `#experienceAmountForNextLevel` | `5` | `5` | `experienceAmountForNextLevel=5` | ✓ |
 | `#stallSpeed` | `0.5` | reel-recovery rate | NOT forwarded | WONTFIX (below) |
 | `#miniMapStatus` | `#inf` | visible on minimap | no minimap in port | WONTFIX |
-| `mana_capacity` | (none; inherits `act_character:10`) | `10` | `capacity=10` | ✓ |
-| `mana_flow` | (none; inherits `1`) | `1` | `flow=1` | ✓ |
-| `mana_burst` | (none; inherits `1`) | `1` | `burst=1` | ✓ |
-| `mana_regeneration` | (none; inherits `1`) | `1` | `regeneration=1` | ✓ |
+| `mana_capacity` | (inherits `act_character:10`) | `10` | `capacity=10` | ✓ |
+| `mana_flow` | (inherits `1`) | `1` | `flow=1` | ✓ |
+| `mana_burst` | (inherits `1`) | `1` | `burst=1` | ✓ |
+| `mana_regeneration` | (inherits `1`) | `1` | `regeneration=1` | ✓ |
 
-**WONTFIX: `#stallSpeed`** — `objGameObject.txt:69` describes this as "how rapidly the character can
-recover from being hit" (a reel-recovery rate in the original's `objMoveXY`). The port has no reel-recovery
-concept (reel is handled by `Hurt`/`Movement` knockback decay); the value is not forwarded in
-`archetypes.ts:spawnEnemy`. No observable effect on cast/attack cadence. Faithful omission.
+**WONTFIX: `#stallSpeed`** — `objGameObject.txt:69` describes this as the rate of recovery from reel (a reel-recovery rate in the original's `objMoveXY`). The port has no reel-recovery concept; the value is not forwarded in `archetypes.ts:spawnEnemy`. No observable effect on cast/attack cadence. Faithful omission.
 
 **WONTFIX: `#miniMapStatus`** — cosmetic display feature; port has no minimap.
 
@@ -43,47 +39,48 @@ concept (reel is handled by `Hurt`/`Movement` knockback decay); the value is not
 
 Original: `#character: #darkMage` → all strips keyed under `darkMage_`.
 
-| Strip | Original strips expected | Port (assets.json) | Loop | Notes |
+| Strip | Expected | Port (assets.json) | Loop | Notes |
 |---|---|---|---|---|
-| `darkMage_stand` | stand idle | 3 frames | `loop=true` | ✓ |
-| `darkMage_walk` | walk cycle | 4 frames | `loop=true` | ✓ |
-| `darkMage_charge` | charge phase (displayed during multi-frame charge) | 4 frames | `loop=true` | strip exists but CPU skips charge phase — see DIV-1 |
-| `darkMage_chargeWalk` | charge while walking | 4 frames | `loop=true` | used by PlayerControl only |
-| `darkMage_release` | cast/fire | 4 frames | `loop=false` (one-shot ✓) | ✓ |
-| `darkMage_releaseWalk` | release while walking | 4 frames | `loop=true` | PlayerControl only; loop=true is a cosmetic quirk (faithful for walk-release) |
-| `darkMage_reel` | hit/knockback | 6 frames | `loop=false` | ✓ |
-| `darkMage_grave` | corpse | 2 frames | `loop=false` | ✓ |
-| `darkMage_die` | MISSING | — | — | WONTFIX (below) |
+| `darkMage_stand` | idle | 3 frames | `loop=true` | ✓ present |
+| `darkMage_walk` | walk cycle | 4 frames | `loop=true` | ✓ present |
+| `darkMage_charge` | charge phase orb growing | 4 frames | `loop=true` | ✓ present in assets; **CPU never plays it** (DIV-1) |
+| `darkMage_chargeWalk` | charge while walking | 4 frames | `loop=true` | PlayerControl only |
+| `darkMage_release` | cast/fire | 4 frames | `loop=false` | ✓ CPU plays this during attack window |
+| `darkMage_releaseWalk` | release while walking | 4 frames | `loop=true` | PlayerControl only |
+| `darkMage_reel` | hit/knockback | 6 frames | `loop=false` | ✓ present |
+| `darkMage_grave` | corpse | 2 frames | `loop=false` | ✓ present |
 
-**WONTFIX: `darkMage_die`** — The original uses `#reel`/`#reelFly`/`#dead` modes to transition to a grave
-(`modGrave`). There is no distinct `die` strip in the original's `act_darkMage`; the asset exporter did not
-extract one. The port uses `grave` correctly (dead → `getGraveOn=true` → `darkMage_grave` held). Faithful.
+Cast strip fallback logic (`control.ts:544-549`): `animAction()` for a `#magic` caster checks `assets.anims["darkMage_release"]` first; falls back to `"darkMage_charge"`. Since `darkMage_release` exists, the port correctly resolves to `"release"` — no stand-fallback.
 
 ---
 
 ## 3. Weapon & Spell (`#darkBlast` / `act_darkBlast.txt`)
 
-| Property | Original (`act_darkBlast.txt`) | Port (observed) |
+| Property | Original | Port (observed) |
 |---|---|---|
-| `#animType` | `#magic` | `animType="#magic"`, `type="magic"` |
-| `#reach` | `9999` | `reach=9999`; capped to `reachRanged=220` in CpuAI init |
-| `#cooldown` | `15` | effective cooldown 34 frames (`(15+18)×1+1`, manaRegen=1) |
+| `#animType` | `#magic` | `animType="#magic"`, `type="magic"` ✓ |
+| `#reach` | `9999` | `reach=9999`; capped to `reachRanged=220` in `CpuAI` init ✓ |
+| `#cooldown` | `15` | effective cooldown ≈33 frames (`ceil((15−1)/1)+18+1`, manaRegen=1) ✓ |
 | `#chargeMax` | `999` | raw `chargeMax=999` |
-| `#chargeMaxBasic` | `10` | `chargeMaxBasic=10` |
-| `#chargeMaxModifier` | `0.5` | `chargeMaxModifier=0.5` |
+| `#chargeMaxBasic` | `10` | `chargeMaxBasic=10` ✓ |
+| `#chargeMaxModifier` | `0.5` | `chargeMaxModifier=0.5` ✓ |
 | Derived `chargeMax` | `min(999, 10×0.5+10) = 15` | computed `15` ✓ |
 | `#chargeStart` | `5` | `chargeStart=5`; +manaBurst(1) → effective start 6 |
 | `#chargeSpeed` | `1` | `chargeSpeed=1` per tick |
-| Charge ramp | ~9–10 ticks from start to full | N/A — port instant-releases at full (DIV-1) |
-| `#spellSpeed` | `20` | `spellSpeed=20` → fly speed 20/3≈6.7 px/tick |
-| `#power` | `3` | `powerScalar=3` |
-| `#bullet` | `#energyBlastBullet` | `bullet="#energyBlastBullet"` |
-| `#chargeColour` | `rgb(0,0,0)` (black) | `chargeColour=[0,0,0]` |
-| `#hits` | `[#teamMembers, #teamBuildings]` | `hits=["#teamMembers","#teamBuildings"]` |
-| `#limitMagic` | `false` | `limitMagic=false` |
-| `#randomSummon` | `false` | `randomSummon=false` |
-| `#explodeSound` | `"spell_explode"` | `explodeSound="spell_explode"` |
-| `#releaseSound` | `"spell_release"` | `releaseSound="spell_release"` |
+| `#chargeSize` | (structMaster default `1`) | `chargeSize=1` ✓ |
+| `#chargeExplodeFactor` | (structMaster default `4`) | `chargeExplodeFactor=4` ✓ |
+| `#spellSpeed` | `20` | `spellSpeed=20` → fly speed `20/3≈6.7 px/tick` ✓ |
+| `#power` | `3` | `powerScalar=3` ✓ |
+| `#bullet` | `#energyBlastBullet` | `bullet="#energyBlastBullet"` ✓ |
+| `#collisionLoc` | `point(0,−8)` | `collisionLoc={x:0,y:−8}` → muzzle at `(m.x, m.y−8)` ✓ |
+| `#hits` | `[#teamMembers,#teamBuildings]` | `hits=["#teamMembers","#teamBuildings"]` ✓ |
+| `#limitMagic` | `false` | `limitMagic=false` ✓ |
+| `#randomSummon` | `false` | `randomSummon=false` ✓ |
+| `releaseFunction` | (not set → structMaster `#none`) | `releaseFunction="#release"` (not `#fireBullets` → non-streaming) ✓ |
+| `explodeFunction` | (not set → `#none`) | `explodeFunction="#none"` → bolt damage path ✓ |
+| `payloadFunction` | (structMaster → `[takeHit]`) | `payloadFunction=["takeHit"]` ✓ |
+| `#explodeSound` | `"spell_explode"` | `explodeSound="spell_explode"` ✓ |
+| `#releaseSound` | `"spell_release"` | `releaseSound="spell_release"` ✓ |
 
 ---
 
@@ -91,47 +88,58 @@ extract one. The port uses `grave` correctly (dead → `getGraveOn=true` → `da
 
 ### Original (`objAiCPUSpellCaster` extends `objAiCPU` extends `objAiAttack`)
 
-1. **findTarget** → finds nearest hostile via `teamMaster.findTarget`.
-2. **moveToAttack** → target always in reach (reach=9999) → immediately calls `attack()` → `chargeMagic()`.
-3. **Multi-frame charge phase** (`#charge` character mode): `ensureMode(#charge)` plays `darkMage_charge` animation. Each frame: `chargeSpell()` increments counter by 1. After ~9–10 frames (chargeMax=15, start=6, speed=1), counter reaches max → `#spellCharged` event.
-4. **Release**: `releaseMagic(targetLoc)` → `ensureMode(#release)` plays `darkMage_release` strip → spell flies, explodes. `resetCooldown()` starts 15-frame cooldown.
-5. **Post-attack**: `attackFin` → `setTarget(#none)` → AI enters `pSpellCasterMode=#moveToOptimumPosition`.
-6. **optimumPosition loop**: 1) dodge bullets tangent, 2) flee enemies within 100px, 3) approach target beyond 100px buffer, 4) idle+shoot when cooled.
-7. **Death**: `pSpellCasterMode=#none`, cancel spell, grave spawns.
+1. **findTarget** → nearest hostile via `teamMaster.findTarget`.
+2. **moveToAttack** → reach=9999 → always in reach → immediately calls `attack()` → `chargeMagic()`.
+3. **Multi-frame charge phase**: `chargeMagic()` calls `ensureMode(#charge)` on the character (plays `darkMage_charge` looping strip), then `ensureSpell()` (spawns `objSpell` charge actor), then `chargeSpell()` every frame: increments counter by 1. From start=6 to max=15 → ~9 frames at speed=1.
+4. **`#spellCharged` event** → `releaseMagic(targetLoc)` → `ensureMode(#release)` plays `darkMage_release` strip → `releaseSpell()` → spell flies at speed 20, explodes radially on arrival.
+5. **Post-attack**: `attackFin` → `setTarget(#none)` → `goSpellCasterMode(#moveToOptimumPosition)`.
+6. **optimumPosition loop**: 1) dodge enemy bullets tangent, 2) flee enemies within 100px, 3) approach target beyond 100px+20px buffer, 4) idle when close enough; fires again once cooldown recovers.
+7. **Death**: `pSpellCasterMode=#none`, `cancelAttack()` (cancel any in-progress spell), grave spawns.
 
 ### Port (reproduced, 300-frame simulation)
 
-1. **findTarget** → `refreshTarget()` ✓
-2. **moveToAttack** → with reachRanged=220 (capped from 9999), target at 140px → in reach after 7 frames → enters `attack()` ✓
-3. **Attack (instant)**: `performAttack()` calls `spawnSpell` + `setCharge(chargeMax=15)` + `release()` in ONE frame. No per-frame charge ramp. **DIV-1** (see below).
-4. **Attack animation**: `attackAction()` shows `"release"` strip (darkMage_release, 4 frames, loop=false). The `darkMage_charge` strip is **never played by CpuAI**. **DIV-1**.
-5. **Post-attack**: `attackFin` → `dodgesBullets=true` → `goMode("optimumPosition")` ✓
-6. **optimumPosition**: bullet-tangent dodge + enemy-flee + approach/idle+fire loop ✓
-7. **Cast interval**: observed 33 frames between spells (effective cooldown 34; 1-frame rounding). Original: ~15 charge + 4 release + 15 cooldown ≈ 34 frames total. Port cadence is close but the split is different.
-8. **Death + grave**: `isDead=true`, `getGraveOn=true`, grave strip found ✓
+**REAL BUNDLE CONFIRMED WORKING**: spell spawned at frame 7, flew to player at (400,400) via direct position stepping (`flyDirX/Y × speed`; not velocity), player dead at frame 28. `spellSeen=true`, entity count grew from 2→3.
+
+1. **findTarget** → `refreshTarget()` ✓ — player found on frame 0
+2. **moveToAttack** → reachRanged=220 (capped from 9999), player at 140px → in reach on frame 0 → enters attack ✓
+3. **Attack (instant)**: `performAttack()` calls `spawnSpell` + `sa.setCharge(chargeMaxOf=15)` + `sa.release()` in ONE frame (frame 7 after cooldown). No per-frame charge ramp. — **DIV-1**
+4. **Attack animation**: `attackAction()` returns `"release"` for the full `attackT` window. `darkMage_charge` never plays for CpuAI. — **DIV-1**
+5. **Spell flies correctly**: `SpellActor.mode="fly"`, position steps by `flyDirX×speed` each frame (vel stays 0; direct step, faithful to `objSpell.releaseNormal` `moveXYfin`). Arrival → explode → player killed ✓
+6. **Post-attack**: `attackFin` → `dodgesBullets=true` → `goMode("optimumPosition")` ✓
+7. **optimumPosition**: bullet-tangent dodge + enemy-flee + approach/idle loop ✓; FSM stays in mode until target lost (player dead → findTarget, target=null)
+8. **Cast cadence**: effective cooldown 33 frames. Original: ~9 charge + 4 release + 15 cooldown ≈ 28 frames. Port fires faster per cycle but the overall cadence difference is a secondary consequence of DIV-1.
+9. **Death + grave**: `darkMage_grave` exists ✓; grave component fires on death ✓
 
 ---
 
 ## 5. Divergences
 
-### DIV-1: CPU spellcaster skips the multi-frame charge phase (no `darkMage_charge` animation)
+### DIV-1: CPU spellcaster skips the multi-frame charge phase — `darkMage_charge` never plays
 
-**Original** (`casts/script_objects/objAiAttack.txt:126-129`, `objAiCPU.txt:444-468`):
-- `chargeMagic()` calls `ensureMode(#charge)` on the character → plays `darkMage_charge` (4-frame looping strip).
-- `chargeSpell()` is called every frame until the counter reaches `chargeMax` (~9–10 frames at speed=1 from start=6 to max=15).
-- During this period the character is in `#charge` mode visually and positionally (charge orb grows over head at `calcChargeLoc()`).
-- `#spellCharged` → `releaseMagic()` → `ensureMode(#release)` → plays `darkMage_release`.
+**Original** (`casts/script_objects/objAiAttack.txt:126–142`, `objAiCPU.txt:444–468`):
+- `attack()` → `chargeMagic()` → `ensureMode(#charge)` (character enters charge mode, plays `darkMage_charge` looping strip) → `ensureSpell()` (spawns objSpell over head) → `chargeSpell()` per frame.
+- Each frame: counter increments by 1; from start=6 to max=15 → ~9 frames.
+- When counter reaches max: `internalEvent(#spellCharged)` → `releaseMagic(targetLoc)` → `ensureMode(#release)` plays `darkMage_release` → spell released.
 
-**Port** (`port/src/components/control.ts:807-818`):
-- `CpuAI.performAttack()` calls `spawnSpell`, `sa.setCharge(chargeMaxOf(...))`, `sa.release()` all in the SAME frame.
-- `attackAction()` returns `"release"` for the entire `attackT` window.
-- The `darkMage_charge` strip is NEVER played for the CPU darkMage (only for `PlayerControl`).
+**Port** (`port/src/components/control.ts:807–818`):
+- `CpuAI.performAttack()` calls `spawnSpell(...)`, `sa.setCharge(chargeMaxOf=15)`, `sa.release(...)` in ONE frame.
+- `attackAction()` returns `"release"` for the whole `attackT` window.
+- The `darkMage_charge` strip is NEVER played for CPU darkMage (it only plays for `PlayerControl`).
 
-**Impact**: Visual divergence (missing ~9-10 frame charge animation), timing divergence (original has ~9-frame wind-up before firing; port fires instantly), and the charge-orb growing over the darkMage's head is absent. However: the **total cast cycle** (charge+release+cooldown ≈ 34 frames in both) keeps the overall cadence faithful.
+**Proof**: `tools/_audit_darkMage.ts` probe frame log:
+- `t=1 animAction="release"` (attack already entered, showing release strip immediately)
+- `t=7: spell spawned — pos=(540,384.5) vel=(0,0)` (spawned+released in same frame)
+- `t=28: player dead` (spell flew correctly, killed player)
+- `darkMage_charge` strip never appeared in animAction log.
 
-**Fix sketch**: In `CpuAI`, replace the single-frame `performAttack` with a charge ramp substate: on entering attack mode, spawn the spell actor and accumulate charge per tick (calling `SpellActor.setCharge`) until `charge >= chargeMaxOf`; then call `SpellActor.release` and leave attack mode. This matches `objAiAttack.chargeMagic/chargeSpell/releaseMagic` exactly. The `attackT` window should be held during both phases. `attackAction()` should return `"charge"` while ramp is in progress, `"release"` after `release()` is called.
+**Impact**: Visual divergence (missing ~9-frame charge animation where orb grows over darkMage's head); timing divergence (original has ~9-frame wind-up before casting; port instant-releases). Total cast cycle is roughly equivalent (port compensates via cooldown calibration) but the sub-phases differ. The `darkMage_charge` asset ships in `assets.json` and is wired in `attackAction()` fallback but CpuAI never reaches that state.
 
-**Verdict**: REAL DIVERGENCE. The K2-K8 plan (`port/docs/parity/plans/K2-K8-ai-completeness.md:154-156`) identified this as a deviation ("casters now **charge over frames** rather than instant-fire") to be fixed, but the implementation (control.ts) still instant-releases. Not a WONTFIX.
+**Fix sketch**: In `CpuAI.attack()` / `updateAttack()`, implement a two-phase magic-attack flow:
+1. **charge phase**: call `spawnSpell(...)`, hold `SpellActor` reference; each tick call `sa.setCharge(charge += chargeSpeedOf(...))` and return `animAction="charge"`. Stop when `charge >= chargeMaxOf`.
+2. **release phase**: call `sa.release(targetX, targetY, speed)`, switch `attackT` to count down the release strip, return `animAction="release"`. Call `attackFin` when strip completes.
+This matches `objAiAttack.chargeMagic` → `chargeSpell` (per-frame) → `#spellCharged` → `releaseMagic` → `updateRelease` exactly.
+
+**Verdict**: REAL DIVERGENCE — not WONTFIX.
 
 ---
 
@@ -139,33 +147,36 @@ extract one. The port uses `grave` correctly (dead → `getGraveOn=true` → `da
 
 | Quirk | Proof | Verdict |
 |---|---|---|
-| `reachRanged` capped to 220 (original reach=9999) | `archetypes.ts:502` comment "cap magic's 9999"; optimumPosition approach chain always moves mage within 100px of target before firing, so the 220px cap never prevents a shot in practice | WONTFIX |
-| No `chargeVolumeMap` (audio volume scaling during charge) | `act_darkBlast.txt:17` `#chargeVolumeMap`; no audio component in combat harness; cosmetic | WONTFIX |
+| `reachRanged` capped to 220 (original reach=9999) | `archetypes.ts:666` `Math.min(220, ...)` comment; optimumPosition approach chain moves mage within 100px of target before firing, so 220px cap never blocks a shot | WONTFIX |
+| No `chargeVolumeMap` audio scaling | `act_darkBlast.txt:17` `#chargeVolumeMap`; no audio component in combat harness; cosmetic | WONTFIX |
 | `#stallSpeed=0.5` not forwarded | Port has no reel-recovery parameterization; `Hurt`/`Movement` knockback decay is uniform | WONTFIX |
-| `darkMage_die` strip missing | Original has no distinct `die` strip in `act_darkMage`; death goes via reel→grave; `darkMage_grave` exists and is used | WONTFIX |
+| `darkMage_die` strip absent | Original has no distinct `die` strip in `act_darkMage`; death goes via reel→grave; `darkMage_grave` exists and is used ✓ | WONTFIX |
 | `#miniMapStatus:#inf` not honored | No minimap system in port | WONTFIX |
+| `darkBlast` `#animframe: #none` | Original `modAttack.isOnAttackFrame` with `#none` yields no frame-crossing hits (magic fires on `#spellCharged`, not an animframe). Port's empty `animFrame=[]` → same: fires on strip completion, not frame crossing (`control.ts:737–740`). Faithful. | WONTFIX |
 
 ---
 
 ## 7. Summary Table
 
-| Behavior | Original source:line | Port source:line | Verdict |
+| Behavior | Original source | Port source | Verdict |
 |---|---|---|---|
-| Identity / team / energy / walk | `act_darkMage.txt:3-19` | `archetypes.ts:291-362` | ✓ CORRECT |
-| Weapon → darkBlast magic | `act_darkMage.txt:20` | `archetypes.ts:169-175` | ✓ CORRECT |
-| Magic attack classification (ranged AI) | `act_darkBlast.txt:9` | `archetypes.ts:183-184` | ✓ CORRECT |
-| Spellcaster AI (dodgesBullets, runReload) | `objAiCPUSpellCaster.txt:20-36` | `archetypes.ts:226-228` | ✓ CORRECT |
-| Bullet-tangent dodge (updateMoveToOptimumPosition) | `objAiCPUSpellCaster.txt:275-297` | `control.ts:861-928` | ✓ CORRECT |
-| Post-attack → optimumPosition | `objAiCPUSpellCaster.txt:54-55` | `control.ts:699-704` | ✓ CORRECT |
-| Charge max=15 (mana-scaled) | `modAttack.txt:83-118` | `charge.ts` via `chargeMaxOf` | ✓ CORRECT |
-| Effective cooldown ≈33 frames | `act_darkBlast.txt:19` + `act_darkMage.txt:9` | `archetypes.ts:194-202` | ✓ CORRECT |
-| Spell spawns + flies + explodes | `objSpell.txt` lifecycle | `systems/spells.ts` + `spellActor.ts` | ✓ CORRECT |
+| Identity / team / energy / walk | `act_darkMage.txt:3–19` | `archetypes.ts:303–363` | ✓ CORRECT |
+| Weapon → darkBlast magic | `act_darkMage.txt:20` | `archetypes.ts:169–175` | ✓ CORRECT |
+| Magic attack classification (ranged AI) | `act_darkBlast.txt:9` | `archetypes.ts:183–184` | ✓ CORRECT |
+| Spellcaster AI (dodgesBullets, runReload) | `objAiCPUSpellCaster.txt:20–36` | `archetypes.ts:237–240` | ✓ CORRECT |
+| Bullet-tangent dodge (updateMoveToOptimumPosition) | `objAiCPUSpellCaster.txt:275–297` | `control.ts` optimumPosition | ✓ CORRECT |
+| Post-attack → optimumPosition | `objAiCPUSpellCaster.txt:54–55` | `control.ts:699–704` | ✓ CORRECT |
+| Charge max=15 (mana-scaled) | `modAttack.txt:83–118` + `act_darkBlast.txt:14–16` | `charge.ts` via `chargeMaxOf` | ✓ CORRECT |
+| Effective cooldown ≈33 frames | `act_darkBlast.txt:19` + `act_darkMage.txt:9` | `archetypes.ts:194–207` | ✓ CORRECT |
+| Spell spawns + flies + explodes | `casts/script_objects/objSpell.txt` lifecycle | `systems/spells.ts` + `spellActor.ts` | ✓ CORRECT |
+| Spell kills player (radial damage) | `objSpell.txt:145–161` impactAttack | `spellActor.ts:117–147` resolveSplash | ✓ CORRECT (player died frame 28) |
+| Cast strip = "release" (not fallback "stand") | `objAiAttack.txt:127` ensureMode(#release) | `control.ts:544–549` | ✓ CORRECT |
 | Death → grave | `modGrave.txt` | `components/grave.ts` | ✓ CORRECT |
-| **Multi-frame charge phase** | `objAiAttack.txt:126-142` | `control.ts:807-818` | **DIV-1: MISSING** |
-| **`darkMage_charge` anim on CPU** | `objAiAttack.txt:127` ensureMode(#charge) | `control.ts:541-551` (magic→"release" only) | **DIV-1: MISSING** |
+| **Multi-frame charge phase + `darkMage_charge` anim** | `objAiAttack.txt:126–142` | `control.ts:807–818` (instant) | **DIV-1: MISSING** |
+| **Charge orb grows over head (per-frame setCharge)** | `objAiAttack.txt:127` ensureMode(#charge) | never entered by CpuAI | **DIV-1: MISSING** |
 
 ---
 
 `darkMage | DIVERGENCES=1`
 
-DIV-1: CPU magic caster skips multi-frame charge ramp (no `darkMage_charge` anim, instant-release); the `darkMage_charge` strip ships in assets but is never played by `CpuAI`. Fix: implement per-frame charge accumulation in `CpuAI.attack` mode (ensureSpell + chargeSpell ramp → release on `chargeMax`), matching `objAiAttack.chargeMagic/chargeSpell/releaseMagic`.
+DIV-1: CPU magic caster skips multi-frame charge ramp — `darkMage_charge` strip never plays, spell instant-releases in one frame. Fix: two-phase attack in `CpuAI` (charge-ramp returning `animAction="charge"`, then release returning `"release"`), matching `objAiAttack.chargeMagic/chargeSpell/#spellCharged/releaseMagic`.

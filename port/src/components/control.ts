@@ -542,11 +542,12 @@ export class CpuAI extends Component {
     const at = this.entity.get(WeaponManager).getCurrentAttack();
     let act = typeof at?.animType === "string" ? at.animType.replace(/^#/, "") : "";
     if (act === "magic" || act === "weaponMagic" || act === "magicMelee") {
-      // a caster's cast strip varies: most use `release`, but some (necromancer) only ship a `charge` strip.
-      // Pick the one this char actually has so the cast ANIMATES instead of falling back to stand.
+      // objAiAttack.chargeMagic: a caster spends the attack window in #charge (the wind-up — orb growing over
+      // its head) before the brief #release. So PREFER the `charge` strip (the visible bulk); fall back to
+      // `release` for casters that ship no charge strip. Either way it ANIMATES instead of standing still.
       const char = this.entity.tryGet(Anim)?.char ?? "";
-      act = game.assets.index.anims[`${char}_release`] ? "release"
-        : game.assets.index.anims[`${char}_charge`] ? "charge" : "release";
+      act = game.assets.index.anims[`${char}_charge`] ? "charge"
+        : game.assets.index.anims[`${char}_release`] ? "release" : "release";
     }
     return act;
   }
