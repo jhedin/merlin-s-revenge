@@ -38,6 +38,12 @@ export class Movement extends Component {
   ghost = false;
   facingLeft = false;
   hitX = false; hitY = false;  // wall contact this tick (projectiles read these)
+  // objCPUCharacter.collisionWall/collisionVertical: a CPU unit knocked into a wall/ceiling takes
+  // (impact − damageSpeed) bonus damage. damageSpeed is the per-actor threshold (modEnergy #damageSpeed=5);
+  // knockDmgX/Y are the pending wall-slam damage armed by the hit that knocked the unit (its axis-aligned
+  // collision magnitude), consumed on a wall slam while the knockback is still active.
+  damageSpeed = 5;
+  private knockDmgX = 0; private knockDmgY = 0; private knockAttacker = -1;
   // objBullet.checkCollisions: bullets do NOT collide with terrain (gBulletsCollideWithBackground is never
   // set, so the ancestor collision check never runs) — they fly THROUGH walls and die only by stalling /
   // hitting a target / expiring. passThrough integrates position with no moveBox so a bullet isn't stopped
@@ -56,6 +62,8 @@ export class Movement extends Component {
     this.walkSpeedIncLevel = typeof cfg["walkSpeedIncLevel"] === "number" ? cfg["walkSpeedIncLevel"] : 0;
     this.constrainToArea = cfg["constrainToArea"] === true;
     this.ghost = cfg["ghost"] === true;
+    this.damageSpeed = typeof cfg["damageSpeed"] === "number" ? cfg["damageSpeed"] : 5;
+    this.knockDmgX = this.knockDmgY = 0; this.knockAttacker = -1;
   }
 
   // modMoveToLoc.internalEvent #levelUp -> incWalkSpeedLevel: bump the walk-speed cap by the per-level
@@ -88,6 +96,12 @@ export class Movement extends Component {
     const km = Math.hypot(kx, ky);
     if (km > KNOCK_MAX) { kx = (kx / km) * KNOCK_MAX; ky = (ky / km) * KNOCK_MAX; }
     this.kvx += kx; this.kvy += ky;
+    // arm the wall-slam damage (objCPUCharacter only — the player has no collisionWall handler). If this
+    // knockback carries the CPU unit into a wall before it decays, it takes (|dv| − damageSpeed) bonus on
+    // that axis. Tracks X/Y separately to match collisionWall (vectX) vs collisionVertical (vectY).
+    if (this.entity.type !== "player") {
+      this.knockDmgX = Math.abs(dvx); this.knockDmgY = Math.abs(dvy); this.knockAttacker = attackerId;
+    }
     return next(dvx, dvy, attackerId, mult);          // damped vector -> Energy/Freeze/Heal (the coupling)
   }
 
@@ -143,10 +157,29 @@ export class Movement extends Component {
     // integrate walk velocity (capped, above) + knockback impulse (uncapped) together, then decay knockback
     const b = this.box;
     const oldTop = this.y - b / 2;
+    const knx = this.kvx, kny = this.kvy; // knockback velocity this tick (before it's zeroed by a wall)
+    // was the box validly INSIDE the play area before this move? (A spawn placed half-out-of-bounds gets
+    // CLAMPED inward and moveBox reports a wall event for that — not a real slam. Only an in-bounds box
+    // being DRIVEN into a wall counts.)
+    const gw = game.grid.cols * game.grid.tilePx, gh = game.grid.rows * game.grid.tilePx;
+    const inBounds = this.x - b / 2 >= 0 && this.y - b / 2 >= 0 && this.x + b / 2 <= gw && this.y + b / 2 <= gh;
     const r = game.grid.moveBox(this.x - b / 2, this.y - b / 2, b, b, this.vx + this.kvx, this.vy + this.kvy, oldTop);
     this.hitX = r.hitX; this.hitY = r.hitY;
+    // objCPUCharacter.collisionWall/collisionVertical: a unit DRIVEN into a wall/ceiling by its knockback
+    // (knockDmg armed by the hit, still active) takes (impact − damageSpeed) bonus damage on that axis. Gate
+    // on the DIRECTIONAL collision event matching the knockback sign — so a unit merely clamped at the play-
+    // area boundary while knocked AWAY isn't hit. loseEnergy is damage-only (no further knockback); the
+    // combat tick + reincarnate.ts handle a resulting death off isDead, just like a takeHit kill.
+    if (inBounds && this.knockDmgX > this.damageSpeed && ((r.events.wallRight && knx > 0) || (r.events.wallLeft && knx < 0))) {
+      this.entity.send("loseEnergy", this.knockDmgX - this.damageSpeed, this.knockAttacker); this.knockDmgX = 0;
+    }
+    if (inBounds && this.knockDmgY > this.damageSpeed && r.events.ceiling && kny < 0) {
+      this.entity.send("loseEnergy", this.knockDmgY - this.damageSpeed, this.knockAttacker); this.knockDmgY = 0;
+    }
     if (r.hitX) { this.vx = 0; this.kvx = 0; }
     if (r.hitY) { this.vy = 0; this.kvy = 0; }
+    // disarm the wall-slam once the knockback impulse has decayed (so a later WALK into a wall deals nothing).
+    if ((this.knockDmgX || this.knockDmgY) && Math.abs(this.kvx) + Math.abs(this.kvy) < 0.1) { this.knockDmgX = this.knockDmgY = 0; }
     this.x = r.x + b / 2; this.y = r.y + b / 2;
     // directional collision events (checkCollisions 266-295): dispatch as chain messages so gameplay
     // components (reelFly-landing, AI scenic repathing) can react. Solid grids only ever fire wall*/

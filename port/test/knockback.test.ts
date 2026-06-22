@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { game } from "@/game/context";
 import { CollisionGrid } from "@/world/collision";
-import { spawnEnemy } from "@/entities/archetypes";
+import { spawnEnemy, spawnPlayer } from "@/entities/archetypes";
 import { Energy } from "@/components/combat";
 import { Movement } from "@/components/movement";
 import { aimedVect } from "@/engine/math";
@@ -76,6 +76,55 @@ describe("damage == knockback (collision vector)", () => {
     expect(Math.abs(v.x) + Math.abs(v.y)).toBeCloseTo(30, 6);
     const h = aimedVect(0, 0, 12);            // degenerate -> horizontal
     expect(h).toEqual({ x: 12, y: 0 });
+  });
+});
+
+// objCPUCharacter.collisionWall/collisionVertical: a CPU unit knocked INTO a wall takes (impact -
+// damageSpeed) bonus damage on top of the hit. A unit that merely WALKS into a wall takes nothing, and the
+// player (objPlayerMerlinCharacter, no collisionWall handler) is exempt.
+describe("wall-slam damage (objCPUCharacter.collisionWall)", () => {
+  beforeEach(() => {
+    game.grid = new CollisionGrid(40, 40, 32);
+    game.entities = [];
+    game.assets = { index: { anims: {} }, img: () => null } as any;
+  });
+
+  it("an enemy knocked into a wall takes (impact - damageSpeed) BONUS damage on top of the hit", () => {
+    for (let ty = 0; ty < 40; ty++) game.grid.set(7, ty, true); // wall column at tile 7 (x>=224)
+    const e = spawnEnemy("swordOrc", 7 * 32 - 10, 100, { animChar: "swordOrc" }); // just left of the wall
+    e.get(Movement).inertia = 0; e.get(Movement).damageSpeed = 5;
+    game.entities = [e];
+    const hp0 = e.get(Energy).energy;
+    e.send("takeHit", 60, 0, 999, 1);                  // 60 dmg + a hard shove toward the wall (no attacker entity)
+    expect(hp0 - e.get(Energy).energy).toBe(60);        // just the hit so far
+    let everHit = false;
+    for (let i = 0; i < 10; i++) { e.send("update"); everHit ||= e.get(Movement).hitX; } // knockback into the wall
+    expect(everHit).toBe(true);                         // it slammed the wall
+    expect(hp0 - e.get(Energy).energy).toBe(60 + 55);   // + (60 - damageSpeed 5) wall bonus
+  });
+
+  it("a unit that WALKS into a wall (no knockback) takes no wall damage", () => {
+    for (let ty = 0; ty < 40; ty++) game.grid.set(7, ty, true);
+    const e = spawnEnemy("swordOrc", 6 * 32 + 8, 100, { animChar: "swordOrc" });
+    const m = e.get(Movement); m.maxSpeed = 6;
+    game.entities = [e];
+    const hp0 = e.get(Energy).energy;
+    for (let i = 0; i < 20; i++) { m.intentX = 1; (m as any).update(() => {}); } // walk right into the wall
+    expect(m.hitX).toBe(true);
+    expect(e.get(Energy).energy).toBe(hp0);             // walking into a wall is harmless
+  });
+
+  it("the player takes NO wall-slam damage (objPlayerMerlinCharacter has no collisionWall)", () => {
+    for (let ty = 0; ty < 40; ty++) game.grid.set(7, ty, true);
+    const p = spawnPlayer(7 * 32 - 10, 100); game.player = p; // just left of the wall
+    p.get(Movement).inertia = 0;
+    game.entities = [p];
+    p.send("takeHit", 60, 0, 999, 1);                  // hit + knockback toward the wall
+    const afterHit = p.get(Energy).energy;
+    let everHit = false;
+    for (let i = 0; i < 10; i++) { (p.get(Movement) as any).update(() => {}); everHit ||= p.get(Movement).hitX; }
+    expect(everHit).toBe(true);                         // the player DID reach the wall
+    expect(p.get(Energy).energy).toBe(afterHit);        // but takes NO extra wall damage
   });
 });
 

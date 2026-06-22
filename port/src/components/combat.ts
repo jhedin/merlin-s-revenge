@@ -7,7 +7,7 @@ import { game } from "../game/context";
 import { ColourTransform } from "./colourTransform";
 
 export class Energy extends Component {
-  static handles = ["takeHit", "takeHeal", "increaseEnergy", "update", "levelUp", "isDead", "getKilledInAction", "energyFrac", "glowGold", "restoreEnergy", "reviveFull", "colourTransformFin", "addSaveData", "restoreFromSave"];
+  static handles = ["takeHit", "takeHeal", "increaseEnergy", "loseEnergy", "update", "levelUp", "isDead", "getKilledInAction", "energyFrac", "glowGold", "restoreEnergy", "reviveFull", "colourTransformFin", "addSaveData", "restoreFromSave"];
   private ct(): ColourTransform | undefined { return this.entity.tryGet(ColourTransform); }
   energy = 100; max = 100; dead = false; dieSound = "";
   goldGlow = 0;               // glowGold() frames (cosmetic, rendered as a gold tint)
@@ -78,6 +78,26 @@ export class Energy extends Component {
   // glowGold (modEnergy.glowGold): plays the gold->fadeGoldBlack heal tint via ColourTransform.
   glowGold(next: NextFn): void { this.goldGlow = 12; this.ct()?.glowGold(); return next(); }
 
+  // modEnergy.loseEnergy (200-220): subtract `amount` and run the SAME death block as takeHit (dead +
+  // killedInAction + dieSound + XP to the attacker; the combat tick then fires #leaveGame and reincarnate.ts
+  // spawns children — all driven off isDead). Unlike takeHit this carries NO collision vector: no knockback,
+  // no reel. Used for ENVIRONMENTAL damage (a reeling unit slammed into a wall — objCPUCharacter.collisionWall).
+  loseEnergy(next: NextFn, amount = 0, attackerId = -1): any {
+    if (this.dead || amount <= 0) return next(amount);
+    this.energy -= amount;
+    if (this.energy <= this.minEnergy) {
+      this.energy = this.minEnergy; this.dead = true; this.killedInAction = true;
+      if (this.dieSound) game.audio?.play(this.dieSound, 0.6);
+      if (attackerId >= 0) {
+        const killer = game.entities.find((e) => e.id === attackerId && !e.send("isDead"));
+        killer?.send("gainXp", this.entity.send("getReward") ?? this.imWorthFallback());
+      }
+    } else {
+      this.ct()?.flickWhite();      // modEnergy.loseEnergy 203: a non-lethal hit flicks white
+      this.glowRedOnLowHealth();
+    }
+    return next(amount);
+  }
   // modEnergy.increaseEnergy (133-147): add `amount` to energy (capped at max), and stop the low-health red
   // glow once back above the threshold. Crucially NO gold glow — that belongs to takeHeal (heal-SPELL
   // impacts) only. The pickup +25 bonus and the maxikit full-heal go through HERE, not takeHeal.
