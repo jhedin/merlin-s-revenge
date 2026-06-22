@@ -1,5 +1,22 @@
 # Rendering Fidelity Audit
 
+> **RESOLUTION (post-audit):** 10 of 11 gaps fixed. A `members` section was added to the asset
+> bundle (`build_assets.ts`) for the static gfx members the renderer composites directly, and
+> `Assets.member()` exposes them.
+> - GAP 1 (pickups) — real `*_potion`/`*_scroll` member sprites, z-sorted with actors ✓
+> - GAP 2 (freeze rect) — removed; the teal sprite tint carries it ✓
+> - GAP 3 (health_bar_surround) — real frame composited over the energy fill ✓
+> - GAP 4 (medikit/extra-lives) — medikit_on/off row + lives counter added ✓
+> - GAP 5 (minimap) — real 4×4 status tiles ✓
+> - GAP 6 (rollover stars) — real large/medium/tiny star row ✓
+> - GAP 7 (dwarfAxe) & GAP 11 (goblinArrow) — bullet char now keyed off the actor `#name`
+>   (`axe_fly`/`gobarrow_fly`); both ARE bundled, so neither was a dot ✓
+> - GAP 8 (pickup draw order) — resolved by GAP 1 (pickups now in the z-sorted band) ✓
+> - GAP 10 (charge ring) — removed; the head charge orb is the real feedback ✓
+> - **GAP 9 (title background) — DEFERRED:** the bundled `background` member is 64×10 (a bar
+>   background, not a title screen); no large title-screen bitmap is reliably identifiable in
+>   `extracted/` (only a mangled `0N_A` 576×288 candidate). Left procedural until the art is confirmed.
+
 **Scope:** Every draw call in `port/src/main.ts` and `port/src/render/*.ts` compared to the
 original Shockwave/Lingo game in `casts/` and `extracted/engine/scripts/`.
 
