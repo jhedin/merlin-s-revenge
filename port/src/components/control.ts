@@ -323,11 +323,11 @@ export class PlayerControl extends Component {
 
   private tryMelee(attack: AttackData, m: Movement, wm: WeaponManager): void {
     if (!wm.cooldownFinFor(attack.name)) return;                 // per-weapon cooldown counter gate
-    const target = game.teamMaster.findTarget(this.entity).obj;
-    if (!target) return;
-    const p = target.send("getPos") as { x: number; y: number };
-    if (Math.hypot(p.x - m.x, p.y - m.y) > attack.reach) return; // swing only when something's in reach
-    m.facingLeft = p.x < m.x;
+    // objAiPlayer: "#melee and #ranged will autofire" — the player swings on cooldown UNCONDITIONALLY
+    // (objAiAttack.attack/attackMelee gate only on getCooldownFin, never on a target/reach). The swing
+    // animates + sounds into empty air; `reach` is only the damage AREA, so impactMeleeAttack just whiffs
+    // when nothing's there. (Was wrongly target+reach-gated, so Merlin wouldn't punch unless next to a foe.)
+    m.facingLeft = this.aimLeft;                                 // swing toward the aim
     // performMeleeAttack -> teamMaster.impactMeleeAttack: area resolution. A swing knocks back EVERY
     // hostile (role #hits) within reach, each via A1's aimed-vector takeHit. Damage = power·strength·SCALE
     // carried as the vector L1, times damageMultiplier as `mult` (now data-driven from the weapon).
