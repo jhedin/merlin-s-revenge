@@ -290,8 +290,12 @@ for (const b of bitmaps) {
 interface Member { file: string; w: number; h: number; reg: [number, number]; }
 const members: Record<string, Member> = {};
 const MEMBER_NAMES = [
-  // pickup potions (objPotion / modMedikit #member: member("<x>_potion","gfx"))
-  "medikit_potion", "walkSpeed_potion", "manaBurst_potion", "manaCapacity_potion", "manaFlow_potion",
+  // pickup potions (objPotion / objMedikit #member: member("<x>_potion","gfx"))
+  "medikit_potion", "maxikit_potion", "walkSpeed_potion", "manaBurst_potion", "manaCapacity_potion", "manaFlow_potion",
+  // pickup scrolls (objScroll #member: member("<x>_scroll","gfx"))
+  "merlinSword_scroll", "energyBlast_scroll", "cBlast_scroll", "arcticBlast_scroll", "healBlast_scroll",
+  "armySummon_scroll", "monsterSummon_scroll", "energyMines_scroll", "energyPunch_scroll", "gmg_scroll",
+  "energyBeamSpell_scroll", "energyPulseSpell_scroll",
   // minimap status tiles (modMiniMap 4×4)
   "miniInfested", "miniCurrent", "miniClear", "miniSpecial", "miniFriendly",
   // rollover level stars (objMoveableLevelBar)

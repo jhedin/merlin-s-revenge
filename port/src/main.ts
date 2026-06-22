@@ -383,10 +383,18 @@ async function main() {
       const sprites = game.entities
         .filter((e) => e.type !== "bullet" && e.type !== "pickup" && e.type !== "marker" && e.type !== "spell")
         .map((e) => e.get(Anim).sprite()).filter((sp): sp is Sprite => sp !== null);
+      // pickups (objPotion/objScroll) sit at gGameObjectLayer=50 — z-sorted WITH the actors (a unit standing
+      // in front occludes a ground pickup), NOT a flat overlay on top. Member-less pickups fall back to a diamond.
+      const pickupFallback: import("./engine/dispatch").Entity[] = [];
+      for (const e of game.entities) {
+        if (e.type !== "pickup") continue;
+        const sp = pickupSprite(e, assets);
+        if (sp) sprites.push(sp); else pickupFallback.push(e);
+      }
       renderer.drawSprites(sprites);
+      if (pickupFallback.length) drawPickupFallback(renderer, pickupFallback);
       drawBullets(renderer);
       drawSpells(renderer); // K2: the growing/flying charge orbs (objSpell), over the actors
-      drawPickups(renderer);
       // #foregroundPassive (objRoom layer, gMapLayer over the actor band): F1 preserved the data; this
       // draws it OVER the actors (after drawSprites). pFrontLayerBlendLevel=128 -> globalAlpha 0.5 default.
       const fg = rooms.room.layer("#foregroundPassive");
@@ -466,23 +474,39 @@ function drawHud(renderer: Renderer, player: import("./engine/dispatch").Entity)
   if (Date.now() < flashUntil) { ctx.fillStyle = "#ff4"; ctx.fillText(flashMsg, 8, 44); }
 }
 
-// the charge meter follows the cursor while a spell is being held (gmgChargeLoc feedback)
+// pickup effect -> its static gfx member (objPotion/objMedikit #member: "<x>_potion"; objScroll #member:
+// "<x>_scroll"). The scroll names key off the granted actor (SCROLL_ACTOR): spell->energyBlast, sword->
+// merlinSword. darkBlast shares energyBlast's scroll art (act_darkBlast #member). These render as real
+// bitmaps z-sorted with the actors (gGameObjectLayer), replacing the old procedural diamond.
+const PICKUP_MEMBER: Record<string, string> = {
+  heal: "medikit_potion", maxikit: "maxikit_potion", speed: "walkSpeed_potion",
+  manaCapacity: "manaCapacity_potion", manaFlow: "manaFlow_potion", manaBurst: "manaBurst_potion",
+  sword: "merlinSword_scroll", spell: "energyBlast_scroll", cBlast: "cBlast_scroll",
+  darkBlast: "energyBlast_scroll", arcticBlast: "arcticBlast_scroll", healBlast: "healBlast_scroll",
+  armySummon: "armySummon_scroll", monsterSummon: "monsterSummon_scroll", energyMines: "energyMines_scroll",
+  energyPunch: "energyPunch_scroll", gmg: "gmg_scroll", energyBeam: "energyBeamSpell_scroll",
+  energyPulse: "energyPulseSpell_scroll",
+};
 const PICKUP_COLOR: Record<string, string> = {
   heal: "#3d6", speed: "#4cf", power: "#c5f", sword: "#fe8", spell: "#fc8",
   manaCapacity: "#48f", manaFlow: "#4cf", manaBurst: "#88f",
 };
-function drawPickups(renderer: Renderer) {
+// a pickup's display sprite (its #member bitmap at the pickup loc), or null when the art isn't bundled.
+function pickupSprite(e: import("./engine/dispatch").Entity, assets: Assets): Sprite | null {
+  const mem = assets.member(PICKUP_MEMBER[e.send("getEffect") as string] ?? "");
+  if (!mem) return null;
+  const m = e.get(Movement);
+  return { img: mem.img, x: m.x, y: m.y, regX: mem.reg[0], regY: mem.reg[1], z: m.y };
+}
+// fallback for any pickup whose art wasn't bundled: the old coloured diamond.
+function drawPickupFallback(renderer: Renderer, pickups: import("./engine/dispatch").Entity[]) {
   const ctx = renderer.ctx;
-  for (const e of game.entities) {
-    if (e.type !== "pickup") continue;
+  for (const e of pickups) {
     const m = e.get(Movement);
-    const blink = (Math.floor(Date.now() / 250) % 2) ? 1 : 0.6;
-    ctx.globalAlpha = blink;
     ctx.fillStyle = PICKUP_COLOR[e.send("getEffect") as string] ?? "#fff";
     ctx.beginPath(); // diamond
     ctx.moveTo(m.x, m.y - 5); ctx.lineTo(m.x + 5, m.y); ctx.lineTo(m.x, m.y + 5); ctx.lineTo(m.x - 5, m.y);
     ctx.closePath(); ctx.fill();
-    ctx.globalAlpha = 1;
   }
 }
 
