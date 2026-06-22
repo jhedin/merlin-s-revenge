@@ -123,7 +123,11 @@ No `skeletonGiant_naturalMelee` strip — attack animType is `#weaponMelee`, not
 
 ## 4. Divergences
 
-### DIV-1 — `dammageMultiplier` typo: damage multiplier reads as 1 instead of 8
+### DIV-1 — `dammageMultiplier` typo → reads 1 — **NOT A DIVERGENCE (WONTFIX, faithful)**
+
+**VERDICT (post-review): this is faithful — do NOT "fix" it.** The original engine reads `getAttack().damageMultiplier` (correctly spelled, `modEnergy.txt:276`); NO original script reads the typo'd `#dammageMultiplier`. So in the ORIGINAL too the typo'd key was dead and the multiplier fell back to the `structMaster` default `1` (`structMaster.txt:171`). The port reads the same correctly-spelled key and falls back to the same default `1` (`registry.ts:26`) — it reproduces the original's shipped behavior EXACTLY. Reading the typo'd key (the "fix" below) would make skeletonGiant/skeletonComando deal 8×/14× — STRONGER than the real game. The "intended 8" never happened in the shipped game. The original analysis below is retained for context only.
+
+
 
 **Cast file**: `act_skeletonGiantSword.txt:14` — `#dammageMultiplier: 8` (double-m typo).  
 **Port resolves**: `damageMultiplier = 1` (the `STRUCT_ATTACK` default).
