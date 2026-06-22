@@ -94,7 +94,11 @@ const isLoopAction = (action: string): boolean => !ONE_SHOT_ACTIONS.has(action);
 
 for (const b of bitmaps) {
   // a single bitmap may carry several logical anm_ names (seperateMembers) — space-split first.
-  for (const name of b.name.split(/\s+/)) {
+  for (const raw of b.name.split(/\s+/)) {
+    // strip a leading cast-library prefix (e.g. "3_anm_spellIcons_monsterSummon_..." -> "anm_..."); without
+    // this, every numeric-prefixed bitmap (monsterSummon/undeadSummon/goblinSummon/skelitonSummon icons and
+    // more) was silently dropped, so those spells/actors fell back to the wrong/missing sprite.
+    const name = raw.replace(/^\d+_/, "");
     if (!name.startsWith("anm_")) continue;
     const t = name.split("_");
     const char = t[1] ?? "?";

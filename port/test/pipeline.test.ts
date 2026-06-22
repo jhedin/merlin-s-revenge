@@ -1,5 +1,5 @@
 // F1 asset-pipeline completeness gate. Asserts the generated bundle ships EVERYTHING the engine can
-// drive (all 10 tilesets / 171 chars / 47 maps / 29 SFX / 8 music), cross-checked against a fresh
+// drive (all 10 tilesets / 177 chars / 47 maps / 29 SFX / 8 music), cross-checked against a fresh
 // scan of the source (extracted/manifest.json + maps/ + casts/data) so the numbers track source, not
 // a stale constant. Plus audio-vocabulary coverage and a multi-map structural load smoke (no throw).
 import { describe, it, expect } from "vitest";
@@ -18,8 +18,10 @@ const read = (p: string) => readFileSync(join(root, p), "utf8");
 const manifest = JSON.parse(read("extracted/manifest.json"));
 const bitmaps: { name: string }[] = manifest.engine.bitmaps;
 const srcTilesets = bitmaps.filter((b) => b.name.startsWith("tlk_"));
-const srcAnm = bitmaps.filter((b) => b.name.startsWith("anm_"));
-const srcChars = new Set(srcAnm.map((b) => b.name.split("_")[1]));
+// mirror the bundler: a cast-library prefix ("3_anm_...") is stripped before the anm_ check.
+const srcAnm = bitmaps.filter((b) => /(^|\s)(\d+_)?anm_/.test(b.name));
+const srcChars = new Set(srcAnm.flatMap((b) => b.name.split(/\s+/)
+  .map((n) => n.replace(/^\d+_/, "")).filter((n) => n.startsWith("anm_")).map((n) => n.split("_")[1])));
 
 const walkMaps = (dir: string): string[] => {
   const out: string[] = [];
@@ -38,9 +40,9 @@ describe("F1 pipeline: completeness counts (cross-checked vs source)", () => {
     expect(srcTilesets.length).toBe(10);
     expect(Object.keys(assets.tilesets).length).toBe(10);
   });
-  it("bundles all 171 animation chars", () => {
-    expect(srcChars.size).toBe(171);
-    expect(Object.keys(assets.chars).length).toBe(171);
+  it("bundles all 177 animation chars", () => {
+    expect(srcChars.size).toBe(177);
+    expect(Object.keys(assets.chars).length).toBe(177);
     // every source char appears in the bundle
     for (const c of srcChars) expect(assets.chars).toHaveProperty(c as string);
   });
