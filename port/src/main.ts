@@ -582,6 +582,21 @@ function drawSpells(renderer: Renderer) {
         scaleX: size / Math.max(1, f!.w), scaleY: size / Math.max(1, f!.h),
         tint: { rgb: [cr, cg, cb], strength: 1, additive: false }, // setSpriteColour: tint the white orb
       });
+      // objSpellIcons.displayIconNumber: a SUMMON spell overlays the current tier's unit FACE on the orb
+      // (spellIcons_<spellName>, frame = the tier number). It appears once the charge reaches the first
+      // summon tier and changes as the charge crosses higher tiers (armySummon: warrior->archer->...->king).
+      const ms = sa.attack.multistage;
+      if (ms.length && sa.attack.explodeFunction.includes("summonUnit")) {
+        let tier = 0;
+        for (const t of ms) { if (t.chargeRequired <= sa.charge) tier++; else break; }
+        if (tier > 0) {
+          const ia = game.assets.index.anims[`spellIcons_${sa.attack.name.replace(/^#/, "")}`];
+          const ifr = ia?.frames[Math.min(tier - 1, ia.frames.length - 1)];
+          if (ifr && game.assets.images.has(ifr.file)) {
+            spellSprites.push({ img: game.assets.img(ifr.file)!, x: m.x, y: m.y, regX: ifr.reg[0], regY: ifr.reg[1], z: m.y + 1 });
+          } else if (ia) void game.assets.ensureChar("spellIcons");
+        }
+      }
       continue;
     }
     // fallback (art not yet loaded): the soft gradient orb, radius size/2.
