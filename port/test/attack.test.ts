@@ -157,9 +157,11 @@ describe("burst fire: one shot per #animframe crossing (animation-driven attack)
     game.teamMaster.reset(); game.armyMaster.reset(); game.teamMaster.unitMap.configure(32, 0, 0);
     const player = spawnPlayer(300, 200); game.player = player; game.entities.push(player);
     const orc = spawnEnemy("bowOrc", 360, 200); game.entities.push(orc); // 60px < crossBow reach 100
-    // run one full attack loop (6-frame strip @ dela 1 + the 1-tick CpuAI/Anim ordering lag), counting shots.
+    // run ONE full attack loop (6-frame strip @ dela 1 + the 1-tick CpuAI/Anim ordering lag), counting shots.
+    // Window is one strip length: crossBow's faithful cooldown (cd 8) re-fires quickly, so a longer window
+    // would spill into the next loop. The burst-count (3 shots/loop) is what this asserts, not the cadence.
     let shots = 0;
-    for (let t = 0; t < 12; t++) {
+    for (let t = 0; t < 8; t++) {
       rebuildCombatSubstrate();
       const before = game.entities.filter((e) => e.type === "bullet").length;
       orc.send("update");
