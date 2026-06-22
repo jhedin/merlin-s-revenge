@@ -863,7 +863,7 @@ export class CpuAI extends Component {
             const hits = ba.hits.length ? ba.hits : ["#teamMembers", "#teamBuildings"];
             pb = fireBulletPayload(this.entity.id, mz.x, mz.y, dx, dy, speed, l1, team, ba, hits, alleg, 100);
           } else {
-            pb = fireBullet(this.entity.id, mz.x, mz.y, dx, dy, speed, l1, team, 100, 0, bmult, this.bulletChar);
+            pb = fireBullet(this.entity.id, mz.x, mz.y, dx, dy, speed, l1, team, 100, 0, bmult, this.bulletChar, this.bulletAttack?.friction ?? 0);
           }
           if (this.bulletReincarnate.length) pb.get(Projectile).reincarnateAs = this.bulletReincarnate; // lizardEgg->#bug, ostrichEgg->#babyOstrich
         }

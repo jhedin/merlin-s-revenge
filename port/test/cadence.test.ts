@@ -30,7 +30,7 @@ function modeGap(actor: string): number {
     for (const en of game.entities) { const p = en.tryGet(Projectile); if (p && (p as any).ownerId === e.id && !seen.has(en.id)) { seen.add(en.id); ticks.push(t); } }
   }
   const gaps: Record<number, number> = {}; let best = 0, bv = -1;
-  for (let i = 1; i < ticks.length; i++) { const g = ticks[i] - ticks[i - 1]; gaps[g] = (gaps[g] ?? 0) + 1; if (gaps[g] > bv) { bv = gaps[g]; best = g; } }
+  for (let i = 1; i < ticks.length; i++) { const g = ticks[i]! - ticks[i - 1]!; gaps[g] = (gaps[g] ?? 0) + 1; if (gaps[g]! > bv) { bv = gaps[g]!; best = g; } }
   return best;
 }
 

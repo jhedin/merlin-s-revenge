@@ -44,6 +44,12 @@ export interface AttackData {
   // performRangedAttack). #proportional → throwVect = distToTarget/10 (always arrives in ~10 frames);
   // #fullstrength → speed = the attacker's strength (constant-speed projectile). Drives travel time.
   firingType: string;
+  // #friction (top-level on the BULLET actor, default 0 = no decay): the percent of speed the projectile
+  // loses each frame (objMoveXY: lostSpeed = VarValRange(friction,[0,speed]) = friction% of speed). The
+  // bullet decelerates exponentially and, below pStallSpeed (~0.2), STALLS — a splash bullet detonates
+  // where it landed, a plain bullet lands. bomb/darkRock/flamingRock (10%) are decelerating lobs; arrows
+  // (5%) coast far enough to reach a target. Only meaningful for a bullet's own attack record.
+  friction: number;
   spellSpeed: number;
   releaseSound: string;
   // #explodeSound (structMaster default #none): the sound a splash/explode resolution plays on detonation.
@@ -197,6 +203,8 @@ export function resolveAttack(raw: Record<string, any> | undefined, owner?: Reco
     sound: strOr(r["sound"], d["sound"] as string),
     bullet: strOr(r["bullet"], d["bullet"] as string),
     firingType: strOr(r["firingType"], strOr(d["firingType"] as string, "#proportional")),
+    // #friction lives top-level on the bullet actor (o); accept a point {x} or a scalar, default 0 (no decay).
+    friction: (() => { const f = o["friction"]; return f && typeof f === "object" && "x" in f ? Number((f as any).x) || 0 : typeof f === "number" ? f : 0; })(),
     spellSpeed: numOr(r["spellSpeed"], d["spellSpeed"] as number),
     releaseSound: strOr(r["releaseSound"], d["releaseSound"] as string),
     // #explodeSound lives top-level on the ACTOR (o); the merged #attack default is "#none". Pick the first
