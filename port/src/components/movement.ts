@@ -11,7 +11,9 @@ export interface Pos { x: number; y: number; }
 // At the original's engine scale knockback == the damage magnitude; at this slice's px scale that would
 // launch units across the room, so — like the port's px-tuned spell damage — knockback keeps the same
 // vector/direction/proportionality but is scaled down and clamped. Damage itself stays faithful (Energy).
-const KNOCK_SCALE = 0.06;   // px-scale factor on the (damped) collision vector
+const KNOCK_SCALE = 0.4;    // px-scale factor on the (damped) collision vector — a solid hit shoves ~5px
+                            // (clamped), decaying over several ticks (~20px total). Was 0.06 (~<1px = no felt
+                            // knockback). Big spells/heavy hits clamp at KNOCK_MAX so units aren't flung.
 const KNOCK_MAX = 5;        // clamp a single hit's shove so big spells don't fling units
 const KNOCK_FRICTION = 0.78; // per-tick decay of the knockback impulse
 // nav-mode speed multiplier: objRoom.goNavMode swaps the player's walkAcceleration 2->6 (pNavModeAcceleration)
