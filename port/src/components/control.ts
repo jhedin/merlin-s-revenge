@@ -14,6 +14,7 @@ import { fireBullet, fireSplashBullet, fireBulletPayload, performBeamAttack } fr
 import { Projectile } from "./projectile";
 import { registry } from "../game/data";
 import { meleeHitFn } from "../systems/teams";
+import { aimWithEyestrain } from "../engine/math";
 import { Targeting } from "./combat";
 import { WeaponManager, meleeBasePower, enemyMeleeBasePower, resolveAttack, BULLET_DAMAGE_SCALE, type AttackData } from "./weapon";
 import { summonUnit, depositMines } from "./summon";
@@ -398,6 +399,7 @@ export class CpuAI extends Component {
   buildRate = 100; buildOne = true; buildDie = false; leaveWhenFinished = false;
   private strength = 5;
   private strengthInc = 0.1; // modCharacterAttackProperties #strengthIncLevel: melee strength grows per level
+  private eyestrain = 0;     // modCharacterAttackProperties #eyestrain: ranged/magic aim scatter (px at max range)
 
   private mode: CpuMode = "findTarget";
   private target: Entity | null = null;
@@ -423,6 +425,7 @@ export class CpuAI extends Component {
   override init(cfg: Record<string, any>): void {
     this.strength = typeof cfg["strength"] === "number" ? cfg["strength"] : 5;
     this.strengthInc = typeof cfg["strengthIncLevel"] === "number" ? cfg["strengthIncLevel"] : 0.1;
+    this.eyestrain = typeof cfg["eyestrain"] === "number" ? cfg["eyestrain"] : 0;
     const strPow = this.strength / 3;
     const atkPow = typeof cfg["atkPower"] === "number" ? cfg["atkPower"] : 0;
     this.power = Math.max(4, Math.round(strPow + atkPow));
@@ -621,6 +624,9 @@ export class CpuAI extends Component {
       // K1 reference (the original couples damage to |getVect()|, but the port's tuned damage model is a
       // deliberate abstraction at a fixed reference speed — kept stable so balance/tests don't shift).
       const ftAttack = wm.getCurrentAttack();
+      // objAiAttack.modifyLocWithEyestrain: scatter the aim, scaled by dist/reach, so the player can DODGE
+      // ranged/magic CPU fire at distance (without it every shot lands dead-on). The player aims by cursor.
+      ({ dx, dy } = aimWithEyestrain(dx, dy, this.eyestrain, ftAttack?.reach ?? this.reachRanged, game.rng));
       const throwDist = Math.hypot(dx, dy) || 1;
       const isFullStrength = (ftAttack?.firingType ?? "#proportional").toLowerCase() === "#fullstrength";
       const throwSpeed = isFullStrength ? Math.max(1, this.strength) : Math.max(0.5, throwDist / 10);

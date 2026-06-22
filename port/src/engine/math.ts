@@ -91,3 +91,15 @@ export function aimedVect(dx: number, dy: number, dmg: number): { x: number; y: 
   const f = dmg / l1;
   return { x: dx * f, y: dy * f };
 }
+
+// objAiAttack.modifyLocWithEyestrain: a ranged/magic CPU shot is scattered by ±eyestrain px on each axis,
+// scaled by dist/reach — 0 at point-blank, full `eyestrain` at max range (VarValRange(percentOfRange,[0,E])).
+// VarRoughly(0, scaled) ≈ a symmetric integer jitter in [-scaled, scaled]. Returns the perturbed aim vector.
+export function aimWithEyestrain(dx: number, dy: number, eyestrain: number, reach: number,
+  rng: { range(lo: number, hi: number): number }): { dx: number; dy: number } {
+  if (eyestrain <= 0) return { dx, dy };
+  const dist = Math.hypot(dx, dy);
+  const scaled = Math.round(eyestrain * Math.min(1, dist / Math.max(1, reach)));
+  if (scaled <= 0) return { dx, dy };
+  return { dx: dx + rng.range(-scaled, scaled), dy: dy + rng.range(-scaled, scaled) };
+}
