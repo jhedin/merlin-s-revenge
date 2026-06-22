@@ -47,4 +47,20 @@ describe("collision golden scenarios", () => {
     expect(g.moveBox(64, 0, 16, 16, 20, 0).hitX).toBe(false); // exits right
     expect(g.moveBox(0, 0, 16, 16, -20, 0).hitX).toBe(true);  // left closed
   });
+
+  it("a bilateral exit mask confines crossing to the doorway gap (no walking off the open edge anywhere)", () => {
+    // an open-field room (no edge walls) whose LEFT neighbour only has a doorway at row 2: the mask carved by
+    // setExits is 1 only at row 2, so the player can leave west ONLY through row 2 — never embedding in the
+    // neighbour's wall at the other rows (the room-2 -> room-1 "odd spot" transition bug).
+    const g = grid(1, 4, []);          // 1 col × 4 rows, no solids -> edge column all passable
+    g.open.left = true;
+    g.exitMask.left = Uint8Array.from([0, 0, 1, 0]); // doorway only at row 2
+    // out-of-bounds solidity honours the mask
+    expect(g.solidCell(-1, 0)).toBe(true);   // wall row -> blocked
+    expect(g.solidCell(-1, 2)).toBe(false);  // doorway row -> open
+    expect(g.solidCell(-1, 3)).toBe(true);
+    // and moveBox crossing reflects it: row 0 is blocked, row 2 exits
+    expect(g.moveBox(0, 0, 16, 16, -20, 0).hitX).toBe(true);          // row 0 (px 0..15) -> wall
+    expect(g.moveBox(0, 2 * 32, 16, 16, -20, 0).hitX).toBe(false);    // row 2 (px 64..79) -> doorway
+  });
 });
