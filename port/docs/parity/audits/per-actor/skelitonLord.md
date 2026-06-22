@@ -1,130 +1,88 @@
-# Actor Parity Audit: skelitonLord
+# Per-Actor Parity Audit: `skelitonLord`
 
-**Date:** 2025-06-21  
-**Scope:** Behavioral parity between casts/data/act_skelitonLord.txt and port/src/generated/data.json + port/src/* components
+**Method:** REPRODUCED — derived correct behavior from `casts/data/act_skelitonLord.txt` +
+`act_skelitonLordSword.txt`, then ran the real port against the bundled `assets.json` via a throwaway
+harness (`tools/_audit_skelitonLord.ts`, since deleted). Spawned the lord with a live `#aldevar` target,
+ticked 250 frames, then killed it and ticked the death/reincarnation path.
 
-## Summary
+**Verdict:** **CLEAN — no port divergences.** All derived behaviors reproduce faithfully in the port.
 
-The skelitonLord actor exhibits **full behavioral parity**. All key properties are present and correctly mapped. The multi-entry reincarnation cascade (Lord → Upper → TorsoTank → Head) is faithfully implemented with proper #none handling, fan-out spawning, and depth budgeting.
+---
 
-## Detailed Analysis
+## SECTION 1 — Derived-correct behavior (from the ORIGINAL)
 
-| Property | Original | Port | Status | Notes |
-|----------|----------|------|--------|-------|
-| **objType** | #objCPUCharacter | #objCPUCharacter | ✓ | — |
-| **AiType** | #objAiCPU | #objAiCPU | ✓ | Melee enemy FSM; committed-target hunting |
-| **team** | #undead | #undead | ✓ | Allegiance routing via Targeting component |
-| **energy** | 750 | 750 | ✓ | — |
-| **strength** | 14 | 14 | ✓ | Melee damage source; uses enemyMeleeBasePower |
-| **dexterity** | 2 | 2 | ✓ | Cooldown counter inc for ranged (N/A for melee) |
-| **experienceImWorth** | 75 | 75 | ✓ | XP grant on death |
-| **walkSpeed** | 5 | 5 | 5 × 0.6 = 3.0 px/tick | ✓ | Faithful slice calibration (walk units → px) |
-| **inertia** | 75 | 75 | ✓ | Knockback damping (modGameObject) |
-| **stallSpeed** | 7 | 7 | ✓ | Pathfinding minimum velocity; non-blocking |
-| **weapon** | #skelitonLordSword | (resolved to attack data) | ✓ | Resolved via registry.resolveActor; attack carries animType #weaponMelee, power(3,0), mult 12 |
-| **reincarnateAs** | [#skelitonUpper, #skelitonLowerLeg, #skelitonSword] | [#skelitonUpper, #skelitonLowerLeg, #skelitonSword] | ✓ | **Multi-entry cascade verified** |
-| **reincarnateRadius** | 40 | 40 | ✓ | Fan-out radius for spawns j>1 |
-| **frictionReel** | point(30,30) | {x:30, y:30} | ✓ | Knockback friction (modGameObject damping) |
-| **graveOn** | false | false | ✓ | No persistent grave on death |
-| **eyestrain** | 30 | 30 | ✓ | Screen shake on hit (cosmetic, non-blocking) |
-| **damageSpeed** | 5 | 5 | ✓ | Damage recovery animation speed; non-blocking |
-| **#reincarnateRadius (skeletonSword)** | — | — | ✓ | skelitonSword carries no reincarnateAs; leaf node |
+| Property | Original (file:line) | Value |
+|---|---|---|
+| objType / AiType | act_skelitonLord.txt | `#objCPUCharacter` / `#objAiCPU` (melee CPU) |
+| team | act_skelitonLord.txt:`#team` | `#undead` (hates `#aldevar` et al.) |
+| energy | act_skelitonLord.txt | 750 |
+| strength / dexterity | act_skelitonLord.txt | 14 / 2 |
+| walkSpeed | act_skelitonLord.txt | 5 |
+| inertia / stallSpeed / frictionReel | act_skelitonLord.txt | 75 / 7 / point(30,30) |
+| experienceImWorth / eyestrain / damageSpeed | act_skelitonLord.txt | 75 / 30 / 5 |
+| **weapon** | act_skelitonLord.txt:`#weapon` | `#skelitonLordSword` (no own `#attack`, no `#character`) |
+| **graveOn** | act_skelitonLord.txt:14 | **false → vanishes on death, NO corpse/grave** |
+| **reincarnateAs** | act_skelitonLord.txt:11 | `[#skelitonUpper, #skelitonLowerLeg, #skelitonSword]` |
+| reincarnateRadius | act_skelitonLord.txt | 40 |
+| **sprite char (#name)** | act_skelitonLord.txt:`#name` | `"skelitonLord"` (no `#character` anywhere up the chain) |
 
-### Reincarnation Cascade Verification
+**Weapon `#skelitonLordSword`** (act_skelitonLordSword.txt):
+- `#animType: #weaponMelee`, `#animframe: 5` (line 7), `#cooldown: 0`
+- `#power: point(3, 0)`, `#damageMultiplier: 12` (line 13), `#collisionLoc: point(80,-15)` (line 9)
+- `#hits: [#teamMembers, #teamBuildings]`, `#sound: "skeleton_fire"`
 
-The skelitonLord splits into **three immediate children** on death (killed-in-action):
+**Derived expectations:**
+1. Sprite must resolve to the **`skelitonLord` family strip**, NOT the `blackOrc` stand-in (lord ships its
+   own `_stand/_walk/_reel/_weaponMelee` art).
+2. Melee CPU: approach target, swing `weaponMelee` strip, land **exactly one hit per swing** at `#animframe 5`.
+3. `graveOn:false` → on death the body **vanishes** (no grave frame held behind the living).
+4. On killed-in-action death, **split into 3 children** `[skelitonUpper, skelitonLowerLeg, skelitonSword]`
+   (the start of a deep undead cascade), fanned out within radius 40.
 
-```
-skelitonLord (energy 750, strength 14, #weaponMelee sword)
-├─ spawned[0]: skelitonUpper (energy 220, AiType #objAiCPUSpellCaster, #weapon #skelitonSummon)
-│  └─ on death: [#skelitonTorsoTank, #skelitonArm, #skelitonArm] (radius 30)
-│     ├─ skelitonTorsoTank (energy 200, #naturalRanged #skelitonMissile, strength 10)
-│     │  └─ on death: [#skelitonHead, #none] (radius unspecified, defaults ≤ 0)
-│     │     └─ skelitonHead (energy 10, #naturalRanged, strength 15, #reelProof)
-│     ├─ skelitonArm (twin)
-│     └─ skelitonArm (twin)
-├─ spawned[1]: skelitonLowerLeg (energy 120, #naturalMelee #highKick, strength 3)
-│  └─ on death: [#skelitonFootSoldier, #skelitonFootSoldier] (radius 20)
-└─ spawned[2]: skelitonSword (energy 200, #naturalMelee #swordSwipe, strength 6, leaf)
-   └─ no reincarnate (leaf node)
-```
+---
 
-**Cascade Depth:** 4 (Lord → Upper → TorsoTank → Head / FootSoldier)
+## SECTION 2 — Observed (port, RUN)
 
-#### Port Implementation Verification
+| Check | Expected | Observed | Status |
+|---|---|---|---|
+| **Sprite char resolves** | `skelitonLord` (not blackOrc) | `spriteCharOr("skelitonLord")` → **`skelitonLord`**; `_stand`(1f) `_walk`(8f) `_reel`(1f) `_weaponMelee`(6f) all bundled | ✓ |
+| Anim char on spawned entity | `skelitonLord` | `lord.animChar = skelitonLord` | ✓ |
+| Targeting | finds the `#aldevar` target | `findTarget → obj` found; `#aldevar` in undead hate-tier | ✓ |
+| **Attack type / frame** | melee, `animFrame=[5]` | `getCurrentAttack` → `type:melee reach:25 mult:12 name:#skelitonLordSword animFrame:[5]`; `CpuAI.attackFrames=[5]` | ✓ |
+| **Hits per swing (#animframe)** | 1 hit / swing | 6 swing-entries over 250f → **6 hits** (1:1); target killed | ✓ |
+| Facing | faces target (right) | `facingLeft=false` (target to the right) | ✓ |
+| **Death / graveOn:false** | vanish, no corpse | dead → `getGraveOn=false` → `Anim.sprite()` returns **`null` (vanish)** | ✓ |
+| **Reincarnation** | `[Upper, LowerLeg, Sword]` | 3 children: `skelitonUpper` / `skelitonLowerLeg` / `skelitonSword`, correct order, each with its own family anim char | ✓ |
 
-1. **Multi-Entry Array** (reincarnate.ts:40–46)
-   - `parseReincarnate()` normalizes both #reincarnateAs and #reincarnateInto to string[] ✓
-   - #none entries preserved in array (kept so list indices remain stable) ✓
-   - Example: skelitonTorsoTank's [#skelitonHead, #none] → ["skelitonHead", "none"] ✓
+The `skelitonLord_weaponMelee` strip is **6 frames** (1-based 1–6), so `#animframe 5` is a real frame and
+fires once per one-shot swing — no dropped strip, no wrong shot count.
 
-2. **Fire-Once Latch** (reincarnate.ts:68)
-   - `done` flag set BEFORE spawn loop ✓
-   - Prevents double-reincarnation on dual-update in death frame ✓
+---
 
-3. **List-Order Spawning** (reincarnate.ts:82–98)
-   - Loop iterates i=0..length; skips when typ=="none" ✓
-   - Each non-#none entry spawned exactly once, in array order ✓
-   - skelitonLord spawns [Upper, LowerLeg, Sword] in that order ✓
+## SECTION 3 — Comparison & findings
 
-4. **Fan-Out by Radius** (reincarnate.ts:87–92)
-   - First spawn (j=1, spawned=0): no offset, at corpse loc exactly ✓
-   - Subsequent spawns (j>1, spawned>0): deterministic angle = (spawned / length) × 2π, radius from cfg ✓
-   - Example: skelitonLord (radius 40) spawns Upper at (0,0), LowerLeg at angle ~2π/3, Sword at angle ~4π/3 ✓
+**0 PORT DIVERGENCES.**
 
-5. **Depth Budget** (reincarnate.ts:59, 80)
-   - pendingDepth initialized to DEFAULT_DEPTH (12) ✓
-   - Each child's Reincarnate reads pendingDepth at init ✓
-   - Child's depth = parent's depth - 1 ✓
-   - At depth 0, cascade stops (line 65 gate) ✓
-   - Real cascade (4 deep) never approaches budget (12) ✓
+### Faithful, worth noting (NOT bugs)
+- **No `skelitonLord_grave` strip is bundled.** Correct and expected: `graveOn:false` means the lord never
+  draws a grave, so the builder had no reason to extract one. The port's `Anim.sprite()`
+  (`port/src/components/anim.ts`) returns `null` for a dead `graveOn:false` actor before it ever looks up a
+  `_grave` strip — so the absence is benign.
+- The resolved attack object carries an inherited top-level `animFrame:2` alongside the raw `animframe:5`.
+  The port's parser (`port/src/components/weapon.ts:181-185`) correctly prefers the raw `r["animframe"]`,
+  yielding `[5]` — verified at runtime (`CpuAI.attackFrames=[5]`). No divergence.
 
-6. **KilledInAction Gate** (reincarnate.ts:67)
-   - Checks `isDead && getKilledInAction()` only ✓
-   - #leaveWhenFinished allies (monks) do NOT split on retire ✓
-   - Room transitions do NOT split (getKilledInAction only on lethal damage) ✓
+### Harness note (method integrity, NOT a port bug)
+The port's `spawnEnemy/spawnAlly` helpers do **not** push the new entity onto `game.entities` — the room
+layer does (`port/src/world/rooms.ts:213,247,430`). A harness that omits this push leaves the unit-map /
+team roster empty, so `findTarget` returns nothing and the actor never engages or reincarnates. This was
+confirmed to be a HARNESS gap (not a port bug) by reproducing the identical "never engages" failure on the
+known-good `blackOrc`, then fixing it by pushing spawned entities exactly as the room does — after which the
+lord engaged and reincarnated correctly. Reincarnation children are pushed by
+`port/src/components/reincarnate.ts:104`.
 
-### Weapon Resolution
+---
 
-**skelitonLord's #weapon: #skelitonLordSword**
-
-- Original: act_skelitonLordSword.txt carries #attack with:
-  - animType: #weaponMelee ✓
-  - power: point(3, 0) → powerScalar = 3 ✓
-  - damageMultiplier: 12 ✓
-  - sound: "skeleton_fire" ✓
-  - cooldown: 0 ✓
-
-- Port resolution (archetypes.ts:155–162):
-  - Registry looks up #skelitonLordSword → resolveActor returns attack ✓
-  - animType #weaponMelee → enemy melee FSM (ranged=false) ✓
-  - Effective cooldown: raw(0) + (melee?6:18) = 6 frames, calibrated to (6 × agility(1) + 1) = 7 ✓
-
-- Port attack delivery (control.ts:606–609):
-  - CpuAI.attack() → ranged=false branch (melee) ✓
-  - base = enemyMeleeBasePower(ca, strength=14) = 3 × 14 × ENEMY_DAMAGE_SCALE(0.18) = 7.56 ✓
-  - mult = 12 ✓
-  - Final vector L1 = 7.56 × 12 = 90.72, damped by victim inertia ✓
-
-### Behavior Checklist
-
-- **Melee AI**: #objAiCPU FSM (findTarget → moveToAttack → attack → attackFin, cyclic) ✓
-  - Committed-target (refreshed every 30 frames or after attack) ✓
-  - No per-tick re-scan (vs original per-tick nearest) — faithful state machine ✓
-  
-- **Weapon resolution**: #weapon attack resolved once at spawn, drives reach/cooldown/type ✓
-
-- **Team**: #undead → allegiance routes to Targeting → teamMaster.findTarget filter ✓
-
-- **Movement**: walkSpeed 5 × 0.6 = 3.0 px/tick; pathfinding via modPathFinding ✓
-
-- **Death**: energy ≤ 0 → isDead=true; modEnergy sets getKilledInAction on lethal loss ✓
-
-- **Reincarnation on death**: Reincarnate.update gate fires on isDead && getKilledInAction, spawns all non-#none children in list order, fanned out by radius ✓
-
-## Conclusion
-
-**Status: CLEAN**
-
-All property coverage verified. Multi-entry reincarnation cascade is faithfully implemented with correct #none handling, fire-once latch, list-order spawning, fan-out geometry, and depth budgeting. The melee AI uses enemyMeleeBasePower for faithful damage scaling. No divergences detected.
-
+**Conclusion:** `skelitonLord` is faithfully ported. Sprite resolves to its own family strip (not
+blackOrc), the `#weaponMelee #animframe 5` swing lands one hit per swing, `graveOn:false` vanishes with no
+corpse, and the 3-way reincarnation cascade (`Upper / LowerLeg / Sword`) fires on killed-in-action death.
