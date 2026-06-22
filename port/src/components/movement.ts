@@ -142,7 +142,11 @@ export class Movement extends Component {
     if (sp > cap) { this.vx = (this.vx / sp) * cap; this.vy = (this.vy / sp) * cap; }
     if (Math.abs(this.vx) < 0.05) this.vx = 0;
     if (Math.abs(this.vy) < 0.05) this.vy = 0;
-    if (this.vx < 0) this.facingLeft = true; else if (this.vx > 0) this.facingLeft = false;
+    // facing follows the walk direction — EXCEPT mid-attack, where it's locked to the swing's aim (set once
+    // at attack entry). A moving unit attacking keeps facing its target/aim instead of flipping to its walk.
+    if (this.entity.send("attackActive") !== true) {
+      if (this.vx < 0) this.facingLeft = true; else if (this.vx > 0) this.facingLeft = false;
+    }
 
     // passThrough (bullets + ghosts): integrate position with NO terrain collision — fly straight through
     // walls (objBullet never collides with the background; ghost units run collisionDetectionOff), dying
