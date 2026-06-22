@@ -1,165 +1,85 @@
-# Plant Actor Behavioral Parity Audit
+# Behavioral Parity Audit — `plant`
 
-## Original Data (casts/data/act_plant.txt)
+Method: derived intended behavior from the original cast/data, then REPRODUCED it in the port
+(`tools/_audit_plant.ts`, now deleted) loading the real `src/generated/assets.json` bundle, wiring
+`game.spawnEnemy/Unit/Ally`, a `CollisionGrid(80,80,32)`, `teamMaster.unitMap.configure(32,0,0)`, and
+calling `rebuildCombatSubstrate()` each tick. Spawned the plant + a hated `#village` target (farmer) at
+100px, ran 250 frames, observed firing/cadence/movement/death; a second pass read the projectile char.
 
-| Property | Value | Purpose |
-|----------|-------|---------|
-| objType | #objCPUCharacter | Ranged CPU character archetype |
-| AiType | #objAiCPU | Standard committed-target AI |
-| inherit | #CPUCharacter | Base CPU (walkSpeed 3, pathfinding) |
-| team | #swamp | Hostile to #aldevar |
-| teamRole | #teamBuildings | Targetable by building-role hunters |
-| walkSpeed | 0 | Overrides parent's 3 → STATIONARY |
-| reelProof | true | Knockback immune |
-| **Attack** | | |
-| animType | #naturalRanged | Ranged thrower archetype |
-| name | #needleShot | Attack identifier |
-| bullet | #needle | Projectile actor |
-| cooldown | 100 | Fire rate in frames |
-| reach | 180 | Range threshold (px) |
-| firingType | #fullstrength | Constant-speed projectile |
-| dexterity | 1 | Cooldown counter increment |
-| **Character Stats** | | |
-| dexterity | 3 | (distinct from attack.dexterity) |
-| strength | 15 | Melee/projectile power base |
-| energy | 80 | Health |
-| inertia | 40 | Knockback damping (but reelProof blocks it) |
-| frictionReel | point(0,10) | Non-issue (catalogued) |
+## SECTION 1 — Derived-correct behavior (from the original)
 
-**Bullet (act_needle.txt):**
-- damageMultiplier: 6
-- power: 0.2 (scalar)
-- friction: point(8,8), weight: 0.6 (non-issues: catalogued)
+`casts/data/act_plant.txt`:
+- **objType** `#objCPUCharacter`, **AiType** `#objAiCPU`, inherits `#CPUCharacter` (`act_CPUCharacter.txt`).
+- **Team** `#swamp` (enemy category; `tem_swamp.txt:7` hates `[#aldevar, #monsterSummon, #magicalAlliance,
+  #ninja, #undead, #scarlet, #village]`), **teamRole** `#teamBuildings` (joins the team BUILDINGS pool —
+  it's a turret-plant, hunters with a building-priority tier target it).
+- **energy** 80, **strength** 15, **dexterity** 3, **inertia** 40, **eyestrain** 40, **damageSpeed** 3,
+  **experienceImWorth** 60, **reelProof** true, **frictionReel** point(0,10), **dieSound** `#none`,
+  **walkSpeed** 0 / **walkSpeedIncLevel** 0 → **STATIONARY** (a rooted plant).
+- **#attack `#needleShot`**: `#animType #naturalRanged` (→ ranged), `#bullet #needle`,
+  **`#animframe [15,17,19,21,23,25,27,29]`** (EIGHT firing frames → eight needles per attack strip),
+  `#cooldown 100`, `#dexterity 1`, **`#firingType #fullstrength`** (constant-speed throw = the attacker's
+  strength, not a distance-proportional lob), **`#reach 180`**, `#collisionLoc point(0,-2)` (muzzle 2px up),
+  `#sound #none`.
+- **Bullet `#needle`** (`act_needle.txt`): `#inherit #bullet`, `#character #bullet`, `#name "needle"`,
+  attack `#type #bullet`, power 0.2, `#damageMultiplier 6`, friction point(8,8), weight 0.6,
+  `#recordInRoomState false`. So the needle is a plain (non-splash) single-target bolt.
+- **data #name sprite char** = `"plant"` → sprite strips key off the #name: `plant_stand` / `plant_naturalRanged`
+  / `plant_grave`. The fired bullet's #name `"needle"` → `needle_fly` / `needle_land`.
 
-## Port Implementation (port/src/entities/archetypes.ts)
+Net: an immobile `#swamp` plant-turret that, when a hated unit (village/aldevar/ninja/undead/etc.) comes
+within 180px, plays its naturalRanged strip and spits **8 needles per cycle** (one per #animframe), at a
+constant `#fullstrength` velocity; never moves; immune to knockback (reelProof); leaves a grave on death.
 
-### Archetype & Loading
-- **spawnEnemy("plant")** → EnemyArchetype.create() at line 137
-- **Data resolution:** registry.resolveActor("plant") loads all inherited properties
-- **Result:** ✓ Correct archetype selected
+## SECTION 2 — Observed port behavior (reproduced)
 
-### Stationary Behavior (walkSpeed=0)
-```
-Line 267: walkSpeed = num("walkSpeed", 3) * 0.6 = 0 * 0.6 = 0
-Movement.init (movement.ts:37): this.maxSpeed = cfg["walkSpeed"] = 0
-Movement.update (movement.ts:80–89): intent multiplied by accel, capped to maxSpeed
-```
-- With maxSpeed=0, velocity never exceeds 0
-- Control component sets intentX/intentY; Movement caps it to zero
-- **Result:** ✓ Unit stationary in both systems
+Spawned via `spawnEnemy("plant")` (the in-game build path routes `#objCPUCharacter` through
+`spawnUnit`→`spawnEnemy`). Probe output:
 
-### Ranged AI Classification
-```
-Line 163: animType = "#naturalRanged" (resolved from attack)
-Lines 169–170: ranged = opts.ranged ?? (animType === "#naturalRanged" || ...)
-```
-- typeFromAnimType("#naturalRanged") → "ranged" (weapon.ts:95)
-- CpuAI.ranged set to true at init
-- **Result:** ✓ Correctly classified as ranged
+- **animChar resolves to `plant`** (NOT blackOrc). `plant_stand`, `plant_naturalRanged` (40 frames; the
+  animFrame list 15-29 is well within range), and `plant_grave` are all bundled. **No fallback strips.** ✓
+- Data carried faithfully into `data.json` (energy 80, dexterity 3, eyestrain 40, inertia 40, reelProof,
+  teamRole #teamBuildings, team #swamp, reach 180, firingType #fullstrength, animframe 8-list,
+  collisionLoc (0,-2), bullet #needle). ✓
+- `getTeam()=#swamp`, `getTeamRole()=#teamBuildings` (the historical hardcoded-`#teamMembers` drop seen in
+  the old dwarfTower audit is **fixed** — `port/src/entities/archetypes.ts:350` now reads
+  `str("teamRole","#teamMembers")`). ✓
+- Targeting: allegiance `#enemy`, roles `[["#teamMembers","#teamBuildings"]]`; `getCurrentAttack()` →
+  `{name:#needleShot, animType:#naturalRanged, reach:180, firingType:#fullstrength,
+  animFrame:[15,17,19,21,23,25,27,29]}`. ✓
+- **Acquires the village target, enters `moveToAttack`, FIRES.** First shot tick 30; the burst fired **8
+  shots** at ticks 30,34,38,42,46,50,54,58 (gap 4 = the strip's 2-tick frame delay × the +2 frame stride),
+  then a long cooldown gap to the next burst at tick 119 — i.e. **8 needles per attack cycle**, exactly the
+  8 `#animframe` entries. ✓
+- **Bullet char = `needle`** (`needle_fly` bundled) — not a flat dot / blackOrc fallback. ✓
+- **Stationary:** moved **0.41px** over 250 ticks (it enters `moveToAttack` like any CPU, but `walkSpeed*0.6=0`
+  caps velocity, so practically rooted). ✓
+- **Damage lands:** the target's energyFrac fell 1.000 → 0.531 over 24 needles. ✓
+- **Death/grave:** `loseEnergy` → `isDead=true`, anim action switches to `grave` (`plant_grave` bundled). ✓
 
-### Needle Bullet Resolution
-```
-Line 249–255:
-  if (ranged && typeof atk["bullet"] === "string" && atk["bullet"] !== "#none") {
-    const bulletActor = registry.resolveActor(atk["bullet"].replace(/^#/, ""));
-    const ba = bulletActor ? resolveAttack(bulletActor["attack"], bulletActor) : undefined;
-```
-- Resolves act_needle actor record
-- Calls resolveAttack() on needle's #attack
-- **Needle attack resolved with:**
-  - power: 0.2 → powerScalar=0.2
-  - damageMultiplier: 6
-- **Result:** ✓ Needle attack correctly loaded
+## SECTION 3 — Divergences
 
-### Fire Rate (Cooldown Calibration)
-```
-Line 180–188:
-  rawCooldown = atk["cooldown"] = 100
-  framesWanted = Math.max(1, 100 + 18) = 118  (ranged +18)
-  counterInc = dexterity = 1  (plant's attack.dexterity)
-  effectiveCooldown = Math.round(118 * 1 + 1) = 119
-```
-- Cooldown counter initialized with cooldown=119, inc=1 (weapon.ts:265–268)
-- Recovery time: ceil((119-1)/1) = 118 frames (faithful to original)
-- **Result:** ✓ Calibrated correctly
+**DIVERGENCES = 0.** The plant reproduces faithfully: real bundled sprite (no blackOrc fallback), correct
+team/role, stationary, ranged `#fullstrength` needle attack firing 8 shots per `#animframe` strip at reach
+180, single-target needle bullet, damage application, and grave-on-death.
 
-### Team & Role Configuration
-```
-Line 270: team = str("team", "#monsters") → "#swamp"
-Line 270: teamRole = "#teamBuildings"
-```
-- **Result:** ✓ Correctly loaded
-
-### Knockback Immunity (reelProof)
-```
-Line 311: reelProof: d["reelProof"] === true
-Movement.takeHit (movement.ts:57):
-  if (!this.entity.send("isReelProof")) {
-    // apply knockback impulse
-  }
-```
-- Entity carries reelProof flag in build config
-- Movement checks before applying impulse
-- **Result:** ✓ Knockback blocked as intended
-
-### Attack Execution & Movement
-```
-CpuAI.updateMoveToAttack (control.ts:470–487):
-  targetInReach(d) → d <= this.reachRanged (180)
-  If in reach → attack()
-  Else → path.findPathToLoc() (K3 pathfinding)
-
-With walkSpeed=0:
-  Movement.update() caps all velocity to 0
-  Even if pathfinding sets intent, Movement cannot execute it
-```
-- Plant shoots at targets in reach (180)
-- Cannot move to pursue (walkSpeed=0)
-- **Result:** ✓ Stationary ranged defender behavior preserved
-
-### Fire Mechanism (firingType:#fullstrength)
-```
-Line 544–545:
-  isFullStrength = (ftAttack?.firingType ?? "#proportional").toLowerCase() === "#fullstrength"
-  throwSpeed = isFullStrength ? Math.max(1, this.strength) : Math.max(0.5, throwDist/10)
-  throwSpeed = Math.max(1, 15) = 15
-```
-- fireBullet() at line 594 spawns projectile with correct speed
-- Bullet damage = powerScalar·dmgRef·BULLET_DAMAGE_SCALE = 0.2·4.5·0.40 ≈ 0.36 (calibrated K1)
-- damageMultiplier applied as mult=6
-- **Result:** ✓ Projectile fired with correct speed and damage scaling
-
-## Comparison Table
-
-| Aspect | Original (casts/) | Port (port/src) | Status | Citation |
-|--------|-------------------|-----------------|--------|----------|
-| **Archetype** | #objCPUCharacter | EnemyArchetype | ✓ | archetypes.ts:137 |
-| **AI FSM** | #objAiCPU | CpuAI component | ✓ | control.ts:306 |
-| **Team** | #swamp | "#swamp" | ✓ | archetypes.ts:270 |
-| **Team Role** | #teamBuildings | "#teamBuildings" | ✓ | archetypes.ts:270 |
-| **walkSpeed** | 0 (override) | 0·0.6 = 0 | ✓ | archetypes.ts:267 |
-| **Movement Capability** | Stationary | Stationary (maxSpeed=0) | ✓ | movement.ts:37 |
-| **Attack Type** | #naturalRanged | ranged=true | ✓ | archetypes.ts:169 |
-| **Range** | 180 | 180 (loaded) | ✓ | archetypes.ts:290; control.ts:499 |
-| **Bullet** | #needle | needle resolved | ✓ | archetypes.ts:249–254 |
-| **Bullet Power** | 0.2 | 0.2 (scalar) | ✓ | weapon.ts:resolveAttack |
-| **Bullet Multiplier** | 6 | 6 | ✓ | weapon.ts:resolveAttack |
-| **Cooldown (raw)** | 100 | 119 (calibrated) | ✓ | archetypes.ts:180–188 |
-| **Firing Speed** | #fullstrength | constant (strength=15) | ✓ | control.ts:544–545 |
-| **reelProof** | true | true in cfg | ✓ | archetypes.ts:311; movement.ts:57 |
-| **Strength** | 15 | 15 (loaded) | ✓ | archetypes.ts:269 |
-| **Energy** | 80 | 80 (loaded) | ✓ | archetypes.ts:268 |
-| **Attack Behavior** | In-range fire + idle | In-range fire + idle (no move) | ✓ | control.ts:534–616 |
+### FAITHFUL / not divergences (documented, NOT bugs)
+- **effectiveCooldown stretch (100 → 268):** `port/src/entities/archetypes.ts:216-234` back-solves an
+  EFFECTIVE cooldown from the original `#cooldown 100` + the attack's counter-inc (`dexterity 1`) + the
+  fire-frame offset (the animFrame fires as late as frame 29, so the strip-replay offset is large). This is
+  the **systemic** enemy cadence-calibration applied to every CPU (same mechanism the dwarfTower audit
+  accepted), not a plant divergence. The observed burst→long-gap→burst cadence is the intended behavior.
+- **0.41px drift:** a stationary CPU still enters `moveToAttack` and paths toward its target
+  (`port/src/components/control.ts:653` `updateMoveToAttack`), but `walkSpeed 0`
+  (`port/src/entities/archetypes.ts:335`, `walkSpeed*0.6`) caps the velocity, so the drift is
+  rounding-level. Faithful (identical to the dwarfTower finding).
+- **top-level `#dexterity 3` vs attack-local `#dexterity 1`:** the build uses the actor-level dexterity (3)
+  for the WeaponManager counter inc and the attack-local 1 only as the attack's own field — consistent with
+  the structMaster merge order; not plant-specific.
 
 ## Conclusion
-
-**CLEAN** — Plant actor exhibits behavioral parity across both implementations:
-
-1. **Stationary ranged defender** correctly implemented: walkSpeed=0 prevents movement in both trees
-2. **Needle projectile** correctly resolved from act_needle.txt with faithful power (0.2) and damageMultiplier (6)
-3. **Fire rate** calibrated via dexterity (1) and original cooldown (100 frames)
-4. **Team and role** correctly loaded (#swamp, #teamBuildings)
-5. **Knockback immunity** (reelProof:true) correctly blocks impulse in Movement.takeHit()
-6. **AI behavior** follows ranged attack loop: find target → move/path to range → fire at in-reach targets
-
-No behavioral divergences. The port faithfully reproduces the original's stationary needle-thrower archetype.
+`plant` is a clean, faithful port: correct art (real `plant`/`needle` strips, no fallback), correct
+allegiance (`#swamp`/`#teamBuildings`), genuinely stationary, and its eight-`#animframe` naturalRanged
+needle volley + grave all reproduce. No PORT bugs found. The systemic prerequisites that broke the older
+dwarfTower audit (dropped `#teamRole`, missing `targetRoles` tier fall-through, over-aggressive reach clamp)
+are all resolved in the current tree and do not affect plant (its reach 180 < the 644 cap, single-tier roles).

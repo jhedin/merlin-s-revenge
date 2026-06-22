@@ -1,176 +1,121 @@
-# Actor Parity Audit: scMonk
+# Per-Actor Parity Audit: `scMonk`
 
-## Summary
+**Method:** Behavior derived from `casts/data/act_scMonk.txt` + inherit chain (`#CPUCharacter` → `#character` → `#actor`) + the weapon `casts/data/act_scSummon.txt`, `objAiCPUSpellCaster`, `modSpellMultistage`, `structMaster.structAttack`, `animStripMaster`. Reproduced by RUNNING `tools/_audit_scMonk.ts` (real `src/generated/assets.json` bundle, scMonk + a forced `#aldevar` target on an 80×80 grid, 250 ticks, summons counted by team/type; probe deleted after audit).
 
-scMonk (Scarlet summon tier 3) exhibits **CLEAN** behavioral parity between the original Lingo game and TypeScript port. All properties, AI behaviors, and spell mechanics are faithfully implemented.
+scMonk is a **scarlet summoner** (`#objAiCPUSpellCaster`, `#weapon: #scSummon`). Its spell is itself a *summon* (`#explodeFunction:#summonUnit`) that fields scWarrior/scArcher/scMonk by charge tier. It does NOT throw a damage bolt as its primary purpose — it summons reinforcements (the energyBlastBullet payload still lands a small radial hit).
 
-## Data Properties
+---
 
-| Property | Original (casts/data/act_scMonk.txt) | Port (port/src/generated/data.json) | Status |
-|----------|--------------------------------------|-------------------------------------|--------|
-| objType | #objCPUCharacter | #objCPUCharacter | ✓ |
-| AiType | #objAiCPUSpellCaster | #objAiCPUSpellCaster | ✓ |
-| inherit | #CPUCharacter | #CPUCharacter | ✓ |
-| character | #enemyCharacter | #enemyCharacter | ✓ |
-| chargeOffsetSide | #top | #top | ✓ |
-| chargeLoc | point(0,-10) | {x:0, y:-10} | ✓ |
-| collisionDetection | true | true | ✓ |
-| damageSpeed | 6 | 6 | ✓ |
-| dexterity | 1 | 1 | ✓ |
-| energy | 175 | 175 | ✓ |
-| experienceImWorth | 30 | 30 | ✓ |
-| inertia | 75 | 75 | ✓ |
-| mana_capacity | 17 | 17 | ✓ |
-| mana_flow | 2 | 2 | ✓ |
-| mana_capacityIncLevel | 1 | 1 | ✓ |
-| mana_regeneration | 1 | 1 | ✓ |
-| miniMapStatus | #inf | #inf | ✓ |
-| stallSpeed | 0.5 | 0.5 | ✓ |
-| stallSpeedIncLevel | 1 | 1 | ✓ |
-| reincarnateAs | [#fire] | [#fire] | ✓ |
-| strength | 5 | 5 | ✓ |
-| team | #scarlet | #scarlet | ✓ |
-| name | "scMonk" | "scMonk" | ✓ |
-| walkSpeed | 4 | 4 | ✓ |
-| weapon | #scSummon | #scSummon | ✓ |
+## 1. Identity & Data — RUN-confirmed
 
-## Behavior Verification
+| Property | Original (`act_scMonk.txt`) | Port (observed) | Match |
+|---|---|---|---|
+| `#objType` | `#objCPUCharacter` | `EnemyArchetype` | ✓ |
+| `#AiType` | `#objAiCPUSpellCaster` | `optimumPosition` mode seen; `dodgesBullets`/`runReload` true | ✓ |
+| `#character` | `#enemyCharacter` | (irrelevant to sprite — see §2) | n/a |
+| `#name` (sprite char) | `"scMonk"` | resolves to **`blackOrc`** | ✗ **DIV-1** |
+| `#team` | `#scarlet` | `#scarlet` | ✓ |
+| `#weapon` | `#scSummon` | `#scSummon` (magic, reach 9999, explodeFunction `#summonUnit`) | ✓ |
+| `#energy` | `175` | energyFrac 1 (full) | ✓ |
+| `#strength` | `5` | 5 | ✓ |
+| `#dexterity` | `1` | 1 | ✓ |
+| `#inertia` | `75` | 75 | ✓ |
+| `#walkSpeed` | `4` | 4 (×0.6 px slice) | ✓ |
+| `#damageSpeed` | `6` | 6 | ✓ |
+| `#experienceImWorth` | `30` | 30 | ✓ |
+| `#chargeOffsetSide` / `#chargeLoc` | `#top` / `(0,-10)` | cosmetic muzzle | ✓ |
+| `#mana_capacity` | `17` | 17 | ✓ |
+| `#mana_flow` | `2` | 2 | ✓ |
+| `#mana_regeneration` | `1` | 1 | ✓ |
+| `#mana_capacityIncLevel` | `1` | 1 (forwarded) | ✓ |
+| `#stallSpeed` / `#stallSpeedIncLevel` | `0.5` / `1` | reel-recovery rate — not modeled | WONTFIX |
+| `#miniMapStatus` | `#inf` | no minimap in port | WONTFIX |
+| `#reincarnateAs` | `[#fire]` | forwarded (`archetypes.ts:401`) | ✓ |
 
-### 1. Spellcaster AI (objAiCPUSpellCaster) – K4 bullet-dodge
+---
 
-**Original (casts/script_objects/objAiCPUSpellCaster.txt:266-272):**
-- Reach check: `if me.getAttack().reach = 9999 then` triggers optimumPosition mode
-- updateMoveToOptimumPosition cascade: bullet-dodge → flee enemies → approach target → idle
+## 2. Animation Strips & sprite resolution
 
-**Port (port/src/components/control.ts:618-640, CpuAI.updateMoveToOptimumPosition):**
-- AiType `#objAiCPUSpellCaster` → `dodgesBullets = true` (line 214 in archetypes.ts)
-- Spell reach 9999 routed via mode chain: runTangentToNearestBullet → runFromNearEnemy → approach target → idle
-- RNG-based 25-75% tangent-mirror blend (line 667, matching original line 249)
+Original keys strips by the actor's `#name` (`scMonk`). The bundle DOES ship a full scMonk strip set:
 
-**Status:** ✓ FAITHFUL
+| Strip key in `assets.json` | frames | loop |
+|---|---|---|
+| `scMonk_Stand` (capital **S**) | 1 | true |
+| `scMonk_walk` | 8 | true |
+| `scMonk_charge` | 4 | true |
+| `scMonk_chargeWalk` | 4 | true |
+| `scMonk_release` | 5 | false |
+| `scMonk_releaseWalk` | 5 | true |
+| `scMonk_reel` | 1 | false |
+| `scMonk_grave` | 2 | false |
 
-### 2. Summon Weapon (scSummon) – multistage tier resolution with randomSummon wobble
+For comparison the sibling summons key their stand strip **lowercase**: `scArcher_stand`, `scWarrior_stand` (both present). Only scMonk's stand strip is `scMonk_Stand`.
 
-**Original (casts/data/act_scSummon.txt:25-31):**
+### DIV-1 (PORT BUG): scMonk renders as `blackOrc` — its entire bundled strip set is dropped
+
+**Observed (probe):**
 ```
-#multistage: [#scWarrior: 16, #scArcher: 17, #scMonk: 20],
-#randomSummon: true
+animChar              : blackOrc   (expected 'scMonk')
+scMonk_stand bundled  : false   scMonk_Stand bundled: true
+...
+summon counts by type : {"scArcher(char=scArcher)":10, "scMonk(char=blackOrc)":1}
 ```
+Every scMonk — the caster itself AND any scMonk it summons — renders as a generic blackOrc. The summoned **scArcher** correctly renders as `scArcher`; only scMonk is broken, isolating the cause to the strip-key casing.
 
-**Port (port/src/generated/data.json act_scSummon.data.attack):**
-```json
-"randomSummon": true,
-"multistage": {"scWarrior": 16, "scArcher": 17, "scMonk": 20}
-```
+**Dual-tree evidence:**
 
-**Port resolution (port/src/components/weapon.ts:80-86, normMultistage):**
-- Parses proplist into ascending tiers: [{type:"scWarrior", chargeRequired:16}, ...]
-- Sorted ascending (line 85)
+- **Original cast member name (faithful data quirk):** `extracted/manifest.json` → `anm_scMonk_Stand_03_01L`. The original Director cast literally names scMonk's stand member with a capital `Stand`, while its other members are lowercase (`anm_scMonk_walk_…`, `anm_scMonk_release_…`, `anm_scMonk_reel_…`). This inconsistency is in the SHIPPED art.
+- **Original engine tolerates it (case-insensitive symbols):** `casts/master_objects/animStripMaster.txt:69-71` — `data[3] = symbol(data[3])` converts the action token to a Lingo **symbol**, and Lingo symbols are case-insensitive: `symbol("Stand") == symbol("stand") == #stand`. So the original keys the strip under `#stand` and `modAnimSet.getAnimSym(#stand)` resolves it normally. The monk shows its real sprite.
+- **Port keeps a case-SENSITIVE string key:** `port/tools/build_assets.ts:105,108` — `const action = t[2]`; `const key = \`${char}_${action}\``. The raw token `Stand` is preserved verbatim, producing `scMonk_Stand`.
+- **Port lookup is lowercase-only:** `port/src/components/anim.ts:40-44` (`spriteCharOr`): it gates the char on `anims[\`${dn}_stand\`]` (lowercase `scMonk_stand`) → miss → falls through to `anims[\`${name}_stand\`]` (also `scMonk_stand`) → miss → no `CHAR_ALIAS` entry → **`return fallback` ("blackOrc")**. `archetypes.ts:351` then builds the unit with `animChar="blackOrc"`.
 
-**Port randomSummon wobble (port/src/components/charge.ts:36-43, chargeMaxOf):**
-- Condition: `rng && attack.randomSummon && attack.multistage.length >= 2`
-- Wobble formula: `tempMax = cm * rng.int(20) / 17 + rng.int(tier1)`, then `cm = min(cm, tempMax) + rng.int(2) - 1`
-- Applied when tier2 > cm (i.e., chargeMax affordable, but tier2 not guaranteed)
+**Why the whole set is lost, not just stand:** `spriteCharOr` gates the *entire* char on the `_stand` probe. Because `scMonk_stand` (lowercase) is absent, the char never resolves to `"scMonk"`, so the present `scMonk_walk/charge/release/reel/grave` strips are never reached either. The monk is 100% blackOrc.
 
-**Port CPU caster integration (port/src/components/control.ts:558-564, CpuAI.attack):**
-- Line 563: `const sc = chargeMaxOf(ca, this.entity.get(Mana), game.rng)` — passes RNG for wobble
-- Line 564: `summonUnit(ca, sc, m.x, m.y, this.entity.id)` — summon at caster's location
+**Classification: PORT BUG.** The art is shipped and correct; the original engine displays it. The port's case-sensitive strip keying + lowercase-only `_stand` gate is a regression from Lingo's case-insensitive `symbol()`. Two faithful fixes (either is sufficient): (a) lowercase the action token when keying strips in `build_assets.ts` (mirrors `symbol()`), or (b) make `spriteCharOr`/`animFor` case-insensitive. Option (a) is closest to the original (symbols are case-folded at ingest). NOTE: this likely affects any other actor with a capitalized member-name token — worth a sweep, but out of scope for this single-actor audit.
 
-**Port spell actor integration (port/src/components/spellActor.ts:126-128):**
-- On explode: `summonUnit(this.attack, this.charge, m.x, m.y, this.ownerId)`
-- Player casting also passes static charge (no RNG for player, faithful to original)
+---
 
-**Status:** ✓ FAITHFUL (wobble baked into both CPU caster and spell-actor paths)
+## 3. Weapon / Spell (`#scSummon`) — FAITHFUL
 
-### 3. Summon Unit Spawning (team assignment, tier selection)
+| Property | Original (`act_scSummon.txt`) | Port (observed) |
+|---|---|---|
+| `#animType` | `#magic` | `#magic`, type magic ✓ |
+| `#explodeFunction` | `#summonUnit` | `#summonUnit` ✓ |
+| `#animframe` | `#none` | `[]` (empty → cast fires on strip-complete, not per-frame) ✓ |
+| `#reach` | `9999` | 9999 (room-scale clamp) ✓ |
+| `#cooldown` | `15` | 15 (effective ≈14-15 frame cadence observed) ✓ |
+| `#bullet` | `#energyBlastBullet` | `#energyBlastBullet` ✓ |
+| `#spellSpeed` | `25` | 25 → fly speed ✓ |
+| `#randomSummon` | `true` | true ✓ |
+| `#multistage` | `scWarrior:16, scArcher:17, scMonk:20` | parsed ascending `[16,17,20]` ✓ |
+| `#chargeStart` / `#chargeMax` | `3` / `22` | 3 / 22 ✓ |
+| `#residentTeamCategory` | `#enemies` | summons join `#scarlet` (caster's team) ✓ |
+| `#targetAllegiance` | `#enemy` | `#enemy` ✓ |
+| charge ceiling (`chargeMaxModifier`/`Basic` default `1`/`0`) | `min(22, 17·1+0)=17` | `chargeMaxOf=17` ✓ |
 
-**Original (casts/script_objects/modSpellMultistage.txt / team context):**
-- Summon units (scWarrior, scArcher, scMonk) all carry `team: #scarlet`
-- Summon spells use `residentTeamCategory: #enemies` → units on enemy side
+**Summon tier math (derived & confirmed):** With `chargeMaxModifier`/`chargeMaxBasic` unset, both default to `1`/`0` (`structMaster.txt:147,149`; port `STRUCT_ATTACK` `registry.ts:22`). Ceiling = `min(22, capacity·1 + 0) = min(22,17) = 17`. The randomSummon wobble (`charge.ts:36-43`) only fires when `tier2 - cm < 0`; here `17 - 17 = 0` → no wobble. So at base level scMonk deterministically summons the highest tier ≤ 17 = **scArcher (17)**, never the scWarrior fallback and (initially) never scMonk(20).
 
-**Port actor data (scWarrior: team=#scarlet, scArcher: team=#scarlet, scMonk: team=#scarlet):**
-- ✓ All match original
+**Observed:** 10× scArcher + 1× scMonk over 250 ticks. The lone scMonk appears AFTER the caster levels up (`gainXp 0.5` per summon → `mana_capacityIncLevel:1` raises capacity → ceiling reaches 20 → scMonk tier becomes affordable). This is faithful tier-escalation behavior, not a divergence.
 
-**Port summon.ts:selectTier (line 25-31):**
-- Picks highest tier ≤ charge; null if below first tier
+**AI (`objAiCPUSpellCaster`) — FAITHFUL:** probe saw modes `moveToAttack` and `optimumPosition` (the reach-9999 bullet-dodge/kite chain). `runReload`+`dodgesBullets` set (`archetypes.ts:264-267`). Casts at full ceiling on strip-complete (`#animframe #none`), summon FLIES to the target loc and fields the unit there (`control.ts:809-821`), so summons don't pile on the caster.
 
-**Port summon.ts:summonUnit (line 38-63):**
-- Line 40: `const type = selectTier(charge, attack.multistage)` — selects tier by charge
-- Line 45: `const team = (owner?.send("getTeam") as string) || attack.residentTeamCategory`
-- Line 58: `const e = game.spawnUnit(type, x, y, {})` → spawnUnit routes by team
-- spawnUnit (archetypes.ts:54-60): reads actor data's `team` field; if player-side, type="ally", else "enemy"
+**Summoned-unit team routing — FAITHFUL:** summoned scArcher/scMonk carry `#scarlet` (caster's team), spawn as `type=enemy`. ✓
 
-**Status:** ✓ FAITHFUL (team=#scarlet on all tiers; routing by actor data, not spell data)
+---
 
-### 4. Mana & Charge Scaling (mana-dependent tier wobble)
+## 4. Death / grave / reincarnate — FAITHFUL
 
-**Original (objAiCPUSpellCaster inherits modCharacterAttackProperties):**
-- Mana stats (capacity, flow, regeneration) tune the charge ceiling
-- Original wobble: tempMax = cm·random(20)/17 + random(tier1); wobbles WITHIN affordable band
+- `graveOn` defaults true → leaves a grave (`scMonk_grave` exists but is rendered through the blackOrc fallback → DIV-1 also taints the corpse sprite).
+- `#reincarnateAs:[#fire]` forwarded (`archetypes.ts:401`) → splits into `#fire` on lethal death.
 
-**Port (Mana component line 19-28):**
-- Initialized from actor data: mana_capacity, mana_flow, mana_regeneration
-- scMonk data: capacity=17, flow=2, regeneration=1
+---
 
-**Port chargeMaxOf (charge.ts:26-46):**
-- Line 30: `cm = Math.min(attack.chargeMax, mana.capacity * attack.chargeMaxModifier + attack.chargeMaxBasic)`
-- For scSummon: chargeMax=22, chargeMaxModifier=undefined (defaults to 0), chargeMaxBasic=undefined (defaults to 0)
-  - Actually, scSummon is NOT a player spell; this path is for **enemy casters** like scMonk holding scSummon weapon
-  - For scMonk: chargeMax from scSummon weapon is 22, so cm = min(22, 17*0 + 0) = 0 initially
-  - **WAIT—need to check actual resolved attack for scSummon when used by enemy**
+## Divergence Summary
 
-Let me verify the scSummon attack resolution for enemy context...
+| # | Severity | Kind | Summary |
+|---|---|---|---|
+| DIV-1 | High (visual) | **PORT BUG** | scMonk (caster + summoned) renders as `blackOrc`: bundle ships `scMonk_Stand` (capital S) but `spriteCharOr` gates on lowercase `scMonk_stand`. Original engine case-folds action tokens via `symbol()` (`animStripMaster.txt:69-71`); port keeps case-sensitive string keys (`build_assets.ts:105-108`, `anim.ts:40-44`). The whole strip set is lost, not just stand. Fix: lowercase the action token at ingest (faithful to `symbol()`), or case-insensitive strip lookup. |
 
-**Port resolveAttack (weapon.ts:153+):**
-- scSummon has chargeMaxModifier and chargeMaxBasic NOT specified; uses defaults from structAttack
-- Checking structAttack defaults would require full resolveAttack trace
+All other behavior (spellcaster AI/kiting, scSummon multistage tiers + charge ceiling, randomSummon wobble gating, level-driven tier escalation, energyBlastBullet payload, team routing, reincarnate `#fire`) is FAITHFUL.
 
-**Status:** ✓ BEHAVIORAL (CPU caster wobble mechanism verified in code path; tier selection correct)
-
-### 5. Attack & Cooldown
-
-**Original (scMonk has no direct #attack; inherits from #CPUCharacter via #weapon #scSummon):**
-- Cooldown: 15 frames (from scSummon)
-
-**Port (archetypes.ts:180-188, spawnEnemy):**
-- scMonk: ranged=true (animType=#magic), cooldown=15
-- Effective cooldown = ceil((15 + 18) * mana_regeneration(1) + 1) = ceil(34) = 34
-
-**Status:** ✓ FAITHFUL (cooldown calibrated; mana_regeneration acts as counter increment)
-
-### 6. Movement & Team Context
-
-**Original:**
-- scMonk is #scarlet team (enemy)
-- Inherits pathfinding from #CPUCharacter
-
-**Port (archetypes.ts:56-59, spawnEnemy):**
-- team=#scarlet → game.teamMaster.isPlayerSide("#scarlet") = false → type="enemy"
-- Movement component: pathfinding via K3 beeline→scenic
-
-**Status:** ✓ FAITHFUL
-
-### 7. Death & Reincarnation
-
-**Original (scMonk.reincarnateAs = [#fire]):**
-- On death, spawns #fire actor(s) at corpse location
-
-**Port (archetypes.ts:303-305, Reincarnate component):**
-- Line 305: `reincarnateAs: d["reincarnateAs"]` — passed from actor data
-- Reincarnate component honors both #reincarnateAs and #reincarnateInto
-
-**Status:** ✓ FAITHFUL
-
-## Conclusion
-
-scMonk achieves **CLEAN** behavioral parity. All core mechanics are implemented:
-
-1. **Spellcaster AI**: Bullet-dodge chain (optimumPosition) activated by reach=9999
-2. **Weapon system**: scSummon spell with proper multistage tiers (16/17/20)
-3. **Tier wobble**: randomSummon wobble applied in chargeMaxOf, threaded through CPU caster and spell-actor paths
-4. **Team assignment**: All summon units (#scarlet) route to enemy-side spawning
-5. **Mana scaling**: CPU caster mana stats drive charge ceiling; wobble respects affordable band
-6. **Cooldown/regeneration**: Per-weapon cooldown calibrated to mana_regeneration counter increment
-7. **Death**: Reincarnate to #fire on lethal hit
-
-No gaps detected.
+`scMonk | DIVERGENCES=1`
