@@ -353,6 +353,8 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     hits: Array.isArray(atk["hits"]) ? atk["hits"] : ["#teamMembers"],
     targetReach: meleeReach ?? targetReach ?? (ranged ? 150 : 22),
     dieSound: typeof d["dieSound"] === "string" ? d["dieSound"] : undefined,  // played on death
+    takeHitSound: typeof d["takeHitSound"] === "string" ? d["takeHitSound"] : undefined, // played when hit (dragons etc.)
+    takeHitVolume: typeof d["takeHitVolume"] === "number" ? d["takeHitVolume"] : undefined,
     experienceImWorth: num("experienceImWorth", 0) || undefined,             // XP this unit grants
     experienceAmountForNextLevel: num("experienceAmountForNextLevel", 0),    // first-level XP threshold (Lingo default 0)
     energyIncPercentage: num("energyIncPercentage", 0) || undefined,
