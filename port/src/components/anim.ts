@@ -17,8 +17,12 @@ import type { Sprite } from "../render/renderer";
 // right FAMILY, not the generic blackOrc stand-in ("wrong enemies" from spawners).
 const CHAR_ALIAS: Record<string, string> = {
   goblinHero: "goblinWarrior",
-  goblinArcher: "goblinWarrior", friendlyGoblinWarrior: "goblinWarrior", friendlyGoblinArcher: "goblinWarrior",
-  friendlyGoblinMage: "goblinMage", skeletonWarrior: "skeletonArcher", swordNinja: "ninja",
+  // match the unit's COMBAT TYPE so a ranged unit looks ranged and a melee unit looks melee — otherwise an
+  // archer wearing a swordsman sprite reads as "a swordsman shooting arrows" (and vice-versa).
+  goblinArcher: "archer", friendlyGoblinArcher: "archer",           // ranged -> an archer sprite
+  friendlyGoblinWarrior: "goblinWarrior", swordNinja: "ninja",      // melee  -> a melee sprite
+  skeletonWarrior: "skelitonFootSoldier",                           // melee skeleton (not skeletonArcher)
+  friendlyGoblinMage: "goblinMage",                                 // caster
 };
 
 /** The sprite character for an actor, or a stand-in ("blackOrc") when its anims aren't bundled. */
