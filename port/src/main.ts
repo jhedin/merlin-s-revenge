@@ -580,10 +580,35 @@ function drawBullets(renderer: Renderer) {
       ctx.restore();
       continue;
     }
-    ctx.fillStyle = proj.team === "#aldevar" ? "#9cf" : "#fd6";
-    ctx.beginPath(); ctx.arc(m.x, m.y, 3, 0, Math.PI * 2); ctx.fill();
+    // objBullet sprite: the `<char>_fly` strip (archerArrow/gobarrow/axe/crossBolt…) rotated to the flight
+    // direction (modRotational + GeomAngle). Falls back to a coloured dot only when the bullet has no sprite
+    // char or its art hasn't lazy-loaded yet — so a thrown axe/arrow finally LOOKS like one (was a 3px dot).
+    if (!drawBulletSprite(renderer, proj.char, m.x, m.y, m.vx, m.vy, proj.life)) {
+      ctx.fillStyle = proj.team === "#aldevar" ? "#9cf" : "#fd6";
+      ctx.beginPath(); ctx.arc(m.x, m.y, 3, 0, Math.PI * 2); ctx.fill();
+    }
   }
   if (beamSprites.length) renderer.drawSprites(beamSprites);
+}
+
+// render a bullet's `<char>_fly` frame, animated over its life and rotated to its velocity (GeomAngle).
+// Returns false (caller draws the dot) when there's no char or the art isn't loaded yet.
+function drawBulletSprite(renderer: Renderer, char: string, x: number, y: number, vx: number, vy: number, life: number): boolean {
+  if (!char) return false;
+  const anim = game.assets.index.anims[char + "_fly"];
+  if (!anim || anim.frames.length === 0) return false;
+  const dela = Math.max(1, anim.frames[0]!.dela ?? anim.delay ?? 1);
+  const f = anim.frames[Math.floor(life / dela) % anim.frames.length]!;
+  if (!game.assets.images.has(f.file)) { void game.assets.ensureChar(char); return false; }
+  const img = game.assets.img(f.file) as CanvasImageSource | null;
+  if (!img) return false;
+  const ctx = renderer.ctx;
+  ctx.save();
+  ctx.translate(Math.round(x), Math.round(y));
+  if (vx !== 0 || vy !== 0) ctx.rotate(Math.atan2(vy, vx)); // art faces +x; rotate to the flight angle
+  ctx.drawImage(img, -f.reg[0], -f.reg[1]);
+  ctx.restore();
+  return true;
 }
 
 // beamSprite: build the energyBeam fly sprite anchored at the caster anchor, stretched to the beam

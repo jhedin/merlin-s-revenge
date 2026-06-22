@@ -16,6 +16,7 @@ import { spawnFromSymbol } from "../entities/actorSerial";
 export class Projectile extends Component {
   static handles = ["update", "isFinished", "getTeam"];
   life = 0; maxLife = 100; power = 10; team = ""; ownerId = -1; done = false; freeze = 0; mult = 1;
+  char = ""; // objBullet sprite char (archerArrow/gobarrow/axe/crossBolt…) -> the `<char>_fly` strip, rotated to flight
   // splash payload (C2): when set, the bullet resolves an area hit on trigger instead of single-target.
   private splash: AttackData | null = null;
   private splashHits: string[] = ["#teamMembers", "#teamBuildings"];
@@ -60,7 +61,7 @@ export class Projectile extends Component {
     this.beam = true; this.beamDist = dist; this.beamAngle = angle; this.beamCasterX = casterX; this.beamCasterY = casterY;
     this.beamLife = 4; // a few frames so the line is visible before it sweeps out
   }
-  override reset(): void { this.done = false; this.life = 0; this.ownerId = -1; this.freeze = 0; this.mult = 1; this.splash = null; this.payload = null; this.beam = false; this.reincarnateAs = []; }
+  override reset(): void { this.done = false; this.life = 0; this.ownerId = -1; this.freeze = 0; this.mult = 1; this.splash = null; this.payload = null; this.beam = false; this.reincarnateAs = []; this.char = ""; }
   isFinished(): boolean { return this.done; }
   // a splash/beam bullet IS the attacker passed to resolveSplash; expose its owner team so the area
   // search resolves the right hostile teams (calcTargetTeams reads attacker.getTeam). objBullet.setTeam.

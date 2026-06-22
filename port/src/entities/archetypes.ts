@@ -258,8 +258,10 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
   // a fired bullet's #reincarnateAs (objBullet.reincarnate): flamingRock -> #fire, lizardEgg -> #bug,
   // ostrichEgg -> #babyOstrich. The bullet hatches/leaves these at its death loc — threaded to Projectile.
   let bulletReincarnate: string[] = [];
+  let bulletChar = "";
   if (ranged && typeof atk["bullet"] === "string" && atk["bullet"] !== "#none") {
-    const bulletActor = registry.resolveActor(atk["bullet"].replace(/^#/, ""));
+    bulletChar = atk["bullet"].replace(/^#/, ""); // the bullet actor name -> its `<char>_fly` sprite strip
+    const bulletActor = registry.resolveActor(bulletChar);
     const ba = bulletActor ? resolveAttack(bulletActor["attack"] as Record<string, any>, bulletActor) : undefined;
     if (ba && (ba.attackType === "#explode" || ba.splashDamageOn)) splashBullet = ba;
     else if (ba) bulletAttack = ba;
@@ -292,7 +294,7 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     animChar: opts.animChar ?? actorName, box: 14,
     stretchDeath: d["stretchDeath"] === true, // greyGhost #stretchDeath: magical stretch+fade death (modStretchDeath)
     inertia: num("inertia", 0), // resists knockback (modGameObject damping); heavy orcs get shoved less
-    ranged, runReload, ghost, splashBullet, bulletAttack, bulletReincarnate,
+    ranged, runReload, ghost, splashBullet, bulletAttack, bulletReincarnate, bulletChar,
     // K4/K5/K6/K8a AI config: bullet-dodge caster, multi-attack 2-weapon switch, builder build-loop, the
     // ghost's possess team. Defaults keep every other actor on the existing committed-target FSM.
     dodgesBullets, multiAttack, builder, unitToBuild,

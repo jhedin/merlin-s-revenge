@@ -392,6 +392,7 @@ export class CpuAI extends Component {
   teamWhenAlive = "";  // K5: the ghost's possess team (#aldevar) — getTeamWhenAlive
   splashBullet: AttackData | null = null; // towerAxe/energyPulse etc: fire a SPLASH bullet, not single-target
   bulletAttack: AttackData | null = null; // K1: a plain (non-splash) ranged weapon's resolved #attack.bullet
+  bulletChar = "";                         // the fired bullet's sprite char (archerArrow/axe…) for `<char>_fly`
   bulletReincarnate: string[] = [];       // bullet #reincarnateAs (flamingRock->fire, eggs->creature): hatch on death
   // K8a builder data (modBuilder): the unitToBuild list, build rate (per-100 advances a frame), and the
   // buildOne/buildDie/leaveWhenFinished disposition.
@@ -449,6 +450,7 @@ export class CpuAI extends Component {
     this.atkSound = typeof cfg["atkSound"] === "string" ? cfg["atkSound"] : "";
     this.splashBullet = (cfg["splashBullet"] as AttackData | undefined) ?? null; // a ranged CPU's splash bullet (tower)
     this.bulletAttack = (cfg["bulletAttack"] as AttackData | undefined) ?? null; // K1: plain bullet's #attack (power/mult)
+    this.bulletChar = typeof cfg["bulletChar"] === "string" ? cfg["bulletChar"] : "";
     this.bulletReincarnate = (cfg["bulletReincarnate"] as string[] | undefined) ?? []; // bullet hatch/leave-behind list
     this.retargetCtr = 0; this.noTargetCtr = 0;
     this.mode = "findTarget"; this.target = null; this.attackT = 0;
@@ -642,7 +644,7 @@ export class CpuAI extends Component {
         // land/collide it resolves an AREA hit through SplashDamage (same A1 vector scale).
         const tg = this.entity.send("getTargeting") as { hits: string[]; allegiance: string } | undefined;
         const sb = fireSplashBullet(this.entity.id, m.x, m.y - 6, dx, dy, throwSpeed, this.splashBullet, team,
-          this.splashBullet.hits, tg?.allegiance ?? "#enemy", 140);
+          this.splashBullet.hits, tg?.allegiance ?? "#enemy", 140, this.bulletChar);
         if (this.bulletReincarnate.length) sb.get(Projectile).reincarnateAs = this.bulletReincarnate; // flamingRock -> #fire
       } else {
         // J1: a magic-weapon CPU caster routes by its #attack payload, like the player's castMagic —
@@ -700,7 +702,7 @@ export class CpuAI extends Component {
             const hits = ba.hits.length ? ba.hits : ["#teamMembers", "#teamBuildings"];
             pb = fireBulletPayload(this.entity.id, m.x, m.y - 6, dx, dy, speed, l1, team, ba, hits, alleg, 100);
           } else {
-            pb = fireBullet(this.entity.id, m.x, m.y - 6, dx, dy, speed, l1, team, 100, 0, bmult);
+            pb = fireBullet(this.entity.id, m.x, m.y - 6, dx, dy, speed, l1, team, 100, 0, bmult, this.bulletChar);
           }
           if (this.bulletReincarnate.length) pb.get(Projectile).reincarnateAs = this.bulletReincarnate; // lizardEgg->#bug, ostrichEgg->#babyOstrich
         }
