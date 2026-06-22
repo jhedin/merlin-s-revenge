@@ -718,7 +718,10 @@ export class CpuAI extends Component {
     const an = this.entity.tryGet(Anim);
     if (this.attackAnimates && an) {
       if (an.frameFresh() && this.attackFrames.includes(an.attackFrame())) this.performAttack(m);
-      if (an.looped()) { this.attackT = 0; this.attackFin(m); return; }
+      // strip completed: if nothing fired yet (a magic weapon's #animframe is #none -> empty list, so no
+      // frame crossing ever fires), cast NOW on completion — else casters would play the release strip and
+      // leave attack mode without ever attacking. Melee/ranged already fired on their crossings.
+      if (an.looped()) { if (!this.attackFired) this.performAttack(m); this.attackT = 0; this.attackFin(m); return; }
     }
     if (--this.attackT <= 0) {                   // safety / non-animating strip: fire once, then leave
       if (!this.attackFired) this.performAttack(m);

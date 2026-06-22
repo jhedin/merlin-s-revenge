@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { spawnEnemy, spawnAlly, spawnPlayer } from "@/entities/archetypes";
+import { spawnEnemy, spawnAlly, spawnPlayer, spawnUnit } from "@/entities/archetypes";
 import { EnemyAI } from "@/components/control";
 import { game } from "@/game/context";
 import { CollisionGrid } from "@/world/collision";
@@ -160,6 +160,24 @@ describe("burst fire: one shot per #animframe crossing (animation-driven attack)
       shots += game.entities.filter((e) => e.type === "bullet").length - before;
     }
     expect(shots).toBe(3); // crossBow [2,4,6] -> 3 bullets per attack, not 1
+  });
+
+  it("a MAGIC caster fires on strip completion (#animframe #none) — casters must still attack", () => {
+    // the bug: with a REAL multi-frame release strip the attack is animation-driven, but magic's #animframe
+    // is #none (empty crossing list), so the strip would loop and leave attack mode WITHOUT ever firing.
+    game.grid = new CollisionGrid(60, 60, 32); game.entities = [];
+    game.assets = { index: { anims: {
+      mageOrc_release: { delay: 1, frames: Array.from({ length: 4 }, () => ({ dela: 1 })) }, // real strip -> attackAnimates
+      mageOrc_stand: { delay: 1, frames: [{}] },
+    } }, img: () => null } as any;
+    game.teamMaster.reset(); game.armyMaster.reset(); game.teamMaster.unitMap.configure(32, 0, 0);
+    game.spawnEnemy = spawnEnemy; game.spawnUnit = spawnUnit; game.spawnAlly = spawnAlly; // summoner needs these
+    const player = spawnPlayer(400, 400); game.player = player; game.entities.push(player);
+    const mage = spawnEnemy("mageOrc", 540, 400); game.entities.push(mage);
+    const n0 = game.entities.length;
+    let summoned = false;
+    for (let t = 0; t < 80 && !summoned; t++) { rebuildCombatSubstrate(); mage.send("update"); summoned = game.entities.length > n0; }
+    expect(summoned).toBe(true); // the caster summoned (fired on release-strip completion), not nothing
   });
 });
 
