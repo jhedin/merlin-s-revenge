@@ -50,9 +50,14 @@ export class PlayerControl extends Component {
   // every other spell it equals the deterministic chargeMaxOf (the wobble branch needs randomSummon).
   private chargeCeil = 0;
   private releaseT = 0;
-  private meleeT = 0;
+  private meleeT = 0;          // in-swing window (in-melee flag + safety budget); the strip is the real clock
   private aimLeft = false;
   private usingSword = false; // most-recent melee swing used #merlinSword (anim/sound)
+  // animation-driven swing state (mirrors CpuAI): the hit fires per #animframe crossing of the swing strip.
+  private swingFrames: number[] = [];   // the melee weapon's #animframe firing frames (1-based)
+  private swingAnimates = false;        // the swing strip has >1 frame, so the animation drives the hit
+  private swingFired = false;           // a hit landed this swing (non-animating fallback guard)
+  private swingAttack: AttackData | null = null; // the committed melee weapon for the in-progress swing
   // I7 GMG (modGoldenMachineGun): a MODE (not a weapon) modifying the current magic weapon's charge.
   private gmgCollected_ = false; // pGmgCollected — found at least once (the toggle is inert until then)
   private gmgOn = false;         // pGmgOn — the live on/off state (the cosmetic gmgMaster HUD flag)
@@ -141,8 +146,9 @@ export class PlayerControl extends Component {
   levelUp(next: NextFn): void { this.strength += this.strengthInc; next(); }
 
   update(next: NextFn): void {
+    const m = this.entity.get(Movement);
     if (this.releaseT > 0) this.releaseT--;
-    if (this.meleeT > 0) this.meleeT--;
+    if (this.meleeT > 0) this.driveSwing(m); // animation-driven swing: fire per #animframe crossing, end on loop
     // I8: tick any in-flight bullet stream (modFireBullets) regardless of input/death — it owns its
     // own residual charge and drains independently once released.
     if (this.stream) this.tickStream();
@@ -162,7 +168,6 @@ export class PlayerControl extends Component {
     // can damage Merlin every cooldown-gated swing). The white flash (modFlasher) still plays for feedback.
 
     const input = game.input;
-    const m = this.entity.get(Movement);
     const mv = input.moveVector();
     m.intentX = mv.x; m.intentY = mv.y;
 
@@ -240,10 +245,10 @@ export class PlayerControl extends Component {
       else if (this.spell) { this.spell.get(SpellActor).discard(); this.spell = null; } // no weapon -> drop the orb
       this.charging = false; this.charge = 0;
     } else if (melee && primary) {
-      // objAiPlayer.interpretMouse: a swing fires ONLY while the fire button is held (#pressed ->
-      // playerAttackCharge -> attack; #notPressed does nothing). So melee is click/hold-to-attack — it
-      // autofires on cooldown WHILE held (into empty air, target-independent), and stops when you release.
-      this.tryMelee(melee, m, wm);
+      // objAiPlayer.interpretMouse: a swing STARTS only while the fire button is held (#pressed ->
+      // playerAttackCharge -> attack; #notPressed does nothing). Click/hold-to-attack — a new swing begins
+      // on cooldown while held; an in-progress swing is driven (and its hits fired) by driveSwing above.
+      this.tryStartSwing(melee, m, wm);
     }
     next();
   }
@@ -333,30 +338,52 @@ export class PlayerControl extends Component {
     return anim.frames.reduce((s, f) => s + Math.max(1, f.dela ?? anim.delay ?? 1), 0);
   }
 
-  private tryMelee(attack: AttackData, m: Movement, wm: WeaponManager): void {
-    if (this.meleeT > 0) return;                                  // a swing is still animating — no re-hit
-    if (!wm.cooldownFinFor(attack.name)) return;                 // per-weapon cooldown counter gate
-    // objAiPlayer: "#melee and #ranged will autofire" — the player swings on cooldown UNCONDITIONALLY
-    // (objAiAttack.attack/attackMelee gate only on getCooldownFin, never on a target/reach). The swing
-    // animates + sounds into empty air; `reach` is only the damage AREA, so impactMeleeAttack just whiffs
-    // when nothing's there. (Was wrongly target+reach-gated, so Merlin wouldn't punch unless next to a foe.)
-    m.facingLeft = this.aimLeft;                                 // swing toward the aim
-    // performMeleeAttack -> teamMaster.impactMeleeAttack: area resolution. A swing knocks back EVERY
-    // hostile (role #hits) within reach, each via A1's aimed-vector takeHit. Damage = power·strength·SCALE
-    // carried as the vector L1, times damageMultiplier as `mult` (now data-driven from the weapon).
-    // J2 #magicMelee (energyPunch): calcCollisionVectMelee adds a mana term — power·(strength +
-    // 1.5·manaCapacity)/1.5 — so a magic punch scales with mana. #naturalMelee/#weaponMelee (punch/sword)
-    // use plain strength (unchanged, no room-1 regression).
+  // START a swing (objAiAttack.attack: gate on cooldown, lock facing, restart strip, reset cooldown — the HIT
+  // is NOT applied here, it fires per #animframe crossing in driveSwing). objAiPlayer: melee autofires on
+  // cooldown UNCONDITIONALLY (no target/reach gate) — the swing animates + sounds into empty air; `reach` is
+  // only the damage AREA, so a whiff hits nobody. Facing is locked at entry and HELD for the whole swing.
+  private tryStartSwing(attack: AttackData, m: Movement, wm: WeaponManager): void {
+    if (this.meleeT > 0 || !wm.cooldownFinFor(attack.name)) return;
+    m.facingLeft = this.aimLeft;                                 // facing locked for the whole swing
+    this.usingSword = attack.type === "melee" && attack.animType === "#weaponMelee";
+    this.swingAttack = attack;
+    this.swingFrames = attack.animFrame ?? [];
+    this.swingFired = false;
+    const action = this.usingSword ? "weaponMelee" : "naturalMelee";
+    const strip = game.assets.index.anims[`mer_${action}`];
+    this.swingAnimates = !!strip && strip.frames.length > 1;
+    this.meleeT = this.swingTicks(attack) + 2;                   // window + safety (the strip is the real clock)
+    this.entity.tryGet(Anim)?.restart();                        // play the swing from frame 0
+    wm.resetCooldownFor(attack.name);                           // cooldown recovers DURING the swing
+    game.audio?.play(this.usingSword ? "skeleton_fire" : "wizard_punch"); // #attack.sound: merlinSword / #punch
+  }
+
+  // drive an in-progress swing each tick: fire the hit on each FRESH #animframe crossing of the swing strip,
+  // and end the swing when the strip completes (looped). The player may keep moving during the swing.
+  private driveSwing(m: Movement): void {
+    const an = this.entity.tryGet(Anim);
+    if (this.swingAnimates && an) {
+      if (an.frameFresh() && this.swingFrames.includes(an.attackFrame())) this.performMeleeHit(m);
+      if (an.looped()) { this.meleeT = 0; return; }
+    }
+    if (--this.meleeT <= 0) {                                    // safety / non-animating strip: fire once
+      if (!this.swingFired) this.performMeleeHit(m);
+      this.meleeT = 0;
+    }
+  }
+
+  // performMeleeHit (performMeleeAttack -> teamMaster.impactMeleeAttack): the AREA hit, dispatched once per
+  // #animframe crossing. J2 #magicMelee (energyPunch) adds a mana term to the strength; #naturalMelee/
+  // #weaponMelee use plain strength.
+  private performMeleeHit(_m: Movement): void {
+    const attack = this.swingAttack;
+    if (!attack) return;
+    this.swingFired = true;
     const effStrength = attack.animType === "#magicMelee"
       ? (this.strength + 1.5 * this.entity.get(Mana).capacity) / 1.5
       : this.strength;
     const base = meleeBasePower(attack, effStrength);
     game.teamMaster.impactMeleeAttack(this.entity, meleeHitFn(this.entity, this.entity.id, base, attack.damageMultiplier));
-    wm.resetCooldownFor(attack.name);
-    this.meleeT = this.swingTicks(attack); // hold the swing for its full animation (gates the next hit)
-    this.usingSword = attack.type === "melee" && attack.animType === "#weaponMelee";
-    this.entity.tryGet(Anim)?.restart(); // replay the swing strip from frame 0 (don't freeze on the last)
-    game.audio?.play(this.usingSword ? "skeleton_fire" : "wizard_punch"); // #attack.sound: merlinSword / #punch
   }
 
   // action override for modAnimSet: melee / release / charge strips take priority over walk/stand
