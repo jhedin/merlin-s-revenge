@@ -83,8 +83,11 @@ export class Dwelling extends Component {
     const spawn = game.spawnUnit ?? game.spawnEnemy;
     if (!spawn || !this.group) return;
     const m = this.entity.get(Movement);
-    const a = game.rng.next() * Math.PI * 2, r = 20 + game.rng.next() * 16;
-    const e = spawn(this.group.typ, m.x + Math.cos(a) * r, m.y + Math.sin(a) * r, { animChar: spriteCharOr(this.group.typ) });
+    // modResidents.releaseResident: params.startLoc = me.getLoc(), useOffset = FALSE — a resident spawns AT
+    // the dwelling's reg point, not a random ring offset (the old offset could land it outside the room /
+    // in a wall, stranding an unkillable enemy, and just looked wrong — far from the spawner). It then walks
+    // out on its own AI. The dwelling's loc is always a valid in-bounds spot.
+    const e = spawn(this.group.typ, m.x, m.y, { animChar: spriteCharOr(this.group.typ) });
     // modResidents.releaseResident: setStartingLevel(random(getExperienceLevel)) uses the dwelling's level
     // BEFORE this release. random(level) = 1..level for level>0 (Lingo random(n) ∈ 1..n); 0 when level 0.
     // A fresh (level-0) dwelling fields its first resident unleveled; later residents escalate as the

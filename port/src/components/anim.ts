@@ -11,9 +11,15 @@ import { ColourTransform } from "./colourTransform";
 import { game } from "../game/context";
 import type { Sprite } from "../render/renderer";
 
-// A few actors carry no bundled art of their own (e.g. goblinHero inherits #CPUCharacter with no
-// #character); map them to the closest kin sprite instead of the generic blackOrc stand-in.
-const CHAR_ALIAS: Record<string, string> = { goblinHero: "goblinWarrior" };
+// A few actors carry no bundled art of their own (#inherit:CPUCharacter, no #character, and no extracted
+// sprite — e.g. the dwelling residents goblinArcher / swordNinja / skeletonWarrior and the friendly goblin
+// variants). Map them to their closest bundled KIN sprite so a goblin/skeleton/ninja spawner produces the
+// right FAMILY, not the generic blackOrc stand-in ("wrong enemies" from spawners).
+const CHAR_ALIAS: Record<string, string> = {
+  goblinHero: "goblinWarrior",
+  goblinArcher: "goblinWarrior", friendlyGoblinWarrior: "goblinWarrior", friendlyGoblinArcher: "goblinWarrior",
+  friendlyGoblinMage: "goblinMage", skeletonWarrior: "skeletonArcher", swordNinja: "ninja",
+};
 
 /** The sprite character for an actor, or a stand-in ("blackOrc") when its anims aren't bundled. */
 export function spriteCharOr(name: string, fallback = "blackOrc"): string {
