@@ -154,14 +154,11 @@ export class PlayerControl extends Component {
       return next();
     }
 
-    // objAiPlayer.update interprets keys ONLY in #playerControl/#attack/#freeze/#release — never in
-    // #dazed. A hit drives characterModeChanged(#reel/#die) -> goMode(#dazed), so during the reel the
-    // player can't move or act, only slide from the knockback. Mirror that: freeze intent + skip input
-    // for the reel window (isHurt). The 18-frame i-frames outlast the 6-frame reel, so it can't chain-lock.
-    if (this.entity.send("isHurt")) {
-      const m = this.entity.get(Movement); m.intentX = m.intentY = 0;
-      return next();
-    }
+    // objPlayerMerlinCharacter.takeHit OVERRIDES modReel: after the hit it immediately goMode(#walk), so
+    // Merlin NEVER reels/dazes — he takes the damage (and the knockback slide) but keeps FULL control the
+    // same frame (unlike a CPU unit, which goes #dazed). And modInvince grants i-frames only from PICKUPS,
+    // never from a hit — so there is no post-hit input-lock and no hit-invincibility here (faithful: a swarm
+    // can damage Merlin every cooldown-gated swing). The white flash (modFlasher) still plays for feedback.
 
     const input = game.input;
     const m = this.entity.get(Movement);

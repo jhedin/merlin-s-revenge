@@ -136,7 +136,9 @@ export function spawnPlayer(x: number, y: number): Entity {
     energyRecoverDelay: num(d, "energyRecoverDelay", 30),
     team: "#aldevar", teamRole: "#teamMembers", animChar: "mer", box: 12,
     stretchDeath: d["stretchDeath"] === true, // act_player #stretchDeath: magical stretch+fade death (modStretchDeath)
-    invince: 18, // brief i-frames so overlapping enemies can't chain-kill
+    // NO post-hit i-frames: modInvince fires only on a PICKUP collect (startTempInvince), never from a hit,
+    // and objPlayerMerlinCharacter.takeHit cancels the reel (goMode #walk). So Merlin takes every cooldown-
+    // gated swing in full — faithful (was invince:18, a port-invented anti-chain-kill cushion).
     // act_player #punch targeting: auto-aim/melee at enemies (#aldevar.hates), reach = punch reach.
     targetAllegiance: "#enemy", targetCriteria: "#closestDistance",
     targetRoles: [["#teamMembers", "#teamBuildings"]],

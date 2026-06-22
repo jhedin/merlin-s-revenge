@@ -15,19 +15,19 @@ describe("Hurt feedback (flash + i-frames)", () => {
       mousePressed: () => false, mouseReleased: () => false, held: () => false, pressed: () => false, endTick() {} } as any;
   });
 
-  it("player i-frames let the landing hit through but block immediate follow-ups", () => {
+  it("the player has NO post-hit i-frames — consecutive hits all land (modInvince is pickup-only)", () => {
     const p = spawnPlayer(100, 100); game.player = p; game.entities = [p];
     const en = p.get(Energy); const hp0 = en.energy;
     p.send("takeHit", 20, 0, -1);
     expect(en.energy).toBe(hp0 - 20);     // first hit lands
+    expect(p.send("isInvince")).toBe(false); // no hit-invincibility (faithful: objPlayerMerlinCharacter)
+    p.send("takeHit", 20, 0, -1);
+    expect(en.energy).toBe(hp0 - 40);     // immediate follow-up ALSO lands (no i-frame block)
+    // a PICKUP collect still grants temp-invince (modInvince.startTempInvince) — that path is unchanged.
+    p.send("grantInvince", 200);
     expect(p.send("isInvince")).toBe(true);
-    expect(p.send("isHurt")).toBe(true);
     p.send("takeHit", 20, 0, -1);
-    expect(en.energy).toBe(hp0 - 20);     // blocked by i-frames
-    for (let i = 0; i < 18; i++) p.send("update"); // i-frames decay
-    expect(p.send("isInvince")).toBe(false);
-    p.send("takeHit", 20, 0, -1);
-    expect(en.energy).toBe(hp0 - 40);     // takes damage again
+    expect(en.energy).toBe(hp0 - 40);     // blocked by the PICKUP invince
   });
 
   it("enemies flash but have no i-frames (take continuous damage)", () => {
