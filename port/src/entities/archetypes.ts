@@ -3,7 +3,7 @@
 
 import { Archetype, type Entity, makeEntityId } from "../engine/dispatch";
 import { Movement } from "../components/movement";
-import { Anim } from "../components/anim";
+import { Anim, spriteCharOr } from "../components/anim";
 import { Energy, Team, Targeting } from "../components/combat";
 import { Experience } from "../components/experience";
 import { Freeze } from "../components/freeze";
@@ -321,7 +321,8 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     // (#teamBuildings) so attackers with a building-priority targetRoles tier hunt them. Was hardcoded
     // #teamMembers, dropping the data role (dwarfTower/garTower spawned as members → mis-targeted).
     team: str("team", "#monsters"), teamRole: str("teamRole", "#teamMembers"),
-    animChar: opts.animChar ?? actorName, box: 14,
+    animChar: opts.animChar ?? spriteCharOr(actorName), box: 14, // resolve the faithful #name sprite (dragon, gar, skw…) not the raw key
+
     stretchDeath: d["stretchDeath"] === true, // greyGhost #stretchDeath: magical stretch+fade death (modStretchDeath)
     graveOn: d["graveOn"] !== false, // modGrave: #graveOn:false (sumo/skelitonLord/Upper/orc+undeadInvasion) → vanish, no grave
 
