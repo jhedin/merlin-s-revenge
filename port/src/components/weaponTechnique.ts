@@ -3,7 +3,7 @@
 // ±frameValue (100) of cache is SPENT — positive → frameAdvance (skip an attack-anim frame → the strip
 // plays faster), negative → frameExtendDelay (hold a frame → slower). The remainder persists across
 // cycles (only init zeroes it), so a high-technique unit's attack anim keeps speeding up the longer it
-// attacks. On #levelUp, technique += inc (2). Data: ninja/shrouder = 20 (fast), kongFuChicken = 200
+// attacks. On #levelUp, technique += inc (2). Data: ninja/shrouder = 20 (fast), sumo = 200
 // (very fast), bowOrc/archer = negative (slow); default 0 → the loop never triggers (no anim change).
 //
 // PORT WIRING: the original gates accumulation on a per-frame counter (pAdditionalFramesCounter, tim[2]
