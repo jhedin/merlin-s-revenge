@@ -422,8 +422,13 @@ export class CpuAI extends Component {
   private static readonly RETARGET = 30;
   private noTargetCtr = 0;                  // frames with no target (leaveWhenFinished retire grace)
   private static readonly LEAVE_GRACE = 60; // ~2s of no targets before a leaveWhenFinished ally retires
-  private attackT = 0;                       // #attack-mode window (drives modWeaponTechnique accumulation)
+  private attackT = 0;                       // #attack-mode window (in-attack flag + safety budget)
   private static readonly ATTACK_FRAMES = 6;
+  // animation-driven attack state (objAiAttack): the hit fires per #animframe crossing while the strip plays.
+  private committedTarget: Entity | null = null; // re-aimed each shot (ranged burst tracks a moving target)
+  private attackFrames: number[] = [];           // the weapon's #animframe firing frames (1-based)
+  private attackFired = false;                    // did at least one shot land this attack (fallback guard)
+  private attackAnimates = false;                 // the attack strip has >1 frame, so the animation drives it
   private path = new PathFinding();          // K3 modPathFinding (beeline→scenic)
   // K5 ghost FSM
   private ghostMode: GhostMode = "findTarget";
@@ -549,9 +554,9 @@ export class CpuAI extends Component {
   update(next: NextFn): void {
     const m = this.entity.get(Movement);
     if (this.entity.send("isDead")) { this.idle(m); return next(); }
-    // objAiCPU #attack mode: while the attack animation plays the unit is STATIONARY (it doesn't pursue) —
-    // the attack window also enforces a minimum cadence so attacks can't free-run faster than the swing.
-    if (this.attackT > 0) { this.attackT--; this.idle(m); return next(); }
+    // objAiCPU #attack mode: STATIONARY while the attack strip plays; the hit fires per #animframe crossing
+    // and the mode ends when the strip completes (the animation is the clock — updateAttack).
+    if (this.attackT > 0) { this.updateAttack(m); return next(); }
     if (this.builder) { this.updateBuilder(m); return next(); }
     if (this.ghost) { this.updateGhost(m); return next(); }
     switch (this.mode) {
@@ -655,9 +660,50 @@ export class CpuAI extends Component {
 
   private idle(m: Movement): void { m.intentX = 0; m.intentY = 0; }
 
-  private attack(m: Movement, dx: number, dy: number, target: Entity): void {
+  // attack (objAiAttack.attack): ENTER #attack mode — gate on cooldown, lock facing once, restart the attack
+  // strip, reset the cooldown. The HIT is NOT fired here; it's driven by the animation reaching the weapon's
+  // #animframe frames (performAttack, dispatched from updateAttack). Cooldown gates ENTRY, not the hit.
+  private attack(m: Movement, dx: number, dy: number, _target: Entity): void {
     const wm = this.entity.get(WeaponManager);
     if (!wm.getCooldownFin()) return;
+    m.facingLeft = dx < 0;                       // facing locked for the whole swing
+    this.committedTarget = _target;
+    this.attackFrames = wm.getCurrentAttack()?.animFrame ?? [];
+    this.attackFired = false;
+    const an = this.entity.tryGet(Anim);
+    an?.restart();
+    // will the ATTACK strip animate (>1 frame)? check it directly — Anim's current action is still walk/stand
+    // here (it only switches to the attack strip in Anim.update, after this), so an.canAnimate() would be wrong.
+    const strip = an ? game.assets.index.anims[`${an.char}_${this.attackAction()}`] : undefined;
+    this.attackAnimates = !!strip && strip.frames.length > 1;
+    this.attackT = Math.max(CpuAI.ATTACK_FRAMES, this.attackAnimTicks(this.attackAction()) + 2); // window + safety
+    if (this.atkSound) game.audio?.play(this.atkSound, 0.5); // #attack.sound (quieter than player)
+    wm.resetCooldown();                          // cooldown recovers DURING the attack; gates the NEXT entry
+  }
+
+  // updateAttack (objAiAttack.updateAttack): each tick in #attack mode, fire one shot/hit per FRESH #animframe
+  // crossing of the strip, and leave the mode when the strip completes (getLooped). The unit is stationary.
+  private updateAttack(m: Movement): void {
+    this.idle(m);
+    const an = this.entity.tryGet(Anim);
+    if (this.attackAnimates && an) {
+      if (an.frameFresh() && this.attackFrames.includes(an.attackFrame())) this.performAttack(m);
+      if (an.looped()) { this.attackT = 0; this.attackFin(m); return; }
+    }
+    if (--this.attackT <= 0) {                   // safety / non-animating strip: fire once, then leave
+      if (!this.attackFired) this.performAttack(m);
+      this.attackT = 0; this.attackFin(m);
+    }
+  }
+
+  // performAttack (objAiAttack.performAttack): the actual hit/shot, dispatched once per #animframe crossing.
+  // Re-aims at the live committed target each call so a ranged burst tracks a mover; melee keeps the entry facing.
+  private performAttack(m: Movement): void {
+    this.attackFired = true;
+    const wm = this.entity.get(WeaponManager);
+    const t = this.committedTarget;
+    let dx = m.facingLeft ? -100 : 100, dy = 0;
+    if (t && !t.send("isDead")) { const tp = t.send("getPos") as { x: number; y: number }; dx = tp.x - m.x; dy = tp.y - m.y; }
     if (this.ranged) {
       const team = this.entity.send("getTeam") as string;
       // #firingType (modAttack performRangedAttack): the THROW velocity. #proportional (the structMaster
@@ -760,14 +806,6 @@ export class CpuAI extends Component {
       const mult = ca ? ca.damageMultiplier : 1;
       game.teamMaster.impactMeleeAttack(this.entity, meleeHitFn(this.entity, this.entity.id, base, mult));
     }
-    m.facingLeft = dx < 0;
-    // hold the #attack window for the full attack strip (>= the technique window) so the whole animation
-    // plays instead of being cut to 6 frames; drives both the attack anim and modWeaponTechnique.
-    this.attackT = Math.max(CpuAI.ATTACK_FRAMES, this.attackAnimTicks(this.attackAction()));
-    this.entity.tryGet(Anim)?.restart(); // replay the attack strip from frame 0 each attack (ensureMode)
-    if (this.atkSound) game.audio?.play(this.atkSound, 0.5); // #attack.sound (quieter than player)
-    wm.resetCooldown(); // restart this weapon's cooldown counter
-    this.attackFin(m); // re-acquire / kite
   }
 
   // ── K4 bullet-dodge optimumPosition (objAiCPUSpellCaster.updateMoveToOptimumPosition) ────────────

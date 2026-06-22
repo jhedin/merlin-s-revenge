@@ -75,8 +75,9 @@ describe("CpuAI committed-target FSM", () => {
 
   it("attackFin: after a strike it re-acquires (clear + refresh)", () => {
     const { orc, t } = setup([320, 200], [330, 200]); // adjacent -> in melee reach
-    rebuildCombatSubstrate(); orc.send("update");        // tick 1: findTarget -> commit -> moveToAttack
-    rebuildCombatSubstrate(); orc.send("update");        // tick 2: in reach -> attack -> attackFin re-acquires
+    // animation-driven attack: enter #attack mode in reach, the hit fires during the attack window (no anim
+    // strip here -> fires once on the window's fallback), then attackFin re-acquires. Run through the window.
+    for (let i = 0; i < 14; i++) { rebuildCombatSubstrate(); orc.send("update"); }
     const hp = (t.get(Energy) as any).energy as number;
     expect(hp).toBeLessThan(200);                        // area melee landed on the player
     expect(orc.send("getAiTarget")).toBe(t);             // attackFin re-committed the same (only) hostile

@@ -47,6 +47,12 @@ export class Anim extends Component {
   private action = "stand";
   private frame = 0;
   private timer = 0;
+  // objAnimStrip frame-event latches (set per Anim.update, read by the animation-driven attack drivers):
+  // justAdvanced = the strip advanced a frame THIS tick (getFrameFresh); justLooped = it wrapped / a one-shot
+  // reached its last frame THIS tick (getLooped). So a #animframe hit fires once per frame, and the attack
+  // window ends exactly when the strip completes — the animation is the clock.
+  private justAdvanced = false;
+  private justLooped = false;
   private extraDelay = 0;   // modWeaponTechnique.frameExtendDelay: extra frames added to the current frame's delay
   // modStretchDeath (act_player #stretchDeath): a magical death — the body stretches vertically + fades to
   // transparent over STRETCH_DURATION frames instead of switching to a grave, then resolves (gameOver).
@@ -72,7 +78,17 @@ export class Anim extends Component {
   // restart the current action strip from frame 0 (ensureMode re-entry): a NEW attack/swing replays its
   // one-shot strip even though the action STRING is unchanged across consecutive swings — without this the
   // strip plays once then holds its last frame for every following swing (the "stuck on the last frame" bug).
-  restart(): void { this.frame = 0; this.timer = 0; this.extraDelay = 0; }
+  restart(): void { this.frame = 0; this.timer = 0; this.extraDelay = 0; this.justAdvanced = false; this.justLooped = false; }
+
+  // ── objAnimStrip frame state, for the animation-driven attack drivers (control.ts) ──────────────
+  /** getFrame: current 1-based frame index of the active strip (Lingo #animframe values are 1-based). */
+  attackFrame(): number { return this.frame + 1; }
+  /** getFrameFresh: true only on the tick the strip just advanced a frame (a #animframe fires once). */
+  frameFresh(): boolean { return this.justAdvanced; }
+  /** getLooped: true on the tick the strip wrapped / a one-shot reached its last frame (attack complete). */
+  looped(): boolean { return this.justLooped; }
+  /** the active strip has >1 frame and so can drive frame-events; a 0/1-frame strip can't (caller falls back). */
+  canAnimate(): boolean { const a = this.animFor(this.action); return !!a && a.frames.length > 1; }
 
   // frameAdvance (modWeaponTechnique.skipFramesForWeaponTechnique → me.big.frameAdvance): step the strip
   // one frame early (faster attack cadence). Wraps for looped strips, clamps for one-shots; resets the
@@ -104,6 +120,7 @@ export class Anim extends Component {
   }
 
   update(next: NextFn): void {
+    this.justAdvanced = false; this.justLooped = false; // frame-event latches, set only on an advance this tick
     // modStretchDeath transform progress: advance while the stretch-death unit is dead; reset on revive
     // (extra-life respawn in place) so the next death stretches from scratch.
     if (this.stretchDeath) {
@@ -125,9 +142,16 @@ export class Anim extends Component {
       this.timer += game.gameSpeed;
       if (this.timer >= frameDelay) {
         this.timer = 0; this.extraDelay = 0; // the held-extra is spent once this frame finally advances
+        const prev = this.frame, last = anim.frames.length - 1, looped = this.isLooped(action, anim);
         // cyclic strips wrap; one-shot strips advance to the last frame and hold (data-driven loop flag)
-        if (this.isLooped(action, anim)) this.frame = (this.frame + 1) % anim.frames.length;
-        else this.frame = Math.min(this.frame + 1, anim.frames.length - 1);
+        if (looped) this.frame = (this.frame + 1) % anim.frames.length;
+        else this.frame = Math.min(this.frame + 1, last);
+        if (this.frame !== prev) {
+          this.justAdvanced = true;
+          // getLooped: the strip completed a play THIS tick — a looped strip wrapping to 0, or a one-shot
+          // reaching its last frame (the original exits #attack mode on this event via attackFin).
+          if (looped ? this.frame === 0 : this.frame === last) this.justLooped = true;
+        }
       }
     }
     next();
