@@ -154,4 +154,16 @@ describe("player melee autofire (objAiPlayer: #melee/#ranged autofire on cooldow
     for (let t = 0; t < 40 && !swung; t++) { player.send("update"); swung = player.send("animAction") === "naturalMelee"; }
     expect(swung).toBe(true); // auto-swing happened with nothing in reach
   });
+
+  it("the player does NOT swing when the fire button is NOT held (click/hold-to-attack)", () => {
+    game.grid = new CollisionGrid(40, 40, 32); game.entities = [];
+    game.assets = { index: { anims: {} }, img: () => null } as any;
+    game.teamMaster.reset(); game.armyMaster.reset(); game.teamMaster.unitMap.configure(32, 0, 0);
+    game.input = { moveVector: () => ({ x: 0, y: 0 }), cursor: () => ({ x: 400, y: 200 }), mouseDown: () => false,
+      mousePressed: () => false, mouseReleased: () => false, held: () => false, pressed: () => false, endTick() {} } as any;
+    const player = spawnPlayer(200, 200); game.player = player; game.entities.push(player);
+    let swung = false;
+    for (let t = 0; t < 40 && !swung; t++) { player.send("update"); swung = player.send("animAction") === "naturalMelee"; }
+    expect(swung).toBe(false); // fire not held -> no swing (objAiPlayer.interpretMouse #notPressed: nothing)
+  });
 });

@@ -25,6 +25,10 @@ await p.evaluate(`(() => {
   if (sword) { const q = sword.send("getPos"); m.x = q.x; m.y = q.y; } // walk onto it -> equip
 })()`);
 await p.waitForTimeout(120); // let the pickup collect
+// melee is click/hold-to-attack (objAiPlayer.interpretMouse) — HOLD fire over the canvas so the punch
+// autofires on its cooldown while the bot teleports adjacent to each foe.
+await p.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+await p.mouse.down();
 for (let i = 0; i < 200; i++) { // melee is slower than magic + dwellings release waves
   const foe = await p.evaluate(`(() => {
     const g = window.__game; const m = g.player.comps.find(c=>"x"in c);
@@ -35,8 +39,9 @@ for (let i = 0; i < 200; i++) { // melee is slower than magic + dwellings releas
     return { x: best.x, y: best.y };
   })()`) as { x: number; y: number } | null;
   if (!foe) break;
-  await p.waitForTimeout(160); // hold position; auto-punch fires on its cooldown
+  await p.waitForTimeout(160); // hold position; the punch fires on its cooldown while fire is held
 }
+await p.mouse.up();
 
 await p.waitForTimeout(120); // let a frame render the now-cleared room (exit arrows included)
 const res = await p.evaluate(`(() => { const r = window.__rooms(); const g = window.__game; return {

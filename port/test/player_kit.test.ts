@@ -88,14 +88,14 @@ describe("Merlin's charged-magic + punch kit", () => {
     expect(foe.get(Energy).energy).toBeLessThan(hp0);
   });
 
-  it("auto-punches an adjacent enemy when not casting", () => {
-    game.input = fakeInput({ mouseDown: false, cursor: null }) as any;
+  it("punches an adjacent enemy while the fire button is HELD (no magic weapon -> melee)", () => {
+    game.input = fakeInput({ mouseDown: true, cursor: null }) as any; // hold fire (click-to-attack)
     const p = spawnPlayer(100, 100);
     const foe = spawnEnemy("swordOrc", 110, 100, { animChar: "swordOrc" }); // hostile, within punch reach
     game.entities = [p, foe];
     const hp0 = foe.get(Energy).energy;
     rebuildCombatSubstrate(); // roster + unit map (auto-aim + area melee both read teamMaster now)
-    p.send("update"); // melee fires on the first eligible tick
+    p.send("update"); // melee fires on the first eligible tick while fire is held
     expect(foe.get(Energy).energy).toBeLessThan(hp0);
   });
 

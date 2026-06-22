@@ -238,8 +238,11 @@ export class PlayerControl extends Component {
       if (magic) this.castMagic(magic, m, aim, wm); // released or cooled down -> fire at whatever charge was held
       else if (this.spell) { this.spell.get(SpellActor).discard(); this.spell = null; } // no weapon -> drop the orb
       this.charging = false; this.charge = 0;
-    } else if (melee) {
-      this.tryMelee(melee, m, wm); // not casting -> auto-swing the melee weapon at anything in reach
+    } else if (melee && primary) {
+      // objAiPlayer.interpretMouse: a swing fires ONLY while the fire button is held (#pressed ->
+      // playerAttackCharge -> attack; #notPressed does nothing). So melee is click/hold-to-attack — it
+      // autofires on cooldown WHILE held (into empty air, target-independent), and stops when you release.
+      this.tryMelee(melee, m, wm);
     }
     next();
   }
