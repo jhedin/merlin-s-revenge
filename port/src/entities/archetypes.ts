@@ -300,6 +300,7 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     animChar: opts.animChar ?? actorName, box: 14,
     stretchDeath: d["stretchDeath"] === true, // greyGhost #stretchDeath: magical stretch+fade death (modStretchDeath)
     inertia: num("inertia", 0), // resists knockback (modGameObject damping); heavy orcs get shoved less
+    damageSpeed: num("damageSpeed", 5), // modEnergy #damageSpeed: wall-slam bonus threshold (was never forwarded)
     ranged, runReload, ghost, splashBullet, bulletAttack, bulletReincarnate, bulletChar,
     // K4/K5/K6/K8a AI config: bullet-dodge caster, multi-attack 2-weapon switch, builder build-loop, the
     // ghost's possess team. Defaults keep every other actor on the existing committed-target FSM.
