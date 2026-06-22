@@ -3,8 +3,9 @@ import { Archetype } from "@/engine/dispatch";
 import { Experience } from "@/components/experience";
 import { Energy } from "@/components/combat";
 import { Movement } from "@/components/movement";
-import { spawnEnemy, spawnPlayer } from "@/entities/archetypes";
+import { spawnEnemy, spawnPlayer, spawnAlly } from "@/entities/archetypes";
 import { CollisionGrid } from "@/world/collision";
+import { rebuildCombatSubstrate } from "@/systems/combatTick";
 import { game } from "@/game/context";
 
 // modExperience: cumulative XP, rising absolute threshold (L^3+L^2+prev/(L+1)+5+init), levels at 0.
@@ -12,7 +13,7 @@ describe("experience: XP + leveling (faithful curve)", () => {
   const arch = new Archetype("char", [Experience, Energy], { defaults: { isDead: false, getLevel: 0, isInvince: false, gainXp: undefined } });
 
   it("levels up on the rising cumulative threshold and does not reset XP", () => {
-    const e = arch.create(1).build({ energy: 100, energyIncPercentage: 0 }); // init threshold 10
+    const e = arch.create(1).build({ energy: 100, energyIncPercentage: 0, experienceAmountForNextLevel: 10 }); // player-like init threshold 10
     const xp = e.get(Experience);
     expect(xp.level).toBe(0);
     e.send("gainXp", 10);          // xp 10 >= 10 -> level 1; next threshold = 0+0+10/1 +5+10 = 25
@@ -24,6 +25,13 @@ describe("experience: XP + leveling (faithful curve)", () => {
     expect(xp.level).toBe(2);
   });
 
+  it("a default unit (experienceAmountForNextLevel 0, the Lingo default) levels up on its FIRST earned XP", () => {
+    const e = arch.create(10).build({ energy: 100 }); // no experienceAmountForNextLevel -> 0
+    expect(e.get(Experience).level).toBe(0);
+    e.send("gainXp", 1);                  // any XP clears the 0 threshold -> level 1 (enemies scale fast)
+    expect(e.get(Experience).level).toBe(1);
+  });
+
   it("a single big gain can grant several levels", () => {
     const e = arch.create(2).build({ energy: 100 });
     e.send("gainXp", 1000);
@@ -31,7 +39,7 @@ describe("experience: XP + leveling (faithful curve)", () => {
   });
 
   it("energy grows by energyIncPercentage of base per level (not a full heal)", () => {
-    const e = arch.create(3).build({ energy: 100, energyIncPercentage: 2 });
+    const e = arch.create(3).build({ energy: 100, energyIncPercentage: 2, experienceAmountForNextLevel: 10 });
     const en = e.get(Energy); en.energy = 50;
     e.send("gainXp", 10);          // exactly one level
     expect(en.max).toBe(102);      // +2 (2% of base 100)
@@ -57,6 +65,25 @@ describe("walk-speed grows with level (modMoveToLoc.incWalkSpeedLevel)", () => {
     game.grid = new CollisionGrid(20, 20, 32);
     game.entities = [];
     game.assets = { index: { anims: {} }, img: () => null } as any;
+  });
+
+  it("an enemy's melee strength grows per level (CpuAI.levelUp — harder hits)", () => {
+    game.teamMaster.reset(); game.teamMaster.unitMap.configure(32, 0, 0);
+    game.spawnEnemy = spawnEnemy; game.spawnAlly = spawnAlly;
+    const hitDamage = (levels: number): number => {
+      const orc = spawnEnemy("swordOrc", 100, 100, { animChar: "swordOrc" });
+      const prey = spawnAlly("warrior", 112, 100, "warrior"); // within melee reach
+      prey.get(Energy).max = 1e6; prey.get(Energy).energy = 1e6;          // survive the swing
+      game.entities = [orc, prey];
+      for (let i = 0; i < levels; i++) orc.send("levelUp");
+      rebuildCombatSubstrate();
+      const hp0 = prey.get(Energy).energy;
+      for (let i = 0; i < 40 && prey.get(Energy).energy === hp0; i++) orc.send("update");
+      return hp0 - prey.get(Energy).energy;
+    };
+    const d0 = hitDamage(0), d20 = hitDamage(20);
+    expect(d0).toBeGreaterThan(0);          // it does swing
+    expect(d20).toBeGreaterThan(d0);        // and hits harder after 20 levels
   });
 
   it("an enemy's maxSpeed rises 0.045 per level", () => {

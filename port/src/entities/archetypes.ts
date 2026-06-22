@@ -286,6 +286,7 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     // (#ghost is already passed below for the AI; Movement.init reads it for the takeHit amGhost gate)
     energy: num("energy", 40),
     strength: num("strength", 5),
+    strengthIncLevel: num("strengthIncLevel", 0.1), // melee strength growth per level (CpuAI.levelUp)
     team: str("team", "#monsters"), teamRole: "#teamMembers",
     animChar: opts.animChar ?? actorName, box: 14,
     stretchDeath: d["stretchDeath"] === true, // greyGhost #stretchDeath: magical stretch+fade death (modStretchDeath)
@@ -318,6 +319,7 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     targetReach: targetReach ?? (ranged ? 150 : 22),
     dieSound: typeof d["dieSound"] === "string" ? d["dieSound"] : undefined,  // played on death
     experienceImWorth: num("experienceImWorth", 0) || undefined,             // XP this unit grants
+    experienceAmountForNextLevel: num("experienceAmountForNextLevel", 0),    // first-level XP threshold (Lingo default 0)
     energyIncPercentage: num("energyIncPercentage", 0) || undefined,
     // objCPUCharacter overrides objCharacter's energyRecoverDelay(30) -> 300 (objCPUCharacter.txt:22): every
     // CPU/enemy/ally unit slowly regens +1 energy per 300 ticks (modEnergy.recoverEnergy) unless it sets its

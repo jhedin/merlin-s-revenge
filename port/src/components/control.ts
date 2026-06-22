@@ -375,7 +375,7 @@ type GhostMode = "findTarget" | "goToLoc";
 type BuilderMode = "lookForBuilding" | "walkToBuilding" | "build" | "fight";
 
 export class CpuAI extends Component {
-  static handles = ["update", "eventLeaveGame", "characterModeChanged", "getAiMode", "getAiTarget",
+  static handles = ["update", "levelUp", "eventLeaveGame", "characterModeChanged", "getAiMode", "getAiTarget",
     "getTargetDetails", "setAiTarget", "attackActive"];
   reach = 22;          // melee strike reach (targetInReachMelee)
   reachRanged = 150;   // ranged targetInReachRanged (GeomDist < reach)
@@ -397,6 +397,7 @@ export class CpuAI extends Component {
   unitToBuild: string[] = [];
   buildRate = 100; buildOne = true; buildDie = false; leaveWhenFinished = false;
   private strength = 5;
+  private strengthInc = 0.1; // modCharacterAttackProperties #strengthIncLevel: melee strength grows per level
 
   private mode: CpuMode = "findTarget";
   private target: Entity | null = null;
@@ -421,6 +422,7 @@ export class CpuAI extends Component {
 
   override init(cfg: Record<string, any>): void {
     this.strength = typeof cfg["strength"] === "number" ? cfg["strength"] : 5;
+    this.strengthInc = typeof cfg["strengthIncLevel"] === "number" ? cfg["strengthIncLevel"] : 0.1;
     const strPow = this.strength / 3;
     const atkPow = typeof cfg["atkPower"] === "number" ? cfg["atkPower"] : 0;
     this.power = Math.max(4, Math.round(strPow + atkPow));
@@ -455,6 +457,11 @@ export class CpuAI extends Component {
     this.mode = "findTarget"; this.target = null; this.retargetCtr = 0; this.attackT = 0; this.path.reset();
     this.ghostMode = "findTarget"; this.builderMode = "lookForBuilding"; this.building = null;
   }
+
+  // levelUp (modCharacterAttackProperties.incStrength via #levelUp): an enemy/ally CPU's melee strength grows
+  // per level, like the player's. Without this an enemy that levels (now from its first kill, threshold 0)
+  // would deal the same melee damage forever. Fans out alongside Energy/Mana/walk-speed growth.
+  levelUp(next: NextFn): any { this.strength += this.strengthInc; return next(); }
 
   // attackActive (modWeaponTechnique.update gate: getAI().getMode() == #attack): true during the brief
   // strike window after an attack fires — when the attack anim plays and technique accumulates.

@@ -14,13 +14,13 @@ export class Experience extends Component {
   level = 0;
   imWorth = 3;            // experience this unit is worth to its killer
   lastAttacker = -1;
-  private threshold = 10; // absolute XP needed to reach the next level
-  private initThreshold = 10;
+  private threshold = 0;  // absolute XP needed to reach the next level
+  private initThreshold = 0; // modExperience #experienceAmountForNextLevel default 0 (the player overrides to 10)
   private lastThreshold = 0;
 
   override init(cfg: Record<string, any>): void {
     this.xp = 0; this.level = 0; this.lastAttacker = -1;
-    this.initThreshold = typeof cfg["experienceAmountForNextLevel"] === "number" ? cfg["experienceAmountForNextLevel"] : 10;
+    this.initThreshold = typeof cfg["experienceAmountForNextLevel"] === "number" ? cfg["experienceAmountForNextLevel"] : 0;
     this.threshold = this.initThreshold; this.lastThreshold = 0;
     this.imWorth = typeof cfg["experienceImWorth"] === "number" ? cfg["experienceImWorth"] : 3;
   }
