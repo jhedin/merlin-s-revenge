@@ -279,6 +279,15 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
   const rch = atk["reach"];
   const targetReach = typeof rch === "number" ? rch
     : (rch && typeof rch === "object" && "x" in rch ? Math.hypot(rch.x, rch.y) : undefined);
+  // MELEE reach comes from the strike point, NOT #reach (objAiCPU.targetInReachMelee uses calcStrikePoint =
+  // loc + #collisionLoc; #reach gates only RANGED). So a melee weapon's standoff + damage area = |collisionLoc.x|
+  // (blackAxe 70), not the 22 default — without this a long-reach melee unit closes ~2.5x too far before swinging.
+  const isMeleeAtk = /melee/i.test(String(atk["animType"] ?? ""));
+  const clx = atk["collisionLoc"] && typeof atk["collisionLoc"] === "object"
+    ? Math.abs(Number((atk["collisionLoc"] as { x?: number }).x) || 0) : 0;
+  // clamp ONCE (to [16,90]) and feed BOTH the approach gate and the damage area the SAME value, so the
+  // unit stands where its area still reaches the target (else a short-reach melee weapon would whiff).
+  const meleeReach = isMeleeAtk && clx > 0 ? Math.max(16, Math.min(90, clx)) : undefined;
   const e = EnemyArchetype.create(makeEntityId());
   e.type = "enemy";
   e.build({
@@ -292,7 +301,7 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     passThrough: d["collisionDetection"] === false || ghost,
     constrainToArea: d["collisionDetection"] === false || ghost, // autoConstrainToPlayArea: ghosts stay on-map
     // (#ghost is already passed below for the AI; Movement.init reads it for the takeHit amGhost gate)
-    energy: num("energy", 40),
+    energy: num("energy", 100), // objCharacter.new seeds #energy=100 (was 40); actors w/o #energy inherit it
     strength: num("strength", 5),
     strengthIncLevel: num("strengthIncLevel", 0.1), // melee strength growth per level (CpuAI.levelUp)
     eyestrain: num("eyestrain", 0),                 // ranged/magic aim scatter (objAiAttack.modifyLocWithEyestrain)
@@ -318,7 +327,7 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     // real mana_* so a CPU caster charges to its true ceiling (summon tiers / charge-scaled spell power)
     mana_capacity: num("mana_capacity", 10), mana_flow: num("mana_flow", 1), mana_burst: num("mana_burst", 1),
     atkCooldown: typeof atk["cooldown"] === "number" ? atk["cooldown"] : undefined,
-    atkReach: typeof atk["reach"] === "number" ? atk["reach"] : undefined,
+    atkReach: meleeReach ?? (typeof atk["reach"] === "number" ? atk["reach"] : undefined),
     atkPower: atkPower || undefined,
     atkSound: typeof atk["sound"] === "string" ? atk["sound"] : undefined,   // #attack.sound
     // teamMaster.findTarget / impactMeleeAttack config (#attack.target*); defaults from structAttack
@@ -326,7 +335,7 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     targetCriteria: typeof atk["targetCriteria"] === "string" ? atk["targetCriteria"] : "#closestDistance",
     targetRoles: Array.isArray(atk["targetRoles"]) ? atk["targetRoles"] : [["#teamMembers", "#teamBuildings"]],
     hits: Array.isArray(atk["hits"]) ? atk["hits"] : ["#teamMembers"],
-    targetReach: targetReach ?? (ranged ? 150 : 22),
+    targetReach: meleeReach ?? targetReach ?? (ranged ? 150 : 22),
     dieSound: typeof d["dieSound"] === "string" ? d["dieSound"] : undefined,  // played on death
     experienceImWorth: num("experienceImWorth", 0) || undefined,             // XP this unit grants
     experienceAmountForNextLevel: num("experienceAmountForNextLevel", 0),    // first-level XP threshold (Lingo default 0)

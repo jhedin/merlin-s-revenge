@@ -37,6 +37,9 @@ export interface AttackData {
   // The attack is animation-driven: one hit/shot per listed frame as the attack strip plays (crossBow
   // [2,4,6] = a 3-shot burst). #none -> [] (magic fires on charge/release, not a frame). 1-based (Lingo).
   animFrame: number[];
+  // #collisionLoc (point): the weapon's strike/spawn offset from the attacker. For MELEE it sets the strike
+  // POINT (calcStrikePoint = loc + collisionLoc) → the approach reach; for RANGED the bullet spawn offset.
+  collisionLoc: { x: number; y: number };
   // #firingType (structMaster default #proportional): the ranged THROW velocity model (modAttack
   // performRangedAttack). #proportional → throwVect = distToTarget/10 (always arrives in ~10 frames);
   // #fullstrength → speed = the attacker's strength (constant-speed projectile). Drives travel time.
@@ -180,13 +183,16 @@ export function resolveAttack(raw: Record<string, any> | undefined, owner?: Reco
     : typeof afRaw === "number" ? [afRaw]
     : typeof afRaw === "string" ? []
     : [numOr(d["animFrame"], 2)];
+  const cl = r["collisionLoc"] ?? d["collisionLoc"];
+  const collisionLoc = cl && typeof cl === "object" && "x" in cl
+    ? { x: Number((cl as any).x) || 0, y: Number((cl as any).y) || 0 } : { x: 0, y: 0 };
   return {
     name: strOr(r["name"], d["name"] as string),
     animType, type: typeFromAnimType(animType),
     cooldown: numOr(r["cooldown"], d["cooldown"] as number),
     powerX, powerY, powerScalar,
     damageMultiplier: numOr(r["damageMultiplier"], d["damageMultiplier"] as number),
-    reach, animFrame,
+    reach, animFrame, collisionLoc,
     hits: Array.isArray(r["hits"]) ? r["hits"] : (d["hits"] as string[]),
     sound: strOr(r["sound"], d["sound"] as string),
     bullet: strOr(r["bullet"], d["bullet"] as string),

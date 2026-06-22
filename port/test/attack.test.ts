@@ -73,10 +73,12 @@ describe("data-driven attacks (real #attack via #weapon)", () => {
     expect(ai.ranged).toBe(true);
     expect(ai.reachRanged).toBe(100); // archerBow reach
   });
-  it("warrior resolves to a melee attack with short reach", () => {
+  it("warrior resolves to a melee attack with collisionLoc-based reach", () => {
     const ai = spawnEnemy("warrior", 0, 0).get(EnemyAI);
     expect(ai.ranged).toBe(false);
-    expect(ai.reach).toBe(25); // warriorSword reach
+    // melee reach comes from the strike point (warriorSword #collisionLoc.x = 12), clamped to [16,90] — NOT
+    // the structAttack #reach default (25, which gates RANGED only). objAiCPU.targetInReachMelee.
+    expect(ai.reach).toBe(16);
   });
   it("magic reach (9999) is capped", () => {
     const ai = spawnEnemy("mageOrc", 0, 0).get(EnemyAI);
