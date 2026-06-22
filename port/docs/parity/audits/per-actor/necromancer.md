@@ -1,7 +1,10 @@
 # Behavioral Audit: act_necromancer
 
-**Method:** Full derive-from-source + reproduce-in-port (300-frame probe run).  
-**Date:** 2026-06-22
+**Method:** Full derive-from-source + reproduce-in-port. Node harness (`tools/_audit_necromancer.ts`, deleted)
+loaded the real `src/generated/assets.json` bundle, spawned the necromancer + an `#aldevar` warrior target,
+ran `rebuildCombatSubstrate()` + per-entity `update()` for 320 frames, and observed every anim action, every
+summon (type + loc), death/grave, and the static charge math.
+**Date:** 2026-06-22 (re-audit; supersedes the prior pass — its D1/D2 are corrected below)
 
 ---
 
@@ -12,192 +15,134 @@
 | Name | necromancer | act_necromancer.txt:23 |
 | objType | #objCPUCharacter | :3 |
 | AiType | #objAiCPUSpellCaster | :4 |
-| Inherit chain | #CPUCharacter → #character → #actor | :5 |
-| Team | #undead | :22 |
+| Team | #undead (hates #aldevar et al — tem_undead) | :22 |
 | Weapon | #undeadSummon | :25 |
-| animChar | necromancer | (derived from #name) |
+| animChar | necromancer | derived; `necromancer_stand` is bundled |
 
 ---
 
-## 2. Derived Correct Behavior (from originals)
+## 2. Derived Correct Behavior (from the ORIGINAL)
 
-### Stats (act_necromancer.txt + inherit chain)
-| Property | Original value | Source line |
-|---|---|---|
-| energy | 50 | :12 |
-| walkSpeed | 4 | :24 |
-| inertia | 75 | :11 |
-| damageSpeed | 4 | :10 |
-| dexterity | 1 | :11 |
-| strength | 1 | :21 |
-| mana_capacity | 26 | :15 |
-| mana_flow | 4 | :16 |
-| mana_capacityIncLevel | 1.75 | :17 |
-| mana_regeneration | 0.75 | :18 |
-| stallSpeed | 0.5 | :20 |
-| experienceImWorth | 25 | :13 |
+### Stats (act_necromancer.txt)
+energy 50 (:12), walkSpeed 4 (:24), inertia 75 (:14), damageSpeed 4 (:10), dexterity 1 (:11),
+strength 1 (:21), mana_capacity 26 (:15), mana_flow 4 (:16), mana_capacityIncLevel 1.75 (:17),
+mana_regeneration 0.75 (:18), stallSpeed 0.5 (:20), experienceImWorth 25 (:13),
+chargeOffsetSide #top (:7), chargeLoc point(0,-8) (:8).
 
-### AI Behavior (objAiCPUSpellCaster)
-- **Range**: infinite (reach 9999, `targetInReachRanged` → true from the start).
-- **FSM**: findTarget → moveToAttack (immediately enters attack since reach is met) → attack → attackFin → optimumPosition (dodgesBullets=true).
-- **Kite/dodge**: runs tangent to incoming bullets + flees enemies within 100px (pEnemySafeDistance=100, pBulletSafeDistance=100). Approaches its target when safe (runTowardsObject).
-- **runReload**: runs kite mode after each shot (spellcaster always does).
+### AI (objAiCPUSpellCaster + objAiCPU)
+- reach 9999 → always "in reach"; FSM findTarget → moveToAttack → attack(charge) → on `#spellCharged`
+  release → attackFin → optimumPosition (dodge bullets/flee enemies, pBulletSafeDistance/pEnemySafeDistance
+  = 100). runReload kite after each cast.
 
-### Weapon / Attack (act_undeadSummon.txt)
-| Property | Value | act_undeadSummon:line |
-|---|---|---|
-| animType | #magic | 9 |
-| bullet | #energyBlastBullet | 10 |
-| chargeColour | rgb(9,113,255) | 11 |
-| chargeExplodeFactor | 1 | 12 |
-| chargeSize | 2 | 13 |
-| chargeSpeed | 0.6 (capped at 0.8) | 14-17 |
-| chargeStart | 0 | 15 |
-| chargeMax | 36 (effective: min(36, 26×1+0) = 26) | 16 |
-| chargeSpeedMax | 0.8 | 17 |
-| cooldown | 25 | 19 |
-| explodeFunction | #summonUnit | 21 |
-| explodeSound | spell_explode | 22 |
-| hits | [#teamMembers] | 23 |
-| limitMagic | false | 24 |
-| randomSummon | true | 25 |
-| reach | 9999 | 41 |
-| releaseSound | spell_release | 42 |
-| residentTeamCategory | #enemies | 43 |
-| spellSpeed | 25 | 44 |
-| targetAllegiance | #enemy | 45 |
-| targetTileWhenNotBlank | true | 46 |
+### Weapon #undeadSummon (act_undeadSummon.txt:6-47)
+animType #magic, animframe **#none**, bullet #energyBlastBullet, chargeExplodeFactor 1, chargeSize 2,
+chargeSpeed 0.6 (×manaFlow, capped chargeSpeedMax 0.8), chargeStart 0, chargeMax 36, cooldown 25,
+explodeFunction **#summonUnit**, explodeSound spell_explode, hits [#teamMembers], limitMagic false,
+**randomSummon true**, power 2, payloadFunction #takeHit, reach 9999, releaseSound spell_release,
+residentTeamCategory #enemies, **spellSpeed 25**, targetAllegiance #enemy, **targetTileWhenNotBlank true**.
 
-### Multistage Summon Tiers (act_undeadSummon.txt:27-36)
-With mana_capacity=26: effective chargeMax = min(36, 26) = 26. chargeSpeed = min(0.6×4, 0.8) = 0.8/frame.
+### Charge math (modAttack.calcAttackChargeMax)
+chargeMax = min(36, capacity·chargeMaxModifier + chargeMaxBasic) = min(36, 26·1+0) = **26**. limitMagic
+false → no scaling. randomSummon wobble fires (tier2=17 < 26): `tempMax = 26·random(20)/17 + random(15);
+cm = min(26, tempMax) + random(2)-1` → per-cast ceiling ≈ **[~1.5 .. 27]** (verified samples in §3).
 
-| Tier | Unit | chargeRequired | Affordable at cap=26? |
+### Multistage tiers (act_undeadSummon.txt:27-36) — affordable at ceiling ≤27
+skeletonWarrior 15 ✓, skeletonArcher 17 ✓, skeletonThrower 20 ✓, greyGhost 25 ✓, undeadDragon 29 ✗,
+necromancer 33 ✗, darkMage 35 ✗, skelitonLord 38 ✗. → summons skeleton*/greyGhost; never the higher tiers
+(ceiling never reaches 29). Casts whose wobbled ceiling < 15 summon **nothing** (selectPayload returns none).
+
+### Release lifecycle (objAiCPU #spellCharged → objAiAttack.releaseMagic → objSpell.release)
+On full charge the spell is released toward **`calcSpellTargetLoc()`** — the target's loc, snapped to the
+**centre of the target's tile** (`targetTileWhenNotBlank:true`, objAiCPU.txt:78-100). releaseFunction defaults
+to **#release** → the orb FLIES at spellSpeed 25, explodes on arrival, and `doExplodeFunction`/`summonPayload`
+fields the unit **AT the landing loc (= near the target)**. The explosion also resolves the radial `#takeHit`
+(power 2) and the spell carries an `energyBlastBullet`. So in the original the undead appear **around the
+player**, plus a small damage pulse.
+
+### Animation strips
+The port's caster anim picks `<char>_charge` if present, else `<char>_release` (control.ts:560-564). The
+necromancer ships `necromancer_charge` (+ chargeWalk, stand, walk, grave) — so the wind-up animates on the
+`charge` strip. `necromancer_release` is **absent**, but it is **never needed** (charge is preferred).
+
+---
+
+## 3. Reproduced Behavior (320-frame harness, real bundle)
+
+```
+chargeMaxOf (no rng): 26
+chargeMaxOf wobble samples (rng): [26,26,16.1,27,27,15.6,27,27,17.3,19.6,11.2,26,13.5,11.5,27,27,...]
+STRIP COVERAGE: stand PRESENT, walk PRESENT, charge PRESENT, chargeWalk PRESENT, release MISSING, grave PRESENT
+necro resolved char: necromancer | targeting {allegiance:#enemy, reach:9999} | mana cap 26 flow 4
+actions seen: ["stand","charge","walk"]   charge strip entered: true
+frames resolving to a MISSING necromancer strip: 0 (none)
+total summons: 12 by char: {greyGhost,skeletonThrower,skeletonArcher,skeletonWarrior} (skeleton*/greyGhost only)
+summon locs: ALL at the necromancer's own loc (e.g. f16 (400,400); after it kited to (284,400) → f79 (284,400))
+after death -> action: grave | graveOn: true | grave strip present: true   reachRanged 644
+```
+
+### Confirmed faithful
+- Charges then summons; tiers wobble across skeletonWarrior..greyGhost, never undeadDragon+ (ceiling ≤27). ✓
+- Summoned units join `#undead`, type enemy, and engage the warrior. ✓
+- Every necro action (stand/walk/charge) resolves to a **real bundled strip** — 0 fallbacks; grave on death. ✓
+- AI flags: ranged true, runReload true, dodgesBullets true, reachRanged 644 (room-scaled, not the old 220);
+  necro kites away (400→284) while casting. ✓
+- mana_capacity 26, flow 4, regeneration 0.75, energy 50, walkSpeed 4 all forwarded. ✓
+
+---
+
+## 4. Divergences
+
+### D1 — Summoned units appear at the CASTER, not at the target's tile (REAL PORT BUG)
+- **Original**: `objAiCPU` releases on `#spellCharged` toward `calcSpellTargetLoc()` (objAiCPU.txt:245-248,
+  78-100) — the **target's tile centre** (`targetTileWhenNotBlank:true`). objSpell flies (spellSpeed 25,
+  releaseFunction #release) and `summonPayload` (modSpellMultistage.txt:372-377) fields the unit **at the
+  landing loc**. Undead therefore spawn **around the player**.
+- **Port**: the CPU summon branch short-circuits the flying spell:
+  `summonUnit(ca, chargeMaxOf(ca, mana, rng), m.x, m.y, this.entity.id)` — **at the caster's own loc**
+  (`port/src/components/control.ts:809-815`, comment "summon at the caster's loc"). `summonUnit`
+  (`port/src/components/summon.ts:55-85`) spawns at the passed (x,y) with no fly/landing step.
+- **Evidence**: harness — all 12 summons appeared at the necromancer's loc (f16 (400,400); after kiting to
+  (284,400), f79/f87/f130… all (284–294,400)), never near the warrior at (470,400).
+- **Impact**: gameplay — the necromancer builds its undead pile next to itself (behind its kite line) instead
+  of dropping them onto the player. The player-cast path is faithful (spellActor flies + summons at landing,
+  `spellActor.ts:117-127`); only the **CPU** path diverges.
+
+### D2 — CPU summon cast deals NO damage / fires no bolt (REAL PORT BUG, minor)
+- **Original**: the undeadSummon spell, besides summoning, explodes with a radial `#takeHit` (power 2,
+  payloadFunction #takeHit) at the landing loc and carries `#energyBlastBullet` — selectPayload keeps the
+  payload non-blank, so a summon cast also damages.
+- **Port**: the CPU branch calls ONLY `summonUnit(...)` (control.ts:809-815) — no `resolveSplash`, no bullet.
+  (The player path's `spellActor.explode` does both summon + radial damage, but the CPU path skips it.)
+- **Impact**: low — the necromancer's own offensive output is near-zero (power 2 is tiny anyway); its threat
+  is the summoned units. Documented for completeness.
+
+### D3 — `stallSpeed: 0.5` unimplemented (FAITHFUL-quirk / cosmetic — do NOT fix)
+- act_necromancer.txt:20. A min-speed anim-timing stall, not read anywhere in Movement/Anim. Pure cosmetic;
+  movement + animation are correct without it. Out of scope.
+
+### Corrections to the PRIOR audit (NOT divergences)
+- **Prior "D1: missing `necromancer_release` → falls back to stand" is FALSE.** The port prefers the
+  `necromancer_charge` strip (control.ts:560-564), which IS bundled; the harness observed 0 fallback frames.
+  No release strip is needed. Removed.
+- **Prior "D2: `mana_capacityIncLevel` not forwarded" is RESOLVED.** archetypes.ts:129/349 now forwards it
+  (necromancer's 1.75 reaches the Mana component). Removed.
+
+---
+
+## 5. Derive-vs-Reproduced
+
+| Property | Expected (original) | Reproduced (port) | Status |
 |---|---|---|---|
-| 1 | skeletonWarrior | 15 | YES |
-| 2 | skeletonArcher | 17 | YES |
-| 3 | skeletonThrower | 20 | YES |
-| 4 | greyGhost | 25 | YES |
-| 5 | undeadDragon | 29 | NO (>26) |
-| 6 | necromancer | 33 | NO |
-| 7 | darkMage | 35 | NO |
-| 8 | skelitonLord | 38 | NO |
-
-Deterministic top tier: **greyGhost** (requires 25 of 26 available). `randomSummon:true` wobbles the effective chargeMax per cast, so lower tiers (down to skeletonWarrior) occur too.
-
-### Expected Animation Strips
-The necromancer uses `#magic` animType. In modAnimSet.getAnimSym (script_objects/modAnimSet.txt:130-133), `#release` maps to `#releaseWalk` when moving.
-
-| Action | Strip name | Should exist? |
-|---|---|---|
-| Stand | necromancer_stand | YES |
-| Walk | necromancer_walk | YES |
-| Charge (building spell) | necromancer_charge | YES |
-| Charge+walk | necromancer_chargeWalk | YES |
-| **Attack (release)** | **necromancer_release** | **YES — original game uses it** |
-| **Attack+walk** | **necromancer_releaseWalk** | YES |
-| Grave/death | necromancer_grave | YES |
-
----
-
-## 3. Reproduced Behavior (300-frame probe, real bundle)
-
-**Setup**: CollisionGrid 60×60×32, player at (400,400), necromancer at (540,400). Real assets.json. `game.spawnUnit/spawnEnemy/spawnAlly` wired. 300 frames.
-
-### Confirmed Working
-- **Summoning works**: entity count grew from 2→9 in 300 frames. Units spawned: greyGhost (×5), skeletonThrower (×2). All on team `#undead`, type `enemy`. `randomSummon` tier wobble working correctly.
-- **Team correct**: spawned units are `#undead`, targeting the player enemy correctly.
-- **dodgesBullets**: AI entered `optimumPosition` mode post-attack (t=50: `aiMode=optimumPosition`). Kite behavior live.
-- **runReload**: correctly set, enters kite/reload after each cast.
-- **Spell path**: `explodeFunction=#summonUnit` → `summonUnit()` called → `spawnUnit()` used correctly. No `#armySummon` reservation gate (correct — only `#armySummon` requires a reserve; `#undeadSummon` spawns fresh).
-- **Stats resolution**: mana_capacity=26, mana_flow=4, mana_regeneration=0.75, chargeMax=36 (raw; effective=26), chargeSpeed capped at 0.8, team=#undead all correct.
-- **AI type flags**: `ranged=true`, `runReload=true`, `dodgesBullets=true`, `reachRanged=220` (capped from 9999).
-- **Energy=50**: forwarded correctly to build.
-- **Inertia=75**: forwarded correctly.
-- **walkSpeed**: 4×0.6=2.4 px/tick forwarded correctly.
-
-### DIVERGENCE 1 — MISSING `necromancer_release` ANIMATION STRIP (REAL)
-
-**What the probe showed**: `attackAnimsPlayed = ['release']` — the port's `CpuAI.attackAction()` correctly returns `"release"` for a `#magic` caster. However, `game.assets.index.anims["necromancer_release"]` does **not exist**.
-
-The Anim component's `animFor(action)` falls back to `<char>_stand` when the action strip is absent (anim.ts:160-162). So during every attack window, the necromancer shows its **stand** frames instead of a casting animation.
-
-- **Cast file reference**: modAnimSet.txt:130-133 — `#release` is a valid mode; necromancer must have a release strip. The original game runs this strip.
-- **Assets**: `necromancer_release` and `necromancer_releaseWalk` strips are absent from `assets.json`. Both `mageOrc` and `goblinMage` have these strips.
-- **Functional impact**: purely visual — the summon still fires on strip completion (the `an.looped()` fallback in `updateAttack` fires `performAttack` when `!attackFired`). But the necromancer **silently casts** (stand anim plays) instead of showing a release animation.
-- **Fix sketch**: Source and add `necromancer_release` (and optionally `necromancer_releaseWalk`) sprite strips to the assets bundle via `build_assets.ts`. The port code is correct; only the art asset is missing.
-
-### DIVERGENCE 2 — `mana_capacityIncLevel` not forwarded for enemies (MINOR / LOW IMPACT)
-
-**What the probe showed**: Mana's `capInc` defaults to `1.0` for all enemies. The necromancer's data sets `mana_capacityIncLevel: 1.75` (act_necromancer.txt:17), giving it a faster charge-ceiling growth per level than a generic CPU caster.
-
-- **Cast file reference**: act_necromancer.txt:17 — `#mana_capacityIncLevel: 1.75`
-- **Port reference**: `spawnEnemy` in archetypes.ts:326-328 passes `mana_capacity/flow/burst/regeneration` but NOT `mana_capacityIncLevel`, `mana_flowIncLevel`, etc.
-- **Functional impact**: Low — enemies only level up after kills, and in a typical playthrough a necromancer rarely gets many kills before dying. A levelled necromancer would have a lower-than-intended charge ceiling growth (1.0 instead of 1.75 per level), meaning it stays weaker at higher levels than the original.
-- **Fix sketch**: In `spawnEnemy`, add `mana_capacityIncLevel: num("mana_capacityIncLevel", 1)` to the build config (and optionally the other `*IncLevel` mana stats for completeness). The Mana component already reads `mana_capacityIncLevel` in `init` (mana.ts:26).
-
-### DIVERGENCE 3 — `stallSpeed` not implemented (COSMETIC / OUT-OF-SCOPE)
-
-**What the probe showed**: `stallSpeed: 0.5` exists in the original (act_necromancer.txt:20) but is not read or used anywhere in the port's Movement, EnemyAI, or CpuAI.
-
-- **Cast reference**: act_necromancer.txt:20 — `#stallSpeed: 0.5`
-- **Original meaning**: The minimum speed below which a character's walk animation stalls (plays slower or freezes). A cosmetic animation-timing parameter.
-- **Functional impact**: None — the necromancer moves and animates correctly without it. This is an art-quality tweak.
-- **Fix sketch**: Out of scope per plan. Could be added to Movement as a min-speed clamp on animation timing if needed later.
-
----
-
-## 4. Derive-vs-Reproduced Table
-
-| Property | Expected | Reproduced | Status |
-|---|---|---|---|
-| Team | #undead | #undead | PASS |
-| animChar | necromancer | necromancer | PASS |
-| AI type | spellcaster+dodge+kite | ranged=true, runReload=true, dodgesBullets=true | PASS |
-| Summons undead | yes, via #undeadSummon multistage | yes, greyGhost+skeletonThrower seen at t<55 | PASS |
-| Summon tiers (within cap=26) | skeletonWarrior..greyGhost | greyGhost, skeletonThrower observed | PASS |
-| randomSummon wobble | yes, tier varies | yes, varied between greyGhost and skeletonThrower | PASS |
-| Summoned team | #undead | #undead | PASS |
-| Summoned entity type | enemy | enemy | PASS |
-| energy | 50 | 50 | PASS |
-| walkSpeed | 4 (×0.6=2.4 px/tick) | 2.4 | PASS |
-| inertia | 75 | 75 | PASS |
-| mana_capacity | 26 | 26 | PASS |
-| mana_flow | 4 | 4 | PASS |
-| mana_regeneration | 0.75 | 0.75 | PASS |
-| chargeSpeed (capped) | 0.8 | 0.8 (computed at cast time) | PASS |
-| chargeMax (raw data) | 36 | 36 | PASS |
-| chargeMax (effective) | 26 | 26 | PASS |
-| cooldown (effective) | 33 frames | 33 | PASS |
-| Release strip during attack | necromancer_release | MISSING → falls back to stand | **FAIL** |
-| mana_capacityIncLevel | 1.75 | defaults to 1.0 | **FAIL (minor)** |
-| stallSpeed | 0.5 | not implemented | **FAIL (cosmetic/OOS)** |
-| kite post-attack | optimumPosition mode | aiMode=optimumPosition at t=50 | PASS |
-| dodgesBullets | true | true | PASS |
-| experienceImWorth | 25 | 25 | PASS |
-
----
-
-## 5. Divergences
-
-### D1 — Missing `necromancer_release` animation strip (REAL BUG — visual)
-- **Cast**: modAnimSet.txt:130-133 (release mode), act_necromancer.txt (animType: #magic via #undeadSummon)
-- **Port**: `CpuAI.attackAction()` returns `"release"` → `Anim.animFor("release")` → looks up `necromancer_release` → NOT FOUND → falls back to `necromancer_stand`.
-- **Effect**: Necromancer shows its **stand** sprite during every cast instead of a casting animation. Summon still fires correctly (functional fallback in `updateAttack:an.looped()`).
-- **Fix**: Add `necromancer_release` (and `necromancer_releaseWalk`) art strips to the asset bundle. The port control/animation code is already correct — the art is simply missing from `assets.json`.
-
-### D2 — `mana_capacityIncLevel` not forwarded to enemy Mana (MINOR — low gameplay impact)
-- **Cast**: act_necromancer.txt:17 `#mana_capacityIncLevel: 1.75`
-- **Port**: `spawnEnemy` (archetypes.ts:326-328) doesn't pass `mana_capacityIncLevel` to build; Mana.init defaults to `1.0`.
-- **Effect**: A levelled necromancer gains mana capacity at 1.0/level instead of 1.75/level, so its summon tier ceiling grows more slowly with level. Low impact in normal play.
-- **Fix**: Add `mana_capacityIncLevel: num("mana_capacityIncLevel", 1)` to the `spawnEnemy` build config.
-
-### D3 — `stallSpeed` not implemented (COSMETIC / OOS)
-- **Cast**: act_necromancer.txt:20 `#stallSpeed: 0.5`
-- **Port**: Not read or used anywhere.
-- **Effect**: Walk animation does not stall at slow speed. Pure cosmetic difference.
-- **Fix**: Out of scope per plan. Low priority.
-
----
-
-necromancer | DIVERGENCES=3  
-D1: missing `necromancer_release` art strip (stand plays instead of casting anim — visual); D2: `mana_capacityIncLevel` not forwarded to enemy Mana (1.0 vs 1.75, low impact); D3: `stallSpeed` unimplemented (cosmetic/OOS).
+| Team / animChar | #undead / necromancer | #undead / necromancer | PASS |
+| AI mode | spellcaster + dodge + kite | ranged+runReload+dodgesBullets, kites | PASS |
+| Charges then summons | yes, #undeadSummon multistage | yes, 12 summons in 320f | PASS |
+| Summon tiers (cap≤27) | skeletonWarrior..greyGhost | skeleton*/greyGhost only | PASS |
+| randomSummon wobble | yes (ceiling ~1.5..27) | yes (samples 11.2..27) | PASS |
+| Sub-tier-1 cast → no summon | yes | (implicit; low ceilings summon none) | PASS |
+| chargeMax effective | 26 | 26 | PASS |
+| All actions → real strips | yes | 0 fallbacks (stand/walk/charge/grave) | PASS |
+| Grave on death | necromancer_grave | grave, graveOn true | PASS |
+| energy/walkSpeed/mana | 50 / 4 / 26·4·0.75 | 50 / 4 / 26·4·0.75 | PASS |
+| **Summon location** | **target's tile centre (flies)** | **caster's own loc** | **FAIL (D1)** |
+| **Cast damage/bolt** | **radial #takeHit + energyBlastBullet** | **none (summon only)** | **FAIL (D2)** |
+| stallSpeed | 0.5 | unimplemented | quirk (D3) |
