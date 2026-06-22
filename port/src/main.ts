@@ -511,6 +511,7 @@ function drawPickups(renderer: Renderer) {
 // rotates it to GeomAngle(caster,target), pivoting at the caster anchor. Loaded lazily (the spell is a
 // pickup, so the char isn't in the map's spawn set); until the frame is in memory we fall back to a line.
 const BEAM_ANIM = "energyBeam_fly";
+const SPELL_ANIM = "spell_charge"; // act_spell #character:#spell -> the generic charge-orb anim (tinted per spell)
 
 // K22: tile each arrow member across its exit rect (modScreenExits.drawExitArrowsOnImage → ImageDrawRepeated).
 // The member image is repeated to fill the rect; clipped to the rect so a partial tile at the far end crops
@@ -534,17 +535,35 @@ function drawExitArrows(renderer: Renderer, assets: Assets, rects: ExitArrowRect
   }
 }
 
-// K2 (objSpell render / updateSize): the charge orb — a glowing disc of radius size/2 (size = charge·
-// chargeSize) in the spell's #chargeColour, growing as it charges and travelling on release. A soft outer
-// glow + bright core read as an energy ball at any size.
+// K2 (objSpell render / modAnimSet + updateSize + setSpriteColour): a spell IS the generic `spell_charge`
+// orb sprite (act_spell #character:#spell; getAnimSym maps charge/fly/explode -> #charge), TINTED to the
+// spell's #chargeColour (setSpriteColour) and SCALED so its width/height = size = charge·chargeSize
+// (updateSize). Falls back to the procedural gradient orb only when the art hasn't lazy-loaded yet.
 function drawSpells(renderer: Renderer) {
   const ctx = renderer.ctx;
+  const spellSprites: Sprite[] = [];
+  const anim = game.assets.index.anims[SPELL_ANIM];
+  const f = anim?.frames[0];
+  const ready = !!f && game.assets.images.has(f.file);
+  if (f && !ready) void game.assets.ensureChar("spell");
   for (const e of game.entities) {
     if (e.type !== "spell") continue;
     const sa = e.get(SpellActor);
     const m = e.get(Movement);
-    const r = Math.max(2, sa.size() / 2);
+    const size = Math.max(4, sa.size());
     const [cr, cg, cb] = sa.attack.chargeColour;
+    if (ready) {
+      // setSpriteWidth/Height(size): scale the native frame to the live charge size about its centred reg.
+      spellSprites.push({
+        img: game.assets.img(f!.file)!,
+        x: m.x, y: m.y, regX: f!.reg[0], regY: f!.reg[1], z: m.y,
+        scaleX: size / Math.max(1, f!.w), scaleY: size / Math.max(1, f!.h),
+        tint: { rgb: [cr, cg, cb], strength: 1, additive: false }, // setSpriteColour: tint the white orb
+      });
+      continue;
+    }
+    // fallback (art not yet loaded): the soft gradient orb, radius size/2.
+    const r = size / 2;
     ctx.save();
     const grad = ctx.createRadialGradient(m.x, m.y, 0, m.x, m.y, r * 1.6);
     grad.addColorStop(0, `rgba(255,255,255,0.95)`);
@@ -554,6 +573,7 @@ function drawSpells(renderer: Renderer) {
     ctx.beginPath(); ctx.arc(m.x, m.y, r * 1.6, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
   }
+  if (spellSprites.length) renderer.drawSprites(spellSprites);
 }
 
 function drawBullets(renderer: Renderer) {
