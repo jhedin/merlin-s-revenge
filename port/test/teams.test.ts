@@ -47,6 +47,16 @@ describe("TeamMaster (allegiance, roster, findTarget, impactMeleeAttack)", () =>
     expect(tm.findTarget(orc).obj).toBe(hut);                   // role filter skips the member
   });
 
+  it("targetRoles priority TIERS: take the first tier with a target, fall through only when empty", () => {
+    // dwarfTower-style [[#teamBuildings],[#teamMembers]]: hunt buildings first, members only if none.
+    const tower = spawn("#orcs", 0, 0, { targetRoles: [["#teamBuildings"], ["#teamMembers"]] });
+    const member = spawn("#aldevar", 40, 0);                                  // member, closer
+    const hut = spawn("#aldevar", 60, 0, { teamRole: "#teamBuildings" });     // building, farther
+    expect(tm.findTarget(tower).obj).toBe(hut);   // tier-0 building wins despite the closer member
+    hut.send("loseEnergy", 9999);                 // building gone → fall through to tier-1 members
+    expect(tm.findTarget(tower).obj).toBe(member);
+  });
+
   it("#lowestHealth targets the weakest member and skips full health", () => {
     const healer = spawn("#orcs", 0, 0, { targetCriteria: "#lowestHealth" });
     spawn("#aldevar", 20, 0);                          // full health -> skipped (healBlast rule)

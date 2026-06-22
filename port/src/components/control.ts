@@ -477,6 +477,11 @@ export class CpuAI extends Component {
   private static readonly BUILD_RANGE = 50;  // pBuildRange
   private static readonly BULLET_SAFE = 100;  // pBulletSafeDistance
   private static readonly ENEMY_SAFE = 100;   // pEnemySafeDistance
+  // The faithful bound for ranged #reach: the room is 18×9 tiles (576×288px), diagonal ≈ 644. A finite
+  // data reach (≤600, e.g. dwarfTower's whole-room turret) passes through unclamped; the #reach 9999
+  // "see the whole room" sentinel (magic casters) clamps to this room-scale bound instead of the old
+  // flat 220 cap (which wrongly throttled every reach >220, e.g. towers fired only at 220 not 600).
+  private static readonly MAX_RANGED_REACH = 644;
 
   override init(cfg: Record<string, any>): void {
     this.strength = typeof cfg["strength"] === "number" ? cfg["strength"] : 5;
@@ -499,7 +504,7 @@ export class CpuAI extends Component {
     this.buildDie = cfg["buildDie"] === true;
     this.leaveWhenFinished = cfg["leaveWhenFinished"] === true;
     if (typeof cfg["atkReach"] === "number") {
-      if (this.ranged) this.reachRanged = Math.min(220, Math.max(60, cfg["atkReach"])); // cap magic's 9999
+      if (this.ranged) this.reachRanged = Math.min(CpuAI.MAX_RANGED_REACH, Math.max(60, cfg["atkReach"])); // honor finite reach; cap magic's 9999 to room scale
       else this.reach = Math.max(16, Math.min(90, cfg["atkReach"])); // melee strike reach = collisionLoc.x (no 40 clip)
     }
     this.atkSound = typeof cfg["atkSound"] === "string" ? cfg["atkSound"] : "";
@@ -672,7 +677,7 @@ export class CpuAI extends Component {
     const ca = this.entity.get(WeaponManager).getCurrentAttack();
     if (!ca) return;
     this.ranged = ca.type === "ranged" || ca.type === "magic";
-    this.reachRanged = Math.min(220, Math.max(60, ca.reach));
+    this.reachRanged = Math.min(CpuAI.MAX_RANGED_REACH, Math.max(60, ca.reach));
     // melee reach = the strike point (collisionLoc.x), same as spawn — NOT #reach (ranged-only). Keeps a
     // multiAttack unit's melee standoff faithful after a weapon switch (ninjaSword collisionLoc 15 -> 16).
     this.reach = ca.type === "melee" && ca.collisionLoc.x

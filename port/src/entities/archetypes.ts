@@ -317,7 +317,10 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     strength: num("strength", 5),
     strengthIncLevel: num("strengthIncLevel", 0.1), // melee strength growth per level (CpuAI.levelUp)
     eyestrain: num("eyestrain", 0),                 // ranged/magic aim scatter (objAiAttack.modifyLocWithEyestrain)
-    team: str("team", "#monsters"), teamRole: "#teamMembers",
+    // #teamRole (structMaster default #teamMembers): towers/turrets join the team's BUILDINGS pool
+    // (#teamBuildings) so attackers with a building-priority targetRoles tier hunt them. Was hardcoded
+    // #teamMembers, dropping the data role (dwarfTower/garTower spawned as members → mis-targeted).
+    team: str("team", "#monsters"), teamRole: str("teamRole", "#teamMembers"),
     animChar: opts.animChar ?? actorName, box: 14,
     stretchDeath: d["stretchDeath"] === true, // greyGhost #stretchDeath: magical stretch+fade death (modStretchDeath)
     inertia: num("inertia", 0), // resists knockback (modGameObject damping); heavy orcs get shoved less

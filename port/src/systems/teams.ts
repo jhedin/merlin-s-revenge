@@ -148,19 +148,26 @@ export class TeamMaster {
       return { obj: best, dist: best ? 1 : 999999 };
     }
 
-    // #closestDistance: expanding-shell unit-map search, optional single-role filter, min squared dist.
-    const roles = tg.targetRoles[0] ?? [];
-    const onlyRole = roles.length === 1 ? roles[0]! : null;
-    const cands = this.unitMap.search(pos.x, pos.y, (u) =>
-      teamSet.has(u.send("getTeam") as string) && !u.send("isDead") &&
-      (onlyRole === null || this.roleOf(u) === onlyRole), 0, 20);
-    let best: Entity | null = null, bd = Infinity;
-    for (const u of cands) {
-      const p = u.send("getPos") as { x: number; y: number };
-      const dd = (p.x - pos.x) ** 2 + (p.y - pos.y) ** 2;
-      if (dd < bd) { bd = dd; best = u; }
+    // #closestDistance: expanding-shell unit-map search, min squared dist, with targetRoles PRIORITY TIERS.
+    // teamMaster.findTargetInTeam (760-804): iterate the priority tiers in order; within a tier match ANY
+    // of its roles; STOP at the first tier that yields a target — only fall through to a lower tier when
+    // the current one finds nothing. (dwarfTower [[#teamBuildings],[#teamMembers]]: hunt buildings first,
+    // members only if none.) A single all-roles tier (the common case) is just one pass = unchanged.
+    for (const tier of tg.targetRoles) {
+      const tierRoles = tier.filter((r) => r !== "#none");
+      const roleSet = tierRoles.length ? new Set(tierRoles) : null; // null = any role
+      const cands = this.unitMap.search(pos.x, pos.y, (u) =>
+        teamSet.has(u.send("getTeam") as string) && !u.send("isDead") &&
+        (roleSet === null || roleSet.has(this.roleOf(u))), 0, 20);
+      let best: Entity | null = null, bd = Infinity;
+      for (const u of cands) {
+        const p = u.send("getPos") as { x: number; y: number };
+        const dd = (p.x - pos.x) ** 2 + (p.y - pos.y) ** 2;
+        if (dd < bd) { bd = dd; best = u; }
+      }
+      if (best) return { obj: best, dist: bd };
     }
-    return { obj: best, dist: best ? bd : 999999 };
+    return { obj: null, dist: 999999 };
   }
 
   // restoreTarget (teamMaster.txt 1297-1306): re-acquire a committed reference POSITIONALLY on load.
