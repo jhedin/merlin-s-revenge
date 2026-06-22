@@ -60,14 +60,15 @@ describe("Hurt feedback (flash + i-frames)", () => {
     expect(en.energy).toBe(wounded + 1);      // +1 trickle on the 300th tick
   });
 
-  it("a one-shot action (grave) holds its last frame instead of looping", () => {
-    // grave is one-shot; a dead entity routes through it deterministically via pickAction
+  it("a grave holds a SINGLE static frame (modGrave: a one-time background blit, never animating)", () => {
+    // a dead grave-leaving actor freezes: the original captures getAnimMemberFromStrip(#grave) ONCE and
+    // blits it into the room background, so the corpse neither advances frames nor loops.
     game.assets = { index: { anims: { foo_grave: { delay: 1, frames: [{}, {}, {}] }, foo_stand: { delay: 1, frames: [{}] } } }, img: () => ({}) } as any;
     const e = spawnEnemy("swordOrc", 0, 0, { animChar: "foo" });
     game.entities = [e];
     e.send("takeHit", 999999, 0, -1);          // kill it -> pickAction returns "grave"
     const anim = e.get(Anim);
     for (let i = 0; i < 12; i++) (anim as any).update(() => {});
-    expect((anim as any).frame).toBe(2);    // clamped at last of 3 frames, not wrapped back to 0
+    expect((anim as any).frame).toBe(0);    // static — held at the grave frame, not advanced or looped
   });
 });

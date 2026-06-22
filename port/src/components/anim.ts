@@ -98,7 +98,10 @@ export class Anim extends Component {
     const action = this.pickAction();
     if (action !== this.action) { this.action = action; this.frame = 0; this.timer = 0; this.extraDelay = 0; }
     const anim = this.animFor(action);
-    if (anim && anim.frames.length > 1) {
+    // A grave holds a SINGLE static frame (modGrave.drawGrave captures getAnimMemberFromStrip(#grave) — the
+    // current member — once at death; the corpse is then background, not an animating sprite). Don't advance.
+    const isGrave = this.entity.send("isDead") === true && this.entity.send("getGraveOn") === true;
+    if (!isGrave && anim && anim.frames.length > 1) {
       // per-frame delay (objAnimStrip.moveNextFrame: pDelay.tim[2] = pDelayList.nextValue()): the current
       // frame's own `dela` gates the advance; the counter steps by gGameSpeed (pDelay.inc = 1*gGameSpeed).
       const cur = anim.frames[this.frame % anim.frames.length]!;

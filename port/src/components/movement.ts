@@ -120,6 +120,15 @@ export class Movement extends Component {
   }
 
   update(next: NextFn): void {
+    // A settled GRAVE (a dead actor that leaves a grave) is frozen in place: the original blits the grave
+    // member into the room background ONCE at the death loc and drops the actor from the sim (objRoom.
+    // drawAndRecordGrave), so it can't slide from the killing blow's residual knockback or be shoved by a
+    // later area hit (the reelProof "shove all units" path reaches dead bodies too). Hold position; zero all
+    // velocity so nothing accumulates. (Dead player/ghost are not graves — they fall through to the normal path.)
+    if (this.entity.send("isDead") === true && this.entity.send("getGraveOn") === true) {
+      this.vx = this.vy = this.kvx = this.kvy = 0;
+      return next();
+    }
     this.vx += this.intentX * this.accel;
     this.vy += this.intentY * this.accel;
     if (this.intentX === 0) this.vx *= this.friction;

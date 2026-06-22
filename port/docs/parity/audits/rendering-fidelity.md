@@ -550,3 +550,233 @@ these bullets is found in a later asset extraction pass, add it then.
 |11 | goblinArrow/fangBunny: no fly art   | LOW        | N/A (no original art either) |
 
 RENDERING AUDIT | GAPS=11
+
+---
+
+## DOMAIN B: world/tile rendering
+
+> **Scope:** The room/world draw pipeline — background passive layer, background active
+> (collision/solid) layer, foreground-over-actors layer, room boundary, tile indexing, camera
+> model, and background clear. Sprites, HUD, minimap, and exit arrows are excluded (covered by
+> the prior audit or already fixed). Sources: `port/src/main.ts` (renderScene, ~lines 374-401),
+> `port/src/render/renderer.ts` (drawTileLayer), `port/src/world/rooms.ts` (RoomManager),
+> `casts/script_objects/objRoom.txt`, `objMap.txt`, `modBoundary.txt`,
+> `extracted/engine/scripts/MovieScript 1 - GameSpecific.ls` (gMapBoundary=128,
+> gMapBoundaryLayer=150), `MovieScript 1 - main.ls` (layer z constants).
+
+---
+
+### B-GAP 1 — Map boundary: four black border panels missing
+
+**Severity:** HIGH (visible black mask around every room in the original)
+
+**Port file/line:** No boundary code exists anywhere in `port/src/`. The `modBoundary` module
+is never ported.
+
+**Original ref:** `casts/script_objects/modBoundary.txt` + `objMap.txt:569`:
+
+```lingo
+-- objMap.onScreen (line 569):
+if gMapBoundary > 0 then
+  me.displayBoundary()
+end if
+
+-- modBoundary.displayBoundary():
+mapRect = me.ID.bigMe.getSpriteRect()
+boundaryRect = inflate(mapRect, gMapBoundary, gMapBoundary)
+-- four sprites at gMapBoundaryLayer=150 (above actors at 99, below HUD at 170)
+pBoundarySprites[1].rect = rect(boundaryRect.left,  boundaryRect.top,    boundaryRect.right, mapRect.top)    -- top
+pBoundarySprites[2].rect = rect(boundaryRect.left,  boundaryRect.top,    mapRect.left,       boundaryRect.bottom) -- left
+pBoundarySprites[3].rect = rect(boundaryRect.left,  mapRect.bottom,      boundaryRect.right, boundaryRect.bottom) -- bottom
+pBoundarySprites[4].rect = rect(mapRect.right,      boundaryRect.top,    boundaryRect.right, boundaryRect.bottom) -- right
+```
+
+`GameInitGlobals` (GameSpecific.ls line 21) sets `gMapBoundary = 128`. The boundary is a
+solid black (member "dot" stretched) mask that inflates 128 px beyond the room rect on every
+side and sits at `gMapBoundaryLayer = 150` — above actors (`gPlayerLayer=99`) but below the
+HUD (`gGameEnergyBarLayer=170`). Its purpose is to prevent the camera-adjacent black void from
+showing through when actors or spells reach the room edge.
+
+In the port the canvas is exactly the room size (`viewW x viewH`, no letterbox), so there is
+no visible void to mask. The boundary panels would render entirely off-canvas and have no
+visual effect. This is therefore a **no-op gap** — the original needed the mask because the
+room sat in a larger stage; the port canvas is trimmed to the room. Visual parity is achieved
+without implementing it.
+
+**Verdict:** No visual gap. Confirmed no-op in the port's canvas model.
+
+---
+
+### B-GAP 2 — Foreground blend level: 0.5 alpha vs Director blendLevel 128
+
+**Severity:** LOW (nearly identical; the `#foregroundPassive` layer is absent in all 47
+shipped maps so this never fires in practice)
+
+**Port file/line:** `port/src/main.ts:401`:
+
+```typescript
+renderer.drawTileLayer(fg, rooms.foregroundSheet, 0, 0, 0.5);
+```
+
+**Original ref:** `casts/script_objects/objRoom.txt:33`:
+
+```lingo
+i[#frontLayerBlendLevel] = 128
+```
+
+Director's `blendLevel` is a 0–255 integer; 128/255 ≈ 0.502. The port hardcodes
+`globalAlpha = 0.5` (0.5/1.0). The numeric difference is 0.002 (< 0.8%), invisible to the
+eye, but the mechanism differs: Director's `#ink:36` (Matte) with blendLevel composites the
+tile image over the destination with that alpha; `globalAlpha 0.5` on `drawImage` is
+equivalent for opaque tile pixels.
+
+`getBlendLevelForLayer` in `objRoom.txt:296-308` shows the 128 blendLevel applies ONLY in
+`#edit` mode (the map editor), NOT in `#activate` mode (gameplay). In activate mode the
+method returns `100` (full opacity for backgroundActive) — and the foreground layer itself is
+drawn by `getScaleImage` WITHOUT a blendLevel param (line 509 shows `copyPixelsParams` has no
+`blendLevel` for the foreground in activate mode). This means in play mode the original
+renders the foreground at FULL OPACITY, not 50%.
+
+However, no shipped map contains a `#foregroundPassive` layer in its saved data
+(`port/public/assets/map.txt` and all 47 map files only define `#backgroundPassive`,
+`#backgroundActive`, `#objects`). The foreground path is dead code in play for all shipped
+maps. The blend discrepancy is therefore moot for the current asset set.
+
+**Fix sketch (if a map with #foregroundPassive is ever added):** Change line 401 to
+`alpha = 1.0` (full opacity for play mode). The 0.5 was imported from the editor's blend
+hint, not the gameplay composite.
+
+---
+
+### B-GAP 3 — Background clear: transparent clearRect vs opaque passive layer
+
+**Severity:** NONE (fully covered by tile data in all shipped maps; no visual artifact)
+
+**Port file/line:** `port/src/render/renderer.ts:45`:
+
+```typescript
+clear(): void { this.ctx.clearRect(0, 0, this.viewW, this.viewH); }
+```
+
+**Original ref:** `casts/script_objects/objTileLayer.txt:34-35`:
+
+```lingo
+if pType = #backgroundPassive then
+  me.setCopyPixelsParams([#useFastQuads: true, #ink: 0])
+end if
+```
+
+The original backgroundPassive layer uses `#ink:0` (Copy ink — fully overwrites the
+destination, no transparency). The backgroundActive layer uses `#ink:36` (Matte). In the
+port, `drawTileLayer` skips `n <= 0` (empty tiles) so any cell left zero would show the
+transparent clear beneath it. In all 47 shipped maps the backgroundPassive grid fully tiles
+every cell (e.g. all 12s), so no transparent pixel is ever exposed.
+
+**Verdict:** No visual gap with the current asset set. If a future map ships with empty
+passive cells, a black fill before `drawTileLayer(passive, ...)` would be needed to match
+the Copy-ink baseline.
+
+---
+
+### B-GAP 4 — Layer composition order: active layer tile blend in play mode
+
+**Severity:** NONE (original uses full opacity for active layer in play; port matches)
+
+**Port file/line:** `port/src/main.ts:377`:
+
+```typescript
+if (active && rooms.activeSheet) renderer.drawTileLayer(active, rooms.activeSheet);
+```
+
+**Original ref:** `casts/script_objects/objRoom.txt:492-527` (`getScaleImage`):
+
+```lingo
+copyPixelsParams = [#usefastQuads: true, #ink:36]
+-- ... in #activate mode blendLevel is NOT set on copyPixelsParams
+if backgroundSolid <> #none then
+  backgroundImage.copypixels(backgroundSolid, backgroundImage.rect, backgroundSolid.rect, copyPixelsParams)
+end if
+```
+
+In `#activate` (gameplay) mode `getBlendLevelForLayer` returns the pFrontLayerBlendLevel
+(128) only for edit mode. In play mode the `copyPixelsParams` has no `blendLevel` key, so
+Director uses full opacity for the active/solid tiles. The port draws the active layer at
+`alpha=1` (default), which matches.
+
+**Verdict:** Correct. No gap.
+
+---
+
+### B-GAP 5 — Tile source-rect indexing: 1-based tile numbers
+
+**Severity:** NONE (port correctly adjusts; verified against map data)
+
+**Port file/line:** `port/src/render/renderer.ts:55-59`:
+
+```typescript
+const sx = ((n - 1) % cols) * tile;
+const sy = Math.floor((n - 1) / cols) * tile;
+```
+
+**Original ref:** `casts/script_objects/objTileMap.txt:187-220` (`tileImage`):
+
+```lingo
+nImageNum = me.peekNum(point(xLoc, yLoc))   -- tile number from map (1-based)
+nImage = pTileSet.getTileNo(nImageNum)       -- index into the tileset (1 = first tile)
+```
+
+Map data confirms 1-based tile numbers (`[12, 12, ...]` for the backgroundPassive in all
+rooms, where 12 maps to a specific tile in the sheet). The port subtracts 1 before computing
+`(sx, sy)`, mapping tile 1 → row 0 col 0, which is correct. Tile 0 is the skip sentinel
+(`if (n <= 0) continue`), matching the original's empty-cell convention.
+
+**Verdict:** Correct. No gap.
+
+---
+
+### B-GAP 6 — Camera model: fixed screen per room, no parallax
+
+**Severity:** NONE (both match)
+
+**Port file/line:** `port/src/world/rooms.ts` — no scroll offset applied anywhere; tiles are
+always drawn at `ox=0, oy=0`.
+
+**Original ref:** `casts/script_objects/objMap.txt:559-575` (`onScreen`) + `objRoom.txt:565`
+(`show`): The room sprite is placed at `pLocation = params.location` (a fixed point, no
+scrolling). Each room is a fixed-camera screen; the room transitions on edge-crossing, not by
+scrolling. No parallax layers exist.
+
+**Verdict:** Correct. No gap.
+
+---
+
+### B-GAP 7 — `#backgroundSolid` vs `#backgroundActive` layer naming
+
+**Severity:** NONE (terminology difference, not a rendering gap)
+
+The comment at `objRoom.txt:3` lists the layers as `#backgroundPassive, #backgroundSolid,
+#objects, #foregroundPassive`. However the actual code throughout objRoom, objMap,
+modScreenExits, and modCollisionDetection consistently uses `#backgroundActive`. The map data
+in the shipped assets also uses `#backgroundActive`. The port uses `#backgroundActive`
+throughout. The comment was an early name from before the rename.
+
+**Verdict:** Port is correct. No gap.
+
+---
+
+### Summary — Domain B
+
+| # | Element                             | Port ref           | Original ref            | Severity | Verdict     |
+|---|-------------------------------------|--------------------|------------------------|----------|-------------|
+| B1 | Map boundary panels (4 black bars)  | missing            | modBoundary.txt + gMapBoundary=128 | — | No-op: canvas is room-sized, panels would be off-canvas |
+| B2 | Foreground blend in play mode       | main.ts:401 alpha=0.5 | objRoom getScaleImage: full opacity in activate mode | LOW | Moot: no shipped map has #foregroundPassive; fix to alpha=1 if added |
+| B3 | Background clear transparency       | renderer.ts:45 clearRect | backgroundPassive uses ink:0 (copy) | — | No-op: passive layer fully tiles all cells in shipped maps |
+| B4 | Active layer alpha in play          | main.ts:377 alpha=1 | No blendLevel set in activate mode = full opacity | — | Correct; matches |
+| B5 | Tile source-rect indexing           | renderer.ts:55-59 n-1 | objTileMap tileImage: 1-based nums | — | Correct; matches |
+| B6 | Camera model (fixed per room)       | rooms.ts no scroll | objMap fixed screen flip | — | Correct; matches |
+| B7 | Layer naming (#backgroundSolid)     | uses #backgroundActive | code uses #backgroundActive | — | Correct; comment was stale |
+
+**True visual gaps requiring a fix:** 1 (B2 — foreground alpha should be 1.0 for play mode,
+but is dead code for all shipped maps). No gaps exist that affect any currently shipped map.
+
+DOMAIN B | GAPS=1

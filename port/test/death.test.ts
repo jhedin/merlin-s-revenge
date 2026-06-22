@@ -64,6 +64,27 @@ describe("H2: death flow (modExtraLives.attemptRespawn vs gameOver)", () => {
   });
 });
 
+describe("grave freeze (modGrave: a dead grave is static background, not a live body)", () => {
+  beforeEach(setupWorld);
+
+  it("a dead grave-leaving actor does NOT slide from residual knockback or a later shove", () => {
+    const e = spawnEnemy("swordOrc", 200, 200);
+    game.entities = [e];
+    expect(e.send("getGraveOn")).toBe(true);          // leaves a grave
+    const m = e.get(Movement);
+    e.get(Energy).energy = 0; e.get(Energy).dead = true; // killed
+    // arm residual knockback + walk velocity, then step: a grave must hold its death loc.
+    m.kvx = 4; m.kvy = -3; m.vx = 2; m.vy = 2;
+    for (let i = 0; i < 10; i++) e.send("update");
+    expect(m.x).toBe(200); expect(m.y).toBe(200);     // frozen at the death position
+    expect(m.kvx).toBe(0); expect(m.kvy).toBe(0);     // knockback zeroed, can't accumulate
+    // a later area hit (the reelProof "shove all units" path) can't move it either.
+    e.send("takeHit", 9, 0, -1, 1);
+    e.send("update");
+    expect(m.x).toBe(200); expect(m.y).toBe(200);
+  });
+});
+
 describe("H2: goWastedMode (modWastedMode) flag", () => {
   beforeEach(setupWorld);
   it("the player + a cutscene-style unit answer goWastedMode/isWasted", () => {
