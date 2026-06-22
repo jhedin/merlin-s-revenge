@@ -696,7 +696,11 @@ export class CpuAI extends Component {
     if (!target || target.send("isDead")) { this.target = null; this.goMode("findTarget", m); return; }
     const tp = target.send("getPos") as { x: number; y: number };
     const dx = tp.x - m.x, dy = tp.y - m.y; const d = Math.hypot(dx, dy) || 1;
-    if (d < this.reachRanged * 0.7) { m.intentX = -dx / d; m.intentY = -dy / d; } else this.idle(m); // moveAwayFromLoc
+    // moveAwayFromLoc (modMoveToLoc:305, GeomMirrorPoint): retreat directly away from the target EVERY
+    // reload frame — unconditional in the original, NOT band-gated. The window is bounded by cooldown
+    // (exits below on cooledDown), so the kiter does a fire-and-retreat, not an endless flee. Was gated to
+    // d < reachRanged·0.7, which left a kiter standing still while reloading in the outer-reach band.
+    m.intentX = -dx / d; m.intentY = -dy / d;
     if (this.cooledDown()) this.goMode("moveToAttack", m);
   }
 
