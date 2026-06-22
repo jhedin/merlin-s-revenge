@@ -33,6 +33,10 @@ export interface AttackData {
   hits: string[];
   sound: string;
   bullet: string;
+  // #animframe (structMaster default 2): the strip frame(s) on which the weapon FIRES — scalar or list.
+  // The attack is animation-driven: one hit/shot per listed frame as the attack strip plays (crossBow
+  // [2,4,6] = a 3-shot burst). #none -> [] (magic fires on charge/release, not a frame). 1-based (Lingo).
+  animFrame: number[];
   // #firingType (structMaster default #proportional): the ranged THROW velocity model (modAttack
   // performRangedAttack). #proportional → throwVect = distToTarget/10 (always arrives in ~10 frames);
   // #fullstrength → speed = the attacker's strength (constant-speed projectile). Drives travel time.
@@ -170,13 +174,19 @@ export function resolveAttack(raw: Record<string, any> | undefined, owner?: Reco
   let reach: number;
   if (rch && typeof rch === "object" && "x" in rch) reach = Math.hypot(rch.x, rch.y);
   else reach = numOr(rch, numOr(d["reach"], 25));
+  // #animframe: the firing frame(s). list -> as-is; scalar -> [n]; "#none" (magic) -> []; missing -> [2].
+  const afRaw = r["animframe"] ?? r["animFrame"];
+  const animFrame: number[] = Array.isArray(afRaw) ? afRaw.map(Number).filter((n) => Number.isFinite(n))
+    : typeof afRaw === "number" ? [afRaw]
+    : typeof afRaw === "string" ? []
+    : [numOr(d["animFrame"], 2)];
   return {
     name: strOr(r["name"], d["name"] as string),
     animType, type: typeFromAnimType(animType),
     cooldown: numOr(r["cooldown"], d["cooldown"] as number),
     powerX, powerY, powerScalar,
     damageMultiplier: numOr(r["damageMultiplier"], d["damageMultiplier"] as number),
-    reach,
+    reach, animFrame,
     hits: Array.isArray(r["hits"]) ? r["hits"] : (d["hits"] as string[]),
     sound: strOr(r["sound"], d["sound"] as string),
     bullet: strOr(r["bullet"], d["bullet"] as string),

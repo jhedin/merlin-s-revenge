@@ -40,7 +40,10 @@ const isStreaming = (a: AttackData): boolean => a.releaseFunction === "#fireBull
 // once a magic weapon is owned. WeaponManager is the data store; PlayerControl drives BOTH modes,
 // gating each on that weapon's own cooldown counter (resetCooldown on FIRE).
 export class PlayerControl extends Component {
-  static handles = ["update", "levelUp", "animAction", "chargeFrac", "addSaveData", "restoreFromSave"];
+  static handles = ["update", "levelUp", "animAction", "chargeFrac", "attackActive", "addSaveData", "restoreFromSave"];
+  // attackActive: mid-swing — Movement holds the facing (locked at swing entry) instead of flipping it to
+  // the walk direction, so a moving Merlin keeps aiming his swing where it started (no right->left flip).
+  attackActive(): boolean { return this.meleeT > 0; }
   private strength = 8;
   private strengthInc = 0.1;
   private charge = 0;
@@ -50,9 +53,14 @@ export class PlayerControl extends Component {
   // every other spell it equals the deterministic chargeMaxOf (the wobble branch needs randomSummon).
   private chargeCeil = 0;
   private releaseT = 0;
-  private meleeT = 0;
+  private meleeT = 0;          // in-swing window (in-melee flag + safety budget); the strip is the real clock
   private aimLeft = false;
   private usingSword = false; // most-recent melee swing used #merlinSword (anim/sound)
+  // animation-driven swing state (mirrors CpuAI): the hit fires per #animframe crossing of the swing strip.
+  private swingFrames: number[] = [];   // the melee weapon's #animframe firing frames (1-based)
+  private swingAnimates = false;        // the swing strip has >1 frame, so the animation drives the hit
+  private swingFired = false;           // a hit landed this swing (non-animating fallback guard)
+  private swingAttack: AttackData | null = null; // the committed melee weapon for the in-progress swing
   // I7 GMG (modGoldenMachineGun): a MODE (not a weapon) modifying the current magic weapon's charge.
   private gmgCollected_ = false; // pGmgCollected — found at least once (the toggle is inert until then)
   private gmgOn = false;         // pGmgOn — the live on/off state (the cosmetic gmgMaster HUD flag)
@@ -141,8 +149,9 @@ export class PlayerControl extends Component {
   levelUp(next: NextFn): void { this.strength += this.strengthInc; next(); }
 
   update(next: NextFn): void {
+    const m = this.entity.get(Movement);
     if (this.releaseT > 0) this.releaseT--;
-    if (this.meleeT > 0) this.meleeT--;
+    if (this.meleeT > 0) this.driveSwing(m); // animation-driven swing: fire per #animframe crossing, end on loop
     // I8: tick any in-flight bullet stream (modFireBullets) regardless of input/death — it owns its
     // own residual charge and drains independently once released.
     if (this.stream) this.tickStream();
@@ -162,7 +171,6 @@ export class PlayerControl extends Component {
     // can damage Merlin every cooldown-gated swing). The white flash (modFlasher) still plays for feedback.
 
     const input = game.input;
-    const m = this.entity.get(Movement);
     const mv = input.moveVector();
     m.intentX = mv.x; m.intentY = mv.y;
 
@@ -240,10 +248,10 @@ export class PlayerControl extends Component {
       else if (this.spell) { this.spell.get(SpellActor).discard(); this.spell = null; } // no weapon -> drop the orb
       this.charging = false; this.charge = 0;
     } else if (melee && primary) {
-      // objAiPlayer.interpretMouse: a swing fires ONLY while the fire button is held (#pressed ->
-      // playerAttackCharge -> attack; #notPressed does nothing). So melee is click/hold-to-attack — it
-      // autofires on cooldown WHILE held (into empty air, target-independent), and stops when you release.
-      this.tryMelee(melee, m, wm);
+      // objAiPlayer.interpretMouse: a swing STARTS only while the fire button is held (#pressed ->
+      // playerAttackCharge -> attack; #notPressed does nothing). Click/hold-to-attack — a new swing begins
+      // on cooldown while held; an in-progress swing is driven (and its hits fired) by driveSwing above.
+      this.tryStartSwing(melee, m, wm);
     }
     next();
   }
@@ -333,30 +341,52 @@ export class PlayerControl extends Component {
     return anim.frames.reduce((s, f) => s + Math.max(1, f.dela ?? anim.delay ?? 1), 0);
   }
 
-  private tryMelee(attack: AttackData, m: Movement, wm: WeaponManager): void {
-    if (this.meleeT > 0) return;                                  // a swing is still animating — no re-hit
-    if (!wm.cooldownFinFor(attack.name)) return;                 // per-weapon cooldown counter gate
-    // objAiPlayer: "#melee and #ranged will autofire" — the player swings on cooldown UNCONDITIONALLY
-    // (objAiAttack.attack/attackMelee gate only on getCooldownFin, never on a target/reach). The swing
-    // animates + sounds into empty air; `reach` is only the damage AREA, so impactMeleeAttack just whiffs
-    // when nothing's there. (Was wrongly target+reach-gated, so Merlin wouldn't punch unless next to a foe.)
-    m.facingLeft = this.aimLeft;                                 // swing toward the aim
-    // performMeleeAttack -> teamMaster.impactMeleeAttack: area resolution. A swing knocks back EVERY
-    // hostile (role #hits) within reach, each via A1's aimed-vector takeHit. Damage = power·strength·SCALE
-    // carried as the vector L1, times damageMultiplier as `mult` (now data-driven from the weapon).
-    // J2 #magicMelee (energyPunch): calcCollisionVectMelee adds a mana term — power·(strength +
-    // 1.5·manaCapacity)/1.5 — so a magic punch scales with mana. #naturalMelee/#weaponMelee (punch/sword)
-    // use plain strength (unchanged, no room-1 regression).
+  // START a swing (objAiAttack.attack: gate on cooldown, lock facing, restart strip, reset cooldown — the HIT
+  // is NOT applied here, it fires per #animframe crossing in driveSwing). objAiPlayer: melee autofires on
+  // cooldown UNCONDITIONALLY (no target/reach gate) — the swing animates + sounds into empty air; `reach` is
+  // only the damage AREA, so a whiff hits nobody. Facing is locked at entry and HELD for the whole swing.
+  private tryStartSwing(attack: AttackData, m: Movement, wm: WeaponManager): void {
+    if (this.meleeT > 0 || !wm.cooldownFinFor(attack.name)) return;
+    m.facingLeft = this.aimLeft;                                 // facing locked for the whole swing
+    this.usingSword = attack.type === "melee" && attack.animType === "#weaponMelee";
+    this.swingAttack = attack;
+    this.swingFrames = attack.animFrame ?? [];
+    this.swingFired = false;
+    const action = this.usingSword ? "weaponMelee" : "naturalMelee";
+    const strip = game.assets.index.anims[`mer_${action}`];
+    this.swingAnimates = !!strip && strip.frames.length > 1;
+    this.meleeT = this.swingTicks(attack) + 2;                   // window + safety (the strip is the real clock)
+    this.entity.tryGet(Anim)?.restart();                        // play the swing from frame 0
+    wm.resetCooldownFor(attack.name);                           // cooldown recovers DURING the swing
+    game.audio?.play(this.usingSword ? "skeleton_fire" : "wizard_punch"); // #attack.sound: merlinSword / #punch
+  }
+
+  // drive an in-progress swing each tick: fire the hit on each FRESH #animframe crossing of the swing strip,
+  // and end the swing when the strip completes (looped). The player may keep moving during the swing.
+  private driveSwing(m: Movement): void {
+    const an = this.entity.tryGet(Anim);
+    if (this.swingAnimates && an) {
+      if (an.frameFresh() && this.swingFrames.includes(an.attackFrame())) this.performMeleeHit(m);
+      if (an.looped()) { this.meleeT = 0; return; }
+    }
+    if (--this.meleeT <= 0) {                                    // safety / non-animating strip: fire once
+      if (!this.swingFired) this.performMeleeHit(m);
+      this.meleeT = 0;
+    }
+  }
+
+  // performMeleeHit (performMeleeAttack -> teamMaster.impactMeleeAttack): the AREA hit, dispatched once per
+  // #animframe crossing. J2 #magicMelee (energyPunch) adds a mana term to the strength; #naturalMelee/
+  // #weaponMelee use plain strength.
+  private performMeleeHit(_m: Movement): void {
+    const attack = this.swingAttack;
+    if (!attack) return;
+    this.swingFired = true;
     const effStrength = attack.animType === "#magicMelee"
       ? (this.strength + 1.5 * this.entity.get(Mana).capacity) / 1.5
       : this.strength;
     const base = meleeBasePower(attack, effStrength);
     game.teamMaster.impactMeleeAttack(this.entity, meleeHitFn(this.entity, this.entity.id, base, attack.damageMultiplier));
-    wm.resetCooldownFor(attack.name);
-    this.meleeT = this.swingTicks(attack); // hold the swing for its full animation (gates the next hit)
-    this.usingSword = attack.type === "melee" && attack.animType === "#weaponMelee";
-    this.entity.tryGet(Anim)?.restart(); // replay the swing strip from frame 0 (don't freeze on the last)
-    game.audio?.play(this.usingSword ? "skeleton_fire" : "wizard_punch"); // #attack.sound: merlinSword / #punch
   }
 
   // action override for modAnimSet: melee / release / charge strips take priority over walk/stand
@@ -422,8 +452,13 @@ export class CpuAI extends Component {
   private static readonly RETARGET = 30;
   private noTargetCtr = 0;                  // frames with no target (leaveWhenFinished retire grace)
   private static readonly LEAVE_GRACE = 60; // ~2s of no targets before a leaveWhenFinished ally retires
-  private attackT = 0;                       // #attack-mode window (drives modWeaponTechnique accumulation)
+  private attackT = 0;                       // #attack-mode window (in-attack flag + safety budget)
   private static readonly ATTACK_FRAMES = 6;
+  // animation-driven attack state (objAiAttack): the hit fires per #animframe crossing while the strip plays.
+  private committedTarget: Entity | null = null; // re-aimed each shot (ranged burst tracks a moving target)
+  private attackFrames: number[] = [];           // the weapon's #animframe firing frames (1-based)
+  private attackFired = false;                    // did at least one shot land this attack (fallback guard)
+  private attackAnimates = false;                 // the attack strip has >1 frame, so the animation drives it
   private path = new PathFinding();          // K3 modPathFinding (beeline→scenic)
   // K5 ghost FSM
   private ghostMode: GhostMode = "findTarget";
@@ -548,8 +583,10 @@ export class CpuAI extends Component {
 
   update(next: NextFn): void {
     const m = this.entity.get(Movement);
-    if (this.attackT > 0) this.attackT--;
     if (this.entity.send("isDead")) { this.idle(m); return next(); }
+    // objAiCPU #attack mode: STATIONARY while the attack strip plays; the hit fires per #animframe crossing
+    // and the mode ends when the strip completes (the animation is the clock — updateAttack).
+    if (this.attackT > 0) { this.updateAttack(m); return next(); }
     if (this.builder) { this.updateBuilder(m); return next(); }
     if (this.ghost) { this.updateGhost(m); return next(); }
     switch (this.mode) {
@@ -653,9 +690,50 @@ export class CpuAI extends Component {
 
   private idle(m: Movement): void { m.intentX = 0; m.intentY = 0; }
 
-  private attack(m: Movement, dx: number, dy: number, target: Entity): void {
+  // attack (objAiAttack.attack): ENTER #attack mode — gate on cooldown, lock facing once, restart the attack
+  // strip, reset the cooldown. The HIT is NOT fired here; it's driven by the animation reaching the weapon's
+  // #animframe frames (performAttack, dispatched from updateAttack). Cooldown gates ENTRY, not the hit.
+  private attack(m: Movement, dx: number, dy: number, _target: Entity): void {
     const wm = this.entity.get(WeaponManager);
     if (!wm.getCooldownFin()) return;
+    m.facingLeft = dx < 0;                       // facing locked for the whole swing
+    this.committedTarget = _target;
+    this.attackFrames = wm.getCurrentAttack()?.animFrame ?? [];
+    this.attackFired = false;
+    const an = this.entity.tryGet(Anim);
+    an?.restart();
+    // will the ATTACK strip animate (>1 frame)? check it directly — Anim's current action is still walk/stand
+    // here (it only switches to the attack strip in Anim.update, after this), so an.canAnimate() would be wrong.
+    const strip = an ? game.assets.index.anims[`${an.char}_${this.attackAction()}`] : undefined;
+    this.attackAnimates = !!strip && strip.frames.length > 1;
+    this.attackT = Math.max(CpuAI.ATTACK_FRAMES, this.attackAnimTicks(this.attackAction()) + 2); // window + safety
+    if (this.atkSound) game.audio?.play(this.atkSound, 0.5); // #attack.sound (quieter than player)
+    wm.resetCooldown();                          // cooldown recovers DURING the attack; gates the NEXT entry
+  }
+
+  // updateAttack (objAiAttack.updateAttack): each tick in #attack mode, fire one shot/hit per FRESH #animframe
+  // crossing of the strip, and leave the mode when the strip completes (getLooped). The unit is stationary.
+  private updateAttack(m: Movement): void {
+    this.idle(m);
+    const an = this.entity.tryGet(Anim);
+    if (this.attackAnimates && an) {
+      if (an.frameFresh() && this.attackFrames.includes(an.attackFrame())) this.performAttack(m);
+      if (an.looped()) { this.attackT = 0; this.attackFin(m); return; }
+    }
+    if (--this.attackT <= 0) {                   // safety / non-animating strip: fire once, then leave
+      if (!this.attackFired) this.performAttack(m);
+      this.attackT = 0; this.attackFin(m);
+    }
+  }
+
+  // performAttack (objAiAttack.performAttack): the actual hit/shot, dispatched once per #animframe crossing.
+  // Re-aims at the live committed target each call so a ranged burst tracks a mover; melee keeps the entry facing.
+  private performAttack(m: Movement): void {
+    this.attackFired = true;
+    const wm = this.entity.get(WeaponManager);
+    const t = this.committedTarget;
+    let dx = m.facingLeft ? -100 : 100, dy = 0;
+    if (t && !t.send("isDead")) { const tp = t.send("getPos") as { x: number; y: number }; dx = tp.x - m.x; dy = tp.y - m.y; }
     if (this.ranged) {
       const team = this.entity.send("getTeam") as string;
       // #firingType (modAttack performRangedAttack): the THROW velocity. #proportional (the structMaster
@@ -758,14 +836,6 @@ export class CpuAI extends Component {
       const mult = ca ? ca.damageMultiplier : 1;
       game.teamMaster.impactMeleeAttack(this.entity, meleeHitFn(this.entity, this.entity.id, base, mult));
     }
-    m.facingLeft = dx < 0;
-    // hold the #attack window for the full attack strip (>= the technique window) so the whole animation
-    // plays instead of being cut to 6 frames; drives both the attack anim and modWeaponTechnique.
-    this.attackT = Math.max(CpuAI.ATTACK_FRAMES, this.attackAnimTicks(this.attackAction()));
-    this.entity.tryGet(Anim)?.restart(); // replay the attack strip from frame 0 each attack (ensureMode)
-    if (this.atkSound) game.audio?.play(this.atkSound, 0.5); // #attack.sound (quieter than player)
-    wm.resetCooldown(); // restart this weapon's cooldown counter
-    this.attackFin(m); // re-acquire / kite
   }
 
   // ── K4 bullet-dodge optimumPosition (objAiCPUSpellCaster.updateMoveToOptimumPosition) ────────────

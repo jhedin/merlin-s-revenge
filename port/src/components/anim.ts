@@ -17,8 +17,12 @@ import type { Sprite } from "../render/renderer";
 // right FAMILY, not the generic blackOrc stand-in ("wrong enemies" from spawners).
 const CHAR_ALIAS: Record<string, string> = {
   goblinHero: "goblinWarrior",
-  goblinArcher: "goblinWarrior", friendlyGoblinWarrior: "goblinWarrior", friendlyGoblinArcher: "goblinWarrior",
-  friendlyGoblinMage: "goblinMage", skeletonWarrior: "skeletonArcher", swordNinja: "ninja",
+  // match the unit's COMBAT TYPE so a ranged unit looks ranged and a melee unit looks melee — otherwise an
+  // archer wearing a swordsman sprite reads as "a swordsman shooting arrows" (and vice-versa).
+  goblinArcher: "archer", friendlyGoblinArcher: "archer",           // ranged -> an archer sprite
+  friendlyGoblinWarrior: "goblinWarrior", swordNinja: "ninja",      // melee  -> a melee sprite
+  skeletonWarrior: "skelitonFootSoldier",                           // melee skeleton (not skeletonArcher)
+  friendlyGoblinMage: "goblinMage",                                 // caster
 };
 
 /** The sprite character for an actor, or a stand-in ("blackOrc") when its anims aren't bundled. */
@@ -43,6 +47,12 @@ export class Anim extends Component {
   private action = "stand";
   private frame = 0;
   private timer = 0;
+  // objAnimStrip frame-event latches (set per Anim.update, read by the animation-driven attack drivers):
+  // justAdvanced = the strip advanced a frame THIS tick (getFrameFresh); justLooped = it wrapped / a one-shot
+  // reached its last frame THIS tick (getLooped). So a #animframe hit fires once per frame, and the attack
+  // window ends exactly when the strip completes — the animation is the clock.
+  private justAdvanced = false;
+  private justLooped = false;
   private extraDelay = 0;   // modWeaponTechnique.frameExtendDelay: extra frames added to the current frame's delay
   // modStretchDeath (act_player #stretchDeath): a magical death — the body stretches vertically + fades to
   // transparent over STRETCH_DURATION frames instead of switching to a grave, then resolves (gameOver).
@@ -68,7 +78,17 @@ export class Anim extends Component {
   // restart the current action strip from frame 0 (ensureMode re-entry): a NEW attack/swing replays its
   // one-shot strip even though the action STRING is unchanged across consecutive swings — without this the
   // strip plays once then holds its last frame for every following swing (the "stuck on the last frame" bug).
-  restart(): void { this.frame = 0; this.timer = 0; this.extraDelay = 0; }
+  restart(): void { this.frame = 0; this.timer = 0; this.extraDelay = 0; this.justAdvanced = false; this.justLooped = false; }
+
+  // ── objAnimStrip frame state, for the animation-driven attack drivers (control.ts) ──────────────
+  /** getFrame: current 1-based frame index of the active strip (Lingo #animframe values are 1-based). */
+  attackFrame(): number { return this.frame + 1; }
+  /** getFrameFresh: true only on the tick the strip just advanced a frame (a #animframe fires once). */
+  frameFresh(): boolean { return this.justAdvanced; }
+  /** getLooped: true on the tick the strip wrapped / a one-shot reached its last frame (attack complete). */
+  looped(): boolean { return this.justLooped; }
+  /** the active strip has >1 frame and so can drive frame-events; a 0/1-frame strip can't (caller falls back). */
+  canAnimate(): boolean { const a = this.animFor(this.action); return !!a && a.frames.length > 1; }
 
   // frameAdvance (modWeaponTechnique.skipFramesForWeaponTechnique → me.big.frameAdvance): step the strip
   // one frame early (faster attack cadence). Wraps for looped strips, clamps for one-shots; resets the
@@ -100,6 +120,7 @@ export class Anim extends Component {
   }
 
   update(next: NextFn): void {
+    this.justAdvanced = false; this.justLooped = false; // frame-event latches, set only on an advance this tick
     // modStretchDeath transform progress: advance while the stretch-death unit is dead; reset on revive
     // (extra-life respawn in place) so the next death stretches from scratch.
     if (this.stretchDeath) {
@@ -121,9 +142,16 @@ export class Anim extends Component {
       this.timer += game.gameSpeed;
       if (this.timer >= frameDelay) {
         this.timer = 0; this.extraDelay = 0; // the held-extra is spent once this frame finally advances
+        const prev = this.frame, last = anim.frames.length - 1, looped = this.isLooped(action, anim);
         // cyclic strips wrap; one-shot strips advance to the last frame and hold (data-driven loop flag)
-        if (this.isLooped(action, anim)) this.frame = (this.frame + 1) % anim.frames.length;
-        else this.frame = Math.min(this.frame + 1, anim.frames.length - 1);
+        if (looped) this.frame = (this.frame + 1) % anim.frames.length;
+        else this.frame = Math.min(this.frame + 1, last);
+        if (this.frame !== prev) {
+          this.justAdvanced = true;
+          // getLooped: the strip completed a play THIS tick — a looped strip wrapping to 0, or a one-shot
+          // reaching its last frame (the original exits #attack mode on this event via attackFin).
+          if (looped ? this.frame === 0 : this.frame === last) this.justLooped = true;
+        }
       }
     }
     next();
@@ -154,7 +182,10 @@ export class Anim extends Component {
     // tint: the real modColourTransform palette (white flick on hit, glowRed/Teal/Gold). Falls back to
     // the binary white flash (isHurt) only when no ColourTransform component is present on this archetype.
     const ct = this.entity.tryGet(ColourTransform);
-    const tint = ct ? ct.getColourTransform() : (this.entity.send("isHurt") === true ? { rgb: [255, 255, 255] as [number, number, number], strength: 0.85, additive: false } : null);
+    // a GRAVE is a plain static background blit — NO glow. Drop any tint the unit carried at death (a
+    // glowRed low-health pulse / glowTeal freeze), else the corpse flashes red/teal forever.
+    const tint = isGrave ? null
+      : ct ? ct.getColourTransform() : (this.entity.send("isHurt") === true ? { rgb: [255, 255, 255] as [number, number, number], strength: 0.85, additive: false } : null);
     const alpha = this.entity.send("getAlpha"); // per-sprite alpha (globalAlpha), default opaque
     // modStretchDeath transforms: startTransBlend(out) fades opacity 1->0; startStretchHeight stretches the
     // body taller (anchored at the feet via the reg point) — both over STRETCH_DURATION.

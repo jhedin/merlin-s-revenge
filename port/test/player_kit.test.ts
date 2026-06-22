@@ -88,32 +88,36 @@ describe("Merlin's charged-magic + punch kit", () => {
     expect(foe.get(Energy).energy).toBeLessThan(hp0);
   });
 
-  it("punches an adjacent enemy while the fire button is HELD (no magic weapon -> melee)", () => {
+  // a 4-frame punch strip (dela 1) so the swing's #animframe (#punch = 3) crossing fires the hit.
+  const punchAnims = { mer_naturalMelee: { delay: 1, frames: [{ dela: 1 }, { dela: 1 }, { dela: 1 }, { dela: 1 }] }, mer_stand: { delay: 1, frames: [{}] } };
+
+  it("punches an adjacent enemy while the fire button is HELD (the swing's #animframe lands the hit)", () => {
+    game.assets = { index: { anims: punchAnims }, img: () => null } as any;
     game.input = fakeInput({ mouseDown: true, cursor: null }) as any; // hold fire (click-to-attack)
     const p = spawnPlayer(100, 100);
     const foe = spawnEnemy("swordOrc", 110, 100, { animChar: "swordOrc" }); // hostile, within punch reach
     game.entities = [p, foe];
     const hp0 = foe.get(Energy).energy;
-    rebuildCombatSubstrate(); // roster + unit map (auto-aim + area melee both read teamMaster now)
-    p.send("update"); // melee fires on the first eligible tick while fire is held
-    expect(foe.get(Energy).energy).toBeLessThan(hp0);
+    let hit = false;
+    for (let i = 0; i < 10 && !hit; i++) { rebuildCombatSubstrate(); p.send("update"); hit = foe.get(Energy).energy < hp0; }
+    expect(hit).toBe(true); // the swing animation reached #animframe 3 and the area hit landed
   });
 
-  it("ONE swing = ONE hit — holding fire through the swing window doesn't re-hit every frame", () => {
-    // merlinSword #cooldown:0 recovers within a tick; the re-hit gate is the swing animation (meleeT), so a
-    // foe must take exactly one hit per swing, not N (the 'orcs die in one hit' multi-hit bug).
+  it("ONE swing = ONE hit — fires once per #animframe crossing, not every frame", () => {
+    // animation-driven: the hit fires only when the swing strip reaches #punch's #animframe (3), once per
+    // swing — not every tick the player holds fire (the 'orcs die in one hit' per-frame multi-hit bug).
+    game.assets = { index: { anims: punchAnims }, img: () => null } as any;
     game.input = fakeInput({ mouseDown: true, cursor: null }) as any; // hold fire the whole time
     const p = spawnPlayer(100, 100);
-    const foe = spawnEnemy("blackOrc", 110, 100, { animChar: "blackOrc" }); // big HP so it survives one hit
+    const foe = spawnEnemy("blackOrc", 110, 100, { animChar: "blackOrc" }); // big HP so it survives a hit
     foe.get(Movement).inertia = 0;
     game.entities = [p, foe];
-    rebuildCombatSubstrate();
-    p.send("update");
-    const afterOne = foe.get(Energy).energy;          // damage from the single swing
-    const dmg1 = (foe.get(Energy).max) - afterOne;
-    for (let i = 0; i < 5; i++) p.send("update");     // still mid-swing window (sword swing is 12 ticks)
-    expect(foe.get(Energy).energy).toBe(afterOne);    // NO further damage — the swing can't re-hit
-    expect(dmg1).toBeGreaterThan(0);
+    let drops = 0, prev = foe.get(Energy).energy;
+    for (let i = 0; i < 5; i++) { // one swing window (4-frame strip @ dela 1 + the ordering lag)
+      rebuildCombatSubstrate(); p.send("update");
+      const e = foe.get(Energy).energy; if (e < prev) drops++; prev = e;
+    }
+    expect(drops).toBe(1); // exactly ONE damage event across the swing, not one per frame
   });
 
   it("routes objects-layer units by team: #aldevar -> ally, hostile -> enemy", () => {

@@ -140,6 +140,29 @@ describe("FSM configuration from #AiType", () => {
   });
 });
 
+describe("burst fire: one shot per #animframe crossing (animation-driven attack)", () => {
+  it("a crossBow (#animframe [2,4,6]) fires exactly 3 bullets across one attack loop", () => {
+    game.grid = new CollisionGrid(40, 40, 32); game.entities = [];
+    // a 6-frame weaponRanged strip (dela 1) so the strip crosses 1-based frames 2,4,6 as it plays.
+    game.assets = { index: { anims: {
+      bowOrc_weaponRanged: { delay: 1, frames: Array.from({ length: 6 }, () => ({ dela: 1 })) },
+      bowOrc_stand: { delay: 1, frames: [{}] },
+    } }, img: () => null } as any;
+    game.teamMaster.reset(); game.armyMaster.reset(); game.teamMaster.unitMap.configure(32, 0, 0);
+    const player = spawnPlayer(300, 200); game.player = player; game.entities.push(player);
+    const orc = spawnEnemy("bowOrc", 360, 200); game.entities.push(orc); // 60px < crossBow reach 100
+    // run one full attack loop (6-frame strip @ dela 1 + the 1-tick CpuAI/Anim ordering lag), counting shots.
+    let shots = 0;
+    for (let t = 0; t < 12; t++) {
+      rebuildCombatSubstrate();
+      const before = game.entities.filter((e) => e.type === "bullet").length;
+      orc.send("update");
+      shots += game.entities.filter((e) => e.type === "bullet").length - before;
+    }
+    expect(shots).toBe(3); // crossBow [2,4,6] -> 3 bullets per attack, not 1
+  });
+});
+
 describe("enemies play their ATTACK animation (CpuAI.animAction — was missing entirely)", () => {
   it("a melee orc returns its weaponMelee strip while attacking, then reverts", () => {
     game.grid = new CollisionGrid(40, 40, 32); game.entities = [];
