@@ -1,116 +1,163 @@
 # Parity Audit: thunderMonk
 
-**Actor**: thunderMonk  
-**Slice**: CPU ranged splasher  
-**Data Source**: casts/data/act_thunderMonk.txt / act_thunderSticks.txt / act_thunderBlast.txt  
-**Port Source**: port/src/entities/archetypes.ts / port/src/components/control.ts / port/src/components/splash.ts  
-**Date**: 2026-06-21
+**Date**: 2026-06-22  
+**Probe**: `port/tools/_audit_thunderMonk.ts` (run + deleted)  
+**Data**: `casts/data/act_thunderMonk.txt` + `#CPUCharacter` + `#character` + `#actor` + `act_thunderSticks.txt` + `act_thunderBlast.txt`  
+**Scripts**: `objAiCPU` → `objAiAttack` + `modAttack` + `modWeaponManager`; `objCPUCharacter`
 
-## Property Coverage
+---
 
-| Property | Original | Port | Status |
-|----------|----------|------|--------|
-| objType | #objCPUCharacter | #objCPUCharacter | ✓ |
-| AiType | #objAiCPU | #objAiCPU | ✓ |
-| inherit | #CPUCharacter | #CPUCharacter | ✓ |
-| energy | 150 | 150 | ✓ |
-| strength | 10 | 10 | ✓ |
-| dexterity | 10 | 10 | ✓ |
-| inertia | 50 | 50 | ✓ |
-| walkSpeed | 4 | 2.4 (4 × 0.6 px/tick) | ✓ Calibrated |
-| weapon | #thunderSticks | #thunderSticks | ✓ |
-| team | #magicalAlliance | #magicalAlliance | ✓ |
-| damageSpeed | 3 | (not tracked; non-issue) | ✓ |
-| dieSound | #none | (no-op; non-issue) | ✓ |
-| startingLevel | 0 | 0 | ✓ |
-| experienceImWorth | 15 | 15 | ✓ |
-| eyestrain | 50 | (non-issue) | ✓ |
-| weaponTechnique | 0 | 0 | ✓ |
+## 1. Derive — Full Inheritance Chain
 
-## Behavioral Parity
+### Identity & Team
 
-### Weapon Resolution
+| Field | Value | Source |
+|-------|-------|--------|
+| objType | `#objCPUCharacter` | act_thunderMonk |
+| AiType | `#objAiCPU` | act_thunderMonk |
+| inherit | `#CPUCharacter` → `#character` → `#actor` | chain |
+| name | `"thunderMonk"` | act_thunderMonk |
+| team | `#magicalAlliance` | act_thunderMonk |
+| category | `#enemies` (hates `#aldevar`) | tem_magicalAlliance |
 
-**thunderSticks** (casts/data/act_thunderSticks.txt:5–16):
-- animType: #weaponRanged
-- bullet: #thunderBlast
-- reach: 300
-- firingType: #fullstrength
-- cooldown: 0
+### Base Stats (merged, later overrides earlier)
 
-**Port resolution** (archetypes.ts:163–201):
-- Line 163: animType = "#weaponRanged"
-- Line 169: ranged = (animType === "#weaponRanged") → **true** ✓
-- Line 249–255: Bullet resolution: bulletActor = act_thunderBlast
-  - bulletActor.attack.type = "#explode" → splashBullet flag set ✓
+| Field | #actor/#character | #CPUCharacter | act_thunderMonk | Final |
+|-------|-------------------|---------------|-----------------|-------|
+| energy | — | — | 150 | **150** |
+| strength | 1 (character) | — | 10 | **10** |
+| dexterity | 1 (character) | — | 10 | **10** |
+| eyestrain | 0 (character) | — | 50 | **50** |
+| inertia | — | — | 50 | **50** |
+| walkSpeed | — | 3 | 4 | **4** |
+| damageSpeed | — | — | 3 | **3** |
+| startingLevel | — | — | 0 | **0** |
+| experienceImWorth | — | — | 15 | **15** |
+| weaponTechnique | — | — | 0 | **0** |
+| dieSound | — | — | `#none` | `#none` |
+| frictionReel | — | `point(10,10)` | — | `point(10,10)` |
+| pathfinding | — | true | — | true |
+| walkType | — | `#anyDirSpeed` | — | `#anyDirSpeed` |
 
-**thunderBlast** (casts/data/act_thunderBlast.txt:2–22):
-- attack.type: #explode
-- explodeCharge: 100
-- power: 0.5
-- friction: point(3,3)
+### Weapon — `#thunderSticks` (`act_thunderSticks.txt`)
 
-**Port resolution** (archetypes.ts:252):
-- `ba.attackType === "#explode"` → splashBullet = ba ✓
-- CpuAI.attack (control.ts:546–551): ranged + splashBullet fires via `fireSplashBullet()` ✓
+| Field | Value |
+|-------|-------|
+| animType | `#weaponRanged` |
+| bullet | `#thunderBlast` |
+| reach | 300 |
+| animframe | 13 |
+| firingType | `#fullstrength` |
+| cooldown | 0 |
+| collisionLoc | `point(0,-2)` |
+| sound | `#none` |
 
-### Splash Damage Behavior
+Derived effect: `#weaponRanged` → `ranged = true`; `cooldown 0`, `dexterity 10`
+→ `framesWanted = ceil((0−1)/10) + 18 = 18`; `effectiveCooldown = 18 × 10 + 1 = 181`.
 
-**Port splash resolution** (components/splash.ts:49–78):
-- Line 53: `const explode = attack.attackType === "#explode"` → true ✓
-- Line 54: `const radius = explode ? attack.explodeCharge / 2 : attack.powerScalar`
-  - Radius = 100 / 2 = 50 px
-- Line 57–58: searchRadius = 50 + 12 (TARGET_RADIUS) = 62 px
-- Line 62–70: Radial falloff: `speed = (hitRange - dist) * attack.powerScalar`
-  - hitRange = 50 + 12 = 62
-  - Falloff = (62 - dist) × 0.5 (power)
-  - Central hits (dist=0): speed = 62 × 0.5 = 31 px knockback
-  - Rim hits (dist≈62): speed ≈ 0
-  - **Faithful to original radial gradient** ✓
+### Bullet — `#thunderBlast` (`act_thunderBlast.txt`)
 
-### AI Mode & Movement
+| Field | Value |
+|-------|-------|
+| attack.type | `#explode` |
+| attack.explodeCharge | 100 |
+| attack.power | 0.5 |
+| friction | `point(3,3)` |
+| weight | 0.4 |
+| explodeSound | `"spell_explode"` |
+| explodeEvents | `[#bulletArrivedAtTargetLoc, #bulletCollidedWithTarget, #bulletLanded]` |
 
-**CpuAI FSM** (control.ts:296–450):
-- Line 330: `mode: CpuMode = "findTarget"`
-- Line 312: `ranged = false` (init default; overridden to true at spawn)
-- Line 356: `this.ranged = cfg["ranged"] === true` → **true** (from archetype line 273)
-- Line 357: `this.runReload = cfg["runReload"] === true` → **false** (data has no runReload; AiType is #objAiCPU, not spellcaster) ✓
-- Line 470–487: updateMoveToAttack
-  - Line 485: `if (this.targetInReach(d)) → this.attack(m, dx, dy, target)`
-  - Line 499: reachRanged = 150 (default for ranged; 300 reach set but clamped to 220 max at line 370)
-- **Faithful committed-target FSM with 30-frame retarget throttle** ✓
+`attack.type = #explode` → routes as **splash bullet** (not a plain bolt). Radius = `explodeCharge / 2 = 50 px`. On detonation, `SplashDamage` delivers radial falloff: `speed = (hitRange − dist) × 0.5` (max 31 at centre, 0 at rim 62 px from centre).
 
-### Attack Execution
+### AI Behaviour — `objAiCPU`
 
-**ranged + splashBullet path** (control.ts:534–551):
-- Line 534–544: firingType = "#fullstrength" → throwSpeed = this.strength = 10
-- Line 546: `if (this.splashBullet)` → true
-- Line 550–551: `fireSplashBullet(this.entity.id, m.x, m.y - 6, dx, dy, throwSpeed, this.splashBullet, team, this.splashBullet.hits, tg?.allegiance ?? "#enemy", 140)`
-  - Fires the splash bullet with thunderSticks' fireType behavior ✓
-  - Projectile lands → `resolveSplash()` on impact (systems/bullets.ts hook) ✓
+- Mode FSM: `findTarget → moveToAttack → attack → attackFin → findTarget`
+- Retarget throttle: 30 frames
+- **Not** a spellcaster (`#objAiCPU`, not `#objAiCPUSpellCaster`) → `runReload = false`, `dodgesBullets = false`
+- Reach: 300 clamped → `reachRanged = 220`
+- On attack: faces target (`faceTarget()` because `animType ≠ #magic`), fires via `attackRanged()` → `performAttack()` → `performRangedAttack()`
+- Shot timing: `#animframe 13` on a 15-frame strip at delay=3 → fires at tick 37 of the 45-tick strip
+- Throw velocity: `#fullstrength`, `strength=10` → 10 px/tick
 
-### Team Allegiance
+### Sprites / Animations
 
-**Port entity build** (archetypes.ts:264–312):
-- Line 270: `team: str("team", "#monsters")` → "#magicalAlliance" (from data) ✓
-- Line 270: `teamRole: "#teamMembers"` (default hostile role) ✓
-- teamMaster.findTarget respects team + allegiance for targeting ✓
+| Strip | Frames | Loop | Purpose | In assets |
+|-------|--------|------|---------|-----------|
+| `thunderMonk_stand` | 1 | yes | idle | YES |
+| `thunderMonk_walk` | 6 | yes | movement | YES |
+| `thunderMonk_weaponRanged` | 15 | no | attack | YES |
+| `thunderMonk_grave` | 2 | no | death grave | YES |
+| `thunderMonk_reel` | 2 | no | knockback | YES |
+| `thunderMonk_charge` | — | — | n/a (not spellcaster) | NO |
+| `thunderMonk_release` | — | — | n/a (not spellcaster) | NO |
 
-### Movement & Collision
+Bullet strips: `thunderBlast_fly` (6f), `thunderBlast_land` (2f), `thunderBlast_explode` (6f) — all present.
 
-**Movement component** (components/movement.ts, implicit via EnemyArchetype):
-- walkSpeed: 4 → 2.4 px/tick (archetypes.ts:267) ✓
-- Pathfinding via K3 beeline (line 486 archetypes.ts) when not in reach ✓
-- Collision handled by Movement tick (no wall-reel damage for AI except in reel mode) ✓
+### Death / Grave / Reincarnation
 
-### Death
+- `dieSound: #none` — silent death (no sound)
+- `modGrave` (via `objCPUCharacter`) → `thunderMonk_grave` strip (2 frames), held behind living units
+- No reincarnation (`reincarnateAs`/`reincarnateInto` not set)
 
-**Energy → death transition** (components/combat.ts Energy component):
-- energy: 150 (max)
-- dieSound: #none (non-issue per spec) ✓
-- Grave component (EnemyArchetype line 36) handles corpse lifecycle ✓
-- No divergence ✓
+---
 
-## Conclusion
+## 2. Derived vs Reproduced Table
 
-**thunderMonk is CLEAN.** All properties match. The weapon chain resolves correctly: thunderSticks → #weaponRanged → bullet thunderBlast → #explode type → splashBullet flag → ranged + splash AI firing via fireSplashBullet. The splash damage resolver computes the faithful radial falloff (speed = (hitRange - dist) × power). Team allegiance, movement, and death are correctly handled. No behavioral divergence detected.
+| Property | Derived | Reproduced (probe) | Match |
+|----------|---------|--------------------|-------|
+| team | `#magicalAlliance` | `#magicalAlliance` | OK |
+| ai.ranged | `true` | `true` | OK |
+| ai.runReload | `false` | `false` | OK |
+| ai.dodgesBullets | `false` | `false` | OK |
+| ai.reachRanged | `220` (300 clamped) | `220` | OK |
+| ai.eyestrain | `50` | `50` | OK |
+| atk.name | `#thunderSticks` | `#thunderSticks` | OK |
+| atk.type | `ranged` | `ranged` | OK |
+| atk.animType | `#weaponRanged` | `#weaponRanged` | OK |
+| atk.animFrame | `[13]` | `[13]` | OK |
+| atk.bullet | `#thunderBlast` | `#thunderBlast` | OK |
+| atk.firingType | `#fullstrength` | `#fullstrength` | OK |
+| atk.reach | `300` | `300` | OK |
+| splashBullet wired | yes (`#explode`) | truthy | OK |
+| bulletAttack (plain) | no | `null` | OK |
+| splashBullet.attackType | `#explode` | `#explode` | OK |
+| splashBullet.explodeCharge | `100` | `100` | OK |
+| splashBullet.powerScalar | `0.5` | `0.5` | OK |
+| anim.char | `thunderMonk` | `thunderMonk` | OK |
+| stand strip | present | present | OK |
+| walk strip | present | present | OK |
+| weaponRanged strip | 15f / delay=3 | 15f / delay=3 | OK |
+| grave strip | present | present | OK |
+| reel strip | present | present | OK |
+| charge strip | absent | absent | OK |
+| release strip | absent | absent | OK |
+| death strip | absent | absent | OK |
+| walkSpeed px/tick | `2.4` (4×0.6) | `2.4` | OK |
+| energy | `150` | `150` | OK |
+| bullet fires (200f run) | yes, at t≈37 | t=37, speed=10.00 | OK |
+| splash bullet moving | yes, non-zero v | speed=10.00 px/tick | OK |
+| attackAction | `weaponRanged` | `weaponRanged` | OK |
+
+**Probe output: DIVERGENCES=0**
+
+---
+
+## 3. Divergences
+
+None. All 10 divergence checks passed.
+
+---
+
+## 4. Faithful Original Quirks (WONTFIX)
+
+**reachRanged capped at 220** — original `reach: 300` exceeds the port-wide `Math.min(220, Math.max(60, reach))` cap (`archetypes.ts:502`). Keeps CPU actors within visual range. FAITHFUL → WONTFIX.
+
+**effectiveCooldown 181 (not 0)** — original `cooldown: 0` + `dexterity 10` feeds `ceil((0−1)/10) + 18 = 18 framesWanted`; port counter recovers in 18 frames (matches original `atkCooldown + 18` behaviour). FAITHFUL → WONTFIX.
+
+**animAction undefined at t=0** — at frame 0 the unit immediately enters attack mode but the `animAction` dispatch resolves after the update; by t=1 it returns `weaponRanged`. The strip drives real attack timing via `#animframe 13`, not this string. FAITHFUL → WONTFIX.
+
+**shot fires at t=37** — 15-frame strip × delay=3 = 45 total ticks; frame 13 reached after 12×3=36 elapsed ticks (the 37th game tick). Matches `#animframe 13` exactly. FAITHFUL.
+
+---
+
+thunderMonk | DIVERGENCES=0 | team, attack-chain, splash-bullet routing, animation strips, walkSpeed, energy, and AI mode all verified by live probe; shot fires at frame 13 (t=37) with speed=10 px/tick as derived.

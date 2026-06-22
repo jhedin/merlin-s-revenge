@@ -192,23 +192,35 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
   // melee, dexterity for ranged/magic. So hi = framesWanted*inc + 1. (Faithful power/reach/sound/bullet
   // pass through unchanged; only the cooldown bound is calibrated — B2 plan §f.3.)
   const rawCooldown = typeof atk["cooldown"] === "number" ? atk["cooldown"] : (ranged ? 40 : 18);
-  const framesWanted = Math.max(1, rawCooldown + (ranged ? 18 : 6));
   // the counter inc the WeaponManager will use for THIS weapon's #type (melee=agility, ranged=dexterity,
   // magic=manaRegeneration). manaRegen is passed into the build below so Mana.regeneration (the live inc)
   // matches this calibration inc for magic enemies (else a caster with mana_regeneration!=1 would drift).
   const isMagic = animType === "#magic";
   const manaRegen = num("mana_regeneration", 1);
   const counterInc = isMagic ? manaRegen : ranged ? dexterity : agility;
-  const effectiveCooldown = Math.round(framesWanted * (counterInc > 0 ? counterInc : 1) + 1);
+  const inc = counterInc > 0 ? counterInc : 1;
+  // the ORIGINAL counter recovers in ceil((cooldown-1)/inc) ticks (hi=cooldown, inc=skill stat) — NOT
+  // `cooldown` ticks. The old formula treated cooldown as the frame count, so a high-dexterity weapon
+  // (shrouder dexterity 10, cooldown 400) recovered ~10x too slow (418 vs 40). Derive the original recovery
+  // first, THEN add the port's attack-window buffer; effectiveCooldown back-solves the counter hi.
+  const framesWanted = Math.max(1, Math.ceil((rawCooldown - 1) / inc) + (ranged ? 18 : 6));
+  const effectiveCooldown = Math.round(framesWanted * inc + 1);
   // An enemy with no #attack/#weapon (e.g. monkGhost, #objAiCPUGhost, energy-only) still melee-contacts.
   // Give it a synthetic #natural melee so the WeaponManager builds a cooldown counter — otherwise
   // getCooldownFin() is unconditionally true and the unit attacks EVERY frame (the old code defaulted
   // its cooldown to 18). The synthetic attack carries no power (CpuAI uses its scalar this.power).
-  const hasAttack = animType !== "" && typeof atk["name"] === "string" && atk["name"] !== "#none";
+  // a weapon's #name may be a Lingo bare symbol (`#name: skeletonComandoSword`, no #) which the data parser
+  // serialises as `{ $global: "..." }` (an object), not a string. The original engine still uses the weapon
+  // (only the name resolves oddly); the port must NOT reject it. Normalise the name to a usable "#sym" string.
+  const atkNameRaw = atk["name"];
+  const atkName = typeof atkNameRaw === "string" ? atkNameRaw
+    : atkNameRaw && typeof atkNameRaw === "object" && "$global" in (atkNameRaw as Record<string, unknown>)
+      ? "#" + String((atkNameRaw as Record<string, string>)["$global"]) : "";
+  const hasAttack = animType !== "" && atkName !== "" && atkName !== "#none";
   // attackless fallback recovers in the old default 18 frames (cooldownMax 18 for a no-atkCooldown melee).
   const fallbackCooldown = Math.round(18 * (agility > 0 ? agility : 1) + 1);
   const enemyAttack = hasAttack
-    ? resolveAttack({ ...atk, cooldown: effectiveCooldown })
+    ? resolveAttack({ ...atk, name: atkName, cooldown: effectiveCooldown })
     : resolveAttack({ name: "#natural", animType: "#naturalMelee", cooldown: fallbackCooldown });
   // K6: a multiAttack actor's natural attack IS its ranged weapon 1 — force its type so getCurrentAttack()
   // and setMultiAttack's ranged/melee branch are correct (the global animType map keeps it "melee" for scope).
@@ -279,6 +291,15 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
   const rch = atk["reach"];
   const targetReach = typeof rch === "number" ? rch
     : (rch && typeof rch === "object" && "x" in rch ? Math.hypot(rch.x, rch.y) : undefined);
+  // MELEE reach comes from the strike point, NOT #reach (objAiCPU.targetInReachMelee uses calcStrikePoint =
+  // loc + #collisionLoc; #reach gates only RANGED). So a melee weapon's standoff + damage area = |collisionLoc.x|
+  // (blackAxe 70), not the 22 default — without this a long-reach melee unit closes ~2.5x too far before swinging.
+  const isMeleeAtk = /melee/i.test(String(atk["animType"] ?? ""));
+  const clx = atk["collisionLoc"] && typeof atk["collisionLoc"] === "object"
+    ? Math.abs(Number((atk["collisionLoc"] as { x?: number }).x) || 0) : 0;
+  // clamp ONCE (to [16,90]) and feed BOTH the approach gate and the damage area the SAME value, so the
+  // unit stands where its area still reaches the target (else a short-reach melee weapon would whiff).
+  const meleeReach = isMeleeAtk && clx > 0 ? Math.max(16, Math.min(90, clx)) : undefined;
   const e = EnemyArchetype.create(makeEntityId());
   e.type = "enemy";
   e.build({
@@ -292,7 +313,7 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     passThrough: d["collisionDetection"] === false || ghost,
     constrainToArea: d["collisionDetection"] === false || ghost, // autoConstrainToPlayArea: ghosts stay on-map
     // (#ghost is already passed below for the AI; Movement.init reads it for the takeHit amGhost gate)
-    energy: num("energy", 40),
+    energy: num("energy", 100), // objCharacter.new seeds #energy=100 (was 40); actors w/o #energy inherit it
     strength: num("strength", 5),
     strengthIncLevel: num("strengthIncLevel", 0.1), // melee strength growth per level (CpuAI.levelUp)
     eyestrain: num("eyestrain", 0),                 // ranged/magic aim scatter (objAiAttack.modifyLocWithEyestrain)
@@ -300,6 +321,10 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     animChar: opts.animChar ?? actorName, box: 14,
     stretchDeath: d["stretchDeath"] === true, // greyGhost #stretchDeath: magical stretch+fade death (modStretchDeath)
     inertia: num("inertia", 0), // resists knockback (modGameObject damping); heavy orcs get shoved less
+    damageSpeed: num("damageSpeed", 5), // modEnergy #damageSpeed: wall-slam bonus threshold (was never forwarded)
+    // #frictionReel point: per-actor knockback-slide friction (heavies skid less). Forward the x component.
+    frictionReel: d["frictionReel"] && typeof d["frictionReel"] === "object"
+      ? Number((d["frictionReel"] as { x?: number }).x) || 10 : 10,
     ranged, runReload, ghost, splashBullet, bulletAttack, bulletReincarnate, bulletChar,
     // K4/K5/K6/K8a AI config: bullet-dodge caster, multi-attack 2-weapon switch, builder build-loop, the
     // ghost's possess team. Defaults keep every other actor on the existing committed-target FSM.
@@ -316,8 +341,9 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     attack: enemyAttack, attack2: secondAttack, agility, dexterity, mana_regeneration: manaRegen,
     // real mana_* so a CPU caster charges to its true ceiling (summon tiers / charge-scaled spell power)
     mana_capacity: num("mana_capacity", 10), mana_flow: num("mana_flow", 1), mana_burst: num("mana_burst", 1),
+    mana_capacityIncLevel: num("mana_capacityIncLevel", 1), // per-level charge-ceiling growth (was not forwarded)
     atkCooldown: typeof atk["cooldown"] === "number" ? atk["cooldown"] : undefined,
-    atkReach: typeof atk["reach"] === "number" ? atk["reach"] : undefined,
+    atkReach: meleeReach ?? (typeof atk["reach"] === "number" ? atk["reach"] : undefined),
     atkPower: atkPower || undefined,
     atkSound: typeof atk["sound"] === "string" ? atk["sound"] : undefined,   // #attack.sound
     // teamMaster.findTarget / impactMeleeAttack config (#attack.target*); defaults from structAttack
@@ -325,8 +351,10 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     targetCriteria: typeof atk["targetCriteria"] === "string" ? atk["targetCriteria"] : "#closestDistance",
     targetRoles: Array.isArray(atk["targetRoles"]) ? atk["targetRoles"] : [["#teamMembers", "#teamBuildings"]],
     hits: Array.isArray(atk["hits"]) ? atk["hits"] : ["#teamMembers"],
-    targetReach: targetReach ?? (ranged ? 150 : 22),
+    targetReach: meleeReach ?? targetReach ?? (ranged ? 150 : 22),
     dieSound: typeof d["dieSound"] === "string" ? d["dieSound"] : undefined,  // played on death
+    takeHitSound: typeof d["takeHitSound"] === "string" ? d["takeHitSound"] : undefined, // played when hit (dragons etc.)
+    takeHitVolume: typeof d["takeHitVolume"] === "number" ? d["takeHitVolume"] : undefined,
     experienceImWorth: num("experienceImWorth", 0) || undefined,             // XP this unit grants
     experienceAmountForNextLevel: num("experienceAmountForNextLevel", 0),    // first-level XP threshold (Lingo default 0)
     energyIncPercentage: num("energyIncPercentage", 0) || undefined,

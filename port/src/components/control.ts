@@ -31,6 +31,12 @@ import type { Entity } from "../engine/dispatch";
 const SPELL_FX = { dmgPerUnit: 26, speedBase: 4.5, speedPerUnit: 0.28, speedCap: 9, releaseFrames: 6, life: 110 };
 const MELEE_FRAMES = 6; // the melee anim-strip window (presentational)
 const bare = (s: string): string => (s.startsWith("#") ? s.slice(1) : s); // #energyBeam -> energyBeam (resolveActor key)
+// calcAttackLoc (modAttack): a projectile/spell spawns at the attacker's loc + the weapon's #collisionLoc
+// (x flipped by facing) — the muzzle. Falls back to the old chest offset (0,-6) when no attack/collisionLoc.
+function muzzle(attack: AttackData | null | undefined, m: Movement): { x: number; y: number } {
+  const cl = attack?.collisionLoc;
+  return { x: m.x + (cl ? cl.x * (m.facingLeft ? -1 : 1) : 0), y: m.y + (cl ? cl.y : -6) };
+}
 // a #fireBullets spell (energyPulse/beam) streams bullets on release (I8); every other spell is #release
 // (grow-fly-explode, the K2 spell actor). The struct default releaseFunction is #release.
 const isStreaming = (a: AttackData): boolean => a.releaseFunction === "#fireBullets" || a.releaseFunction === "fireBullets";
@@ -236,7 +242,7 @@ export class PlayerControl extends Component {
       this.charge = Math.min(cm, this.charge + chargeSpeedOf(magic, mana, gmg));
       // K2 ensureSpell/chargeSpell (objAiAttack.chargeMagic): a #release spell grows a LIVE objSpell over
       // Merlin's head each tick (the #fireBullets streamers carry no charge actor — they latch on release).
-      if (!isStreaming(magic)) this.ensureSpell(magic, m).get(SpellActor).setCharge(this.charge, m.x, m.y - 6);
+      if (!isStreaming(magic)) this.ensureSpell(magic, m).get(SpellActor).setCharge(this.charge, muzzle(magic, m).x, muzzle(magic, m).y);
       // I7 auto-fire (objAiPlayer.internalEvent #spellCharged): under GMG with gmgAutoFire, the instant
       // the charge reaches max, release the spell and immediately re-charge (continuous machine-gun fire).
       if (gmg && magic.gmgAutoFire && this.charge >= cm) {
@@ -282,10 +288,10 @@ export class PlayerControl extends Component {
       registry.resolveActor(bare(s.attack.bullet)) as any);
     const hits = s.attack.hits.length ? s.attack.hits : ["#teamMembers", "#teamBuildings"];
     if (s.attack.beam) {
-      performBeamAttack(this.entity.id, m.x, m.y - 6, s.aimX, s.aimY, bulletAttack, s.team, hits, "#enemy");
+      performBeamAttack(this.entity.id, muzzle(s.attack, m).x, muzzle(s.attack, m).y, s.aimX, s.aimY, bulletAttack, s.team, hits, "#enemy");
     } else {
       const dirX = s.aimX - m.x, dirY = (s.aimY - 6) - m.y;
-      fireSplashBullet(this.entity.id, m.x, m.y - 6, dirX, dirY, s.attack.spellSpeed / 3, bulletAttack,
+      fireSplashBullet(this.entity.id, muzzle(s.attack, m).x, muzzle(s.attack, m).y, dirX, dirY, s.attack.spellSpeed / 3, bulletAttack,
         s.team, hits, "#enemy", 90);
     }
     game.audio?.play("spell_release", 0.4);
@@ -297,7 +303,7 @@ export class PlayerControl extends Component {
     if (this.spell && !(this.spell.send("isFinished") as boolean)) return this.spell;
     const team = this.entity.send("getTeam") as string;
     const allegiance = attack.payloadFunction.includes("takeHeal") ? "#friendly" : "#enemy";
-    this.spell = spawnSpell(attack, this.entity.id, m.x, m.y - 6, team, attack.hits, allegiance);
+    this.spell = spawnSpell(attack, this.entity.id, muzzle(attack, m).x, muzzle(attack, m).y, team, attack.hits, allegiance);
     this.spell.get(SpellActor).aimDir = this.aimLeft ? -1 : 1;
     return this.spell;
   }
@@ -322,7 +328,7 @@ export class PlayerControl extends Component {
     // aim point and EXPLODES radially on arrival. The summon (armySummon/monsterSummon), freeze, heal and
     // damage all resolve at the LANDING loc via the spell's explode (no instant bolt). spellSpeed/3 -> px.
     const spell = this.ensureSpell(attack, m);
-    spell.get(SpellActor).setCharge(c, m.x, m.y - 6);          // final size at release
+    spell.get(SpellActor).setCharge(c, muzzle(attack, m).x, muzzle(attack, m).y);  // final size at release (collisionLoc muzzle)
     spell.get(SpellActor).release(aim.x, aim.y, Math.max(2, attack.spellSpeed / 3));
     this.spell = null;
     m.facingLeft = this.aimLeft;
@@ -494,7 +500,7 @@ export class CpuAI extends Component {
     this.leaveWhenFinished = cfg["leaveWhenFinished"] === true;
     if (typeof cfg["atkReach"] === "number") {
       if (this.ranged) this.reachRanged = Math.min(220, Math.max(60, cfg["atkReach"])); // cap magic's 9999
-      else this.reach = Math.max(16, Math.min(40, cfg["atkReach"]));
+      else this.reach = Math.max(16, Math.min(90, cfg["atkReach"])); // melee strike reach = collisionLoc.x (no 40 clip)
     }
     this.atkSound = typeof cfg["atkSound"] === "string" ? cfg["atkSound"] : "";
     this.splashBullet = (cfg["splashBullet"] as AttackData | undefined) ?? null; // a ranged CPU's splash bullet (tower)
@@ -526,6 +532,14 @@ export class CpuAI extends Component {
   // this, an enemy had NO animAction handler so it only ever showed walk/stand (no attack animation at all).
   // Forwards (next) when not attacking, so the Hurt component's reel strip still applies on a hit.
   animAction(next: NextFn): any {
+    // modAnimSet.getAnimSym #build: a builder in range of its site plays the #build strip (construction
+    // animation) instead of stand/walk. builderMode==="build" already implies in-range (the FSM enters it
+    // only after walkToBuilding succeeds, and the builder stands still while accruing). Falls back to
+    // stand/walk (next) for a char that ships no build strip.
+    if (this.builder && this.builderMode === "build") {
+      const char = this.entity.tryGet(Anim)?.char ?? "";
+      if (game.assets.index.anims[`${char}_build`]) return "build";
+    }
     if (this.attackT > 0) { const act = this.attackAction(); if (act) return act; }
     return next();
   }
@@ -535,7 +549,14 @@ export class CpuAI extends Component {
   private attackAction(): string {
     const at = this.entity.get(WeaponManager).getCurrentAttack();
     let act = typeof at?.animType === "string" ? at.animType.replace(/^#/, "") : "";
-    if (act === "magic" || act === "weaponMagic" || act === "magicMelee") act = "release";
+    if (act === "magic" || act === "weaponMagic" || act === "magicMelee") {
+      // objAiAttack.chargeMagic: a caster spends the attack window in #charge (the wind-up — orb growing over
+      // its head) before the brief #release. So PREFER the `charge` strip (the visible bulk); fall back to
+      // `release` for casters that ship no charge strip. Either way it ANIMATES instead of standing still.
+      const char = this.entity.tryGet(Anim)?.char ?? "";
+      act = game.assets.index.anims[`${char}_charge`] ? "charge"
+        : game.assets.index.anims[`${char}_release`] ? "release" : "release";
+    }
     return act;
   }
   // the attack strip's full length in ticks (so the attack window holds the whole animation, not a cut 6f).
@@ -638,7 +659,7 @@ export class CpuAI extends Component {
     // K6 setMultiAttack: a 2-weapon CPU (ninja/shrouder) picks ranged weapon 1 beyond bufferDist, melee
     // weapon 2 within — BEFORE deciding reach/attack, so getCurrentAttack()'s reach/type is correct.
     if (this.multiAttack) {
-      this.entity.get(WeaponManager).setMultiAttack(this.entity, tp.x, tp.y, m.x, m.y, this.bufferDist);
+      this.entity.get(WeaponManager).setMultiAttack(target, tp.x, tp.y, m.x, m.y, this.bufferDist); // the TARGET (read its attack type), not self
       this.syncWeaponMode();
     }
     if (this.targetInReach(d)) { this.idle(m); this.attack(m, dx, dy, target); }
@@ -652,7 +673,11 @@ export class CpuAI extends Component {
     if (!ca) return;
     this.ranged = ca.type === "ranged" || ca.type === "magic";
     this.reachRanged = Math.min(220, Math.max(60, ca.reach));
-    this.reach = Math.max(16, Math.min(40, ca.reach));
+    // melee reach = the strike point (collisionLoc.x), same as spawn — NOT #reach (ranged-only). Keeps a
+    // multiAttack unit's melee standoff faithful after a weapon switch (ninjaSword collisionLoc 15 -> 16).
+    this.reach = ca.type === "melee" && ca.collisionLoc.x
+      ? Math.max(16, Math.min(90, Math.abs(ca.collisionLoc.x)))
+      : Math.max(16, Math.min(90, ca.reach));
   }
 
   private targetInReach(d: number): boolean { return d <= (this.ranged ? this.reachRanged : this.reach); }
@@ -718,7 +743,10 @@ export class CpuAI extends Component {
     const an = this.entity.tryGet(Anim);
     if (this.attackAnimates && an) {
       if (an.frameFresh() && this.attackFrames.includes(an.attackFrame())) this.performAttack(m);
-      if (an.looped()) { this.attackT = 0; this.attackFin(m); return; }
+      // strip completed: if nothing fired yet (a magic weapon's #animframe is #none -> empty list, so no
+      // frame crossing ever fires), cast NOW on completion — else casters would play the release strip and
+      // leave attack mode without ever attacking. Melee/ranged already fired on their crossings.
+      if (an.looped()) { if (!this.attackFired) this.performAttack(m); this.attackT = 0; this.attackFin(m); return; }
     }
     if (--this.attackT <= 0) {                   // safety / non-animating strip: fire once, then leave
       if (!this.attackFired) this.performAttack(m);
@@ -743,6 +771,7 @@ export class CpuAI extends Component {
       // K1 reference (the original couples damage to |getVect()|, but the port's tuned damage model is a
       // deliberate abstraction at a fixed reference speed — kept stable so balance/tests don't shift).
       const ftAttack = wm.getCurrentAttack();
+      const mz = muzzle(ftAttack, m); // #collisionLoc muzzle for every projectile/spell this attack spawns
       // objAiAttack.modifyLocWithEyestrain: scatter the aim, scaled by dist/reach, so the player can DODGE
       // ranged/magic CPU fire at distance (without it every shot lands dead-on). The player aims by cursor.
       ({ dx, dy } = aimWithEyestrain(dx, dy, this.eyestrain, ftAttack?.reach ?? this.reachRanged, game.rng));
@@ -754,13 +783,13 @@ export class CpuAI extends Component {
         // The beam spawns AT the target loc (stretched/rotated), detonating its explode #attack on the first
         // frame — an INSTANT hit, not a travelling bullet. (faithful: objAiCPU inherits objAiAttack.attack.)
         const tg = this.entity.send("getTargeting") as { hits: string[]; allegiance: string } | undefined;
-        performBeamAttack(this.entity.id, m.x, m.y - 6, m.x + dx, m.y + dy, this.splashBullet, team,
+        performBeamAttack(this.entity.id, mz.x, mz.y, m.x + dx, m.y + dy, this.splashBullet, team,
           this.splashBullet.hits, tg?.allegiance ?? "#enemy");
       } else if (this.splashBullet) {
         // a static turret (dwarfTower) / splash caster fires its real splash bullet (towerAxe): on
         // land/collide it resolves an AREA hit through SplashDamage (same A1 vector scale).
         const tg = this.entity.send("getTargeting") as { hits: string[]; allegiance: string } | undefined;
-        const sb = fireSplashBullet(this.entity.id, m.x, m.y - 6, dx, dy, throwSpeed, this.splashBullet, team,
+        const sb = fireSplashBullet(this.entity.id, mz.x, mz.y, dx, dy, throwSpeed, this.splashBullet, team,
           this.splashBullet.hits, tg?.allegiance ?? "#enemy", 140, this.bulletChar);
         if (this.bulletReincarnate.length) sb.get(Projectile).reincarnateAs = this.bulletReincarnate; // flamingRock -> #fire
       } else {
@@ -781,7 +810,7 @@ export class CpuAI extends Component {
           depositMines(ca, chargeMaxOf(ca, this.entity.get(Mana)), m.x + dx, m.y + dy);
         } else if (ca && ca.type === "magic" && ca.payloadFunction.includes("takeHeal")) {
           const tgc = this.entity.send("getTargeting") as { hits: string[]; allegiance: string } | undefined;
-          fireBulletPayload(this.entity.id, m.x, m.y - 6, dx, dy, ca.spellSpeed / 6,
+          fireBulletPayload(this.entity.id, mz.x, mz.y, dx, dy, ca.spellSpeed / 6,
             Math.round(SPELL_FX.dmgPerUnit * (ca.chargeMaxBasic || 5)), team, ca,
             tgc?.hits ?? ["#teamMembers"], "#friendly", SPELL_FX.life);
         } else if (ca && ca.type === "magic" && !isStreaming(ca)) {
@@ -792,9 +821,9 @@ export class CpuAI extends Component {
           // high-mana / leveled caster hits harder, matching objAiCPUSpellCaster (released at full charge).
           const tgc = this.entity.send("getTargeting") as { hits: string[]; allegiance: string } | undefined;
           const hits = ca.hits && ca.hits.length ? ca.hits : ["#teamMembers", "#teamBuildings"];
-          const spell = spawnSpell(ca, this.entity.id, m.x, m.y - 6, team, hits, tgc?.allegiance ?? "#enemy");
+          const spell = spawnSpell(ca, this.entity.id, mz.x, mz.y, team, hits, tgc?.allegiance ?? "#enemy");
           const sa = spell.get(SpellActor);
-          sa.setCharge(chargeMaxOf(ca, this.entity.get(Mana)), m.x, m.y - 6); // full charge at release
+          sa.setCharge(chargeMaxOf(ca, this.entity.get(Mana)), mz.x, mz.y); // full charge at release
           sa.release(m.x + dx, m.y + dy, Math.max(2, ca.spellSpeed / 3));
         } else {
           // bullet's collision-vector L1 (= power·speed·BULLET_DAMAGE_SCALE), with mult from the bullet's
@@ -817,9 +846,9 @@ export class CpuAI extends Component {
           if (status && ba) {
             const alleg = ba.payloadFunction.includes("takeHeal") ? "#friendly" : "#enemy";
             const hits = ba.hits.length ? ba.hits : ["#teamMembers", "#teamBuildings"];
-            pb = fireBulletPayload(this.entity.id, m.x, m.y - 6, dx, dy, speed, l1, team, ba, hits, alleg, 100);
+            pb = fireBulletPayload(this.entity.id, mz.x, mz.y, dx, dy, speed, l1, team, ba, hits, alleg, 100);
           } else {
-            pb = fireBullet(this.entity.id, m.x, m.y - 6, dx, dy, speed, l1, team, 100, 0, bmult, this.bulletChar);
+            pb = fireBullet(this.entity.id, mz.x, mz.y, dx, dy, speed, l1, team, 100, 0, bmult, this.bulletChar);
           }
           if (this.bulletReincarnate.length) pb.get(Projectile).reincarnateAs = this.bulletReincarnate; // lizardEgg->#bug, ostrichEgg->#babyOstrich
         }

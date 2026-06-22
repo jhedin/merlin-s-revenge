@@ -45,6 +45,12 @@ export class Movement extends Component {
   // knockDmgX/Y are the pending wall-slam damage armed by the hit that knocked the unit (its axis-aligned
   // collision magnitude), consumed on a wall slam while the knockback is still active.
   damageSpeed = 5;
+  // #frictionReel (objGameObject, modReel: setFriction on #reel): per-actor friction that decays the
+  // knockback shove. Default point(10,10); heavies override high (boulderMonster 40, fourArmGolem 50) so
+  // they barely skid. The port's single multiplicative KNOCK_FRICTION ~= the default 10; map a higher
+  // frictionReel to a proportionally snappier decay so heavy units stop their slide fast.
+  frictionReel = 10;
+  private knockFriction = KNOCK_FRICTION;
   private knockDmgX = 0; private knockDmgY = 0; private knockAttacker = -1;
   // objBullet.checkCollisions: bullets do NOT collide with terrain (gBulletsCollideWithBackground is never
   // set, so the ancestor collision check never runs) — they fly THROUGH walls and die only by stalling /
@@ -65,6 +71,9 @@ export class Movement extends Component {
     this.constrainToArea = cfg["constrainToArea"] === true;
     this.ghost = cfg["ghost"] === true;
     this.damageSpeed = typeof cfg["damageSpeed"] === "number" ? cfg["damageSpeed"] : 5;
+    this.frictionReel = typeof cfg["frictionReel"] === "number" ? cfg["frictionReel"] : 10;
+    // default 10 -> the tuned global 0.78; a stiffer frictionReel decays the shove proportionally faster.
+    this.knockFriction = Math.max(0.1, Math.min(0.9, KNOCK_FRICTION * 10 / this.frictionReel));
     this.knockDmgX = this.knockDmgY = 0; this.knockAttacker = -1;
   }
 
@@ -156,7 +165,7 @@ export class Movement extends Component {
     if (this.passThrough) {
       this.x += this.vx + this.kvx; this.y += this.vy + this.kvy;
       this.hitX = this.hitY = false;
-      this.kvx *= KNOCK_FRICTION; this.kvy *= KNOCK_FRICTION;
+      this.kvx *= this.knockFriction; this.kvy *= this.knockFriction;
       // autoConstrainToPlayArea (objGameObject:164): a collisionDetection:false UNIT (ghost) is clamped to
       // the play area so it can't drift off-map (bullets don't set this — they exit and expire). Bounds are
       // the room grid extent, inset by the unit's half-box.
@@ -206,7 +215,7 @@ export class Movement extends Component {
     if (ev.ceiling) this.entity.send("collisionCeiling");
     if (ev.platform) this.entity.send("collisionPlatform");
     if (ev.noPlatform) this.entity.send("collisionNoPlatform");
-    this.kvx *= KNOCK_FRICTION; this.kvy *= KNOCK_FRICTION;
+    this.kvx *= this.knockFriction; this.kvy *= this.knockFriction;
     if (Math.abs(this.kvx) < 0.05) this.kvx = 0;
     if (Math.abs(this.kvy) < 0.05) this.kvy = 0;
     next();

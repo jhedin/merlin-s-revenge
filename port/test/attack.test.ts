@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { spawnEnemy, spawnAlly, spawnPlayer } from "@/entities/archetypes";
+import { spawnEnemy, spawnAlly, spawnPlayer, spawnUnit } from "@/entities/archetypes";
 import { EnemyAI } from "@/components/control";
 import { game } from "@/game/context";
 import { CollisionGrid } from "@/world/collision";
@@ -73,10 +73,12 @@ describe("data-driven attacks (real #attack via #weapon)", () => {
     expect(ai.ranged).toBe(true);
     expect(ai.reachRanged).toBe(100); // archerBow reach
   });
-  it("warrior resolves to a melee attack with short reach", () => {
+  it("warrior resolves to a melee attack with collisionLoc-based reach", () => {
     const ai = spawnEnemy("warrior", 0, 0).get(EnemyAI);
     expect(ai.ranged).toBe(false);
-    expect(ai.reach).toBe(25); // warriorSword reach
+    // melee reach comes from the strike point (warriorSword #collisionLoc.x = 12), clamped to [16,90] — NOT
+    // the structAttack #reach default (25, which gates RANGED only). objAiCPU.targetInReachMelee.
+    expect(ai.reach).toBe(16);
   });
   it("magic reach (9999) is capped", () => {
     const ai = spawnEnemy("mageOrc", 0, 0).get(EnemyAI);
@@ -160,6 +162,24 @@ describe("burst fire: one shot per #animframe crossing (animation-driven attack)
       shots += game.entities.filter((e) => e.type === "bullet").length - before;
     }
     expect(shots).toBe(3); // crossBow [2,4,6] -> 3 bullets per attack, not 1
+  });
+
+  it("a MAGIC caster fires on strip completion (#animframe #none) — casters must still attack", () => {
+    // the bug: with a REAL multi-frame release strip the attack is animation-driven, but magic's #animframe
+    // is #none (empty crossing list), so the strip would loop and leave attack mode WITHOUT ever firing.
+    game.grid = new CollisionGrid(60, 60, 32); game.entities = [];
+    game.assets = { index: { anims: {
+      mageOrc_release: { delay: 1, frames: Array.from({ length: 4 }, () => ({ dela: 1 })) }, // real strip -> attackAnimates
+      mageOrc_stand: { delay: 1, frames: [{}] },
+    } }, img: () => null } as any;
+    game.teamMaster.reset(); game.armyMaster.reset(); game.teamMaster.unitMap.configure(32, 0, 0);
+    game.spawnEnemy = spawnEnemy; game.spawnUnit = spawnUnit; game.spawnAlly = spawnAlly; // summoner needs these
+    const player = spawnPlayer(400, 400); game.player = player; game.entities.push(player);
+    const mage = spawnEnemy("mageOrc", 540, 400); game.entities.push(mage);
+    const n0 = game.entities.length;
+    let summoned = false;
+    for (let t = 0; t < 80 && !summoned; t++) { rebuildCombatSubstrate(); mage.send("update"); summoned = game.entities.length > n0; }
+    expect(summoned).toBe(true); // the caster summoned (fired on release-strip completion), not nothing
   });
 });
 

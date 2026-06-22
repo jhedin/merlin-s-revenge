@@ -4,6 +4,7 @@
 
 import { Component, type NextFn } from "../engine/dispatch";
 import { ColourTransform } from "./colourTransform";
+import { game } from "../game/context";
 
 export class Hurt extends Component {
   static handles = ["update", "takeHit", "isInvince", "isHurt", "isReelProof", "animAction", "grantInvince"];
@@ -12,10 +13,14 @@ export class Hurt extends Component {
   private flashT = 0;
   private invinceT = 0;
   private pulsing = false; // modInvince.invinceOn->pulseWhite: the temp-invince white pulse is active
+  private takeHitSound = ""; // #takeHitSound (modEnergy.loseEnergy:206 playSound): the sound a unit makes when hit
+  private takeHitVolume = 0.5;
 
   override init(cfg: Record<string, any>): void {
     this.invinceFrames = typeof cfg["invince"] === "number" ? cfg["invince"] : 0;
     this.reelProof = cfg["reelProof"] === true;
+    this.takeHitSound = typeof cfg["takeHitSound"] === "string" && cfg["takeHitSound"] !== "#none" ? cfg["takeHitSound"] : "";
+    this.takeHitVolume = typeof cfg["takeHitVolume"] === "number" ? Math.max(0, Math.min(1, cfg["takeHitVolume"] / 255)) : 0.5;
     this.flashT = 0; this.invinceT = 0; this.pulsing = false;
   }
   override reset(): void { this.flashT = 0; this.invinceT = 0; this.pulsing = false; }
@@ -47,6 +52,10 @@ export class Hurt extends Component {
         // modEnergy.loseEnergy 203: a non-lethal hit plays the real flickWhite (white->black, speed 33)
         // instead of the binary flash. ColourTransform plays it; isHurt still gates the reel anim.
         if (!dead) this.entity.tryGet(ColourTransform)?.flickWhite();
+        // modEnergy.loseEnergy:206 playSound(pTakeHitSound): the unit's hit sound (dragons "dragon_hit",
+        // player "wizard_hit"). #none/unbundled -> the audio system no-ops. Only on a non-lethal hit (a
+        // lethal one plays the death/grave path instead).
+        if (!dead && this.takeHitSound) game.audio?.play(this.takeHitSound, this.takeHitVolume);
         this.entity.send("characterModeChanged", dead ? "#die" : "#reel");
       }
     }
