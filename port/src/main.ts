@@ -395,7 +395,7 @@ async function main() {
       // carried through Anim.sprite()'s tint), NOT a separate overlay — so no box is drawn here (the original
       // has no freeze-overlay object). Merlin's Revenge also has NO always-on health bars (gEnemyEnergyMasterOn
       // =0); health/level/XP show only on mouse-hover (rollover, below).
-      drawHealthRollover(renderer, game.input.cursor(), game.entities); // characterEnergyRollOverMaster (gCharacterEnergyRolloverOn=1)
+      drawHealthRollover(renderer, game.input.cursor(), game.entities, assets); // characterEnergyRollOverMaster (gCharacterEnergyRolloverOn=1)
       weaponPalette.render(renderer, player, assets); // modWeaponSelector palette (over the world, under the HUD)
       drawHud(renderer, player);
       // 5-state minimap (modMiniMap): #cur/#clr/#inf (+ data #fre/#spe) with a proximity distance blend.
@@ -405,7 +405,7 @@ async function main() {
       if (game.navMode) drawMinimap(renderer, {
         map, loc: rooms.loc, cleared: rooms.clearedSet(), infested: rooms.infestedRooms(),
         playerPx: { x: pm.x, y: pm.y }, cursorPx: game.input.cursor(),
-      }, viewW);
+      }, viewW, assets);
       // K12: overlay the in-game chatter cutscene (spawned ulin + speech bubble) over the live game.
       if (scene.isInGameCutscene() && inGameCut) inGameCut.renderInGame(renderer);
       // K18 overlays (showArmy / instructions / key-config) draw over the live game via the screens host.

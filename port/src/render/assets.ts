@@ -27,6 +27,9 @@ export interface AssetIndex {
   arrows?: Record<string, Record<string, string>>;
   // modWeaponSelector palette: weapon symbol (energyBlast/merlinSword/...) + greenBox/yellowBox -> icon png.
   weaponIcons?: Record<string, string>;
+  // static gfx members composited directly (pickup potions, minimap tiles, level stars, HUD chrome):
+  // clean member name -> { file, w, h, reg } (reg = the Director registration point).
+  members?: Record<string, { file: string; w: number; h: number; reg: [number, number] }>;
 }
 
 export const mapList = mapsIndex as MapMeta[];
@@ -98,7 +101,18 @@ export class Assets {
     await Promise.all(arrowFiles.map((f) => a.loadFile(f, "flood")));
     // modWeaponSelector icons: ~24 tiny PNGs, loaded up front (flood-keyed white matte like the arrows).
     await Promise.all(Object.values(index.weaponIcons ?? {}).map((f) => a.loadFile(f, "flood")));
+    // static gfx members (potions / minimap tiles / stars / HUD chrome): small, loaded up front, white-matte
+    // keyed like the other gfx so their backgrounds drop out.
+    await Promise.all(Object.values(index.members ?? {}).map((m) => a.loadFile(m.file, "flood")));
     return a;
+  }
+
+  /** A static gfx member (pickup potion, minimap tile, level star, HUD chrome) with its art + registration
+   *  point, or undefined when it wasn't bundled. */
+  member(name: string): { img: Drawable; w: number; h: number; reg: [number, number] } | undefined {
+    const m = this.index.members?.[name];
+    const img = m && this.images.get(m.file);
+    return img ? { img, w: m.w, h: m.h, reg: m.reg } : undefined;
   }
 
   /** K22: the loaded arrow member for a colour ("green"|"red") + edge ("left"|"up"|"right"|"down"),
