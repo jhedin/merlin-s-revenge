@@ -154,7 +154,10 @@ export class Anim extends Component {
     // tint: the real modColourTransform palette (white flick on hit, glowRed/Teal/Gold). Falls back to
     // the binary white flash (isHurt) only when no ColourTransform component is present on this archetype.
     const ct = this.entity.tryGet(ColourTransform);
-    const tint = ct ? ct.getColourTransform() : (this.entity.send("isHurt") === true ? { rgb: [255, 255, 255] as [number, number, number], strength: 0.85, additive: false } : null);
+    // a GRAVE is a plain static background blit — NO glow. Drop any tint the unit carried at death (a
+    // glowRed low-health pulse / glowTeal freeze), else the corpse flashes red/teal forever.
+    const tint = isGrave ? null
+      : ct ? ct.getColourTransform() : (this.entity.send("isHurt") === true ? { rgb: [255, 255, 255] as [number, number, number], strength: 0.85, additive: false } : null);
     const alpha = this.entity.send("getAlpha"); // per-sprite alpha (globalAlpha), default opaque
     // modStretchDeath transforms: startTransBlend(out) fades opacity 1->0; startStretchHeight stretches the
     // body taller (anchored at the feet via the reg point) — both over STRETCH_DURATION.

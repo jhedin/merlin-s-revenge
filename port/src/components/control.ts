@@ -548,8 +548,10 @@ export class CpuAI extends Component {
 
   update(next: NextFn): void {
     const m = this.entity.get(Movement);
-    if (this.attackT > 0) this.attackT--;
     if (this.entity.send("isDead")) { this.idle(m); return next(); }
+    // objAiCPU #attack mode: while the attack animation plays the unit is STATIONARY (it doesn't pursue) —
+    // the attack window also enforces a minimum cadence so attacks can't free-run faster than the swing.
+    if (this.attackT > 0) { this.attackT--; this.idle(m); return next(); }
     if (this.builder) { this.updateBuilder(m); return next(); }
     if (this.ghost) { this.updateGhost(m); return next(); }
     switch (this.mode) {
