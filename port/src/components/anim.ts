@@ -139,7 +139,15 @@ export class Anim extends Component {
       else if (this.deathT > 0) this.deathT = 0;
     }
     const action = this.pickAction();
-    if (action !== this.action) { this.action = action; this.frame = 0; this.timer = 0; this.extraDelay = 0; }
+    if (action !== this.action) {
+      // entering a new strip: its first frame (frame 0 / attackFrame 1) is FRESHLY shown this tick, so it
+      // counts as a frame crossing (objAnimStrip onAttackFrame: currentFrame==animFrame matches the first
+      // DISPLAYED frame). Without this, frame 0 is only ever reset-to, never advanced-into, so any #animframe
+      // that lists frame 1 can never fire its first hit — a general off-by-one. Consumed only by the attack/
+      // swing drivers, which gate on #animframe membership, so a strip whose list omits 1 sees no spurious
+      // hit; the only shipped weapon affected is flameThrower [1,3,5,7] (the fireDragon breath: 4 shots, was 3).
+      this.action = action; this.frame = 0; this.timer = 0; this.extraDelay = 0; this.justAdvanced = true;
+    }
     const anim = this.animFor(action);
     // A grave holds a SINGLE static frame (modGrave.drawGrave captures getAnimMemberFromStrip(#grave) — the
     // current member — once at death; the corpse is then background, not an animating sprite). Don't advance.
