@@ -541,7 +541,13 @@ export class CpuAI extends Component {
   private attackAction(): string {
     const at = this.entity.get(WeaponManager).getCurrentAttack();
     let act = typeof at?.animType === "string" ? at.animType.replace(/^#/, "") : "";
-    if (act === "magic" || act === "weaponMagic" || act === "magicMelee") act = "release";
+    if (act === "magic" || act === "weaponMagic" || act === "magicMelee") {
+      // a caster's cast strip varies: most use `release`, but some (necromancer) only ship a `charge` strip.
+      // Pick the one this char actually has so the cast ANIMATES instead of falling back to stand.
+      const char = this.entity.tryGet(Anim)?.char ?? "";
+      act = game.assets.index.anims[`${char}_release`] ? "release"
+        : game.assets.index.anims[`${char}_charge`] ? "charge" : "release";
+    }
     return act;
   }
   // the attack strip's full length in ticks (so the attack window holds the whole animation, not a cut 6f).

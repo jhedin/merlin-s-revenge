@@ -310,6 +310,9 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     stretchDeath: d["stretchDeath"] === true, // greyGhost #stretchDeath: magical stretch+fade death (modStretchDeath)
     inertia: num("inertia", 0), // resists knockback (modGameObject damping); heavy orcs get shoved less
     damageSpeed: num("damageSpeed", 5), // modEnergy #damageSpeed: wall-slam bonus threshold (was never forwarded)
+    // #frictionReel point: per-actor knockback-slide friction (heavies skid less). Forward the x component.
+    frictionReel: d["frictionReel"] && typeof d["frictionReel"] === "object"
+      ? Number((d["frictionReel"] as { x?: number }).x) || 10 : 10,
     ranged, runReload, ghost, splashBullet, bulletAttack, bulletReincarnate, bulletChar,
     // K4/K5/K6/K8a AI config: bullet-dodge caster, multi-attack 2-weapon switch, builder build-loop, the
     // ghost's possess team. Defaults keep every other actor on the existing committed-target FSM.
@@ -326,6 +329,7 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     attack: enemyAttack, attack2: secondAttack, agility, dexterity, mana_regeneration: manaRegen,
     // real mana_* so a CPU caster charges to its true ceiling (summon tiers / charge-scaled spell power)
     mana_capacity: num("mana_capacity", 10), mana_flow: num("mana_flow", 1), mana_burst: num("mana_burst", 1),
+    mana_capacityIncLevel: num("mana_capacityIncLevel", 1), // per-level charge-ceiling growth (was not forwarded)
     atkCooldown: typeof atk["cooldown"] === "number" ? atk["cooldown"] : undefined,
     atkReach: meleeReach ?? (typeof atk["reach"] === "number" ? atk["reach"] : undefined),
     atkPower: atkPower || undefined,
