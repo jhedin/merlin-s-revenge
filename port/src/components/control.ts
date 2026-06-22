@@ -650,7 +650,7 @@ export class CpuAI extends Component {
     // K6 setMultiAttack: a 2-weapon CPU (ninja/shrouder) picks ranged weapon 1 beyond bufferDist, melee
     // weapon 2 within — BEFORE deciding reach/attack, so getCurrentAttack()'s reach/type is correct.
     if (this.multiAttack) {
-      this.entity.get(WeaponManager).setMultiAttack(this.entity, tp.x, tp.y, m.x, m.y, this.bufferDist);
+      this.entity.get(WeaponManager).setMultiAttack(target, tp.x, tp.y, m.x, m.y, this.bufferDist); // the TARGET (read its attack type), not self
       this.syncWeaponMode();
     }
     if (this.targetInReach(d)) { this.idle(m); this.attack(m, dx, dy, target); }
@@ -664,7 +664,11 @@ export class CpuAI extends Component {
     if (!ca) return;
     this.ranged = ca.type === "ranged" || ca.type === "magic";
     this.reachRanged = Math.min(220, Math.max(60, ca.reach));
-    this.reach = Math.max(16, Math.min(40, ca.reach));
+    // melee reach = the strike point (collisionLoc.x), same as spawn — NOT #reach (ranged-only). Keeps a
+    // multiAttack unit's melee standoff faithful after a weapon switch (ninjaSword collisionLoc 15 -> 16).
+    this.reach = ca.type === "melee" && ca.collisionLoc.x
+      ? Math.max(16, Math.min(90, Math.abs(ca.collisionLoc.x)))
+      : Math.max(16, Math.min(90, ca.reach));
   }
 
   private targetInReach(d: number): boolean { return d <= (this.ranged ? this.reachRanged : this.reach); }
