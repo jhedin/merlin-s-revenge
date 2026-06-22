@@ -99,6 +99,23 @@ describe("Merlin's charged-magic + punch kit", () => {
     expect(foe.get(Energy).energy).toBeLessThan(hp0);
   });
 
+  it("ONE swing = ONE hit — holding fire through the swing window doesn't re-hit every frame", () => {
+    // merlinSword #cooldown:0 recovers within a tick; the re-hit gate is the swing animation (meleeT), so a
+    // foe must take exactly one hit per swing, not N (the 'orcs die in one hit' multi-hit bug).
+    game.input = fakeInput({ mouseDown: true, cursor: null }) as any; // hold fire the whole time
+    const p = spawnPlayer(100, 100);
+    const foe = spawnEnemy("blackOrc", 110, 100, { animChar: "blackOrc" }); // big HP so it survives one hit
+    foe.get(Movement).inertia = 0;
+    game.entities = [p, foe];
+    rebuildCombatSubstrate();
+    p.send("update");
+    const afterOne = foe.get(Energy).energy;          // damage from the single swing
+    const dmg1 = (foe.get(Energy).max) - afterOne;
+    for (let i = 0; i < 5; i++) p.send("update");     // still mid-swing window (sword swing is 12 ticks)
+    expect(foe.get(Energy).energy).toBe(afterOne);    // NO further damage — the swing can't re-hit
+    expect(dmg1).toBeGreaterThan(0);
+  });
+
   it("routes objects-layer units by team: #aldevar -> ally, hostile -> enemy", () => {
     game.input = fakeInput({}) as any;
     expect(spawnUnit("warrior", 0, 0, { animChar: "warrior" }).type).toBe("ally");   // #aldevar

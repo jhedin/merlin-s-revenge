@@ -321,7 +321,19 @@ export class PlayerControl extends Component {
     this.releaseT = SPELL_FX.releaseFrames;
   }
 
+  // the swing's full animation length in ticks (sum of per-frame delays). The re-swing cadence is this
+  // window, NOT the weapon cooldown: merlinSword #cooldown:0 recovers within a tick, so without this gate
+  // the hit would re-apply EVERY frame (objAiAttack.attackMelee ensureMode(#attack) only re-triggers the
+  // swing once the previous #attack animation completes — the damage lands once per swing via #animframe).
+  private swingTicks(attack: AttackData): number {
+    const action = attack.animType === "#weaponMelee" ? "weaponMelee" : "naturalMelee";
+    const anim = game.assets.index.anims["mer_" + action];
+    if (!anim || anim.frames.length === 0) return MELEE_FRAMES;
+    return anim.frames.reduce((s, f) => s + Math.max(1, f.dela ?? anim.delay ?? 1), 0);
+  }
+
   private tryMelee(attack: AttackData, m: Movement, wm: WeaponManager): void {
+    if (this.meleeT > 0) return;                                  // a swing is still animating — no re-hit
     if (!wm.cooldownFinFor(attack.name)) return;                 // per-weapon cooldown counter gate
     // objAiPlayer: "#melee and #ranged will autofire" — the player swings on cooldown UNCONDITIONALLY
     // (objAiAttack.attack/attackMelee gate only on getCooldownFin, never on a target/reach). The swing
@@ -340,7 +352,7 @@ export class PlayerControl extends Component {
     const base = meleeBasePower(attack, effStrength);
     game.teamMaster.impactMeleeAttack(this.entity, meleeHitFn(this.entity, this.entity.id, base, attack.damageMultiplier));
     wm.resetCooldownFor(attack.name);
-    this.meleeT = MELEE_FRAMES;
+    this.meleeT = this.swingTicks(attack); // hold the swing for its full animation (gates the next hit)
     this.usingSword = attack.type === "melee" && attack.animType === "#weaponMelee";
     game.audio?.play(this.usingSword ? "skeleton_fire" : "wizard_punch"); // #attack.sound: merlinSword / #punch
   }
