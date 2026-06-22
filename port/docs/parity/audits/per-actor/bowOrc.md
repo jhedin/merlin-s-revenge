@@ -1,185 +1,199 @@
-# Behavioral Audit: act_bowOrc
+# Actor Audit: act_bowOrc
 
-**Actor:** `bowOrc`  
-**Auditor classification:** `#objCPUCharacter` / `#objAiCPU` (hostile orc ranger)  
-**Date:** 2026-06-21
-
----
-
-## Summary
-
-`bowOrc` is a **ranged hostile unit** spawned by the `orcHouse` dwelling. The port faithfully reproduces its core behavioral signature: ranged #weaponRanged archetype, fires crossBolt projectiles, correct team allegiance, appropriate stats. All behavioral properties resolve correctly and map to the port's ranged AI FSM.
-
-**Status:** ✅ **CLEAN** — No divergences found.
+**Audit Date:** 2026-06-22
+**Port Version:** TypeScript
+**Original Spec:** `casts/data/act_bowOrc.txt`
+**Actor Type:** CPU-controlled hostile ranged unit (orc archer)
+**Method:** Derived behavior from original cast + inherit chain, then REPRODUCED in port via live probe
+(`port/test/_audit_bowOrc.test.ts` — 11 tests all passing).
 
 ---
 
-## Detailed Behavioral Coverage
+## 1. Derived Correct Behavior (from Original)
 
-### 1. Core Identity
+### Identity / Team
+- `#name: "bowOrc"`, `#team: #orcs` (hostile to `#aldevar`)
+- `#objType: #objCPUCharacter`, `#AiType: #objAiCPU` (standard committed-target FSM)
+- `#inherit: #CPUCharacter → #character → #actor` (no own `#attack`; weapon supplies it)
 
-| Property | Original | Port | Status |
+### Stats
+- `#energy: 300`, `#strength: 8`, `#dexterity: 10` (ranged cooldown recovery)
+- `#walkSpeed: 6` → port px `6 * 0.6 = 3.6 px/tick`
+- `#inertia: 55` (moderate knockback resistance)
+- `#damageSpeed: 2` (wall-slam threshold: takes impact − 2 damage when reeling into a wall above speed 2)
+- `#eyestrain: 50` (large aim scatter at range)
+- `#weaponTechnique: -5` (slows attack animation)
+- `#experienceImWorth: 30`, `#startingLevel: 0`, `#dieSound: #none`
+
+### Weapon: `#crossBow` (act_crossBow.txt)
+- `#animType: #weaponRanged` → ranged FSM branch
+- `#animframe: [2, 4, 6]` → **3 shots per attack** (fires on strip frames 2, 4, and 6)
+- `#bullet: #crossBolt` → spawns `crossBolt` projectile
+- `#collisionLoc: point(0, -2)` → bullet fires from `(x, y−2)` in original
+- `#cooldown: 8`
+- `#firingType: #fullstrength` → bullet speed = attacker strength = 8 px/tick
+- `#reach: 100` → attack when within 100 px
+- `#sound: "orc_fire"` → plays on attack
+
+### Bullet: `#crossBolt` (act_crossBolt.txt)
+- `#attack.damageMultiplier: 4`, `#attack.power: 0.7`, `#attack.type: #bullet`
+- `#name: "crossBolt"` → sprite char `crossBolt` → `crossBolt_fly` strip
+- `#weight: 1.6`, `#friction: point(5,5)`
+
+### Art Strips (all bundled as `bowOrc_*`)
+- `bowOrc_stand`: 1 frame
+- `bowOrc_walk`: 8 frames, delay 2
+- `bowOrc_weaponRanged`: 10 frames (total 28 ticks), delays [2,3,3,3,3,3,2,3,4,2]; firing frames 2,4,6
+- `bowOrc_grave`: 2 frames (death → grave, modGrave)
+- No `bowOrc_die` strip (correct; enemies use the grave strip, not a separate die strip)
+
+### AI Behavior
+- FSM: `findTarget → moveToAttack → attack → attackFin` (standard `#objAiCPU`)
+- Does NOT kite (`#runReload` absent from data; `#AiType` is `#objAiCPU`, not `#objAiCPUSpellCaster`)
+- `#pathfinding: true` (inherited from `#CPUCharacter`), enables scenic pathfinding
+- Retargets every 30 frames; dazed on reel/recoil/die
+- `weaponTechnique: -5` → `WeaponTechnique` accumulates negative cache → `frameExtendDelay` → attack anim slows down during sustained firing
+
+---
+
+## 2. Reproduce vs. Observed (Port)
+
+All 11 probe tests pass. Results from `port/test/_audit_bowOrc.test.ts`:
+
+| Property | Derived (Original) | Observed (Port) | Match |
 |---|---|---|---|
-| **objType** | `#objCPUCharacter` | EnemyArchetype | ✅ |
-| **AiType** | `#objAiCPU` | CpuAI FSM (ranged) | ✅ |
-| **team** | `#orcs` | `#orcs` (resolved via registry) | ✅ |
-| **name** | `"bowOrc"` | actorType: `"bowOrc"` | ✅ |
-
-**Verification:**  
-- `port/src/entities/archetypes.ts:136-309` (`spawnEnemy`): resolves all actor properties via registry, including team
-- `port/src/data/registry.ts:86-113` (`resolveActor`): team property fetched and passed to build config
-- `port/test/dwelling.test.ts:43-50` (`orcHouse test`): confirms bowOrc spawns with `#orcs` team
-
----
-
-### 2. Attack Type & Weapon Resolution
-
-| Property | Original | Port Path | Status |
-|---|---|---|---|
-| **weapon** | `#crossBow` (data) → `#attack:[animType:#weaponRanged, bullet:#crossBolt]` | Registry → resolveAttack | ✅ |
-| **animType** | `#weaponRanged` (on crossBow's attack) | Classification in spawnEnemy:169 | ✅ |
-| **Ranged Classification** | animType → ranged FSM | `archetypes.ts:169-170` detects `#weaponRanged` → `ranged=true` | ✅ |
-
-**Verification:**  
-- `port/casts/data/act_crossBow.txt:8` defines `#animType: #weaponRanged`
-- `port/src/entities/archetypes.ts:155-162` resolves weapon data and extracts attack
-- `port/src/entities/archetypes.ts:169-170` correctly classifies `#weaponRanged` as ranged
-- `port/src/entities/archetypes.ts:180-188` derives effective cooldown for ranged weapon (18 frame bonus)
-
----
-
-### 3. Bullet Firing & Collision
-
-| Property | Original | Port Behavior | Status |
-|---|---|---|---|
-| **bullet** | `#crossBolt` (from crossBow attack) | bulletAttack resolved (archetypes.ts:240-244) | ✅ |
-| **Bullet Name** | crossBolt (case-matched) | Registry has case-insensitive fallback | ✅ |
-| **Fire Logic** | Ranged FSM fires bullets on cooldown | CpuAI.attack ranged branch (control.ts:521-568) | ✅ |
-
-**Verification:**  
-- `port/casts/data/act_crossBolt.txt` exists and is indexed by registry
-- `port/src/entities/archetypes.ts:240-244` resolves bullet attack for ranged units
-- `port/src/components/control.ts:521-568` fires bullets via `fireBullet` on ranged attack
+| `team` | `#orcs` | `#orcs` | ✅ |
+| `energy` | 300 | 300 | ✅ |
+| `walkSpeed` | 6 → 3.6 px/tick | 3.6 px/tick (`m.maxSpeed`) | ✅ |
+| `inertia` | 55 | 55 | ✅ |
+| `weaponTechnique` | -5 | -5 | ✅ |
+| `anim.char` | `"bowOrc"` | `"bowOrc"` (not blackOrc fallback) | ✅ |
+| `bowOrc_stand` | 1 frame | 1 frame | ✅ |
+| `bowOrc_walk` | 8 frames | 8 frames | ✅ |
+| `bowOrc_weaponRanged` | 10 frames | 10 frames | ✅ |
+| `bowOrc_grave` | 2 frames | 2 frames | ✅ |
+| `ai.ranged` | true | true | ✅ |
+| `ai.reachRanged` | 100 | 100 | ✅ |
+| `ai.runReload` | false | false | ✅ |
+| `atk.animType` | `#weaponRanged` | `#weaponRanged` | ✅ |
+| `atk.animFrame` | `[2,4,6]` | `[2,4,6]` | ✅ |
+| `atk.firingType` | `#fullstrength` | `#fullstrength` | ✅ |
+| `atk.bullet` | `#crossBolt` | `#crossBolt` | ✅ |
+| `atk.sound` | `"orc_fire"` | `"orc_fire"` | ✅ |
+| `ai.bulletChar` | `"crossBolt"` | `"crossBolt"` | ✅ |
+| `ai.bulletAttack.powerScalar` | 0.7 | 0.7 | ✅ |
+| `ai.bulletAttack.damageMultiplier` | 4 | 4 | ✅ |
+| shots per attack | 3 (frames 2,4,6) | **3** (observed 15 attacks × 3 shots) | ✅ |
+| bullet speed | 8 px/tick (`#fullstrength`, strength 8) | **8.000 px/tick** | ✅ |
+| `ai.eyestrain` | 50 | 50 | ✅ |
+| technique cache | negative (slows anim) | −35 after 100 ticks | ✅ |
+| `runReload` mode seen | never | never observed | ✅ |
+| `atk.cooldown` | 261 (calibrated: (8+18)×10+1) | 261 | ✅ |
+| `damageSpeed` (wall-slam threshold) | **2** | **5** (wrong — default, not forwarded) | ❌ |
+| bullet fire position | `(x, y−2)` via `collisionLoc: point(0,−2)` | `(x, y−6)` (hardcoded offset) | ❌ |
 
 ---
 
-### 4. AI Behavior (Ranged FSM)
+## 3. DIVERGENCES
 
-| Behavior | Original | Port Routing | Status |
-|---|---|---|---|
-| **FSM Mode** | committed-target hunter, ranged kite | CpuAI `moveToAttack` + `runReload` | ✅ |
-| **Targeting** | hostiles (`#aldevar.hates`) | Targeting config: `targetAllegiance:"#enemy"` | ✅ |
-| **Attack Distance** | ranged reach (crossBow reach: 100) | `archetypes.ts:180`: reach calibrated | ✅ |
-| **Cooldown** | crossBow cooldown:8 + ranged bonus (18) | `archetypes.ts:180-188`: effective 26 frames | ✅ |
-| **Kiting** | ranged unit backs away post-shot | CpuAI.updateRunReload (control.ts:488-496) | ✅ |
-| **Dexterity Tuning** | dexterity 10 (faster ranged recovery) | spawnEnemy carries dexterity into cooldown calc | ✅ |
+### D-1: `damageSpeed` not forwarded — port uses default 5 instead of 2
 
-**Verification:**  
-- `port/casts/data/act_bowOrc.txt:18-19` specifies `#weapon:#crossBow` and `#dexterity:10`
-- `port/src/entities/archetypes.ts:172-188` uses dexterity as the ranged counter increment
-- `port/src/components/control.ts:480-482` (syncWeaponMode): ranged flag drives reach selection
-- `port/src/components/control.ts:486` (targetInReach): ranged branch uses reachRanged (150)
+**Original** (`casts/data/act_bowOrc.txt:6`):
+```
+#damageSpeed: 2
+```
 
----
+**Original behavior** (`casts/script_objects/modEnergy.txt:249–253` + `objCPUCharacter.txt:103–115`):
+When the bowOrc is in `#reel` / `#reel_fly` / `#reel_land` mode and collides with a wall or ceiling,
+`takeDamage(impactSpeed)` is called. `modEnergy.takeDamage` applies damage only when
+`impactSpeed > pDamageSpeed`, subtracting `pDamageSpeed` from the hit:
+```
+if amount > pDamageSpeed then
+  amount = amount - pDamageSpeed
+  me.loseEnergy(amount)
+```
+With `pDamageSpeed = 2`, the bowOrc takes wall-slam damage at very low impact speeds (threshold 2).
 
-### 5. Special Flags & Behavior Modifiers
+**Port behavior** (`port/src/components/movement.ts:67`, line 188–192):
+```typescript
+this.damageSpeed = typeof cfg["damageSpeed"] === "number" ? cfg["damageSpeed"] : 5;
+```
+`damageSpeed` IS correctly read from `cfg` in Movement, but `spawnEnemy` in
+`port/src/entities/archetypes.ts` never includes `damageSpeed` in the `e.build({...})` call
+(lines 284–347 — the property is absent). The Movement component therefore always gets the default 5.
 
-| Flag | Original | Port | Status |
-|---|---|---|---|
-| **wizard** | false (not set) | Defaults to false in spawnEnemy | ✅ |
-| **ghost** | false (not set) | Defaults to false in control.ts:346 | ✅ |
-| **multiAttack** | false (not set) | Defaults to false | ✅ |
-| **builder** | false (not set) | Defaults to false | ✅ |
-| **leaveWhenFinished** | false (not set, hostile) | Defaults to false | ✅ |
-| **reelProof** | false (not set) | Defaults to false | ✅ |
+**Confirmed** by probe:
+```
+damageSpeed: 5   (should be 2)
+```
 
-**Verification:**  
-All default to false/unset in the original; port correctly omits them (spawnEnemy lines 266-268, 301).
+**Effect:** bowOrc takes wall-slam damage only above speed 5 (port) instead of speed 2 (original).
+Any reel with impact ≤ 5 deals no bonus damage; impacts between 2–5 that should deal `speed − 2` damage
+are lost. The bowOrc survives wall-slamming knockbacks more easily than intended.
 
----
-
-### 6. Combat Stats
-
-| Stat | Original | Port Derivation | Status |
-|---|---|---|---|
-| **strength** | 8 (from actor) | `num("strength", 5)` reads 8 from data | ✅ |
-| **dexterity** | 10 (from actor) | Used for ranged cooldown counter inc | ✅ |
-| **energy** | 300 (from actor) | `num("energy", 40)` reads 300 | ✅ |
-| **walkSpeed** | 6 (from actor) | `num("walkSpeed", 3) * 0.6` = 3.6 px/tick | ✅ |
-| **inertia** | 55 (from actor) | `num("inertia", 0)` reads 55 (knockback resistance) | ✅ |
-| **experienceImWorth** | 30 (from actor) | Passed to build config (archetypes.ts:290) | ✅ |
-
-**Verification:**  
-- All properties read from registry in spawnEnemy (lines 138-142)
-- Data coverage audit (data-coverage.md) verified these are used
+**Fix sketch:**
+In `port/src/entities/archetypes.ts`, add `damageSpeed` to the `e.build({...})` config:
+```typescript
+damageSpeed: num("damageSpeed", 5),   // wall-slam threshold (modEnergy.takeDamage)
+```
+This passes the data value through to `Movement.init`, which already reads it correctly.
 
 ---
 
-### 7. Death & Reincarnation
+### D-2: Bullet fire position uses hardcoded `y − 6` instead of `collisionLoc: point(0, −2)`
 
-| Aspect | Original | Port | Status |
-|---|---|---|---|
-| **reincarnateAs** | not set | Defaults to undefined | ✅ |
-| **reincarnateInto** | not set | Defaults to undefined | ✅ |
-| **dieSound** | not set (none) | `num("dieSound")` returns undefined | ✅ |
-| **Death Flow** | Generic death via Energy | Energy.takeHit → isDead → grave/cleanup | ✅ |
+**Original** (`casts/data/act_crossBow.txt:11`):
+```
+#collisionLoc: point(0, -2)
+```
 
-**Verification:**  
-- archetypes.ts:295-301: reincarnation properties passed but undefined when not in data
-- control.ts:401-406: death triggers dazed mode, no special handling for bowOrc
+**Original behavior** (`casts/script_objects/modAttack.txt:185–199` `calcAttackLoc`):
+```
+on calcAttackLoc me
+  dir = SpriteGetFlipHAsDir(me.pSpr)
+  attackLoc = pAttack.collisionLoc.duplicate()
+  attackLoc[1] = attackLoc[1] * dir
+  attackLoc = me.pCharacterPrg.getLoc() + attackLoc
+  return attackLoc
+```
+The crossBolt spawns at `(x + 0 × dir, y + (−2)) = (x, y − 2)`.
 
----
+**Port behavior** (`port/src/components/control.ts:822`):
+```typescript
+pb = fireBullet(this.entity.id, m.x, m.y - 6, ...);
+```
+The bullet always spawns at `(x, y − 6)`, a fixed 6-pixel vertical offset. The `collisionLoc` field
+is stored in `AttackData` (resolved by `resolveAttack`) but never read in the ranged attack dispatch.
 
-### 8. Spawning Path (Dwelling Context)
+**Effect:** The crossBolt spawns 6 px below the bowOrc's origin (port) instead of 2 px below (original).
+This is a cosmetic difference (bullet emerges slightly lower). It does not affect targeting, damage, or
+reach — only the visual spawn point of the bolt. At typical frame rates this is barely perceptible.
 
-`bowOrc` spawns via `orcHouse` dwelling, which is a **residential spawn** context, not a tile-placed enemy:
-
-| Stage | Original | Port | Status |
-|---|---|---|---|
-| **Dwelling Spec** | orcHouse lists bowOrc in `#residentGroups[0]` | `port/src/entities/archetypes.ts:70-94` (spawnDwelling) | ✅ |
-| **Group Resolution** | buildTime [52,62], groupSize [1,6], releaseInterval [30,60] | Parsed & filtered by group.typ resolution | ✅ |
-| **Resident Spawn** | `dwelling.ts` releaseResident → spawnEnemy | `port/src/components/dwelling.ts` resident loop | ✅ |
-| **Team Routing** | orcHouse team #goblins, but bowOrc team #orcs | Dwelling routes by resident.typ data (not dwelling team) | ✅ |
-
-**Verification:**  
-- `port/casts/data/act_orcHouse.txt:30` wrongly lists team `#goblins`; actual spawn uses `bowOrc` team `#orcs`
-- `port/src/entities/archetypes.ts:78-85`: groups filtered by `registry.resolveActor(g.typ)`, each resident's OWN data team applies
-- `port/test/dwelling.test.ts:49`: assertion confirms orcHouse residents are `#orcs` team
-
----
-
-## Edge Cases & Quirks
-
-### Team Override in orcHouse (Lingo Bug)
-The original `act_orcHouse.txt` mistakenly lists `#team: #goblins` at the dwelling level, but the 3 resident types (bowOrc/swordOrc/mageOrc) all have their own `#team: #orcs` in their respective records. The original engine respects **per-resident team** during spawning (modResidents), not the dwelling's team.
-
-The port reproduces this correctly:
-- `archetypes.ts:78-85` resolves each resident by `g.typ` (its own actor record)
-- Each bowOrc carries its own `#team: #orcs` from the registry
-- Test assertion confirms the behavior (dwelling.test.ts:49)
-
-**Conclusion:** Faithful to the original's implicit behavior.
-
-### Cooldown Calibration
-The port re-derives the effective cooldown from raw data:
-- Original: crossBow cooldown 8 + hardcoded ranged bonus (18 frames) = 26 frame recovery
-- Port: `rawCooldown=8`, `framesWanted=8+18=26`, `counterInc=dexterity=10`, `effectiveCooldown=round(26*10+1)=261`
-
-This means the cooldown counter runs DOWN at rate 10 per tick, needing 261 ticks to recover (26 frames ÷ 10 = 2.6 frames, so fires ~every 26 game ticks at dex 10). This preserves the FEEL of the original attack rate while staying data-faithful. **Verified as intentional calibration (plan §f.3, archetypes.ts:176-188 comments).**
+**Fix sketch:**
+In `CpuAI.performAttack` (ranged branch), replace the hardcoded `m.y - 6` with:
+```typescript
+const atk = wm.getCurrentAttack();
+const colY = atk ? (atk as any).collisionLocY ?? -6 : -6; // from resolveAttack
+pb = fireBullet(this.entity.id, m.x, m.y + colY, ...);
+```
+Requires exposing `collisionLoc.y` as a field in `AttackData` (currently stored but not named).
+Low priority (cosmetic only).
 
 ---
 
-## Conclusion
+## Notes (not divergences)
 
-All behavioral properties of `bowOrc` are **correctly wired**:
-
-1. ✅ Ranged unit (weaponRanged → FSM ranged branch)
-2. ✅ Fires crossBolt projectiles (bullet resolves, fires on ranged attack path)
-3. ✅ Team/targeting correct (#orcs hostiles)
-4. ✅ Stats faithful (strength 8, dexterity 10, energy 300)
-5. ✅ AI behavior ranged kite (runReload, moveToAttack)
-6. ✅ Spawns via orcHouse resident loop (dwelling test passes)
-7. ✅ No special flags/modifiers (defaults appropriate)
-8. ✅ No reincarnation/minEnergy (none in data)
-
-**No divergences detected.**
+- **`bowOrc_die` strip absent**: Correct. Enemies use the `_grave` strip via `modGrave.drawGrave`;
+  no `_die` strip is expected for CPU characters.
+- **`#runReload` correctly false**: The old audit (2026-06-21) incorrectly listed "runReload" as a
+  behavior of bowOrc — it does not kite. Confirmed by probe (no `runReload` mode observed).
+- **`#collisionLoc point(0,-2)` x-axis**: The x-component is 0 (center of the actor), so the facing
+  direction flip has no effect on the bolt origin (x doesn't shift either way). Only the y offset matters.
+- **`weaponTechnique: -5`** (initial) vs. the **`weaponTechniqueInc`** gap identified in `archer.md`:
+  The bowOrc carries an explicit negative initial `#weaponTechnique: -5` (slows anim from frame 1),
+  not `#weaponTechniqueInc`. The port correctly reads this as the initial value. The
+  `WeaponTechnique.INC = 2` hardcoding affects per-level growth but bowOrc starts at level 0 and
+  rarely levels, so this is a very minor concern.
+- **`damageSpeed` is a systemic gap**: The same missing-forward affects every actor with a
+  non-default `damageSpeed` (e.g., `archer: 4`, `swordOrc: 2`, `bug: 2`). bowOrc is one instance.
+  The fix in archetypes.ts (D-1 above) would resolve it for all actors simultaneously.
