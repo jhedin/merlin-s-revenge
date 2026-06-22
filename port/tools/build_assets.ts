@@ -102,7 +102,12 @@ for (const b of bitmaps) {
     if (!name.startsWith("anm_")) continue;
     const t = name.split("_");
     const char = t[1] ?? "?";
-    const action = t[2] ?? "?";
+    // Lingo member-action symbols are case-INSENSITIVE (modAnimSet keys via symbol()), but a few members
+    // ship a capitalized token (anm_scMonk_Stand). The port queries the canonical camelCase action
+    // ("stand"/"walk"/"weaponMelee"), so normalize the leading char to lowercase — a no-op for the
+    // correctly-cased strips, and it rescues scMonk_Stand from the blackOrc fallback.
+    const rawAction = t[2] ?? "?";
+    const action = rawAction.charAt(0).toLowerCase() + rawAction.slice(1);
     const dela = Number.isFinite(Number(t[3])) ? Number(t[3]) : 1;
     chars[char] = true;
     const key = `${char}_${action}`;
