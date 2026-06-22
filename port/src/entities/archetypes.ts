@@ -192,23 +192,35 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
   // melee, dexterity for ranged/magic. So hi = framesWanted*inc + 1. (Faithful power/reach/sound/bullet
   // pass through unchanged; only the cooldown bound is calibrated — B2 plan §f.3.)
   const rawCooldown = typeof atk["cooldown"] === "number" ? atk["cooldown"] : (ranged ? 40 : 18);
-  const framesWanted = Math.max(1, rawCooldown + (ranged ? 18 : 6));
   // the counter inc the WeaponManager will use for THIS weapon's #type (melee=agility, ranged=dexterity,
   // magic=manaRegeneration). manaRegen is passed into the build below so Mana.regeneration (the live inc)
   // matches this calibration inc for magic enemies (else a caster with mana_regeneration!=1 would drift).
   const isMagic = animType === "#magic";
   const manaRegen = num("mana_regeneration", 1);
   const counterInc = isMagic ? manaRegen : ranged ? dexterity : agility;
-  const effectiveCooldown = Math.round(framesWanted * (counterInc > 0 ? counterInc : 1) + 1);
+  const inc = counterInc > 0 ? counterInc : 1;
+  // the ORIGINAL counter recovers in ceil((cooldown-1)/inc) ticks (hi=cooldown, inc=skill stat) — NOT
+  // `cooldown` ticks. The old formula treated cooldown as the frame count, so a high-dexterity weapon
+  // (shrouder dexterity 10, cooldown 400) recovered ~10x too slow (418 vs 40). Derive the original recovery
+  // first, THEN add the port's attack-window buffer; effectiveCooldown back-solves the counter hi.
+  const framesWanted = Math.max(1, Math.ceil((rawCooldown - 1) / inc) + (ranged ? 18 : 6));
+  const effectiveCooldown = Math.round(framesWanted * inc + 1);
   // An enemy with no #attack/#weapon (e.g. monkGhost, #objAiCPUGhost, energy-only) still melee-contacts.
   // Give it a synthetic #natural melee so the WeaponManager builds a cooldown counter — otherwise
   // getCooldownFin() is unconditionally true and the unit attacks EVERY frame (the old code defaulted
   // its cooldown to 18). The synthetic attack carries no power (CpuAI uses its scalar this.power).
-  const hasAttack = animType !== "" && typeof atk["name"] === "string" && atk["name"] !== "#none";
+  // a weapon's #name may be a Lingo bare symbol (`#name: skeletonComandoSword`, no #) which the data parser
+  // serialises as `{ $global: "..." }` (an object), not a string. The original engine still uses the weapon
+  // (only the name resolves oddly); the port must NOT reject it. Normalise the name to a usable "#sym" string.
+  const atkNameRaw = atk["name"];
+  const atkName = typeof atkNameRaw === "string" ? atkNameRaw
+    : atkNameRaw && typeof atkNameRaw === "object" && "$global" in (atkNameRaw as Record<string, unknown>)
+      ? "#" + String((atkNameRaw as Record<string, string>)["$global"]) : "";
+  const hasAttack = animType !== "" && atkName !== "" && atkName !== "#none";
   // attackless fallback recovers in the old default 18 frames (cooldownMax 18 for a no-atkCooldown melee).
   const fallbackCooldown = Math.round(18 * (agility > 0 ? agility : 1) + 1);
   const enemyAttack = hasAttack
-    ? resolveAttack({ ...atk, cooldown: effectiveCooldown })
+    ? resolveAttack({ ...atk, name: atkName, cooldown: effectiveCooldown })
     : resolveAttack({ name: "#natural", animType: "#naturalMelee", cooldown: fallbackCooldown });
   // K6: a multiAttack actor's natural attack IS its ranged weapon 1 — force its type so getCurrentAttack()
   // and setMultiAttack's ranged/melee branch are correct (the global animType map keeps it "melee" for scope).
