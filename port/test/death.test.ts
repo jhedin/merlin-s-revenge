@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { spawnPlayer, spawnEnemy, spawnUnit, spawnAlly } from "@/entities/archetypes";
 import { Movement } from "@/components/movement";
 import { Energy } from "@/components/combat";
+import { EnemyAI } from "@/components/control";
 import { ExtraLives } from "@/components/extraLives";
 import { game } from "@/game/context";
 import { CollisionGrid } from "@/world/collision";
@@ -82,6 +83,17 @@ describe("grave freeze (modGrave: a dead grave is static background, not a live 
     e.send("takeHit", 9, 0, -1, 1);
     e.send("update");
     expect(m.x).toBe(200); expect(m.y).toBe(200);
+  });
+
+  it("#graveOn:false actors (sumo) vanish — getGraveOn is false (no persistent corpse)", () => {
+    expect(spawnEnemy("swordOrc", 0, 0).send("getGraveOn")).toBe(true); // default leaves a grave
+    expect(spawnEnemy("sumo", 0, 0).send("getGraveOn")).toBe(false);    // #graveOn:false → no grave
+  });
+
+  it("sumo's point-blank ranged reach (25) is honored, not floored to 60", () => {
+    const sumo = spawnEnemy("sumo", 0, 0).get(EnemyAI) as any;
+    expect(sumo.ranged).toBe(true);
+    expect(sumo.reachRanged).toBe(25);
   });
 });
 

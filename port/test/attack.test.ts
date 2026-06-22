@@ -80,10 +80,14 @@ describe("data-driven attacks (real #attack via #weapon)", () => {
     // the structAttack #reach default (25, which gates RANGED only). objAiCPU.targetInReachMelee.
     expect(ai.reach).toBe(16);
   });
-  it("magic reach (9999) is capped", () => {
+  it("magic reach (9999) is capped to room scale, not the flat 220", () => {
+    // #reach 9999 ("see the whole room") clamps to the room diagonal (644), NOT the old flat 220 — which
+    // also wrongly throttled finite reaches like dwarfTower's 600. A finite reach passes through unclamped.
     const ai = spawnEnemy("mageOrc", 0, 0).get(EnemyAI);
     expect(ai.ranged).toBe(true);
-    expect(ai.reachRanged).toBeLessThanOrEqual(220);
+    expect(ai.reachRanged).toBe(644);
+    const tower = spawnEnemy("dwarfTower", 0, 0).get(EnemyAI);
+    expect(tower.reachRanged).toBe(600); // finite reach honored, no longer clamped to 220
   });
 
   it("#naturalRanged throwers are RANGED and resolve their #bullet (not mis-classified as melee)", () => {

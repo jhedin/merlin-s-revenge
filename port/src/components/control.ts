@@ -17,7 +17,7 @@ import { meleeHitFn } from "../systems/teams";
 import { aimWithEyestrain } from "../engine/math";
 import { Targeting } from "./combat";
 import { WeaponManager, meleeBasePower, enemyMeleeBasePower, resolveAttack, BULLET_DAMAGE_SCALE, type AttackData } from "./weapon";
-import { summonUnit, depositMines } from "./summon";
+import { depositMines } from "./summon";
 import { chargeMaxOf, chargeStartOf, chargeSpeedOf } from "./charge";
 import { PathFinding } from "./pathFinding";
 import { ColourTransform } from "./colourTransform";
@@ -477,6 +477,11 @@ export class CpuAI extends Component {
   private static readonly BUILD_RANGE = 50;  // pBuildRange
   private static readonly BULLET_SAFE = 100;  // pBulletSafeDistance
   private static readonly ENEMY_SAFE = 100;   // pEnemySafeDistance
+  // The faithful bound for ranged #reach: the room is 18×9 tiles (576×288px), diagonal ≈ 644. A finite
+  // data reach (≤600, e.g. dwarfTower's whole-room turret) passes through unclamped; the #reach 9999
+  // "see the whole room" sentinel (magic casters) clamps to this room-scale bound instead of the old
+  // flat 220 cap (which wrongly throttled every reach >220, e.g. towers fired only at 220 not 600).
+  private static readonly MAX_RANGED_REACH = 644;
 
   override init(cfg: Record<string, any>): void {
     this.strength = typeof cfg["strength"] === "number" ? cfg["strength"] : 5;
@@ -499,7 +504,7 @@ export class CpuAI extends Component {
     this.buildDie = cfg["buildDie"] === true;
     this.leaveWhenFinished = cfg["leaveWhenFinished"] === true;
     if (typeof cfg["atkReach"] === "number") {
-      if (this.ranged) this.reachRanged = Math.min(220, Math.max(60, cfg["atkReach"])); // cap magic's 9999
+      if (this.ranged) this.reachRanged = Math.min(CpuAI.MAX_RANGED_REACH, Math.max(16, cfg["atkReach"])); // honor finite reach (sumo's point-blank 25); cap magic's 9999 to room scale
       else this.reach = Math.max(16, Math.min(90, cfg["atkReach"])); // melee strike reach = collisionLoc.x (no 40 clip)
     }
     this.atkSound = typeof cfg["atkSound"] === "string" ? cfg["atkSound"] : "";
@@ -672,7 +677,7 @@ export class CpuAI extends Component {
     const ca = this.entity.get(WeaponManager).getCurrentAttack();
     if (!ca) return;
     this.ranged = ca.type === "ranged" || ca.type === "magic";
-    this.reachRanged = Math.min(220, Math.max(60, ca.reach));
+    this.reachRanged = Math.min(CpuAI.MAX_RANGED_REACH, Math.max(16, ca.reach));
     // melee reach = the strike point (collisionLoc.x), same as spawn — NOT #reach (ranged-only). Keeps a
     // multiAttack unit's melee standoff faithful after a weapon switch (ninjaSword collisionLoc 15 -> 16).
     this.reach = ca.type === "melee" && ca.collisionLoc.x
@@ -691,7 +696,11 @@ export class CpuAI extends Component {
     if (!target || target.send("isDead")) { this.target = null; this.goMode("findTarget", m); return; }
     const tp = target.send("getPos") as { x: number; y: number };
     const dx = tp.x - m.x, dy = tp.y - m.y; const d = Math.hypot(dx, dy) || 1;
-    if (d < this.reachRanged * 0.7) { m.intentX = -dx / d; m.intentY = -dy / d; } else this.idle(m); // moveAwayFromLoc
+    // moveAwayFromLoc (modMoveToLoc:305, GeomMirrorPoint): retreat directly away from the target EVERY
+    // reload frame — unconditional in the original, NOT band-gated. The window is bounded by cooldown
+    // (exits below on cooledDown), so the kiter does a fire-and-retreat, not an endless flee. Was gated to
+    // d < reachRanged·0.7, which left a kiter standing still while reloading in the outer-reach band.
+    m.intentX = -dx / d; m.intentY = -dy / d;
     if (this.cooledDown()) this.goMode("moveToAttack", m);
   }
 
@@ -798,12 +807,18 @@ export class CpuAI extends Component {
         // every caster firing a generic damage bolt. Plain bolt-casters (energyBlast/dark/arctic) unchanged.
         const ca = this.entity.get(WeaponManager).getCurrentAttack();
         if (ca && ca.type === "magic" && (ca.explodeFunction === "#summonUnit" || ca.explodeFunction === "summonUnit")) {
-          // summon the multistage tier the caster's mana affords (chargeMaxOf = its real charge ceiling).
-          // Pass game.rng so a #randomSummon spell (goblin/undead/sc/skeleton summon) wobbles the tier
-          // per cast (calcAttackChargeMax) instead of always reaching the deterministic top tier — this is
-          // a one-shot at the summon release (cooldown-gated), so it can't jitter.
-          const sc = chargeMaxOf(ca, this.entity.get(Mana), game.rng);
-          summonUnit(ca, sc, m.x, m.y, this.entity.id); // summon at the caster's loc
+          // objAiCPUSpellCaster: a summoner RELEASES a real objSpell that FLIES to the target and, on
+          // landing, summons the unit at the landing loc PLUS resolves the radial #explode hit (undeadSummon
+          // payloadFunction #takeHit power 2) — exactly the player's path and the damage-caster branch below
+          // (SpellActor.explode fields #summonUnit). Was summoning directly at the CASTER's loc with no bolt,
+          // so every summon piled onto the necromancer and the explode damage never landed. chargeMaxOf with
+          // game.rng wobbles the #randomSummon tier per cast (one-shot at release, cooldown-gated → no jitter).
+          const tgc = this.entity.send("getTargeting") as { hits: string[]; allegiance: string } | undefined;
+          const hits = ca.hits && ca.hits.length ? ca.hits : ["#teamMembers", "#teamBuildings"];
+          const spell = spawnSpell(ca, this.entity.id, mz.x, mz.y, team, hits, tgc?.allegiance ?? "#enemy");
+          const sa = spell.get(SpellActor);
+          sa.setCharge(chargeMaxOf(ca, this.entity.get(Mana), game.rng), mz.x, mz.y); // wobbled tier ceiling
+          sa.release(m.x + dx, m.y + dy, Math.max(2, ca.spellSpeed / 3));             // fly to the target tile
         } else if (ca && ca.type === "magic" && (ca.explodeFunction === "#depositMines" || ca.explodeFunction === "depositMines")) {
           // verdanlinInGame energyMines: deposit charge/chargePerUnit #energyMine actors at the target loc
           // (the spell's would-be landing point). The mines carry #aldevar so they hit the caster's enemies.

@@ -1,157 +1,110 @@
-# Quadranid Behavioral Parity Audit
+# Quadranid — Per-Actor Parity Audit (REPRODUCED)
 
-## Summary
-Quadranid is a ranged CPU-controlled enemy that fires laser bullets at fixed range using a committed-target FSM. All data properties and behavioral logic match faithfully between the original Lingo cast and TypeScript port.
+Method: derived correct behaviour from the original cast/data, then RAN the port headlessly
+(`tools/_audit_quadranid.ts`, now deleted) against the REAL `src/generated/assets.json` bundle —
+spawned the actor with a live (inert) #aldevar target, ticked 220 frames with `rebuildCombatSubstrate()`
+each tick, and observed strip resolution / shot count / cadence / facing / death. Result: **FAITHFUL,
+0 port divergences.** The prior version of this doc was a code-read only; this one is reproduction-backed.
 
-## Data Properties Verification
+## SECTION 1 — Derived-correct behaviour (from the ORIGINAL)
 
-| Property | Cast (act_quadranid.txt) | Port (data.json) | Match |
-|----------|------------------------|-----------------|-------|
-| objType | #objCPUCharacter | #objCPUCharacter | ✓ |
-| AiType | #objAiCPU | #objAiCPU | ✓ |
-| Attack name | #fireLaser | #fireLaser | ✓ |
-| Attack animType | #naturalRanged | #naturalRanged | ✓ |
-| Bullet | #laser | #laser | ✓ |
-| Reach | 175 | 175 | ✓ |
-| Cooldown | 30 | 30 | ✓ |
-| Firing type | #fullstrength | #fullstrength | ✓ |
-| Team | #monsters | #monsters | ✓ |
-| Strength | 10 | 10 | ✓ |
-| Dexterity | 1 | 1 | ✓ |
-| Energy | 80 | 80 | ✓ |
-| Walk speed | 4 | 4 | ✓ |
-| Starting level | 0 | 0 | ✓ |
-| Experience worth | 5 | 5 | ✓ |
-| Inertia | 50 | 50 | ✓ |
-| Damage speed | 3 | 3 | ✓ |
+`casts/data/act_quadranid.txt` — `#inherit #CPUCharacter`, `#objType #objCPUCharacter`, `#AiType #objAiCPU`:
 
-**Laser bullet** (act_laser.txt):
-| Property | Cast | Port | Match |
-|----------|------|------|-------|
-| type | #bullet | #bullet | ✓ |
-| damageMultiplier | 10 | 10 | ✓ |
-| power | 0.3 | 0.3 | ✓ |
-| friction | point(3,3) | {x:3,y:3} | ✓ |
-| weight | 0.4 | 0.4 | ✓ |
+| Property | Original (act_quadranid.txt:line) |
+|---|---|
+| team | `#monsters` (:28) — hunts #aldevar (player team) |
+| energy | 80 (:22) |
+| walkSpeed | 4 (:30) |
+| strength | 10 (:27) — drives #fullstrength throw speed |
+| dexterity | 1 (:20) — ranged cooldown-counter inc |
+| eyestrain | 40 (:24) — ranged aim scatter |
+| inertia / damageSpeed | 50 (:25) / 3 (:19) |
+| experienceImWorth | 5 (:23) |
+| attack #name | `#fireLaser` (:14) |
+| attack #animType | `#naturalRanged` (:9) → `type=#ranged` (AttackSetTypeFromAnimType) |
+| attack #animframe | 23 (:8) — fires on strip frame 23 (scalar) |
+| attack #bullet | `#laser` (:10) |
+| attack #reach | 175 (:15) |
+| attack #cooldown | 30 (:12) |
+| attack #firingType | `#fullstrength` (:13) → throw speed = strength (constant) |
+| attack #collisionLoc | point(0,-5) (:11) — muzzle |
+| attack #sound | "quadranid_fire" (:16) |
+| dieSound | `#none` (:21) |
 
-## Behavioral Logic Verification
+**Laser bullet** (`act_laser.txt`): `#inherit #bullet`, `#type #bullet`, damageMultiplier 10, power 0.3,
+friction point(3,3), weight 0.4. Plain single-target bullet (NOT splash/explode).
 
-### 1. AI Type & Component Mapping
-- **Cast**: objAiCPU script (casts/script_objects/objAiCPU.txt)
-- **Port**: EnemyAI component (port/src/components/control.ts, line 306: CpuAI class exported as EnemyAI)
-- **Implementation**: Archetypes.ts line 36 correctly wires EnemyAI component for CPU enemies
-- ✓ **MATCH**: Both implement committed-target FSM (findTarget → moveToAttack → attack → attackFin)
+**Original fire loop** (`objAiAttack.txt`): enter `#attack` → play `#naturalRanged` strip → on
+`isOnAttackFrame` (`modAttack.txt:577`: `getAnimFrameFresh() AND currentFrame==animFrame` → frame 23,
+fires ONCE per strip-play) call `performAttack` (`:297` → performRangedAttack + `resetCooldown`) → on
+`getAnimLooped` `attackFin(#completed)` leaves attack mode. Re-attack gated by `getCooldownFin()`
+(`modWeaponManager.txt:207`). Counter (`Counter ().txt`/`CounterNew ().txt`): `tim=[1,cooldown=30]`,
+`inc=dexterity=1`; reset→theCount=1, recovers in `ceil((30-1)/1)=29` ticks.
+**Original observable inter-shot gap ≈ 50–52 ticks** (fire@frame23 → strip ends @28 ≈ 5t → wait ~24t for
+cooldown fin → re-enter → 23t to refire).
 
-### 2. Ranged Classification
-- **Cast**: animType #naturalRanged (act_quadranid.txt line 9)
-- **Port**: CpuAI.ranged = true (control.ts line 312, set via config at archetypes.ts line 169-170)
-- **Verification**: animType "#naturalRanged" maps to ranged=true in spawnEnemy (archetypes.ts line 170)
-- ✓ **MATCH**: Firing at distance with projectile logic
+**quadAura** (`act_quadAura.txt`): a SEPARATE placeable freeze-mine — `#objMine`, `#teamMines`,
+`#payloadFunction #takeFreeze`, freezeMultiplier .5, power .25, explodeCharge 18, triggerRadius 16,
+`glowTeal false`, `#team #monsters`. It appears ONLY in the aura-key list of `tlk_merlinOpenObjects_key.txt`
+(:227, alongside orcAura/undeadAura/snowAura/iceAura) — it is NOT referenced, spawned, or attached by
+`act_quadranid.txt` (no #aura/#summon/#produce/#mine property anywhere on the quadranid). The quadranid is
+a plain ranged laser shooter; the aura is an unrelated map-placed mine.
 
-### 3. Firing Type (#fullstrength)
-- **Cast**: modAttack.performRangedAttack applies #fullstrength speed model
-- **Port**: control.ts line 544-545 checks firingType == "#fullstrength"
-  - When true: throwSpeed = strength (10 for quadranid)
-  - Projectile travels at constant speed = 10px/tick
-- ✓ **MATCH**: Faithful implementation of strength-based throw velocity
+## SECTION 2 — Reproduced in the port (RAN)
 
-### 4. Laser Bullet Deployment
-- **Cast**: modWeaponManager / modFireBullets route via modAttack.performRangedAttack
-- **Port**: CpuAI.attack (control.ts line 531-616)
-  - Line 534-598: ranged=true → fires via fireBullet (systems/bullets.ts)
-  - Line 543-545: Throw speed resolved from #fullstrength
-  - Line 579-594: Bullet damage = speed·power·mult·BULLET_DAMAGE_SCALE
-- ✓ **MATCH**: Laser bullets fire with correct damage model
+Harness: real `assets.json` index, `images=new Map()` (img→null), `CollisionGrid(80,80,32)`,
+`unitMap.configure(32,0,0)`, `rebuildCombatSubstrate()` per tick. Spawned quadranid @x=200 with an inert
+#aldevar sponge @x=360 (~160px, inside reach 175); ticked 220 frames.
 
-### 5. Range Gating (targetInReach)
-- **Cast**: objAiCPU.targetInReachRanged (line 396-415)
-  - Reach = 175 (integer)
-  - Check: distToTarget < reach*reach
-- **Port**: CpuAI.targetInReach (line 499)
-  - reachRanged = 175 (from archetypes.ts line 169)
-  - Check: d <= reachRanged
-- ✓ **MATCH**: Reach-based fire gate (375px is well beyond most engagement distances)
+Observed:
+- **Strips all resolve to REAL bundled strips — NO fallback.** Anim requested `quadranid_stand`,
+  `quadranid_naturalRanged`, `quadranid_grave`; all present (28-frame naturalRanged, loop=false, delay 1).
+  `MISSING strips that fell back: none`.
+- **Attack = #naturalRanged, fires the laser on strip frame 23** (first shot at tick 23). One shot per
+  strip-play (matches scalar #animframe 23, fresh-crossing-only).
+- **Bullets fired: 5 in 220 ticks; shotTicks 23,70,117,164,211; inter-shot gap = 47,47,47,47 (constant).**
+- firingType `#fullstrength` → throw speed = strength 10 (`control.ts:779-780`).
+- **Facing:** target to the RIGHT → `facingLeft=false` (faces target). Committed target acquired,
+  mode `moveToAttack`.
+- **Death/grave:** `loseEnergy(1000)` → `isDead=true`, `getGraveOn=true`, Anim action→`grave`
+  (`quadranid_grave` exists, 2 frames). (sprite()==null in-harness only because `images` Map is empty —
+  a harness artefact, NOT a divergence.)
+- quadAura: bundle DOES carry `quadAura_stand/_primed/_explode` strips, but the quadranid never spawns it
+  (port has no aura link on quadranid — only a comment in `mine.ts:43` listing aura mine types). Matches original.
 
-### 6. Cooldown Counter
-- **Cast**: modWeaponManager cooldown counters (line 159-194)
-  - Increment: dexterity (1 for quadranid)
-  - Cooldown: 30 frames
-  - Recovery: (30-1)/1 + 1 = 30 frames
-- **Port**: WeaponManager.getCooldownFin() gate (control.ts line 533, 614)
-  - Counter inc: dexterity (1 for quadranid, archetypes.ts line 174)
-  - Effective cooldown: Math.round(30 * 1 + 1) = 31 frames
-- ✓ **MATCH**: Cooldown recovery within expected frame window
+## SECTION 3 — Derived-correct vs Observed
 
-### 7. Target Acquisition & Commitment
-- **Cast**: objAiCPU.refreshTarget / formRelationship (line 273-314)
-  - Acquire once via teamMaster.findTarget
-  - Commit as #target relationship
-  - Drop on death or when target leaves
-- **Port**: CpuAI.refreshTarget (line 512-517)
-  - Acquire via game.teamMaster.findTarget (same master)
-  - Commit to this.target + subscribe for #leaveGame
-  - Clear on death / target gone
-- ✓ **MATCH**: Faithful committed-target model
+| Aspect | Derived-correct (original) | Observed (port, RAN) | Verdict |
+|---|---|---|---|
+| Team / allegiance | #monsters, hunts player | #monsters, committed an #aldevar target | FAITHFUL |
+| Energy / strength / walkSpeed | 80 / 10 / 4 | resolveActor 80 / 10 / 4 | FAITHFUL |
+| Attack type | ranged laser, frame 23, once/play | ranged laser, fires @frame 23, once/play | FAITHFUL |
+| Bullet | #laser (single-target bullet) | bulletAttack (non-splash) path | FAITHFUL |
+| firingType | #fullstrength → speed=strength | speed = strength 10 | FAITHFUL |
+| Reach | 175 | acquires/fires from ~160px | FAITHFUL |
+| Facing | faces target | facingLeft tracks target side | FAITHFUL |
+| Death / grave | leaves grave (getGraveOn) | isDead + getGraveOn + grave strip | FAITHFUL |
+| quadAura | independent map mine, not spawned | not spawned by quadranid | FAITHFUL |
+| **Inter-shot cadence** | **≈50–52 ticks** (raw cooldown 30 + strip replay) | **47 ticks** (effectiveCooldown 48 calibration) | **FAITHFUL (calibrated)** — see note |
 
-### 8. Re-targeting Throttle
-- **Cast**: pRetargetCounter, tim[2]=30 (line 24-25)
-  - Only re-evaluate target every 30 frames
-- **Port**: RETARGET = 30 (line 333)
-  - Same throttle on updateMoveToAttack (line 471)
-- ✓ **MATCH**: Identical 30-frame re-target window
+### Candidate ORIGINAL-game quirks (faithful — do NOT "fix")
+- **eyestrain 40** is very high for a 175-reach shooter, so the laser scatters widely at range and rarely
+  lands a hit at the edge of reach (`aimWithEyestrain`, scaled by dist/reach). This is an original-data
+  characteristic, faithfully reproduced.
 
-### 9. Movement During Attack
-- **Cast**: moveToAttack mode calculates ideal attack location and paths (line 495-529)
-- **Port**: updateMoveToAttack (line 470-487)
-  - Paths to target via pathfinding (line 486)
-  - Respects reach band before attacking
-- ✓ **MATCH**: Path-to-target logic preserved
-
-### 10. Run/Reload (Kiting)
-- **Cast**: pRunReload defaults false (objCPUCharacter line 30)
-  - Not set in act_quadranid.txt
-- **Port**: runReload = false (control.ts line 313 default)
-  - Quadranid does NOT kite after shots (no #objAiCPUSpellCaster, not #magic animType)
-- ✓ **MATCH**: Quadranid stands ground while reloading
-
-### 11. Death & Grave
-- **Cast**: objCPUCharacter.goMode(#finish) → drawGrave (line 176-177)
-  - Energy drops to 0 → grave spawned
-- **Port**: Energy component + Grave component (EnemyArchetype line 36)
-  - Death flagged via Energy.isDead
-  - Grave component renders and animates
-- ✓ **MATCH**: Death flow preserved
-
-### 12. Team Allegiance
-- **Cast**: team #monsters (line 28, act_quadranid.txt)
-  - Hunts #aldevar (player team)
-  - Is hunted by player
-- **Port**: team "#monsters" (archetypes.ts line 270)
-  - Targeting via Targeting component (allegiance "#enemy" → hunts #aldevar.hates)
-- ✓ **MATCH**: Monsuter enemy, hunts player
-
-### 13. Non-Deployments Verified
-- **QuadAura**: act_quadAura.txt exists but is NOT deployed by quadranid
-  - act_quadranid.txt contains no spawn/mine trigger
-  - Port has no quadAura spawn in quadranid logic
-  - ✓ **MATCH**: Correctly not deployed
-
-- **Aura/Mine**: No modMineOnDeath, no modAutoSummon on quadranid
-  - ✓ **MATCH**: No passive aura field
-
-## Edge Cases & Behavioral Specifics
-
-| Behavior | Cast | Port | Status |
-|----------|------|------|--------|
-| Melee attack when out of range | Not used (#naturalRanged) | Not used (ranged=true) | ✓ CLEAN |
-| Face target before ranged fire | Skipped (line 35: melee-only) | Skipped (ranged path) | ✓ CLEAN |
-| Attack after movement ends | Yes (targetInReach check) | Yes (targetInReach gate) | ✓ CLEAN |
-| Multi-attack switch (K6) | Not applicable | Not applicable (ranged=true, multiAttack=false) | ✓ CLEAN |
-| Bullet-dodge (K4) | Not applicable | Not applicable (not spellcaster) | ✓ CLEAN |
-| Spell charge/mana | Not applicable | Not applicable (ranged melee attack) | ✓ CLEAN |
-| Builder mode (K8a) | Not applicable | Not applicable (builder=false) | ✓ CLEAN |
-| Ghost possession (K5) | Not applicable | Not applicable (ghost=false) | ✓ CLEAN |
+### Cadence note (NOT a divergence)
+The port's `spawnEnemy` deliberately re-derives the ranged recovery as
+`framesWanted = ceil((cooldown-1)/inc) + 18 = ceil(29/1)+18 = 47`, `effectiveCooldown = round(47*1+1) = 48`
+(`archetypes.ts:206-207`), so the WeaponManager Counter recovers in 47 ticks — folding the original's
+strip-replay/attackFin wait (~24t) plus refire-strip time into one cooldown bound. Observed gap 47 ≈
+original's ~50–52. This is the port's documented "+18" calibration (`archetypes.ts:189-207`,
+`weapon.ts:368`), a deliberate abstraction kept stable for balance/tests — a FAITHFUL approximation, not a
+port bug.
 
 ## Conclusion
 
-**CLEAN** — Quadranid exhibits full behavioral parity between the original Lingo casts and TypeScript port. All data properties match exactly, and all behavioral logic flows from the faithful CpuAI committed-target FSM with proper ranged fire gating, cooldown management, and team allegiance. The actor correctly deploys laser bullets using the #fullstrength firing type (strength-based velocity) and respects the 175px range band. No gaps detected.
+**FAITHFUL — 0 port divergences.** Reproduction confirms every action resolves to a real bundled strip
+(no fallback), the laser fires exactly once per attack on strip frame 23 (matching #animframe), the
+#fullstrength throw + 175 reach + facing + committed-target FSM + death/grave all match the derived-correct
+original. The cadence (47-tick gap) is the port's documented cooldown calibration of the raw 30-frame
+cooldown, not a divergence. quadAura is correctly an independent map mine, never spawned by the quadranid.

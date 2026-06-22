@@ -15,8 +15,11 @@ export class Grave extends Component {
   static handles = ["getGraveOn"];
   private graveOn = true;
 
-  // pGraveOn default true; a #ghost actor (monkGhost / berlinTV) leaves no grave.
-  override init(cfg: Record<string, any>): void { this.graveOn = cfg["ghost"] !== true; }
+  // modGrave.init: pGraveOn = params.graveOn (data, default true), then forced false for a #ghost. A few
+  // actors ship #graveOn:false (sumo / skelitonLord / skelitonUpper / orcInvasion / undeadInvasion) and
+  // must vanish on death (no #grave strip → otherwise a persistent _stand corpse). Was dropping the data
+  // field and keying off ghost alone.
+  override init(cfg: Record<string, any>): void { this.graveOn = cfg["graveOn"] !== false && cfg["ghost"] !== true; }
   override reset(): void { this.graveOn = true; }
 
   // getGraveOn (modGrave.getGraveOn): does this actor leave a grave on death? (false for ghosts.)
