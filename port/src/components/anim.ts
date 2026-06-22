@@ -65,6 +65,11 @@ export class Anim extends Component {
   }
   hasStretchDeath(): boolean { return this.stretchDeath; }
 
+  // restart the current action strip from frame 0 (ensureMode re-entry): a NEW attack/swing replays its
+  // one-shot strip even though the action STRING is unchanged across consecutive swings — without this the
+  // strip plays once then holds its last frame for every following swing (the "stuck on the last frame" bug).
+  restart(): void { this.frame = 0; this.timer = 0; this.extraDelay = 0; }
+
   // frameAdvance (modWeaponTechnique.skipFramesForWeaponTechnique → me.big.frameAdvance): step the strip
   // one frame early (faster attack cadence). Wraps for looped strips, clamps for one-shots; resets the
   // per-frame timer so the early advance counts as a fresh frame.

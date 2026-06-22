@@ -22,6 +22,7 @@ import { chargeMaxOf, chargeStartOf, chargeSpeedOf } from "./charge";
 import { PathFinding } from "./pathFinding";
 import { ColourTransform } from "./colourTransform";
 import { Experience } from "./experience";
+import { Anim } from "./anim";
 import type { Entity } from "../engine/dispatch";
 
 // Damage/bolt-speed are still tuned per charge-unit to the px slice (PLAN_REVIEW: damage == knockback;
@@ -354,6 +355,7 @@ export class PlayerControl extends Component {
     wm.resetCooldownFor(attack.name);
     this.meleeT = this.swingTicks(attack); // hold the swing for its full animation (gates the next hit)
     this.usingSword = attack.type === "melee" && attack.animType === "#weaponMelee";
+    this.entity.tryGet(Anim)?.restart(); // replay the swing strip from frame 0 (don't freeze on the last)
     game.audio?.play(this.usingSword ? "skeleton_fire" : "wizard_punch"); // #attack.sound: merlinSword / #punch
   }
 
@@ -389,7 +391,7 @@ type BuilderMode = "lookForBuilding" | "walkToBuilding" | "build" | "fight";
 
 export class CpuAI extends Component {
   static handles = ["update", "levelUp", "eventLeaveGame", "characterModeChanged", "getAiMode", "getAiTarget",
-    "getTargetDetails", "setAiTarget", "attackActive"];
+    "getTargetDetails", "setAiTarget", "attackActive", "animAction"];
   reach = 22;          // melee strike reach (targetInReachMelee)
   reachRanged = 150;   // ranged targetInReachRanged (GeomDist < reach)
   power = 8;           // melee-vector strength source (strength); bullet damage uses weapon power
@@ -484,6 +486,31 @@ export class CpuAI extends Component {
   // strike window after an attack fires — when the attack anim plays and technique accumulates.
   attackActive(): boolean { return this.attackT > 0; }
 
+  // animAction (modAnimSet ensureMode(animType)): while the attack window is open, play the weapon's attack
+  // strip — naturalMelee/weaponMelee (orcs), weaponRanged/naturalRanged (archers), release (casters). Without
+  // this, an enemy had NO animAction handler so it only ever showed walk/stand (no attack animation at all).
+  // Forwards (next) when not attacking, so the Hurt component's reel strip still applies on a hit.
+  animAction(next: NextFn): any {
+    if (this.attackT > 0) { const act = this.attackAction(); if (act) return act; }
+    return next();
+  }
+
+  // the attack strip for this enemy's current weapon (modAnimSet ensureMode(animType)): the #animType
+  // stripped of #; casters (#magic/#weaponMagic/#magicMelee) show the release strip.
+  private attackAction(): string {
+    const at = this.entity.get(WeaponManager).getCurrentAttack();
+    let act = typeof at?.animType === "string" ? at.animType.replace(/^#/, "") : "";
+    if (act === "magic" || act === "weaponMagic" || act === "magicMelee") act = "release";
+    return act;
+  }
+  // the attack strip's full length in ticks (so the attack window holds the whole animation, not a cut 6f).
+  private attackAnimTicks(act: string): number {
+    const char = this.entity.tryGet(Anim)?.char ?? "";
+    const anim = act ? game.assets.index.anims[`${char}_${act}`] : undefined;
+    if (!anim || anim.frames.length === 0) return CpuAI.ATTACK_FRAMES;
+    return anim.frames.reduce((s, f) => s + Math.max(1, f.dela ?? anim.delay ?? 1), 0);
+  }
+
   // Fire gate is now the enemy's single-weapon cooldown counter (modWeaponManager getCooldownFin),
   // reset on FIRE. Recovery #frames preserve the slice's enemy attack feel (effective cooldown derived
   // in spawnEnemy from atkCooldown + (ranged?18:6)). Replaces the old this.cooldown countdown.
@@ -510,7 +537,7 @@ export class CpuAI extends Component {
     const dazing = charMode === "#reel" || charMode === "#recoil" || charMode === "#die" ||
       charMode === "#dead" || charMode === "#look" || charMode === "#finish" ||
       charMode === "#reelFly" || charMode === "#reelLanded" || charMode === "#reelSit";
-    if (dazing) this.mode = "dazed";
+    if (dazing) { this.mode = "dazed"; this.attackT = 0; } // a hit interrupts the swing -> reel takes over the anim
     else if (this.mode === "dazed") this.mode = "findTarget";
   }
 
@@ -732,7 +759,10 @@ export class CpuAI extends Component {
       game.teamMaster.impactMeleeAttack(this.entity, meleeHitFn(this.entity, this.entity.id, base, mult));
     }
     m.facingLeft = dx < 0;
-    this.attackT = CpuAI.ATTACK_FRAMES; // #attack-mode window: drives modWeaponTechnique accumulation
+    // hold the #attack window for the full attack strip (>= the technique window) so the whole animation
+    // plays instead of being cut to 6 frames; drives both the attack anim and modWeaponTechnique.
+    this.attackT = Math.max(CpuAI.ATTACK_FRAMES, this.attackAnimTicks(this.attackAction()));
+    this.entity.tryGet(Anim)?.restart(); // replay the attack strip from frame 0 each attack (ensureMode)
     if (this.atkSound) game.audio?.play(this.atkSound, 0.5); // #attack.sound (quieter than player)
     wm.resetCooldown(); // restart this weapon's cooldown counter
     this.attackFin(m); // re-acquire / kite

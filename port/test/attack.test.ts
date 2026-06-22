@@ -140,6 +140,22 @@ describe("FSM configuration from #AiType", () => {
   });
 });
 
+describe("enemies play their ATTACK animation (CpuAI.animAction — was missing entirely)", () => {
+  it("a melee orc returns its weaponMelee strip while attacking, then reverts", () => {
+    game.grid = new CollisionGrid(40, 40, 32); game.entities = [];
+    game.assets = { index: { anims: { swordOrc_weaponMelee: { delay: 3, frames: [{ dela: 3 }, { dela: 3 }] } } }, img: () => null } as any;
+    game.teamMaster.reset(); game.armyMaster.reset(); game.teamMaster.unitMap.configure(32, 0, 0);
+    const player = spawnPlayer(200, 200); game.player = player; game.entities.push(player);
+    const orc = spawnEnemy("swordOrc", 214, 200, { animChar: "swordOrc" }); game.entities.push(orc); // in melee reach
+    let attackAnim: string | null = null;
+    for (let t = 0; t < 120 && attackAnim !== "weaponMelee"; t++) {
+      rebuildCombatSubstrate(); orc.send("update");
+      attackAnim = orc.send("animAction");
+    }
+    expect(attackAnim).toBe("weaponMelee"); // the enemy now shows its attack strip (not just walk/stand)
+  });
+});
+
 import { PlayerControl } from "@/components/control";
 describe("player melee autofire (objAiPlayer: #melee/#ranged autofire on cooldown, into empty air)", () => {
   it("the player swings its punch on cooldown even with NO target in reach", () => {
