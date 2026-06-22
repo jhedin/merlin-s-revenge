@@ -17,7 +17,7 @@ import { meleeHitFn } from "../systems/teams";
 import { aimWithEyestrain } from "../engine/math";
 import { Targeting } from "./combat";
 import { WeaponManager, meleeBasePower, enemyMeleeBasePower, resolveAttack, BULLET_DAMAGE_SCALE, type AttackData } from "./weapon";
-import { summonUnit, depositMines } from "./summon";
+import { depositMines } from "./summon";
 import { chargeMaxOf, chargeStartOf, chargeSpeedOf } from "./charge";
 import { PathFinding } from "./pathFinding";
 import { ColourTransform } from "./colourTransform";
@@ -807,12 +807,18 @@ export class CpuAI extends Component {
         // every caster firing a generic damage bolt. Plain bolt-casters (energyBlast/dark/arctic) unchanged.
         const ca = this.entity.get(WeaponManager).getCurrentAttack();
         if (ca && ca.type === "magic" && (ca.explodeFunction === "#summonUnit" || ca.explodeFunction === "summonUnit")) {
-          // summon the multistage tier the caster's mana affords (chargeMaxOf = its real charge ceiling).
-          // Pass game.rng so a #randomSummon spell (goblin/undead/sc/skeleton summon) wobbles the tier
-          // per cast (calcAttackChargeMax) instead of always reaching the deterministic top tier — this is
-          // a one-shot at the summon release (cooldown-gated), so it can't jitter.
-          const sc = chargeMaxOf(ca, this.entity.get(Mana), game.rng);
-          summonUnit(ca, sc, m.x, m.y, this.entity.id); // summon at the caster's loc
+          // objAiCPUSpellCaster: a summoner RELEASES a real objSpell that FLIES to the target and, on
+          // landing, summons the unit at the landing loc PLUS resolves the radial #explode hit (undeadSummon
+          // payloadFunction #takeHit power 2) — exactly the player's path and the damage-caster branch below
+          // (SpellActor.explode fields #summonUnit). Was summoning directly at the CASTER's loc with no bolt,
+          // so every summon piled onto the necromancer and the explode damage never landed. chargeMaxOf with
+          // game.rng wobbles the #randomSummon tier per cast (one-shot at release, cooldown-gated → no jitter).
+          const tgc = this.entity.send("getTargeting") as { hits: string[]; allegiance: string } | undefined;
+          const hits = ca.hits && ca.hits.length ? ca.hits : ["#teamMembers", "#teamBuildings"];
+          const spell = spawnSpell(ca, this.entity.id, mz.x, mz.y, team, hits, tgc?.allegiance ?? "#enemy");
+          const sa = spell.get(SpellActor);
+          sa.setCharge(chargeMaxOf(ca, this.entity.get(Mana), game.rng), mz.x, mz.y); // wobbled tier ceiling
+          sa.release(m.x + dx, m.y + dy, Math.max(2, ca.spellSpeed / 3));             // fly to the target tile
         } else if (ca && ca.type === "magic" && (ca.explodeFunction === "#depositMines" || ca.explodeFunction === "depositMines")) {
           // verdanlinInGame energyMines: deposit charge/chargePerUnit #energyMine actors at the target loc
           // (the spell's would-be landing point). The mines carry #aldevar so they hit the caster's enemies.
