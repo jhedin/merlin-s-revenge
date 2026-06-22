@@ -405,7 +405,7 @@ async function main() {
       // =0); health/level/XP show only on mouse-hover (rollover, below).
       drawHealthRollover(renderer, game.input.cursor(), game.entities, assets); // characterEnergyRollOverMaster (gCharacterEnergyRolloverOn=1)
       weaponPalette.render(renderer, player, assets); // modWeaponSelector palette (over the world, under the HUD)
-      drawHud(renderer, player);
+      drawHud(renderer, player, assets);
       // 5-state minimap (modMiniMap): #cur/#clr/#inf (+ data #fre/#spe) with a proximity distance blend.
       // modMiniMap is OFF by default (pShowMiniMap=false); goNavMode shows it, leaveNavMode hides it — so it
       // appears ONLY once the room is cleared (nav mode), as a "room safe" cue, not during combat.
@@ -458,20 +458,38 @@ function drawTitle(renderer: Renderer, w: number, h: number) {
 // (the old "YOU HAVE FALLEN" game-over overlay is gone: death now plays the wasted cutscene -> reload;
 // the static victory overlay is replaced by the K18 credits scroll on the victory screen.)
 
-function drawHud(renderer: Renderer, player: import("./engine/dispatch").Entity) {
+function drawHud(renderer: Renderer, player: import("./engine/dispatch").Entity, assets: Assets) {
   const ctx = renderer.ctx;
   const hp = player.get(Energy).energyFrac();
   const hasSpell = player.send("getHasSpell") as boolean;
-  ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(6, 6, 104, 24);
-  ctx.fillStyle = healthBarColour(hp); ctx.fillRect(8, 8, 100 * hp, 6);          // health (energy)
+  // health_bar_surround (objPlayerCharacter): the real bar frame composited over the energy fill (its keyed
+  // white interior lets the fill show through). Falls back to the procedural box if the art isn't bundled.
+  const surround = assets.member("health_bar_surround");
+  if (surround) {
+    ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(8, 6, surround.w, surround.h);
+    ctx.fillStyle = healthBarColour(hp); ctx.fillRect(8, 10, Math.round(surround.w * hp), 6); // energy fill
+    ctx.drawImage(surround.img, 8, 6);
+  } else {
+    ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(6, 6, 104, 24);
+    ctx.fillStyle = healthBarColour(hp); ctx.fillRect(8, 8, 100 * hp, 6);
+  }
   const xp = player.get(Experience);
-  ctx.fillStyle = "#fc4"; ctx.fillRect(8, 18, 100 * Math.min(1, xp.frac()), 4);   // experience
-  // no mana bar: magic has no pool (charge is shown by the ring at the cursor); flag once acquired
+  ctx.fillStyle = "#fc4"; ctx.fillRect(8, 22, 100 * Math.min(1, xp.frac()), 4);   // experience
+  // no mana bar: magic has no pool (charge is shown by the orb over the head); flag once acquired
   ctx.fillStyle = "#fff"; ctx.font = "8px monospace";
-  ctx.fillText("HP", 114, 13);
   ctx.fillText("Lv " + xp.level, 114, 24);
-  if (hasSpell) { ctx.fillStyle = "#fc8"; ctx.fillText("✦", 100, 13); } // magic acquired
-  if (Date.now() < flashUntil) { ctx.fillStyle = "#ff4"; ctx.fillText(flashMsg, 8, 44); }
+  if (hasSpell) { ctx.fillStyle = "#fc8"; ctx.fillText("✦", 114, 13); } // magic acquired
+  // medikit bank (medikitMaster.objMedikitDisplayer): a row of on/off kit icons for the banked count.
+  const kits = (player.send("getNumOfMedikits") as number) || 0;
+  const onImg = assets.member("medikit_on"), offImg = assets.member("medikit_off");
+  if (onImg && offImg) {
+    const slots = Math.max(3, kits); // at least the 3 default slots, grows if the player banks more
+    for (let i = 0; i < slots; i++) ctx.drawImage((i < kits ? onImg : offImg).img, 8 + i * 10, 30);
+  } else if (kits > 0) { ctx.fillStyle = "#f88"; ctx.fillText("Kits " + kits, 8, 38); }
+  // extra lives (modExtraLives): no extraLives_text bitmap shipped, so a plain counter.
+  const lives = (player.send("getExtraLives") as number) || 0;
+  if (lives > 0) { ctx.fillStyle = "#fff"; ctx.fillText("♥ " + lives, 8, 50); }
+  if (Date.now() < flashUntil) { ctx.fillStyle = "#ff4"; ctx.fillText(flashMsg, 8, 60); }
 }
 
 // pickup effect -> its static gfx member (objPotion/objMedikit #member: "<x>_potion"; objScroll #member:
