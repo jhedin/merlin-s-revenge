@@ -340,6 +340,26 @@ for (const name of MEMBER_NAMES) {
   members[name] = { file: copy(b), w: b.w, h: b.h, reg: b.reg };
 }
 
+// ── (g2) title screen composition (Director Score frame 30 = titleScreen) ──────────────────────
+// Recovered by extracted/tools/dump_score.py → extracted/engine/title.json. The title is a COMPOSITE
+// of Score sprites (NOT one big bitmap): two stretched backdrop bar-tiles, the MERLIN'S/REVENGE
+// letter glyphs, and a scatter of small army/monster sprites. Each sprite is emitted with its bitmap,
+// Director loc (registration-point position), reg point, sprite rect (w×h, which STRETCHES the
+// background tiles) and ink. Bitmaps are copied via the manifest entry whose `file` matches.
+// See port/docs/parity/audits/title-screen-composition.md.
+interface TitleSprite {
+  file: string; w: number; h: number;        // sprite rect on stage (stretch target)
+  locH: number; locV: number; reg: [number, number]; ink: number; name: string;
+}
+const bmpByFile = new Map(bitmaps.map((b) => [b.file, b]));
+const titleDoc = JSON.parse(readFileSync(join(EXTRACTED, "title.json"), "utf8"));
+const title: TitleSprite[] = [];
+for (const s of titleDoc.sprites as Array<{ file: string; name: string; locH: number; locV: number; w: number; h: number; reg: [number, number]; ink: number; }>) {
+  const b = bmpByFile.get(s.file);
+  if (!b) { console.warn("title: missing bitmap", s.file); continue; }
+  title.push({ file: copy(b), w: s.w, h: s.h, locH: s.locH, locV: s.locV, reg: s.reg, ink: s.ink, name: s.name });
+}
+
 // ── (h) bitmap fonts (objFont): glyph sheets + metrics, keyed by font symbol ───────────────────
 // SS-1. The original blits per-glyph from fnt_<name> sized by fnt_<name>_properties.{theKey,charSize,
 // gap}: a char's tile INDEX = StringGetPos(theKey, char) (1-based, left-to-right along the sheet), at
@@ -385,7 +405,7 @@ for (const { sym, sheetPrefix, props, matte, cellOffset } of FONT_DEFS) {
 
 // ── emit + report ─────────────────────────────────────────────────────────────────────────────
 writeFileSync(join(OUT_GEN, "assets.json"),
-  JSON.stringify({ version: 2, defaultMap: DEFAULT_MAP, tilesets, chars, anims, sounds, music, cutscenes, arrows, weaponIcons, members, fonts }, null, 1));
+  JSON.stringify({ version: 2, defaultMap: DEFAULT_MAP, tilesets, chars, anims, sounds, music, cutscenes, arrows, weaponIcons, members, title, fonts }, null, 1));
 writeFileSync(join(OUT_GEN, "maps.json"), JSON.stringify(maps, null, 1));
 
 const charCount = Object.keys(chars).length, animCount = Object.keys(anims).length;

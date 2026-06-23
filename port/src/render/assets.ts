@@ -31,6 +31,11 @@ export interface AssetIndex {
   // static gfx members composited directly (pickup potions, minimap tiles, level stars, HUD chrome):
   // clean member name -> { file, w, h, reg } (reg = the Director registration point).
   members?: Record<string, { file: string; w: number; h: number; reg: [number, number] }>;
+  // titleScreen composition (Director Score frame 30), recovered by extracted/tools/dump_score.py.
+  // Sprites in channel (back→front) draw order: `file` art, `w`×`h` = the sprite rect on the 576×288
+  // stage (STRETCH target — the background bar-tiles scale up to it), `locH`/`locV` = the Director
+  // registration-point position (top-left = loc - reg), `ink` (36 = matte/background-transparent).
+  title?: Array<{ file: string; w: number; h: number; locH: number; locV: number; reg: [number, number]; ink: number; name: string }>;
   // SS-1 bitmap fonts (objFont): font symbol (menu/numbers/small/smallgrey) -> glyph-sheet + metrics.
   // `cell` is the authoritative slice size (charSize); `key` is the ordered glyph string (cell index =
   // key.indexOf(char)); `matte` selects the keying mode (white→transparent vs dark→transparent).
@@ -123,6 +128,9 @@ export class Assets {
     // static gfx members (potions / minimap tiles / stars / HUD chrome): small, loaded up front, white-matte
     // keyed like the other gfx so their backgrounds drop out.
     await Promise.all(Object.values(index.members ?? {}).map((m) => a.loadFile(m.file, "flood")));
+    // titleScreen composition sprites (logo glyphs / backdrop tiles / decorative army sprites): small,
+    // loaded up front, white-matte flood-keyed like the other gfx so their backgrounds drop out.
+    await Promise.all((index.title ?? []).map((t) => a.loadFile(t.file, "flood")));
     // SS-1 bitmap fonts: 4 tiny glyph sheets, loaded up front. White-matte faces (numbers/small/menu)
     // key like the tile sheets (per-cell interior matte → "global"); smallgrey keys its dark matte.
     await Promise.all(Object.values(index.fonts ?? {}).map((f) => a.loadFile(f.file, f.matte === "dark" ? "dark" : "global")));
@@ -135,6 +143,17 @@ export class Assets {
     const m = this.index.members?.[name];
     const img = m && this.images.get(m.file);
     return img ? { img, w: m.w, h: m.h, reg: m.reg } : undefined;
+  }
+
+  /** titleScreen composition: the loaded sprites (in draw order) with their art + Director loc / reg /
+   *  stretch rect / ink, or [] when the title wasn't bundled (drawTitle then falls back to text). */
+  titleSprites(): Array<{ img: Drawable; w: number; h: number; locH: number; locV: number; reg: [number, number]; ink: number; name: string }> {
+    const out: Array<{ img: Drawable; w: number; h: number; locH: number; locV: number; reg: [number, number]; ink: number; name: string }> = [];
+    for (const t of this.index.title ?? []) {
+      const img = this.images.get(t.file);
+      if (img) out.push({ img, w: t.w, h: t.h, locH: t.locH, locV: t.locV, reg: t.reg, ink: t.ink, name: t.name });
+    }
+    return out;
   }
 
   /** K22: the loaded arrow member for a colour ("green"|"red") + edge ("left"|"up"|"right"|"down"),

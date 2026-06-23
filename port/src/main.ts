@@ -457,11 +457,26 @@ async function main() {
 function drawTitle(renderer: Renderer, w: number, h: number) {
   const ctx = renderer.ctx;
   ctx.fillStyle = "#0a1020"; ctx.fillRect(0, 0, w, h);
-  // SS-1: title via the #menu bitmap face (scaled ×2 for the big title), hints via #small. Falls back
-  // to system fonts (the old fillText path) when the font art isn't bundled/loaded.
   const a = game.assets;
-  ctx.fillStyle = "#fc4";
-  drawText(ctx, a, "menu", "MERLIN'S REVENGE", w / 2, h / 2 - 48, { align: "center", scale: 2, fallbackFont: "bold 26px serif" });
+  // Faithful title composite: the recovered Director Score frame-30 (titleScreen) sprite layout —
+  // backdrop bar-tiles (stretched to their sprite rect), the MERLIN'S/REVENGE letter glyphs, and the
+  // scatter of small army/monster sprites — composited at their recovered stage positions. The stage
+  // is 576×288 = (w,h), so Score coords map 1:1. Top-left = (locH - reg.x, locV - reg.y); the
+  // background tiles draw stretched to (w,h)-of-rect. See dump_score.py / title-screen-composition.md.
+  const sprites = a.titleSprites();
+  if (sprites.length) {
+    for (const s of sprites) {
+      const x = s.locH - s.reg[0], y = s.locV - s.reg[1];
+      const stretch = (s.w !== s.img.width || s.h !== s.img.height);
+      if (stretch) ctx.drawImage(s.img, x, y, s.w, s.h);
+      else ctx.drawImage(s.img, x, y);
+    }
+  } else {
+    // Fallback (title art not bundled/loaded): the #menu bitmap face scaled ×2, then system fonts.
+    ctx.fillStyle = "#fc4";
+    drawText(ctx, a, "menu", "MERLIN'S REVENGE", w / 2, h / 2 - 48, { align: "center", scale: 2, fallbackFont: "bold 26px serif" });
+  }
+  // Control hints (port help text, not part of the original Score) via the #small bitmap face.
   ctx.fillStyle = "#566";
   drawText(ctx, a, "small", "move: WASD/arrows   aim: mouse   hold to charge magic, release to cast   punch: auto", w / 2, h - 26, { align: "center", fallbackFont: "8px monospace" });
   drawText(ctx, a, "small", "spells: 1-9   save/load: F5/F9   pause: Esc   mute: M", w / 2, h - 14, { align: "center", fallbackFont: "8px monospace" });
