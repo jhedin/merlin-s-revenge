@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { PlayerArchetype, spawnPlayer, spawnEnemy, spawnUnit, spawnAlly, spawnDwelling, spawnPickup } from "@/entities/archetypes";
 import { Movement } from "@/components/movement";
 import { Energy, Team } from "@/components/combat";
+import { Mana } from "@/components/mana";
 import { Experience } from "@/components/experience";
 import { WeaponManager, resolveAttack } from "@/components/weapon";
 import { Medikit } from "@/components/medikit";
@@ -151,6 +152,23 @@ describe("G2: armyMaster reserve (bank on leave, re-field at saved level)", () =
     expect(refielded.get(Experience).level).toBe(3);     // re-fielded AT the banked level
     expect(refielded.get(Team).team).toBe("#aldevar");
     expect(game.armyMaster.reserveCount("#aldevar", "warrior")).toBe(0); // consumed
+  });
+
+  it("banks + restores the GROWN mana stats + maxEnergy by VALUE (not re-rolled by forceLevelUp)", () => {
+    // the cast banks the exact grown stats; the port's old level-only replay re-rolled the random mana stat
+    // (Mana.levelUp) and could mis-set maxEnergy. Give the unit distinctive grown stats and confirm they
+    // survive bank+refield exactly — values forceLevelUp's random roll would not reproduce.
+    const ally = spawnAlly("warrior", 30, 30);
+    ally.get(Experience).level = 4;
+    const mn = ally.get(Mana); mn.capacity = 99; mn.flow = 7; mn.burst = 5; mn.regeneration = 3;
+    ally.get(Energy).max = 512;
+    expect(game.armyMaster.teleportOut(ally)).toBe(true);
+
+    const re = game.armyMaster.createUnit("#aldevar", "warrior", 50, 50)!;
+    const rm = re.get(Mana);
+    expect([rm.capacity, rm.flow, rm.burst, rm.regeneration]).toEqual([99, 7, 5, 3]); // assigned, not re-rolled
+    expect(re.get(Energy).max).toBe(512);
+    expect(re.get(Energy).energy).toBe(512); // refills to the restored max (bank is lossy on current HP)
   });
 
   it("an empty reserve summon returns null (can't summon what you haven't banked)", () => {

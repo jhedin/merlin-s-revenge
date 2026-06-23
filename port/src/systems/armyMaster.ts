@@ -10,10 +10,16 @@
 
 import type { Entity } from "../engine/dispatch";
 import { game } from "../game/context";
-import { Team } from "../components/combat";
+import { Team, Energy } from "../components/combat";
+import { Mana } from "../components/mana";
 import { spriteCharOr, Anim } from "../components/anim";
 
-export interface ArmyDetails { typ: string; team: string; level: number; }
+export interface ManaStats { capacity: number; flow: number; burst: number; regeneration: number }
+// modCharacterAttackProperties.addToArmyDetails: the army snapshot records the unit's GROWN stats by value
+// (restored by assignment, not by replaying level-ups). The port keeps the deterministic replay for level/
+// strength but banks the values that the replay can't reproduce: the per-level mana stat is rolled RANDOMLY
+// (Mana.levelUp), and maxEnergy must match exactly — so bank those two and override after the replay.
+export interface ArmyDetails { typ: string; team: string; level: number; max?: number; mana?: ManaStats }
 
 export class ArmyMaster {
   // [team][typ] -> ArmyDetails[]
@@ -23,10 +29,13 @@ export class ArmyMaster {
 
   // generateArmyDetails (80-93): the lossy snapshot — record LEVEL (+ typ/team), not health/position/target.
   generateArmyDetails(e: Entity): ArmyDetails {
+    const en = e.tryGet(Energy), mn = e.tryGet(Mana);
     return {
       typ: (e.send("getActorType") as string) || "",
       team: (e.send("getTeam") as string) || "#aldevar",
       level: (e.send("getLevel") as number) || 0,
+      ...(en ? { max: en.max } : {}),
+      ...(mn ? { mana: { capacity: mn.capacity, flow: mn.flow, burst: mn.burst, regeneration: mn.regeneration } } : {}),
     };
   }
 
@@ -94,6 +103,11 @@ export class ArmyMaster {
   // to avoid double-counting the starting level (the banked level already includes it).
   private restoreArmyDetails(e: Entity, details: ArmyDetails): void {
     for (let cur = (e.send("getLevel") as number) || 0; cur < details.level; cur++) e.send("forceLevelUp");
+    // restoreFromArmyDetails (assignment, not replay): override the stats the replay can't reproduce. The
+    // randomly-rolled mana and the exact maxEnergy are restored from the banked values (older saves without
+    // them keep the replay result). energy refills to the restored max (the bank is lossy on current HP).
+    if (details.mana) { const mn = e.tryGet(Mana); if (mn) { mn.capacity = details.mana.capacity; mn.flow = details.mana.flow; mn.burst = details.mana.burst; mn.regeneration = details.mana.regeneration; } }
+    if (typeof details.max === "number") { const en = e.tryGet(Energy); if (en) { en.max = details.max; en.energy = details.max; } }
   }
 
   // re-field every banked unit of a team (e.g. on entering a new room) at its saved level, at `at`.
@@ -145,7 +159,11 @@ export class ArmyMaster {
       for (const typ of Object.keys(byTyp)) {
         const list = Array.isArray(byTyp[typ]) ? byTyp[typ] : [];
         const dest = this.ensureLists(team, typ);
-        for (const d of list) dest.push({ typ, team, level: Number(d.level) || 0 });
+        for (const d of list) dest.push({
+          typ, team, level: Number(d.level) || 0,
+          ...(typeof d.max === "number" ? { max: d.max } : {}),
+          ...(d.mana && typeof d.mana === "object" ? { mana: { capacity: Number(d.mana.capacity) || 0, flow: Number(d.mana.flow) || 0, burst: Number(d.mana.burst) || 0, regeneration: Number(d.mana.regeneration) || 0 } } : {}),
+        });
       }
     }
   }

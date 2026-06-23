@@ -30,6 +30,11 @@ export type PickupEffect = "heal" | "maxikit" | "speed" | "sword" | "spell" | "e
   | "cBlast" | "darkBlast" | "arcticBlast" | "healBlast" | "armySummon" | "monsterSummon" | "energyMines"
   | "gmg" | "energyBeam" | "energyPulse";
 
+// objPotion (speed + the three mana potions): the only pickups that are POTIONS. Two cast behaviours key off
+// this: (a) the collectSound is act_powerUp's inherited "collect_powerup_02" (scrolls/medikits keep _01), and
+// (b) only a potion bumps the potionMaster "POTIONS DRUNK" tally — medikits/scrolls/sword/gmg do NOT.
+const POTIONS = new Set<PickupEffect>(["speed", "manaCapacity", "manaFlow", "manaBurst"]);
+
 export class Pickup extends Component {
   static handles = ["update", "isFinished", "getEffect", "writingPhase"];
   effect: PickupEffect = "heal";
@@ -62,7 +67,7 @@ export class Pickup extends Component {
       if (Math.abs(pp.x - m.x) < 16 && Math.abs(pp.y - m.y) < 16) {
         this.apply(p);             // grant the effect exactly once, on the collect frame
         this.writingTicks = 0;     // enter the writing/fade phase (displayWriting + startFade) instead of dying
-        game.audio?.play("collect_powerup_01"); // collectSound
+        game.audio?.play(POTIONS.has(this.effect) ? "collect_powerup_02" : "collect_powerup_01"); // collectSound (act_powerUp inherits _02)
       }
     } else if (this.writingTicks >= 0 && this.writingTicks < Pickup.WRITE_FADE) {
       this.writingTicks++;         // advance the fade (modFader.startFade); faderFin -> isFinished -> swept
@@ -71,8 +76,9 @@ export class Pickup extends Component {
   }
 
   private apply(player: import("../engine/dispatch").Entity): void {
-    // every collected powerup bumps the potionMaster tally for its type (G3b: pPotionsCollected).
-    game.potionMaster?.potionCollected(this.effect);
+    // only a POTION bumps the potionMaster tally (G3b: pPotionsCollected) — objPotion.collect calls it;
+    // objMedikit/objScroll/gmg never do (the port previously over-counted every pickup).
+    if (POTIONS.has(this.effect)) game.potionMaster?.potionCollected(this.effect);
     switch (this.effect) {
       // real medikit (G3a): BANK a kit (gradual stockpiled heal via Medikit.update) + a flat +25 below.
       case "heal": player.send("medikitCollected", 1); break;
