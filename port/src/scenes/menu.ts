@@ -5,6 +5,8 @@
 
 import type { Input } from "../systems/input";
 import type { Renderer } from "../render/renderer";
+import { game } from "../game/context";
+import { drawText } from "../render/text";
 
 export interface MenuItem {
   label: string;
@@ -38,18 +40,23 @@ export class Menu {
 
   render(renderer: Renderer, w: number, h: number, opaque = true): void {
     const ctx = renderer.ctx;
+    const a = game.assets;
     if (opaque) { ctx.fillStyle = "rgba(0,0,0,0.72)"; ctx.fillRect(0, 0, w, h); }
     ctx.textAlign = "center";
-    if (this.title) { ctx.fillStyle = "#fc4"; ctx.font = "bold 16px serif"; ctx.fillText(this.title, w / 2, h / 2 - 36); }
-    ctx.font = "11px monospace";
+    // SS-1: title + items via the #menu face (objMenuController #fontObj=#menu); the ↑/↓ hint via #small.
+    // The ▶ selection arrow isn't in the menu key → substitute "> " (in-face) for the bitmap path; the
+    // fillText fallback keeps the original ▶ when the font art is absent.
+    if (this.title) { ctx.fillStyle = "#fc4"; drawText(ctx, a, "menu", this.title, w / 2, h / 2 - 36, { align: "center", fallbackFont: "bold 16px serif" }); }
+    const usingBitmap = !!a?.font?.("menu");
     this.items.forEach((it, i) => {
       const sel = i === this.index;
       const shadow = this.isShadowed(i);
       ctx.fillStyle = shadow ? "#556" : sel ? "#fff" : "#9ab"; // shadowed items greyed
-      ctx.fillText((sel && !shadow ? "▶ " : "  ") + it.label, w / 2, h / 2 - 8 + i * 16);
+      const marker = sel && !shadow ? (usingBitmap ? "> " : "▶ ") : "  ";
+      drawText(ctx, a, "menu", marker + it.label, w / 2, h / 2 - 8 + i * 16, { align: "center", fallbackFont: "11px monospace" });
     });
-    ctx.fillStyle = "#566"; ctx.font = "8px monospace";
-    ctx.fillText("↑/↓ select   space confirm", w / 2, h - 14);
+    ctx.fillStyle = "#566";
+    drawText(ctx, a, "small", usingBitmap ? "up/down select   space confirm" : "↑/↓ select   space confirm", w / 2, h - 14, { align: "center", fallbackFont: "8px monospace" });
     ctx.textAlign = "left";
   }
 }

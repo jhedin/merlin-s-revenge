@@ -3,6 +3,7 @@
 // 30 Hz fixed-timestep loop: data -> world -> entities/dispatch -> render -> input -> combat.
 
 import { Assets, mapList, type MapMeta } from "./render/assets";
+import { drawText } from "./render/text";
 import { Renderer, type Sprite } from "./render/renderer";
 import { drawMinimap } from "./render/minimap";
 import { healthBarColour } from "./render/healthBar";
@@ -446,12 +447,14 @@ async function main() {
 function drawTitle(renderer: Renderer, w: number, h: number) {
   const ctx = renderer.ctx;
   ctx.fillStyle = "#0a1020"; ctx.fillRect(0, 0, w, h);
-  ctx.textAlign = "center";
-  ctx.fillStyle = "#fc4"; ctx.font = "bold 26px serif";
-  ctx.fillText("MERLIN'S REVENGE", w / 2, h / 2 - 48);
-  ctx.fillStyle = "#566"; ctx.font = "8px monospace";
-  ctx.fillText("move: WASD/arrows   aim: mouse   hold to charge magic, release to cast   punch: auto", w / 2, h - 26);
-  ctx.fillText("spells: 1-9   save/load: F5/F9   pause: Esc   mute: M", w / 2, h - 14);
+  // SS-1: title via the #menu bitmap face (scaled ×2 for the big title), hints via #small. Falls back
+  // to system fonts (the old fillText path) when the font art isn't bundled/loaded.
+  const a = game.assets;
+  ctx.fillStyle = "#fc4";
+  drawText(ctx, a, "menu", "MERLIN'S REVENGE", w / 2, h / 2 - 48, { align: "center", scale: 2, fallbackFont: "bold 26px serif" });
+  ctx.fillStyle = "#566";
+  drawText(ctx, a, "small", "move: WASD/arrows   aim: mouse   hold to charge magic, release to cast   punch: auto", w / 2, h - 26, { align: "center", fallbackFont: "8px monospace" });
+  drawText(ctx, a, "small", "spells: 1-9   save/load: F5/F9   pause: Esc   mute: M", w / 2, h - 14, { align: "center", fallbackFont: "8px monospace" });
   ctx.textAlign = "left";
 }
 
@@ -479,20 +482,23 @@ function drawHud(renderer: Renderer, player: import("./engine/dispatch").Entity,
   const xp = player.get(Experience);
   ctx.fillStyle = "#fc4"; ctx.fillRect(8, 22, 100 * Math.min(1, xp.frac()), 4);   // experience
   // no mana bar: magic has no pool (charge is shown by the orb over the head); flag once acquired
-  ctx.fillStyle = "#fff"; ctx.font = "8px monospace";
-  ctx.fillText("Lv " + xp.level, 114, 24);
-  if (hasSpell) { ctx.fillStyle = "#fc8"; ctx.fillText("✦", 114, 13); } // magic acquired
+  // SS-1: "Lv" label via #small, the level number via #numbers (drawText routes the digit run). The ✦
+  // magic-acquired glyph isn't in any font key → kept as a procedural fillText icon.
+  ctx.fillStyle = "#fff";
+  drawText(ctx, assets, "small", "Lv " + xp.level, 114, 24, { fallbackFont: "8px monospace" });
+  if (hasSpell) { ctx.fillStyle = "#fc8"; ctx.font = "8px monospace"; ctx.fillText("✦", 114, 13); } // magic acquired (icon, not a font glyph)
   // medikit bank (medikitMaster.objMedikitDisplayer): a row of on/off kit icons for the banked count.
   const kits = (player.send("getNumOfMedikits") as number) || 0;
   const onImg = assets.member("medikit_on"), offImg = assets.member("medikit_off");
   if (onImg && offImg) {
     const slots = Math.max(3, kits); // at least the 3 default slots, grows if the player banks more
     for (let i = 0; i < slots; i++) ctx.drawImage((i < kits ? onImg : offImg).img, 8 + i * 10, 30);
-  } else if (kits > 0) { ctx.fillStyle = "#f88"; ctx.fillText("Kits " + kits, 8, 38); }
-  // extra lives (modExtraLives): no extraLives_text bitmap shipped, so a plain counter.
+  } else if (kits > 0) { ctx.fillStyle = "#f88"; drawText(ctx, assets, "small", "Kits " + kits, 8, 38, { fallbackFont: "8px monospace" }); }
+  // extra lives (modExtraLives): no extraLives_text bitmap shipped, so a plain counter. The ♥ glyph
+  // isn't in any font key → kept as a procedural icon; the count routes through #numbers via drawText.
   const lives = (player.send("getExtraLives") as number) || 0;
-  if (lives > 0) { ctx.fillStyle = "#fff"; ctx.fillText("♥ " + lives, 8, 50); }
-  if (Date.now() < flashUntil) { ctx.fillStyle = "#ff4"; ctx.fillText(flashMsg, 8, 60); }
+  if (lives > 0) { ctx.fillStyle = "#fff"; ctx.font = "8px monospace"; ctx.fillText("♥", 8, 50); drawText(ctx, assets, "numbers", String(lives), 18, 50, { fallbackFont: "8px monospace" }); }
+  if (Date.now() < flashUntil) { ctx.fillStyle = "#ff4"; drawText(ctx, assets, "small", flashMsg, 8, 60, { fallbackFont: "8px monospace" }); }
 }
 
 // pickup effect -> its static gfx member (objPotion/objMedikit #member: "<x>_potion"; objScroll #member:

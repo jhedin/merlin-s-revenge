@@ -13,6 +13,7 @@ import type { Assets } from "../render/assets";
 import type { Renderer } from "../render/renderer";
 import type { Input } from "../systems/input";
 import type { Entity } from "../engine/dispatch";
+import { drawText, measureText } from "../render/text";
 
 export class CutscenePlayer {
   private thespian: Thespian;
@@ -67,9 +68,9 @@ export class CutscenePlayer {
     const speech = t.getSpeech();
     if (speech) {
       const pos = t.speakerPos(speech.alias) ?? { x: this.viewW / 2, y: 40 };
-      drawBubble(ctx, speech.text, pos.x, pos.y - 28, this.viewW);
+      drawBubble(ctx, this.assets, speech.text, pos.x, pos.y - 28, this.viewW);
     }
-    ctx.fillStyle = "#445"; ctx.font = "8px monospace"; ctx.fillText("move/click/esc: skip", 12, 14);
+    ctx.fillStyle = "#445"; drawText(ctx, this.assets, "small", "move/click/esc: skip", 12, 14, { fallbackFont: "8px monospace" });
   }
 
   render(renderer: Renderer): void {
@@ -103,8 +104,10 @@ export class CutscenePlayer {
     if (dark > 0) { ctx.fillStyle = `rgba(0,0,0,${(0.55 * dark).toFixed(3)})`; ctx.fillRect(0, 0, viewW, viewH); }
 
     if (t.title) {
-      ctx.textAlign = "center"; ctx.fillStyle = "#fc4"; ctx.font = "bold 20px serif";
-      ctx.fillText(t.title, viewW / 2, viewH / 2); ctx.textAlign = "left";
+      // SS-1: cutscene title via the #menu face (×2 scale), centred. Fallback keeps the system font.
+      ctx.textAlign = "center"; ctx.fillStyle = "#fc4";
+      drawText(ctx, this.assets, "menu", t.title, viewW / 2, viewH / 2, { align: "center", scale: 2, fallbackFont: "bold 20px serif" });
+      ctx.textAlign = "left";
     }
 
     // speech caption (auto-advancing; no prompt)
@@ -113,12 +116,12 @@ export class CutscenePlayer {
       const boxH = 56, y = viewH - boxH - 6;
       ctx.fillStyle = "rgba(0,0,0,0.78)"; ctx.fillRect(8, y, viewW - 16, boxH);
       ctx.strokeStyle = "#577"; ctx.strokeRect(8, y, viewW - 16, boxH);
-      ctx.fillStyle = "#fc4"; ctx.font = "bold 10px monospace";
-      ctx.fillText(speech.speaker + ":", 16, y + 14);
-      ctx.fillStyle = "#fff"; ctx.font = "10px monospace";
-      wrap(ctx, speech.text, 16, y + 28, viewW - 32, 12);
+      // SS-1: speaker label + wrapped speech body via the #small face.
+      ctx.fillStyle = "#fc4"; drawText(ctx, this.assets, "small", speech.speaker + ":", 16, y + 14, { fallbackFont: "bold 10px monospace" });
+      ctx.fillStyle = "#fff";
+      wrap(ctx, this.assets, speech.text, 16, y + 28, viewW - 32, 12);
     }
-    ctx.fillStyle = "#445"; ctx.font = "8px monospace"; ctx.fillText("esc/space: skip", 12, 14);
+    ctx.fillStyle = "#445"; drawText(ctx, this.assets, "small", "esc/space: skip", 12, 14, { fallbackFont: "8px monospace" });
   }
 
   /** debug: visible cutscene actors' x positions (used by the H verification tool). */
@@ -138,34 +141,37 @@ export class CutscenePlayer {
 }
 
 // a speech bubble above a speaker's head (modThespian.displaySpeechInGame): a blended rect + wrapped text.
-function drawBubble(ctx: CanvasRenderingContext2D, text: string, cx: number, baseY: number, viewW: number): void {
+// SS-1: layout + draw measured by the #small bitmap face (measureText falls back to ctx when absent).
+function drawBubble(ctx: CanvasRenderingContext2D, assets: Assets, text: string, cx: number, baseY: number, viewW: number): void {
   ctx.font = "9px monospace";
+  const M = (s: string) => measureText(ctx, assets, "small", s);
   // wrap to a max bubble width, measure the laid-out lines, then draw the rect + text.
   const maxW = Math.min(180, viewW - 16);
   const words = text.split(" "); const lines: string[] = []; let line = "";
   for (const w of words) {
     const test = line ? line + " " + w : w;
-    if (ctx.measureText(test).width > maxW - 8 && line) { lines.push(line); line = w; } else line = test;
+    if (M(test) > maxW - 8 && line) { lines.push(line); line = w; } else line = test;
   }
   if (line) lines.push(line);
   const lh = 11, padX = 5, padY = 4;
-  const boxW = Math.min(maxW, Math.max(...lines.map((l) => ctx.measureText(l).width)) + padX * 2);
+  const boxW = Math.min(maxW, Math.max(...lines.map((l) => M(l))) + padX * 2);
   const boxH = lines.length * lh + padY * 2;
   let x = Math.round(cx - boxW / 2); let y = Math.round(baseY - boxH);
   x = Math.max(4, Math.min(x, viewW - boxW - 4)); y = Math.max(4, y);
   ctx.fillStyle = "rgba(0,0,0,0.78)"; ctx.fillRect(x, y, boxW, boxH);
   ctx.strokeStyle = "#577"; ctx.strokeRect(x, y, boxW, boxH);
   ctx.fillStyle = "#fff";
-  lines.forEach((l, i) => ctx.fillText(l, x + padX, y + padY + (i + 1) * lh - 3));
+  lines.forEach((l, i) => drawText(ctx, assets, "small", l, x + padX, y + padY + (i + 1) * lh - 3, { fallbackFont: "9px monospace" }));
 }
 
-function wrap(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxW: number, lh: number): void {
+function wrap(ctx: CanvasRenderingContext2D, assets: Assets, text: string, x: number, y: number, maxW: number, lh: number): void {
+  const M = (s: string) => measureText(ctx, assets, "small", s);
   const words = text.split(" ");
   let line = ""; let yy = y;
   for (const w of words) {
     const test = line ? line + " " + w : w;
-    if (ctx.measureText(test).width > maxW && line) { ctx.fillText(line, x, yy); line = w; yy += lh; }
+    if (M(test) > maxW && line) { drawText(ctx, assets, "small", line, x, yy, { fallbackFont: "10px monospace" }); line = w; yy += lh; }
     else line = test;
   }
-  if (line) ctx.fillText(line, x, yy);
+  if (line) drawText(ctx, assets, "small", line, x, yy, { fallbackFont: "10px monospace" });
 }

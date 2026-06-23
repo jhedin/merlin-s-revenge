@@ -14,6 +14,7 @@ import type { Input } from "../systems/input";
 import type { Assets } from "../render/assets";
 import type { SchemeName } from "../systems/input";
 import { game } from "../game/context";
+import { drawText } from "../render/text";
 
 // The control rows shown in key-config (keyChooseMaster.pKeyDescriptions): control name -> description.
 const KEY_DESCRIPTIONS: { control: string; desc: string }[] = [

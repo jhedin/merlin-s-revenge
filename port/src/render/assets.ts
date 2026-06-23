@@ -4,6 +4,7 @@
 // default map paints as fast as it ever did. (F1: bundle ALL, load only what a map needs.)
 
 import mapsIndex from "../generated/maps.json";
+import { BitmapFont } from "./bitmapFont";
 
 export interface FrameMeta { file: string; w: number; h: number; reg: [number, number]; dela?: number; }
 export interface AnimMeta { delay: number; loop?: boolean; frames: FrameMeta[] }
@@ -30,6 +31,10 @@ export interface AssetIndex {
   // static gfx members composited directly (pickup potions, minimap tiles, level stars, HUD chrome):
   // clean member name -> { file, w, h, reg } (reg = the Director registration point).
   members?: Record<string, { file: string; w: number; h: number; reg: [number, number] }>;
+  // SS-1 bitmap fonts (objFont): font symbol (menu/numbers/small/smallgrey) -> glyph-sheet + metrics.
+  // `cell` is the authoritative slice size (charSize); `key` is the ordered glyph string (cell index =
+  // key.indexOf(char)); `matte` selects the keying mode (white→transparent vs dark→transparent).
+  fonts?: Record<string, { file: string; w: number; h: number; cell: [number, number]; gap: number; key: string; matte: "white" | "dark" }>;
 }
 
 export const mapList = mapsIndex as MapMeta[];
@@ -49,7 +54,7 @@ export function loadImage(src: string): Promise<HTMLImageElement> {
 // baked the matte as opaque white. Key out the white matte by flood-filling transparency from
 // the image border (interior whites — e.g. sprite highlights — are preserved). One-time at
 // load (the per-frame getImageData ban only concerns the render loop).
-function keyOutMatte(img: HTMLImageElement, mode: "flood" | "global"): HTMLCanvasElement {
+function keyOutMatte(img: HTMLImageElement, mode: "flood" | "global" | "dark"): HTMLCanvasElement {
   const c = document.createElement("canvas");
   c.width = img.width; c.height = img.height;
   const ctx = c.getContext("2d")!;
@@ -59,7 +64,15 @@ function keyOutMatte(img: HTMLImageElement, mode: "flood" | "global"): HTMLCanva
   const data = ctx.getImageData(0, 0, w, h);
   const px = data.data;
   const isWhite = (i: number) => px[i]! > 244 && px[i + 1]! > 244 && px[i + 2]! > 244 && px[i + 3]! > 0;
-  if (mode === "global") {
+  if (mode === "dark") {
+    // SS-1 smallgrey: a light-grey glyph on a near-black matte (24,8,16). Key the dark matte to
+    // transparency by mapping LUMINANCE → alpha (interior, per-cell — like "global", not a border flood):
+    // matte pixels go transparent, glyph pixels keep full alpha so the mask can be tinted at draw time.
+    for (let i = 0; i < px.length; i += 4) {
+      const lum = (px[i]! * 299 + px[i + 1]! * 587 + px[i + 2]! * 114) / 1000;
+      px[i + 3] = lum < 48 ? 0 : px[i + 3]!; // below the matte threshold → cut out
+    }
+  } else if (mode === "global") {
     // tile sheets: matte is interior to the sheet (per-cell), so key all near-white.
     for (let i = 0; i < px.length; i += 4) if (isWhite(i)) px[i + 3] = 0;
   } else {
@@ -104,6 +117,9 @@ export class Assets {
     // static gfx members (potions / minimap tiles / stars / HUD chrome): small, loaded up front, white-matte
     // keyed like the other gfx so their backgrounds drop out.
     await Promise.all(Object.values(index.members ?? {}).map((m) => a.loadFile(m.file, "flood")));
+    // SS-1 bitmap fonts: 4 tiny glyph sheets, loaded up front. White-matte faces (numbers/small/menu)
+    // key like the tile sheets (per-cell interior matte → "global"); smallgrey keys its dark matte.
+    await Promise.all(Object.values(index.fonts ?? {}).map((f) => a.loadFile(f.file, f.matte === "dark" ? "dark" : "global")));
     return a;
   }
 
@@ -128,7 +144,22 @@ export class Assets {
     return file ? this.images.get(file) : undefined;
   }
 
-  private async loadFile(file: string, mode: "flood" | "global"): Promise<void> {
+  // SS-1: cache of built BitmapFont wrappers (keyed by font symbol). Built lazily on first access.
+  private fontCache = new Map<string, BitmapFont>();
+  /** SS-1: the bitmap font for a symbol (menu/numbers/small/smallgrey), or undefined when the sheet
+   *  wasn't bundled / loaded (callers fall back to ctx.fillText so text never disappears). */
+  font(sym: string): BitmapFont | undefined {
+    const cached = this.fontCache.get(sym);
+    if (cached) return cached;
+    const meta = this.index.fonts?.[sym.replace(/^#/, "")];
+    const sheet = meta && this.images.get(meta.file);
+    if (!meta || !sheet) return undefined;
+    const f = new BitmapFont(sheet, meta.cell[0], meta.cell[1], meta.gap, meta.key, meta.matte);
+    this.fontCache.set(sym, f);
+    return f;
+  }
+
+  private async loadFile(file: string, mode: "flood" | "global" | "dark"): Promise<void> {
     if (this.images.has(file)) return;
     const img = await loadImage(this.base + file);
     const c = keyOutMatte(img, mode);
