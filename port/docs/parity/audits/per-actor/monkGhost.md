@@ -79,3 +79,12 @@ All sprite actions resolve to real bundled strips with zero fallbacks.
   grave/reel/die/attack strips because it never attacks, never takes damage (`amGhost⇒return`), and leaves no
   grave (vanishes on possession). The port's strip resolver would fall back to `_stand` if any other action
   were requested, but the ghost FSM never requests one — so no fallback ever fires.
+
+---
+
+## RE-VERIFY (2026-06-23) — fresh reproduction (`tools/_audit_monkghost.ts`)
+monkGhost is `#AiType:#objAiCPUGhost`, team `#ghosts`, `#teamWhenAlive:#aldevar`, `#ghost:true` (`#graveOn` effectively off — leaves no grave).
+- **Strips:** `stand`✓ `walk`✓ (animChar=monkGhost). No `grave` strip — correct (ghost vanishes, leaves no corpse).
+- **Possession mechanic (objAiCPUGhost: findUnitOfType #monk on teamWhenAlive → goToLoc → attemptPossess):** with a `#monk` (#aldevar) placed 120px away, the ghost **drifted toward the monk (400→472px) and POSSESSED it at t=63** — ghost died (finalized), monk received the merged XP + glowPink (control.ts:1147). ✓
+- **No-monk case:** vs a non-monk target it drifts to random map points forever (findUnitOfType→null) — faithful (`#objAiCPUGhost` drift-only where no monk is rostered). NOT a bug.
+- **Verdict: CLEAN.**

@@ -99,3 +99,11 @@ anything in normal play** because of three interacting issues: its data `#teamBu
 never advances to members (DIV-2), and even when it does acquire, its 600 reach is clamped to 220 (DIV-3).
 DIV-1 and DIV-2 are systemic (DIV-1 also breaks garTower; DIV-2 affects every multi-tier `targetRoles`
 actor). All three are PORT bugs, not faithful original-game quirks.
+
+---
+
+## RE-VERIFY (2026-06-23) — ELEVATED-MUZZLE AIM FIX VERIFIED (`tools/_audit_combat.ts dwarfTower darkGolem --dist=300`)
+dwarfTower is team **#aldevar** (a FRIENDLY player tower) → it targets `#monsters`/`#undead`, NOT the player. Re-verified vs a hostile `#monsters` darkGolem (750 HP) at 300px.
+- **Strips:** `stand`✓ `grave`✓ `naturalRanged`✓ (animChar=dwarfTower, immobile `#walkSpeed:0`, no walk strip — correct).
+- **Ranged (#naturalRanged #fireAxe, bullet #towerAxe [splash], reach 600, animFrame[31], `#collisionLoc point(0,-88)` = muzzle 88px ABOVE centre):** the **elevated-muzzle aim now CONNECTS** — fired axes at ~156-tick cadence (cooldown 311 → slow tower feel), the splash towerAxe LANDED and applied **sustained splash damage (16 damage events over 700 ticks)**, target driven down. Aim re-derived from the muzzle (control.ts:918) so the −88 offset no longer makes shots sail over the target. **The fix is confirmed working.** ✓
+- **Verdict: CLEAN** (elevated-muzzle aim verified post-fix).

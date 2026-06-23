@@ -95,3 +95,12 @@ dedicated `#build` strip; the port plays `stand` (or `walk` on the transition ti
   so the multi-build loop is never reached. Faithful to the original (same disposition order).
 
 DIVERGENCES = 1
+
+---
+
+## RE-VERIFY (2026-06-23) — fresh reproduction (`tools/_audit_combat.ts goblinBuilder`)
+goblinBuilder is `#AiType:#objAiCPUBuilder`, team `#goblins`, `#weapon:#goblinHammer`.
+- **Strips:** `stand`✓ `walk`✓ `grave`✓ `weaponMelee`✓ `build`✓ `reel`✓ (animChar=goblinBuilder — the `build` construction strip IS bundled, so builder-mode resolves a real strip, not `_stand`).
+- **Combat fallback (no building site present):** with a hostile pinned target and no build site, it correctly fights with `#goblinHammer` (#weaponMelee, reach 25, animFrame[3]) — **19 melee hits**, weaponMelee strip played from real art. ✓
+- **Build-mode note:** full `#build` behavior (walkToBuilding → accrue → construct) requires a buildable site in the room; the `build` strip is present and would render. Combat-path + strip availability verified here.
+- **Verdict: CLEAN.**

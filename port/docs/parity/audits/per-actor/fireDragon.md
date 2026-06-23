@@ -170,3 +170,11 @@ between the port and correct behavior is the char-name resolution.
 
 Everything else (team #scarlet, weapon/bullet resolution, fullstrength velocity, reach 150, cooldown,
 sounds, grave, AI commit/target/face) is FAITHFUL and correctly reproduced.
+
+---
+
+## RE-VERIFY (2026-06-23) — fresh reproduction (`tools/_audit_combat.ts fireDragon --dist=250`)
+fireDragon is the dragon stat block on team **#scarlet** sharing the `dragon_*` sprites (`#name:"dragon"`).
+- **Strips:** `stand`✓ `walk`✓ `grave`✓ `weaponRanged`✓ (animChar=**dragon**, NOT blackOrc — shares dragon art faithfully).
+- **MULTI-SHOT breath (#weapon #flameThrower, #weaponRanged, `#animframe:[1,3,5,7]` = up to 4 shots/breath):** observed fire ticks `[27,30,34,38 | 66,70,74 | 102,106,110 | 182 | 218]` — **bursts of 3-4 fireBall shots 3-4 ticks apart per breath, then a ~28-tick cooldown**. 12 bullets over 250 ticks. Matches the audited `dragon`'s confirmed 4-shots-per-cycle flameThrower. ✓
+- **Verdict: CLEAN** (consistent with the dragon re-verify).

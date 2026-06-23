@@ -99,3 +99,11 @@ All properties are correctly read from data, all behavioral paths (reincarnation
   - port/src/systems/teams.ts (impactMeleeAttack targeting)
 - **Port Tests:**
   - port/test/reincarnate.test.ts (cascade, bare-symbol, killedInAction gate)
+
+---
+
+## RE-VERIFY (2026-06-23) — fresh reproduction (`tools/_audit_combat.ts hydra3`)
+- **Strips:** `stand`✓ `walk`✓ `grave`✓ `naturalMelee`✓ (animChar=hydra3, team #swamp).
+- **MULTI-HIT melee (#naturalMelee #bite, animFrame[5,8,11] = 3 hits/cycle, reach 25, mult 1.2):** observed damage cadence `[3,3,6, 3,3,6, ...]` — exactly **3 hits 3 ticks apart per bite, then a 6-tick gap** to the next cycle. 27 hits over 120 ticks. The 3-frame multi-hit fires faithfully. ✓
+- **Reincarnation:** kill → `[hydra2]` (bare symbol `#hydra2` normalized to one child). ✓
+- **Verdict: CLEAN.**

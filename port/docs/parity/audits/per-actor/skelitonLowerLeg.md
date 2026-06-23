@@ -73,3 +73,11 @@
 No behavioral divergences detected. No unimplemented game-logic gaps. The cascade (skelitonLowerLeg → 2× skelitonFootSoldier → footSoldier's own reincarnate) chain is structurally sound.
 
 **Note:** damageSpeed reduction and weaponTechniqueInc hardcoding are system-wide gaps affecting all actors equally (catalogued in archer.md). They do not represent actor-specific behavioral divergence.
+
+---
+
+## RE-VERIFY (2026-06-23) — fresh reproduction (`tools/_audit_combat.ts skelitonLowerLeg`)
+- **Strips:** `stand`✓ `walk`✓ `grave`✓ `naturalMelee`✓ `reel`✓ (animChar=skelitonLowerLeg).
+- **Melee (#naturalMelee #highKick, reach 25, animFrame[5], mult 1.5):** moved-to-attack and connected — **5 hits at a steady 23-tick cadence** (firstDamage t=20), target energyFrac 1.0→0.90. walk/stand/naturalMelee all played from real strips. ✓
+- **Reincarnation:** kill → `[skelitonFootSoldier, skelitonFootSoldier]`. ✓
+- **Verdict: CLEAN.**

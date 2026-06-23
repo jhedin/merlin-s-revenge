@@ -128,3 +128,11 @@ The following properties/behaviors are explicitly excluded per the audit scope:
 ---
 
 **ACTOR=lizardEgg | CLEAN**
+
+---
+
+## RE-VERIFY (2026-06-23) — fresh reproduction
+lizardEgg is `#inherit:#bullet` — a THROWN projectile (fired by lizardSoldier `#bullet:#lizardEgg`) that HATCHES on land-stall.
+- **Thrower path (`tools/_audit_combat.ts lizardSoldier`):** lizardSoldier fires lizardEgg bullets that reach & damage a pinned hostile (6 damage events). A DIRECT target hit routes to `die()` (no hatch) — faithful (`projectile.ts:96`: only land-stall/explode hatches).
+- **Land-stall hatch (`tools/_audit_egghatch.ts`):** fired a lizardEgg bullet (friction `point(2,2)`); it decayed and STALLED at t=128 → `finish()` spawned EXACTLY `[bug, bug, bug]` (#monsters) at the corpse loc, matching `#reincarnateAs`. Wired via `control.ts:1016` (lizardEgg→#bug) + `projectile.ts:102`. ✓
+- **Verdict: CLEAN.**

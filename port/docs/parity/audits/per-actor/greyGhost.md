@@ -95,3 +95,10 @@ team, stretchDeath). One **cosmetic PORT divergence**: the `#release` firing-fra
 rendered because the port hard-prefers the `charge` strip.
 
 Probe: `tools/_audit_greyGhost.ts` (deleted).
+
+---
+
+## RE-VERIFY (2026-06-23) — fresh reproduction (`tools/_audit_combat.ts greyGhost --dist=250`)
+- **Strips:** `stand`✓ `walk`✓ `grave`✓ `charge`✓ `release`✓ `reel`✓ (animChar=greyGhost, team #undead). Both charge AND release strips present and BOTH used (charge 42 ticks / release 21 ticks over 300).
+- **Summoner (#weapon #undeadSummon, #magic, #explodeFunction:#summonUnit, #randomSummon):** released flying summon spells; summoned **6 undead minions (skeletonThrower / skeletonArcher) over 300 ticks at a steady ~45-tick cadence**; minions then damaged the pinned target (26 damage events). ✓
+- **Verdict: CLEAN.**

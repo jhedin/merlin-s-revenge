@@ -68,3 +68,11 @@
 ## Conclusion
 
 **Hydra2 is CLEAN.** All properties read correctly from generated data. Reincarnation chain (hydra3 → hydra2 → hydra1) is behavioral-correct: minEnergy floor (500) gates death and triggers spawn of #hydra1. Melee AI, attack targeting (units + buildings), energy/maxEnergy, and team allegiance all match original.
+
+---
+
+## RE-VERIFY (2026-06-23) — fresh reproduction (`tools/_audit_combat.ts hydra2`)
+- **Strips:** `stand`✓ `walk`✓ `grave`✓ `naturalMelee`✓ (animChar=hydra2, team #swamp).
+- **MULTI-HIT melee (#naturalMelee #bite, animFrame[5,8] = 2 hits/cycle, reach 25):** damage cadence `[3,8,3,8,...]` — **2 hits 3 ticks apart per bite, 8-tick gap** to next cycle. 16 hits over 100 ticks. ✓
+- **Reincarnation:** kill → `[hydra1]` (bare `#hydra1` normalized). Completes the hydra3→hydra2→hydra1 cascade. ✓
+- **Verdict: CLEAN.**
