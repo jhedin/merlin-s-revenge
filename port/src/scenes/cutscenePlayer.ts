@@ -103,23 +103,25 @@ export class CutscenePlayer {
     const dark = t.darkness();
     if (dark > 0) { ctx.fillStyle = `rgba(0,0,0,${(0.55 * dark).toFixed(3)})`; ctx.fillRect(0, 0, viewW, viewH); }
 
-    if (t.title) {
-      // SS-1: cutscene title via the #menu face (×2 scale), centred. Fallback keeps the system font.
-      ctx.textAlign = "center"; ctx.fillStyle = "#fc4";
-      drawText(ctx, this.assets, "menu", t.title, viewW / 2, viewH / 2, { align: "center", scale: 2, fallbackFont: "bold 20px serif" });
-      ctx.textAlign = "left";
+    if (t.title && t.titleAlpha > 0) {
+      // objCutSceneTitle: gold rgb(204,204,0), cross-faded in/held/out (titleAlpha). #menu face, ×2, centred.
+      ctx.save(); ctx.globalAlpha = t.titleAlpha;
+      ctx.textAlign = "center"; ctx.fillStyle = "#cccc00";
+      drawText(ctx, this.assets, "menu", t.title, viewW / 2, viewH / 2, { align: "center", scale: 2, colour: "#cccc00", fallbackFont: "bold 20px serif" });
+      ctx.textAlign = "left"; ctx.restore();
     }
 
-    // speech caption (auto-advancing; no prompt)
+    // modThespian.displaySpeechCutScene: BARE text floating just above the SPEAKER's head — no caption bar,
+    // no "speaker:" prefix (that bottom VN bar was a port invention). Centre-wrapped over the speaker.
     const speech = t.getSpeech();
     if (speech) {
-      const boxH = 56, y = viewH - boxH - 6;
-      ctx.fillStyle = "rgba(0,0,0,0.78)"; ctx.fillRect(8, y, viewW - 16, boxH);
-      ctx.strokeStyle = "#577"; ctx.strokeRect(8, y, viewW - 16, boxH);
-      // SS-1: speaker label + wrapped speech body via the #small face.
-      ctx.fillStyle = "#fc4"; drawText(ctx, this.assets, "small", speech.speaker + ":", 16, y + 14, { fallbackFont: "bold 10px monospace" });
-      ctx.fillStyle = "#fff";
-      wrap(ctx, this.assets, speech.text, 16, y + 28, viewW - 32, 12);
+      const pos = t.speakerPos(speech.alias);
+      const cx = pos ? Math.round(pos.x) : viewW / 2;
+      // anchor above the 2×-scaled actor's head (feet at pos.y; ~55px sprite ×2 ≈ 110px tall).
+      const topY = Math.max(12, (pos ? Math.round(pos.y) - 124 : 24));
+      ctx.fillStyle = "#fff"; ctx.textAlign = "center";
+      wrapCentered(ctx, this.assets, speech.text, cx, topY, Math.min(viewW - 16, 260), 11);
+      ctx.textAlign = "left";
     }
     ctx.fillStyle = "#445"; drawText(ctx, this.assets, "small", "esc/space: skip", 12, 14, { fallbackFont: "8px monospace" });
   }
@@ -174,4 +176,18 @@ function wrap(ctx: CanvasRenderingContext2D, assets: Assets, text: string, x: nu
     else line = test;
   }
   if (line) drawText(ctx, assets, "small", line, x, yy, { fallbackFont: "10px monospace" });
+}
+
+// like wrap() but each line is CENTRED on cx (cutscene speech floats centred above the speaker's head).
+function wrapCentered(ctx: CanvasRenderingContext2D, assets: Assets, text: string, cx: number, y: number, maxW: number, lh: number): void {
+  const M = (s: string) => measureText(ctx, assets, "small", s);
+  const words = text.split(" ");
+  const lines: string[] = []; let line = "";
+  for (const w of words) {
+    const test = line ? line + " " + w : w;
+    if (M(test) > maxW && line) { lines.push(line); line = w; } else line = test;
+  }
+  if (line) lines.push(line);
+  let yy = y;
+  for (const ln of lines) { drawText(ctx, assets, "small", ln, cx, yy, { align: "center", colour: "#fff", fallbackFont: "10px monospace" }); yy += lh; }
 }
