@@ -1,119 +1,91 @@
-# Parity Audit: skelitonTorsoTank
+# Audit: skelitonTorsoTank (Skeleton-Lord body part — middle tier)
 
-## Summary
-skelitonTorsoTank is the **middle tier** of the skelitonLord reincarnation cascade: skelitonLord → skelitonUpper → **skelitonTorsoTank** → skelitonHead. It is a ranged AI CPU character that fires skelitonMissile bullets and spawns a skelitonHead upon death.
+Method: REPRODUCED in the port via a throwaway harness (`tools/_audit_skelitonTorsoTank.ts`,
+since deleted) that loaded the real `src/generated/assets.json`, spawned the actor with an inert
+hated target (#aldevar dwarf at 150px, inside reach 200), ticked 250 frames updating all entities
+(bullets included), rebuilt the combat substrate each tick, then killed the actor to observe
+death/grave/reincarnation. Derived behavior comes from `casts/data/act_skelitonTorsoTank.txt` and
+the skeleton-lord body-part family (skelitonLord → skelitonUpper → **skelitonTorsoTank** →
+skelitonHead reincarnation chain).
 
-## Property Coverage
+## Family context (derived)
 
-| Property | Original (casts/) | Port (port/src/) | Status |
-|----------|-------------------|------------------|--------|
-| objType | #objCPUCharacter | #objCPUCharacter | ✓ |
-| AiType | #objAiCPU | #objAiCPU | ✓ |
-| inherit | #CPUCharacter | #CPUCharacter | ✓ |
-| attack.animType | #naturalRanged | #naturalRanged | ✓ |
-| attack.bullet | #skelitonMissile | #skelitonMissile | ✓ |
-| attack.cooldown | 10 | 10 | ✓ |
-| attack.firingType | #fullstrength | #fullstrength | ✓ |
-| attack.reach | 200 | 200 | ✓ |
-| attack.sound | "quadranid_fire" | "quadranid_fire" | ✓ |
-| attack.name | #fireMissile | #fireMissile | ✓ |
-| attack.collisionLoc | point(15,-3) | {x:15, y:-3} | ✓ |
-| attack.animframe | 5 | 5 | ✓ |
-| attack.volume | 50 | 50 | ✓ |
-| damageSpeed | 3 | 3 | ✓ |
-| dexterity | 1 | 1 | ✓ |
-| dieSound | #none | #none | ✓ |
-| energy | 200 | 200 | ✓ |
-| experienceImWorth | 15 | 15 | ✓ |
-| eyestrain | 40 | 40 | ✓ (non-issue) |
-| graveOn | true | true | ✓ |
-| inertia | 80 | 80 | ✓ |
-| startingLevel | 0 | 0 | ✓ |
-| reincarnateAs | [#skelitonHead, #none] | ["skelitonHead", "none"] | ✓ |
-| strength | 10 | 10 | ✓ |
-| team | #undead | #undead | ✓ |
-| name | "skelitonTorsoTank" | "skelitonTorsoTank" | ✓ |
-| walkSpeed | 6 | 6 | ✓ |
-| weaponTechnique | 0 | 0 | ✓ (non-issue) |
+The skelitonLord splits into a CASCADE of body parts as each tier dies:
 
-## Behavioral Correctness
+| Actor | reincarnateAs | energy | attack | bullet | notes |
+|-------|---------------|--------|--------|--------|-------|
+| skelitonLord | [Upper, LowerLeg, Sword] | 750 | weapon skelitonLordSword (melee) | — | graveOn:false (vanishes) |
+| skelitonUpper | [TorsoTank, Arm, Arm] | 220 | weapon skelitonSummon (caster) | — | graveOn:false, spellcaster |
+| **skelitonTorsoTank** | **[skelitonHead, #none]** | **200** | **inline #naturalRanged** | **skelitonMissile** | **graveOn:true** |
+| skelitonHead | (none) | 10 | inline #naturalRanged | skelitonMissile | graveOn:true, reach 600 |
+| skelitonLowerLeg | [FootSoldier, FootSoldier] | 120 | naturalMelee highKick | — | graveOn:true |
+| skelitonArm | (none) | 110 | weaponMelee swordSwipe | — | graveOn:true |
 
-### Ranged AI Classification
-- **Original logic** (casts/script_objects/objAiCPU.txt, objAiAttack.txt): The AI reads the attack's `animType` property. #naturalRanged enemies spawn bullets at range and move to within reach before firing.
-- **Port logic** (port/src/components/control.ts, line 169-170): `ranged = opts.ranged ?? (animType === "#weaponRanged" || animType === "#magic" || animType === "#naturalRanged");`
-- **skelitonTorsoTank**: animType = "#naturalRanged", reach = 200 → ranged = true, reachRanged = 150 (capped; see line 370) ✓
-- **Result**: Correctly classified as ranged; will fire via the ranged attack path and kite if #runReload applies. Since #runReload is not set, defaults to false → no kiting post-attack; will re-engage (control.ts line 525).
+## Property Coverage (derived vs observed)
 
-### Firing Behavior (fullStrength firingType)
-- **Original** (casts/script_objects/modAttack.txt performRangedAttack): #fullstrength firingType → constant speed = attacker's strength.
-- **Port** (control.ts, line 544-545): `isFullStrength = (ftAttack?.firingType ?? "#proportional").toLowerCase() === "#fullstrength"; throwSpeed = isFullStrength ? Math.max(1, this.strength) : ...`
-- **skelitonTorsoTank**: firingType = "#fullstrength", strength = 10 → throwSpeed = 10 (constant velocity) ✓
-- **Result**: Correctly implements #fullStrength throw velocity; bullet travels at constant speed independent of distance.
+| Property | Original (casts/data/act_skelitonTorsoTank.txt) | Port (observed) | Status |
+|----------|--------------------------------------------------|------------------|--------|
+| #objType | #objCPUCharacter | ✓ EnemyArchetype CPU | ✓ MATCH |
+| #AiType | #objAiCPU | ✓ committed-target FSM (moveToAttack) | ✓ MATCH |
+| #team | #undead | ✓ #undead, tagged `enemy` | ✓ MATCH |
+| #name (sprite char) | "skelitonTorsoTank" | ✓ animChar = `skelitonTorsoTank` (NOT blackOrc) | ✓ MATCH |
+| #energy | 200 | ✓ energyFrac 1.0 at 200 | ✓ MATCH |
+| #strength | 10 | ✓ 10 | ✓ MATCH |
+| #walkSpeed | 6 | ✓ 6 (→3.6 px/tick) | ✓ MATCH |
+| #experienceImWorth | 15 | ✓ 15 | ✓ MATCH |
+| #eyestrain | 40 | ✓ 40 (aim scatter; bullet vy varies ±1.7) | ✓ MATCH |
+| #inertia | 80 | ✓ 80 | ✓ MATCH |
+| #damageSpeed | 3 | ✓ 3 | ✓ MATCH |
+| #dieSound | #none | ✓ none | ✓ MATCH |
+| #graveOn | true | ✓ true; corpse persists as grave | ✓ MATCH |
+| #reincarnateAs | [#skelitonHead, #none] | ✓ spawns exactly 1 skelitonHead | ✓ MATCH |
+| #attack.animType | #naturalRanged | ✓ type=ranged | ✓ MATCH |
+| #attack.bullet | #skelitonMissile | ✓ fires skelitonMissile bullets | ✓ MATCH |
+| #attack.animframe | 5 | ✓ animFrame [5] — 1 shot/cycle | ✓ MATCH |
+| #attack.reach | 200 | ✓ reach 200; target@150 in reach | ✓ MATCH |
+| #attack.collisionLoc | point(15,-3) | ✓ {x:15,y:-3} (bullet spawn offset) | ✓ MATCH |
+| #attack.cooldown | 10 | ✓ raw 10 → effectiveCooldown 22 (calibrated, see B1) | ✓ MATCH |
+| #attack.firingType | #fullstrength | ✓ #fullstrength (fixed throw velocity) | ✓ MATCH |
+| #attack.sound | "quadranid_fire" | ✓ atkSound forwarded | ✓ MATCH |
+| #attack.name | #fireMissile | ✓ #fireMissile | ✓ MATCH |
 
-### Bullet Resolution (skelitonMissile)
-- **Original** (casts/data/act_skelitonMissile.txt): Inherits #bullet, carries attack.damageMultiplier=10, attack.power=0.3, attack.type=#bullet, no reincarnateAs.
-- **Port** (port/src/entities/archetypes.ts, line 249-254): Resolves the bullet actor, extracts its attack data (damageMultiplier, power), checks for splash/reincarnate flags.
-- **skelitonTorsoTank**: Fires #skelitonMissile → bulletAttack is resolved from act_skelitonMissile's #attack proplist, bulletReincarnate=[] (act_skelitonMissile has no reincarnateAs).
-- **Firing path** (control.ts line 593-594): `fireBullet(this.entity.id, m.x, m.y - 6, dx, dy, speed, l1, team, 100, 0, bmult)` where `l1 = ba.powerScalar * dmgRef * BULLET_DAMAGE_SCALE` and `bmult = ba.damageMultiplier = 10`. ✓
-- **Result**: Bullet properties correctly extracted and passed to the firing path; damage = power·speed·mult·BULLET_DAMAGE_SCALE carried as collision-vector L1.
+## Behavioral correctness (observed)
 
-### Team Allegiance & Targeting
-- **Original**: #team: #undead → targets #aldevar (player side); hunted by team-role matching.
-- **Port**: team = "#undead" → Targeting.allegiance defaults to "#enemy" per team definition (teams.ts); findTarget hunts #aldevar members with roles [#teamMembers, #teamBuildings] ✓
-- **Result**: Team classification correct; enemy/hostile to player; will seek player and allies.
+### Sprite char — resolves to real bundled strip (NOT blackOrc)
+`spriteCharOr("skelitonTorsoTank")` finds the bundled `skelitonTorsoTank_stand` strip off the data
+`#name`, so `animChar = "skelitonTorsoTank"`. The full strip set is bundled:
+`skelitonTorsoTank_{stand,walk,naturalRanged(8f, one-shot),grave(2f)}`. **No blackOrc fallback.** ✓
 
-### Reincarnation Cascade (skelitonHead Spawn)
-- **Original** (casts/script_objects/modReincarnate.txt, line 49-72): On #leftTeam event (death), if #killedInAction, iterate pReincarnateAs; for each non-#none entry, spawn a new actor at the corpse location. First spawn at exact location (j=1, useOffset=false); j>1 spawns get useOffset=true scatter.
-- **Port** (port/src/components/reincarnate.ts, line 64-99):
-  - ReincarnateAs = ["skelitonHead", "none"] (parsed and normalized)
-  - Fire-once latch (`done`) prevents re-entry
-  - Spawn loop iterates; skips "none" entries (line 84)
-  - First non-#none entry (skelitonHead, i=0) spawns at exact corpse location (spawned=0, line 87-88, dx=0, dy=0)
-  - Second+ entries scatter on a ring (radius 20 if not set; line 89) at deterministic angles
-  - Child's Reincarnate.init reads its own data (act_skelitonHead's #team, #startingLevel), not inherited from parent
-  - Depth budget (line 80, childDepth = this.depth - 1) guards against cyclic data typos; default depth 12 >> deepest shipped chain (4)
-- **skelitonTorsoTank death**: reincarnateAs=[skelitonHead, none] → spawns 1 actor (skelitonHead at corpse location) + latch fires once per death ✓
-- **Result**: On death, spawns skelitonHead at the same location, then the TorsoTank corpse finalizes (grave). Faithful to original cascade.
+### Ranged attack — 1 missile per #animframe 5 crossing
+- AI runs `moveToAttack` (committed-target ranged FSM) for the entire run (target always at 150px,
+  inside reach 200, so it never needs to close further).
+- The 8-frame one-shot `naturalRanged` strip fires the hit once per FRESH crossing of frame 5
+  (`animFrame:[5]`). Observed **11 shots in 250 ticks, exactly 1 bullet per cycle** — never a double
+  or zero. Bullets spawn at the collisionLoc offset (≈425,~397) flying right (v≈9.6,±1).
+- **Cadence: a clean 22-tick period** (gaps all 22). This is the documented effective-cooldown
+  calibration: data cooldown 10 + dexterity 1 → recovery ceil((10-1)/1)=9, plus the fire-frame
+  offset (ticks to replay the strip to its gating frame 5) → effectiveCooldown 22, matching the
+  original objAiAttack "reset cooldown AT the firing frame, then the strip must replay" cadence.
+- #eyestrain 40 scatters the aim: bullet vy varies across shots (−0.9 … +1.7), faithful to
+  `objAiAttack.modifyLocWithEyestrain` (scatter scaled by dist/reach). ✓
 
-### Movement & AI Behavior
-- **Original** (act_skelitonTorsoTank.txt): walkSpeed=6 → moderate movement speed; #objAiCPU moves toward target within reach.
-- **Port** (archetypes.ts line 267): walkSpeed = 6 * 0.6 = 3.6 px/frame (scaled by map ratio, no-op if ratio=1) → movement speed passed to Movement component ✓
-- **AI FSM** (control.ts, CpuAI.updateMoveToAttack): Retargets every 30 frames, moves to target via pathfinding, fires when in reach (200px for ranged), then re-evaluates post-attack (no kiting since runReload=false) ✓
-- **Result**: Movement and AI behavior correctly implemented; will advance toward target and fire at range.
+### Death / grave / reincarnation
+- Lethal `loseEnergy` sets `dead=true, killedInAction=true`. ✓
+- `graveOn:true` → the dead tank persists in `game.entities` as its own grave (holds the
+  `skelitonTorsoTank_grave` frame, drawn behind the living). ✓
+- `Reincarnate` fires once (latched): `[#skelitonHead, #none]` → **exactly 1 skelitonHead spawned**
+  (the `#none` placeholder correctly skipped, so the list-of-2 yields 1 child), at the corpse loc,
+  team #undead, animChar `skelitonHead`. The child re-arms its OWN attack chain (it has no further
+  reincarnateAs, so the cascade terminates there). ✓
 
-### Cooldown Recovery (dexterity scaling)
-- **Original** (casts/script_objects/modWeaponManager.txt addCooldownCounter): ranged attack cooldown recovery scaled by dexterity (me.big.getDexterity()).
-- **Port** (archetypes.ts line 180-188):
-  - ranged = true (naturalRanged)
-  - dexterity = 1
-  - rawCooldown = 10 (from #attack.cooldown)
-  - framesWanted = 10 + 18 = 28 (ranged post-attack delay)
-  - counterInc = dexterity = 1
-  - effectiveCooldown = Math.round(28 * 1 + 1) = 29 frames
-- **WeaponManager cooldown counter** (weapon.ts line 265-271): Counter initialized with cooldown=29, inc=1 → recovery ≈ ceil((29-1)/1) = 28 frames per shot.
-- **Result**: Cooldown recovery faithfully scaled by dexterity (1); slow recovery compared to skelitonHead (dexterity 10) — TorsoTank fires every ~28 frames vs Head every ~5 frames. Correct parity.
+## DIVERGENCES
 
-### Inertia Damping
-- **Original**: #inertia: 80 → inertia coefficient (mod-damage knockback damping on hit).
-- **Port** (components/combat.ts Energy.takeHit): Damage knockback scaled by inertia; higher inertia = less knockback displacement.
-- **skelitonTorsoTank**: inertia=80 (vs skelitonHead inertia=95 — heavier head staggers less) ✓
-- **Result**: Correctly implemented; TorsoTank takes more knockback displacement than Head.
+NONE. Every derived property and behavior (team, energy, ranged attack via skelitonMissile, animframe
+5 → 1 shot/cycle, reach 200, sprite char, grave persistence, and the [#skelitonHead,#none] → 1-head
+reincarnation) reproduced faithfully in the port. The 22-tick cadence is the intended
+effective-cooldown calibration (B1, documented in `archetypes.ts`), modeling the original's
+fire-at-frame cooldown reset — a FAITHFUL modeling choice, not a divergence.
 
-### Death & Grave Behavior
-- **Original**: #graveOn: true, #dieSound: #none → spawns a grave actor on death, no death sound effect.
-- **Port** (archetypes.ts line 217; Grave component): graveOn=true triggers grave spawn on death; dieSound=#none → no audio on death ✓
-- **Result**: Grave correctly spawned; silent death (no special death sound).
-
-## Conclusion
-**CLEAN** — skelitonTorsoTank exhibits **perfect behavioral parity** between the original and port:
-1. ✓ Correctly classified as ranged AI CPU via #naturalRanged animType.
-2. ✓ Fires #skelitonMissile bullets at constant velocity (#fullStrength firingType).
-3. ✓ Bullet properties (power=0.3, damageMultiplier=10) correctly resolved from act_skelitonMissile.
-4. ✓ Team allegiance (#undead) correctly mapped; hunts player and allies.
-5. ✓ Reincarnation on death spawns skelitonHead at corpse location; cascade continues faithfully.
-6. ✓ Movement (walkSpeed=6) correctly applied; AI advances to range and fires.
-7. ✓ Cooldown recovery (dexterity=1 → slow firing) correctly implemented (~28 frame per-shot cycle).
-8. ✓ Inertia damping (80) allows moderate knockback; less stable than skelitonHead.
-9. ✓ Grave spawned on death; silent death (no death sound).
-
-All data properties match exactly; all behavioral paths are correct. No gaps found.
+No probe-API artifacts: `loseEnergy(amount, attackerId)`, `getCurrentAttack`, `findTarget`,
+`getGraveOn`, `getKilledInAction`, and `getActorType` all returned valid results; the spawned
+skelitonHead was located via the real `getActorType` message.
