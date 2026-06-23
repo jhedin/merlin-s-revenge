@@ -59,7 +59,7 @@ describe("F1 pipeline: completeness counts (cross-checked vs source)", () => {
     expect(Object.keys(assets.music).length).toBe(8);
   });
   it("keeps the default map present and resolvable", () => {
-    expect(assets.defaultMap).toBe("descent_into_darkness-megaman4ever");
+    expect(assets.defaultMap).toBe("very_big_map"); // the large 225-room playtest map
     expect(maps.some((m) => m.id === assets.defaultMap)).toBe(true);
   });
   it("each tileset carries per-tileset tile size + cols (menu=16, gameplay=32)", () => {

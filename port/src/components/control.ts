@@ -25,6 +25,9 @@ import { Experience } from "./experience";
 import { Anim } from "./anim";
 import type { Entity } from "../engine/dispatch";
 
+// K6 multiAttack: a per-weapon bullet record (render char + splash/plain #attack + reincarnate list).
+type BulletData = { splashBullet?: AttackData; bulletAttack?: AttackData; bulletChar: string; bulletReincarnate: string[] };
+
 // Damage/bolt-speed are still tuned per charge-unit to the px slice (PLAN_REVIEW: damage == knockback;
 // full base charge ~12.5 fells a rank-and-file 300-energy enemy). The CHARGE math (chargeMax/Start/Speed)
 // now flows from the magic weapon's #attack × Mana via charge.ts instead of an inline SPELL constant.
@@ -444,6 +447,9 @@ export class CpuAI extends Component {
   bulletAttack: AttackData | null = null; // K1: a plain (non-splash) ranged weapon's resolved #attack.bullet
   bulletChar = "";                         // the fired bullet's sprite char (archerArrow/axe…) for `<char>_fly`
   bulletReincarnate: string[] = [];       // bullet #reincarnateAs (flamingRock->fire, eggs->creature): hatch on death
+  // K6 multiAttack: a 2-ranged-weapon CPU (shrouder) carries a bullet record per weapon keyed by #bullet name;
+  // syncWeaponMode swaps the active bullet on a weapon switch so each weapon fires ITS OWN projectile.
+  bulletByKey: Record<string, BulletData> | null = null;
   // K8a builder data (modBuilder): the unitToBuild list, build rate (per-100 advances a frame), and the
   // buildOne/buildDie/leaveWhenFinished disposition.
   unitToBuild: string[] = [];
@@ -465,6 +471,7 @@ export class CpuAI extends Component {
   private attackFrames: number[] = [];           // the weapon's #animframe firing frames (1-based)
   private attackFired = false;                    // did at least one shot land this attack (fallback guard)
   private attackAnimates = false;                 // the attack strip has >1 frame, so the animation drives it
+  private releasePhase = false;                   // caster: after the #charge wind-up, playing the brief #release fire strip
   private path = new PathFinding();          // K3 modPathFinding (beeline→scenic)
   // K5 ghost FSM
   private ghostMode: GhostMode = "findTarget";
@@ -512,6 +519,7 @@ export class CpuAI extends Component {
     this.bulletAttack = (cfg["bulletAttack"] as AttackData | undefined) ?? null; // K1: plain bullet's #attack (power/mult)
     this.bulletChar = typeof cfg["bulletChar"] === "string" ? cfg["bulletChar"] : "";
     this.bulletReincarnate = (cfg["bulletReincarnate"] as string[] | undefined) ?? []; // bullet hatch/leave-behind list
+    this.bulletByKey = (cfg["bulletByKey"] as Record<string, BulletData> | undefined) ?? null; // K6 multiAttack: per-weapon bullet
     this.retargetCtr = 0; this.noTargetCtr = 0;
     this.mode = "findTarget"; this.target = null; this.attackT = 0;
     this.path.reset();
@@ -555,12 +563,15 @@ export class CpuAI extends Component {
     const at = this.entity.get(WeaponManager).getCurrentAttack();
     let act = typeof at?.animType === "string" ? at.animType.replace(/^#/, "") : "";
     if (act === "magic" || act === "weaponMagic" || act === "magicMelee") {
-      // objAiAttack.chargeMagic: a caster spends the attack window in #charge (the wind-up — orb growing over
-      // its head) before the brief #release. So PREFER the `charge` strip (the visible bulk); fall back to
-      // `release` for casters that ship no charge strip. Either way it ANIMATES instead of standing still.
+      // objAiAttack: a caster spends the wind-up in #charge (the orb growing over its head), then plays
+      // #release at the fire frame (chargeMagic ensureMode(#charge) → releaseMagic goMode(#release)). Mirror
+      // that: #charge during the window, then #release once releasePhase is armed (set when the charge strip
+      // completes and the cast fires). Fall back to whichever strip is bundled.
       const char = this.entity.tryGet(Anim)?.char ?? "";
-      act = game.assets.index.anims[`${char}_charge`] ? "charge"
-        : game.assets.index.anims[`${char}_release`] ? "release" : "release";
+      const hasCharge = !!game.assets.index.anims[`${char}_charge`];
+      const hasRelease = !!game.assets.index.anims[`${char}_release`];
+      act = this.releasePhase && hasRelease ? "release"
+        : hasCharge ? "charge" : hasRelease ? "release" : "release";
     }
     return act;
   }
@@ -676,6 +687,15 @@ export class CpuAI extends Component {
   private syncWeaponMode(): void {
     const ca = this.entity.get(WeaponManager).getCurrentAttack();
     if (!ca) return;
+    // K6 multiAttack: fire the CURRENT weapon's bullet (modAttack params.typ = me.getAttack().bullet). Swap
+    // the active bullet record by the current attack's #bullet name so weapon 2 fires its own projectile.
+    if (this.bulletByKey) {
+      const bd = this.bulletByKey[(ca.bullet ?? "").replace(/^#/, "")];
+      if (bd) {
+        this.splashBullet = bd.splashBullet ?? null; this.bulletAttack = bd.bulletAttack ?? null;
+        this.bulletChar = bd.bulletChar; this.bulletReincarnate = bd.bulletReincarnate;
+      }
+    }
     this.ranged = ca.type === "ranged" || ca.type === "magic";
     this.reachRanged = Math.min(CpuAI.MAX_RANGED_REACH, Math.max(16, ca.reach));
     // melee reach = the strike point (collisionLoc.x), same as spawn — NOT #reach (ranged-only). Keeps a
@@ -734,6 +754,7 @@ export class CpuAI extends Component {
     this.committedTarget = _target;
     this.attackFrames = wm.getCurrentAttack()?.animFrame ?? [];
     this.attackFired = false;
+    this.releasePhase = false;                    // start in #charge; the #release strip arms at wind-up completion
     const an = this.entity.tryGet(Anim);
     an?.restart();
     // will the ATTACK strip animate (>1 frame)? check it directly — Anim's current action is still walk/stand
@@ -755,7 +776,23 @@ export class CpuAI extends Component {
       // strip completed: if nothing fired yet (a magic weapon's #animframe is #none -> empty list, so no
       // frame crossing ever fires), cast NOW on completion — else casters would play the release strip and
       // leave attack mode without ever attacking. Melee/ranged already fired on their crossings.
-      if (an.looped()) { if (!this.attackFired) this.performAttack(m); this.attackT = 0; this.attackFin(m); return; }
+      if (an.looped()) {
+        // a caster's #charge wind-up just completed: fire the cast, then play the brief #release fire strip
+        // (objAiAttack releaseMagic goMode(#release)) before leaving attack mode. Only when a charge strip
+        // was playing and a DISTINCT release strip exists; melee/ranged (no charge) fall straight to attackFin.
+        if (!this.releasePhase) {
+          const ca = this.entity.get(WeaponManager).getCurrentAttack();
+          const char = an.char;
+          if (ca?.type === "magic" && game.assets.index.anims[`${char}_charge`] && game.assets.index.anims[`${char}_release`]) {
+            if (!this.attackFired) this.performAttack(m);   // the cast fires at the charge→release transition
+            this.releasePhase = true;
+            an.restart();                                   // play #release from frame 0 (attackAction now returns it)
+            this.attackT = this.attackAnimTicks("release") + 2;
+            return;
+          }
+        }
+        if (!this.attackFired) this.performAttack(m); this.attackT = 0; this.attackFin(m); return;
+      }
     }
     if (--this.attackT <= 0) {                   // safety / non-animating strip: fire once, then leave
       if (!this.attackFired) this.performAttack(m);

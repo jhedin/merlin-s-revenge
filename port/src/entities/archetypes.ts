@@ -27,6 +27,27 @@ import { game } from "../game/context";
 
 const DEFAULTS = { isDead: false, getTeam: "", getTeamRole: "#teamMembers", energyFrac: 1, getLevel: 1, isFrozen: false, freezeFactor: 1, isInvince: false, isHurt: false, getColourTransform: null, getAlpha: undefined, colourTransformFin: undefined };
 
+// Resolve a fired bullet's render/payload data from its #bullet actor key: the sprite char (off the bullet
+// actor's #name — dwarfAxe -> "axe"), its splash/plain #attack, and any #reincarnateAs. Shared by the
+// primary ranged attack and (for a multiAttack CPU) each weapon's bullet.
+function resolveBulletData(bulletField: unknown): {
+  splashBullet?: ReturnType<typeof resolveAttack>; bulletAttack?: ReturnType<typeof resolveAttack>;
+  bulletChar: string; bulletReincarnate: string[];
+} {
+  let bulletChar = "", bulletReincarnate: string[] = [];
+  let splashBullet: ReturnType<typeof resolveAttack> | undefined, bulletAttack: ReturnType<typeof resolveAttack> | undefined;
+  if (typeof bulletField === "string" && bulletField !== "#none") {
+    bulletChar = bulletField.replace(/^#/, "");
+    const bulletActor = registry.resolveActor(bulletChar);
+    if (bulletActor && typeof bulletActor["name"] === "string" && bulletActor["name"]) bulletChar = bulletActor["name"];
+    const ba = bulletActor ? resolveAttack(bulletActor["attack"] as Record<string, any>, bulletActor) : undefined;
+    if (ba && (ba.attackType === "#explode" || ba.splashDamageOn)) splashBullet = ba;
+    else if (ba) bulletAttack = ba;
+    bulletReincarnate = parseReincarnateList(bulletActor?.["reincarnateAs"] ?? bulletActor?.["reincarnateInto"]);
+  }
+  return { splashBullet, bulletAttack, bulletChar, bulletReincarnate };
+}
+
 // The ticks the attack strip takes to reach its gating #animframe (the LAST firing frame — the original
 // resets the cooldown on each shot, so the last one gates the next cycle). Sums the per-frame delays of the
 // frames BEFORE the gating frame. Used to add the original's fire-frame cooldown offset (objAiAttack:319)
@@ -274,8 +295,10 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
   // (the #weapon's melee #attack), range-switched by setMultiAttack. Build the second weapon's #attack.
   const multiAttack = d["multiAttack"] === true;
   let secondAttack: ReturnType<typeof resolveAttack> | undefined;
+  let secondBulletField: unknown;
   if (multiAttack && typeof d["weapon"] === "string") {
     const w2 = objAttack((registry.resolveActor(d["weapon"].replace(/^#/, "")) ?? {})["attack"]);
+    secondBulletField = w2["bullet"]; // weapon 2's #bullet (shrouder pinShooter -> #smokePin)
     if (w2["animType"]) {
       // weapon 2 gets the same effective-cooldown calibration as a single weapon of its type.
       const w2ranged = w2["animType"] === "#weaponRanged" || w2["animType"] === "#naturalRanged" || w2["animType"] === "#magic";
@@ -300,17 +323,21 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
   // ostrichEgg -> #babyOstrich. The bullet hatches/leaves these at its death loc — threaded to Projectile.
   let bulletReincarnate: string[] = [];
   let bulletChar = "";
-  if (ranged && typeof atk["bullet"] === "string" && atk["bullet"] !== "#none") {
-    bulletChar = atk["bullet"].replace(/^#/, ""); // the bullet actor KEY (e.g. #dwarfAxe)
-    const bulletActor = registry.resolveActor(bulletChar);
-    // modAnimSet keys the sprite by the actor's #name, NOT its key: dwarfAxe -> "axe" (axe_fly), goblinArrow
-    // -> "gobarrow" (gobarrow_fly). Most bullets carry name===key, but these two diverge — so resolve the
-    // sprite char off #name or the fly strip is missed and the bolt falls back to a flat dot.
-    if (bulletActor && typeof bulletActor["name"] === "string" && bulletActor["name"]) bulletChar = bulletActor["name"];
-    const ba = bulletActor ? resolveAttack(bulletActor["attack"] as Record<string, any>, bulletActor) : undefined;
-    if (ba && (ba.attackType === "#explode" || ba.splashDamageOn)) splashBullet = ba;
-    else if (ba) bulletAttack = ba;
-    bulletReincarnate = parseReincarnateList(bulletActor?.["reincarnateAs"] ?? bulletActor?.["reincarnateInto"]);
+  if (ranged) {
+    const b = resolveBulletData(atk["bullet"]);
+    splashBullet = b.splashBullet; bulletAttack = b.bulletAttack; bulletChar = b.bulletChar; bulletReincarnate = b.bulletReincarnate;
+  }
+  // K6 multiAttack with TWO ranged bullets (shrouder: throwSmoke#smoke far / pinShooter#smokePin near): the
+  // original fires me.getAttack().bullet (the CURRENT weapon) at fire time. Resolve BOTH bullets into a map
+  // keyed by bullet name so syncWeaponMode can swap the active bullet on a weapon switch (else weapon 2
+  // wrongly fires weapon 1's bullet). Only built when weapon 2 ships its own bullet.
+  let bulletByKey: Record<string, ReturnType<typeof resolveBulletData>> | undefined;
+  if (multiAttack && typeof secondBulletField === "string" && secondBulletField !== "#none") {
+    const k1 = typeof atk["bullet"] === "string" ? atk["bullet"].replace(/^#/, "") : "";
+    const k2 = secondBulletField.replace(/^#/, "");
+    bulletByKey = {};
+    if (k1) bulletByKey[k1] = { splashBullet, bulletAttack, bulletChar, bulletReincarnate };
+    bulletByKey[k2] = resolveBulletData(secondBulletField);
   }
   const pw = atk["power"];
   const atkPower = pw && typeof pw === "object" && "x" in pw ? Math.abs(pw.x) + Math.abs(pw.y) : 0;
@@ -358,7 +385,7 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     // #frictionReel point: per-actor knockback-slide friction (heavies skid less). Forward the x component.
     frictionReel: d["frictionReel"] && typeof d["frictionReel"] === "object"
       ? Number((d["frictionReel"] as { x?: number }).x) || 10 : 10,
-    ranged, runReload, ghost, splashBullet, bulletAttack, bulletReincarnate, bulletChar,
+    ranged, runReload, ghost, splashBullet, bulletAttack, bulletReincarnate, bulletChar, bulletByKey,
     // K4/K5/K6/K8a AI config: bullet-dodge caster, multi-attack 2-weapon switch, builder build-loop, the
     // ghost's possess team. Defaults keep every other actor on the existing committed-target FSM.
     dodgesBullets, multiAttack, builder, unitToBuild,
