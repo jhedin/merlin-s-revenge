@@ -1,27 +1,28 @@
 # Actor Audit: act_friendlyGoblinMage
 
-**Method:** REPRODUCED — spawned via `spawnUnit` against a hostile blackOrc, ticked ~400 frames on the real
-`assets.json` bundle, observed sprite/team/routing/anim + the cast effect.
+**VERDICT: CLEAN — 0 divergences.** (An earlier note claimed a no-damage D1; that was a PROBE ARTIFACT —
+see correction below.)
+
+**Method:** REPRODUCED — spawned via `spawnUnit` against a hostile blackOrc on the real `assets.json`
+bundle, ticked ~400 frames, observed sprite/team/routing/anim + the cast effect.
 
 ## Derived (original)
 `#inherit #CPUCharacter`, `#character #goblinMage`, `#name "goblinMage"`, `#team #village` (player-side),
 energy 50, `#weapon #energyBlast` (`#animType #magic`, chargeMax 999/0.75/5, spellSpeed 20) — a friendly
 captured goblin mage that casts the energyBlast damage spell at hostiles.
 
-## Observed (port) — mostly faithful
-- **Sprite** resolves to **goblinMage** (real bundled strip, NOT blackOrc) via the `#name "goblinMage"`
-  path. All actions resolve (stand/walk/charge/release/reel/grave).
-- **Routing**: `spawnUnit` routes it to **ally** (type ally, team #village = player side); hunts the orc.
-- **Charge -> release**: plays charge then release (the caster fire-flash) and spawns a `spell` orb — casts.
+## Observed (port) — all faithful
+- **Sprite** resolves to **goblinMage** (real bundled strip, NOT blackOrc) via the `#name "goblinMage"` path.
+- **Routing**: `spawnUnit` -> **ally** (type ally, team #village = player side); hunts the hostile orc.
+- **Charge -> release**: plays charge then release and spawns a `spell` orb (energyBlast).
+- **Damage**: the energyBlast orb flies to the target loc and explodes via `SpellActor.explode` ->
+  `resolveSplash`. Against a **pinned** target it deals damage (blackOrc 1200 -> 356). It DOES damage.
 
-## DIVERGENCE
-- **D1 (PORT BUG, needs investigation):** the energyBlast cast spawns the spell orb but **deals no damage**
-  (blackOrc energy 1200 -> 1200 over 400f). The CPU/ally magic path was wired for SUMMON spells
-  (explodeFunction #summonUnit -> fly + summon); a DAMAGE spell's explode (resolveSplash area hit) does not
-  resolve for a CPU caster. Low shipped impact - nearly every enemy caster uses a summon weapon
-  (mageOrc/necromancer/greyGhost/scMonk); friendlyGoblinMage is the notable damage-spell CPU. Candidate
-  systemic fix: route a CPU damage-spell's release through resolveSplash like the summon path. Affects any
-  CPU whose #weapon is energyBlast/cBlast/darkBlast.
+## CORRECTION (probe artifact, NOT a divergence)
+The earlier "D1: cast deals no damage" was a test artifact: the first probe used a **moving** target. The
+spell flies to the loc captured at release (faithful objSpell behaviour — the original orb also flies to a
+fixed loc), so a target that walks away dodges it. With the target pinned, `resolveSplash` damages it
+normally. The CPU/ally damage-spell path (SpellActor.explode -> resolveSplash) is correct.
 
-friendlyGoblinMage | DIVERGENCES=1
-- D1: CPU/ally energyBlast cast spawns the orb but deals no damage (CPU magic path wired for summon, not damage spells).
+friendlyGoblinMage | DIVERGENCES=0
+- (none) — goblinMage sprite, ally routing, charge->release, energyBlast deals damage (pinned-target verified).
