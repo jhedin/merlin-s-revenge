@@ -41,6 +41,11 @@ export function spriteCharOr(name: string, fallback = "blackOrc"): string {
   if (anims[`${name}_stand`]) return name;
   const alias = CHAR_ALIAS[name];
   if (alias && anims[`${alias}_stand`]) return alias;
+  // #character fallback (the actor's character TYPE): kingStones -> king, friendlyGoblinMage -> goblinMage,
+  // ochre -> ochreWizard. Rescues actors whose own #name strip is missing from the dump but whose character
+  // art is bundled — closer than the blackOrc fallback. Only reached after #name/key/alias all miss.
+  const chr = rec && typeof rec["character"] === "string" ? (rec["character"] as string).replace(/^#/, "") : "";
+  if (chr && anims[`${chr}_stand`]) return chr;
   return fallback;
 }
 
