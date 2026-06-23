@@ -582,6 +582,7 @@ function drawSpells(renderer: Renderer) {
     const sa = e.get(SpellActor);
     const m = e.get(Movement);
     const size = Math.max(4, sa.size());
+    const fade = sa.fadeAlpha(); // 1 while charging/flying; 1->0 over the post-explode quick-fade (grown orb)
     const [cr, cg, cb] = sa.attack.chargeColour;
     if (ready) {
       // setSpriteWidth/Height(size): scale the native frame to the live charge size about its centred reg.
@@ -590,6 +591,7 @@ function drawSpells(renderer: Renderer) {
         x: m.x, y: m.y, regX: f!.reg[0], regY: f!.reg[1], z: m.y,
         scaleX: size / Math.max(1, f!.w), scaleY: size / Math.max(1, f!.h),
         tint: { rgb: [cr, cg, cb], strength: 1, additive: false }, // setSpriteColour: tint the white orb
+        alpha: fade,                                                 // startQuickFade: the explode flash fades out
       });
       // objSpellIcons.displayIconNumber: a SUMMON spell overlays the current tier's unit FACE on the orb
       // (spellIcons_<spellName>, frame = the tier number). It appears once the charge reaches the first
@@ -611,6 +613,7 @@ function drawSpells(renderer: Renderer) {
     // fallback (art not yet loaded): the soft gradient orb, radius size/2.
     const r = size / 2;
     ctx.save();
+    ctx.globalAlpha = fade; // startQuickFade: the grown orb fades out post-explode
     const grad = ctx.createRadialGradient(m.x, m.y, 0, m.x, m.y, r * 1.6);
     grad.addColorStop(0, `rgba(255,255,255,0.95)`);
     grad.addColorStop(0.5, `rgba(${cr},${cg},${cb},0.85)`);
