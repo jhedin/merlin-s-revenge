@@ -911,6 +911,11 @@ export class CpuAI extends Component {
       // deliberate abstraction at a fixed reference speed — kept stable so balance/tests don't shift).
       const ftAttack = wm.getCurrentAttack();
       const mz = muzzle(ftAttack, m); // #collisionLoc muzzle for every projectile/spell this attack spawns
+      // Aim from the MUZZLE, not the character centre (modAttack.performRangedAttack: distXY = targetLoc −
+      // me.calcAttackLoc(), and the bullet startLoc = calcAttackLoc = the muzzle). An elevated muzzle
+      // (collisionLoc.y, e.g. garTower −30 / dwarfTower −88) launched along a centre→target ray and the
+      // shot missed by the muzzle offset at every range; re-derive the aim from mz so it actually connects.
+      if (t && !(t.send("isDead") as boolean)) { const tp = t.send("getPos") as { x: number; y: number }; dx = tp.x - mz.x; dy = tp.y - mz.y; }
       // objAiAttack.modifyLocWithEyestrain: scatter the aim, scaled by dist/reach, so the player can DODGE
       // ranged/magic CPU fire at distance (without it every shot lands dead-on). The player aims by cursor.
       ({ dx, dy } = aimWithEyestrain(dx, dy, this.eyestrain, ftAttack?.reach ?? this.reachRanged, game.rng));

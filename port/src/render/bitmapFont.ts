@@ -25,6 +25,9 @@ export class BitmapFont {
     private gap: number,
     private key: string,
     private matte: "white" | "dark",
+    // leading-blank-cell offset: glyph key-index k is at sheet-cell k+cellOffset (the `small` sheet starts
+    // with a blank cell, so without this every letter blits the PREVIOUS cell — all UI text shows wrong glyphs).
+    private cellOffset = 0,
   ) {
     this.charW = cellW + gap;
   }
@@ -79,7 +82,7 @@ export class BitmapFont {
       if (ch === " ") { cx += adv; continue; }
       const i = this.index(ch);
       if (i < 0) { cx += adv; continue; } // absent glyph: advance, draw nothing
-      ctx.drawImage(sheet, i * this.cellW, 0, this.cellW, this.cellH,
+      ctx.drawImage(sheet, (i + this.cellOffset) * this.cellW, 0, this.cellW, this.cellH,
         Math.round(cx), Math.round(y), this.cellW * sc, this.cellH * sc);
       cx += adv;
     }
