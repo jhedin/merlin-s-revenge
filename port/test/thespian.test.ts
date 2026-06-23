@@ -95,7 +95,7 @@ describe("H1: Thespian drives real actors through Movement/Anim", () => {
     const cut = parseCutscene(`characters\n#merlin - m\nlines\nm: Press #key fire now\n`);
     const t = new Thespian(cut, host);
     t.tick();
-    expect(t.getSpeech()?.text).toContain("K_FIRE".toUpperCase()); // host.keyForControl("fire") -> K_fire, upper
+    expect(t.getSpeech()?.text).toContain('"K_fire"'); // modThespian: QUOTE-wrapped, natural case (not force-uppercased)
   });
 
   it("lightsDown blocks the chain for the fade duration", () => {
