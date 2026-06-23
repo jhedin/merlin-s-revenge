@@ -85,7 +85,12 @@ export function parseMap(src: string, tilePxFor?: TilePxFor): GameMap {
     mapSize, roomSize, tilePx, startRoom: asPoint(m["startRoom"]), endRoom,
     layerDefs, rooms,
     roomAt(loc) {
-      // rooms are stored by 1-based incremental num, row-major across mapSize
+      // rooms are stored by 1-based incremental num, row-major across mapSize. BOUNDS-CHECK first: an
+      // off-grid loc (x<1 / x>mapSize.x / y<1 / y>mapSize.y) has NO room — without this, a border room's
+      // off-map edge wrapped to a phantom neighbour (e.g. left of col 1 -> the previous row's last room),
+      // so map-edge rooms drew bogus exit arrows AND let the player transition off the map into a wrong
+      // room. The start room is often a corner, so this hit immediately.
+      if (loc.x < 1 || loc.x > mapSize.x || loc.y < 1 || loc.y > mapSize.y) return undefined;
       const idx = (loc.y - 1) * mapSize.x + loc.x;
       return rooms.get(idx);
     },

@@ -253,23 +253,31 @@ const tifToPng = (src: string, out: string): boolean => {
     src, out], { encoding: "utf8" });
   return r.status === 0;
 };
-let arrowsOk = false;
-if (existsSync(GFX_ARROWS)) {
-  mkdirSync(OUT_ARROWS, { recursive: true });
-  arrowsOk = true;
-  outer:
-  for (const col of ["green", "red"]) {
-    arrows[col] = {};
-    for (const { edge, stem } of ARROW_EDGES) {
+// The 8 arrows are PRE-CONVERTED and committed to tools/static/arrows/ so the deployed build needs no
+// Python/PIL (GitHub's ubuntu runner ships neither Pillow nor a .tif decoder — the runtime conversion
+// silently failed in CI, so the deployed game had NO exit arrows). Prefer copying the committed PNGs; fall
+// back to converting the source .tif via PIL only when a committed PNG is missing (local regeneration).
+const STATIC_ARROWS = join(REPO, "port/tools/static/arrows");
+let arrowsOk = true;
+mkdirSync(OUT_ARROWS, { recursive: true });
+outer:
+for (const col of ["green", "red"]) {
+  arrows[col] = {};
+  for (const { edge, stem } of ARROW_EDGES) {
+    const outName = `arrows/arrow_${col}_${edge}.png`;
+    const out = join(OUT_ASSETS, outName);
+    const committed = join(STATIC_ARROWS, `arrow_${col}_${edge}.png`);
+    if (existsSync(committed)) {
+      copyFileSync(committed, out);
+    } else {
       const src = join(GFX_ARROWS, `${stem(col)}.tif`);
-      const outName = `arrows/arrow_${col}_${edge}.png`;
-      if (!existsSync(src) || !tifToPng(src, join(OUT_ASSETS, outName))) {
-        console.warn("  arrow conversion failed for", src, "— exit-arrow overlay will no-op");
+      if (!existsSync(src) || !tifToPng(src, out)) {
+        console.warn("  arrow missing (no committed PNG, no .tif/PIL):", outName, "— exit-arrow overlay will no-op");
         arrowsOk = false;
         break outer;
       }
-      arrows[col]![edge] = outName;
     }
+    arrows[col]![edge] = outName;
   }
 }
 if (!arrowsOk) { for (const k of Object.keys(arrows)) delete arrows[k]; }
