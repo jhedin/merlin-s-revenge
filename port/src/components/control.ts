@@ -476,6 +476,11 @@ export class CpuAI extends Component {
   // the #charge wind-up (not springing one into existence already flying at release). Released at the
   // charge→release transition; discarded if the wind-up is interrupted (daze/death) so no orb is stranded.
   private windupSpell: Entity | null = null;
+  // I8 streaming CPU caster (ochreInGame/prestotolinInGame energyPulse/energyBeam): mirrors the PLAYER's
+  // stream sub-state. modFireBullets.releaseSpell streams chargeMax/chargePerUnit bullets at fireDelay
+  // spacing — not ONE splash bullet per cooldown. Latched at the cast, emptied over the next frames.
+  private cpuStream: { attack: AttackData; charge: number; delay: number; counter: number;
+    aimX: number; aimY: number; team: string; hits: string[]; allegiance: string } | null = null;
   private path = new PathFinding();          // K3 modPathFinding (beeline→scenic)
   // K5 ghost FSM
   private ghostMode: GhostMode = "findTarget";
@@ -533,6 +538,7 @@ export class CpuAI extends Component {
   override reset(): void {
     this.mode = "findTarget"; this.target = null; this.retargetCtr = 0; this.attackT = 0; this.path.reset();
     this.ghostMode = "findTarget"; this.builderMode = "lookForBuilding"; this.building = null;
+    this.windupSpell = null; this.cpuStream = null;
   }
 
   // levelUp (modCharacterAttackProperties.incStrength via #levelUp): an enemy/ally CPU's melee strength grows
@@ -632,7 +638,10 @@ export class CpuAI extends Component {
       this.windupSpell.get(SpellActor).discard();
       this.windupSpell = null;
     }
-    if (this.entity.send("isDead")) { this.idle(m); return next(); }
+    if (this.entity.send("isDead")) { this.cpuStream = null; this.idle(m); return next(); }
+    // I8: a released bullet stream (energyPulse/energyBeam) keeps emitting over several frames, independent
+    // of the attack-mode window — tick it every frame until the charge drains (modFireBullets.updateFireBullets).
+    if (this.cpuStream) this.updateCpuStream(m);
     // objAiCPU #attack mode: STATIONARY while the attack strip plays; the hit fires per #animframe crossing
     // and the mode ends when the strip completes (the animation is the clock — updateAttack).
     if (this.attackT > 0) { this.updateAttack(m); return next(); }
@@ -851,6 +860,39 @@ export class CpuAI extends Component {
     return spell;
   }
 
+  // I8 updateCpuStream (modFireBullets.updateFireBullets): every fireDelay frames emit one bullet draining
+  // chargePerUnit, until the charge runs out — the CPU mirror of the player's tickStream. fireDelay 0 empties
+  // the whole stream in one tick (guarded). Mirrors PlayerControl.tickStream exactly (same counter model).
+  private updateCpuStream(m: Movement): void {
+    const s = this.cpuStream!;
+    let guard = 0;
+    while (s.counter <= 0 && guard++ < 10000) {
+      s.charge -= s.attack.chargePerUnit;          // reduce charge (modFireBullets.fireBullet)
+      if (s.charge < 0) { this.cpuStream = null; return; } // finished
+      this.emitCpuStreamBullet(s, m);
+      s.counter = s.delay;                          // resetFireDelay
+      if (s.delay <= 0) continue;                   // fireDelay 0 -> keep emptying this tick
+      break;
+    }
+    if (this.cpuStream) s.counter--;                // count toward the next shot
+  }
+
+  // emit one stream bullet toward the latched aim — energyBeam via the beam path, energyPulse via a splash
+  // bullet (mirrors PlayerControl.emitStreamBullet, but with the CASTER's team + targeting allegiance).
+  private emitCpuStreamBullet(s: NonNullable<CpuAI["cpuStream"]>, m: Movement): void {
+    const rec = registry.resolveActor(bare(s.attack.bullet));
+    const bulletAttack = resolveAttack((rec ?? {})["attack"] as any, rec as any);
+    const mz = muzzle(s.attack, m);
+    if (s.attack.beam) {
+      performBeamAttack(this.entity.id, mz.x, mz.y, s.aimX, s.aimY, bulletAttack, s.team, s.hits, s.allegiance);
+    } else {
+      const dirX = s.aimX - m.x, dirY = (s.aimY - 6) - m.y;
+      fireSplashBullet(this.entity.id, mz.x, mz.y, dirX, dirY, s.attack.spellSpeed / 3, bulletAttack,
+        s.team, s.hits, s.allegiance, 90);
+    }
+    game.audio?.play("spell_release", 0.4);
+  }
+
   // performAttack (objAiAttack.performAttack): the actual hit/shot, dispatched once per #animframe crossing.
   // Re-aims at the live committed target each call so a ranged burst tracks a mover; melee keeps the entry facing.
   private performAttack(m: Movement): void {
@@ -875,6 +917,19 @@ export class CpuAI extends Component {
       const throwDist = Math.hypot(dx, dy) || 1;
       const isFullStrength = (ftAttack?.firingType ?? "#proportional").toLowerCase() === "#fullstrength";
       const throwSpeed = isFullStrength ? Math.max(1, this.strength) : Math.max(0.5, throwDist / 10);
+      // I8 streaming caster (ochreInGame/prestotolinInGame energyPulse/energyBeam): a #fireBullets magic
+      // weapon STREAMS chargeMax/chargePerUnit bullets at fireDelay spacing (modFireBullets.releaseSpell),
+      // NOT one splash bullet per cooldown (the port under-fired ~5×). Intercept BEFORE the single-shot
+      // beam/splashBullet/bullet branches and latch the stream; updateCpuStream empties it over the next frames.
+      if (ftAttack && ftAttack.type === "magic" && isStreaming(ftAttack)) {
+        const tgc = this.entity.send("getTargeting") as { hits: string[]; allegiance: string } | undefined;
+        const hits = ftAttack.hits && ftAttack.hits.length ? ftAttack.hits : ["#teamMembers", "#teamBuildings"];
+        this.cpuStream = {
+          attack: ftAttack, charge: chargeMaxOf(ftAttack, this.entity.get(Mana)), delay: Math.max(0, Math.round(ftAttack.fireDelay)),
+          counter: 0, aimX: m.x + dx, aimY: m.y + dy, team, hits, allegiance: tgc?.allegiance ?? "#enemy",
+        };
+        return;
+      }
       if (ftAttack?.beam && this.splashBullet) {
         // techMech (#objAiCPU + laserBeam, #beam): objAiAttack dispatches #ranged+beam -> performBeamAttack.
         // The beam spawns AT the target loc (stretched/rotated), detonating its explode #attack on the first
