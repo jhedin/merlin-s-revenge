@@ -153,14 +153,16 @@
 - **Original Behavior Gate:**
   - `casts/master_objects/old_reservationsMaster.txt:31` — mn.friends = gMaxFriends
   - Used by reservationsMaster to cap summoned allies (concurrent ally cap)
-- **Port Status:** PARTIAL/DIVERGENT — no global ally cap
+- **Port Status:** DONE — `teams.ts:atCapacity()` enforces the per-team `maxMembers` cap (aldevar 12),
+  gating dwelling releases and summons. This VERDICT WAS DRIFTED: the doc pre-dated the cap landing.
 - **Port Implementation:**
-  - `port/src/systems/armyMaster.ts` — manages banked summoned allies (teleport-out on room leave)
-  - No hard cap on active allies; player can field unlimited allies at once
-  - Allies are pooled (G2) but not spawn-limited
-- **Parity Issue:** ✗ Port does NOT enforce concurrent ally cap. Original hard limit: 12 active friendlies.
-  - Port: allows unlimited concurrent allies (only limits room teleport-in by remaining pool budget)
-- **Impact:** GAMEPLAY DIVERGENCE — player can field more allies than in original; ally spam possible.
+  - `port/src/systems/teams.ts:atCapacity(team, pending)` — `members.size + pending > team.maxMembers`,
+    sourced from the `tem_*` record (default 5), with the teamOverride gang-up halving. Mirrors
+    `reservationsMaster.getPermissionToRelease` (`current + numToRelease <= maxMembers`).
+  - `summon.ts` / `dwelling.ts` query `atCapacity` before releasing; `armyMaster.ts` re-fields the reserve.
+- **Parity:** ✓ Concurrent cap enforced from data. NB `gMaxFriends/gMaxEnemies` (12/16) are the per-side
+  maxima; the BINDING limit is each team's `#maxMembers` (aldevar 12, monsterSummon 3, …), which the port
+  now reads — see `test/team_cap.test.ts`. (Previously a blanket 16 over-capped most enemy teams.)
 
 ---
 
