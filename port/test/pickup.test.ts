@@ -22,7 +22,11 @@ describe("pickups", () => {
     // increaseEnergy(pBonusEnergy=25) heals instantly. So energy 20 -> 45, plus a banked gradual kit.
     expect(player.send("getNumOfMedikits")).toBe(1);               // banked
     expect(player.get(Energy).energy).toBe(45);                    // +25 instant bonus
-    expect(pickup.send("isFinished")).toBe(true);                  // consumed
+    // objPowerUpWriting: collected but NOT yet finished — it shows the fading <effect>_writing caption.
+    expect(pickup.send("isFinished")).toBe(false);
+    expect((pickup.send("writingPhase") as { effect: string } | null)?.effect).toBe("heal");
+    for (let i = 0; i < 50; i++) pickup.send("update");            // let the caption fade out (50 ticks)
+    expect(pickup.send("isFinished")).toBe(true);                  // swept after the fade
     // the banked kit then heals +1 every 5 frames (tick Medikit directly — PlayerControl needs live input)
     const med = player.get(Medikit);
     for (let i = 0; i < 30; i++) med.update(() => {});
@@ -57,6 +61,8 @@ describe("pickups", () => {
     expect(player.get(Energy).energy).toBe(player.get(Energy).max); // filled to MAX instantly
     expect(player.send("getNumOfMedikits")).toBe(0);               // NOT banked (no gradual kit)
     expect(player.get(Energy).goldGlow).toBe(0);                   // increaseEnergy, NOT takeHeal -> NO gold glow
+    expect(pickup.send("isFinished")).toBe(false);                // collected, now showing the fading caption
+    for (let i = 0; i < 50; i++) pickup.send("update");
     expect(pickup.send("isFinished")).toBe(true);
   });
   it("collecting an item does NOT gold-glow: the +25 bonus is increaseEnergy(25), not a heal-spell impact", () => {
@@ -107,6 +113,8 @@ describe("pickups", () => {
     expect(sword.damageMultiplier).toBe(16);
     expect(sword.reach).toBeGreaterThan(punchReach);                 // longer reach (point(12,5))
     expect(player.send("getHasSpell")).toBe(false);                 // still no magic weapon
+    expect(pickup.send("isFinished")).toBe(false);                  // collected, fading the caption
+    for (let i = 0; i < 50; i++) pickup.send("update");
     expect(pickup.send("isFinished")).toBe(true);
   });
 });

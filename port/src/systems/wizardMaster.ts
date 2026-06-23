@@ -44,6 +44,8 @@ export class WizardMaster {
   selectNext(): void { if (this.found.length) this.selected = (this.selected + 1) % this.found.length; }
 
   get activeWizardId(): number { return this.activeId; }
+  /** pWizardOn (objWizardDisplayer.setWizardOn): a found wizard is currently summoned on the field. */
+  get isSummoned(): boolean { return this.activeId >= 0; }
   setActive(id: number): void { this.activeId = id; }
   clearActive(): void { this.activeId = -1; }
 }

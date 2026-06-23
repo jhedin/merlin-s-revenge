@@ -498,7 +498,29 @@ function drawHud(renderer: Renderer, player: import("./engine/dispatch").Entity,
   // isn't in any font key → kept as a procedural icon; the count routes through #numbers via drawText.
   const lives = (player.send("getExtraLives") as number) || 0;
   if (lives > 0) { ctx.fillStyle = "#fff"; ctx.font = "8px monospace"; ctx.fillText("♥", 8, 50); drawText(ctx, assets, "numbers", String(lives), 18, 50, { fallbackFont: "8px monospace" }); }
-  if (Date.now() < flashUntil) { ctx.fillStyle = "#ff4"; drawText(ctx, assets, "small", flashMsg, 8, 60, { fallbackFont: "8px monospace" }); }
+  // SS-hud F2: GMG toggle icon (objGmgDisplayer.updateActive) — drawn only once collected; on/off mirrors
+  // the live getGmgOn toggle. The port HUD has its own layout, so it sits right of the medikit kit row.
+  if (player.send("getGmgCollected") as boolean) {
+    const lit = player.send("getGmgOn") as boolean;
+    const gimg = assets.member(lit ? "gmg_on" : "gmg_off");
+    if (gimg) ctx.drawImage(gimg.img, 70, 30);
+    else { ctx.fillStyle = lit ? "#ff4" : "#666"; drawText(ctx, assets, "small", "GMG", 70, 38, { fallbackFont: "8px monospace" }); }
+  }
+  // SS-hud F3: wizard summon portrait (objWizardDisplayer) — the SELECTED found wizard's bar portrait
+  // (<sym>_off), with the yellow 16×16 wizard_on marker overlaid when one is currently summoned on the
+  // field. Placed in the right HUD column below the GMG icon (the left column holds lives/flash).
+  const wsym = game.wizardMaster.current();
+  if (wsym) {
+    const portrait = assets.member(wsym + "_off");
+    if (portrait) ctx.drawImage(portrait.img, 70, 48);
+    else { ctx.fillStyle = "#8cf"; drawText(ctx, assets, "small", wsym, 70, 56, { fallbackFont: "8px monospace" }); }
+    if (game.wizardMaster.isSummoned) {
+      const mark = assets.member("wizard_on");
+      if (mark) ctx.drawImage(mark.img, 70, 48);
+      else { ctx.strokeStyle = "#ff0"; ctx.strokeRect(70, 48, 16, 16); }
+    }
+  }
+  if (Date.now() < flashUntil) { ctx.fillStyle = "#ff4"; drawText(ctx, assets, "small", flashMsg, 8, 62, { fallbackFont: "8px monospace" }); }
 }
 
 // pickup effect -> its static gfx member (objPotion/objMedikit #member: "<x>_potion"; objScroll #member:
@@ -518,12 +540,27 @@ const PICKUP_COLOR: Record<string, string> = {
   heal: "#3d6", speed: "#4cf", power: "#c5f", sword: "#fe8", spell: "#fc8",
   manaCapacity: "#48f", manaFlow: "#4cf", manaBurst: "#88f",
 };
+// SS-hud F1: pickup effect -> its name-caption member (objPowerUpWriting <character>_writing). darkBlast
+// shares energyBlast's caption; beams use their *Spell caption (mirrors PICKUP_MEMBER's shared scroll art).
+const PICKUP_WRITING: Record<string, string> = {
+  heal: "medikit_writing", maxikit: "maxikit_writing", speed: "walkSpeed_writing",
+  manaCapacity: "manaCapacity_writing", manaFlow: "manaFlow_writing", manaBurst: "manaBurst_writing",
+  sword: "merlinSword_writing", spell: "energyBlast_writing", energyPunch: "energyPunch_writing",
+  cBlast: "cBlast_writing", darkBlast: "energyBlast_writing", arcticBlast: "arcticBlast_writing",
+  healBlast: "healBlast_writing", armySummon: "armySummon_writing", monsterSummon: "monsterSummon_writing",
+  energyMines: "energyMines_writing", gmg: "gmg_writing",
+  energyBeam: "energyBeamSpell_writing", energyPulse: "energyPulseSpell_writing",
+};
 // a pickup's display sprite (its #member bitmap at the pickup loc), or null when the art isn't bundled.
+// Once collected, objPowerUpWriting swaps to the <effect>_writing caption and fades it out in place — so
+// the writing phase returns the caption member at the entity's fading alpha (centred via its reg point).
 function pickupSprite(e: import("./engine/dispatch").Entity, assets: Assets): Sprite | null {
-  const mem = assets.member(PICKUP_MEMBER[e.send("getEffect") as string] ?? "");
+  const ph = e.send("writingPhase") as { effect: string; alpha: number } | null;
+  const name = ph ? PICKUP_WRITING[ph.effect] : PICKUP_MEMBER[e.send("getEffect") as string];
+  const mem = assets.member(name ?? "");
   if (!mem) return null;
   const m = e.get(Movement);
-  return { img: mem.img, x: m.x, y: m.y, regX: mem.reg[0], regY: mem.reg[1], z: m.y };
+  return { img: mem.img, x: m.x, y: m.y, regX: mem.reg[0], regY: mem.reg[1], z: m.y, alpha: ph ? ph.alpha : undefined };
 }
 // fallback for any pickup whose art wasn't bundled: the old coloured diamond.
 function drawPickupFallback(renderer: Renderer, pickups: import("./engine/dispatch").Entity[]) {
