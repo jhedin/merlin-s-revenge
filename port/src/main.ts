@@ -674,6 +674,11 @@ function drawBullets(renderer: Renderer) {
     // I8/K14 energyBeam: the energyBeam fly strip stretched to the caster->target distance and rotated to
     // the beam angle (objBullet.setBeam: setSpriteWidth(dist) + setSpriteRotation(GeomAngle(distXY))).
     if (proj.beam) {
+      // SS-vfx 2c: act_energyBeam is #type:#explode (#explodeEvents [#bulletArrivedAtTargetLoc,#bulletLanded])
+      // — modExploder goMode(#explode) plays the energyBeam_explode burst AT the impact target. The beam
+      // resolves on frame 0 then lingers beamLife frames, so draw the one-shot burst at the target end over
+      // its life (un-rotated, clamped at the last frame), on TOP of the stretched beam line.
+      drawBulletSprite(renderer, proj.char, m.x, m.y, 0, 0, proj.life, "_explode", false);
       const sp = beamSprite(proj);
       if (sp) { beamSprites.push(sp); continue; }
       // fallback (frame not loaded yet / art missing): a bright line caster->target. Kept so the beam is

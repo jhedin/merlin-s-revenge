@@ -472,6 +472,10 @@ export class CpuAI extends Component {
   private attackFired = false;                    // did at least one shot land this attack (fallback guard)
   private attackAnimates = false;                 // the attack strip has >1 frame, so the animation drives it
   private releasePhase = false;                   // caster: after the #charge wind-up, playing the brief #release fire strip
+  // SS-vfx 1: objAiAttack.chargeMagic ensureSpell — a CPU caster grows a LIVE objSpell over its head during
+  // the #charge wind-up (not springing one into existence already flying at release). Released at the
+  // charge→release transition; discarded if the wind-up is interrupted (daze/death) so no orb is stranded.
+  private windupSpell: Entity | null = null;
   private path = new PathFinding();          // K3 modPathFinding (beeline→scenic)
   // K5 ghost FSM
   private ghostMode: GhostMode = "findTarget";
@@ -620,6 +624,14 @@ export class CpuAI extends Component {
 
   update(next: NextFn): void {
     const m = this.entity.get(Movement);
+    // SS-vfx 1 strand guard: the wind-up orb may exist ONLY while a charge wind-up is actively in progress
+    // (in #attack, pre-release, not yet fired, alive). Any other state — interrupted by a hit (attackT→0 on
+    // daze), death, the release firing, or a completed cast — discards it so an unreleased orb is never
+    // stranded (it would never finish/sweep on its own).
+    if (this.windupSpell && !(this.attackT > 0 && !this.releasePhase && !this.attackFired && this.entity.send("isDead") !== true)) {
+      this.windupSpell.get(SpellActor).discard();
+      this.windupSpell = null;
+    }
     if (this.entity.send("isDead")) { this.idle(m); return next(); }
     // objAiCPU #attack mode: STATIONARY while the attack strip plays; the hit fires per #animframe crossing
     // and the mode ends when the strip completes (the animation is the clock — updateAttack).
@@ -771,6 +783,8 @@ export class CpuAI extends Component {
   private updateAttack(m: Movement): void {
     this.idle(m);
     const an = this.entity.tryGet(Anim);
+    // SS-vfx 1: while the #charge wind-up strip plays (pre-release, not yet fired), grow the orb over the head.
+    if (!this.releasePhase && !this.attackFired) this.growWindupSpell(m);
     if (this.attackAnimates && an) {
       if (an.frameFresh() && this.attackFrames.includes(an.attackFrame())) this.performAttack(m);
       // strip completed: if nothing fired yet (a magic weapon's #animframe is #none -> empty list, so no
@@ -798,6 +812,43 @@ export class CpuAI extends Component {
       if (!this.attackFired) this.performAttack(m);
       this.attackT = 0; this.attackFin(m);
     }
+  }
+
+  // SS-vfx 1 (objAiAttack.chargeMagic → ensureSpell + chargeSpell): spawn the orb over the head the moment a
+  // magic wind-up begins and grow it each tick, so it's a growing charge orb — not a spell that springs in
+  // already flying at release. Only for casters whose release actually FLIES an objSpell (summon + plain
+  // damage casters); depositMines/heal casters fire a different payload, so they grow no orb (else it strands).
+  private growWindupSpell(m: Movement): void {
+    const ca = this.entity.get(WeaponManager).getCurrentAttack();
+    if (!ca || ca.type !== "magic" || isStreaming(ca)) return;
+    const an = this.entity.tryGet(Anim);
+    if (!an || !game.assets.index.anims[`${an.char}_charge`]) return; // only real casters (have a charge strip)
+    const ef = ca.explodeFunction;
+    const summons = ef === "#summonUnit" || ef === "summonUnit";
+    const mines = ef === "#depositMines" || ef === "depositMines";
+    const heals = ca.payloadFunction.includes("takeHeal");
+    if (!summons && (mines || heals)) return;                        // these don't release a flying orb
+    const mz = muzzle(ca, m);
+    if (!this.windupSpell || (this.windupSpell.send("isFinished") as boolean)) {
+      const team = this.entity.send("getTeam") as string;
+      const tgc = this.entity.send("getTargeting") as { hits: string[]; allegiance: string } | undefined;
+      const hits = ca.hits && ca.hits.length ? ca.hits : ["#teamMembers", "#teamBuildings"];
+      this.windupSpell = spawnSpell(ca, this.entity.id, mz.x, mz.y, team, hits, tgc?.allegiance ?? "#enemy");
+    }
+    // ramp the visible charge toward the cast ceiling across the wind-up (cosmetic — the released magnitude
+    // still uses chargeMaxOf at performAttack). ~8 ticks to fill, clamped at the ceiling.
+    const ceil = chargeMaxOf(ca, this.entity.get(Mana));
+    const sa = this.windupSpell.get(SpellActor);
+    sa.setCharge(Math.min(ceil, sa.charge + Math.max(0.5, ceil / 8)), mz.x, mz.y);
+  }
+
+  /** SS-vfx 1: hand off the grown wind-up orb to be released (or spawn a fresh one if none charged). */
+  private takeWindupSpell(ca: AttackData, mzx: number, mzy: number, team: string, hits: string[], allegiance: string): Entity {
+    const spell = (this.windupSpell && !(this.windupSpell.send("isFinished") as boolean))
+      ? this.windupSpell
+      : spawnSpell(ca, this.entity.id, mzx, mzy, team, hits, allegiance);
+    this.windupSpell = null;
+    return spell;
   }
 
   // performAttack (objAiAttack.performAttack): the actual hit/shot, dispatched once per #animframe crossing.
@@ -852,7 +903,7 @@ export class CpuAI extends Component {
           // game.rng wobbles the #randomSummon tier per cast (one-shot at release, cooldown-gated → no jitter).
           const tgc = this.entity.send("getTargeting") as { hits: string[]; allegiance: string } | undefined;
           const hits = ca.hits && ca.hits.length ? ca.hits : ["#teamMembers", "#teamBuildings"];
-          const spell = spawnSpell(ca, this.entity.id, mz.x, mz.y, team, hits, tgc?.allegiance ?? "#enemy");
+          const spell = this.takeWindupSpell(ca, mz.x, mz.y, team, hits, tgc?.allegiance ?? "#enemy"); // SS-vfx 1: release the grown orb
           const sa = spell.get(SpellActor);
           sa.setCharge(chargeMaxOf(ca, this.entity.get(Mana), game.rng), mz.x, mz.y); // wobbled tier ceiling
           sa.release(m.x + dx, m.y + dy, Math.max(2, ca.spellSpeed / 3));             // fly to the target tile
@@ -873,7 +924,7 @@ export class CpuAI extends Component {
           // high-mana / leveled caster hits harder, matching objAiCPUSpellCaster (released at full charge).
           const tgc = this.entity.send("getTargeting") as { hits: string[]; allegiance: string } | undefined;
           const hits = ca.hits && ca.hits.length ? ca.hits : ["#teamMembers", "#teamBuildings"];
-          const spell = spawnSpell(ca, this.entity.id, mz.x, mz.y, team, hits, tgc?.allegiance ?? "#enemy");
+          const spell = this.takeWindupSpell(ca, mz.x, mz.y, team, hits, tgc?.allegiance ?? "#enemy"); // SS-vfx 1: release the grown orb
           const sa = spell.get(SpellActor);
           sa.setCharge(chargeMaxOf(ca, this.entity.get(Mana)), mz.x, mz.y); // full charge at release
           sa.release(m.x + dx, m.y + dy, Math.max(2, ca.spellSpeed / 3));
