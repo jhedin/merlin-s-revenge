@@ -1,175 +1,72 @@
-# Behavioral Audit: act_farmer
+# Behavioral Audit (REPRODUCED): act_farmer
 
-**Audit Date**: 2026-06-21  
-**Scope**: Port vs Original (casts/data/act_farmer.txt)  
-**Result**: ✅ CLEAN — all behavioral aspects match the original.
+**Audit Date**: 2026-06-23
+**Method**: REPRODUCTION — throwaway `tools/_audit_farmer.ts` loaded the real
+`@/generated/assets.json`, spawned farmer (via `spawnUnit`) with a HOSTILE blackOrc target placed in
+melee range, ticked ~200f through `rebuildCombatSubstrate` each frame, and OBSERVED
+sprite/team/hits-per-#animframe/reach/cadence/grave. A second farmer was killed to observe the death→grave path.
+**Result**: ✅ CLEAN — every observed behavior matches the original. 0 divergences.
 
 ---
 
-## Data Fidelity
+## Derived spec (original cast/data)
 
-### Spec (Original Lingo)
 ```lingo
-[#name: "act_farmer", #type: #field]
-[
-#objType: #objCPUCharacter,
-#AiType: #objAiCPU,
-#inherit: #CPUCharacter,
-#damageSpeed: 3,
-#dexterity: 3,
-#experienceImWorth: 4,
-#eyestrain: 30,
-#inertia: 30,
-#miniMapStatus: #clr,
-#strength: 3,
-#team: #village,
-#name: "farmer",
-#walkSpeed: 4,
-#weapon: #pitchFork
-]
+[#name: "act_farmer" ...]
+[ #objType:#objCPUCharacter, #AiType:#objAiCPU, #inherit:#CPUCharacter,
+  #damageSpeed:3, #dexterity:3, #experienceImWorth:4, #eyestrain:30, #inertia:30,
+  #miniMapStatus:#clr, #strength:3, #team:#village, #name:"farmer",
+  #walkSpeed:4, #weapon:#pitchFork ]
 ```
+```lingo
+act_pitchFork [ #objType:#objPowerUp, #inherit:#weapon, #attack:
+  [ #animframe:3, #animType:#weaponMelee, #collisionLoc:point(12,2), #cooldown:30,
+    #damageMultiplier:5, #hits:[#teamMembers,#teamBuildings], #idealAttackLoc:point(12,2),
+    #name:#pitchFork, #power:point(.3,.3), #sound:"skeleton_fire" ] ]
+```
+- A friendly **#village** CPU melee unit (no own #attack → fights with its **#pitchFork** weapon).
+- #village ∈ #aldevar.friends ⇒ player-side; #village.hates includes #orcs/#monsters/#undead/etc.
+- Has its own bundled sprite family (`farmer_stand/walk/weaponMelee/grave`). **No `farmer_reel` strip**
+  (unlike townWatch) — but the inherited CPUCharacter reel/recoil is animation-only; absence is cosmetic.
 
-### Port (src/generated/data.json + registry resolution)
-All properties correctly preserved:
-- `objType`: `#objCPUCharacter` ✓
-- `AiType`: `#objAiCPU` ✓
-- `inherit`: `#CPUCharacter` ✓
-- `team`: `#village` ✓
-- `weapon`: `#pitchFork` ✓
-- `strength`: `3` ✓
-- `dexterity`: `3` ✓
-- `walkSpeed`: `4` ✓
-- `inertia`: `30` ✓
-- `experienceImWorth`: `4` ✓
-- `damageSpeed`: `3` (known-omitted list) ✓
-- `eyestrain`: `30` (known-omitted list) ✓
-- `miniMapStatus`: `#clr` (known-omitted list) ✓
+## Dual-tree evidence
 
----
+| Aspect | Original (cast/data) | Port (reproduced) | Verdict |
+|---|---|---|---|
+| Archetype / AI | `#objCPUCharacter` + `#objAiCPU` (committed-target melee hunt) | EnemyArchetype + CpuAI FSM; not ghost/builder/caster/multi/runReload | ✅ FAITHFUL |
+| Team / allegiance | `#team:#village` (∈ #aldevar.friends) | `spawnUnit` → **type=ally**, team `#village`, `isPlayerSide('#village')=true` | ✅ FAITHFUL |
+| **Sprite by #name** | `#name:"farmer"` keys `farmer_*` strips | `spriteCharOr('farmer') ⇒ "farmer"` (NOT blackOrc); stand/walk/weaponMelee/grave all bundled | ✅ FAITHFUL |
+| Attack type | weapon `#animType:#weaponMelee` | resolved `type=melee, animType=#weaponMelee` | ✅ FAITHFUL |
+| **#animframe (hits/swing)** | `#animframe:3` (scalar) on a 5-frame weaponMelee strip → one hit per swing on frame 3 | resolved `animFrame=[3]`; observed **5 hits over 200t across 6 swing-entries = exactly 1 hit/swing** (6th swing not yet past frame 3 at the 200t cutoff) | ✅ FAITHFUL |
+| Cadence | `#cooldown:30` → swing replays gated by cooldown recovery + fire-frame offset | observed hit-gaps uniformly **39t** (5 hits at t=14,53,92,131,170) | ✅ FAITHFUL |
+| damageMultiplier / power | mult 5, power point(.3,.3) | `damageMultiplier=5`, `powerScalar=0.6`; enemy-melee base = 0.6·str(3)·ENEMY_SCALE × mult 5 | ✅ FAITHFUL |
+| hits roles | `[#teamMembers,#teamBuildings]` | Targeting.hits `["#teamMembers","#teamBuildings"]` | ✅ FAITHFUL |
+| targetRoles | `[[#teamMembers,#teamBuildings]]` | Targeting.targetRoles `[["#teamMembers","#teamBuildings"]]` | ✅ FAITHFUL |
+| Targeting found enemy | hunts #village.hates (#orcs/#monsters) | `findTarget` returned the hostile (type=enemy, dist≈10); landed real damage on it, not an ally | ✅ FAITHFUL |
+| Reach | melee strike = #collisionLoc.x = 12 | `Targeting.reach=16` = clamp(12,[16,90]) — port-wide melee floor, same as townWatch; unit walks in then swings | ✅ FAITHFUL (port convention) |
+| Death / grave | `#graveOn` default (no override) → grave | killed farmer2 → action sequence `[grave]`, `farmer_grave` (2-frame one-shot) held; animChar stays `farmer` | ✅ FAITHFUL |
+| strength / walkSpeed / inertia / XP | 3 / 4 / 30 / 4 | str 3, walk 4·0.6, inertia 30, experienceImWorth 4 | ✅ FAITHFUL |
+| dexterity 3 / eyestrain 30 | ranged-only stats (aim scatter / look counter) | unused — farmer is melee (no scatter); recorded | ✅ FAITHFUL (inert for melee) |
+| damageSpeed 3 / miniMapStatus #clr | wall-slam threshold / minimap | damageSpeed forwarded; miniMapStatus on known-omitted list | ✅ FAITHFUL |
 
-## Behavioral Verification
+## Observed run (probe output, condensed)
+- `spriteCharOr('farmer') => farmer` (real strip, no blackOrc fallback). Strips present:
+  `farmer_stand(1f) walk(4f) weaponMelee(5f,one-shot) grave(2f,one-shot)`; `farmer_reel` absent (cosmetic).
+- `spawnUnit('farmer').type = ally`, team `#village`, `isPlayerSide=true`.
+- resolved attack: `type=melee animType=#weaponMelee animFrame=[3] reach=25(data)/16(strike) damageMult=5 powerScalar=0.6 hits=[#teamMembers,#teamBuildings]`.
+- 200 ticks vs adjacent hostile blackOrc (energy frac 1 → survives): **6 swing-entries, 5 hits** on the
+  target, hit-ticks `[14,53,92,131,170]`, uniform **39t** gaps → exactly one hit per #animframe-3 swing
+  (the 6th swing simply hadn't crossed frame 3 by t=200). Actions seen `[stand, walk, weaponMelee]`.
+- `findTarget` → enemy at dist≈10; `village hates` = blackSorcerer/goblins/karate/…/orcs.
+- death (loseEnergy 99999) → action `grave`, animChar stays `farmer`.
 
-### 1. Archetype & AI FSM
-| Aspect | Original | Port | Status |
-|--------|----------|------|--------|
-| Archetype | #objCPUCharacter (CPU slot) | EnemyArchetype with EnemyAI | ✓ Equivalent |
-| AiType | #objAiCPU | Read from data; drives CpuAI FSM (committed-target chase+attack) | ✓ Correct |
-| Special AI | None (not spellcaster/ghost/builder/bomber) | runReload=false, ghost=false, builder=false, dodgesBullets=false | ✓ Standard hunt mode |
-
-**Evidence**:  
-- `casts/data/act_farmer.txt:4` → `#AiType: #objAiCPU`  
-- `port/src/entities/archetypes.ts:171-210` → ai type resolved; non-spellcaster, non-ranged → standard FSM  
-- `port/src/components/control.ts:285-330` → CpuAI FSM implements committed-target hunt
-
-### 2. Attack Type Resolution
-| Aspect | Original | Port | Status |
-|--------|----------|------|--------|
-| Has own #attack | No | No | ✓ Correct |
-| Weapon | #pitchFork | Resolved from data | ✓ Correct |
-| Weapon.animType | #weaponMelee | #weaponMelee | ✓ Correct |
-| Inferred type | Melee (contact) | typeFromAnimType("#weaponMelee") → "melee" | ✓ Correct |
-| Fire mode | NOT ranged | ranged=false (line 169-170) | ✓ Correct |
-| Attack sound | "skeleton_fire" | Mapped to atkSound in control.ts | ✓ Correct |
-| Cooldown (raw) | 30 frames | Calibrated to 37 (30+6)·agility(1)+1 | ✓ Correct |
-
-**Evidence**:  
-- `casts/data/act_farmer.txt:16` → `#weapon: #pitchFork`  
-- `casts/data/act_pitchFork.txt:8` → `#animType: #weaponMelee`  
-- `port/src/entities/archetypes.ts:145-162` → spawnEnemy logic: no own attack → use weapon's attack  
-- `port/src/components/weapon.ts:86-95` → typeFromAnimType maps #weaponMelee → "melee"  
-- `port/src/entities/archetypes.ts:180-188` → effective cooldown = ceil((rawCooldown+6)·agility)+1
-
-### 3. Weapon Attack Properties
-| Property | Original | Port | Status |
-|----------|----------|------|--------|
-| damageMultiplier | 5 | Mapped to AttackData.damageMultiplier | ✓ Correct |
-| power | point(0.3, 0.3) | powerX=0.3, powerY=0.3, powerScalar=0.6 | ✓ Correct |
-| hits | [#teamMembers, #teamBuildings] | Mapped to AttackData.hits | ✓ Correct |
-| sound | "skeleton_fire" | Set in CpuAI.atkSound (line 361) | ✓ Correct |
-
-**Evidence**:  
-- `casts/data/act_pitchFork.txt:5-18` → all attack properties  
-- `port/src/components/weapon.ts:153-216` → resolveAttack builds AttackData from raw attack proplist
-
-### 4. Team & Allegiance
-| Aspect | Original | Port | Status |
-|--------|----------|------|--------|
-| Team | #village | Read and set as "#village" | ✓ Correct |
-| Player side? | No (friendly village) | isPlayerSide("#village")=true (friends of #aldevar) → type="ally" | ✓ Correct |
-| Hates | #monsters, #goblins, #swamp, etc. | tem_village.hates loaded | ✓ Data-driven |
-| Friends | #aldevar, #monsterSummon | tem_village.friends loaded | ✓ Data-driven |
-
-**Evidence**:  
-- `casts/data/act_farmer.txt:13` → `#team: #village`  
-- `casts/data/tem_village.txt:6` → `#friends:[#aldevar, #monsterSummon]`  
-- `port/src/entities/archetypes.ts:54-59` → spawnUnit checks isPlayerSide(team); true → "ally" type  
-- `port/src/systems/teams.ts:80-83` → isPlayerSide checks #aldevar and its friends
-
-### 5. Inheritance Chain Resolution
-| Property | Inherited From | Port Value | Status |
-|----------|--------|-----------|--------|
-| pathfinding | #CPUCharacter | true | ✓ Correct |
-| walkType | #CPUCharacter | #anyDirSpeed | ✓ Correct (not used by port, but recorded) |
-| frictionReel | #CPUCharacter | point(10,10) | ✓ Correct (known-omitted) |
-| agility | #character | 1 (default) | ✓ Correct |
-| mana_capacity | #character | 10 (default) | ✓ Correct |
-
-**Evidence**:  
-- `casts/data/act_CPUCharacter.txt:3-8` → inherits from #character  
-- `casts/data/act_character.txt:1-12` → defines agility/mana_*  
-- `port/src/generated/data.json` → resolved actor data includes all inherited properties
-
-### 6. No Special Flags
-| Flag | Present? | Behavior | Status |
-|------|----------|----------|--------|
-| wizard | No | — | ✓ Not triggered |
-| ghost | No | — | ✓ Not triggered |
-| multiAttack | No | — | ✓ Not triggered |
-| builder | No | — | ✓ Not triggered |
-| leaveWhenFinished | No | — | ✓ Not triggered |
-| reelProof | No | — | ✓ Not triggered |
-| runReload | No | — | ✓ Not triggered (melee, not ranged) |
-
-All checked in `port/src/entities/archetypes.ts:154-210`; all falsy, standard unit behavior applies.
-
----
-
-## Combat Sequence (Behavioral Correctness)
-
-1. **Spawn**: `spawnEnemy("farmer", x, y)` or `spawnUnit("farmer", x, y)` reads act_farmer data
-2. **Archetype**: EnemyArchetype (CpuAI FSM + melee weapon)
-3. **Team**: #village (friendly to player; hunts enemies of #village)
-4. **Attack**: Resolves weapon #pitchFork → #weaponMelee → melee type
-5. **FSM**: Standard hunt (findTarget → moveToAttack → swing → cooldown)
-   - **findTarget**: teamMaster.findTarget scans for allegiance "#enemy" per Targeting (village.hates)
-   - **moveToAttack**: pathfinds within reach (22px melee)
-   - **attack**: impactMeleeAttack resolves area hit with:
-     - Base power = powerScalar(0.6) · strength(3) · ENEMY_DAMAGE_SCALE(0.18) = 0.324
-     - Multiplied by damageMultiplier(5) = 1.62 per swing
-     - Cost: 1 cooldown counter (resets every 37 frames for melee)
-6. **No deviations**: No spell-casting, no possession, no multi-weapon switch, no building
-
-**This matches the original objAiCPU hunting behavior exactly.**
-
----
-
-## Movement & Physics
-| Aspect | Original | Port | Status |
-|--------|----------|------|--------|
-| walkSpeed (data) | 4 | 4 | ✓ Correct |
-| walkSpeed (px/tick) | native units | 4 · 0.6 = 2.4 px/tick | ✓ Converted correctly |
-| inertia | 30 | 30 (resists knockback) | ✓ Correct |
-| pathfinding | true | enabled via PathFinding component | ✓ Correct |
-| gravity/jumping | standard | via Movement component | ✓ Standard physics |
-
----
+> Note on the data dump: the raw pitchFork record carries BOTH a struct-default `animFrame:2` and the
+> real Lingo `animframe:3`. `resolveAttack` reads `r["animframe"]` FIRST, so the effective firing frame
+> is **3** (verified: resolved `AttackData.animFrame=[3]`). Not a divergence.
 
 ## Conclusion
-
-✅ **CLEAN** — farmer behaves faithfully in the port. All data properties, AI routing, attack resolution, team allegiance, weapon stats, and flag handling are correct. No behavioral divergences found.
-
-The farmer is a standard village NPC with:
-- Committed-target melee hunt (CpuAI FSM)
-- Village team allegiance (hunts enemies, befriends #aldevar)
-- Pitchfork weapon (melee, power 0.6, mult 5, 37-frame cooldown)
-- No special mechanics (wizard, ghost, builder, etc.)
+✅ **CLEAN**. farmer reproduces faithfully: own bundled `farmer_*` sprite (no blackOrc stand-in),
+correct ally routing by #village team, melee #pitchFork with exactly one hit per #animframe-3 swing,
+cooldown-30 gated cadence (39t), role-filtered hits, and a `farmer_grave` on death. No port divergences.
+(The 12→16 melee-reach floor is the established port-wide clamp applied identically to all short-reach
+melee units — e.g. townWatch's townMace collisionLoc.x=12 — not a farmer-specific change.)

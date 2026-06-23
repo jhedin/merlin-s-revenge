@@ -109,6 +109,13 @@ export class Thespian {
   // (objScriptPerformer.pWaitingForPlayers — each playerFaderFin decrements; 0 -> lineFinished).
   private waitingForFaders = 0;
   title = "";
+  // objCutSceneTitle lifecycle: cross-fade IN, HOLD ~150 frames, fade OUT, then clear. titleAlpha (0..1)
+  // drives the host draw; the port previously popped the title on and never hid it.
+  titleAlpha = 0;
+  private titlePhase: 0 | 1 | 2 | 3 = 0;   // 0 none, 1 fade-in, 2 hold, 3 fade-out
+  private titleT = 0;
+  private static readonly TITLE_FADE = 16;
+  private static readonly TITLE_HOLD = 150;
   speech: SpeechState | null = null;
 
   private readonly floor: number;
@@ -118,7 +125,9 @@ export class Thespian {
 
   constructor(private cut: Cutscene, private host: ThespianHost) {
     this.ingame = host.ingame === true;
-    this.floor = Math.round(host.viewH * 0.6);            // getStageFloor (the ground line)
+    // getStageFloor: the original ground line is stageRect.bottom - 16 (actors stand near the bottom edge).
+    // The in-game path keeps actors at their world y, so the floor only matters for the full-cutscene stage.
+    this.floor = this.ingame ? Math.round(host.viewH * 0.6) : host.viewH - 16;
     this.stageLeft = 24; this.stageRight = host.viewW - 24;
     this.acquirePlayers();
   }
@@ -176,6 +185,21 @@ export class Thespian {
     const p = this.players.get(alias); if (!p) return null;
     const m = p.entity.get(Movement); return { x: m.x, y: m.y };
   }
+  // objCutSceneTitle: cross-fade in over TITLE_FADE, hold TITLE_HOLD, fade out over TITLE_FADE, then clear.
+  private tickTitle(): void {
+    if (this.titlePhase === 0) return;
+    this.titleT++;
+    if (this.titlePhase === 1) {                                  // fade in
+      this.titleAlpha = Math.min(1, this.titleT / Thespian.TITLE_FADE);
+      if (this.titleT >= Thespian.TITLE_FADE) { this.titlePhase = 2; this.titleT = 0; this.titleAlpha = 1; }
+    } else if (this.titlePhase === 2) {                           // hold
+      if (this.titleT >= Thespian.TITLE_HOLD) { this.titlePhase = 3; this.titleT = 0; }
+    } else {                                                      // fade out
+      this.titleAlpha = Math.max(0, 1 - this.titleT / Thespian.TITLE_FADE);
+      if (this.titleT >= Thespian.TITLE_FADE) { this.titlePhase = 0; this.titleAlpha = 0; this.title = ""; }
+    }
+  }
+
   isFinished(): boolean { return this.finished; }
 
   /** ESC/space cancels the whole scene (scriptCancelled / pSkipCounter). */
@@ -188,6 +212,7 @@ export class Thespian {
     if (this.cancelled) { this.finish(); return true; }
     this.tweenStage();         // advances the per-actor faders (decrements waitingForFaders on completion)
     this.driveActors();
+    this.tickTitle();          // objCutSceneTitle: fade-in -> hold -> fade-out -> clear
     // async gate: tick the timer; when it expires, fall through to the next line(s).
     if (this.pending) {
       if (--this.pending.left > 0) return false;
@@ -251,7 +276,8 @@ export class Thespian {
       case "backgroundColourTo": if (step.arg.kind === "rgb") { this.bgTarget = { r: step.arg.r, g: step.arg.g, b: step.arg.b }; this.bgFlash = false; } break;
       case "lightsUp": this.lightsChange(1); break;   // K17: each actor fades IN under its own fader
       case "lightsDown": this.lightsChange(0); break; // K17: each actor fades OUT under its own fader
-      case "showTitle": this.title = step.arg.kind === "text" ? step.arg.text : step.args.join(" "); break;
+      case "showTitle": this.title = step.arg.kind === "text" ? step.arg.text : step.args.join(" ");
+        this.titlePhase = 1; this.titleT = 0; this.titleAlpha = 0; break; // start the fade-in/hold/out
       case "setStage": this.setStage(); break;
       case "playSound": if (step.arg.kind === "sound") this.host.playSound?.(step.arg.member, step.arg.volume); break;
       case "playMusic": if (step.arg.kind === "sound") this.host.playMusic?.(step.arg.member, step.arg.volume); break;
@@ -299,8 +325,13 @@ export class Thespian {
   }
 
   private goWastedMode(p: Player): void {
+    // modWastedMode.wastedModeOn does ONLY setBlend(30) + setAnimKeepSize(true) + setSpriteHeight(60): a
+    // translucent vertical STRETCH. It does NOT change the animation — the wasted actor keeps walking/
+    // standing under the normal anim system (he walks on, walks off, then speaks). The earlier port forced
+    // a "die" pose here, which froze him on the mer_die frame the whole scene (wrong frame). Just flag him
+    // wasted; the WastedMode component (isWasted) makes Anim animate normally despite the dead energy, and
+    // the cutscene renderer applies the blend + stretch.
     p.wasted = true; p.visible = true;
-    this.setMode(p, "die"); // modWastedMode: blend + squash; the port renders a die/grave-ish pose
     p.entity.send("goWastedMode");
   }
 

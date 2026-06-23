@@ -160,3 +160,32 @@ None of these affect behavioral correctness.
 - ✓ Death sound plays correctly
 
 **No behavioral divergences found.**
+
+---
+
+## Anim-Cosmetic Sweep (2026-06-23) — REPRODUCED
+
+**Method:** throwaway probe (`port/tools/_audit_animcosmetic.ts`, deleted) loaded the REAL `assets.json`,
+spawned doubleDarkGolem + a `#aldevar` target, ticked 200 frames, then applied a non-lethal hit and a lethal kill.
+Strip availability cross-checked against the ORIGINAL extracted bitmaps (`extracted/engine/bitmaps`).
+
+| Aspect | Observed | Verdict |
+|--------|----------|---------|
+| (a) anim char | `spriteCharOr("doubleDarkGolem")` → **`doubleDarkGolem`** (via `#name`), NEVER `blackOrc` | CORRECT |
+| (b) strips | stand(1)/walk(8)/naturalRanged(38)/grave(2) resolve to real `doubleDarkGolem_*` art; **NO `_reel`** | see (d) |
+| (c) attack strip + hit sync | `doubleDarkGolem_naturalRanged` plays; bullet (#darkRock) fires on **#animframe [5,11,18,25]** (matches data — 4 throws per strip); 21 bullets in 200f | CORRECT |
+| (d) non-lethal reel | `animAction`→`"reel"` but **no `doubleDarkGolem_reel` strip** → falls back to **stand** | FAITHFUL QUIRK |
+| (e) death visual | `getGraveOn=true`; `doubleDarkGolem_grave` (2f) renders, z≪0 (behind living), faces right, no tint | CORRECT |
+
+**On (c) — supersedes the earlier "deferred" note.** This file's prior READ-ONLY audit listed
+`#attack.animframe:[5,11,18,25]` as "attack-frame gating (deferred)". That is NO LONGER accurate: the REPRODUCED
+run shows the four boulders fire on exactly frames 5, 11, 18, 25 of the 38-frame `naturalRanged` strip — the
+animation IS the clock. The port reads the lowercase `animframe` data key over the camelCase `animFrame:2` STRUCT
+default. No cosmetic divergence.
+
+**On (d) — NOT a port bug.** The ORIGINAL ships NO `anm_doubleDarkGolem_reel_*` bitmap (only grave/naturalRanged/
+stand/walk in `extracted/engine/bitmaps`). The original `objAnimSet.symExistsOrDefault` (`ParentScript 80`) maps a
+missing strip to **`#stand`**; the port's `Anim.animFor` does the same. Reeling-as-stand is the shipped behavior,
+reproduced faithfully (the white flick-on-hit still plays via ColourTransform).
+
+**Anim-cosmetic: CLEAN (0 PORT divergences; 1 faithful quirk — reel→stand, no reel art in original).**

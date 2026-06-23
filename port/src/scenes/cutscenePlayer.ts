@@ -15,6 +15,10 @@ import type { Input } from "../systems/input";
 import type { Entity } from "../engine/dispatch";
 import { drawText, measureText } from "../render/text";
 
+// modWastedMode.init: pWastedModeHeight = 60 — the absolute sprite height (member-px) the wasted actor is
+// stretched to (setSpriteHeight). Merlin's body is ~16px, so the wasted ghost is a tall vertical stretch.
+const WASTED_STRETCH_H = 60;
+
 export class CutscenePlayer {
   private thespian: Thespian;
   private readonly ingame: boolean;
@@ -88,14 +92,17 @@ export class CutscenePlayer {
       if (!sp) continue;
       const img = sp.img as CanvasImageSource;
       const w = (img as HTMLImageElement).width * scale, h = (img as HTMLImageElement).height * scale;
-      let dx = Math.round(m.x - w / 2), dy = Math.round(m.y - h);
-      if (p.wasted) { dy = Math.round(m.y - h * 0.6); } // modWastedMode squash (h=60%)
+      // modWastedMode.wastedModeOn: setSpriteHeight(60) forces an ABSOLUTE 60px-tall sprite (setAnimKeepSize
+      // keeps the natural WIDTH) — a tall, translucent vertical STRETCH (Merlin's body is ~16px, so 60 is a
+      // ~3.75× stretch). NOT a squash. In cutscene space that absolute height scales with the actor draw.
+      const dh = p.wasted ? WASTED_STRETCH_H * scale : h;
+      const dx = Math.round(m.x - w / 2), dy = Math.round(m.y - dh); // feet stay on the ground line
       ctx.save();
       // K17 per-actor fade alpha (lightsUp/Down fade each actor under its own fader) × the wasted blend.
-      // modWastedMode.wastedModeOn: setBlend(30) -> 0.30 opacity (the squashed ghost is mostly translucent).
+      // modWastedMode.wastedModeOn: setBlend(30) -> 0.30 opacity (the stretched ghost is mostly translucent).
       ctx.globalAlpha = t.actorAlpha(p) * (p.wasted ? 0.3 : 1);
-      if (m.facingLeft) { ctx.translate(dx + w, dy); ctx.scale(-1, 1); ctx.drawImage(img, 0, 0, w, p.wasted ? h * 0.6 : h); }
-      else ctx.drawImage(img, dx, dy, w, p.wasted ? h * 0.6 : h);
+      if (m.facingLeft) { ctx.translate(dx + w, dy); ctx.scale(-1, 1); ctx.drawImage(img, 0, 0, w, dh); }
+      else ctx.drawImage(img, dx, dy, w, dh);
       ctx.restore();
     }
 
@@ -103,23 +110,25 @@ export class CutscenePlayer {
     const dark = t.darkness();
     if (dark > 0) { ctx.fillStyle = `rgba(0,0,0,${(0.55 * dark).toFixed(3)})`; ctx.fillRect(0, 0, viewW, viewH); }
 
-    if (t.title) {
-      // SS-1: cutscene title via the #menu face (×2 scale), centred. Fallback keeps the system font.
-      ctx.textAlign = "center"; ctx.fillStyle = "#fc4";
-      drawText(ctx, this.assets, "menu", t.title, viewW / 2, viewH / 2, { align: "center", scale: 2, fallbackFont: "bold 20px serif" });
-      ctx.textAlign = "left";
+    if (t.title && t.titleAlpha > 0) {
+      // objCutSceneTitle: gold rgb(204,204,0), cross-faded in/held/out (titleAlpha). #menu face, ×2, centred.
+      ctx.save(); ctx.globalAlpha = t.titleAlpha;
+      ctx.textAlign = "center"; ctx.fillStyle = "#cccc00";
+      drawText(ctx, this.assets, "menu", t.title, viewW / 2, viewH / 2, { align: "center", scale: 2, colour: "#cccc00", fallbackFont: "bold 20px serif" });
+      ctx.textAlign = "left"; ctx.restore();
     }
 
-    // speech caption (auto-advancing; no prompt)
+    // modThespian.displaySpeechCutScene: BARE text floating just above the SPEAKER's head — no caption bar,
+    // no "speaker:" prefix (that bottom VN bar was a port invention). Centre-wrapped over the speaker.
     const speech = t.getSpeech();
     if (speech) {
-      const boxH = 56, y = viewH - boxH - 6;
-      ctx.fillStyle = "rgba(0,0,0,0.78)"; ctx.fillRect(8, y, viewW - 16, boxH);
-      ctx.strokeStyle = "#577"; ctx.strokeRect(8, y, viewW - 16, boxH);
-      // SS-1: speaker label + wrapped speech body via the #small face.
-      ctx.fillStyle = "#fc4"; drawText(ctx, this.assets, "small", speech.speaker + ":", 16, y + 14, { fallbackFont: "bold 10px monospace" });
-      ctx.fillStyle = "#fff";
-      wrap(ctx, this.assets, speech.text, 16, y + 28, viewW - 32, 12);
+      const pos = t.speakerPos(speech.alias);
+      const cx = pos ? Math.round(pos.x) : viewW / 2;
+      // anchor above the 2×-scaled actor's head (feet at pos.y; ~55px sprite ×2 ≈ 110px tall).
+      const topY = Math.max(12, (pos ? Math.round(pos.y) - 124 : 24));
+      ctx.fillStyle = "#fff"; ctx.textAlign = "center";
+      wrapCentered(ctx, this.assets, speech.text, cx, topY, Math.min(viewW - 16, 260), 11);
+      ctx.textAlign = "left";
     }
     ctx.fillStyle = "#445"; drawText(ctx, this.assets, "small", "esc/space: skip", 12, 14, { fallbackFont: "8px monospace" });
   }
@@ -174,4 +183,18 @@ function wrap(ctx: CanvasRenderingContext2D, assets: Assets, text: string, x: nu
     else line = test;
   }
   if (line) drawText(ctx, assets, "small", line, x, yy, { fallbackFont: "10px monospace" });
+}
+
+// like wrap() but each line is CENTRED on cx (cutscene speech floats centred above the speaker's head).
+function wrapCentered(ctx: CanvasRenderingContext2D, assets: Assets, text: string, cx: number, y: number, maxW: number, lh: number): void {
+  const M = (s: string) => measureText(ctx, assets, "small", s);
+  const words = text.split(" ");
+  const lines: string[] = []; let line = "";
+  for (const w of words) {
+    const test = line ? line + " " + w : w;
+    if (M(test) > maxW && line) { lines.push(line); line = w; } else line = test;
+  }
+  if (line) lines.push(line);
+  let yy = y;
+  for (const ln of lines) { drawText(ctx, assets, "small", ln, cx, yy, { align: "center", colour: "#fff", fallbackFont: "10px monospace" }); yy += lh; }
 }

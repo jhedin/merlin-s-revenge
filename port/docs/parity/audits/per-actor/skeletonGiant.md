@@ -214,3 +214,23 @@ The previous read-only audit of this actor incorrectly asserted `damageMultiplie
 `skeletonGiant | DIVERGENCES=2`  
 - DIV-1: `dammageMultiplier` typo → port reads `damageMultiplier=1` instead of 8 (`weapon.ts:194`)  
 - DIV-2: dual `animframe`/`animFrame` key in structAttack merge (latent; currently resolves correctly)
+
+---
+
+## Anim-Cosmetic Sweep (2026-06-23) — REPRODUCED
+
+**Method:** throwaway probe (`port/tools/_audit_animcosmetic.ts`, deleted) loaded the REAL `assets.json`,
+spawned skeletonGiant + a `#aldevar` target, ticked 200 frames, then applied a non-lethal hit and a lethal kill.
+
+| Aspect | Observed | Verdict |
+|--------|----------|---------|
+| (a) anim char | `spriteCharOr("skeletonGiant")` → **`skeletonGiant`**, NEVER `blackOrc` | CORRECT |
+| (b) strips | stand(1)/walk(8)/weaponMelee(7)/reel(2)/grave(2) all resolve to real `skeletonGiant_*` art | CORRECT |
+| (c) attack strip + hit sync | `skeletonGiant_weaponMelee` plays; hit fires on **#animframe 6** (matches `skeletonGiantSword #animframe:6`); 14 swings in 200f | CORRECT |
+| (d) non-lethal reel | `animAction`→`"reel"`, `skeletonGiant_reel` (2f) present → reel STRIP shows | CORRECT |
+| (e) death visual | `getGraveOn=true`; `skeletonGiant_grave` (2f) renders, z≪0 (behind living), faces right, no tint | CORRECT |
+
+This sweep confirms the ANIMATION/visual path is fully faithful. (The separately-logged DIV-1 `dammageMultiplier`
+typo is a STATS issue, out of scope for this cosmetic sweep and already adjudicated WONTFIX/faithful above.)
+
+**Anim-cosmetic: CLEAN (0 cosmetic divergences).**

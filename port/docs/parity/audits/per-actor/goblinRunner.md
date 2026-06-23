@@ -1,226 +1,147 @@
-# Audit: goblinRunner Actor Behavioral Parity
+# Audit: goblinRunner — derived-vs-observed (REPRODUCED)
 
-## Executive Summary
-
-**Status**: CLEAN (with caveats)
-
-`goblinRunner` is **not placed in any playable map** in either the original Lingo game or the TypeScript port. It exists as actor definition only, referenced by the cutscene-trigger stone `goblinRunnerStones` (which inherits `#chatter` and properly triggers the `#goblinRunner` script via the Chatter component). No gameplay-relevant behavioral gap detected.
-
----
-
-## Classification
-
-**Type**: Scripted cutscene NPC (unused actor definition)  
-**Original objType**: `#objActorPlayer` (via inheritance from `#actorPlayer`)  
-**Port objType**: Not set directly; inherits from `#actorPlayer` (also `#objActorPlayer`)  
-**Team**: `#chatters` (via `#actor` inheritance)  
-**Usage**: Referenced only by `act_goblinRunnerStones` (a `#chatter`) as `#scriptToPerform: #goblinRunner`
+Method: derived correct behavior from `casts/data/*` + `casts/script_objects/*`, then REPRODUCED the
+port via a throwaway harness (`tools/_audit_goblinRunner.ts`) that loads the REAL
+`src/generated/assets.json`, spawns `goblinRunner` through the real placement path
+(`spawnFromSymbol`), ticks 200 frames against a hostile `#aldevar` target, and contrasts it against
+`goblinWarrior` (the combat actor whose sprite goblinRunner borrows).
 
 ---
 
-## Original Lingo Definition
+## What goblinRunner IS (derived from original)
 
-**File**: `/home/user/merlin-s-revenge/casts/data/act_goblinRunner.txt` (lines 1–13)
+`act_goblinRunner` (`casts/data/act_goblinRunner.txt`):
 
-```lingo
-[#name: "act_goblinRunner", #type: #field]
-[
-#inherit: #actorPlayer,
-#collisionRect: rect(-60, -2, 60, 2),
-#initFaceDir: -1,
-#miniMapStatus: #clr,
-#name: "goblinWarrior",
-#scriptToPerform: #demo_006_ulin,
-#speechColor: rgb(74,255,57),
-#startOffset: point(-16, -16),
-#walkSpeed: 5,
-#weight: 0
-]
+```
+#inherit: #actorPlayer,  #name: "goblinWarrior",  #scriptToPerform: #demo_006_ulin,
+#collisionRect: rect(-60,-2,60,2),  #initFaceDir: -1,  #miniMapStatus: #clr,
+#speechColor: rgb(74,255,57),  #walkSpeed: 5,  #weight: 0
 ```
 
-**Inheritance Chain**:
-- `act_goblinRunner` → `#actorPlayer` (casts/data/act_actorPlayer.txt:3)
-- `#actorPlayer` → `objType:#objActorPlayer`, `AiType:#objAiAttack`, `#actor`
-- `#actor` → `team:#chatters`, `masterPrg:#actorMaster`
+Resolved `#inherit` chain → `#actorPlayer` → `#actor`:
+- `objType: #objActorPlayer`, `AiType: #objAiAttack` (from `act_actorPlayer.txt`)
+- `team: #chatters` (from `act_actor.txt` — goblinRunner does NOT override it)
 
-**Key Properties**:
-| Property | Value | Purpose |
-|----------|-------|---------|
-| `#inherit` | `#actorPlayer` | Inherits from actor-player base (scripted NPC) |
-| `#scriptToPerform` | `#demo_006_ulin` | Script to execute (likely cutscene trigger) |
-| `#walkSpeed` | `5` | Movement speed if active |
-| `#weight` | `0` | No gravity; doesn't fall through platforms |
-| `#collisionRect` | `rect(-60, -2, 60, 2)` | Thin horizontal collision box |
-| `#initFaceDir` | `-1` | Faces left on spawn |
-| `#miniMapStatus` | `#clr` | Hidden from minimap |
-| `#speechColor` | `rgb(74,255,57)` | Green speech bubble (if dialogues) |
+`objActorPlayer` (`casts/script_objects/objActorPlayer.txt`) is documented "acts in scripts and cut
+scenes". Its `new` installs `modFader, modPositioning, modProp, modStretcher, modTeleport,
+modThespian, modWastedMode` — i.e. CUTSCENE modules only. It installs **NO AI driver**, and its
+`checkCollisions` is a no-op (`return newLoc`). So:
+
+- goblinRunner is a **scripted cutscene actor (thespian puppet)**, NOT a combat CPU.
+- The inherited `AiType: #objAiAttack` is **vestigial** — objActorPlayer never spins up an attack AI,
+  so it never seeks/fights. It walks, stands, faces, teleports, and emotes only when a cutscene
+  script drives it via modThespian.
+- `#name: "goblinWarrior"` is purely the **sprite character** (modAnimSet renders the goblinWarrior
+  strips); it does NOT make goblinRunner a goblin combatant. Team stays `#chatters`.
+- `#scriptToPerform: #demo_006_ulin` is a thespian/cutscene script name.
+
+### Energy / movement / attack / weapon / death (derived)
+- **energy:** none set; objCharacter seeds 100. Irrelevant — a thespian actor is never in combat.
+- **movement:** walkSpeed 5, `#weight: 0` (no gravity). It moves only when a script issues `walkTo`.
+- **attack / weapon / reach / #animframe:** NONE. No `#weapon`, no `#attack`, no AI to fire one.
+  It does not fight and does not flee-as-combat — its "running" is whatever a cutscene scripts.
+- **death / grave:** N/A — never takes combat damage in its intended (cutscene) context.
+
+### Placement / usage (derived — CRITICAL)
+- `goblinRunner` the actor appears in NO `scr_*.txt` cutscene script's character list
+  (`grep goblinRunner casts/data/scr_*.txt` → none) and in NO map.
+- `#demo_006_ulin` is a **dangling script reference**: there is no `scr_demo_006_ulin.txt`, it is not
+  in the cutscenes manifest, and it is shared verbatim by `act_ulin` and `act_prestotolin` too. No
+  such cutscene exists in the shipped data.
+- The only in-game thing carrying the *goblinRunner* name is the **separate** `#goblinRunner`
+  **cutscene script** triggered by `act_goblinRunnerStones` (a `#chatter`/`#objChatter`,
+  `team: #collectables`). That stone is the real placed object; it plays its script through
+  `objChatter.collected → cutSceneMaster.playCutScene`, and the port spawns it via `spawnChatter`
+  (objType `#objChatter`) — fully ported, NOT part of this actor.
+
+Conclusion from derivation: **the goblinRunner ACTOR is an unused, never-instantiated thespian
+puppet.** Neither the original nor the port ever spawns it in gameplay.
 
 ---
 
-## Port TypeScript Definition
+## What the PORT does (OBSERVED via harness)
 
-**File**: `/home/user/merlin-s-revenge/port/src/generated/data.json` (act_goblinRunner)
+Routing: `spawnFromSymbol("goblinRunner")` (the single placement path) does NOT branch on
+`#objActorPlayer` (`actorSerial.ts:48-54` handles dwelling/mine/magicLimit/music/teamOverride/chatter,
+then falls through to `spawnUnit`). So goblinRunner builds an **EnemyArchetype** with a `CpuAI`.
 
-```json
-{
-  "header": { "name": "act_goblinRunner", "type": "#field" },
-  "data": {
-    "inherit": "#actorPlayer",
-    "collisionRect": { "left": -60, "top": -2, "right": 60, "bottom": 2 },
-    "initFaceDir": -1,
-    "miniMapStatus": "#clr",
-    "name": "goblinWarrior",
-    "scriptToPerform": "#demo_006_ulin",
-    "speechColor": { "r": 74, "g": 255, "b": 57 },
-    "startOffset": { "x": -16, "y": -16 },
-    "walkSpeed": 5,
-    "weight": 0
-  }
-}
+Observed over 200 ticks (target = an `#aldevar` blackOrc 70px away, inert):
+
+| probe | value |
+|---|---|
+| `animChar` resolved | **`goblinWarrior`** (blackOrc fallback? **NO**) |
+| strip `goblinWarrior_stand/walk/weaponMelee/reel/grave` bundled | all **true** |
+| route → entity type | `enemy` (EnemyArchetype); components: Identity,Grave,**CpuAI**,…,Anim,Energy,Team,Targeting |
+| has Chatter / Thespian component | **NO** — `scriptToPerform: #demo_006_ulin` is dropped |
+| team | `#chatters` (correctly preserved from data) |
+| energy / maxSpeed | 100 / 3 px (walkSpeed 5 × 0.6) |
+| AI mode over 200 ticks | `findTarget` ×200 — **never leaves target-search** |
+| movement | **0 px** (never moved) |
+| hits landed | **0** (`findTarget` returns null) |
+| died / grave | no — stays alive, inert |
+
+Contrast (same harness): `goblinWarrior` (team `#goblins`, same sprite) moved 48 px and landed 12
+hits on the same kind of target — proving the runner's total inertness is **purely the `#chatters`
+team** (chatters hate nobody and are hated by nobody → `findTarget` null forever), not a sprite or
+asset problem.
+
+---
+
+## DIVERGENCES (dual-tree)
+
+### DIVERGENCE 1 — port routes the cutscene actor as a combat EnemyArchetype (not a thespian puppet)
+
+```
+ORIGINAL
+  goblinRunner = #objActorPlayer
+  └─ modThespian + modWastedMode, NO AI driver, checkCollisions = no-op
+  └─ exists ONLY to be driven by a cutscene script (walk/stand/face/teleport/emote)
+  └─ scriptToPerform #demo_006_ulin carried on the actor for the thespian system
+
+PORT
+  spawnFromSymbol("goblinRunner")
+  └─ no #objActorPlayer branch  →  falls through to spawnUnit → spawnEnemy
+  └─ builds EnemyArchetype (CpuAI, WeaponManager, synthetic #natural melee)
+  └─ NO Chatter/Thespian component  →  scriptToPerform #demo_006_ulin silently dropped
+  └─ would run hostile combat AI instead of being a scripted puppet
 ```
 
-**Inheritance Chain** (data.json):
-- `act_goblinRunner` → `#actorPlayer` (act_actorPlayer.data.inherit)
-- `#actorPlayer` → `objType:#objActorPlayer`, `AiType:#objAiAttack`, `#actor`
+Classification: **PORT-BUG (latent / non-manifesting).** The port has no `#objActorPlayer` spawn
+branch, so a placed objActorPlayer would be mis-built as a combat enemy with its thespian script lost.
+BUT this never manifests in gameplay: goblinRunner is in no map and no cutscene's character list, and
+`#demo_006_ulin` is a dangling reference with no backing cutscene. The port DOES model thespian actors
+elsewhere (`scenes/thespian.ts` `spawnCutActor` builds a `CutActorArchetype` for cutscene casts) — but
+that path is only reached for actors listed in a parsed cutscene's `chars`, which goblinRunner is not.
+So the divergence is real in the routing code yet **dead** (unreachable for this actor). No
+gameplay-visible effect; no fix required for goblinRunner specifically.
 
-**Parity Check**:
-| Property | Original | Port | Match | Notes |
-|----------|----------|------|-------|-------|
-| `#inherit` | `#actorPlayer` | `#actorPlayer` | ✓ | Exact |
-| `#collisionRect` | `rect(-60, -2, 60, 2)` | `{left:-60, top:-2, right:60, bottom:2}` | ✓ | Rect conversion correct |
-| `#initFaceDir` | `-1` | `-1` | ✓ | Exact |
-| `#miniMapStatus` | `#clr` | `#clr` | ✓ | Exact |
-| `#name` | `"goblinWarrior"` | `"goblinWarrior"` | ✓ | Exact |
-| `#scriptToPerform` | `#demo_006_ulin` | `#demo_006_ulin` | ✓ | Exact |
-| `#speechColor` | `rgb(74,255,57)` | `{r:74, g:255, b:57}` | ✓ | RGB conversion correct |
-| `#startOffset` | `point(-16, -16)` | `{x:-16, y:-16}` | ✓ | Point conversion correct |
-| `#walkSpeed` | `5` | `5` | ✓ | Exact |
-| `#weight` | `0` | `0` | ✓ | Exact |
+### Non-divergences verified
+- **animChar:** original renders goblinWarrior strips via modAnimSet(`#name`); port `spriteCharOr`
+  resolves `#name "goblinWarrior"` → `goblinWarrior_stand` (bundled) → **`goblinWarrior`, not
+  blackOrc.** FAITHFUL.
+- **team `#chatters`:** preserved exactly. FAITHFUL.
+- **walkSpeed/weight/collisionRect/initFaceDir/miniMapStatus/speechColor:** all carried through
+  resolveActor identically (data is byte-faithful).
+- The runner's 0-movement/0-attack inertness in the port is itself **incidentally close to the
+  original's intent** (a non-combat puppet that does nothing on its own), even though it is reached
+  via the wrong (combat) archetype.
 
----
-
-## Behavioral Analysis
-
-### Original (Lingo)
-
-1. **Spawning**: If placed, would be spawned as an `#objActorPlayer` via the room's object layer.
-2. **Movement**: Inherits from `#actorPlayer`, so has AI-driven behavior (AiType: `#objAiAttack`). With `#walkSpeed: 5`, it would move and potentially pursue targets.
-3. **Scripting**: `#scriptToPerform: #demo_006_ulin` would be accessible to script-driven behavior (possibly a cutscene context or encounter trigger).
-4. **Collisions**: Custom rect `rect(-60, -2, 60, 2)` defines a thin horizontal collision zone.
-5. **Gravity**: `#weight: 0` means no gravity; cannot fall.
-6. **Placement**: **NOT PLACED IN ANY MAP** — no game state references it directly.
-
-### Port (TypeScript)
-
-**If spawned via `spawnFromSymbol`**:
-
-1. **Routing**: No explicit `objType`, so falls through to `spawnUnit` (actorSerial.ts:54).
-2. **Spawning**: `spawnUnit` calls `spawnEnemy`, which creates an `EnemyArchetype` entity.
-3. **Components**: Enemy archetype includes:
-   - `EnemyAI`, `Movement`, `Anim`, `Energy`, `Team` (via archetypes.ts line 36)
-   - **NO Chatter component** → `scriptToPerform` property **IS LOST**
-4. **AI Behavior**: Would run standard `EnemyAI`, not script-driven behavior.
-5. **Movement**: `walkSpeed: 5` scaled by `0.6` (archetypes.ts:162) → `3 px/tick` effective speed.
-6. **Collision**: Correctly passed to entity (collisionRect stored in Movement component).
-7. **Gravity**: `weight: 0` correctly applied (no gravity system in port).
-8. **Placement**: **NOT PLACED IN ANY MAP** (maps.json has no references).
-
-**Critical Issue Identified**: If `goblinRunner` were placed as an actor in a map, the port would:
-- Create an `EnemyArchetype` entity (not a `ChatterArchetype`)
-- **NOT instantiate the Chatter component** (no `scriptToPerform` handling)
-- The script `#demo_006_ulin` would be **silently ignored**
-- The actor would instead run hostile AI behavior
-
-**However**: This is **NOT a behavioral gap** because:
-- `goblinRunner` is **not placed in any playable map** in the original OR the port
-- Only `goblinRunnerStones` (a `#chatter` inheritor) is placed and uses the script
-- `goblinRunnerStones` properly spawns as a Chatter in the port
-
----
-
-## Verification: goblinRunnerStones (The Real Placement)
-
-**Original** (casts/data/act_goblinRunnerStones.txt:1–15):
-```lingo
-[#name: "act_goblinRunnerStones", #type: #field]
-[
-#inherit: #chatter,
-#character: #goblinRunnerStones,
-#collisionRect: rect(-320, -320, 320, 320),
-#initFaceDir: 1,
-#member: member("anm_goblinRunnerStones_stand_03_01", "gfx"),
-#miniMapStatus: #clr,
-#name: "goblinRunnerStones",
-#team: #collectables,
-#scriptToPerform: #goblinRunner,
-#speechColor: rgb(100,100,255),
-#startOffset: point(-16, -16),
-#walkSpeed: 4
-]
-```
-
-**Port** (generated/data.json):
-- ✓ `#inherit: #chatter` (objType: `#objChatter`)
-- ✓ `#scriptToPerform: #goblinRunner` preserved
-- ✓ Spawned via `spawnChatter` (actorSerial.ts:53)
-- ✓ Chatter component instantiated → `scriptToPerform` **handled correctly**
-
-**Result**: The stone trigger that references the goblinRunner script is **properly ported and functional**.
-
----
-
-## Placement Verification
-
-### Original Lingo
-- **Maps searched**: casts/data/*.txt (no map layers; Lingo stores map data separately)
-- **References**: Only in `act_goblinRunnerStones.txt` and data key translations
-- **Placement**: **NONE FOUND** — `act_goblinRunner` is never instantiated in gameplay
-
-### TypeScript Port
-- **Maps file**: `/home/user/merlin-s-revenge/port/src/generated/maps.json` (array of map metadata)
-- **Grep result**: `grep -i "goblinRunner" maps.json` → **NO MATCHES**
-- **Conclusion**: `act_goblinRunner` is **not placed in any map**
-
----
-
-## Summary Table
-
-| Aspect | Original | Port | Status |
-|--------|----------|------|--------|
-| **Actor Definitions** | ✓ Present | ✓ Present | Identical |
-| **Properties** | ✓ 10 properties | ✓ 10 properties | All match |
-| **Inheritance Chain** | `#actorPlayer` → `#actor` | `#actorPlayer` → `#actor` | ✓ Preserved |
-| **scriptToPerform** | `#demo_006_ulin` | `#demo_006_ulin` | ✓ Present in data |
-| **Placed in Maps** | ✗ NO | ✗ NO | Both unused |
-| **Trigger Stone** | `goblinRunnerStones` (✓ chatter) | `goblinRunnerStones` (✓ chatter) | ✓ Script works via stone |
-| **Behavioral Gap** | N/A (unused) | Potential if placed | Not triggered |
+### Probe-API caveats (NOT divergences)
+- First harness pass read `Energy.value` / `Movement.walkSpeed` (wrong field names) → `undefined`.
+  Corrected to `Energy.energy` / `Movement.maxSpeed` (verified in `components/combat.ts:12`,
+  `components/movement.ts:30`). The `undefined`s were probe errors, not port behavior.
+- `act_orc` does not exist; used `blackOrc` for the target. Not a divergence.
 
 ---
 
 ## Conclusion
 
-**CLEAN**: No behavioral parity gap for `goblinRunner`.
+The goblinRunner **actor** is a dangling, never-instantiated cutscene puppet in both versions. The
+port mis-routes `#objActorPlayer` through the combat spawn path (would build an enemy and drop the
+thespian script), which is a genuine but **latent, never-exercised** mismatch — DIVERGENCE 1. Sprite
+resolution, team, and all data props are faithful. The actually-played `goblinRunner` *cutscene* is
+triggered by `goblinRunnerStones` (a `#chatter`), which is ported correctly and is out of scope for
+this actor.
 
-**Reasoning**:
-1. Actor data is **100% identical** between original and port
-2. `goblinRunner` is **never placed in any playable map** in either version
-3. Its only in-game reference is via `goblinRunnerStones` (a `#chatter`), which **properly instantiates the Chatter component** and triggers the script in the port
-4. If hypothetically placed as a unit in a map, the port would lose `scriptToPerform` handling (would spawn as enemy, not chatter), but this scenario is **non-existent in the game**
-5. The core scripted behavior (cutscene trigger via the stone) is **fully preserved and functional**
-
-**No action required**.
-
----
-
-## Evidence Files
-
-| File | Line(s) | Content |
-|------|---------|---------|
-| `/home/user/merlin-s-revenge/casts/data/act_goblinRunner.txt` | 1–13 | Original actor definition |
-| `/home/user/merlin-s-revenge/casts/data/act_actorPlayer.txt` | 1–6 | Parent class `#actorPlayer` |
-| `/home/user/merlin-s-revenge/casts/data/act_actor.txt` | 1–11 | Grandparent class `#actor` |
-| `/home/user/merlin-s-revenge/port/src/generated/data.json` | JSON | Port definition (identical structure) |
-| `/home/user/merlin-s-revenge/port/src/entities/actorSerial.ts` | 39–56 | Spawn routing logic |
-| `/home/user/merlin-s-revenge/port/src/entities/archetypes.ts` | 36, 137–200 | EnemyArchetype + spawnEnemy |
-| `/home/user/merlin-s-revenge/port/src/entities/objTypes.ts` | (ChatterArchetype) | Chatter spawning with scriptToPerform |
-| `/home/user/merlin-s-revenge/port/src/generated/maps.json` | (full file) | Map placements (no goblinRunner) |
+goblinRunner | DIVERGENCES=1
+- D1: port routes the #objActorPlayer cutscene actor through spawnUnit→spawnEnemy (combat CpuAI, thespian #scriptToPerform dropped) instead of a thespian puppet — PORT-BUG, latent/never-instantiated (animChar/team/props all faithful).

@@ -1,73 +1,117 @@
-# Audit: `act_babyOstrich`
+# Audit: `act_babyOstrich` (REPRODUCED)
 
-Per-property audit of the baby ostrich actor (CPUCharacter, ranged laser-firing enemy).
+Per-actor parity audit by RUNNING the actor in the port (`tools/_audit_babyOstrich.ts`, throwaway) and
+comparing against behaviour DERIVED from `casts/data/act_babyOstrich.txt` + `casts/script_objects/*`.
 
-## Properties Table
+`babyOstrich` is the **terminal hatchling** of the ostrich chain: `powerOstrich` (`act_powerOstrich.txt`)
+spits `ostrichEgg` bullets (`#bullet: #ostrichEgg`); each egg carries `#reincarnateAs: [#babyOstrich]`
+(`act_ostrichEgg.txt:14`), so when an egg lands/expires it reincarnates into a babyOstrich. babyOstrich
+itself has **no** `#reincarnateAs`/`#reincarnateInto` — it does **NOT** grow into a powerOstrich.
 
-| Property | Verdict | Original Cite | Port Cite | Note |
-|----------|---------|---------------|-----------|------|
-| objType: #objCPUCharacter | USED | objCPUCharacter.txt:1, archetypes resolveActor | archetypes.ts:137 (spawnEnemy) | Type determines archetype (EnemyArchetype) |
-| AiType: #objAiCPU | USED | objAiPlayer.txt (AI dispatch), archetypes determines behaviour | archetypes.ts:171 (str "AiType") | Routed to EnemyAI (standard hunt/attack FSM) |
-| inherit: #CPUCharacter | USED | registry.resolveActor merges chains | registry.ts:93–110 (resolveActor) | Parent merged into child; stats inherited |
-| name: "babyOstrich" | USED | objActorData.txt, identity tracking | archetypes.ts:256 (actorType: actorName) | Actor type key for respawning |
-| team: #monsters | USED | modTeam uses for allegiance/targeting | archetypes.ts:260 (str "team") | Determines enemy vs ally; #monsters hunts #aldevar |
-| energy: 100 | USED | modEnergy init pEnergy | archetypes.ts:258 (num "energy", 40) | Max health; babyOstrich 100 > default 40 |
-| strength: 10 | USED | modCharacterAttackProperties pStrength multiplies attack power | archetypes.ts:259 (num "strength", 5) | Melee damage: power × strength × scale; babyOstrich 10 > default 5 |
-| dexterity: 10 | USED | modCharacterAttackProperties pDexterity modifies ranged cooldown | archetypes.ts:174 (num "dexterity", 0.2) | Ranged cooldown inc; babyOstrich 10 >> default 0.2 |
-| inertia: 30 | USED | objGameObject.takeHit damps knockback/damage (100-inertia)/100 | archetypes.ts:262 (num "inertia", 0); Movement.ts:41, 55 | Knockback resistance: 30% dampening |
-| damageSpeed: 3 | GAP | modEnergy.takeDamage: `if amount > pDamageSpeed then amount -= pDamageSpeed` | absent | Physical armor: incoming damage ≥3 is reduced by 3. Port takes full damage. |
-| dieSound: #none | USED | objCharacter.playSound(pDieSound) on death (line unclear, search modGrave) | archetypes.ts:289 (dieSound from d) | Sound on death; #none = silent (default) |
-| takeHitSound: "dragon_hit" | GAP | modEnergy.loseEnergy:206 plays pTakeHitSound on damage | absent from port | Damage feedback sound; never played in port |
-| takeHitVolume: 50 | GAP | modEnergy.loseEnergy:206 playSound(pTakeHitSound, pTakeHitVolume) | absent from port | Volume scale for damage sound (50/100); no takeHit sound at all |
-| walkSpeed: 1 | USED | modMoveToLoc pWalkSpeed target speed | archetypes.ts:257 (walkSpeed: num * 0.6) | Movement max speed; babyOstrich 1 → 0.6 px/tick (v. slow) |
-| experienceImWorth: 4 | USED | modExperience.attributeExperience awards imWorth + xp/2 | archetypes.ts:290 (experienceImWorth); experience.ts:15, 25, 40 | XP on kill: 4 + (victim's earned XP / 2) |
-| startingLevel: 0 | USED | modExperience.levelUpToStartingLevel runs `repeat 1 to pStartingLevel: levelUp` | archetypes.ts:307–308 (for loop forceLevelUp) | Pre-levelling (goblin heros use this); 0 = no pre-level |
-| eyestrain: 25 | GAP | modCharacterAttackProperties pEyestrain multiplies attack.inaccuracy on #ranged/#magic | absent from port | Ranged/spell accuracy debuff; not modelled in port |
-| attack.animframe: 3 | USED | modAnim plays frame N of attack strip | archetypes.ts:163 (typeFromAnimType determines ranged; animType used) | Attack animation keyframe; not directly read in port (anim driven by component state) |
-| attack.animType: #naturalRanged | USED | modAttack.calcAttackType returns pAttack.type; animType→type enum | archetypes.ts:163, 169; weapon.ts:86–94 (typeFromAnimType) | Maps to "ranged" (fires bullet) vs "melee"/"magic" |
-| attack.bullet: #laser | USED | modAttack.calcAttackHitBullet fires the actor#bullet | archetypes.ts:240–241 (bulletActor resolution); weapon.ts:174 | Bullet type resolved at spawn; #laser → looks up act_laser data |
-| attack.collisionLoc: point(5,-9) | USED? | modAttack.calcAttackLoc = me.getLoc() + attack.collisionLoc (melee reach anchor) | registry.ts:25 (STRUCT_ATTACK default point); archetype doesn't extract | Melee offset (not used by ranged); port may use default or ignore |
-| attack.cooldown: 100 | USED | modAttack pChargeSpeedMax tied to cooldown; CpuAI fires if getCooldownFin() | archetypes.ts:180 (rawCooldown); weapon.ts:168 | Shot recovery frames; babyOstrich 100 (v. slow, ~1.6s at 60fps) |
-| attack.firingType: #fullstrength | NEEDS-REVIEW | modAttack.calcAttackPowerBullet reads firingType to scale power | registry.ts (not in STRUCT_ATTACK or resolveAttack output) | Bullet power scaling (#fullstrength, #proportional, etc.); unclear if port honors |
-| attack.name: #babyLaser | USED | modWeaponManager tracks as weapon identity (pWeapons[name]) | archetypes.ts:196–198 (enemyAttack = resolveAttack); weapon.ts:235 | Weapon/attack symbol; used as key |
-| attack.reach: 100 | USED | modAttack.calcAttackReach; CpuAI hunts if distToTarget ≤ reach | archetypes.ts:248–251 (reach resolved to px distance); weapon.ts:161–164 | Target range for firing (100 units = ~60 px at slice scale) |
-| attack.sound: "quadranid_fire" | USED | modSoundFX plays on attack release | archetypes.ts:282 (atkSound); weapon.ts:173 | Attack fire sound |
-| attack.volume: 10 | USED? | modSoundFX plays at this volume | archetypes.ts:282 (sound extracted); weapon.ts:173 | Fire sound volume (10/100 = quiet) |
+---
 
-## GAPS
+## DERIVED (from original data + scripts)
 
-### 1. damageSpeed (3 pts)
-- **Original**: modEnergy.takeDamage (line 250) — incoming damage ≥ damageSpeed is reduced by damageSpeed before being applied to energy. A unit with damageSpeed 3 takes 3 fewer HP per hit.
-- **Port**: No damageSpeed mechanic. All damage flows straight through to Energy (Movement.takeHit → next → Energy.takeHit → loseEnergy).
-- **Consequence**: babyOstrich (and all enemies) take unmitigated damage; effective toughness is reduced vs original (pre-fight durability changes).
+| Field | Value (act_babyOstrich.txt) | Meaning |
+|-------|------------------------------|---------|
+| objType / AiType / inherit | `#objCPUCharacter` / `#objAiCPU` / `#CPUCharacter` | standard hunt-and-fire CPU enemy |
+| team | `#monsters` | hostile to player side (`#aldevar`/village); targets them |
+| energy | `100` | hitpoints |
+| walkSpeed | `1` | very slow (CPUCharacter `#anyDirSpeed`, pathfinding) |
+| inertia | `30` | 30% knockback/impact damping |
+| damageSpeed | `3` | **wall/floor-slam threshold** during `#reel` only (see DERIVATION below) |
+| strength | `10` | melee strength AND `#fullstrength` bullet throw speed |
+| dexterity | `10` | ranged cooldown-counter `inc` (recovery rate, NOT frame count) |
+| eyestrain | `25` | ranged aim scatter (±25px at max range, scaled by dist/reach) |
+| experienceImWorth | `4` | XP awarded on kill |
+| startingLevel | `0` | no pre-levelling |
+| takeHitSound / Vol | `"dragon_hit"` / `50` | sound played on each non-lethal hit |
+| dieSound | `#none` | silent on death |
+| **attack** | — | — |
+| attack.name | `#babyLaser` | weapon identity |
+| attack.animType | `#naturalRanged` | **RANGED** FSM: approach to reach, then fire `#bullet` |
+| attack.bullet | `#laser` | fires `act_laser` (`damageMultiplier 10`, `power 0.3`) |
+| attack.animframe | `3` (lowercase override) | **fires once per strip play**, on frame 3 |
+| attack.reach | `100` | fires when target within 100px |
+| attack.cooldown | `100` | counter ceiling; recovery = ceil((100-1)/dexterity 10) ≈ **10 ticks**, NOT 100 frames |
+| attack.firingType | `#fullstrength` | throw speed = caster `strength` (=10), constant regardless of distance |
+| attack.collisionLoc | `point(5,-9)` | muzzle offset for the laser spawn |
+| attack.sound / volume | `"quadranid_fire"` / `10` | fire sound |
+| **sprite #name** | `"babyOstrich"` | resolves to bundled `babyOstrich_*` strips |
+| death/grave | grave on (no `#graveOn:false`, not a ghost) → `babyOstrich_grave` | leaves a permanent grave; no reincarnation |
 
-### 2. takeHitSound: "dragon_hit" (not played)
-- **Original**: modEnergy.loseEnergy (line 206) — `me.big.playSound(pTakeHitSound, pTakeHitVolume)` plays whenever the unit is damaged.
-- **Port**: No takeHitSound handler exists; Hurt.takeHit skips sound, only plays visual flash. Dwelling plays dieSound on death (combat.ts:1062), but not takeHitSound on damage.
-- **Consequence**: babyOstrich makes no sound when hit (only on death via dieSound #none). Missing combat feedback.
+### DERIVATION — `damageSpeed` is a reel-slam threshold, not general armor
+`casts/script_objects/modEnergy.txt:249` `on takeDamage me, amount: if amount > pDamageSpeed then amount -= pDamageSpeed; me.loseEnergy(amount)`.
+The ONLY callers of `takeDamage` are `objCPUCharacter.txt:111,124` inside `collisionVertical`/`collisionWall`,
+each gated `case me.big.getMode() of #reel,#reel_fly,#reel_land:` — i.e. damageSpeed mitigates ONLY the
+bonus damage taken when a knocked-back unit slams into a wall/floor. Normal weapon hits (`loseEnergy`/
+`takeHit`) are NOT routed through it. (The prior version of this doc wrongly called it general armor.)
 
-### 3. takeHitVolume: 50 (unused without takeHitSound)
-- **Original**: modEnergy.loseEnergy (line 206) — volume scalar for the takeHitSound.
-- **Port**: No takeHitVolume used; takeHitSound not played at all (see gap 2).
-- **Consequence**: N/A (cascades from gap 2).
+### DERIVATION — cooldown 100 is a counter ceiling, not a frame gap
+`modWeaponManager.txt:163-201` builds `pCooldownCounters[weapon] = CounterNew()` with `tim[2] = cooldown`
+(=100) and `inc = dexterity` (=10, for `#ranged`). The `Counter()` general function adds `inc` per tick
+from `tim[1]=1` until `>= tim[2]`, so recovery = ceil((100-1)/10) ≈ 10 ticks, NOT 100 frames. A faithful
+port must NOT treat cooldown as a literal frame gap.
 
-### 4. eyestrain: 25
-- **Original**: modCharacterAttackProperties (line 8) — pEyestrain is a "multiplier of attack.inaccuracy on #ranged and #magic". Ranged attack inaccuracy is scaled by eyestrain.
-- **Port**: No eyestrain property exists. Ranged attacks fire with fixed trajectories (no RNG scatter).
-- **Consequence**: babyOstrich's laser fires with zero inaccuracy (perfectly accurate); original had 25× base inaccuracy (very twitchy aim). Makes babyOstrich much more accurate than intended.
+### DERIVATION — `#fullstrength` throw velocity
+`modAttack.txt:743-775`: `#fullstrength` → `speed = me.getStrength()` (=10); the bullet velocity vector is
+`distXY / (distToTarget/speed)`, i.e. constant speed `strength` toward the target (vs `#proportional` =
+`distXY/10`). So babyOstrich's laser flies at ~10 px/tick regardless of range.
 
-### 5. attack.firingType: #fullstrength
-- **Original**: modAttack.calcAttackPowerBullet — firingType controls how the bullet's power is scaled relative to the caster's charge/stats. #fullstrength = max power; #proportional = scales with charge.
-- **Port**: firingType is not extracted or used in resolveAttack (not in STRUCT_ATTACK defaults, not in AttackData interface).
-- **Consequence**: babyOstrich's laser fire always at base power; if #fullstrength has a distinct multiplier, it's lost. (Likely low-impact if bullet.attack.power is already tuned, but a faithful gap.)
+---
 
-## Summary
+## OBSERVED (port, `tools/_audit_babyOstrich.ts`, 200 ticks, target = `knight` ally @70px)
 
-**5 gaps total:**
-1. damageSpeed — physical damage reduction (toughness)
-2. takeHitSound — damage feedback audio
-3. takeHitVolume — volume for damage sound (cascades from 2)
-4. eyestrain — ranged attack accuracy/inaccuracy scatter (accuracy overpowered)
-5. firingType — bullet power scaling mode (likely minor; power may be pre-tuned)
+- **animChar = `babyOstrich`** — resolves to real bundled strips (`babyOstrich_stand/walk/naturalRanged/grave` all present). **NOT a blackOrc fallback.** ✓
+- AI mode: `moveToAttack` (ranged FSM) the whole run — approaches and fires. ✓
+- **Fires `laser` bullets**, char = `laser` (real `laser_fly`/`laser_land` strips bundled). ✓
+- **1 shot per attack** (resolved `animFrame:[3]`); max bullets alive observed = 3, one per cast. ✓
+- Bullet velocity vx ≈ **9.7** (≈ strength 10) — `#fullstrength` honored. ✓
+- Bullet vy ≈ -0.8/1.7/1.8 — small per-axis scatter consistent with **eyestrain** modelled. ✓
+- reach: resolved attack `reach: 100`; fired at a target 70px away (within reach). ✓
+- Cadence: shots at t=13,35,79 (gaps 22,44) — far shorter than raw 100; consistent with the ~10-tick
+  counter recovery + strip/reposition overhead (resolved internal `cooldown:221` is the back-solved counter
+  hi that recovers in ~`framesWanted` ticks at inc=dexterity, NOT a literal gap). ✓
+- takeHitSound `"dragon_hit"`/vol handled by `Hurt.takeHit` (`hurt.ts:22,58`). ✓
+- Death: `loseEnergy(9999)` → `isDead()=true`; no extra entities spawned (no growth/reincarnation). ✓
+- Grave: `Grave.graveOn` defaults true → dead actor holds the `babyOstrich_grave` member. ✓
 
-**Most impactful:** damageSpeed (survivability), takeHitSound (feedback), eyestrain (combat feel).
+(Note: an initial probe using `send("takeDamage",…)` failed to kill — that is the wrong port API, NOT a
+port divergence; the lethal path is `loseEnergy`/`takeHit`. Re-probed with `loseEnergy`.)
+
+---
+
+## DIVERGENCES
+
+### DIVERGENCE 1 — bullet damage decoupled from velocity (FAITHFUL-by-design, port-wide)
+- **Original** (`modAttack.txt` performRangedAttack + `objBullet` takeHit): the laser's damage is the L1
+  magnitude of its live collision vector `|getVect()|` × `damageMultiplier` (10). Since `#fullstrength`
+  fires it at speed=strength (10), damage scales with that velocity.
+  ```
+  laser.damageMultiplier 10 · |bulletVect| (=strength 10 at full speed)  ── original
+  ```
+- **Port** (`control.ts:813-817` comment; `bullets.ts:fireBullet` + `weapon.ts:151 BULLET_DAMAGE_SCALE`):
+  velocity governs **travel time only**; bullet damage uses a calibrated fixed reference (`BULLET_DAMAGE_SCALE
+  0.40` on speed·power·mult), deliberately stable so balance/tests don't shift with throw speed.
+  ```
+  power · mult · BULLET_DAMAGE_SCALE at a fixed reference speed  ── port
+  ```
+- **Verdict: FAITHFUL-quirk (deliberate abstraction).** This is a documented, intentional port-wide
+  enemy/spell-bullet damage model (the "K1 reference"), not a babyOstrich-specific bug. Velocity, reach,
+  cadence, sound, bullet identity, eyestrain, firingType and the shot count all reproduce faithfully; only
+  the damage-vs-speed coupling is abstracted, identically for every ranged enemy.
+
+---
+
+## NON-DIVERGENCES (previously-suspected gaps now CONFIRMED FAITHFUL)
+- **damageSpeed**: port models it correctly as the wall/floor reel-slam threshold (`movement.ts:47,197-201`,
+  forwarded `archetypes.ts:384`), matching the original's `takeDamage`-only usage. NOT general armor.
+- **eyestrain**: modelled (`control.ts:496,823`; `math.ts:aimWithEyestrain`) with the same dist/reach
+  scaling + per-axis VarRoughly scatter as `objAiAttack.modifyLocWithEyestrain`.
+- **takeHitSound/Volume**: handled by `Hurt` (`hurt.ts:22-23,58`), played on non-lethal hits.
+- **cooldown 100**: correctly calibrated to the ~10-tick counter recovery (inc=dexterity), not a 100-frame gap.
+- **sprite / grave**: real `babyOstrich_*` strips bundled; no blackOrc fallback; `babyOstrich_grave` on death.
+- **no growth**: babyOstrich is terminal (no `#reincarnateAs`); only `ostrichEgg` reincarnates INTO it.
+
+babyOstrich | DIVERGENCES=1
+- bullet damage decoupled from throw velocity (FAITHFUL-by-design: port-wide K1 fixed-reference bullet-damage abstraction, not a babyOstrich bug)
