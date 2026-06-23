@@ -94,3 +94,28 @@
 **prestotolinInGame** exhibits full behavioral parity across all axes: spellcaster AI configuration, spell weapon resolution (I9 fix), mana scaling, pre-levelling, leaveWhenFinished retirement, spell discard on death, and spell lifecycle (charge/fly/explode). No behavioral divergences detected.
 
 **Status:** CLEAN
+
+---
+
+## RE-VERIFY BY REPRODUCTION (2026-06-23)
+
+Real assets/data; `prestotolinInGame` as `#aldevar` ally vs PINNED `darkGolem`; substrate rebuilt per tick;
+260 frames. Confirms the streaming `#fireBullets` path (shared with the now-fixed `ochreInGame`) is correct
+for prestotolin too. Harness gitignored/deleted.
+
+| Check | Expected | Observed | Status |
+|---|---|---|---|
+| Sprite char | `presto` (not blackOrc) | `spriteCharOr("presto")→presto`; full charge/release/grave strips bundled | ✓ |
+| Weapon | `#energyPulseSpell` (`#releaseFunction #fireBullets`, `#fireDelay 5`, `#bullet #energyPulse`) | `getCurrentAttack name:#energyPulse releaseFunction:#fireBullets fireDelay:5 type:magic` | ✓ |
+| Stream cadence | one bullet every `fireDelay`=5 ticks (NOT one orb per cooldown) | bullets at t=14,19,24,29,34,… → clean **5-tick spacing**, **58 bullets** over 260t (the I8 stream, not under-firing) | ✓ |
+| Stream lands | bullets damage an in-range hostile | with the pin at 200px the `#energyPulse` (friction 6, ~116px lob range) falls SHORT (probe artifact, see note); re-run with the pin at **80px** → **23 damage ticks**, energyFrac dropping → hits land | ✓ |
+| AI mode | spellcaster | `optimumPosition`(238t)+`moveToAttack`(22t) | ✓ |
+| startingLevel 5 | pre-levelled | spawns at level 5 | ✓ |
+
+**Probe note (NOT a port bug):** `energyPulse` is a `#type:#explode` short-range lob (`#friction point(6,6)`)
+that decelerates and only reaches ~116px from the muzzle. A pin at 200px is out of that range, so the stream
+visibly missed; moving the pin in-range (80px) lands the stream cleanly. The pin distance, not the port, was
+the cause — confirmed by re-pinning.
+
+**CLEAN — reproduced faithfully.** The `#fireBullets` stream emits at the correct `fireDelay` cadence and
+lands on an in-range target.

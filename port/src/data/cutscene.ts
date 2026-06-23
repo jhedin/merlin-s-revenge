@@ -40,12 +40,21 @@ const LOC_ARG_VERBS = new Set(["at", "walkTo", "teleportInAt", "propAt"]);
 
 const num = (s?: string): number => { const m = /-?\d+(?:\.\d+)?/.exec(s ?? ""); return m ? Number(m[0]) : 0; };
 
+// resolveAlias: the registered character key matching `s` case-insensitively (Lingo alias matching ignores
+// case), or undefined. Returns the CANONICAL key so downstream Thespian player lookups by alias still hit.
+function resolveAlias(chars: Record<string, string>, s: string): string | undefined {
+  if (chars[s] !== undefined) return s;
+  const lc = s.toLowerCase();
+  for (const k of Object.keys(chars)) if (k.toLowerCase() === lc) return k;
+  return undefined;
+}
+
 /** interpretLineArgs: parse the verb's remaining words into a typed argument (objScript.txt:248). */
 function interpretArg(verb: string, words: string[], chars: Record<string, string>): CutArg {
   const joined = words.join(" ");
   if (ACTOR_ARG_VERBS.has(verb)) {
-    const a = words[0];
-    return a !== undefined && chars[a] !== undefined ? { kind: "actor", alias: a } : { kind: "none" };
+    const a = words[0] !== undefined ? resolveAlias(chars, words[0]) : undefined; // case-insensitive (turnToFace M)
+    return a !== undefined ? { kind: "actor", alias: a } : { kind: "none" };
   }
   if (TEXT_ARG_VERBS.has(verb)) return { kind: "text", text: joined };
   if (SOUND_ARG_VERBS.has(verb)) {
@@ -116,13 +125,18 @@ export function parseCutscene(src: string): Cutscene {
     }
     if (section === "lines") {
       // interpretLineCommand: first word ends in ":" -> dialogue (speakLine). The speaker is word1's alias.
+      // Lingo matches the alias CASE-INSENSITIVELY (the scripts mix `m:` and `M:`); resolveAlias returns the
+      // CANONICAL registered key so a `M: …` line isn't silently dropped (stones1 lost a whole Merlin line)
+      // and `T turnToFace m` resolves its actor.
       const say = /^(\w+):\s?(.*)$/.exec(line);
-      if (say && chars[say[1]!] !== undefined) { steps.push({ kind: "say", alias: say[1]!, text: say[2]! }); continue; }
+      const sayAlias = say ? resolveAlias(chars, say[1]!) : undefined;
+      if (say && sayAlias !== undefined) { steps.push({ kind: "say", alias: sayAlias, text: say[2]! }); continue; }
       const toks = line.split(/\s+/);
-      if (toks.length >= 2 && chars[toks[0]!] !== undefined) {
+      const cmdAlias = toks[0] !== undefined ? resolveAlias(chars, toks[0]) : undefined;
+      if (toks.length >= 2 && cmdAlias !== undefined) {
         // actor-scoped verb: word1 is the character, word2 the verb, rest the args.
         const verb = toks[1]!; const words = toks.slice(2);
-        steps.push({ kind: "cmd", actor: toks[0]!, verb, arg: interpretArg(verb, words, chars), args: words });
+        steps.push({ kind: "cmd", actor: cmdAlias, verb, arg: interpretArg(verb, words, chars), args: words });
       } else {
         // global verb: word1 is the verb.
         const verb = toks[0]!; const words = toks.slice(1);

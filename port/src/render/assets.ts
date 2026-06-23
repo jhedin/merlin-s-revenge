@@ -34,7 +34,7 @@ export interface AssetIndex {
   // SS-1 bitmap fonts (objFont): font symbol (menu/numbers/small/smallgrey) -> glyph-sheet + metrics.
   // `cell` is the authoritative slice size (charSize); `key` is the ordered glyph string (cell index =
   // key.indexOf(char)); `matte` selects the keying mode (white→transparent vs dark→transparent).
-  fonts?: Record<string, { file: string; w: number; h: number; cell: [number, number]; gap: number; key: string; matte: "white" | "dark" }>;
+  fonts?: Record<string, { file: string; w: number; h: number; cell: [number, number]; gap: number; key: string; matte: "white" | "dark"; cellOffset?: number }>;
 }
 
 export const mapList = mapsIndex as MapMeta[];
@@ -154,7 +154,7 @@ export class Assets {
     const meta = this.index.fonts?.[sym.replace(/^#/, "")];
     const sheet = meta && this.images.get(meta.file);
     if (!meta || !sheet) return undefined;
-    const f = new BitmapFont(sheet, meta.cell[0], meta.cell[1], meta.gap, meta.key, meta.matte);
+    const f = new BitmapFont(sheet, meta.cell[0], meta.cell[1], meta.gap, meta.key, meta.matte, meta.cellOffset ?? 0);
     this.fontCache.set(sym, f);
     return f;
   }

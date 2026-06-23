@@ -189,3 +189,24 @@ missing strip to **`#stand`**; the port's `Anim.animFor` does the same. Reeling-
 reproduced faithfully (the white flick-on-hit still plays via ColourTransform).
 
 **Anim-cosmetic: CLEAN (0 PORT divergences; 1 faithful quirk — reel→stand, no reel art in original).**
+
+---
+
+## RE-VERIFY BY REPRODUCTION (2026-06-23)
+
+Real assets/data; `doubleDarkGolem` as `#monsters` enemy vs PINNED `archer` (`#aldevar`); substrate rebuilt
+per tick; 260 frames + a forced-kill to observe reincarnation. Harness gitignored/deleted.
+
+| Check | Expected | Observed | Status |
+|---|---|---|---|
+| Sprite char | `doubleDarkGolem` (not blackOrc) | `spriteCharOr→doubleDarkGolem`; `_stand`(1) `_walk`(8) `_naturalRanged`(38) `_grave`(2) bundled | ✓ |
+| Weapon | `#throwBoulder` `#naturalRanged` `#darkRock`, reach 150 | `getCurrentAttack name:#throwBoulder type:ranged reach:150 animFrame:[5,11,18,25]` | ✓ |
+| **Multi-attack (4 shots/cycle)** | fire on each of `#animframe [5,11,18,25]` | bullets at strip-ticks **[5,11,18,24]** per cycle (frame 25 lands at tick 24 by per-frame delay accumulation) → **4 shots per attack** | ✓ |
+| Approach | walkSpeed 1 → creeps into reach 150 | walked from 200px to dist 149, then fired | ✓ |
+| Damage | boulders hit | pinned archer **energyFrac→0.145** (`collisionLoc -10` is within the 12px collision tolerance — see garTower note) | ✓ |
+| **Reincarnation** | `[#darkGolem, #darkGolem]` on KIA | killed → `killedInAction true` → **2 `darkGolem` children** | ✓ |
+
+**CLEAN — reproduced faithfully.** The 4-frame multi-attack fires four `darkRock` boulders per cycle and the
+golem splits into two darkGolems on death. (Its boulders land despite the muzzle-aim aiming bug noted under
+`garTower` only because `collisionLoc.y = -10` falls inside the ±12px hit tolerance; a larger offset would
+miss — that bug bites tower-class units, not this golem.)

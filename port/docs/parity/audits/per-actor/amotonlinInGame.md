@@ -113,3 +113,23 @@
 ## Conclusion
 
 **amotonlinInGame** is CLEAN. All properties are present and correct. Behavioral implementation of spellcaster AI (charge-release spell at full mana ceiling, bullet-dodge repositioning, kite-reload, retire on room clear) and arcticBlast freeze spell (charge-scaled radius, vector-scaled freeze accumulation clamped to 1000 ticks, teal glow) match the original faithfully. The only missing property from the generated data is `chargeExplodeFactor` in the arcticBlast #attack, which correctly falls back to the STRUCT_ATTACK default of 4 in port/src/data/registry.ts:21.
+
+---
+
+## RE-VERIFY BY REPRODUCTION (2026-06-23)
+
+Loaded the real bundled `assets.json`+`data.json`, spawned `amotonlinInGame` as an `#aldevar` ally vs a
+PINNED hostile `darkGolem` (`#monsters`, 750 energy, held at a fixed loc each tick), `rebuildCombatSubstrate`
+per tick, ticked 260 frames. Throwaway harness (gitignored), deleted.
+
+| Check | Expected | Observed | Status |
+|---|---|---|---|
+| Sprite char | `amo` (not blackOrc) | `spriteCharOr("amo")→amo`; strips `_stand`(1) `_walk`(8) `_charge`(4) `_release`(4) `_chargeWalk`(4) `_releaseWalk`(4) `_grave`(2) all bundled | ✓ |
+| Team-hate | `#aldevar` hates `#monsters` | findTarget→darkGolem dist 163; hate tier includes `#monsters` | ✓ |
+| AI mode | spellcaster dodge/position | `optimumPosition`(238t) + `moveToAttack`(22t) | ✓ |
+| Cast lifecycle | charge→fly→explode magic orb | `getCurrentAttack type:magic name:#arcticBlast`; 3 SpellActor orbs born over the head (phase=charge), fly to target, explode | ✓ |
+| Cadence | charge+cooldown 30 | casts at t=2,24,46 → **22-tick gaps** | ✓ |
+| Damage + freeze | `[#takeFreeze,#takeHit]` | pinned darkGolem 1.0→**0.553** energyFrac; resolved payload `["takeFreeze","takeHit"]` | ✓ |
+
+Punch melee (`#naturalMelee` animFrame 14) never triggers — magic reach 9999 keeps the AI ranged the whole
+run; no `amo_naturalMelee` strip is bundled and none is needed. **CLEAN — reproduced faithfully.**

@@ -72,4 +72,14 @@ playMusic #electronic_merlin_v1_02 200
     expect(c.steps[0]).toMatchObject({ kind: "say", alias: "m", text: "hi" });
     expect(c.steps[1]).toMatchObject({ kind: "cmd", actor: "m", verb: "goWastedMode" });
   });
+
+  // Lingo matches aliases case-insensitively; the shipped scripts mix `m:`/`M:` and `T turnToFace m`. Before
+  // the fix an uppercase `M:` line was silently dropped (a whole Merlin line in stones1) and `T turnToFace m`
+  // fell through to a junk global verb. resolveAlias normalizes to the canonical registered key.
+  it("matches a speaker/actor alias CASE-INSENSITIVELY (canonical key preserved)", () => {
+    const c = parseCutscene(`characters\n#merlin - m\n#tv - t\nlines\nM: Where might I find this spell?\nT turnToFace M\n`);
+    expect(c.steps[0]).toMatchObject({ kind: "say", alias: "m", text: "Where might I find this spell?" });
+    expect(c.steps[1]).toMatchObject({ kind: "cmd", actor: "t", verb: "turnToFace" });
+    expect((c.steps[1] as Extract<typeof c.steps[number], { kind: "cmd" }>).arg).toMatchObject({ kind: "actor", alias: "m" });
+  });
 });

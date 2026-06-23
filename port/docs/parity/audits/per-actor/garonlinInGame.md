@@ -141,3 +141,22 @@ For garonlinInGame with default mana_flow=1: charge rate = attack.chargeSpeed ×
 
 ## Conclusion
 **CLEAN** — All properties present and correctly valued in the port. All behavioral subsystems (spellcaster AI, mana scaling, spell lifecycle, retire-on-clear) are faithfully implemented. No gaps or deviations detected.
+
+---
+
+## RE-VERIFY BY REPRODUCTION (2026-06-23)
+
+Real assets/data; `garonlinInGame` as `#aldevar` ally vs PINNED `darkGolem`; substrate rebuilt per tick; 260
+frames. Harness gitignored/deleted.
+
+| Check | Expected | Observed | Status |
+|---|---|---|---|
+| Sprite char | `garo` (not blackOrc) | `spriteCharOr("garo")→garo`; `_stand/_walk(8)/_charge(4)/_release(4)/_chargeWalk(4)/_releaseWalk(4)/_grave(2)` bundled | ✓ |
+| Weapon | `#darkBlast` magic, power 3 | `getCurrentAttack name:#darkBlast type:magic powerScalar 3 cooldown 16 chargeMaxBasic 10` | ✓ |
+| AI mode | spellcaster | `optimumPosition`(238t)+`moveToAttack`(22t) | ✓ |
+| Cast lifecycle | charge→fly→explode | 3 SpellActor orbs born, fly, explode | ✓ |
+| Cadence | charge+cooldown 15 | t=2,24,46 → **22-tick gaps** | ✓ |
+| Damage | high-power bolt kills | pinned darkGolem **energyFrac→0.000, 2 respawns** (power 3 → most kills of the bolt-casters) | ✓ |
+
+**CLEAN — reproduced faithfully.** darkBlast's power 3 (vs energyBlast 0.5) visibly produces more kills,
+confirming `power`/`chargeMaxBasic` feed the explode damage. Punch backup never fires.

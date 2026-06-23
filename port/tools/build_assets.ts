@@ -347,13 +347,17 @@ for (const name of MEMBER_NAMES) {
 // sheets carry blank trailing padding past the key (small: 58 keys×8=464 of 609px; menu: 55×10=550 of
 // 1000px), so dividing w by cells over-counts. Sheets are black-on-white masks (numbers/small/menu) or
 // grey-on-dark (smallgrey) → keyed (white→transparent / dark→transparent) + tinted at draw time.
-interface FontMeta { file: string; w: number; h: number; cell: [number, number]; gap: number; key: string; matte: "white" | "dark"; }
+interface FontMeta { file: string; w: number; h: number; cell: [number, number]; gap: number; key: string; matte: "white" | "dark"; cellOffset: number; }
 const fonts: Record<string, FontMeta> = {};
-const FONT_DEFS: { sym: string; sheetPrefix: string; props: string; matte: "white" | "dark" }[] = [
-  { sym: "menu",      sheetPrefix: "fnt_menu",      props: "fnt_menu_properties.txt",      matte: "white" },
-  { sym: "numbers",   sheetPrefix: "fnt_numbers",   props: "fnt_numbers_properties.txt",   matte: "white" },
-  { sym: "small",     sheetPrefix: "fnt_small",     props: "fnt_small_properties.txt",     matte: "white" },
-  { sym: "smallgrey", sheetPrefix: "fnt_smallgrey", props: "fnt_smallgrey_properties.txt", matte: "dark"  },
+// cellOffset: some shipped sheets have a LEADING BLANK cell before the keyed glyphs, so glyph key-index k
+// lives at sheet-cell k+cellOffset. The `small` sheet (05299_fnt_smallCC) starts blank → 'A' is at cell 1
+// (without this every UI letter renders the PREVIOUS glyph). Verified by ink-per-cell: small cell0 is empty;
+// menu/numbers/smallgrey cell0 hold a glyph. A fixed per-sheet fact (cannot be PIL-detected in CI).
+const FONT_DEFS: { sym: string; sheetPrefix: string; props: string; matte: "white" | "dark"; cellOffset: number }[] = [
+  { sym: "menu",      sheetPrefix: "fnt_menu",      props: "fnt_menu_properties.txt",      matte: "white", cellOffset: 0 },
+  { sym: "numbers",   sheetPrefix: "fnt_numbers",   props: "fnt_numbers_properties.txt",   matte: "white", cellOffset: 0 },
+  { sym: "small",     sheetPrefix: "fnt_small",     props: "fnt_small_properties.txt",     matte: "white", cellOffset: 1 },
+  { sym: "smallgrey", sheetPrefix: "fnt_smallgrey", props: "fnt_smallgrey_properties.txt", matte: "dark",  cellOffset: 0 },
 ];
 const parseFontProps = (path: string) => {
   const s = readFileSync(path, "utf8");
@@ -363,7 +367,7 @@ const parseFontProps = (path: string) => {
   return { key, cell: [Number(cs?.[1] ?? 8), Number(cs?.[2] ?? 10)] as [number, number], gap };
 };
 const OUT_FONTS = join(OUT_ASSETS, "fonts"); mkdirSync(OUT_FONTS, { recursive: true });
-for (const { sym, sheetPrefix, props, matte } of FONT_DEFS) {
+for (const { sym, sheetPrefix, props, matte, cellOffset } of FONT_DEFS) {
   // PREFIX-COLLISION trap: `fnt_small` is a prefix of `fnt_smallgrey` — exclude the longer sibling
   // family so the small face doesn't grab the smallgrey sheet. Among the rest, the shortest engine name
   // wins (least-mangled candidate), mirroring the members block.
@@ -376,7 +380,7 @@ for (const { sym, sheetPrefix, props, matte } of FONT_DEFS) {
   const { key, cell, gap } = parseFontProps(propPath);
   const out = `fonts/${basename(b.file)}`;
   copyFileSync(join(EXTRACTED, b.file), join(OUT_ASSETS, out));
-  fonts[sym] = { file: out, w: b.w, h: b.h, cell, gap, key, matte };
+  fonts[sym] = { file: out, w: b.w, h: b.h, cell, gap, key, matte, cellOffset };
 }
 
 // ── emit + report ─────────────────────────────────────────────────────────────────────────────

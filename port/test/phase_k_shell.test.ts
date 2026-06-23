@@ -192,8 +192,9 @@ describe("K17 per-actor fader", () => {
     t.tick(); // runs at/at then lightsDown -> both actors fading; the chain gates on the fader count
     const m = t.visibleActors().find((p) => p.alias === "m")!.entity.get(Movement);
     expect(m.x).toBe(100);                       // `at 999` NOT yet run (gated by the faders)
-    // advance until the faders complete; only then does `at 999` run.
-    for (let i = 0; i < 40; i++) t.tick();
+    // advance until the faders complete; only then does `at 999` run. (FADE_DURATION = 50: startSlowFade
+    // speed 2 -> 100/2 frames; allow a margin past it.)
+    for (let i = 0; i < 70; i++) t.tick();
     const mAfter = t.visibleActors().find((p) => p.alias === "m");
     // by now the faders finished and `at 999` ran (or the scene is wrapping up via the trailing wait)
     expect(mAfter ? mAfter.entity.get(Movement).x : 999).toBe(999);
@@ -202,7 +203,7 @@ describe("K17 per-actor fader", () => {
   it("a faded-out actor reports alpha 0 (per-sprite fade), a lit actor reports 1", () => {
     const cut = parseCutscene(`characters\n#merlin - m\nlines\nm at 100\nlightsDown\nwait 200\n`);
     const t = new Thespian(cut, host);
-    for (let i = 0; i < 40; i++) t.tick();
+    for (let i = 0; i < 70; i++) t.tick(); // FADE_DURATION = 50 (startSlowFade speed 2); allow a margin
     const p = t.visibleActors().find((q) => q.alias === "m")!;
     expect(t.actorAlpha(p)).toBeCloseTo(0, 2); // fully faded out
   });

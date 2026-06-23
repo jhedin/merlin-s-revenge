@@ -138,3 +138,23 @@ Per the audit charter, the following are NOT flagged as gaps:
 
 **foelinInGame is CLEAN.** All data properties are correctly loaded from the generated registry and wired to the spellcaster AI FSM. Behavioral chains (optimalPosition kiting, spell casting with multistage tiers, runReload after shot, leaveWhenFinished retirement, mana-scaled charge, melee backup) are faithfully ported. No gaps detected.
 
+
+---
+
+## RE-VERIFY BY REPRODUCTION (2026-06-23)
+
+Real assets/data; `foelinInGame` (summoner) as `#aldevar` ally vs PINNED `darkGolem`; substrate rebuilt per
+tick; 260 frames. Harness gitignored/deleted.
+
+| Check | Expected | Observed | Status |
+|---|---|---|---|
+| Sprite char | `foe` (not blackOrc) | `spriteCharOr("foe")→foe`; full `_stand/_walk/_charge/_release/_chargeWalk/_releaseWalk/_grave` bundled | ✓ |
+| Weapon | `#monsterSummonAi` (`#explodeFunction #summonUnit`, `#randomSummon true`) | resolved magic summon weapon | ✓ |
+| AI mode | spellcaster | `optimumPosition`(238t)+`moveToAttack`(22t) | ✓ |
+| Summon lifecycle | spell FLIES then summons at landing (J1 fix) | 3 SpellActor orbs born → fly → on explode spawn **`summonArcher`** allies (team `#monsterSummon` = `#residentTeamCategory`) | ✓ |
+| Multistage tier | mana_capacity 11 → only the cheapest tier (`summonArcher:12`) reachable, `randomSummon` wobble | **11 summonArcher** spawned, no higher tier — correct (cap 11 × chargeMaxModifier 1.2 ≈ 13 lands in the archer band) | ✓ |
+| Summons act | summoned archers fight | the 11 summonArchers fired **29 bullets** of their own at the hostile | ✓ |
+
+The summons spawn at the spell's LANDING loc (not piled on the caster) — the J1 path. **CLEAN — reproduced
+faithfully.** A low-mana foelin correctly only affords summonArcher; a higher-mana/leveled caster would
+wobble up the multistage tiers.

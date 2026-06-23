@@ -120,3 +120,30 @@ describe("H1: Thespian drives real actors through Movement/Anim", () => {
     expect(t.visibleActors().length).toBe(0);
   });
 });
+
+describe("cutscene stage + timing fidelity (RESWEEP fixes)", () => {
+  beforeEach(setupWorld);
+
+  it("setStage SNAPS the background to black (pSetSceneColour rgb(0,0,0))", () => {
+    const t = new Thespian(parseCutscene(`characters\n#merlin - m\nlines\nsetStage\nwait 200\n`), host);
+    t.tick();
+    expect(t.bg).toMatchObject({ r: 0, g: 0, b: 0 });
+  });
+
+  it("backgroundColourTo is a FIXED ~50-frame percent tween (speed 2), not a fast per-channel step", () => {
+    const t = new Thespian(parseCutscene(`characters\n#merlin - m\nlines\nsetStage\nbackgroundColourTo rgb(220,220,220)\nwait 300\n`), host);
+    t.tick(); // setStage(black) + backgroundColourTo starts the tween (advances from the NEXT tick)
+    for (let i = 0; i < 25; i++) t.tick();
+    expect(t.bg.r).toBeGreaterThan(80); expect(t.bg.r).toBeLessThan(160); // ~halfway at 25 frames (was already ~done)
+    for (let i = 0; i < 30; i++) t.tick();
+    expect(Math.round(t.bg.r)).toBe(220);                                  // settled by ~50 frames
+  });
+
+  it("cutAnimChar resolves an actor's sheet via its data #name (prestotolin -> presto), not slice(0,3)", () => {
+    (game.assets.index.anims as any).presto_stand = { frames: [{}], delay: 4 };
+    const t = new Thespian(parseCutscene(`characters\n#prestotolin - p\nlines\np at 50\nwait 200\n`), host);
+    t.tick();
+    const p = t.visibleActors().find((a) => a.alias === "p")!;
+    expect(p.entity.get(Anim).char).toBe("presto"); // was "pre" (no such sheet) -> the actor rendered invisible
+  });
+});
