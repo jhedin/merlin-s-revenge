@@ -164,12 +164,17 @@ describe("G2: armyMaster reserve (bank on leave, re-field at saved level)", () =
     expect(game.armyMaster.teleportOut(orc)).toBe(false);
   });
 
-  it("banks only SUMMONED allies (teleportable flag) — tile-spawned #aldevar units stay put", () => {
+  it("banks the #leaveWhenFinished army (incl. tile-spawned), but NOT a non-army ally", () => {
     const summoned = spawnAlly("warrior", 0, 0);     // via spawnAlly -> teleportable
     expect(game.armyMaster.teleportOut(summoned)).toBe(true);
-    // a tile-spawned #aldevar unit becomes an ally via spawnUnit but is NOT teleportable
-    const tile = spawnUnit("warrior", 0, 0); // warrior's real team is #aldevar -> routed to ally
-    if (tile.type === "ally") expect(game.armyMaster.teleportOut(tile)).toBe(false);
+    // #leaveWhenFinished is intrinsic to the actor, not the spawn path: a tile-spawned warrior banks too
+    // (objAiCPU #noTargetFound banks any getLeaveWhenFinished ally — warrior/archer/dwarf/monk/king/wizards).
+    const tileArmy = spawnUnit("warrior", 0, 0);     // warrior's real team is #aldevar -> routed to ally
+    expect(tileArmy.type).toBe("ally");
+    expect(game.armyMaster.teleportOut(tileArmy)).toBe(true);
+    // a player-side ally that is NOT #leaveWhenFinished (a #monsterSummon throwaway) stays put — not banked.
+    const throwaway = spawnUnit("summonArcher", 0, 0);
+    expect(game.armyMaster.teleportOut(throwaway)).toBe(false);
   });
 
   it("round-trips pReserveArmy whole (addSaveData/restoreFromSave)", () => {

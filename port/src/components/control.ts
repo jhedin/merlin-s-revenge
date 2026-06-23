@@ -129,7 +129,9 @@ export class PlayerControl extends Component {
   summonArmy(input: Input): void {
     const team = this.entity.send("getTeam") as string;
     const at = input.cursor() ?? this.entity.get(Movement);
-    const types = game.armyMaster.reserveTypes(team);
+    // summonArmy fields the battalion only — wizards are summoned SEPARATELY via summonWizard (#wizard/Q).
+    // Re-fielding a banked wizard here (untracked by wizardMaster) would let a later Q spawn a second copy.
+    const types = game.armyMaster.reserveTypes(team).filter((t) => registry.resolveActor(t.replace(/^#/, ""))?.["wizard"] !== true);
     let i = 0;
     for (const typ of types) {
       if (game.teamMaster.atCapacity(team)) break;

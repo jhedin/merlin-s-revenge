@@ -186,17 +186,21 @@ async function main() {
     // win on TWO triggers (H3): clear-all OR reach+clear the #endRoom (RoomManager.markCleared).
     rooms = new RoomManager(map, assets, activeKey, objectsKey, viewW, viewH, player,
       () => scene.gameComplete());
-    // G2 army reserve: bank teleportable allies when leaving a room; re-field them on the next room.
+    // G2 army reserve: bank teleportable allies when leaving a room. They are re-fielded ONLY by the player's
+    // explicit summonArmy (#army / C) or summonWizard (#wizard / Q) — interpretGameKeys, never automatically.
     rooms.onLeaveRoom = (leaving) => {
       for (let i = leaving.length - 1; i >= 0; i--) {
         const e = leaving[i]!;
         if (game.armyMaster.teleportOut(e)) {
+          if (e.id === game.wizardMaster.activeWizardId) game.wizardMaster.clearActive(); // keep the singleton honest
           const idx = game.entities.indexOf(e);
           if (idx >= 0) game.entities.splice(idx, 1);
         }
       }
     };
-    rooms.onEnterRoom = (x, y) => { game.armyMaster.refieldAll("#aldevar", x, y); };
+    // NO room-enter auto-refield: the original re-fields the bank only on the army/wizard key (objAiPlayer
+    // .interpretGameKeys). Auto-refielding dumped the whole army every room AND duplicated a summoned wizard
+    // (the auto-refielded copy went untracked, so the next #wizard press spawned a second one).
     rooms.enter(map.startRoom);
     deathT = 0;
     audio.playMusic("electronic_merlin_v1_02"); // the dungeon theme

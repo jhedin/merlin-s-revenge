@@ -42,7 +42,7 @@ describe("drawEnemyEnergyBars (enemyEnergyMaster): team-colour, damaged-only", (
   });
 
   it("draws a team-colour bar over a DAMAGED enemy, nothing over a full-health one", () => {
-    const hurt = spawnEnemy("goblinWarrior", 100, 100); hurt.get(Energy).team = undefined as any;
+    const hurt = spawnEnemy("goblinWarrior", 100, 100);
     const full = spawnEnemy("goblinWarrior", 200, 100);
     game.entities = [hurt, full];
     hurt.get(Energy).energy = Math.round(hurt.get(Energy).max * 0.4); // wound to 40%
