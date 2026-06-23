@@ -99,9 +99,14 @@ export function spawnUnit(actorName: string, x: number, y: number, opts: { animC
   const team = typeof d["team"] === "string" ? (d["team"] as string) : "#monsters";
   const e = spawnEnemy(actorName, x, y, opts);
   if (game.teamMaster.isPlayerSide(team)) e.type = "ally";
-  // newWizardFound (objGameObject.init params.wizard): a #wizard:true ally registers as a summonable wizard
-  // and is teleportable so it banks to the reserve on room-leave (then summonWizard can re-field it).
-  if (d["wizard"] === true) { game.wizardMaster?.register(actorName); e.flags.add("teleportable"); }
+  // The bankable "army" is exactly the #leaveWhenFinished units — warrior/archer/dwarf/monk/king and the
+  // *InGame wizards (objAiCPU #noTargetFound banks only a getLeaveWhenFinished ally). Flag THOSE teleportable
+  // so they bank to the reserve on room-leave/clear. The port previously flagged only wizards, so summon-spell
+  // allies (warrior/archer via spawnUnit) never banked — the army was always empty. Plain tile NPCs (no
+  // leaveWhenFinished) stay put.
+  if (d["leaveWhenFinished"] === true || d["wizard"] === true) e.flags.add("teleportable");
+  // newWizardFound (objGameObject.init params.wizard): a #wizard:true ally registers as a summonable wizard.
+  if (d["wizard"] === true) game.wizardMaster?.register(actorName);
   return e;
 }
 

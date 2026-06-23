@@ -186,17 +186,21 @@ async function main() {
     // win on TWO triggers (H3): clear-all OR reach+clear the #endRoom (RoomManager.markCleared).
     rooms = new RoomManager(map, assets, activeKey, objectsKey, viewW, viewH, player,
       () => scene.gameComplete());
-    // G2 army reserve: bank teleportable allies when leaving a room; re-field them on the next room.
+    // G2 army reserve: bank teleportable allies when leaving a room. They are re-fielded ONLY by the player's
+    // explicit summonArmy (#army / C) or summonWizard (#wizard / Q) — interpretGameKeys, never automatically.
     rooms.onLeaveRoom = (leaving) => {
       for (let i = leaving.length - 1; i >= 0; i--) {
         const e = leaving[i]!;
         if (game.armyMaster.teleportOut(e)) {
+          if (e.id === game.wizardMaster.activeWizardId) game.wizardMaster.clearActive(); // keep the singleton honest
           const idx = game.entities.indexOf(e);
           if (idx >= 0) game.entities.splice(idx, 1);
         }
       }
     };
-    rooms.onEnterRoom = (x, y) => { game.armyMaster.refieldAll("#aldevar", x, y); };
+    // NO room-enter auto-refield: the original re-fields the bank only on the army/wizard key (objAiPlayer
+    // .interpretGameKeys). Auto-refielding dumped the whole army every room AND duplicated a summoned wizard
+    // (the auto-refielded copy went untracked, so the next #wizard press spawned a second one).
     rooms.enter(map.startRoom);
     deathT = 0;
     audio.playMusic("electronic_merlin_v1_02"); // the dungeon theme
@@ -331,8 +335,11 @@ async function main() {
         sweepSpells(); // K2: return exploded spell actors to the pool
         for (let i = game.entities.length - 1; i >= 0; i--) { // sweep collected pickups + retired allies
           const e = game.entities[i]!;
-          // `left`: a #leaveWhenFinished ally that teleported out (already banked to the reserve) — remove it.
-          if ((e.type === "pickup" && e.send("isFinished")) || e.flags.has("left")) game.entities.splice(i, 1);
+          // `left`: a #leaveWhenFinished ally that teleported out (already banked to the reserve) — remove it,
+          // but only once its #teleportOutStretch beam has finished playing (modTeleport). A `left` ally with
+          // no Anim, or whose beam is done, is removed now.
+          const beaming = e.flags.has("left") && e.tryGet(Anim)?.isTeleportingOut() === true && !e.get(Anim).teleportOutDone();
+          if ((e.type === "pickup" && e.send("isFinished")) || (e.flags.has("left") && !beaming)) game.entities.splice(i, 1);
         }
         game.effects.update(); // advance level-up star particles (modStarReleaser)
         rooms.update();
@@ -619,7 +626,10 @@ function drawSpells(renderer: Renderer) {
     if (e.type !== "spell") continue;
     const sa = e.get(SpellActor);
     const m = e.get(Movement);
-    const size = Math.max(4, sa.size());
+    // size = charge·chargeSize, NO minimum floor (objSpriteMember.setSpriteHeight has none). A Math.max(4,…)
+    // floor here drew sub-4 charge orbs (the opening frames of every cast) too big AND ~1.5px too high (the
+    // #top rise is computed from the true size while the floored size was painted). Faithful: paint the true size.
+    const size = sa.size();
     const fade = sa.fadeAlpha(); // 1 while charging/flying; 1->0 over the post-explode quick-fade (grown orb)
     const [cr, cg, cb] = sa.attack.chargeColour;
     if (ready) {

@@ -76,6 +76,14 @@ export class Anim extends Component {
   private deathT = 0;
   private static readonly STRETCH_DURATION = 33; // blendSpeed 3: ~100/3 frames to fade out
   private static readonly STRETCH_AMOUNT = 0.7;  // scaleY 1 -> 1.7 (stretchHeight 50, anchored at the feet)
+  // modTeleport (armyTeleportIn/Out): the summon/desummon "beam" — the sprite stretches vertically to/from a
+  // tall thin streak (anchored at the feet) while fading in/out over TELE_FRAMES. "in" plays as a freshly
+  // summoned unit collapses into place; "out" as a desummoned/retired unit stretches away (the caller defers
+  // removal until teleportOutDone()).
+  private teleport: "in" | "out" | null = null;
+  private teleT = 0;
+  private static readonly TELE_FRAMES = 15;  // pTeleportFrames
+  private static readonly TELE_PEAK = 6;     // scaleY at the fully-stretched streak (pTeleportHeight, capped)
 
   override init(cfg: Record<string, any>): void {
     this.char = cfg["animChar"] ?? "mer"; this.extraDelay = 0;
@@ -90,6 +98,13 @@ export class Anim extends Component {
     return this.stretchDeath && this.entity.send("isDead") === true && this.deathT >= Anim.STRETCH_DURATION;
   }
   hasStretchDeath(): boolean { return this.stretchDeath; }
+
+  // modTeleport seams. startTeleportIn: a freshly summoned unit beams in. startTeleportOut: a desummoned unit
+  // beams out (idempotent). teleportOutDone: the out-beam has fully played (caller may now remove the entity).
+  startTeleportIn(): void { this.teleport = "in"; this.teleT = 0; }
+  startTeleportOut(): void { if (this.teleport !== "out") { this.teleport = "out"; this.teleT = 0; } }
+  teleportOutDone(): boolean { return this.teleport === "out" && this.teleT >= Anim.TELE_FRAMES; }
+  isTeleportingOut(): boolean { return this.teleport === "out"; }
 
   // restart the current action strip from frame 0 (ensureMode re-entry): a NEW attack/swing replays its
   // one-shot strip even though the action STRING is unchanged across consecutive swings — without this the
@@ -160,6 +175,10 @@ export class Anim extends Component {
       const stretchDying = this.entity.send("isDead") === true && this.entity.send("isWasted") !== true;
       if (stretchDying) { if (this.deathT <= Anim.STRETCH_DURATION) this.deathT++; }
       else if (this.deathT > 0) this.deathT = 0;
+    }
+    if (this.teleport) {
+      if (this.teleT < Anim.TELE_FRAMES) this.teleT++;
+      else if (this.teleport === "in") this.teleport = null; // in-beam complete -> resume normal render
     }
     const action = this.pickAction();
     if (action !== this.action) {
@@ -235,6 +254,12 @@ export class Anim extends Component {
     // modStretchDeath transforms: startTransBlend(out) fades opacity 1->0; startStretchHeight stretches the
     // body taller (anchored at the feet via the reg point) — both over STRETCH_DURATION.
     const prog = stretching ? Math.min(1, this.deathT / Anim.STRETCH_DURATION) : 0;
+    // modTeleport beam (overrides the normal scale/alpha): "in" collapses from a tall streak to 1x as it
+    // fades in; "out" stretches up to the streak as it fades out — both anchored at the feet (the reg point).
+    const teleProg = this.teleport ? Math.min(1, this.teleT / Anim.TELE_FRAMES) : 0;
+    const teleScaleY = this.teleport === "in" ? 1 + (Anim.TELE_PEAK - 1) * (1 - teleProg)
+      : this.teleport === "out" ? 1 + (Anim.TELE_PEAK - 1) * teleProg : undefined;
+    const teleAlpha = this.teleport === "in" ? teleProg : this.teleport === "out" ? 1 - teleProg : undefined;
     return {
       img: game.assets.img(f.file),
       x: m.x, y: m.y, regX: f.reg[0], regY: f.reg[1],
@@ -243,8 +268,8 @@ export class Anim extends Component {
       z: isGrave ? m.y - 100000 : m.y,
       flip: isGrave ? false : m.facingLeft, // graves face right (setFlipFromDir(1)); else mirror to aim dir
       tint: tint ?? undefined,
-      scaleY: stretching ? 1 + prog * Anim.STRETCH_AMOUNT : undefined,
-      alpha: stretching ? 1 - prog : (typeof alpha === "number" ? alpha : undefined),
+      scaleY: teleScaleY ?? (stretching ? 1 + prog * Anim.STRETCH_AMOUNT : undefined),
+      alpha: teleAlpha ?? (stretching ? 1 - prog : (typeof alpha === "number" ? alpha : undefined)),
     };
   }
 }

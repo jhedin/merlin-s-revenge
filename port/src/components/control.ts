@@ -111,7 +111,11 @@ export class PlayerControl extends Component {
   summonWizard(input: Input): void {
     const wm = game.wizardMaster;
     const active = game.entities.find((e) => e.id === wm.activeWizardId && !e.send("isDead"));
-    if (active) { game.armyMaster.teleportOut(active); active.flags.add("left"); wm.clearActive(); return; }
+    if (active) {
+      // unsummon: bank it now, then BEAM OUT (the main-loop cull waits for the out-stretch to finish before
+      // removing it). flagging "left" + starting the beam together; the cull keeps it until teleportOutDone.
+      game.armyMaster.teleportOut(active); active.get(Anim).startTeleportOut(); active.flags.add("left"); wm.clearActive(); return;
+    }
     const typ = wm.currentActorType();           // "<wiz>InGame"
     if (!typ) return;                            // no wizard found yet
     const team = this.entity.send("getTeam") as string;
@@ -119,6 +123,7 @@ export class PlayerControl extends Component {
     let wiz = game.armyMaster.createUnit(team, typ, at.x, at.y); // re-field from the reserve when banked
     if (!wiz && game.spawnUnit) {                                 // else summon a fresh copy of the found wizard
       wiz = game.spawnUnit(typ.replace(/^#/, ""), at.x, at.y);
+      wiz.get(Anim).startTeleportIn();                            // armyTeleportIn (#teleportInStretch)
       if (!game.entities.includes(wiz)) game.entities.push(wiz);
     }
     if (wiz) wm.setActive(wiz.id);
@@ -129,7 +134,9 @@ export class PlayerControl extends Component {
   summonArmy(input: Input): void {
     const team = this.entity.send("getTeam") as string;
     const at = input.cursor() ?? this.entity.get(Movement);
-    const types = game.armyMaster.reserveTypes(team);
+    // summonArmy fields the battalion only — wizards are summoned SEPARATELY via summonWizard (#wizard/Q).
+    // Re-fielding a banked wizard here (untracked by wizardMaster) would let a later Q spawn a second copy.
+    const types = game.armyMaster.reserveTypes(team).filter((t) => registry.resolveActor(t.replace(/^#/, ""))?.["wizard"] !== true);
     let i = 0;
     for (const typ of types) {
       if (game.teamMaster.atCapacity(team)) break;
@@ -630,6 +637,9 @@ export class CpuAI extends Component {
 
   update(next: NextFn): void {
     const m = this.entity.get(Movement);
+    // modTeleport #teleportOutStretch: a desummoned ally is INERT while it beams out (no targeting/attacks/
+    // movement) — only its Anim keeps ticking the stretch, then the main-loop cull removes it when done.
+    if (this.entity.get(Anim).isTeleportingOut()) { this.idle(m); return next(); }
     // SS-vfx 1 strand guard: the wind-up orb may exist ONLY while a charge wind-up is actively in progress
     // (in #attack, pre-release, not yet fired, alive). Any other state — interrupted by a hit (attackT→0 on
     // daze), death, the release firing, or a completed cast — discards it so an unreleased orb is never
@@ -679,6 +689,7 @@ export class CpuAI extends Component {
   private leaveGame(): void {
     if (this.entity.flags.has("left")) return;
     game.armyMaster.teleportOut(this.entity);  // armyTeleportOut: bank to the reserve if it's a teleportable ally
+    this.entity.get(Anim).startTeleportOut();  // #teleportOutStretch: beam out before the cull removes it
     this.entity.flags.add("left");
   }
 

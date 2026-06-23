@@ -11,7 +11,7 @@
 import type { Entity } from "../engine/dispatch";
 import { game } from "../game/context";
 import { Team } from "../components/combat";
-import { spriteCharOr } from "../components/anim";
+import { spriteCharOr, Anim } from "../components/anim";
 
 export interface ArmyDetails { typ: string; team: string; level: number; }
 
@@ -81,6 +81,7 @@ export class ArmyMaster {
     // force the ally onto the banked team (it may differ from the default ally team) and re-field at level.
     const teamComp = e.tryGet(Team); if (teamComp) teamComp.team = details.team || "#aldevar";
     this.restoreArmyDetails(e, details);
+    e.tryGet(Anim)?.startTeleportIn();  // armyTeleportIn (#teleportInStretch): beam the re-fielded unit in
     // restoreUnitToCombat (315-330): remove the consumed record from the reserve.
     found.list.splice(found.idx, 1);
     game.entities.push(e);

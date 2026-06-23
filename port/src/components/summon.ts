@@ -20,6 +20,7 @@ import type { Entity } from "../engine/dispatch";
 import { game } from "../game/context";
 import type { AttackData } from "./weapon";
 import { spawnFromSymbol } from "../entities/actorSerial";
+import { Anim } from "./anim";
 
 // depositMines (modSpellMultistage.depositMines): an #explodeFunction:#depositMines spell (energyMines)
 // drops numMines = charge/chargePerUnit #energyMine actors, each scattered VarRoughly(loc, charge/2) around
@@ -78,6 +79,7 @@ export function summonUnit(attack: AttackData, charge: number, x: number, y: num
 
   if (!game.spawnUnit) return null;
   const e = game.spawnUnit(type, x, y, {});
+  e.tryGet(Anim)?.startTeleportIn();  // armyTeleportIn (#teleportInStretch): beam the summoned unit in
   game.entities.push(e);
   // owner gains +0.5 experience (pExperienceGain) — same gainXp chain a kill uses.
   owner?.send("gainXp", 0.5);
