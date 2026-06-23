@@ -6,6 +6,7 @@ import { Assets, mapList, type MapMeta } from "./render/assets";
 import { drawText } from "./render/text";
 import { Renderer, type Sprite } from "./render/renderer";
 import { buildSpellSprites, spellFaceTier } from "./render/spellSprites";
+import { medikitLayout } from "./render/hudLayout";
 import { drawMinimap } from "./render/minimap";
 import { healthBarColour } from "./render/healthBar";
 import { drawHealthRollover, drawEnemyEnergyBars } from "./render/rollover";
@@ -496,12 +497,19 @@ function drawHud(renderer: Renderer, player: import("./engine/dispatch").Entity,
   ctx.fillStyle = "#fff";
   drawText(ctx, assets, "small", "Lv " + xp.level, 114, 24, { fallbackFont: "8px monospace" });
   if (hasSpell) { ctx.fillStyle = "#fc8"; ctx.font = "8px monospace"; ctx.fillText("✦", 114, 13); } // magic acquired (icon, not a font glyph)
-  // medikit bank (medikitMaster.objMedikitDisplayer): a row of on/off kit icons for the banked count.
+  // medikit display (objMedikitDisplayer): a horizontal composite — [on/off icon][green vertical energy bar
+  // = active kit's remaining HP][numeric banked count] — NOT a row of icons (the old port layout overlapped
+  // 16px icons at a 10px step). Positions from medikitLayout (the cast's displayer arithmetic).
   const kits = (player.send("getNumOfMedikits") as number) || 0;
   const onImg = assets.member("medikit_on"), offImg = assets.member("medikit_off");
   if (onImg && offImg) {
-    const slots = Math.max(3, kits); // at least the 3 default slots, grows if the player banks more
-    for (let i = 0; i < slots; i++) ctx.drawImage((i < kits ? onImg : offImg).img, 8 + i * 10, 30);
+    const L = medikitLayout(8, 30, onImg.img.width || 16, onImg.img.height || 16);
+    ctx.drawImage(((player.send("getMedikitActive") as boolean) ? onImg : offImg).img, L.icon.x, L.icon.y);
+    const frac = (player.send("getMedikitFrac") as number) || 0;        // objEnergyBar #vertical, rgb(0,200,0)
+    ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.fillRect(L.bar.x, L.bar.y, L.bar.w, L.bar.h);
+    const fh = Math.round(L.bar.h * frac);
+    ctx.fillStyle = "rgb(0,200,0)"; ctx.fillRect(L.bar.x, L.bar.y + (L.bar.h - fh), L.bar.w, fh); // fill bottom-up
+    drawText(ctx, assets, "numbers", String(kits), L.counter.x, L.counter.y, { fallbackFont: "8px monospace" });
   } else if (kits > 0) { ctx.fillStyle = "#f88"; drawText(ctx, assets, "small", "Kits " + kits, 8, 38, { fallbackFont: "8px monospace" }); }
   // extra lives (modExtraLives): no extraLives_text bitmap shipped, so a plain counter. The ♥ glyph
   // isn't in any font key → kept as a procedural icon; the count routes through #numbers via drawText.
