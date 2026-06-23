@@ -158,3 +158,11 @@ Harness: `assets.json` bundle, `CollisionGrid(80,80,32)`, `unitMap.configure(32,
 fourArmGolem is fully faithful in the port. The live run confirms the actor's distinguishing feature — its `#animframe:[7,14,20,27]` 4-entry list fires **four** darkRock splash bullets per attack cycle (vs darkGolem's two), via `modAttack.isOnAttackFrame`'s list-membership test, reproduced exactly in `CpuAI.updateAttack` (`attackFrames.includes(an.attackFrame())`, `port/src/components/control.ts:757`). Throw speed 20.5 (#fullstrength × leveled strength), muzzle offset (0,-8), reach 150, eyestrain 25, energy 1200 all match. On lethal death it reincarnates into 2 darkGolem (radius 30). No animation falls back to the `blackOrc` stand-in. Stats reflect `#startingLevel:5` pre-leveling. No PORT bugs and no faithful original-game quirks to flag.
 
 `fourArmGolem | DIVERGENCES=0`
+
+---
+
+## RE-VERIFY (2026-06-23) — fresh reproduction (`tools/_audit_combat.ts fourArmGolem --dist=250`)
+- **Strips:** `stand`✓ `walk`✓ `grave`✓ `naturalRanged`✓ (animChar=fourArmGolem, team #monsters).
+- **MULTI-SHOT ranged (#naturalRanged #throwBoulder, bullet #darkRock, animFrame[7,14,20,27] = 4 shots/cycle, reach 150, #fullstrength):** observed bullets in bursts of 4 (t=129,136,143,149) then next cycle (t=169,176,...), **9 damage events**, target hit & damaged to 0.86. The 4-frame multi-shot fires faithfully. ✓
+- **Reincarnation:** kill → `[darkGolem, darkGolem]`. ✓
+- **Verdict: CLEAN.**

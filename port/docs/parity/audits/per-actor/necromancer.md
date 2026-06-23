@@ -146,3 +146,11 @@ after death -> action: grave | graveOn: true | grave strip present: true   reach
 | **Summon location** | **target's tile centre (flies)** | **caster's own loc** | **FAIL (D1)** |
 | **Cast damage/bolt** | **radial #takeHit + energyBlastBullet** | **none (summon only)** | **FAIL (D2)** |
 | stallSpeed | 0.5 | unimplemented | quirk (D3) |
+
+---
+
+## RE-VERIFY (2026-06-23) — fresh reproduction (`tools/_audit_combat.ts necromancer --dist=250`)
+- **Strips:** `stand`✓ `walk`✓ `grave`✓ `charge`✓ (animChar=necromancer, team #undead). `_release` absent → `attackAction()` (control.ts:583) falls to the bundled `charge` strip — NO `_stand` fallback.
+- **Summoner (#weapon #undeadSummon, #magic, #explodeFunction:#summonUnit, #randomSummon):** at caster range it RELEASED flying objSpells that summoned **varied undead repeatedly** — observed greyGhost, skeletonThrower, skeletonArcher (the `#randomSummon` multistage table), >9 summons over 300 ticks (~every ~25-40 ticks). The summoned ranged minions then damaged the pinned target. ✓
+- **PROBE NOTE:** at a too-close pin (<100px) the spellcaster `optimumPosition` flee-ring (ENEMY_SAFE=100) makes it flee a pinned in-ring target and summon rarely — PROBE ARTIFACT. Use ≥150px.
+- **Verdict: CLEAN.**

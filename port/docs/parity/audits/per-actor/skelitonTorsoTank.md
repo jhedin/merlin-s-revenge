@@ -89,3 +89,12 @@ fire-at-frame cooldown reset — a FAITHFUL modeling choice, not a divergence.
 No probe-API artifacts: `loseEnergy(amount, attackerId)`, `getCurrentAttack`, `findTarget`,
 `getGraveOn`, `getKilledInAction`, and `getActorType` all returned valid results; the spawned
 skelitonHead was located via the real `getActorType` message.
+
+---
+
+## RE-VERIFY (2026-06-23) — fresh reproduction (`tools/_audit_combat.ts skelitonTorsoTank --dist=250`)
+Real `assets.json`/`data.json`, pinned `#aldevar` player target.
+- **Strips:** `stand`✓ `walk`✓ `grave`✓ `naturalRanged`✓ `reel`✓ (animChar=skelitonTorsoTank, no blackOrc/_stand fallback).
+- **Ranged attack (#naturalRanged #fireMissile / bullet #skelitonMissile, reach 200, animFrame[5]):** fired **5 missiles over 250 ticks**, bullets reached & damaged the pinned target (firstDamage t=50), `#firingType:#fullstrength` velocity ~9.6px/tick. ✓
+- **Reincarnation:** kill → `[skelitonHead]` (the `#none` 2nd entry correctly skipped). ✓
+- **Verdict: CLEAN.**

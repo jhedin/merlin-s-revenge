@@ -103,3 +103,11 @@ The following properties are correctly implemented but not independently verifie
 | Behavioral Correctness | ✓ Faithful |
 | Edge Cases (case-insensitivity, payload list order, freeze cap) | ✓ Correct |
 | Overall Parity | ✓ **CLEAN** |
+
+---
+
+## RE-VERIFY (2026-06-23) — fresh reproduction (`tools/_audit_combat.ts iceRock --dist=250`)
+- **Strips:** `stand`✓ `walk`✓ `grave`✓ `naturalRanged`✓ `reel`✓ (animChar=iceRock, team #ice).
+- **Ranged (#naturalRanged #throwiceBoulder, bullet #iceboulder [status freeze payload], reach 210, animFrame[15], #fullstrength):** fired iceboulder bullets that reached & damaged the pinned target (firstDamage t=109), travel velocity ~11.7px/tick. ✓
+- **Reincarnation:** kill → `[boulderMonster]` (child resolves its OWN team #monsters, not the parent #ice — correct, each child uses its own act-data team). ✓
+- **Verdict: CLEAN.**

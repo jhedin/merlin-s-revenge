@@ -90,3 +90,15 @@ All tiers verified in data.json (act_skelitonTorsoTank, act_skelitonArm).
 - Reincarnation cascade (TorsoTank + 2 Arms) on lethal death
 - Team (#undead) & targeting (#enemy) data-driven
 - All existing flags (firingType, runReload, leaveWhenFinished, startingLevel, spell-actor, summonUnit, randomSummon wobble, reincarnateAs cascade, case-insensitive registry) verified
+
+---
+
+## RE-VERIFY (2026-06-23) — fresh reproduction pass
+
+Re-reproduced via `tools/_audit_combat.ts skelitonUpper --dist=250` (caster range), pinned `#aldevar` player.
+
+- **Strips (no fallback):** `skelitonUpper_stand`✓ `_charge`✓ `_reel`✓. `animChar=skelitonUpper`. `_walk` absent — correct (`#walkSpeed:0`, immobile summoner). `_release` absent → `attackAction()` (control.ts:583) correctly falls to the bundled `charge` strip, NO `_stand` fallback.
+- **Summon attack (#magic / #explodeFunction:#summonUnit / #randomSummon):** at proper caster range it RELEASED a flying objSpell that landed and summoned **7 units over 300 ticks (~40-tick cadence)**, `#randomSummon` correctly varying the tier from the multistage table (observed: skelitonTorsoTank / skelitonSword / skelitonFootSoldier). Charge strip ran 96/300 ticks. ✓
+- **PROBE NOTE:** at a too-close 80px pin the spellcaster's `optimumPosition` flee-ring (`ENEMY_SAFE=100`, control.ts:495) makes it flee a pinned in-ring target forever and summon only once — a PROBE ARTIFACT, not a bug. At ≥150px it summons normally.
+- **Reincarnation:** killed → `[skelitonTorsoTank, skelitonArm, skelitonArm]` on `#undead`, matching `#reincarnateAs`. ✓
+- **Verdict: CLEAN** (confirms prior audit).

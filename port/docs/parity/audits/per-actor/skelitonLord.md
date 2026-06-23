@@ -86,3 +86,14 @@ lord engaged and reincarnated correctly. Reincarnation children are pushed by
 **Conclusion:** `skelitonLord` is faithfully ported. Sprite resolves to its own family strip (not
 blackOrc), the `#weaponMelee #animframe 5` swing lands one hit per swing, `graveOn:false` vanishes with no
 corpse, and the 3-way reincarnation cascade (`Upper / LowerLeg / Sword`) fires on killed-in-action death.
+
+---
+
+## RE-VERIFY (2026-06-23) — fresh reproduction pass
+
+Re-reproduced via `tools/_audit_combat.ts skelitonLord` against the REAL `assets.json`/`data.json`, pinned `#aldevar` player target.
+
+- **Strips (no fallback):** `skelitonLord_stand`✓ `_walk`✓ `_weaponMelee`✓ `_reel`✓ resolve to real bundled strips. `animChar=skelitonLord` (NOT blackOrc). `_grave` absent — correct, `#graveOn:false` (ghost-style no-grave boss).
+- **Attack (melee):** `#weaponMelee` skelitonLordSword, reach 25, animFrame [5]. From an 80px start it moved-to-attack and connected: **11 melee hits over 120 ticks at a steady 11-tick cadence** (firstDamage t=9). Target energyFrac 1.0→0.55. Bullets/spells/summons = 0 (pure melee). ✓
+- **Reincarnation:** killed at t=20 (`loseEnergy`, killedInAction=true) → spawned EXACTLY `[skelitonUpper, skelitonLowerLeg, skelitonSword]` on `#undead`, matching `#reincarnateAs`. ✓
+- **Verdict: CLEAN** (confirms prior audit).

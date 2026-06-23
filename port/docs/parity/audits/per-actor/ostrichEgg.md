@@ -149,3 +149,11 @@ All data properties match faithfully. The egg's reincarnation into a #babyOstric
 - Hatch logic verified: Projectile.finish() spawns the child at corpse location
 - Child resolution verified: spawnFromSymbol("babyOstrich") correctly instantiates the hatched baby
 - No behavioral divergence detected between Lingo and TypeScript implementations
+
+---
+
+## RE-VERIFY (2026-06-23) — fresh reproduction
+ostrichEgg is `#inherit:#bullet` — a projectile (fired by powerOstrich `#bullet:#ostrichEgg`) that HATCHES on land-stall.
+- **Land-stall hatch (`tools/_audit_egghatch.ts`):** fired an ostrichEgg bullet (friction `point(5,5)` — decays faster than lizardEgg); STALLED at t=50 → `finish()` spawned EXACTLY `[babyOstrich]` (#monsters), matching `#reincarnateAs`. Wired via `control.ts:1016` (ostrichEgg→#babyOstrich). The friction difference (5 vs 2) gives the heavier ostrich egg a shorter throw — faithful. ✓
+- **Direct-hit:** a direct target hit does NOT hatch (routes to die()) — faithful.
+- **Verdict: CLEAN.**
