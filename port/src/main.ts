@@ -7,7 +7,7 @@ import { drawText } from "./render/text";
 import { Renderer, type Sprite } from "./render/renderer";
 import { drawMinimap } from "./render/minimap";
 import { healthBarColour } from "./render/healthBar";
-import { drawHealthRollover } from "./render/rollover";
+import { drawHealthRollover, drawEnemyEnergyBars } from "./render/rollover";
 import { Input } from "./systems/input";
 import { AudioSystem } from "./systems/audio";
 import { GameLoop } from "./engine/loop";
@@ -404,6 +404,7 @@ async function main() {
       // carried through Anim.sprite()'s tint), NOT a separate overlay — so no box is drawn here (the original
       // has no freeze-overlay object). Merlin's Revenge also has NO always-on health bars (gEnemyEnergyMasterOn
       // =0); health/level/XP show only on mouse-hover (rollover, below).
+      drawEnemyEnergyBars(renderer, game.entities); // enemyEnergyMaster: team-colour bar over each DAMAGED CPU unit
       drawHealthRollover(renderer, game.input.cursor(), game.entities, assets); // characterEnergyRollOverMaster (gCharacterEnergyRolloverOn=1)
       weaponPalette.render(renderer, player, assets); // modWeaponSelector palette (over the world, under the HUD)
       drawHud(renderer, player, assets);
@@ -414,7 +415,7 @@ async function main() {
       if (game.navMode) drawMinimap(renderer, {
         map, loc: rooms.loc, cleared: rooms.clearedSet(), infested: rooms.infestedRooms(),
         playerPx: { x: pm.x, y: pm.y }, cursorPx: game.input.cursor(),
-      }, viewW, assets);
+      }, viewW, viewH, assets);
       // K12: overlay the in-game chatter cutscene (spawned ulin + speech bubble) over the live game.
       if (scene.isInGameCutscene() && inGameCut) inGameCut.renderInGame(renderer);
       // K18 overlays (showArmy / instructions / key-config) draw over the live game via the screens host.

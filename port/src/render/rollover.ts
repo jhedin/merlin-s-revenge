@@ -9,7 +9,7 @@ import type { Renderer } from "./renderer";
 import type { Assets } from "./assets";
 import { Energy } from "../components/combat";
 import { Experience } from "../components/experience";
-import { healthBarColour } from "./healthBar";
+import { teamColourCss } from "./teamColour";
 
 const HOVER_TYPES = new Set(["enemy", "ally", "player", "dwelling"]);
 
@@ -47,7 +47,8 @@ export function drawHealthRollover(renderer: Renderer, cur: { x: number; y: numb
   const starW = stars.reduce((s, m) => s + m.w, 0), starH = stars.reduce((h, m) => Math.max(h, m.h), 0);
   const boxH = 8 + (stars.length ? starH + 1 : 4);
   ctx.fillStyle = "rgba(0,0,0,0.72)"; ctx.fillRect(bx - 1, by - 1, 26, boxH);
-  ctx.fillStyle = healthBarColour(frac); ctx.fillRect(bx, by, Math.round(24 * frac), 3);  // energy (multicolour)
+  // objMoveableEnergyBar: the fill is the target's flat TEAM colour (allegiance); only the WIDTH tracks HP.
+  ctx.fillStyle = teamColourCss(best.send("getTeam") as string); ctx.fillRect(bx, by, Math.round(24 * frac), 3);
   if (stars.length) {                                                                      // level: real star row, centred
     let sx = bx + Math.round((24 - starW) / 2), rowTop = by + 4;
     for (const m of stars) { ctx.drawImage(m.img, sx, rowTop + (starH - m.h)); sx += m.w; }
@@ -57,4 +58,25 @@ export function drawHealthRollover(renderer: Renderer, cur: { x: number; y: numb
   }
   const xp = best.tryGet(Experience);                                                       // experience bar
   if (xp) { ctx.fillStyle = "#8cf"; ctx.fillRect(bx, by + boxH - 3, Math.round(24 * Math.min(1, xp.frac())), 2); }
+}
+
+// enemyEnergyMaster (gEnemyEnergyMasterOn=1, the shipped main.ls config): a small TEAM-colour energy bar
+// floats over each live CPU character (objCPUCharacter.initEnergyBar → objEnergyBar). Shown only once the
+// unit is DAMAGED (energy < max) — a full-health unit's bar would be a flat full bar, so gating on damage
+// matches "damaged enemies always show their health bar" and keeps a crowded room readable. The player has
+// its own HUD bar; the on-hover rollover (above) layers level/XP on top of this for the unit under the cursor.
+export function drawEnemyEnergyBars(renderer: Renderer, entities: Entity[]): void {
+  const ctx = renderer.ctx;
+  const W = 20;
+  for (const e of entities) {
+    if (e.type !== "enemy" && e.type !== "ally") continue;
+    if (e.send("isDead") === true) continue;
+    const frac = e.send("energyFrac") as number;
+    if (!(frac < 1) || frac <= 0) continue; // damaged-only (full → no bar; dead/0 handled by the grave)
+    const p = e.send("getPos") as { x: number; y: number };
+    const bx = Math.round(p.x - W / 2), by = Math.round(p.y - 30);
+    ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(bx - 1, by - 1, W + 2, 4);  // objEnergyBar surround
+    ctx.fillStyle = teamColourCss(e.send("getTeam") as string);                  // fill = team colour
+    ctx.fillRect(bx, by, Math.max(1, Math.round(W * frac)), 2);                  // width = energy %
+  }
 }
