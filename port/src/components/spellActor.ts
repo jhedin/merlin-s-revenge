@@ -91,6 +91,9 @@ export class SpellActor extends Component {
   // the quick-fade alpha while the exploded orb fades out (1 -> 0 over QUICK_FADE_TICKS); 1 before explode.
   fadeAlpha(): number { return this.mode === "fade" ? Math.max(0, 1 - this.fadeT / QUICK_FADE_TICKS) : 1; }
 
+  /** objSpell lifecycle phase: #charge (growing over the head) / #fly (released, in flight) / #explode-fade. */
+  phase(): "charge" | "fly" | "fade" { return this.mode; }
+
   // discard: drop a charging spell without releasing it (caster lost the weapon / interrupted) — finish so
   // it's swept back to the pool, no explode.
   discard(): void { this.done = true; }
