@@ -76,7 +76,13 @@ function keyOutMatte(img: HTMLImageElement, mode: "flood" | "global" | "dark"): 
     // tile sheets: matte is interior to the sheet (per-cell), so key all near-white.
     for (let i = 0; i < px.length; i += 4) if (isWhite(i)) px[i + 3] = 0;
   } else {
-    // sprites: flood transparency from the image border (preserves interior white highlights).
+    // sprites: flood transparency from the image border. Most members/frames are baked on a WHITE matte, but
+    // a handful ship a MAGENTA chroma-key (255,0,255) matte instead (star_tiny, needle/shuriken frames) —
+    // keying only white left those a magenta/teal blob. Key BOTH known matte colours (white + magenta) by a
+    // border flood (interior highlights, not connected to the border, are preserved). Only these two fixed
+    // chroma keys — NOT any opaque corner — so a sprite that legitimately reaches the edge isn't eaten.
+    const isMagenta = (i: number) => px[i]! > 240 && px[i + 1]! < 16 && px[i + 2]! > 240 && px[i + 3]! > 0;
+    const isMatte = (i: number) => isWhite(i) || isMagenta(i);
     const stack: number[] = [];
     const push = (x: number, y: number) => { if (x >= 0 && y >= 0 && x < w && y < h) stack.push(y * w + x); };
     for (let x = 0; x < w; x++) { push(x, 0); push(x, h - 1); }
@@ -86,7 +92,7 @@ function keyOutMatte(img: HTMLImageElement, mode: "flood" | "global" | "dark"): 
       const p = stack.pop()!;
       if (seen[p]) continue; seen[p] = 1;
       const i = p * 4;
-      if (!isWhite(i)) continue;
+      if (!isMatte(i)) continue;
       px[i + 3] = 0;
       const x = p % w, y = (p / w) | 0;
       push(x + 1, y); push(x - 1, y); push(x, y + 1); push(x, y - 1);
