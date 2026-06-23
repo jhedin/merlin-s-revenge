@@ -31,28 +31,41 @@ export type PickupEffect = "heal" | "maxikit" | "speed" | "sword" | "spell" | "e
   | "gmg" | "energyBeam" | "energyPulse";
 
 export class Pickup extends Component {
-  static handles = ["update", "isFinished", "getEffect"];
+  static handles = ["update", "isFinished", "getEffect", "writingPhase"];
   effect: PickupEffect = "heal";
-  private collected = false;
+  // objPowerUpWriting: on collect the powerup does NOT vanish — it swaps its sprite to <effect>_writing,
+  // goMode(#writing) + startFade (startTransBlend(2,#out): blend 100->0 at speed 2 = 50 ticks), then
+  // setDead(true) on faderFin. writingTicks: -1 = not collected; 0..WRITE_FADE counts up the fade.
+  private writingTicks = -1;
+  private static readonly WRITE_FADE = 50;
 
   override init(cfg: Record<string, any>): void {
     if (typeof cfg["effect"] === "string") this.effect = cfg["effect"] as PickupEffect;
-    this.collected = false;
+    this.writingTicks = -1;
   }
-  override reset(): void { this.collected = false; }
-  isFinished(): boolean { return this.collected; }
+  override reset(): void { this.writingTicks = -1; }
+  isFinished(): boolean { return this.writingTicks >= Pickup.WRITE_FADE; } // dies only AFTER the caption fades
   getEffect(): PickupEffect { return this.effect; }
+
+  // the live writing-caption phase for the renderer (objPowerUpWriting): the granted effect + the caption's
+  // fading alpha (1 -> 0 over WRITE_FADE), or null before collection (still the potion/scroll art).
+  writingPhase(): { effect: PickupEffect; alpha: number } | null {
+    if (this.writingTicks < 0) return null;
+    return { effect: this.effect, alpha: 1 - this.writingTicks / Pickup.WRITE_FADE };
+  }
 
   update(next: NextFn): void {
     const p = game.player;
-    if (p && !p.send("isDead") && !this.collected) {
+    if (p && !p.send("isDead") && this.writingTicks < 0) {
       const m = this.entity.get(Movement);
       const pp = p.send("getPos") as { x: number; y: number };
       if (Math.abs(pp.x - m.x) < 16 && Math.abs(pp.y - m.y) < 16) {
-        this.apply(p);
-        this.collected = true;
+        this.apply(p);             // grant the effect exactly once, on the collect frame
+        this.writingTicks = 0;     // enter the writing/fade phase (displayWriting + startFade) instead of dying
         game.audio?.play("collect_powerup_01"); // collectSound
       }
+    } else if (this.writingTicks >= 0 && this.writingTicks < Pickup.WRITE_FADE) {
+      this.writingTicks++;         // advance the fade (modFader.startFade); faderFin -> isFinished -> swept
     }
     next();
   }

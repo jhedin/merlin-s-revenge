@@ -319,6 +319,19 @@ const MEMBER_NAMES = [
   "star_tiny", "star_medium", "star_large",
   // HUD: health-bar surround + medikit display icons
   "health_bar_surround", "medikit_on", "medikit_off",
+  // SS-hud F2: GMG toggle HUD icon (objGmgDisplayer on/off member).
+  "gmg_off", "gmg_on",
+  // SS-hud F3: wizard summon portrait bar — yellow selection marker (wizard_on=wizard_onLq) + each found
+  // wizard's bar portrait (<name>_off). objWizardDisplayer shows the SELECTED wizard's portrait, with the
+  // 16×16 marker overlaid when one is currently summoned on the field.
+  "wizard_on", "amotonlin_off", "flaetorlin_off", "foelin_off", "garonlin_off", "verdanlin_off",
+  // SS-hud F1: powerup-collect NAME captions (objPowerUpWriting; swapped in-place + faded on pickup). reg.x
+  // ≈ w/2 → centred on the powerup's world loc. PIL-free plain PNGs copied by the prefix matcher.
+  "manaBurst_writing", "manaFlow_writing", "manaCapacity_writing", "energyBlast_writing",
+  "walkSpeed_writing", "medikit_writing", "armySummon_writing", "energyPulseSpell_writing",
+  "energyMines_writing", "cBlast_writing", "energyPunch_writing", "merlinSword_writing",
+  "healBlast_writing", "maxikit_writing", "monsterSummon_writing", "arcticBlast_writing",
+  "morph_writing", "gmg_writing", "energyBeamSpell_writing",
 ];
 for (const name of MEMBER_NAMES) {
   const cands = bitmaps.filter((b) => b.name === name || b.name.startsWith(name)).sort((a, b) => a.name.length - b.name.length);
