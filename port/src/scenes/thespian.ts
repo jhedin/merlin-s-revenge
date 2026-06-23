@@ -392,18 +392,26 @@ export class Thespian {
     if (speaker === "playerCharacter") speaker = "merlin"; // the stones bind #playerCharacter -> the live Merlin
     const display = this.interpretSpeech(text); // #key interpolation re-evaluated at display time
     this.speech = { speaker, text: display, alias };
+    // objScriptPerformer.performNextLine: pAutoTurn (default true) turns every OTHER on-stage actor to face
+    // the speaker on each line (turnPlayersToFace). Props don't turn (their facing tracks their carrier).
+    for (const [a, listener] of this.players) {
+      if (a === alias || !listener.spawned || listener.propStatus === "prop") continue;
+      this.turnToFace(listener, alias);
+    }
     // displayTime = basicTimePerLine + chars·timePerLetter, then delayTime (timeBetweenLines)
     const displayTime = Math.round(BASIC_TIME_PER_LINE + display.length * TIME_PER_LETTER);
     this.pending = { left: displayTime + TIME_BETWEEN_LINES };
   }
 
-  // interpretSpeechVariables: replace "#key <control>" with the live bound key (re-evaluated each display).
-  // The control token may be `#`-prefixed (the stones scripts write `#key #wizard`) — strip the hash.
+  // interpretSpeechVariables (modThespian.txt:353): replace "#key <control>" with the live bound key,
+  // re-evaluated each display. The original wraps it in literal QUOTE chars with the keyMaster's natural
+  // casing (`... QUOTE & currentKey & QUOTE ...` -> `press "w"`) — NOT force-uppercased and unquoted. The
+  // control token may be `#`-prefixed (the stones write `#key #wizard`) — strip the hash.
   private interpretSpeech(text: string): string {
     if (!text.includes("#key")) return text;
     return text.replace(/#key\s+#?(\w+)/g, (_m, ctrl: string) => {
       const k = this.host.keyForControl?.(ctrl);
-      return k ? k.toUpperCase() : ctrl;
+      return k ? `"${k}"` : ctrl;
     });
   }
 

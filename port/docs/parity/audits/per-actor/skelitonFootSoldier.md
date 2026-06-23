@@ -1,79 +1,73 @@
-# Actor Audit: skelitonFootSoldier
+# Actor Audit: skelitonFootSoldier (REPRODUCED)
 
-## Data Properties
+Method: derived behavior from `casts/data/act_skelitonFootSoldier.txt` + inherited
+`objCPUCharacter`/`objCharacter`/`modWeaponManager`, then **reproduced** the actor in a
+headless port harness (throwaway `tools/_audit_skelitonFootSoldier.ts`, now deleted): real
+`@/generated/assets.json`, `CollisionGrid(80,80,32)`, `teamMaster.unitMap.configure(32,0,0)`,
+spawned via `spawnEnemy("skelitonFootSoldier")` vs an inert `#aldevar` dummy (a team `#undead`
+hates), ticked 200 frames with `rebuildCombatSubstrate()` each tick, then killed to observe death.
 
-| Property | Original (Lingo) | Port (TypeScript) | Status |
-|----------|------------------|-------------------|--------|
-| objType | #objCPUCharacter | EnemyArchetype | ✓ |
-| AiType | #objAiCPU | EnemyAI (control.ts) | ✓ |
-| inherit | #CPUCharacter | EnemyArchetype defaults | ✓ |
-| energy | 90 | 90 | ✓ |
-| strength | 3 | 3 | ✓ |
-| dexterity | 10 | 10 | ✓ |
-| walkSpeed | 4 | 4 (calibrated to px/tick) | ✓ |
-| inertia | 85 | 85 | ✓ |
-| team | #undead | "#undead" | ✓ |
-| attack | #weaponMelee swordSwipe | resolved to #swordSwipe | ✓ |
-| dieSound | #none | undefined (no sound) | ✓ |
-| startingLevel | 0 | 0 (no pre-leveling) | ✓ |
-| weaponTechnique | 0 | 0 (no animation speedup) | ✓ |
-| experienceImWorth | 3 | 3 | ✓ |
-| damageSpeed | 3 | (catalogued non-issue) | ✓ |
-| eyestrain | 25 | (catalogued non-issue) | ✓ |
-| graveOn | true | grave drawn via Grave component | ✓ |
-| reincarnateAs | absent | absent (leaf node) | ✓ |
-| reincarnateInto | absent | absent (leaf node) | ✓ |
+## Dual tree
 
-## Attack (swordSwipe) Properties
+```
+DATA  act_skelitonFootSoldier  (#objCPUCharacter, #AiType #objAiCPU, #inherit #CPUCharacter)
+        #team #undead   #energy 90   #strength 3   #dexterity 10   #walkSpeed 4   #inertia 85
+        #damageSpeed 3  #eyestrain 25  #experienceImWorth 3  #startingLevel 0
+        #dieSound #none  #graveOn true   (no #reincarnateAs / #reincarnateInto — LEAF node)
+        #attack:
+          #animType #weaponMelee   #name #swordSwipe   #animframe 8
+          #power point(3,0)   #damageMultiplier 1   #cooldown 0
+          #collisionLoc point(20,0)   #hits [#teamMembers,#teamBuildings]   #sound "skeleton_fire"
+        NO #data block / NO #name-sprite override  → sprite char keys off #name "skelitonFootSoldier"
 
-| Property | Original | Port | Status |
-|----------|----------|------|--------|
-| animType | #weaponMelee | "#weaponMelee" | ✓ |
-| power | point(3,0) | {x:3, y:0} powerScalar=3 | ✓ |
-| cooldown | 0 | 0 (calibrated to ~25 effective) | ✓ |
-| collisionLoc | point(20,0) | {x:20, y:0} (projectile only) | ✓ |
-| hits | [#teamMembers, #teamBuildings] | same | ✓ |
-| name | #swordSwipe | "#swordSwipe" | ✓ |
-| sound | "skeleton_fire" | "skeleton_fire" | ✓ |
-| damageMultiplier | 1 | 1 | ✓ |
+PORT  EnemyArchetype (spawnEnemy) → CpuAI + WeaponManager + Anim + Energy + Grave + Reincarnate + Team
+        team "#undead"  energy 90  strength 3  dexterity 10  maxSpeed 2.4 (=4×0.6)  inertia 85
+        attack resolveAttack: animType "#weaponMelee" name "#swordSwipe" animFrame [8]
+          power {3,0} mult 1  collisionLoc {20,0}  melee reach 20 (=|collisionLoc.x| clamp[16,90])
+          effective cooldown 14 (rawCd 0 → recovery + melee fire-frame offset)
+        animChar = spriteCharOr("skelitonFootSoldier") = "skelitonFootSoldier" (real strip)
+        graveOn true; reincarnate list [] (leaf); dieSound none
+```
 
-## Behavioral Coverage
+## Derived vs Observed
 
-| Behavior | Status | Evidence |
-|----------|--------|----------|
-| **Melee AI FSM** | ✓ | animType "#weaponMelee" → ranged=false (archetypes.ts:169); triggers moveToAttack/attack loop |
-| **Attack Resolution** | ✓ | animType="#weaponMelee" present; direct melee attack used (archetypes.ts:145) |
-| **Weapon Reach** | ✓ | Default melee reach 22px used in targetInReach (control.ts:499) |
-| **Team (#undead)** | ✓ | team="#undead" persists through EnemyArchetype.build (archetypes.ts:270) |
-| **Melee Power Calc** | ✓ | power·strength·ENEMY_DAMAGE_SCALE (3·3·0.55 ≈ 4.95 base) (weapon.ts) |
-| **Cooldown Calibration** | ✓ | rawCooldown=0 + melee offset 6 + dexterity(10)×agility(1) tuning → ~25 effective frames (archetypes.ts:180-188) |
-| **Damage Application** | ✓ | Melee: impactMeleeAttack resolves via meleeHitFn vector + damageMultiplier (control.ts:609) |
-| **Death** | ✓ | dieSound=#none, graveOn=true → grave drawn via Grave component (Energy.isDead) |
-| **Movement** | ✓ | walkSpeed 4 → 2.4 px/tick (calibrated 0.6× factor), inertia 85 knockback damping |
-| **No Reincarnation** | ✓ | No reincarnateAs/reincarnateInto in data; skelitonFootSoldier is a standalone enemy (not part of a cascade) |
-| **No Multi-attack** | ✓ | Single melee weapon, multiAttack not set |
-| **No Runreload** | ✓ | ranged=false; runReload=false (archetypes.ts:211) |
+| Aspect | Derived (original) | Observed (port reproduction) | Verdict |
+|--------|--------------------|------------------------------|---------|
+| Sprite char (`#data #name`) | keys off `#name "skelitonFootSoldier"`; strips bundled | `spriteCharOr → "skelitonFootSoldier"`, NOT blackOrc; strips `_stand/_walk/_weaponMelee/_reel/_grave` all present | FAITHFUL |
+| Team / allegiance | `#undead`, hates `#aldevar`+others | team `#undead`; targeting `#enemy` `#closestDistance`; hits `[#teamMembers,#teamBuildings]`; engages `#aldevar` dummy | FAITHFUL |
+| Energy / strength / dexterity | 90 / 3 / 10 | 90 / 3 / 10 | FAITHFUL |
+| Movement | walkSpeed 4, inertia 85 | maxSpeed 2.4 (4×0.6 calib), inertia 85 | FAITHFUL |
+| Attack type / weapon | `#weaponMelee` `#swordSwipe` | type "melee", name "#swordSwipe" | FAITHFUL |
+| **#animframe (hit gate)** | **8** (fire on strip frame 8) | runtime `animFrame [8]`; **observed STRIP FRAME at every hit = 8** | FAITHFUL |
+| Hits per swing | 1 (strip is 9-frame one-shot; frame 8 crosses once) | `[8,8,8,8,8,8,8,8,8,8,8]` → exactly 1 hit/swing | FAITHFUL |
+| Reach (melee) | `#collisionLoc.x` = 20 (melee uses strike point, not `#reach`) | AI melee reach 20; targeting reach 20 | FAITHFUL |
+| Power / mult | point(3,0), mult 1 | power {3,0}, mult 1 | FAITHFUL |
+| Cadence | cooldown 0 → re-swing after the swing strip replays | steady **17 frames** between swing entries | FAITHFUL |
+| Death | dieSound #none, killedInAction on lethal hit | isDead=true, killedInAction=true, no sound | FAITHFUL |
+| Grave | `#graveOn true` → leaves a grave (drawGrave) | getGraveOn=true; `_grave` strip exists; corpse → grave action | FAITHFUL |
+| Reincarnation | none (no `#reincarnateAs`/`#reincarnateInto`) | Reincarnate list `[]`; entity count stays 2 (no children spawned on death) | FAITHFUL |
+| runReload / ranged | melee, no kiting | ranged=false, runReload=false | FAITHFUL |
 
-## Context
+## Probe-fail checks (NOT port divergences)
 
-skelitonFootSoldier is a standalone melee enemy unit (not spawned via reincarnation):
-- Basic foot soldier in the undead army
-- Differs from skelitonArm (which spawns as part of skelitonLord cascade)
-- Pure melee combatant with consistent attack profile
-- Part of broader skeleton family but leaf node with no child spawns
-- Commonly encountered enemy throughout gameplay
+- Runtime `getCurrentAttack().reach = 25` is the structMaster `#reach` default, irrelevant for a
+  melee weapon — the unit gates approach + damage on the strike point (`collisionLoc.x = 20`), which
+  the harness confirms (AI reach 20). Faithful: `objAiCPU.targetInReachMelee` uses the strike point.
+- The raw registry `attack.animFrame` shows the structMaster default `2`; this is the **pre-merge**
+  default. `resolveAttack` reads the data override `#animframe 8` and the LIVE WeaponManager attack
+  carries `animFrame [8]` — verified by reproduction (every hit fires on strip frame 8). No off-by-one.
+- "hits per swing = 0.92" in the raw counts is `11 hits / 12 swing-entries`: the 12th swing was
+  entered just before tick 200 and had not yet reached frame 8. Per-swing hit count is exactly 1.
+
+## FAITHFUL vs PORT-BUG
+
+- All audited behaviors reproduce FAITHFULLY. No port-bugs found.
+- Doc-only nuance: the prior audit text described the effective cooldown as "~25 effective frames";
+  the reproduced re-swing cadence is **17 frames** (effective cooldown 14 + strip replay). This is a
+  stale prose estimate, not a behavioral divergence — corrected here.
 
 ## Conclusion
 
-**CLEAN**
-
-skelitonFootSoldier exhibits complete behavioral parity between the original Lingo definition and the TypeScript port:
-- All data properties correctly transferred and calibrated (energy, strength, dexterity, walkSpeed, inertia)
-- Melee AI classification via #weaponMelee animType is accurate
-- Cooldown calculation faithfully preserves original attack feel (atkCooldown + melee offset × dexterity)
-- Direct melee attack routing (swordSwipe embedded in actor, not external weapon) matches original modWeaponManager logic
-- Team allegiance (#undead) and targeting preserved
-- Proper leaf-node behavior (no reincarnation cascade initiated on death)
-- No blocking gaps detected
-
-No gaps identified.
+**CLEAN.** Reproduced end-to-end: the actor resolves its own bundled `skelitonFootSoldier` sprite
+(not blackOrc), swings `#swordSwipe` firing exactly once on `#animframe 8`, melee reach 20, steady
+17-frame cadence, `#undead` allegiance, and dies to a grave with no reincarnation (leaf node).

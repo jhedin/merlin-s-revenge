@@ -17,6 +17,13 @@ describe("world: real map parse (maps/works/teamtest.txt)", () => {
     expect(map.layerDefs.map((d) => d.name)).toEqual(["#backgroundPassive", "#backgroundActive", "#objects"]);
     expect(map.layerDefs[0]!.tileSet).toBe("#merlin4Passive");
   });
+  it("roomAt bounds-checks: an off-grid loc has NO room (no phantom-neighbour wrap at map edges)", () => {
+    expect(map.roomAt({ x: 1, y: 1 })).toBeDefined();          // in-bounds
+    expect(map.roomAt({ x: 0, y: 1 })).toBeUndefined();        // left of col 1 (would wrap to a prev-row room)
+    expect(map.roomAt({ x: map.mapSize.x + 1, y: 1 })).toBeUndefined(); // right of last col
+    expect(map.roomAt({ x: 1, y: 0 })).toBeUndefined();        // above row 1
+    expect(map.roomAt({ x: 1, y: map.mapSize.y + 1 })).toBeUndefined(); // below last row
+  });
   it("room 1 has 3 layers with 9x18 grids", () => {
     const room = map.roomAt({ x: 1, y: 1 })!;
     expect(room.num).toBe(1);

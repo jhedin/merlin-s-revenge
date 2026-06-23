@@ -1,189 +1,139 @@
-# Audit: goblinWarrior
+# Actor Audit: goblinWarrior
 
-**Method**: derived correct behavior from `casts/data/act_goblinWarrior.txt` + full `#inherit` chain
-(`#CPUCharacter → #character → #actor`) + weapon (`act_goblinSword.txt`) + AI scripts
-(`objCPUCharacter.txt`, `objAiCPU.txt`, `objAiAttack.txt`, `modAttack.txt`), then reproduced in the
-port by spawning the actor and running 200+ tick observations.
+**Method**: Derived correct behavior from `casts/data/act_goblinWarrior.txt` + full `#inherit` chain
+(`#CPUCharacter → #character → #actor`; CPUCharacter base in `casts/data/act_CPUCharacter.txt`,
+script `casts/script_objects/objCPUCharacter.txt`, energy default `casts/script_objects/objCharacter.txt`)
++ weapon `casts/data/act_goblinSword.txt` + AI scripts (`objAiCPU`, `objAiAttack`, `modAttack`). Then
+**REPRODUCED** in the port via a throwaway harness (`tools/_audit_goblinWarrior.ts`, since deleted) that
+loaded the real `src/generated/assets.json`, spawned the actor against a player target, and ran 200 ticks +
+a lethal-hit death probe.
+
+Classification: **CLEAN** ✓ — 0 divergences. (All four divergences listed in the *prior* version of this
+audit — energy default, `#damageSpeed` forwarding, `#frictionReel`, and minimap `#inf` — have since been
+FIXED in the port and are confirmed resolved by reproduction below.)
 
 ---
 
 ## 1. Derived Correct Behavior (Original)
 
-### Identity
-- Name: `goblinWarrior`; team: `#goblins` (category `#enemies`); friends: `#orcs`; hates: `[#aldevar, #monsterSummon, #karate, #magicalAlliance, #ninja, #undead, #scarlet, #village]`
-- `#objType: #objCPUCharacter`, `#AiType: #objAiCPU`
+### Identity / allegiance
+- `#name: "goblinWarrior"` (the **data #name sprite char** — sprite strips are keyed `goblinWarrior_*`, NOT a kin alias, NOT blackOrc)
+- `#team: #goblins` (category `#enemies`); `#objType: #objCPUCharacter`; `#AiType: #objAiCPU`; `#inherit: #CPUCharacter`
+- Context kin: `act_friendlyGoblinWarrior` is the same unit on `#team: #village` (+ `#minimapStatus: #clr`); `act_goblinHero` (`#name: "gar"`, energy 50, a RANGED `#goblinBow` caster) is unrelated to the melee warrior.
 
-### Animations (all strips must exist as `goblinWarrior_<action>`)
-| Action | Key | Notes |
-|---|---|---|
-| stand | `goblinWarrior_stand` | 1 frame, loop, delay 2 |
-| walk | `goblinWarrior_walk` | 6 frames, loop, delay 3 |
-| attack (melee) | `goblinWarrior_weaponMelee` | 11 frames, one-shot, delays 1/1/1/1/1/3/1/3/1/1/1 = 15 ticks total |
-| grave | `goblinWarrior_grave` | 2 frames, one-shot, delay 1 |
-| reel | `goblinWarrior_reel` | 4 frames, one-shot, delay 2 |
-
-All five strips are present in `assets.json`. There is no `goblinWarrior_death` strip (not needed — death uses the reel/grave path, not a separate death animation).
-
-### Movement
-- `#walkSpeed: 4` (engine units) → `2.4 px/tick` after ×0.6 conversion
-- `#inertia: 30` (resists knockback: `(100-30)/100 = 70%` of hit vector passes through)
-- `#damageSpeed: 3` (wall-slam bonus damage threshold; see DIVERGENCES)
-- Inherited `#frictionReel: point(10,10)` from CPUCharacter (enhanced friction during reel; see DIVERGENCES)
-- Inherited `#pathfinding: true` → scenic pathfinding active
-- Inherited `#walkType: #anyDirSpeed` (8-directional movement)
-
-### AI (objAiCPU)
-- FSM: `findTarget → moveToAttack → [attack] → attackFin → moveToAttack` loop
-- 30-frame retarget throttle (committed-target, no per-tick twitch-retarget)
-- Dazed (zero intent) on `#reel/#die/#finish`; resumes `findTarget` when cleared
-- `#runReload: false` → does NOT kite after attacking (stays in `moveToAttack`)
-- Melee approach: paths to `targetLoc + idealAttackLoc×(−dirToTarget)` = ~15px offset from target center
-- `targetInReachMelee`: `strikePoint(loc + point(±15,0))` inside `target.collisionRect`; effective range ~15 + targetBox ≈ 27px (with a 12px-box target)
-
-### Attack — goblinSword (#weaponMelee)
+### Stats (from data; energy inherited)
 | Property | Value | Source |
 |---|---|---|
-| animType | `#weaponMelee` | `act_goblinSword.txt:8` |
-| type | melee | derived from animType |
-| animframe | 7 (1-based) | `act_goblinSword.txt:7` (1 hit per attack) |
-| collisionLoc | `point(15,0)` | `act_goblinSword.txt:9` |
-| idealAttackLoc | `point(15,0)` | `act_goblinSword.txt:15` |
-| reach | 25 (structAttack default) | no explicit `#reach` in goblinSword |
-| power | `point(0.7, 0)` → scalar 0.7 | `act_goblinSword.txt:15` |
-| damageMultiplier | 2 | `act_goblinSword.txt:11` |
-| hits | `[#teamMembers, #teamBuildings]` | `act_goblinSword.txt:12` |
-| cooldown | 0 (no explicit cooldown → `#cooldown: 0`) | `act_goblinSword.txt:10` |
-| sound | `"skeleton_fire"` | `act_goblinSword.txt:16` |
-| bullet | none (melee only) | — |
+| `#strength` | 4 | `act_goblinWarrior.txt` |
+| `#walkSpeed` | 4 (→ 2.4 px/tick ×0.6) | `act_goblinWarrior.txt` |
+| `#inertia` | 30 | `act_goblinWarrior.txt` |
+| `#damageSpeed` | 3 (wall-slam bonus threshold) | `act_goblinWarrior.txt` |
+| `#dexterity` | 3 (melee uses agility, so cosmetic here) | `act_goblinWarrior.txt` |
+| `#eyestrain` | 30 (ranged-only — inert for melee) | `act_goblinWarrior.txt` |
+| `#experienceImWorth` | 2 | `act_goblinWarrior.txt` |
+| `#energy` | **100** (no explicit field → `objCharacter.txt:34` default) | inherited |
+| `#frictionReel` | `point(10,10)` | `act_CPUCharacter.txt:4` (inherited) |
+| `#miniMapStatus` | `#inf` (room shows infested while alive) | `act_CPUCharacter.txt:5` (inherited) |
+| `#pathfinding` / `#walkType` | `true` / `#anyDirSpeed` | inherited |
+| `#weaponTechnique` | none (default 0) | — |
 
-**Attack strip duration**: 15 ticks total (sum of `dela` values). Each attack cycle takes at least 15 ticks.
+### Animations (strips `goblinWarrior_<action>`)
+| Action | Frames | Loop |
+|---|---|---|
+| stand | 1 | loop |
+| walk | 6 | loop |
+| weaponMelee (attack) | 11 | one-shot |
+| grave | 2 | one-shot |
+| reel | 4 | one-shot |
 
-**Damage formula**: `power(0.7) × strength(4) × ENEMY_DAMAGE_SCALE(0.18) × damageMultiplier(2) = 1.008` per hit.
+No `goblinWarrior_death` strip (death uses the reel→grave path).
 
-### Energy
-- No explicit `#energy` in data. Original default (`objCharacter.txt:34`): `i[#energy] = 100`
-- Port default (`archetypes.ts:295`): `energy: 40` (see DIVERGENCES)
+### Weapon — `#goblinSword` (`act_goblinSword.txt`)
+| Property | Value |
+|---|---|
+| `#animType` | `#weaponMelee` (melee contact) |
+| `#animframe` | **7** (1-based) → 1 hit per swing |
+| `#collisionLoc` / `#idealAttackLoc` | `point(15,0)` |
+| `#power` | `point(0.7, 0)` → scalar 0.7 |
+| `#damageMultiplier` | 2 |
+| `#cooldown` | 0 |
+| `#hits` | `[#teamMembers, #teamBuildings]` |
+| `#reach` | 25 (structAttack default; melee approach actually uses collisionLoc strike point) |
+| `#sound` | `"skeleton_fire"` |
+| `#bullet` | `#none` (melee only) |
 
-### Death & Grave
-- `objCPUCharacter.flasherFinished()`: flashes white, `pDead = true`, `goMode(#finish)`, `drawGrave()`
-- Grave strip (`goblinWarrior_grave`, 2 frames) left at death location, facing right (`setFlipFromDir(1)`)
-- No reincarnation; no `#stretchDeath`
+**Damage/hit** = power(0.7) × strength(4) × ENEMY_DAMAGE_SCALE(0.18) × mult(2) ≈ **1.008**.
+**Cadence**: swing strip = 15 ticks (sum of `dela`); cooldown 0 → cadence floored at the 15-tick strip.
 
-### Misc
-- `#experienceImWorth: 2` (XP awarded to killer)
-- `#eyestrain: 30` (melee only — irrelevant, eyestrain only affects ranged fire)
-- `#dexterity: 3` (irrelevant for melee — cooldown counter uses `agility`)
+### AI (objAiCPU) — melee FSM
+`findTarget → moveToAttack → attack → attackFin → moveToAttack`. Committed target (30-frame retarget
+throttle), dazed on reel/die, `#runReload:false` (no kiting). Approaches to the collisionLoc strike point
+(~15px standoff). Death (`flasherFinished`): flash white → `pDead` → `goMode(#finish)` → `drawGrave()`
+(2-frame grave left at death loc). No reincarnation, no `#stretchDeath`, `#graveOn` true.
 
 ---
 
 ## 2. Observed (Port) — Reproduction Results
 
-Setup: `CollisionGrid(40,40,32)`, real `assets.json` bundle, player at `(300,200)`, goblinWarrior at `(360,200)`, 200 ticks.
+Harness: `CollisionGrid(80,80,32)`, real `assets.json`, inert player target at (300,200), goblinWarrior at
+(360,200), 200 ticks, then a lethal `takeHit` death probe.
 
-| Observable | Expected | Observed | Match? |
+| Observable | Expected (derived) | Observed (port) | Match |
 |---|---|---|---|
-| `spriteCharOr("goblinWarrior")` | `goblinWarrior` | `goblinWarrior` | ✓ |
-| `goblinWarrior_stand` strip | present | present (1 frame, loop) | ✓ |
-| `goblinWarrior_walk` strip | present | present (6 frames, loop) | ✓ |
-| `goblinWarrior_weaponMelee` strip | present | present (11 frames, one-shot) | ✓ |
-| `goblinWarrior_grave` strip | present | present (2 frames, one-shot) | ✓ |
-| `goblinWarrior_reel` strip | present | present (4 frames, one-shot) | ✓ |
-| `goblinWarrior_death` strip | absent | absent (uses reel/grave path) | ✓ |
-| First attack tick | < 200 | tick 25 (approaches + attacks) | ✓ |
-| Hits per attack cycle | 1 (animframe 7) | 1 (confirmed) | ✓ |
-| Total hits in 200 ticks | > 0 | 12 | ✓ |
-| Damage per hit | ~1.008 | ~1.008 | ✓ |
-| Attack anim action | `"weaponMelee"` | `"weaponMelee"` | ✓ |
-| AI mode after attack | `moveToAttack` | `moveToAttack` | ✓ |
-| Warrior moves toward player | true | true | ✓ |
-| Facing changes toward player | true | true | ✓ |
-| `EnemyAI.ranged` | false | false | ✓ |
-| `EnemyAI.runReload` | false | false | ✓ |
-| `EnemyAI.reach` | ~25 (structAttack) | 25 | ✓ |
-| `graveOn` before/after death | true/true | true/true | ✓ |
-| `experienceImWorth` | 2 | 2 | ✓ |
-| `walkSpeed` (maxSpeed) | 2.4 px/tick | 2.4 px/tick | ✓ |
-| `inertia` | 30 | 30 | ✓ |
-| `agility` | 1 (default) | 1 | ✓ |
-| `dexterity` | 3 | 3 | ✓ |
-| Effective cooldown (attack.cooldown) | ~7 ticks | 7 | ✓ |
-| Minimum gap between hits | ≥ 15 ticks (strip duration) | 15 ticks | ✓ |
-| `attack.hits` | `[#teamMembers, #teamBuildings]` | `[#teamMembers, #teamBuildings]` | ✓ |
-| `attack.animFrame` | `[7]` | `[7]` | ✓ |
-| `energy` | 100 (objCharacter default) | 40 (port default) | **DIVERGENCE** |
-| `damageSpeed` | 3 | 5 (port default) | **DIVERGENCE** |
+| data #name | `goblinWarrior` | `goblinWarrior` | ✓ |
+| **`spriteCharOr` → anim char** | `goblinWarrior` (real strip, not blackOrc) | `goblinWarrior` (real) | ✓ |
+| all 5 strips bundled | stand/walk/weaponMelee/grave/reel present | all present (1/6/11/2/4 frames, correct loop flags) | ✓ |
+| `goblinWarrior_death` strip | absent | absent | ✓ |
+| team | `#goblins` | `#goblins` | ✓ |
+| **Energy.max** | **100** | **100** | ✓ |
+| maxSpeed | 2.4 px/tick | 2.4 | ✓ |
+| inertia | 30 | 30 | ✓ |
+| **damageSpeed** | **3** | **3** | ✓ |
+| frictionReel | 10 | 10 (→ knockFriction tuned) | ✓ |
+| weapon attack animType | melee (`#weaponMelee`) | melee | ✓ |
+| attack reach | 25 (struct) / ~15 melee standoff | standoff ~12px (collisionLoc-driven) | ✓ |
+| **hits per swing (`#animframe` 7)** | **1** | **1** (every swing) | ✓ |
+| total hits / 200 ticks | >0 | **12** | ✓ |
+| gap between hits | ≥15 (strip duration) | **15** every time | ✓ |
+| first hit tick | <200 (after approach) | 28 | ✓ |
+| damage per hit | ~1.008 | **1.008** | ✓ |
+| attack.hits filter | `[#teamMembers,#teamBuildings]` | `[#teamMembers,#teamBuildings]` | ✓ |
+| experienceImWorth (getReward) | 2 | 2 | ✓ |
+| approaches + faces target | yes | yes (360→311.9) | ✓ |
+| death: isDead/graveOn/action | true/true/`grave` | true/true/`grave` | ✓ |
+| miniMapStatus | `#inf` | resolves `#inf` (drives room infestation) | ✓ |
+
+**Probe-API note (NOT a port divergence):** the harness sampled `attackFrame()` AFTER the post-update
+energy check, so it read frame `8` at the moment of each hit; the hit actually fires on the FRESH crossing
+of frame `7` (1-based) in `driveSwing`/`updateAttack` (`control.ts:378/769`). The 1-hit-per-swing + 15-tick
+cadence confirm the gate is on frame 7 as derived. An initial death probe also FAILED only because the
+first call used the wrong `takeHit` positional signature; the correct `(vx, vy, attackerId, mult)` call
+produced a clean lethal death + grave.
 
 ---
 
 ## 3. DIVERGENCES
 
-### DIV-1: Default energy 100 → 40
+**None.** All previously-recorded divergences are RESOLVED in the current port:
 
-**Original** (`casts/script_objects/objCharacter.txt:34`): `i[#energy] = 100` — all CPUCharacters without explicit `#energy` start with 100 HP.
-
-`act_goblinWarrior.txt` has no explicit `#energy` field; its full `#inherit` chain (`#CPUCharacter → #character → #actor`) also carries none. So the original goblinWarrior has **100 energy**.
-
-**Port** (`port/src/entities/archetypes.ts:295`): `energy: num("energy", 40)` — the default for enemies without explicit energy is 40.
-
-**Observed**: `warrior.get(Energy).max === 40`, not 100.
-
-**Impact**: The warrior dies in ≈40 damage instead of 100, making it significantly easier to kill. This affects room difficulty calibration.
-
-**Fix sketch**: In `spawnEnemy` change the fallback from `40` to `100` — matching `objCharacter.txt:34`. Alternatively, add an `energy` field to `act_goblinWarrior`'s data (but the faithful fix is correcting the fallback since many no-energy actors share this path).
-
-**Files**: `port/src/entities/archetypes.ts:295`, `casts/script_objects/objCharacter.txt:34`
+- **DIV-1 (energy 100→40) — FIXED.** `archetypes.ts:370` now defaults `energy: num("energy", 100)`
+  (comment: "objCharacter.new seeds #energy=100 (was 40)"). Reproduced: `Energy.max === 100`.
+- **DIV-2 (`#damageSpeed` not forwarded, 3→5) — FIXED.** `archetypes.ts:384` now passes
+  `damageSpeed: num("damageSpeed", 5)`; data's 3 flows through. Reproduced: `Movement.damageSpeed === 3`.
+- **DIV-3 (`#frictionReel` ignored) — FIXED.** `movement.ts:74-76` reads `cfg["frictionReel"]` and derives
+  `knockFriction = KNOCK_FRICTION × 10 / frictionReel`, consumed in the knockback decay. Forwarded at
+  `archetypes.ts:386`. Reproduced: `frictionReel === 10` (CPUCharacter value).
+- **DIV-4 (minimap `#inf` not per-entity) — FIXED at room scope.** `rooms.ts:147` marks the current room
+  infested while `enemiesAlive()`, and `rooms.ts:170` scans unvisited rooms for actors whose data
+  `#miniMapStatus === "#inf"`. goblinWarrior resolves `#inf` and spawns as `type:"enemy"`, so it drives
+  infestation correctly. Reproduced: `resolveActor("goblinWarrior").miniMapStatus === "#inf"`.
 
 ---
 
-### DIV-2: `#damageSpeed` not forwarded — wall-slam threshold wrong (3 → 5)
+## Summary
 
-**Original** (`casts/data/act_goblinWarrior.txt:6`, `casts/script_objects/objCPUCharacter.txt` wall handlers): `#damageSpeed: 3`. `collisionWall`/`collisionVertical` apply bonus damage of `(|impact| − damageSpeed)` when the unit is reeling into a wall. goblinWarrior's threshold is 3, so any wall-slam with impact > 3 inflicts bonus damage.
-
-**Port** (`port/src/components/movement.ts:47, 67`): `damageSpeed = 5` (hardcoded default). `spawnEnemy` never passes `damageSpeed` in the `e.build({...})` call (`port/src/entities/archetypes.ts:284-347`), so `cfg["damageSpeed"]` is `undefined` and the default 5 is used.
-
-**Observed**: `warrior.get(Movement).damageSpeed === 5`. The warrior needs a harder wall-slam to take bonus damage than it should (threshold 5 > 3).
-
-**Impact**: The goblinWarrior takes less damage from wall-slams than intended. It is also more survivable when reeling near walls.
-
-**Fix sketch**: In `spawnEnemy`, add `damageSpeed: num("damageSpeed", 5)` to the `e.build({...})` call. (The `num()` helper reads from the resolved actor data; `act_goblinWarrior.txt:6` sets it to 3, so the correct value 3 would flow through. The default 5 remains for actors without an explicit `#damageSpeed`.)
-
-**Files**: `port/src/entities/archetypes.ts` (add to build call), `port/src/components/movement.ts:67` (already wired to read from cfg), `casts/data/act_goblinWarrior.txt:6`
-
----
-
-### DIV-3 (Minor): `#frictionReel` not implemented — reel deceleration too slow
-
-**Original** (`casts/data/act_CPUCharacter.txt:4`): `#frictionReel: point(10,10)`. In `objCPUCharacter.goMode(#reel)`, `frictionXOn(10)` and `frictionYOn(10)` are called — these swap in a stronger friction factor (10× vs the normal factor) while the unit reels, so it decelerates faster during knockback.
-
-**Port**: There is no `frictionReel` concept. The `Movement` component uses a fixed `friction = 0.6` per-tick regardless of whether the unit is reeling. The generated `data.json` records `frictionReel: {x:10, y:10}` but no code consumes it.
-
-**Observed**: During reel, the warrior's knockback decays at the standard friction rate, not the enhanced rate.
-
-**Impact**: A knocked-back goblinWarrior slides slightly farther than intended before stopping. This is a secondary physics effect.
-
-**Fix sketch**: Add a `reelFriction` field to `Movement.init`, read from `cfg["frictionReel"]`; when `isHurt` (reel state), apply `reelFriction` instead of the normal friction multiplier in the velocity decay step. Pass it through `spawnEnemy` for all CPUCharacters.
-
-**Files**: `port/src/components/movement.ts`, `port/src/entities/archetypes.ts`
-
----
-
-### DIV-4 (Cosmetic): `#miniMapStatus: #inf` not forwarded per-entity
-
-**Original**: `act_CPUCharacter` inherits `#miniMapStatus: #inf`. When any goblinWarrior is alive in a room, the room's minimap status is `#inf` (infested). This is updated per-entity in the original's `modMiniMap`.
-
-**Port**: The minimap system exists (`port/src/render/minimap.ts`) but the per-entity `miniMapStatus` flag is not read from actor data or forwarded through `spawnEnemy`. The room-infested status is not driven per-goblinWarrior presence.
-
-**Impact**: Cosmetic only (minimap room status). Core combat behavior is unaffected.
-
----
-
-## Summary Table
-
-| # | Property | Original | Port | Severity |
-|---|---|---|---|---|
-| DIV-1 | Default energy | 100 (`objCharacter.txt:34`) | 40 (`archetypes.ts:295`) | **High** — warrior dies at 40% of intended HP |
-| DIV-2 | `#damageSpeed` | 3 (`act_goblinWarrior.txt:6`) | 5 (hardcoded default) | Medium — wall-slam damage under-fires |
-| DIV-3 | `#frictionReel` | enhanced during reel | ignored (fixed friction) | Low — minor slide distance |
-| DIV-4 | `#miniMapStatus:#inf` | per-entity room status | not forwarded | Cosmetic |
-
-All art strips, AI FSM, weapon resolution, attack animframe (7 → 1 hit per attack), team/allegiance, hits filter (`[#teamMembers, #teamBuildings]`), walkSpeed, inertia, pathfinding, death/grave, and experience are correct.
+goblinWarrior is a faithful melee `#goblins` CPUCharacter: real `goblinWarrior_*` sprite (no blackOrc
+fallback), 100 energy, walkSpeed 2.4 px/tick, inertia 30, damageSpeed 3, frictionReel 10, the `#goblinSword`
+melee weapon (1 hit per swing on `#animframe` 7, ~1.008 dmg, 15-tick cadence, `[#teamMembers,#teamBuildings]`
+hit filter), worth 2 XP, leaving a 2-frame grave on death. Art, AI FSM, weapon resolution, attack gating,
+allegiance, movement, death/grave, and minimap status all match the original. **CLEAN.**
