@@ -72,3 +72,56 @@ Both towers diverge intentionally on:
 
 ## Conclusion
 **CLEAN** — garTower is fully ported with faithful property coverage and correct behavioral implementation. Stationary firing, ranged AI, bullet resolution, reelProof, and team allegiance all verified in the port's EnemyArchetype + CpuAI + Movement + Hurt chain.
+
+---
+
+## RE-VERIFY BY REPRODUCTION (2026-06-23) — REAL DIVERGENCE FOUND
+
+Real assets/data; `garTower` as `#goblins` enemy vs PINNED `archer` (`#aldevar`); substrate rebuilt per tick;
+260 frames; pin swept across several distances and y-offsets; forced-kill for reincarnation. Harness
+gitignored/deleted.
+
+| Check | Expected | Observed | Status |
+|---|---|---|---|
+| Sprite char | `garTower` (not blackOrc) | `spriteCharOr→garTower`; `_stand`(2) `_weaponRanged`(11) `_beBuilt`(4) `_grave`(2) bundled | ✓ |
+| Stationary | walkSpeed 0 | tower never moved (Δx=0) across the whole run | ✓ |
+| Weapon / frame | `#towerBow` `#weaponRanged` `#scArcherArrow`, animFrame 11, reach 180 | `getCurrentAttack name:#towerBow type:ranged reach:180 animFrame:[11] bullet:#scArcherArrow firingType:#fullstrength` (11-frame strip → frame 11 is real) | ✓ |
+| Fire cadence | regular cooldown gate | fires every **30 ticks** (t=11,41,71,101) | ✓ |
+| Reincarnation | `[#goblinArcher]` on KIA | killed → 1 child, anim char `gar` (goblinArcher `#name "gar"`, all strips bundled — not a fallback) | ✓ |
+| **Damage to target** | arrows HIT the in-reach target | **arrows MISS at every distance/offset tested (0 damage).** Root cause below. | ✗ **BUG** |
+
+### REAL DIVERGENCE — ranged CPU aims from the character CENTER, not the muzzle (`calcAttackLoc`)
+
+**Dual-tree:**
+- **Original** `casts/script_objects/modAttack.txt:739` `distXY = targetLoc - me.calcAttackLoc()` and
+  `:789` `params.startLoc = me.calcAttackLoc()` — the throw vector AND the spawn loc both use
+  `calcAttackLoc()` = `getLoc() + collisionLoc` (the MUZZLE, `:185-197`). So the arrow is aimed FROM the
+  muzzle TO the target and converges on it.
+- **Port** `port/src/components/control.ts:903`
+  `if (t) { const tp = t.send("getPos"); dx = tp.x - m.x; dy = tp.y - m.y; }` — the aim vector is computed
+  from the character CENTER (`m.x, m.y`), but the bullet is SPAWNED at the muzzle `mz = muzzle(ftAttack, m)`
+  (`:913`, = center + `collisionLoc`). The arrow therefore launches from the muzzle but flies along a
+  center-to-target slope — a PARALLEL OFFSET equal to `collisionLoc`. garTower's `collisionLoc point(5,-30)`
+  offsets the arrow ~30px above the target's hit-box; the bullet/unit collision tolerance is only ±12px
+  (`port/src/components/projectile.ts:159`), so the arrow sails over and never hits.
+
+**Reproduction:** vs a pinned archer at 70–120px and y-offsets {0, +30, −30, +60}, garTower scored **0 damage
+ticks** in every case; the bullet flew at y≈368 while the target sat at y=400. Hand-firing the SAME arrow
+aimed from the muzzle (`tp − mz`) instead of the center converged on the target and landed the hit
+(energyFrac 1.0→0.96). Confirmed it is the aim origin, not the pin.
+
+**Scope:** bites ranged CPU units whose weapon `collisionLoc.y` exceeds the ±12px tolerance — garTower
+(−30), **dwarfTower (−88, far worse)**, flameThrower, and similar tower/elevated-muzzle attackers.
+`doubleDarkGolem` (−10) and ground-level shooters are masked by the tolerance, so this is easy to miss.
+
+**Fix sketch (control.ts:902-903):** aim from the muzzle, matching `calcAttackLoc`. Move the `muzzle()` call
+above the dx/dy computation and use it as the aim origin:
+```ts
+const mz = muzzle(wm.getCurrentAttack(), m);
+let dx = m.facingLeft ? -100 : 100, dy = 0;
+if (t && !t.send("isDead")) { const tp = t.send("getPos"); dx = tp.x - mz.x; dy = tp.y - mz.y; }
+```
+(The melee branch must keep aiming from center, so scope the muzzle-aim to `this.ranged` only, or recompute
+dx/dy from `mz` inside the `if (this.ranged)` block before `aimWithEyestrain`.) Optionally add the original
+`pRangedVectOffset` (`modAttack.txt:779`) for the small extra vertical lead, though aiming from the muzzle
+alone restores the hits.

@@ -31,15 +31,22 @@ import { game } from "../game/context";
 const BASIC_TIME_PER_LINE = 50;
 const TIME_PER_LETTER = 1.4;
 const TIME_BETWEEN_LINES = 12;
-const FADE_DURATION = 18;     // shared all-actor fade window (lightsUp/Down/fadeDown faders)
+const FADE_DURATION = 50;     // lights/fade window: startSlowFade(In/Out) = startTransBlend(speed 2) = 100/2 = 50 frames
 const WALK_SPEED_PX = 2.4;    // cutscene walk px/tick (the wings/stage geometry is view-space)
 
-// The abbreviated anim-sheet name for a cutscene character (the sheets are anm_mer/uli/ber/tv, NOT the
-// actor name). Falls back to the first 3 chars (the original CutscenePlayer's heuristic).
+// The anim-sheet name for a cutscene character (the sheets are anm_mer/uli/ber/tv/presto…, NOT the actor
+// alias). Resolve like a live actor: the actor's data #name keys its sprite sheet (objCharacter.getCharacter
+// → the #name strip). So prestotolin → #name "presto" → presto_stand (NOT slice(0,3)="pre", which is blank
+// and renders the actor INVISIBLE all scene). Falls back to the name itself, then the first-3-chars heuristic.
 const CUT_ANIM_CHAR: Record<string, string> = { merlin: "mer", ulin: "uli", berlin: "ber", tv: "tv" };
 function cutAnimChar(name: string): string {
   if (CUT_ANIM_CHAR[name]) return CUT_ANIM_CHAR[name];
-  return game.assets?.index.anims[`${name}_stand`] ? name : name.slice(0, 3);
+  const anims = game.assets?.index.anims;
+  if (anims?.[`${name}_stand`]) return name;
+  // the actor's data #name owns the sprite sheet (presto/amotonlin/… in-game wizards share a #name with the sheet).
+  const dataName = (registry.resolveActor(name) ?? {})["name"];
+  if (typeof dataName === "string" && anims?.[`${dataName.replace(/^#/, "")}_stand`]) return dataName.replace(/^#/, "");
+  return name.slice(0, 3);
 }
 
 // A minimal cutscene-actor archetype: Identity + Movement + Anim + Energy + Team. Enough to walk, stand,
@@ -100,7 +107,11 @@ export class Thespian {
   // stage state (cutSceneMaster pBackground/pTitle/lights)
   bg = { r: 10, g: 16, b: 24 };
   private bgTarget = { r: 10, g: 16, b: 24 };
-  private bgSpeed = 2;          // colour-tween step per tick (backgroundColourTo speed 2 / flash speed)
+  // objTransColour: backgroundColourTo is a PERCENT tween from the current colour to the target over a FIXED
+  // 100/speed frames (speed 2 -> 50), independent of the colour distance — NOT a per-channel step rate.
+  private bgStart = { r: 10, g: 16, b: 24 };
+  private bgTweenT = 1; private bgTweenDur = 1; // progress / total frames (T>=Dur => settled)
+  private bgSpeed = 10;         // remembered flash speed (pBackgroundRandomFlashSpeed); backgroundColourTo is speed 2
   private bgFlash = false;      // K16 backgroundColourRandomFlash: self-restarting random-target loop
   lights = true;
   private lightsTarget = true;
@@ -114,7 +125,7 @@ export class Thespian {
   titleAlpha = 0;
   private titlePhase: 0 | 1 | 2 | 3 = 0;   // 0 none, 1 fade-in, 2 hold, 3 fade-out
   private titleT = 0;
-  private static readonly TITLE_FADE = 16;
+  private static readonly TITLE_FADE = 25; // objCutSceneTitle colour-transform speed 4 -> 100/4 = 25 frames
   private static readonly TITLE_HOLD = 150;
   speech: SpeechState | null = null;
 
@@ -273,7 +284,7 @@ export class Thespian {
       case "fadeDown": if (p) this.fadeActor(p, 0); break;          // K17: this actor's OWN fader (count gate)
       // --- global verbs ---
       case "wait": this.pending = { left: step.arg.kind === "number" ? Math.max(1, Math.round(step.arg.n)) : 30 }; break;
-      case "backgroundColourTo": if (step.arg.kind === "rgb") { this.bgTarget = { r: step.arg.r, g: step.arg.g, b: step.arg.b }; this.bgFlash = false; } break;
+      case "backgroundColourTo": if (step.arg.kind === "rgb") { this.bgFlash = false; this.startBgTween({ r: step.arg.r, g: step.arg.g, b: step.arg.b }, 2); } break;
       case "lightsUp": this.lightsChange(1); break;   // K17: each actor fades IN under its own fader
       case "lightsDown": this.lightsChange(0); break; // K17: each actor fades OUT under its own fader
       case "showTitle": this.title = step.arg.kind === "text" ? step.arg.text : step.args.join(" ");
@@ -401,7 +412,14 @@ export class Thespian {
     this.pickRandomBgTarget();
   }
   private pickRandomBgTarget(): void {
-    this.bgTarget = { r: this.randByte(), g: this.randByte(), b: this.randByte() }; // ColourRandom
+    this.startBgTween({ r: this.randByte(), g: this.randByte(), b: this.randByte() }, this.bgSpeed); // ColourRandom
+  }
+  // objTransColour.calcStart: begin a percent tween from the current colour to `target` over 100/speed frames.
+  private startBgTween(target: { r: number; g: number; b: number }, speed: number): void {
+    this.bgStart = { ...this.bg };
+    this.bgTarget = { ...target };
+    this.bgTweenDur = Math.max(1, Math.round(100 / Math.max(1, speed)));
+    this.bgTweenT = 0;
   }
   private randByte(): number {
     const r = game.rng?.next ? game.rng.next() : Math.random();
@@ -409,10 +427,13 @@ export class Thespian {
   }
 
   private setStage(): void {
-    // putPlayersIntoWings + makePlayersInvisible + backgroundColour(setColour)
+    // putPlayersIntoWings + makePlayersInvisible + backgroundColour(pSetSceneColour). pSetSceneColour =
+    // rgb(0,0,0): setStage SNAPS the stage to BLACK (an instant backgroundColour, not a tween), so a later
+    // backgroundColourTo fades up FROM black. (The port previously left the bg at its default slate blue.)
     this.bgFlash = false; // backgroundColour cancels any random flash (cutSceneMaster.backgroundColour -> goMode #none)
     for (const p of this.players.values()) { p.scrollDir = 0; this.gotoWings(p); }
-    this.bg = { ...this.bgTarget };
+    this.bg = { r: 0, g: 0, b: 0 }; this.bgStart = { r: 0, g: 0, b: 0 }; this.bgTarget = { r: 0, g: 0, b: 0 };
+    this.bgTweenT = this.bgTweenDur = 1; // settled (no in-progress tween)
   }
 
   private speakLine(alias: string, text: string): void {
@@ -488,16 +509,18 @@ export class Thespian {
   }
 
   private tweenStage(): void {
-    const lim = Math.max(1, this.bgSpeed);
-    const step = (cur: number, tgt: number) => cur + Math.max(-lim, Math.min(lim, tgt - cur));
-    this.bg.r = step(this.bg.r, this.bgTarget.r);
-    this.bg.g = step(this.bg.g, this.bgTarget.g);
-    this.bg.b = step(this.bg.b, this.bgTarget.b);
+    // objTransColour: a PERCENT lerp from bgStart to bgTarget over bgTweenDur (= 100/speed) frames — a fixed
+    // duration regardless of the colour distance (the port's old per-channel step rate took ~2× as long).
+    if (this.bgTweenT < this.bgTweenDur) {
+      this.bgTweenT++;
+      const f = this.bgTweenT / this.bgTweenDur;
+      this.bg.r = this.bgStart.r + (this.bgTarget.r - this.bgStart.r) * f;
+      this.bg.g = this.bgStart.g + (this.bgTarget.g - this.bgStart.g) * f;
+      this.bg.b = this.bgStart.b + (this.bgTarget.b - this.bgStart.b) * f;
+    }
     // K16 backgroundColourRandomFlash: when the bg reaches its random target, pick a new one (the self-
     // restarting loop, cutSceneMaster.eventNotification(#colourTransformFin) -> backgroundColourToRandom).
-    if (this.bgFlash && this.bg.r === this.bgTarget.r && this.bg.g === this.bgTarget.g && this.bg.b === this.bgTarget.b) {
-      this.pickRandomBgTarget();
-    }
+    if (this.bgFlash && this.bgTweenT >= this.bgTweenDur) this.pickRandomBgTarget();
     // K17 per-actor faders: advance each fading actor's alpha toward its target; on arrival the fader
     // finishes (playerFaderFin) and decrements waitingForFaders. A uniform step, but per-actor state +
     // a count-to-zero gate (faithful completion model; actors CAN have different fade lengths).

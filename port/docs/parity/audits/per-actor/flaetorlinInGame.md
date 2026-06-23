@@ -82,3 +82,21 @@ flaetorlinInGame is a summoned spellcaster variant on the #aldevar (player's) te
 All seven behavioral categories are faithfully implemented. No behavioral divergence detected.
 
 ACTOR=flaetorlinInGame | CLEAN
+
+---
+
+## RE-VERIFY BY REPRODUCTION (2026-06-23)
+
+Real assets/data; `flaetorlinInGame` as `#aldevar` ally vs PINNED `darkGolem`; substrate rebuilt per tick;
+260 frames. Harness gitignored/deleted.
+
+| Check | Expected | Observed | Status |
+|---|---|---|---|
+| Sprite char | `flaeto` (not blackOrc) | `spriteCharOr("flaeto")→flaeto`; `_stand`(1) `_walk`(8) `_charge`(4) `_release`(4) `_chargeWalk`(4) `_releaseWalk`(4) `_grave`(2) bundled | ✓ |
+| Weapon | `#cBlastAi` → `energyBlast` magic | `getCurrentAttack name:#energyBlast type:magic power 0.5 chargeMaxModifier 3 chargeMaxBasic 18` | ✓ |
+| AI mode | spellcaster | `optimumPosition`(238t)+`moveToAttack`(22t) | ✓ |
+| Cast lifecycle | charge→fly→explode | 3 SpellActor orbs born, fly, explode | ✓ |
+| Cadence | charge+cooldown 30 | t=2,24,46 → **22-tick gaps** | ✓ |
+| Damage | bolt kills | pinned darkGolem **energyFrac→0.000, 1 respawn** (killed) | ✓ |
+
+**CLEAN — reproduced faithfully.** Magic reach 9999 keeps it ranged; punch backup never fires.
