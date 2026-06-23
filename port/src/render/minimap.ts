@@ -51,12 +51,16 @@ export function statusFor(inp: MinimapInputs, x: number, y: number): MiniStatus 
   return "#clr";
 }
 
-export function drawMinimap(renderer: Renderer, inp: MinimapInputs, viewW: number, assets?: Assets): void {
+export function drawMinimap(renderer: Renderer, inp: MinimapInputs, viewW: number, viewH: number, assets?: Assets): void {
   const ctx = renderer.ctx;
   const { map } = inp;
-  const cell = 5;
+  // modMiniMap anchors BOTTOM-right at ×2 (8px/room). The port keeps it readable on a huge map: the cell
+  // size adapts to the room count — large cells (8) when there are FEW rooms, shrinking toward 4 as the map
+  // grows so a 15×15 (225-room) map still fits a compact footprint (≈90px), per the "big when few, small
+  // when many" preference.
+  const cell = Math.max(4, Math.min(8, Math.floor(100 / Math.max(1, map.mapSize.x, map.mapSize.y))));
   const w = map.mapSize.x * cell, h = map.mapSize.y * cell;
-  const ox = viewW - w - 6, oy = 6;
+  const ox = viewW - w - 6, oy = viewH - h - 6; // bottom-right
 
   // distance blend: min(mouse, player) distance to the minimap sprite -> globalAlpha in [0.1, 0.9].
   const mapCx = ox + w / 2, mapCy = oy + h / 2;
@@ -72,8 +76,8 @@ export function drawMinimap(renderer: Renderer, inp: MinimapInputs, viewW: numbe
     for (let x = 0; x < map.mapSize.x; x++) {
       const st = statusFor(inp, x + 1, y + 1);
       const px = ox + x * cell, py = oy + y * cell;
-      const tile = st && assets?.member(STATUS_MEMBER[st]); // the real 4×4 status bitmap
-      if (tile) { ctx.drawImage(tile.img, px, py); continue; }
+      const tile = st && assets?.member(STATUS_MEMBER[st]); // the real 4×4 status bitmap, scaled to the cell
+      if (tile) { ctx.drawImage(tile.img, px, py, cell, cell); continue; }
       ctx.fillStyle = st ? STATUS_COLOR[st] : "#222"; // no room here / art absent -> solid cell
       ctx.fillRect(px, py, cell - 1, cell - 1);
     }
