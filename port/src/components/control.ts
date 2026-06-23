@@ -49,7 +49,7 @@ const isStreaming = (a: AttackData): boolean => a.releaseFunction === "#fireBull
 // once a magic weapon is owned. WeaponManager is the data store; PlayerControl drives BOTH modes,
 // gating each on that weapon's own cooldown counter (resetCooldown on FIRE).
 export class PlayerControl extends Component {
-  static handles = ["update", "levelUp", "animAction", "chargeFrac", "attackActive", "addSaveData", "restoreFromSave"];
+  static handles = ["update", "levelUp", "animAction", "chargeFrac", "attackActive", "getGmgOn", "getGmgCollected", "addSaveData", "restoreFromSave"];
   // attackActive: mid-swing — Movement holds the facing (locked at swing entry) instead of flipping it to
   // the walk direction, so a moving Merlin keeps aiming his swing where it started (no right->left flip).
   attackActive(): boolean { return this.meleeT > 0; }

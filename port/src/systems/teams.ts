@@ -16,7 +16,7 @@ export interface TargetConfig {
 }
 
 interface TeamRuntime {
-  name: string; friends: string[]; hates: string[][];
+  name: string; friends: string[]; hates: string[][]; maxMembers: number;
   members: Set<Entity>; buildings: Set<Entity>;
 }
 
@@ -44,20 +44,24 @@ export class TeamMaster {
       const rec = registry.team(name) as any;
       const friends: string[] = Array.isArray(rec?.friends) ? rec.friends.slice() : [];
       const hates: string[][] = Array.isArray(rec?.hates) ? rec.hates.map((tier: string[]) => tier.slice()) : [];
-      t = { name, friends, hates, members: new Set(), buildings: new Set() };
+      // maxMembers from the tem_ record; absent -> structMaster's default team template (#maxMembers=5).
+      const maxMembers = typeof rec?.maxMembers === "number" ? rec.maxMembers : 5;
+      t = { name, friends, hates, maxMembers, members: new Set(), buildings: new Set() };
       this.teams.set(name, t);
     }
     return t;
   }
 
-  // reservationsMaster.getPermissionToRelease: a team can hold at most team.maxMembers LIVE units —
-  // gMaxFriends=12 for the player side, gMaxEnemies=16 otherwise (GameSpecific.ls). teamOverride halves a
-  // cap >5 (gang-up). Dwelling releases and summons gate on this so a team can't flood past its cap.
-  // pending = units about to be released (default 1 — the common "may I release one more?" query). Blocked
-  // when currentMembers + pending > cap, matching reservationsMaster's `current + numToRelease <= maxMembers`.
+  // reservationsMaster.getPermissionToRelease: a team can hold at most its DATA-DRIVEN team.maxMembers LIVE
+  // units (tem_*.txt #maxMembers: aldevar 12, goblins/undead 16, orcs 11, monsters 10, scarlet 9, invisible
+  // 6, monsterSummon 3; teams with no field -> structMaster default 5). teamOverride halves a cap >5 (gang-up).
+  // Dwelling releases and summons gate on this so a team can't flood past its cap. pending = units about to be
+  // released (default 1). Blocked when currentMembers + pending > cap (reservationsMaster's `current +
+  // numToRelease <= maxMembers`). NB: the old blanket 16-for-all-enemies over-capped most teams (e.g.
+  // monsterSummon let 16 field where the data caps 3) — the per-team value is the faithful limit.
   atCapacity(teamName: string, pending = 1): boolean {
     const t = this.team(teamName);
-    let cap = this.isPlayerSide(teamName) ? 12 : 16;
+    let cap = t.maxMembers;
     if (this.teamOverride && cap > 5) cap = Math.floor(cap / 2);
     return t.members.size + pending > cap;
   }
