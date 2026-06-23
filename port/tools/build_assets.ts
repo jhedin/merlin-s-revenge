@@ -325,6 +325,7 @@ const MEMBER_NAMES = [
   // wizard's bar portrait (<name>_off). objWizardDisplayer shows the SELECTED wizard's portrait, with the
   // 16×16 marker overlaid when one is currently summoned on the field.
   "wizard_on", "amotonlin_off", "flaetorlin_off", "foelin_off", "garonlin_off", "verdanlin_off",
+  "berlin_off", "ulin_off", "prestotolin_off", // the other 3 of the 8 wizard portraits (were drawing as name text)
   // SS-hud F1: powerup-collect NAME captions (objPowerUpWriting; swapped in-place + faded on pickup). reg.x
   // ≈ w/2 → centred on the powerup's world loc. PIL-free plain PNGs copied by the prefix matcher.
   "manaBurst_writing", "manaFlow_writing", "manaCapacity_writing", "energyBlast_writing",

@@ -264,8 +264,11 @@ export class Thespian {
       // --- actor verbs (drive the real entity) ---
       case "at": if (p) this.at(p, this.interpretLoc(step.arg)); break;
       case "walkTo": if (p) this.walkTo(p, this.interpretLoc(step.arg)); break;
-      case "teleportInAt": if (p) { this.at(p, this.interpretLoc(step.arg)); this.setMode(p, "teleportIn"); } break;
-      case "teleportOut": if (p) { this.setMode(p, "teleportOut"); this.gotoWings(p); } break;
+      // modTeleport beam (not just a mode string): place + play the EXISTING Anim stretch+fade in-beam (the
+      // same one army summon uses). teleportOut beams out IN PLACE; the update loop hides it once the beam
+      // finishes (teleportOutDone) rather than popping it to the wings instantly.
+      case "teleportInAt": if (p) { this.at(p, this.interpretLoc(step.arg)); p.visible = true; p.modeOverride = null; p.entity.tryGet(Anim)?.startTeleportIn(); } break;
+      case "teleportOut": if (p) { p.modeOverride = null; p.entity.tryGet(Anim)?.startTeleportOut(); } break;
       case "turnToFace": if (p && step.arg.kind === "actor") this.turnToFace(p, step.arg.alias); break;
       case "walkToPlayer": case "atPlayer": if (p && step.arg.kind === "actor") this.toPlayer(p, step.arg.alias, step.verb === "walkToPlayer"); break;
       case "goMode": if (p && step.arg.kind === "symbol") this.setMode(p, step.arg.sym.replace(/^#/, "")); break;
@@ -500,6 +503,8 @@ export class Thespian {
       const a = p.entity.tryGet(Anim);
       if (a) {
         a.update(() => {});
+        // teleportOut beam finished -> now hide the actor to the wings (it beamed out in place first).
+        if (a.isTeleportingOut() && a.teleportOutDone()) this.gotoWings(p);
         if (p.modeOverride && !p.walkTarget) {
           const prev = (a as any).action;
           if (prev !== p.modeOverride) { (a as any).action = p.modeOverride; (a as any).frame = 0; (a as any).timer = 0; }

@@ -33,6 +33,24 @@ describe("H1: Thespian drives real actors through Movement/Anim", () => {
     expect(m.facingLeft).toBe(false); // walking right
   });
 
+  it("teleportInAt places the actor and plays the Anim stretch+fade in-beam (not an instant pop)", () => {
+    const t = new Thespian(parseCutscene(`characters\n#merlin - m\nlines\nm teleportInAt 100\nwait 200\n`), host);
+    t.tick();
+    const actor = t.visibleActors().find((p) => p.alias === "m")!;
+    expect(actor.entity.get(Movement).x).toBe(100);            // placed
+    expect(actor.entity.get(Anim).isTeleporting()).toBe(true); // beam playing — the EXISTING modTeleport beam
+  });
+
+  it("teleportOut beams out IN PLACE, then hides to the wings once the beam finishes", () => {
+    const t = new Thespian(parseCutscene(`characters\n#merlin - m\nlines\nm at 100\nm teleportOut\nwait 400\n`), host);
+    t.tick();
+    const actor = t.visibleActors().find((p) => p.alias === "m");
+    expect(actor).toBeTruthy();                                // still on stage while beaming out
+    expect(actor!.entity.get(Anim).isTeleportingOut()).toBe(true);
+    for (let i = 0; i < 20; i++) t.tick();                     // > TELE_FRAMES (15)
+    expect(t.visibleActors().find((p) => p.alias === "m")).toBeFalsy(); // beam done -> hidden to the wings
+  });
+
   it("walkTo eventually ARRIVES at the target (real walk, not a snap)", () => {
     // a trailing wait keeps the actor alive long enough to observe arrival.
     const t = new Thespian(parseCutscene(`characters\n#merlin - m\nlines\nm at 0\nm walkTo 60\nwait 200\n`), host);
