@@ -272,20 +272,52 @@ describe("K2 — spell-actor lethality + lifecycle", () => {
     game.spawnUnit = spawnUnit; game.spawnAlly = spawnAlly;
   });
 
-  it("a base-charge (12.5) energyBlast explosion fells a 300-energy enemy at the blast centre", () => {
+  // FAITHFUL balance (modEnergy.takeHit: damage = (|vx|+|vy|)·mult; spell vector speed = (hitRange−dist)·
+  // power, ridden on MELEE_SCALE like every other attack). A BASE-charge energyBlast centre hit ≈ 69 — it
+  // WOUNDS a 300-energy rank-and-file enemy but does NOT one-shot it (the original spell/punch ratio ≈ 1.73,
+  // not the ~8× the old 11.7 scale produced). Damage scales with charge (the grown radius), so a fully-
+  // charged cast DOES fell it — that's the faithful "charge it up" model.
+  const castAtFoe = (charge: number, foeEnergy: number) => {
     const player = spawnPlayer(100, 100); game.entities.push(player); game.player = player; // team #aldevar
     const foe = spawnEnemy("swordOrc", 400, 100, { animChar: "swordOrc" });                 // hostile #orcs
-    foe.get(Energy).max = 300; foe.get(Energy).energy = 300;                                 // rank-and-file band
+    foe.get(Energy).max = foeEnergy; foe.get(Energy).energy = foeEnergy;
     foe.get(Movement).inertia = 0; // a light rank-and-file (heavy/tanky orcs damp the hit per K1 — faithful)
     game.entities.push(foe);
-    // a live spell at base charge, released straight at the foe (it explodes ON the foe -> centre hit).
     const spell = spawnSpell(atkOf("energyBlast"), player.id, 100, 94, "#aldevar", ["#teamMembers", "#teamBuildings"], "#enemy");
-    spell.get(SpellActor).setCharge(12.5, 100, 94);   // base mana charge ceiling (capacity 10 -> 12.5)
+    spell.get(SpellActor).setCharge(charge, 100, 94);
     spell.get(SpellActor).release(400, 100, 8);
     rebuildCombatSubstrate();                          // unit map for the radial area hit
-    for (let i = 0; i < 60 && !spell.send("isFinished"); i++) spell.send("update"); // fly + explode
-    expect(spell.send("isFinished")).toBe(true);       // the orb flew to the foe and exploded
-    expect(foe.send("isDead")).toBe(true);             // centre hit fells the 300-energy enemy (the invariant)
+    for (let i = 0; i < 80 && !spell.send("isFinished"); i++) spell.send("update"); // fly + explode + quick-fade
+    return { spell, foe, dmg: foeEnergy - foe.get(Energy).energy };
+  };
+
+  it("a base-charge (12.5) energyBlast centre hit WOUNDS but does not one-shot a 300-energy enemy", () => {
+    const { spell, foe, dmg } = castAtFoe(12.5, 300);
+    expect(spell.send("isFinished")).toBe(true);       // the orb flew to the foe, exploded, and quick-faded
+    expect(dmg).toBeGreaterThan(40);                   // a real hit (centre ≈ 69, consistent with melee ≈ 40)
+    expect(dmg).toBeLessThan(150);                     // NOT the ~325 one-shot the mis-calibrated scale gave
+    expect(foe.send("isDead")).toBe(false);            // a 300-energy rank-and-file survives a BASE cast
+  });
+
+  it("a fully-charged energyBlast fells the 300-energy enemy (damage scales with charge)", () => {
+    const { foe } = castAtFoe(80, 300);                // a high charge grows the radius -> lethal centre hit
+    expect(foe.send("isDead")).toBe(true);
+  });
+
+  it("the orb GROWS and quick-fades on explode (objSpell startQuickFade) instead of vanishing instantly", () => {
+    const player = spawnPlayer(100, 100); game.entities.push(player); game.player = player;
+    const spell = spawnSpell(atkOf("energyBlast"), player.id, 100, 94, "#aldevar", ["#teamMembers", "#teamBuildings"], "#enemy");
+    const sa = spell.get(SpellActor);
+    sa.setCharge(12.5, 100, 94);
+    const flySize = sa.size();
+    sa.release(120, 94, 8);
+    rebuildCombatSubstrate();
+    for (let i = 0; i < 20 && sa.fadeAlpha() === 1; i++) spell.send("update"); // run until it explodes -> fade
+    expect(sa.size()).toBeGreaterThan(flySize);        // grown ×chargeExplodeFactor (4) at the explode
+    expect(sa.fadeAlpha()).toBeLessThan(1);            // and fading out (not gone) — the landing flash
+    expect(spell.send("isFinished")).toBe(false);      // still alive during the quick-fade window
+    for (let i = 0; i < 12; i++) spell.send("update"); // finish the fade
+    expect(spell.send("isFinished")).toBe(true);       // swept after the fade completes
   });
 
   it("the disc grows with charge (calcSize = charge·chargeSize) and positions over the head (#top)", () => {
