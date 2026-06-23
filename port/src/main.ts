@@ -5,6 +5,7 @@
 import { Assets, mapList, type MapMeta } from "./render/assets";
 import { drawText } from "./render/text";
 import { Renderer, type Sprite } from "./render/renderer";
+import { buildSpellSprites, spellFaceTier } from "./render/spellSprites";
 import { drawMinimap } from "./render/minimap";
 import { healthBarColour } from "./render/healthBar";
 import { drawHealthRollover, drawEnemyEnergyBars } from "./render/rollover";
@@ -633,29 +634,22 @@ function drawSpells(renderer: Renderer) {
     const fade = sa.fadeAlpha(); // 1 while charging/flying; 1->0 over the post-explode quick-fade (grown orb)
     const [cr, cg, cb] = sa.attack.chargeColour;
     if (ready) {
-      // setSpriteWidth/Height(size): scale the native frame to the live charge size about its centred reg.
-      spellSprites.push({
-        img: game.assets.img(f!.file)!,
-        x: m.x, y: m.y, regX: f!.reg[0], regY: f!.reg[1], z: m.y,
-        scaleX: size / Math.max(1, f!.w), scaleY: size / Math.max(1, f!.h),
-        tint: { rgb: [cr, cg, cb], strength: 1, additive: false }, // setSpriteColour: tint the white orb
-        alpha: fade,                                                 // startQuickFade: the explode flash fades out
-      });
       // objSpellIcons.displayIconNumber: a SUMMON spell overlays the current tier's unit FACE on the orb
-      // (spellIcons_<spellName>, frame = the tier number). It appears once the charge reaches the first
-      // summon tier and changes as the charge crosses higher tiers (armySummon: warrior->archer->...->king).
+      // (spellIcons_<spellName>, frame = the tier number), appearing once the charge reaches the first tier
+      // and changing as it crosses higher tiers (armySummon: warrior->archer->...->king). The face fills the
+      // orb's rect (setRect(spellRect)), so it scales with charge — buildSpellSprites does both orb + face.
+      let face: { img: CanvasImageSource; frame: { w: number; h: number; reg: readonly [number, number] } } | null = null;
       const ms = sa.attack.multistage;
       if (ms.length && sa.attack.explodeFunction.includes("summonUnit")) {
-        let tier = 0;
-        for (const t of ms) { if (t.chargeRequired <= sa.charge) tier++; else break; }
+        const tier = spellFaceTier(sa.charge, ms);
         if (tier > 0) {
           const ia = game.assets.index.anims[`spellIcons_${sa.attack.name.replace(/^#/, "")}`];
           const ifr = ia?.frames[Math.min(tier - 1, ia.frames.length - 1)];
-          if (ifr && game.assets.images.has(ifr.file)) {
-            spellSprites.push({ img: game.assets.img(ifr.file)!, x: m.x, y: m.y, regX: ifr.reg[0], regY: ifr.reg[1], z: m.y + 1 });
-          } else if (ia) void game.assets.ensureChar("spellIcons");
+          if (ifr && game.assets.images.has(ifr.file)) face = { img: game.assets.img(ifr.file)!, frame: ifr };
+          else if (ia) void game.assets.ensureChar("spellIcons");
         }
       }
+      spellSprites.push(...buildSpellSprites(sa, m.x, m.y, { img: game.assets.img(f!.file)!, frame: f! }, face));
       continue;
     }
     // fallback (art not yet loaded): the soft gradient orb, radius size/2.
