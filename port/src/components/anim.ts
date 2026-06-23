@@ -105,6 +105,8 @@ export class Anim extends Component {
   startTeleportOut(): void { if (this.teleport !== "out") { this.teleport = "out"; this.teleT = 0; } }
   teleportOutDone(): boolean { return this.teleport === "out" && this.teleT >= Anim.TELE_FRAMES; }
   isTeleportingOut(): boolean { return this.teleport === "out"; }
+  /** any teleport beam (in or out) currently playing — the in-beam clears itself when complete. */
+  isTeleporting(): boolean { return this.teleport !== null; }
 
   // restart the current action strip from frame 0 (ensureMode re-entry): a NEW attack/swing replays its
   // one-shot strip even though the action STRING is unchanged across consecutive swings — without this the
