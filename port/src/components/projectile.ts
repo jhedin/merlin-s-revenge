@@ -20,6 +20,7 @@ export class Projectile extends Component {
   // #friction (objMoveXY): percent of speed lost each frame (exponential decay). When speed falls below
   // STALL_SPEED for STALL_FRAMES, the bullet has come to a natural halt — splash detonates / plain lands.
   friction = 0;
+  exploding = false;        // modExploder.goMode(#explode): playing the <char>_explode burst strip in place before retiring
   private stallCtr = 0;
   private static readonly STALL_SPEED = 0.2;  // pStallSpeed
   private static readonly STALL_FRAMES = 10;  // pStallCount.tim = [1,10]
@@ -69,7 +70,7 @@ export class Projectile extends Component {
     this.beam = true; this.beamDist = dist; this.beamAngle = angle; this.beamCasterX = casterX; this.beamCasterY = casterY;
     this.beamLife = 4; // a few frames so the line is visible before it sweeps out
   }
-  override reset(): void { this.done = false; this.life = 0; this.ownerId = -1; this.freeze = 0; this.mult = 1; this.splash = null; this.payload = null; this.beam = false; this.reincarnateAs = []; this.char = ""; this.friction = 0; this.stallCtr = 0; }
+  override reset(): void { this.done = false; this.life = 0; this.ownerId = -1; this.freeze = 0; this.mult = 1; this.splash = null; this.payload = null; this.beam = false; this.reincarnateAs = []; this.char = ""; this.friction = 0; this.stallCtr = 0; this.exploding = false; }
   isFinished(): boolean { return this.done; }
   // a splash/beam bullet IS the attacker passed to resolveSplash; expose its owner team so the area
   // search resolves the right hostile teams (calcTargetTeams reads attacker.getTeam). objBullet.setTeam.
@@ -79,14 +80,25 @@ export class Projectile extends Component {
     const a = this.splash!;
     resolveSplash(this.entity, a, x, y, this.ownerId, this.splashHits, this.splashAllegiance);
     if (a.attackType === "#explode" && a.explodeSound && a.explodeSound !== "#none") game.audio?.play(a.explodeSound, 0.5);
-    this.finish(x, y);
+    // modExploder.goMode(#explode): play the <char>_explode burst strip in place before retiring. A bullet
+    // whose char ships no explode strip (towerAxe/needle splash) retires immediately, as before.
+    const strip = this.char ? game.assets.index.anims[`${this.char}_explode`] : undefined;
+    if (strip && strip.frames.length > 0) {
+      this.exploding = true; this.life = 0;
+      const m = this.entity.get(Movement); m.vx = 0; m.vy = 0; m.x = x; m.y = y;
+    } else {
+      this.finish(x, y);
+    }
   }
 
   // finish: the single death choke-point — latch `done` (idempotent so a bullet can't finalize twice) and
-  // spawn any #reincarnateAs children at the corpse loc (objBullet.reincarnate: fire mine / hatched egg).
-  private finish(x: number, y: number): void {
+  // spawn any #reincarnateAs children at the corpse loc (objBullet.reincarnate: fire mine / hatched egg). A
+  // direct target hit passes reincarnate=false (modExploder routes #bulletCollidedWithTarget to die(), not
+  // #land) — only a land-stall / explode hatches.
+  private finish(x: number, y: number, reincarnate = true): void {
     if (this.done) return;
     this.done = true;
+    if (!reincarnate) return;
     for (let i = 0; i < this.reincarnateAs.length; i++) {
       const typ = this.reincarnateAs[i]!;
       if (!typ || typ === "none") continue;
@@ -112,6 +124,14 @@ export class Projectile extends Component {
         game.audio?.play("spell_release", 0.4);
       }
       if (++this.life >= this.beamLife) this.done = true;
+      return next();
+    }
+    // modExploder.goMode(#explode): a detonated splash bullet plays its <char>_explode burst strip IN PLACE
+    // (no movement, no further collision), then retires + spawns its #reincarnateAs (flamingRock -> fire).
+    if (this.exploding) {
+      const strip = game.assets.index.anims[`${this.char}_explode`];
+      const total = strip ? strip.frames.reduce((s, f) => s + Math.max(1, f.dela ?? strip.delay ?? 1), 0) : 6;
+      if (++this.life >= total) this.finish(m.x, m.y);
       return next();
     }
     // objBullet does NOT collide with terrain (passThrough) — a bullet flies through walls and dies on a
@@ -149,8 +169,8 @@ export class Projectile extends Component {
           e.send("takeHit", v.x, v.y, this.ownerId, this.mult);
           if (this.freeze > 0) e.send("takeFreeze", this.freeze, 0, this.ownerId, 1, false); // legacy scalar path
         }
-        this.finish(m.x, m.y);
-        break;
+        this.finish(m.x, m.y, false); // modExploder #bulletCollidedWithTarget -> die() in #fly: a DIRECT hit
+        break;                        // does NOT reincarnate (only a land-stall hatches ostrichEgg/lizardEgg)
       }
     }
     next();

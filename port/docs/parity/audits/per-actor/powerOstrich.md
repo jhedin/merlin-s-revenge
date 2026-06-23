@@ -1,102 +1,106 @@
 # Parity Audit: powerOstrich
 
-## Summary
+Method: behavior DERIVED from `casts/data/act_powerOstrich.txt`, `act_ostrichEgg.txt`, `act_babyOstrich.txt`
++ `casts/script_objects/{objBullet,modExploder,modReincarnate,objCPUCharacter,modCharacterAttackProperties}.txt`,
+then REPRODUCED in the port via a throwaway headless harness (`tools/_audit_powerOstrich.ts`, deleted)
+loading the real `src/generated/assets.json`.
 
-Auditing powerOstrich (ranged AI, ostrichEgg bullet that hatches babyOstrich) for behavioral parity between the original Lingo casts/ and the TypeScript port/src/.
+## Actor summary (derived from cast/data)
 
-## Data Alignment
+| Property | Value (original) | Notes |
+|---|---|---|
+| #objType / #AiType | #objCPUCharacter / #objAiCPU | ground ranged CPU |
+| #inherit | #CPUCharacter | walkType #anyDirSpeed |
+| #team | #monsters | hostile to #aldevar/player |
+| #energy | 500 | tanky |
+| #strength | 7 | firingType #fullstrength -> egg throw speed = 7 |
+| #walkSpeed | 15 | |
+| #startingLevel | 2 | |
+| #attack.animType | #naturalRanged | ranged FSM (moveToAttack to reach, fire, kite) |
+| #attack.bullet | #ostrichEgg | thrown egg |
+| #attack.animframe | 14 | gating frame; strip `powerOstrich_naturalRanged` is 18 frames -> 1 shot/cycle |
+| #attack.cooldown | 30 | gates next attack ENTRY |
+| #attack.reach | 230 | |
+| #attack.firingType | #fullstrength | constant throw speed = strength, not dist/10 |
+| #attack.collisionLoc | point(46,35) | muzzle offset |
+| data #name | "powerOstrich" | sprite char -> `powerOstrich_*` strips (NOT blackOrc) |
 
-| Property | Original | Port | Status |
-|----------|----------|------|--------|
-| **act_powerOstrich** | | | |
-| #objType | #objCPUCharacter | #objCPUCharacter | ✓ |
-| #AiType | #objAiCPU | #objAiCPU | ✓ |
-| #inherit | #CPUCharacter | #CPUCharacter | ✓ |
-| #attack.animType | #naturalRanged | #naturalRanged | ✓ |
-| #attack.bullet | #ostrichEgg | #ostrichEgg | ✓ |
-| #attack.cooldown | 30 | 30 | ✓ |
-| #attack.reach | 230 | 230 | ✓ |
-| #attack.firingType | #fullstrength | #fullstrength | ✓ |
-| #startingLevel | 2 | 2 | ✓ |
-| #team | #monsters | #monsters | ✓ |
-| #strength | 7 | 7 | ✓ |
-| #walkSpeed | 15 | 15 (×0.6 px/tick) | ✓ |
-| #energy | 500 | 500 | ✓ |
-| **act_ostrichEgg** | | | |
-| #reincarnateAs | [#babyOstrich] | ["babyOstrich"] | ✓ |
-| #bullet.damageMultiplier | 6 | 6 | ✓ |
-| #bullet.power | 0.3 | 0.3 | ✓ |
-| **act_babyOstrich** | | | |
-| #objType | #objCPUCharacter | #objCPUCharacter | ✓ |
-| #AiType | #objAiCPU | #objAiCPU | ✓ |
-| #team | #monsters | #monsters | ✓ |
-| #startingLevel | 0 | 0 | ✓ |
+ostrichEgg (`#inherit #bullet`): `#attack {damageMultiplier:6, power:0.3, type:#bullet}`, `#friction point(5,5)`,
+`#reincarnateAs [#babyOstrich]`, `#rotational true`, `#weight 1.2`. Because `#type:#bullet` (not #explode)
+and `act_ostrichEgg` declares NO `#explodeEvents`, the egg is a plain bullet that decelerates by friction.
 
-## Behavioral Coverage
+babyOstrich: `#objCPUCharacter/#objAiCPU`, `#team #monsters`, energy 100, `#bullet #laser`, animframe 3,
+`#startingLevel 0`. (The hatchling.)
 
-### 1. Ranged AI Classification
-- **Original**: animType #naturalRanged → objAiCPU ranged FSM (moveToAttack to reach, fire, runReload kite)
-- **Port**: animType #naturalRanged → `archetypes.ts:170` sets `ranged=true` → `control.ts:494` syncs ranged per attack
-- **Status**: ✓ CORRECT
-  - Cited: `port/src/entities/archetypes.ts:169-170` (ranged detection via animType)
-  - Cited: `port/src/components/control.ts:494` (syncWeaponMode updates ranged per weapon)
+## Egg life-cycle DERIVED from the original (the load-bearing detail)
 
-### 2. Attack Dispatch (Ranged Fire)
-- **Original**: objAiCPU.attack → animType #naturalRanged fires bullet at target with reach checking
-- **Port**: `control.ts:534-596` — ranged branch fires plain bullet via `fireBullet()`, assigns `reincarnateAs` list at line 596
-- **Status**: ✓ CORRECT
-  - Cited: `port/src/components/control.ts:534` (if this.ranged { ... })
-  - Cited: `port/src/components/control.ts:596` (ostrichEgg->#babyOstrich reincarnate assignment)
+`objBullet` adds `modExploder` (objBullet.txt:29). On each `objBullet.updateFly`:
+- **stalls** (friction decay) -> `#bulletLanded` -> objBullet.internalEvent goMode(`#land`) -> `updateLand`
+  plays `ostrichEgg_land`; when it loops, `objBullet.update` `#land` branch calls **`me.big.reincarnate()`**
+  -> hatches **babyOstrich** at the landing loc (objBullet.txt:278-283, modReincarnate.txt:49-72).
+- **hits a wall/ceiling** -> `collisionWall*` goMode(`#land`) -> same hatch path.
+- **collides with its target character** -> `updateFly` stat `#hitCharacter` -> `#bulletCollidedWithTarget`
+  -> **modExploder.internalEvent** routes it to **`me.big.die()`** (modExploder.txt:70-71) -> `setDead(true)`.
+  The bullet is removed in `#fly` mode; it NEVER enters `#land`, so **`reincarnate()` is NOT called** —
+  **no babyOstrich hatches on a direct target hit.** Only a friction-LAND (open-ground or wall) hatches.
 
-### 3. Egg → Baby Hatch (Reincarnate Threading)
-- **Original**: objBullet.reincarnate (line 282 `me.big.reincarnate()`) spawns #reincarnateAs children at corpse loc
-- **Port**: `projectile.ts:81-86` — finish() iterates reincarnateAs, spawns each via `spawnFromSymbol(typ, x, y)`
-- **Status**: ✓ CORRECT
-  - Cited: `port/src/components/projectile.ts:81-86` (finish loop spawning reincarnateAs)
-  - Cited: `port/src/entities/archetypes.ts:254` (parseReincarnateList resolves ostrichEgg's reincarnateAs)
-  - Test: `port/test/bullet_reincarnate.test.ts:33-42` (ostrichEgg hatches babyOstrich)
+## Observed in the port (harness reproduction)
 
-### 4. Firing Type (fullstrength)
-- **Original**: #fullstrength → constant throw speed = caster's strength
-- **Port**: `control.ts:544-545` — isFullStrength check sets throwSpeed = Math.max(1, this.strength)
-- **Status**: ✓ CORRECT
-  - Cited: `port/src/components/control.ts:544-545` (firingType #fullstrength → strength-based speed)
+- `powerOstrich` anim.char resolves to **`powerOstrich`** (real bundled strips: `_naturalRanged` 18f,
+  `_stand`, `_walk`, `_reel`, `_grave`). NOT blackOrc. ✓
+- `ostrichEgg_fly` (10f) / `ostrichEgg_land` (13f) and `babyOstrich_*` strips are bundled. ✓
+- Shot COUNT: one egg per attack cycle (animframe 14 crossed once per 18-frame strip). 16 eggs over 250
+  ticks against a target at the edge of reach. ✓ cadence faithful (cooldown-gated entry).
+- Egg DECELERATES by friction 5: speed 7.72 -> ... -> 0.2 (stall). ✓
+- Egg HATCHES babyOstrich on stall-land: 3 hatchlings spawned (`enemy:babyOstrich`, team #monsters). ✓
+- Direct-hit probe (`tools/_audit_powerOstrich2.ts`): an egg fired straight into a close target finished at
+  (232,200) on the target's collision box and **STILL hatched 1 babyOstrich**.
+- powerOstrich survives; target took damage (200 -> 178). Death/grave path is the shared CPUCharacter
+  flasher -> `drawGrave` (`powerOstrich_grave` bundled) — not exercised to completion here.
 
-### 5. Team & Allegiance
-- **Original**: #team:#monsters → hunts #aldevar
-- **Port**: Built via `spawnEnemy()` → team="#monsters" → Targeting hunts "#enemy" allegiance
-- **Status**: ✓ CORRECT
-  - Cited: `port/src/entities/archetypes.ts:56, 270` (team resolved from data)
+## DIVERGENCES
 
-### 6. Death (Non-Combat Removal)
-- **Original**: modReincarnate.reincarnate() only fires on #leftTeam + killedInAction gate
-- **Port**: `components/reincarnate.ts` (Energy.dead + killedInAction gate before spawnChildren)
-- **Status**: ✓ CORRECT
-  - Test: `port/test/reincarnate.test.ts:109-119` (non-combat removal does NOT split)
+### D1 — egg hatches a babyOstrich on a DIRECT TARGET HIT (port) vs only on a LAND-stall (original)
 
-### 7. Movement
-- **Original**: walkSpeed 15 (game units) → CPU walks toward target until in reach
-- **Port**: walkSpeed 15 × 0.6 px/tick calibrated to slice (line 267)
-- **Status**: ✓ CORRECT
-  - Cited: `port/src/entities/archetypes.ts:267` (walkSpeed × 0.6 calibration)
+**FAITHFUL behavior (original):**
+```
+objBullet.updateFly: target collided -> stat = #hitCharacter
+  -> internalEvent(#bulletCollidedWithTarget)
+       -> modExploder.internalEvent: case #bulletCollidedWithTarget: me.big.die()  (modExploder.txt:70-71)
+            -> setDead(true), bullet removed while STILL in #fly mode
+            -> #land branch never runs -> reincarnate() NOT called -> NO babyOstrich
+  (only a friction STALL -> #bulletLanded -> goMode(#land) -> updateLand loop -> reincarnate() hatches)
+```
 
-### 8. Energy & Damage
-- **Original**: energy 500, strength 7, receives damage on takeHit
-- **Port**: Built with energy 500, strength 7 → Energy component tracks hp/max
-- **Status**: ✓ CORRECT
+**PORT behavior:**
+```
+Projectile.update (projectile.ts): plain bullet collides with target
+  -> e.send("takeHit", ...)
+  -> this.finish(m.x, m.y)                          (projectile.ts:152)
+       -> finish() spawns every reincarnateAs child  (projectile.ts:87-96)
+            -> spawnFromSymbol("babyOstrich") -> a babyOstrich hatches AT THE TARGET
+finish() is the single death choke-point for BOTH stall-land AND target-hit, so the port hatches in
+both cases. Verified: a close-range egg that hit the target spawned 1 babyOstrich.
+```
 
-### 9. StartingLevel
-- **Original**: startingLevel 2 → spawns at level 2
-- **Port**: `archetypes.ts` does NOT directly read startingLevel; no Lingo equivalent found
-- **Status**: ℹ NOT IMPLEMENTED (not flagged as gap — Lingo startingLevel is catalog non-issue per spec)
+**Classification: PORT-BUG.** The port's `Projectile.finish()` unconditionally spawns `reincarnateAs`,
+collapsing the original's two distinct death routes. In the original, modExploder's `die()` on
+`#bulletCollidedWithTarget` is the WHOLE point of routing a hit egg around the `#land`/`reincarnate` path:
+a powerOstrich that lands an egg ON the player/ally deals damage but does NOT spawn a free reinforcement;
+it only breeds babyOstrich when an egg MISSES and lands on open ground (or a wall). The port turns every
+on-target hit into a damage hit PLUS a spawned babyOstrich — extra enemies the original never produces,
+making powerOstrich materially harder. (Splash/explode bullets are unaffected — they legitimately
+detonate-then-finish in both engines; this bug is specific to a PLAIN `#type:#bullet` that ALSO carries
+`#reincarnateAs`, i.e. ostrichEgg and lizardEgg.)
 
-## Conclusion
+Fix sketch: only spawn `reincarnateAs` on the natural-LAND finish path (stall / lifetime / wall), not on
+the target-collision branch — mirror modExploder routing the hit case to a plain `die()` (no reincarnate).
 
-**powerOstrich is CLEAN.** All critical behavioral chains are correctly ported:
-1. Ranged AI classification triggers the FSM (moveToAttack to reach, fire).
-2. ostrichEgg is fired with full reincarnateAs chain threaded to Projectile.finish().
-3. Egg hatches into babyOstrich at death location with correct team/level data.
-4. Damage/cooldown/team/allegiance all resolve faithfully.
-5. Non-combat deaths do NOT reincarnate (killedInAction gate).
+## Faithful quirks confirmed (no action)
+- #fullstrength throw: constant egg speed = strength (≈7), independent of distance. ✓ (observed start 7.72)
+- friction 5 deceleration + stall-land hatch. ✓
+- 1 egg per attack cycle (animframe 14 / 18-frame strip), cooldown-30 gated entry. ✓
+- sprite char resolves to the real `powerOstrich`/`babyOstrich`/`ostrichEgg` strips. ✓
 
-No divergences between original behavior and port implementation. Test suite (`bullet_reincarnate.test.ts`, `reincarnate.test.ts`) confirms the hatch mechanism and AI threading.
+powerOstrich | DIVERGENCES=1
+- D1 PORT-BUG: egg hatches babyOstrich on a DIRECT target hit (port finish() spawns reincarnateAs on every death route); original modExploder routes #bulletCollidedWithTarget to die() with NO reincarnate — only a friction land-stall hatches.
