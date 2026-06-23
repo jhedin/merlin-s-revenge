@@ -148,7 +148,7 @@ const point = (src: string, key: string): { x: number; y: number } => {
 
 interface MapMeta { id: string; name: string; folder: string; file: string; roomSize: { x: number; y: number }; mapSize: { x: number; y: number }; tilesets: string[]; }
 const maps: MapMeta[] = [];
-const DEFAULT_MAP = "descent_into_darkness-megaman4ever";
+const DEFAULT_MAP = "very_big_map";
 for (const f of mapFiles) {
   const src = readFileSync(f.path, "utf8");
   const id = idFor(f);
