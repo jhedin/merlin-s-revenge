@@ -60,7 +60,14 @@ export function spawnFromSymbol(sym: string, x: number, y: number): Entity | nul
 // #recordInRoomState:false placed actors (fire mines, auras, hazards) — are NOT recorded; they re-spawn
 // fresh from the tile layer on re-entry instead of being frozen mid-flight/mid-cycle.
 export function isRecordableActor(e: Entity): boolean {
-  if (e.type === "bullet") return false; // pooled projectiles carry no actor-type; all are :false
+  // Transient / pooled / placed-fresh entities are NEVER frozen into the per-room pState snapshot. Besides
+  // bullets, this MUST include live spell actors: act_spell ships #recordInRoomState:true and getActorType()
+  // = "spell", so without the type guard a spell in flight at room-leave is snapshotted, then on re-entry
+  // respawnActor routes "spell" to the #spell PICKUP effect → a pickup entity tagged type "spell" with NO
+  // SpellActor → drawSpells' e.get(SpellActor) throws every frame (the intermittent room-re-entry freeze).
+  // Mines/markers are placed actors that re-tile-spawn fresh on re-entry (spawnNonRecordableTileActors), so
+  // they don't belong in the snapshot either (they also carry #recordInRoomState:false in data).
+  if (e.type === "bullet" || e.type === "spell" || e.type === "marker" || e.type === "mine") return false;
   const typ = bare((e.send("getActorType") as string) || "");
   const rec = typ ? registry.resolveActor(typ) : undefined;
   return rec?.["recordInRoomState"] !== false;
@@ -102,6 +109,11 @@ export function serializeActor(e: Entity): ActorSave {
 
 /** respawnActor: spawn from the saved typ at the saved loc, re-apply runtime type/team, restore chain. */
 export function respawnActor(snap: ActorSave): Entity | null {
+  // Defense-in-depth: a transient/pooled type must never be restored from a snapshot (it would route the
+  // ambiguous "spell"/"bullet" key to the wrong archetype — e.g. "spell" → the #spell PICKUP effect — and
+  // then mislabel its type, leaving a component-less entity the render/update paths crash on). New snapshots
+  // exclude these (isRecordableActor), but an OLD save predating that fix could still carry one — drop it.
+  if (snap.type === "spell" || snap.type === "bullet" || snap.type === "marker") return null;
   const e = spawnFromSymbol(snap.typ, snap.x, snap.y);
   if (!e) return null;
   // re-apply the runtime type (a summoned ally is a #monsters unit forced onto #aldevar — spawnUnit
