@@ -462,13 +462,16 @@ function drawHud(renderer: Renderer, player: import("./engine/dispatch").Entity,
   const ctx = renderer.ctx;
   const hp = player.get(Energy).energyFrac();
   const hasSpell = player.send("getHasSpell") as boolean;
-  // health_bar_surround (objPlayerCharacter): the real bar frame composited over the energy fill (its keyed
-  // white interior lets the fill show through). Falls back to the procedural box if the art isn't bundled.
+  // health_bar_surround (objEnergyBar): the real bar FRAME is blitted first, then the energy fill is drawn
+  // ON TOP of it, width-clipped to health % and inset by the 2px bar border — matching the original's
+  // surround(locZ) + colour-dot(locZ+1, barBorder-inset) composite. (The surround interior is opaque, so
+  // drawing it over the fill — as before — produced a flat blank bar.)
   const surround = assets.member("health_bar_surround");
   if (surround) {
-    ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(8, 6, surround.w, surround.h);
-    ctx.fillStyle = healthBarColour(hp); ctx.fillRect(8, 10, Math.round(surround.w * hp), 6); // energy fill
+    const b = 2; // barBorder (HUD)
     ctx.drawImage(surround.img, 8, 6);
+    ctx.fillStyle = healthBarColour(hp);
+    ctx.fillRect(8 + b, 6 + b, Math.round((surround.w - 2 * b) * hp), surround.h - 2 * b); // energy fill, on top
   } else {
     ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(6, 6, 104, 24);
     ctx.fillStyle = healthBarColour(hp); ctx.fillRect(8, 8, 100 * hp, 6);
