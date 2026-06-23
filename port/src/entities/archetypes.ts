@@ -417,7 +417,11 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     takeHitVolume: typeof d["takeHitVolume"] === "number" ? d["takeHitVolume"] : undefined,
     experienceImWorth: num("experienceImWorth", 0) || undefined,             // XP this unit grants
     experienceAmountForNextLevel: num("experienceAmountForNextLevel", 0),    // first-level XP threshold (Lingo default 0)
-    energyIncPercentage: num("energyIncPercentage", 0) || undefined,
+    // modEnergy.addModParams default #energyIncPercentage = 1: EVERY unit's max HP grows +baseEnergy·1%/level
+    // unless it overrides (player 2, dwellings -1). The port defaulted to 0, so enemies/allies/summons never
+    // got tankier as they levelled (a levelled enemy stayed at its base HP). Default to the faithful 1; an
+    // explicit data value (incl. -1) still wins.
+    energyIncPercentage: num("energyIncPercentage", 1),
     // objCPUCharacter overrides objCharacter's energyRecoverDelay(30) -> 300 (objCPUCharacter.txt:22): every
     // CPU/enemy/ally unit slowly regens +1 energy per 300 ticks (modEnergy.recoverEnergy) unless it sets its
     // own. No shipped enemy sets it in data, so the inherited 300 is the live default — NOT 0 (which would

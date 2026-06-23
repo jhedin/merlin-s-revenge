@@ -36,8 +36,9 @@ export class Experience extends Component {
     while (this.attemptLevelUp()) { /* a single kill can grant several levels */ }
   }
 
-  // the killer earns imWorth + half the victim's own gained XP (modExperience.attributeExperience)
-  getReward(): number { return this.imWorth + Math.floor(this.xp / 2); }
+  // the killer earns imWorth + half the victim's own gained XP (modExperience.attributeExperience). The cast
+  // keeps this FRACTIONAL (pExperienceGained/2, no floor) — flooring lost 0.5 XP per kill of a levelled unit.
+  getReward(): number { return this.imWorth + this.xp / 2; }
 
   getLevel(): number { return this.level; }
   frac(): number { const span = this.threshold - this.lastThreshold; return span > 0 ? (this.xp - this.lastThreshold) / span : 0; }

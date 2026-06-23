@@ -125,7 +125,9 @@ export class Energy extends Component {
   // released) shrinks their max. Apply inc != 0 (was inc > 0, which silently dropped the dwelling decay);
   // floor max at 1 so a long-lived dwelling can't collapse to a non-positive cap.
   levelUp(next: NextFn): void {
-    const inc = Math.round(this.baseEnergy * this.incPct / 100);
+    // modEnergy keeps pEnergyIncAmount FRACTIONAL (params.energy·incPct/100, no rounding), so a small-HP
+    // unit grows by sub-integer steps (a 50-HP bat at 1% = +0.5/level). Rounding doubled that growth.
+    const inc = this.baseEnergy * this.incPct / 100;
     if (inc !== 0) { this.max = Math.max(1, this.max + inc); this.energy = Math.min(this.max, this.energy + inc); }
     next();
   }
