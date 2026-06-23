@@ -16,14 +16,15 @@
 import { Component, type NextFn } from "../engine/dispatch";
 import { Counter } from "../engine/counter";
 import { Movement } from "./movement";
+import { Anim } from "./anim";
 import { game } from "../game/context";
 import { resolveSplash } from "./splash";
 import type { AttackData } from "./weapon";
 
-type MineMode = "stand" | "primed";
+type MineMode = "stand" | "primed" | "explode";
 
 export class Mine extends Component {
-  static handles = ["update", "getMineMode", "getExplosions"];
+  static handles = ["update", "getMineMode", "getExplosions", "animAction"];
   // Note: detonation kills via the Energy chain (takeHit 999999) — the mine carries Energy so it's a
   // real targetable actor (objMine is an objGameObject), matching dwelling self-destruct.
   private attack!: AttackData;
@@ -35,6 +36,7 @@ export class Mine extends Component {
   private prime!: Counter;         // pPrimeCounter (tim[2]=timeToPrime)
   private check!: Counter;         // pCheckCounter (tim[2]=timeToCheck)
   private mode: MineMode = "stand";
+  private explodeT = 0;            // ticks remaining in the #explode strip replay before re-arm/die
 
   override init(cfg: Record<string, any>): void {
     this.attack = cfg["attack"] as AttackData;
@@ -52,20 +54,29 @@ export class Mine extends Component {
     this.explosions = 0;
     this.resetMine();
   }
-  override reset(): void { this.mode = "stand"; this.explosions = 0; }
+  override reset(): void { this.mode = "stand"; this.explosions = 0; this.explodeT = 0; }
 
   getMineMode(): MineMode { return this.mode; }
   getExplosions(): number { return this.explosions; }
+
+  // modAnimSet.getAnimSym maps the mine's getMode() to its strip: #primed -> the armed/emerging frame,
+  // #explode -> the detonation burst; #stand otherwise. Without this the Mine archetype drives no
+  // animAction, so a static mine was stuck on #stand and never showed its _primed/_explode art.
+  animAction(): string | null { return this.mode === "stand" ? null : this.mode; }
 
   private resetMine(): void {
     this.prime.reset();
     this.check.reset();
     this.mode = "stand";
+    this.explodeT = 0;
   }
 
   update(next: NextFn): void {
     if (this.entity.send("isDead")) return next();
-    if (this.mode === "stand") {
+    if (this.mode === "explode") {
+      // modExploder.updateExplode: hold #explode while the burst strip replays; on completion run #explodeFin.
+      if (--this.explodeT <= 0) this.explodeFin();
+    } else if (this.mode === "stand") {
       // updatePrime: tick the prime counter; when it fins, go primed.
       if (this.prime.fin) { this.mode = "primed"; } else this.prime.once();
     } else { // primed
@@ -78,6 +89,15 @@ export class Mine extends Component {
     next();
   }
 
+  // the <char>_explode strip length in ticks (so #explode holds for the whole burst, gating the re-arm
+  // cadence like the original's explodeFin-on-strip-loop). Falls back to a short window if there's no strip.
+  private explodeTicks(): number {
+    const char = this.entity.tryGet(Anim)?.char ?? "";
+    const strip = char ? game.assets?.index?.anims?.[`${char}_explode`] : undefined;
+    if (!strip || strip.frames.length === 0) return 6;
+    return strip.frames.reduce((s, f) => s + Math.max(1, f.dela ?? strip.delay ?? 1), 0);
+  }
+
   // updateCheckCollisions: findTargetWithin(triggerRadius).dist < triggerRadius -> a hostile is in range.
   private collisionDetected(): boolean {
     const m = this.entity.get(Movement);
@@ -86,8 +106,8 @@ export class Mine extends Component {
     return r.obj !== null;
   }
 
-  // #mineTriggered -> modExploder runs the #attack (an #explode area hit at the mine's loc), then
-  // #explodeFin: die or re-arm.
+  // #mineTriggered -> modExploder runs the #attack (an #explode area hit at the mine's loc), then enters
+  // #explode mode to play the burst strip; #explodeFin (die or re-arm) runs once the strip completes.
   private detonate(): void {
     const m = this.entity.get(Movement);
     const hits = this.attack.hits.length ? this.attack.hits : ["#teamMembers"];
@@ -95,15 +115,20 @@ export class Mine extends Component {
     // as every bullet/spell explode. Allegiance #enemy resolves the mine team's #hates (team-gated).
     resolveSplash(this.entity, this.attack, m.x, m.y, this.entity.id, hits, "#enemy");
     if (this.explodeSound) game.audio?.play(this.explodeSound, 0.5);
-    // #explodeFin
+    this.mode = "explode";              // play the _explode burst; explodeFin gates on its completion
+    this.explodeT = this.explodeTicks();
+  }
+
+  // #explodeFin (modExploder): the burst strip finished — die (single-shot) or re-arm (re-priming mines).
+  private explodeFin(): void {
     if (this.dieOnExplode) {
       this.entity.send("takeHit", 999999, 0, this.entity.id); // setDead (self-detonate kill)
-    } else {
-      this.resetMine();
-      this.explosions++;
-      if (this.dieOnExplodeNumber !== 0 && this.explosions >= this.dieOnExplodeNumber) {
-        this.entity.send("takeHit", 999999, 0, this.entity.id); // setDead (self-detonate kill)
-      }
+      return;
+    }
+    this.resetMine();
+    this.explosions++;
+    if (this.dieOnExplodeNumber !== 0 && this.explosions >= this.dieOnExplodeNumber) {
+      this.entity.send("takeHit", 999999, 0, this.entity.id); // setDead (self-detonate kill)
     }
   }
 }
