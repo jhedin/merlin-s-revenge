@@ -60,10 +60,10 @@ export class CutscenePlayer {
       const m = p.entity.get(Movement);
       if (!sp) continue;
       const img = sp.img as CanvasImageSource;
-      const w = (img as HTMLImageElement).width, h = (img as HTMLImageElement).height;
+      const w = (img as HTMLImageElement).width, h = (img as HTMLImageElement).height * (sp.scaleY ?? 1);
       const dx = Math.round(m.x - w / 2), dy = Math.round(m.y - h);
       ctx.save();
-      ctx.globalAlpha = t.actorAlpha(p); // K17 per-actor fade
+      ctx.globalAlpha = t.actorAlpha(p) * (sp.alpha ?? 1); // K17 per-actor fade × teleport-beam fade
       if (m.facingLeft) { ctx.translate(dx + w, dy); ctx.scale(-1, 1); ctx.drawImage(img, 0, 0, w, h); }
       else ctx.drawImage(img, dx, dy, w, h);
       ctx.restore();
@@ -95,12 +95,12 @@ export class CutscenePlayer {
       // modWastedMode.wastedModeOn: setSpriteHeight(60) forces an ABSOLUTE 60px-tall sprite (setAnimKeepSize
       // keeps the natural WIDTH) — a tall, translucent vertical STRETCH (Merlin's body is ~16px, so 60 is a
       // ~3.75× stretch). NOT a squash. In cutscene space that absolute height scales with the actor draw.
-      const dh = p.wasted ? WASTED_STRETCH_H * scale : h;
+      const dh = p.wasted ? WASTED_STRETCH_H * scale : h * (sp.scaleY ?? 1); // teleport beam stretches the body
       const dx = Math.round(m.x - w / 2), dy = Math.round(m.y - dh); // feet stay on the ground line
       ctx.save();
-      // K17 per-actor fade alpha (lightsUp/Down fade each actor under its own fader) × the wasted blend.
-      // modWastedMode.wastedModeOn: setBlend(30) -> 0.30 opacity (the stretched ghost is mostly translucent).
-      ctx.globalAlpha = t.actorAlpha(p) * (p.wasted ? 0.3 : 1);
+      // K17 per-actor fade alpha (lightsUp/Down fade each actor under its own fader) × the wasted blend ×
+      // the teleport-beam fade. modWastedMode.wastedModeOn: setBlend(30) -> 0.30 opacity (translucent ghost).
+      ctx.globalAlpha = t.actorAlpha(p) * (p.wasted ? 0.3 : 1) * (sp.alpha ?? 1);
       if (m.facingLeft) { ctx.translate(dx + w, dy); ctx.scale(-1, 1); ctx.drawImage(img, 0, 0, w, dh); }
       else ctx.drawImage(img, dx, dy, w, dh);
       ctx.restore();
