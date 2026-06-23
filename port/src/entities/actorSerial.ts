@@ -112,5 +112,8 @@ export function respawnActor(snap: ActorSave): Entity | null {
   if (team && snap.role) { team.role = snap.role; }
   if (snap.teleportable) e.flags.add("teleportable"); else e.flags.delete("teleportable");
   e.send("restoreFromSave", snap.chain); // overwrite energy/level/position/weapon inventory etc.
+  // prime the anim from the now-restored state so a restored DEAD actor renders its grave on the FIRST
+  // frame (not a live stand pose that snaps to grave a tick later — the room-re-entry grave flicker).
+  e.send("syncAnimAfterRestore");
   return e;
 }
