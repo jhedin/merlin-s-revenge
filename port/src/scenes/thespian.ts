@@ -325,8 +325,13 @@ export class Thespian {
   }
 
   private goWastedMode(p: Player): void {
+    // modWastedMode.wastedModeOn does ONLY setBlend(30) + setAnimKeepSize(true) + setSpriteHeight(60): a
+    // translucent vertical STRETCH. It does NOT change the animation — the wasted actor keeps walking/
+    // standing under the normal anim system (he walks on, walks off, then speaks). The earlier port forced
+    // a "die" pose here, which froze him on the mer_die frame the whole scene (wrong frame). Just flag him
+    // wasted; the WastedMode component (isWasted) makes Anim animate normally despite the dead energy, and
+    // the cutscene renderer applies the blend + stretch.
     p.wasted = true; p.visible = true;
-    this.setMode(p, "die"); // modWastedMode: blend + squash; the port renders a die/grave-ish pose
     p.entity.send("goWastedMode");
   }
 

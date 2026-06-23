@@ -121,9 +121,13 @@ export class Anim extends Component {
   frameExtendDelay(n: number): void { this.extraDelay += Math.max(0, n); }
 
   private pickAction(): string {
+    // modWastedMode: a WASTED actor (the game-over cutscene's Merlin) is "dead" by energy but still animates
+    // normally — wastedModeOn only blends+stretches him, it never changes the strip. So it walks on / stands
+    // / speaks under the usual walk/stand pick, NOT the grave/stretch-death path (which would freeze a frame).
+    const deadAnim = this.entity.send("isDead") === true && this.entity.send("isWasted") !== true;
     // modStretchDeath: a stretch-death unit keeps its BODY frame while it stretches+fades (no grave swap).
-    if (this.entity.send("isDead") && this.stretchDeath) return this.action === "grave" ? "stand" : this.action;
-    if (this.entity.send("isDead")) return "grave";
+    if (deadAnim && this.stretchDeath) return this.action === "grave" ? "stand" : this.action;
+    if (deadAnim) return "grave";
     const override = this.entity.send("animAction"); // control may force charge/release/punch
     if (typeof override === "string") return override;
     return this.entity.get(Movement).moving() ? "walk" : "stand";
@@ -140,7 +144,10 @@ export class Anim extends Component {
     // modStretchDeath transform progress: advance while the stretch-death unit is dead; reset on revive
     // (extra-life respawn in place) so the next death stretches from scratch.
     if (this.stretchDeath) {
-      if (this.entity.send("isDead")) { if (this.deathT <= Anim.STRETCH_DURATION) this.deathT++; }
+      // a wasted actor is "dead" but NOT stretch-dying (the wasted cutscene presents him fresh) — hold the
+      // transform at 0 so he isn't ALSO faded/stretched by modStretchDeath on top of the wasted blend.
+      const stretchDying = this.entity.send("isDead") === true && this.entity.send("isWasted") !== true;
+      if (stretchDying) { if (this.deathT <= Anim.STRETCH_DURATION) this.deathT++; }
       else if (this.deathT > 0) this.deathT = 0;
     }
     const action = this.pickAction();
@@ -192,7 +199,10 @@ export class Anim extends Component {
     // finished; every other dead actor holds the #grave frame BEHIND the living (the original draws it into
     // the room background — modelled here as a low render-z) and faces RIGHT (drawGrave: setFlipFromDir(1)).
     // getGraveOn is undefined for the player (no grave system — its in-game death plays on the normal path).
-    const dead = this.entity.send("isDead") === true;
+    // a wasted actor (game-over cutscene Merlin) is energy-dead but renders as a normal live frame here —
+    // the cutscene host applies the modWastedMode blend (0.3) + vertical stretch, so Anim must NOT also
+    // draw him as a grave or stretch-death body.
+    const dead = this.entity.send("isDead") === true && this.entity.send("isWasted") !== true;
     const graveOn = this.entity.send("getGraveOn"); // true=leaves grave, false=ghost, undefined=player
     const stretching = dead && this.stretchDeath;   // modStretchDeath: stretch+fade instead of grave/vanish
     if (dead && graveOn === false && !stretching) return null; // ghost: no grave, vanishes

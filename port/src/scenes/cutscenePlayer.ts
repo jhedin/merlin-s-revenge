@@ -15,6 +15,10 @@ import type { Input } from "../systems/input";
 import type { Entity } from "../engine/dispatch";
 import { drawText, measureText } from "../render/text";
 
+// modWastedMode.init: pWastedModeHeight = 60 — the absolute sprite height (member-px) the wasted actor is
+// stretched to (setSpriteHeight). Merlin's body is ~16px, so the wasted ghost is a tall vertical stretch.
+const WASTED_STRETCH_H = 60;
+
 export class CutscenePlayer {
   private thespian: Thespian;
   private readonly ingame: boolean;
@@ -88,14 +92,17 @@ export class CutscenePlayer {
       if (!sp) continue;
       const img = sp.img as CanvasImageSource;
       const w = (img as HTMLImageElement).width * scale, h = (img as HTMLImageElement).height * scale;
-      let dx = Math.round(m.x - w / 2), dy = Math.round(m.y - h);
-      if (p.wasted) { dy = Math.round(m.y - h * 0.6); } // modWastedMode squash (h=60%)
+      // modWastedMode.wastedModeOn: setSpriteHeight(60) forces an ABSOLUTE 60px-tall sprite (setAnimKeepSize
+      // keeps the natural WIDTH) — a tall, translucent vertical STRETCH (Merlin's body is ~16px, so 60 is a
+      // ~3.75× stretch). NOT a squash. In cutscene space that absolute height scales with the actor draw.
+      const dh = p.wasted ? WASTED_STRETCH_H * scale : h;
+      const dx = Math.round(m.x - w / 2), dy = Math.round(m.y - dh); // feet stay on the ground line
       ctx.save();
       // K17 per-actor fade alpha (lightsUp/Down fade each actor under its own fader) × the wasted blend.
-      // modWastedMode.wastedModeOn: setBlend(30) -> 0.30 opacity (the squashed ghost is mostly translucent).
+      // modWastedMode.wastedModeOn: setBlend(30) -> 0.30 opacity (the stretched ghost is mostly translucent).
       ctx.globalAlpha = t.actorAlpha(p) * (p.wasted ? 0.3 : 1);
-      if (m.facingLeft) { ctx.translate(dx + w, dy); ctx.scale(-1, 1); ctx.drawImage(img, 0, 0, w, p.wasted ? h * 0.6 : h); }
-      else ctx.drawImage(img, dx, dy, w, p.wasted ? h * 0.6 : h);
+      if (m.facingLeft) { ctx.translate(dx + w, dy); ctx.scale(-1, 1); ctx.drawImage(img, 0, 0, w, dh); }
+      else ctx.drawImage(img, dx, dy, w, dh);
       ctx.restore();
     }
 
