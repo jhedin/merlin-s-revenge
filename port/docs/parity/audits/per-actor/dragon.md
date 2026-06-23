@@ -1,161 +1,176 @@
-# Actor Behavioral Audit: `act_dragon`
+# Actor Audit: `act_dragon`
 
-## Overview
-Behavioral correctness audit of the dragon actor in the port, verified against the original Lingo spec.
+**Audit Date:** 2026-06-23
+**Method:** REPRODUCED — probe spawned the dragon + an inert player target via the real `@/generated/assets.json`
+bundle, ticked ~250 frames, and observed the live EnemyAI/WeaponManager/Anim/Projectile/Energy behaviour
+(shot count per #animframe, the decelerating fireBall bullet, cadence, facing, death→grave). Probe deleted.
+**Original Spec:** `casts/data/act_dragon.txt` + `#inherit` chain (`#CPUCharacter` → `#character` → `#actor`),
+`casts/data/act_flameThrower.txt` (the dragon's `#weapon`), `casts/data/act_fireBall.txt` (the fired bullet),
+`casts/master_objects/weaponMaster.txt`.
 
-**Original spec:** `casts/data/act_dragon.txt`
-**Port implementation:** `port/src/entities/archetypes.ts` (spawnEnemy), `port/src/components/control.ts` (CpuAI), `port/src/components/weapon.ts` (WeaponManager)
-**Data resolution:** `port/src/generated/data.json` + `port/src/data/registry.ts`
-
----
-
-## Audit Findings
-
-### 1. **objType & Archetype**
-| Property | Spec | Port | Status |
-|----------|------|------|--------|
-| `#objType` | `#objCPUCharacter` | `EnemyArchetype` | ✓ CORRECT |
-
-**Verification:** Dragon spawns via `spawnEnemy()` which creates an `EnemyArchetype` entity (line 252, archetypes.ts), mirroring the original `objCPUCharacter` stack with all combat components (Identity, Grave, EnemyAI, Mana, WeaponManager, Movement, Anim, Energy, Team, Targeting, etc.).
+> NOTE: this overwrites a prior (stale) code-read audit that claimed "1 shot every 181 ticks". That was wrong
+> on two counts: (a) it described the old flat-+18 cooldown formula the port no longer uses, and (b) it missed
+> that `#flameThrower`'s `#animframe: [1,3,5,7]` fires **4 shots per attack cycle**. Both are corrected here by
+> direct reproduction.
 
 ---
 
-### 2. **AI Type & Behavior**
-| Property | Spec | Port | Status |
-|----------|------|------|--------|
-| `#AiType` | `#objAiCPU` | `CpuAI` component | ✓ CORRECT |
+## 1. What the dragon IS and SHOULD do (derived from the original)
 
-**Verification:** Dragon's `AiType: #objAiCPU` (casts/data/act_dragon.txt:4) is a standard committed-target FSM AI. The port's `CpuAI` class (control.ts:295+) implements the original's findTarget → moveToAttack → attack → attackFin loop, with per-tick targeting subscriptions and 30-frame throttle retargeting. Dragon is **not** a spellcaster, flying bomber, builder, ghost, or multi-attack unit — it runs the baseline FSM with no kite (runReload).
+**Identity / team**
 
----
+| Field | Value | Source |
+|-------|-------|--------|
+| record key | `act_dragon` → actor `"dragon"` | act_dragon.txt:1 |
+| `#name` (sprite char) | **"dragon"** | act_dragon.txt:20 |
+| `#team` | `#monsters` (hostile to the player) | act_dragon.txt:19 |
+| `#AiType` | `#objAiCPU` (standard committed-target FSM, no kite) | act_dragon.txt:4 |
+| `#objType` | `#objCPUCharacter` | act_dragon.txt:3 |
 
-### 3. **Attack Type & Firing Behavior**
-| Property | Spec | Port | Chain | Status |
-|----------|------|------|-------|--------|
-| `#weapon` | `#flameThrower` | Resolved via registry | ✓ | CORRECT |
-| `#attack.animType` (flameThrower) | `#weaponRanged` | Decoded as `type: "ranged"` | ✓ | CORRECT |
-| Firing mode | RANGED (fires bullet) | `ranged = true` → fires via fireBullet | ✓ | CORRECT |
+`fireDragon` (act_fireDragon.txt) is the SAME stat block on team `#scarlet`; `undeadDragon`
+(act_undeadDragon.txt) is a SEPARATE actor (team `#undead`, its OWN inline `#attack` firing `#blueFlame`
+on `#animframe [3]`). The audited `dragon` and `fireDragon` both share `#name: "dragon"` → both render off
+the `dragon_*` sprite strips.
 
-**Verification:**
-- Dragon has no own `#attack` (casts/data/act_dragon.txt:1–23). The port reads `d["attack"]` as empty, triggering the weapon-fallback path (archetypes.ts:155–162).
-- Dragon's `weapon: #flameThrower` resolves case-insensitively via registry.resolveActor("flameThrower") → act_flameThrower (registry.ts:86–90 fallback).
-- FlameThrower's `#attack.animType: #weaponRanged` (act_flameThrower.txt:8) is classified as `type: "ranged"` by `typeFromAnimType` (weapon.ts:86–95).
-- Dragon sets `ranged = true` (archetypes.ts:169–170) and will fire bullets, not melee-contact.
+**Stats**
 
----
+| Field | Value | Source |
+|-------|-------|--------|
+| `#energy` | 500 | act_dragon.txt:9 |
+| `#strength` | 8 | act_dragon.txt:16 |
+| `#walkSpeed` | 7 (engine units → 4.2 px/tick) | act_dragon.txt:21 |
+| `#dexterity` | 10 (ranged cooldown-counter inc) | act_dragon.txt:7 |
+| `#inertia` | 70 (knockback resistance) | act_dragon.txt:13 |
+| `#damageSpeed` | 3 (wall-slam bonus-damage threshold) | act_dragon.txt:6 |
+| `#frictionReel` | point(20,20) (knockback-slide friction) | act_dragon.txt:12 |
+| `#eyestrain` | 50 (ranged aim scatter) | act_dragon.txt:11 |
+| `#experienceImWorth` | 50 | act_dragon.txt:10 |
+| `#startingLevel` | 0 | act_dragon.txt:14 |
+| `#stallSpeed` | 3 | act_dragon.txt:15 |
+| `#takeHitSound` | "dragon_hit" @ vol 100 | act_dragon.txt:17–18 |
+| `#dieSound` | `#none` (NO death sound) | act_dragon.txt:8 |
 
-### 4. **Weapon/Bullet Resolution**
-| Property | Spec | Port | Resolution | Status |
-|----------|------|------|------------|--------|
-| FlameThrower name | `#flameThrower` | `"flameThrower"` (stripped) | ✓ Symbol → string | CORRECT |
-| FlameThrower bullet | `#fireBall` | Resolves to `act_fireBall` data | ✓ Case-insensitive fallback works | CORRECT |
-| Bullet animType | (#fireBall not in spec—inherited from `#bullet`) | `type: "#bullet"` (not ranged/magic, doesn't drive animType) | N/A | N/A |
+**Weapon → attack (the dragon carries NO inline `#attack`; it fights with `#weapon: #flameThrower`):**
 
-**Verification:**
-- FlameThrower attack name is `#flameThrower` (act_flameThrower.txt:13) → stripped to `"flameThrower"` in WeaponManager.
-- FlameThrower bullet reference `#fireBall` (act_flameThrower.txt:9) resolves via registry.resolveActor("fireBall") → act_fireBall.data (registry case-insensitive fallback, line 89).
-- FireBall is a bullet-type projectile; its `#attack.type: #bullet` does not override the firing animType (which remains `#weaponRanged` from the launcher).
+The dragon has only `#weapon: #flameThrower` (act_dragon.txt:22) and no `#attack` block, so its firing attack
+IS the flameThrower's attack (`act_flameThrower.txt`):
 
----
+| Field | Value | Source |
+|-------|-------|--------|
+| `#animType` | `#weaponRanged` (→ RANGED FSM) | act_flameThrower.txt:8 |
+| `#animframe` | **`[1,3,5,7]`** → 4 shots per attack cycle | act_flameThrower.txt:7 |
+| `#bullet` | `#fireBall` | act_flameThrower.txt:9 |
+| `#firingType` | `#fullstrength` → bullet speed = attacker strength (8 px/tick) | act_flameThrower.txt:12 |
+| `#reach` | 150 px | act_flameThrower.txt:14 |
+| `#cooldown` | 0 | act_flameThrower.txt:11 |
+| `#collisionLoc` | point(35,-20) (muzzle offset) | act_flameThrower.txt:10 |
+| `#sound` | "dragon_fire" | act_flameThrower.txt:15 |
 
-### 5. **Cooldown Calibration (Ranged)**
-| Property | Spec | Port | Calculation | Status |
-|----------|------|------|-------------|--------|
-| `#cooldown` (flameThrower) | `0` | Raw=0, Effective=(0+18)·10+1=181 | ✓ Calibrated | CORRECT |
-| Dexterity (skill stat) | `10` | Read from dragon data | ✓ Used as inc | CORRECT |
+**Bullet: `#fireBall` → `act_fireBall.txt` (a DECELERATING bullet):**
 
-**Verification:**
-- FlameThrower attack cooldown: 0 (act_flameThrower.txt:11).
-- Dragon dexterity: 10 (act_dragon.txt:7).
-- Port calibration (archetypes.ts:180–188): 
-  - rawCooldown = 0 (from attack.cooldown)
-  - ranged weapon → framesWanted = max(1, 0 + 18) = 18
-  - counterInc = dexterity = 10
-  - effectiveCooldown = round(18 · 10 + 1) = 181
-- Dragon fires every 181 ticks with dexterity increment, matching the faithful per-type cooldown calibration model (B2 plan §f.3).
+| Field | Value | Source |
+|-------|-------|--------|
+| `#inherit` | `#bullet`; `#character: #bullet` (sprite char "fireBall") | act_fireBall.txt:3,10 |
+| `#attack.power` | 0.2 (scalar) | act_fireBall.txt:7 |
+| `#attack.damageMultiplier` | 6 | act_fireBall.txt:6 |
+| `#attack.type` | `#bullet` (single-target, NOT `#explode`/splash) | act_fireBall.txt:8 |
+| `#friction` | **point(4,4)** → loses 4%/frame, decelerating (objMoveXY) | act_fireBall.txt:12 |
+| `#weight` | 0.4 | act_fireBall.txt:14 |
+| `#recordInRoomState` | false | act_fireBall.txt:13 |
 
----
+**Animation strips (all present in `assets.json`):** `dragon_stand` (1f), `dragon_walk` (8f loop),
+`dragon_weaponRanged` (20f one-shot; delays `[2×8,1,1,1,2×9]`, total 37t), `dragon_grave` (2f).
+Bullet: `fireBall_fly` (1f), `fireBall_land` (2f).
 
-### 6. **Attack Reach & Sound**
-| Property | Spec | Port | Status |
-|----------|------|------|--------|
-| `#reach` (flameThrower) | `150` | Read as-is → targetReach | ✓ CORRECT |
-| `#sound` (flameThrower) | `"dragon_fire"` | Passed to atkSound | ✓ CORRECT |
-
-**Verification:** FlameThrower reach (act_flameThrower.txt:14) = 150 px. Port reads it directly (weapon.ts:163–164) and passes it as targetReach. Sound "dragon_fire" is read and stored in CpuAI.atkSound for playback on attack.
-
----
-
-### 7. **Team & Targeting**
-| Property | Spec | Port | Status |
-|----------|------|------|--------|
-| `#team` | `#monsters` | Team component set to "#monsters" | ✓ CORRECT |
-| Targeting allegiance | Default (attack inherits) | `targetAllegiance: "#enemy"` (STRUCT_ATTACK default) | ✓ CORRECT |
-| Targeting roles | Default | `targetRoles: [["#teamMembers", "#teamBuildings"]]` (STRUCT_ATTACK default) | ✓ CORRECT |
-| Hits | Default | `hits: ["#teamMembers"]` (STRUCT_ATTACK default) | ✓ CORRECT |
-
-**Verification:** Dragon is a `#monsters` team member (act_dragon.txt:19). The port reads team="monsters" → "#monsters" (archetypes.ts:260) and registers it with teamMaster. FlameThrower attack carries no override targeting fields, so it inherits STRUCT_ATTACK defaults: target enemies, prioritize #teamMembers, hit #teamMembers on melee (dragon never melees, so this is a non-issue). Allegiance/roles are fully data-driven via the Targeting component (combat.ts).
+**Behaviour:** `#objAiCPU` committed-target FSM, RANGED. Approaches to within reach 150, faces the target,
+plays the 20-frame `weaponRanged` strip, and fires a `fireBall` on each `#animframe` crossing (frames
+1,3,5,7 → a 4-shot fan per cycle). fireBalls fly at strength speed (8 px/tick) and decelerate by 4%/frame.
+Does NOT kite (no `#runReload`, not a spellcaster). On death: grave (no `#graveOn:false`), no reincarnation,
+no death sound (`#dieSound: #none`).
 
 ---
 
-### 8. **Special Flags & Disposition**
-| Flag | Spec | Port | Status |
-|------|------|------|--------|
-| `#wizard` | Not present | — | N/A |
-| `#ghost` | Not present | ghost=false (default) | ✓ CORRECT |
-| `#multiAttack` | Not present | multiAttack=false (default) | ✓ CORRECT |
-| `#builder` | Not present | builder=false (default) | ✓ CORRECT |
-| `#leaveWhenFinished` | Not present | leaveWhenFinished=false (default) | ✓ CORRECT |
-| `#reelProof` | Not present | reelProof=false (default) | ✓ CORRECT |
-| `#runReload` (derived) | Not spellcaster → false | ranged=true, aiType=#objAiCPU, animType=#weaponRanged → runReload=false (archetypes.ts:206) | ✓ CORRECT |
+## 2. Derived-correct vs. REPRODUCED (every row OBSERVED live in the port)
 
-**Verification:** Dragon has no special disposition flags. The port defaults all component flags to false. Most critically, `runReload` evaluates to false because:
-- `ghost = false` ✓
-- `ranged = true` ✓
-- `aiType !== "#objAiCPUSpellCaster"` ✓ (it's "#objAiCPU")
-- `animType !== "#magic"` ✓ (it's "#weaponRanged")
-- `aiType !== "#objAiFlyingBomber"` ✓
-
-So the condition `!ghost && ranged && (isSpellcaster || isMagic || isFlyer)` = `true && true && false` = **false**. Dragon will NOT kite; it commits to targets and fights in place, faithful to its CPU type.
-
----
-
-### 9. **Reincarnation & Death**
-| Property | Spec | Port | Status |
-|----------|------|------|--------|
-| `#reincarnateAs` | Not present | reincarnateAs=undefined | ✓ CORRECT |
-| `#reincarnateInto` | Not present | reincarnateInto=undefined | ✓ CORRECT |
-| `#minEnergy` | Not present | minEnergy=0 (single-stage death) | ✓ CORRECT |
-| `#dieSound` | `#none` | dieSound=undefined (no custom sound on death) | ✓ CORRECT |
-
-**Verification:** Dragon has no reincarnation chain. On lethal death (energy ≤ 0), it dies outright via Energy.update (combat.ts:40–41) without spawning child actors. The Reincarnate component exists but does nothing (reincarnateAs/Into both empty). minEnergy defaults to 0, so death threshold is the natural 0.
-
----
-
-### 10. **Energies & Stats**
-| Property | Spec | Port | Status |
-|----------|------|------|--------|
-| `#energy` | `500` | Read and applied | ✓ CORRECT |
-| `#strength` | `8` | Read and applied | ✓ CORRECT |
-| `#walkSpeed` | `7` | Scaled 7·0.6=4.2 px/tick | ✓ Calibrated |
-| `#dexterity` | `10` | Used as ranged cooldown inc | ✓ CORRECT |
-| `#experienceImWorth` | `50` | Stored in XP component | ✓ CORRECT |
-| `#inertia` | `70` | Knockback resistance | ✓ Applied |
-| `#startingLevel` | `0` | No level-up loop (stays lv0) | ✓ CORRECT |
-
-**Verification:** All numeric stats are read case-insensitively from dragon data (via the `num()` helper in archetypes.ts:139) and applied to the entity's build config. Walk speed is calibrated to px/tick (line 257). Inertia dampens knockback vector (Hurt component, scaled by inertia). No starting level loop runs, so dragon spawns at level 0 (line 307–308).
+| Property | Expected (original) | REPRODUCED (port) | Match? |
+|----------|---------------------|-------------------|--------|
+| `anim.char` | "dragon" | **"dragon"** (resolves to the real strip, NOT blackOrc) | ✓ |
+| `dragon_stand/walk/weaponRanged/grave` strips | exist | all found in assets.json | ✓ |
+| `team` | `#monsters` | `#monsters` | ✓ |
+| `energy` | 500 | 500 / 500 | ✓ |
+| `strength` | 8 | 8 | ✓ |
+| `maxSpeed` (walkSpeed×0.6) | 4.2 px/tick | 4.2 | ✓ |
+| `inertia` | 70 | 70 | ✓ |
+| `damageSpeed` | 3 | 3 (forwarded) | ✓ |
+| `frictionReel.x` | 20 | 20 | ✓ |
+| `eyestrain` | 50 | 50 | ✓ |
+| `AiType` FSM | `#objAiCPU` committed-target | committed-target; `committedTarget` set | ✓ |
+| `ranged` | true (`#weaponRanged`) | true | ✓ |
+| `reachRanged` | 150 | 150 | ✓ |
+| `runReload` (kite) | false | false | ✓ |
+| `dodgesBullets` | false | false | ✓ |
+| firing attack source | the `#weapon` flameThrower (no inline `#attack`) | currentAttack name `#flameThrower`, type ranged | ✓ |
+| `#animframe` | `[1,3,5,7]` | `[1,3,5,7]` | ✓ |
+| **shots per attack cycle** | **4** (one per firing frame) | **4** (burst sizes all `[4,4,4,…]` over 7 cycles) | ✓ |
+| `firingType` | `#fullstrength` | `#fullstrength` | ✓ |
+| bullet launch speed | 8 px/tick (= strength; +eyestrain scatter) | ~8.4–9.6 (strength + diagonal/scatter) | ✓ |
+| `bullet` | `#fireBall` | bulletChar "fireBall" | ✓ |
+| bullet `#attack.power` | 0.2 | 0.2 | ✓ |
+| bullet `#attack.damageMultiplier` | 6 | 6 | ✓ |
+| bullet `#attack.type` | `#bullet` (no splash) | plain bullet (splashBullet = none) | ✓ |
+| bullet `#friction` decel | point(4,4) (4%/frame) | speed decays 8.4 → 0.19 then stalls | ✓ |
+| bullet reaches target | yes (reach 150 > 100px gap) | reached target & `finished(done)=true` (hit fired) | ✓ |
+| bullet damages target | yes | 64 hits over 300t, target 200→55 energy | ✓ |
+| muzzle (`#collisionLoc`) | point(35,-20) | bullet spawns at x≈243 (200+~43 facing-right) | ✓ |
+| `#sound` | "dragon_fire" | atkSound "dragon_fire" | ✓ |
+| faces target | yes | facingLeft=false with target to the right | ✓ |
+| `takeHitSound` | "dragon_hit" | "dragon_hit" forwarded (Hurt) | ✓ |
+| `takeHitVolume` | 100/255 → 0.39 | mapped via /255 | ✓ |
+| `dieSound` `#none` | no sound on death | passed as "#none", filtered at `audio.play` (audio.ts:149) | ✓ |
+| death → grave | grave (no graveOn:false) | lethal takeHit → isDead, anim action "grave", grave strip present | ✓ |
+| reincarnation | none | none | ✓ |
+| `experienceImWorth` | 50 | 50 | ✓ |
+| `startingLevel` | 0 | 0 (no level-up loop) | ✓ |
 
 ---
 
-## Conclusion
+## 3. DIVERGENCES
 
-**All behavioral properties of `act_dragon` are correctly ported.** The dragon:
-1. Is spawned as an `EnemyArchetype` with `CpuAI` (standard committed-target FSM).
-2. Has **no own attack** → uses its weapon's (`#flameThrower`) attack instead.
-3. FlameThrower's `#weaponRanged` attack classifies as **ranged**, firing `#fireBall` bullets.
-4. Cooldown is faithfully calibrated using dexterity (10) as the skill stat: effective 181 ticks per shot.
-5. Does **not kite** (runReload=false) — commits to targets and fires in place.
-6. Has no reincarnation, no multistage death, no special disposition flags.
-7. All energies, reach, sound, team, and targeting are read correctly.
+**None.** Every derived property reproduced faithfully in the running port.
 
-**Status: CLEAN — No behavioral divergences detected.**
+Items that COULD have been divergences but were verified clean:
+
+- **`#dieSound: #none`** — archetypes.ts forwards the literal string `"#none"` to the Energy component, but
+  `game.audio.play` filters `name === "#none"` to a no-op (`port/src/systems/audio.ts:149`). No bogus sound
+  plays. NOT a divergence.
+- **`#damageSpeed: 3`** — forwarded correctly (`damageSpeed: num("damageSpeed", 5)` in archetypes.ts; the
+  data value 3 wins). Observed `m.damageSpeed = 3`. (The older archer audit's DIV-1 predates this fix.)
+- **4-shot fan from `#animframe [1,3,5,7]`** — reproduced exactly (the original fires one shot per fresh
+  `#animframe` crossing of the `weaponRanged` strip; the port's `updateAttack`/`performAttack`
+  (`control.ts:769–806`) does the same, observed burst size 4 every cycle).
+- **Decelerating fireBall** — `#friction: point(4,4)` is threaded through `bulletAttack.friction` to
+  `Projectile.friction` (`control.ts:903`, `projectile.ts:123–134`); the bullet visibly decelerated
+  (8.4→0.19) and still crossed the 100px gap to hit the target, then stalled. NOT a divergence.
+
+### FAITHFUL original-game characteristics (documented, NOT bugs)
+
+- **`fireDragon` shares `#name: "dragon"`** — both `dragon` (#monsters) and `fireDragon` (#scarlet) render off
+  the `dragon_*` strips by design (sprite keying is by `#name`, not record key). Faithful.
+- **Bullet damage decoupled from travel speed** — the port computes fireBall damage off the calibrated K1
+  reference (`dmgRef = 4.5`, control.ts:887) rather than the original's live `|getVect()|·power·mult`. This is
+  a documented deliberate abstraction (the comment at control.ts:813–818), shared by every ranged CPU, so the
+  decelerating bullet's *damage* doesn't fade with its speed. Stable-by-design, not a dragon-specific issue.
+
+---
+
+## Summary
+
+`act_dragon` is reproduced with **ZERO divergences**. The dragon spawns as a `#monsters` `#objAiCPU` enemy with
+energy 500 / strength 8 / walkSpeed 4.2 / inertia 70 / damageSpeed 3 / eyestrain 50; renders off its real
+`dragon` sprite strips (no blackOrc fallback); fights at RANGE (reach 150) by firing its `#weapon: #flameThrower`
+(no inline `#attack`); fans **4 fireBall shots** per attack cycle (`#animframe [1,3,5,7]`) at `#fullstrength`
+speed 8; each fireBall **decelerates** (friction 4) yet reaches and damages the target; faces its target;
+plays `dragon_hit` when struck; and dies to a grave with no death sound (`#dieSound: #none` filtered) and no
+reincarnation.
+
+**Status: CLEAN — No behavioral divergences detected (reproduced, not just code-read).**
