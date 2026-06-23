@@ -58,7 +58,7 @@ const ONE_SHOT_FALLBACK = new Set([
 ]);
 
 export class Anim extends Component {
-  static handles = ["update"];
+  static handles = ["update", "syncAnimAfterRestore"];
   char = "mer";
   private action = "stand";
   private frame = 0;
@@ -95,6 +95,17 @@ export class Anim extends Component {
   // one-shot strip even though the action STRING is unchanged across consecutive swings — without this the
   // strip plays once then holds its last frame for every following swing (the "stuck on the last frame" bug).
   restart(): void { this.frame = 0; this.timer = 0; this.extraDelay = 0; this.justAdvanced = false; this.justLooped = false; }
+
+  // syncAnimAfterRestore (objRoom.restoreState / save-load): respawnActor restores the entity's combat
+  // state (energy.dead, stretchDeath, etc.) AFTER the archetype build left Anim at its default "stand". If
+  // we wait for the first update() to run pickAction, a freshly-restored DEAD actor renders ONE frame as a
+  // live stand pose before snapping to its grave — the "units spawn as not graves, then instantly switch"
+  // flicker on room re-entry. Prime the action from the now-restored state so the very first sprite is right.
+  syncAnimAfterRestore(): void {
+    this.deathT = this.stretchDeath && this.entity.send("isDead") === true ? Anim.STRETCH_DURATION : 0;
+    const a = this.pickAction();
+    if (a !== this.action) { this.action = a; this.frame = 0; this.timer = 0; this.extraDelay = 0; }
+  }
 
   // ── objAnimStrip frame state, for the animation-driven attack drivers (control.ts) ──────────────
   /** getFrame: current 1-based frame index of the active strip (Lingo #animframe values are 1-based). */
