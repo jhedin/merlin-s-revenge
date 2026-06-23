@@ -12,7 +12,7 @@ const HEAL_DELAY = 5;   // tim[2] — heal every 5 frames
 const HEAL_AMOUNT = 1;  // pHealAmount
 
 export class Medikit extends Component {
-  static handles = ["update", "medikitCollected", "getNumOfMedikits", "addSaveData", "restoreFromSave"];
+  static handles = ["update", "medikitCollected", "getNumOfMedikits", "getMedikitActive", "getMedikitFrac", "addSaveData", "restoreFromSave"];
   numOfMedikits = 0;          // pNumOfMedikits — banked kits
   remainingHitpoints = 0;     // pRemainingHitpoints — hp left in the ACTIVE kit
   active = false;             // pMedikitActive
@@ -29,6 +29,10 @@ export class Medikit extends Component {
 
   // getNumOfMedikits (82-90): banked + (1 if a partial kit is mid-heal). The HUD count.
   getNumOfMedikits(): number { return this.numOfMedikits + (this.remainingHitpoints > 0 ? 1 : 0); }
+  // objMedikitDisplayer state: the on/off icon (mid-heal) + the active kit's energy-bar fill (remaining HP
+  // over the refill max = the player's max energy, nextMedikit:62).
+  getMedikitActive(): boolean { return this.active; }
+  getMedikitFrac(): number { const max = this.entity.tryGet(Energy)?.max ?? 0; return max > 0 ? Math.max(0, Math.min(1, this.remainingHitpoints / max)) : 0; }
 
   // update (119-128): while energy < max, attemptHeal; else deactivate.
   update(next: NextFn): void {
