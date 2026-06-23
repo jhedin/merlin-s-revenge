@@ -28,6 +28,26 @@ not a `#key`, not an actor):
   blitter (per-glyph from `charSize`) for the HUD/menu/numbers; route the canvas `fillText` calls through it.
 - Surfaced via: the `charSize` field-key census hit → traced to `objFont` → found the unbundled `fnt_*` family.
 
+### SS-2 — Health-bar sprite (RE-OPENED — user reports it still isn't faithful)
+- A prior pass claimed the HUD bars were swapped to the real `health_bar_surround` member art (see ALREADY
+  RESOLVED below), but in play the health bar still looks wrong — so either the swap is incomplete (drawn
+  procedurally on top of / instead of the real frames), or the per-unit enemy/boss health bars and the
+  player HUD bar use different draw paths and only one was converted.
+- **Audit:** RUN the game, compare the player HUD bar AND the floating per-unit/boss health bars against the
+  original's `objHealthBar`/`health_bar*` member art (fill frames, surround, segment count, position). Trace
+  every health-bar draw call in the renderer/HUD and mark each `reuses-real-member` vs `drawn-procedurally`.
+
+---
+
+## ROADMAP (this sweep is step 3 of 3, per user direction 2026-06-23)
+1. **Cutscene/thespian sweep** (in progress) — reproduce the scripts, command-by-command vs modThespian.
+2. **General cross-cutting check** — the data-pipeline/field-key census + source→output reconciliation pass
+   for systemic issues that are neither per-actor nor a substituted subsystem.
+3. **THIS sweep — substituted subsystems.** Re-verify by RUNNING, do NOT trust the porting agent's
+   "equivalent enough" judgement OR the "ALREADY RESOLVED" claims below — each needs a real visual
+   comparison against the original member art (the resolved ones may be partial). Text rendering (SS-1) and
+   the health bar (SS-2) are confirmed live targets.
+
 ---
 
 ## ALREADY RESOLVED instances of this class (for reference — same pattern, fixed earlier this session)
