@@ -11,6 +11,7 @@ import type { Entity } from "../engine/dispatch";
 import type { Input } from "../systems/input";
 import type { Renderer } from "../render/renderer";
 import type { Assets } from "../render/assets";
+import { drawText } from "../render/text";
 import { WeaponManager } from "../components/weapon";
 import { Movement } from "../components/movement";
 
@@ -80,8 +81,9 @@ export class WeaponPalette {
       else { // no bundled icon: a labelled placeholder so the slot is still selectable
         ctx.fillStyle = r.sym === cur ? "#fc4" : "#3c9";
         ctx.fillRect(r.x, r.y, ICON_W, ICON_H);
-        ctx.fillStyle = "#012"; ctx.font = "7px monospace"; ctx.textAlign = "center";
-        ctx.fillText(r.sym.replace(/^#/, "").slice(0, 3), r.x + ICON_W / 2, r.y + ICON_H / 2 + 3);
+        ctx.fillStyle = "#012"; ctx.textAlign = "center";
+        // SS-1: 3-char weapon abbreviation via the #small bitmap face (centred), system-font fallback.
+        drawText(ctx, assets, "small", r.sym.replace(/^#/, "").slice(0, 3), r.x + ICON_W / 2, r.y + ICON_H / 2 + 3, { align: "center", fallbackFont: "7px monospace" });
         ctx.textAlign = "left";
       }
     }

@@ -327,9 +327,48 @@ for (const name of MEMBER_NAMES) {
   members[name] = { file: copy(b), w: b.w, h: b.h, reg: b.reg };
 }
 
+// ── (h) bitmap fonts (objFont): glyph sheets + metrics, keyed by font symbol ───────────────────
+// SS-1. The original blits per-glyph from fnt_<name> sized by fnt_<name>_properties.{theKey,charSize,
+// gap}: a char's tile INDEX = StringGetPos(theKey, char) (1-based, left-to-right along the sheet), at
+// x = index*charSize.x in a charSize.x×charSize.y cell. charSize (not w/cells) is authoritative — the
+// sheets carry blank trailing padding past the key (small: 58 keys×8=464 of 609px; menu: 55×10=550 of
+// 1000px), so dividing w by cells over-counts. Sheets are black-on-white masks (numbers/small/menu) or
+// grey-on-dark (smallgrey) → keyed (white→transparent / dark→transparent) + tinted at draw time.
+interface FontMeta { file: string; w: number; h: number; cell: [number, number]; gap: number; key: string; matte: "white" | "dark"; }
+const fonts: Record<string, FontMeta> = {};
+const FONT_DEFS: { sym: string; sheetPrefix: string; props: string; matte: "white" | "dark" }[] = [
+  { sym: "menu",      sheetPrefix: "fnt_menu",      props: "fnt_menu_properties.txt",      matte: "white" },
+  { sym: "numbers",   sheetPrefix: "fnt_numbers",   props: "fnt_numbers_properties.txt",   matte: "white" },
+  { sym: "small",     sheetPrefix: "fnt_small",     props: "fnt_small_properties.txt",     matte: "white" },
+  { sym: "smallgrey", sheetPrefix: "fnt_smallgrey", props: "fnt_smallgrey_properties.txt", matte: "dark"  },
+];
+const parseFontProps = (path: string) => {
+  const s = readFileSync(path, "utf8");
+  const key = /#thekey:\s*"([^"]*)"/i.exec(s)?.[1] ?? "";
+  const cs  = /#charSize:\s*point\(\s*(\d+)\s*,\s*(\d+)\s*\)/i.exec(s);
+  const gap = Number(/#gap:\s*(-?\d+)/i.exec(s)?.[1] ?? 0);
+  return { key, cell: [Number(cs?.[1] ?? 8), Number(cs?.[2] ?? 10)] as [number, number], gap };
+};
+const OUT_FONTS = join(OUT_ASSETS, "fonts"); mkdirSync(OUT_FONTS, { recursive: true });
+for (const { sym, sheetPrefix, props, matte } of FONT_DEFS) {
+  // PREFIX-COLLISION trap: `fnt_small` is a prefix of `fnt_smallgrey` — exclude the longer sibling
+  // family so the small face doesn't grab the smallgrey sheet. Among the rest, the shortest engine name
+  // wins (least-mangled candidate), mirroring the members block.
+  const cands = bitmaps
+    .filter((b) => b.name.startsWith(sheetPrefix) && !(sheetPrefix === "fnt_small" && b.name.startsWith("fnt_smallgrey")))
+    .sort((a, b) => a.name.length - b.name.length);
+  const b = cands[0];
+  const propPath = join(DATA, props);
+  if (!b || !existsSync(propPath)) { console.warn("missing font", sym, b ? "(props)" : "(sheet)"); continue; }
+  const { key, cell, gap } = parseFontProps(propPath);
+  const out = `fonts/${basename(b.file)}`;
+  copyFileSync(join(EXTRACTED, b.file), join(OUT_ASSETS, out));
+  fonts[sym] = { file: out, w: b.w, h: b.h, cell, gap, key, matte };
+}
+
 // ── emit + report ─────────────────────────────────────────────────────────────────────────────
 writeFileSync(join(OUT_GEN, "assets.json"),
-  JSON.stringify({ version: 2, defaultMap: DEFAULT_MAP, tilesets, chars, anims, sounds, music, cutscenes, arrows, weaponIcons, members }, null, 1));
+  JSON.stringify({ version: 2, defaultMap: DEFAULT_MAP, tilesets, chars, anims, sounds, music, cutscenes, arrows, weaponIcons, members, fonts }, null, 1));
 writeFileSync(join(OUT_GEN, "maps.json"), JSON.stringify(maps, null, 1));
 
 const charCount = Object.keys(chars).length, animCount = Object.keys(anims).length;
@@ -340,5 +379,6 @@ console.log(`  maps:     ${maps.length}`);
 console.log(`  sounds:   ${Object.keys(sounds).length}   music: ${Object.keys(music).length}`);
 console.log(`  cutscenes: ${Object.keys(cutscenes).length}  (stones1-10 + intro/wasted/complete)`);
 console.log(`  arrows:   ${arrowsOk ? "8 (green/red × left/up/right/down)" : "0 (conversion unavailable — overlay no-ops)"}`);
+console.log(`  fonts:    ${Object.keys(fonts).length}  (${Object.entries(fonts).map(([s, f]) => `${s} ${f.cell[0]}x${f.cell[1]}`).join(", ")})`);
 if (sfxWarnings.length) console.warn("  SFX warnings:\n    " + sfxWarnings.join("\n    "));
 if (missingFromData.length) console.log("  data vocab with no shipped wav (ok): " + missingFromData.join(", "));
