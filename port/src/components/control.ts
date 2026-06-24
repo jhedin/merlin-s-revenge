@@ -17,7 +17,7 @@ import { meleeHitFn } from "../systems/teams";
 import { aimWithEyestrain } from "../engine/math";
 import { Targeting } from "./combat";
 import { WeaponManager, meleeBasePower, enemyMeleeBasePower, resolveAttack, BULLET_DAMAGE_SCALE, type AttackData } from "./weapon";
-import { depositMines } from "./summon";
+import { depositMines, clampToPlayArea } from "./summon";
 import { chargeMaxOf, chargeStartOf, chargeSpeedOf } from "./charge";
 import { PathFinding } from "./pathFinding";
 import { ColourTransform } from "./colourTransform";
@@ -119,7 +119,8 @@ export class PlayerControl extends Component {
     const typ = wm.currentActorType();           // "<wiz>InGame"
     if (!typ) return;                            // no wizard found yet
     const team = this.entity.send("getTeam") as string;
-    const at = input.cursor() ?? this.entity.get(Movement);
+    const raw = input.cursor() ?? this.entity.get(Movement);
+    const at = clampToPlayArea(raw.x, raw.y);    // the cursor can be anywhere (incl. the HUD) — keep the wizard in-bounds
     let wiz = game.armyMaster.createUnit(team, typ, at.x, at.y); // re-field from the reserve when banked
     if (!wiz && game.spawnUnit) {                                 // else summon a fresh copy of the found wizard
       wiz = game.spawnUnit(typ.replace(/^#/, ""), at.x, at.y);
@@ -133,7 +134,8 @@ export class PlayerControl extends Component {
   // cursor, spread around it, respecting the team capacity (gMaxFriends).
   summonArmy(input: Input): void {
     const team = this.entity.send("getTeam") as string;
-    const at = input.cursor() ?? this.entity.get(Movement);
+    const raw = input.cursor() ?? this.entity.get(Movement);
+    const at = clampToPlayArea(raw.x, raw.y);
     // summonArmy fields the battalion only — wizards are summoned SEPARATELY via summonWizard (#wizard/Q).
     // Re-fielding a banked wizard here (untracked by wizardMaster) would let a later Q spawn a second copy.
     const types = game.armyMaster.reserveTypes(team).filter((t) => registry.resolveActor(t.replace(/^#/, ""))?.["wizard"] !== true);
@@ -141,7 +143,8 @@ export class PlayerControl extends Component {
     for (const typ of types) {
       if (game.teamMaster.atCapacity(team)) break;
       const ang = (i++ / Math.max(1, types.length)) * Math.PI * 2;
-      game.armyMaster.createUnit(team, typ, at.x + Math.cos(ang) * 20, at.y + Math.sin(ang) * 20);
+      const p = clampToPlayArea(at.x + Math.cos(ang) * 20, at.y + Math.sin(ang) * 20);
+      game.armyMaster.createUnit(team, typ, p.x, p.y);
     }
   }
 
