@@ -120,20 +120,50 @@ def bmp_palette_ref(data, ents, owner):
     sp = b[12+infoLen:12+infoLen+specLen]
     return struct.unpack('>h', sp[26:28])[0] if specLen >= 28 else None
 
-# 8-bit cast bitmaps name their palette by cast-member ref, but the dump has no member->CLUT cross-reference
-# for these (the CLUT chunks are owned by the palette members, whose ids don't match the ref numbering). Map
-# the verified refs to their CLUT chunk. ref 37 = the title-letter palette (the blue 3D-bevel "MERLIN'S
-# REVENGE" glyphs) -> CLUT@456350; without this they fell back to mac_palette() and rendered as rainbow bands.
-PALETTE_REF_CLUT = {37: 456350}
+# 8-bit cast bitmaps name their palette by a cast-MEMBER ref (spec s16 @ sp[26]). That ref is a member number
+# in the bitmap's OWN cast library; resolving it through the CAS* member table yields the palette member's
+# CASt chunk, which owns the CLUT. (Without this, get_clut fell back to mac_palette() and 8-bit sprites — the
+# MERLIN'S REVENGE title glyphs, iceRock, scw, etc. — rendered as rainbow bands.) Tables built once + cached.
+_CAST_TABLES = None
+_OWNER_LIB = None
+def _ensure_cast_tables(data, ents, owner_to):
+    global _CAST_TABLES, _OWNER_LIB
+    if _CAST_TABLES is not None:
+        return
+    child_owner = {c: o for o, kids in owner_to.items() for c in kids.values()}
+    tables = {}
+    for rid, (t, s, o) in ents.items():
+        if t != 'CAS*':
+            continue
+        own = child_owner.get(rid)
+        if own is None or (own & 0xffff) != 0x400:
+            continue
+        b = chunk(data, ents, rid)
+        tables[own >> 16] = [int.from_bytes(b[k*4:k*4+4], 'big') for k in range(len(b) // 4)]
+    owner_lib = {}
+    for lib, tbl in tables.items():
+        for cid in tbl:
+            owner_lib.setdefault(cid, lib)
+    _CAST_TABLES, _OWNER_LIB = tables, owner_lib
+
+def _resolve_palette_clut(data, ents, owner_to, owner, ref):
+    """(bitmap owner, palette member ref) -> the CLUT chunk that palette member owns, or None."""
+    _ensure_cast_tables(data, ents, owner_to)
+    lib = _OWNER_LIB.get(owner)
+    tbl = _CAST_TABLES.get(lib) if lib is not None else None
+    if not tbl or not (1 <= ref <= len(tbl)):
+        return None
+    return owner_to.get(tbl[ref - 1], {}).get('CLUT')
 
 def get_clut(data, ents, owner_to, owner):
     ch = owner_to.get(owner, {})
     if 'CLUT' in ch:
         return _clut_from_chunk(data, ents, ch['CLUT'])
     ref = bmp_palette_ref(data, ents, owner)
-    cid = PALETTE_REF_CLUT.get(ref)
-    if cid is not None and cid in ents:
-        return _clut_from_chunk(data, ents, cid)
+    if ref is not None and ref > 0:                       # custom palette member (negatives = system palettes)
+        cid = _resolve_palette_clut(data, ents, owner_to, owner, ref)
+        if cid is not None and cid in ents:
+            return _clut_from_chunk(data, ents, cid)
     return mac_palette()
 
 def decode_bitmap(data, ents, owner_to, owner):
