@@ -81,6 +81,16 @@ describe("H2: SceneManager FSM (movieMaster/screenMaster/gameMaster)", () => {
     expect(log).toContain("resume");
   });
 
+  it("a K18 sub-screen overlay (showArmy/keyConfig/instructions) also pauses combat", () => {
+    const { scene } = makeScene();
+    scene.startGameFromTitle(); scene.cutSceneFinished("intro");
+    for (const ov of ["showArmy", "keyConfig", "instructions"] as const) {
+      scene.screenOn(ov);
+      expect(scene.currentOverlay()).toBe(ov);
+      expect(scene.isPaused()).toBe(true); // combat must freeze under the sub-screen (was: ran live)
+    }
+  });
+
   it("overlay screenOn / backAScreen round-trips without changing the base screen", () => {
     const { scene } = makeScene();
     scene.startGameFromTitle(); scene.cutSceneFinished("intro");
