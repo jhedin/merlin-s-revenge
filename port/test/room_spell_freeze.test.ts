@@ -83,4 +83,27 @@ describe("room re-entry freeze: a live spell is not frozen into the snapshot", (
       if (e.type === "spell") expect(e.tryGet(SpellActor)).toBeTruthy();
     }
   });
+
+  it("a HELD (charging) spell orb RIDES across a screen — you keep your charged spell between screens", () => {
+    const map = mkMap();
+    const player = spawnPlayer(viewW / 2, viewH / 2); game.player = player; game.entities = [player];
+    const rm = new RoomManager(map, game.assets, activeKey, objectsKey, viewW, viewH, player, () => {});
+    rm.enter({ x: 1, y: 1 });
+    const orb = spawnSpell(atkOf("energyBlast"), player.id, viewW / 2, viewH / 2, "#aldevar", ["#teamMembers"], "#enemy");
+    expect(orb.get(SpellActor).phase()).toBe("charge");       // a held charge (not released)
+    rm.enter({ x: 1, y: 2 });                                 // cross to the next screen
+    expect(game.entities.includes(orb)).toBe(true);           // the held orb rode across (was: culled -> orphaned)
+    expect(orb.get(SpellActor).phase()).toBe("charge");       // still charging on the other side
+  });
+
+  it("a RELEASED (flying) spell does NOT ride across — it belongs to the room it was cast in", () => {
+    const map = mkMap();
+    const player = spawnPlayer(viewW / 2, viewH / 2); game.player = player; game.entities = [player];
+    const rm = new RoomManager(map, game.assets, activeKey, objectsKey, viewW, viewH, player, () => {});
+    rm.enter({ x: 1, y: 1 });
+    const orb = spawnSpell(atkOf("energyBlast"), player.id, 80, 80, "#aldevar", ["#teamMembers"], "#enemy");
+    orb.get(SpellActor).release(200, 80, 6);                  // released -> flying
+    rm.enter({ x: 1, y: 2 });
+    expect(game.entities.includes(orb)).toBe(false);          // dropped on cross (only held charges persist)
+  });
 });
