@@ -27,7 +27,9 @@ omitted). Worked top-down by fidelity impact. Each item cites where it was defer
   keep the I8 stream (faithful — they don't fly+explode). `PlayerControl` ensureSpell/chargeSpell/release +
   GMG auto-fire spawn-release-respawn. Tested (`spells_c` lethality + grow + rim; `player_kit`/`phase_i`
   retimed to the actor) + verified in-browser (orb grows/flies/explodes, kills, no leak, no errors).
-  attack-frame gating + eyestrain remain default-off cosmetic follow-ons (no shipped-content effect). [B2 §g — resolved]
+  The once-deferred attack-frame gating + eyestrain follow-ons are now IMPLEMENTED too: melee/ranged hits
+  fire per `#animframe` crossing of the swing strip (`control.ts` `driveSwing`/`swingFrames`/`attackFrames`),
+  and `#eyestrain` aim-scatter is read + applied (`control.ts:477,523` + `aimWithEyestrain`). [B2 §g — resolved]
 - ☑ **K3. `modPathFinding` beeline→scenic (NOT A*).** `PathFinding` helper on `CpuAI`: beeline at the goal;
   on a 5-frame zero-movement stall → `#scenic` with one random `±100px` waypoint (`PointRoughly`, map-rect
   clamped); next stall → beeline; arrival within 5px. Replaced the `seek`/perpendicular-detour heuristic.
@@ -54,6 +56,8 @@ omitted). Worked top-down by fidelity impact. Each item cites where it was defer
   carry **0 actor records** (`#AiType` grep empty across all 47 maps); `objAiEnemyTargetSeek`'s base class
   `objAiEnemy` is absent from the source cast (cannot instantiate); the weapon-drop economy `objAICPUWeaponSeek`
   needs is unused. Evidence-backed dead engine code — left unbuilt (per K2-K8 plan §g).
+  **Re-verified 2026-06-24:** `casts/script_objects/objAiEnemy.txt` confirmed ABSENT (only the
+  `objAiEnemyTargetSeek.txt` subclass exists); no map references the `hairSeek`/`weaponSeek` AI types. Stands.
 
 ## Tier 2 — spells / content mechanics
 - ☑ **K9. armySummon reservation requirement.** `summonUnit` (modSpellMultistage.summonPayload →
@@ -148,8 +152,15 @@ omitted). Worked top-down by fidelity impact. Each item cites where it was defer
   Tested in `exit_arrows`. [F2/F3 §g — resolved]
 
 ## Genuinely out of scope (engine-not-game; confirmed)
-Map editor (`mapEditMaster`, separate executable), copy-protection, the `ochreWizard`/`scw` orphan symbols
-(no `act_` record in the original either). These are NOT deferrals — they're non-game or faithful-as-is.
+Map editor (`mapEditMaster`, separate executable), copy-protection, and the `ochreWizard`/`scw` actors.
+These are NOT deferrals — they're non-game or unreachable-in-shipped-content.
+
+> **Correction (2026-06-24):** an earlier wording here claimed `ochreWizard`/`scw` have "no `act_` record in
+> the original either" — that is FACTUALLY WRONG. The records DO exist (`act_ochre.txt`, `act_ochreInGame.txt`,
+> `act_scWarrior.txt`, `act_scWarriorSword.txt`) and use ordinary AI types (`#objAiCPUSpellCaster` / `#objAiCPU`,
+> NOT the dead seek types). The correct reason they're out of scope: **they are not placed in any of the 47
+> shipped maps**, so they never spawn in shipped content (`ochreWizard`/`scw` are the sprite-strip symbols;
+> the actor records are named `act_ochre*`/`act_scWarrior*`). Conclusion (out of scope) holds; rationale fixed.
 
 ## Status log
 - Opened K to burn down every deferral per the owner's directive.
@@ -162,5 +173,10 @@ Map editor (`mapEditMaster`, separate executable), copy-protection, the `ochreWi
 - **K2 closed (the finale): energyBlast's faithful grow-fly-explode-radially `objSpell` lifecycle**,
   recoupling magic damage to K1's scale (SPELL_RADIAL_SCALE re-pins "base charge fells a 300-energy enemy").
 - **ALL Phase-K deferrals are now implemented** (the only never-built items are the evidence-backed dead
-  engine code K8b/K8c and the genuinely-out-of-scope non-game tooling). 346 tests green, tsc clean, room-1
+  engine code K8b/K8c and the genuinely-out-of-scope non-game tooling). Suite green, tsc clean, room-1
   gate green; exit arrows + the spell lifecycle visually confirmed in-browser.
+- **Reconciled 2026-06-24** (post #76 merge): K2's once-deferred attack-frame-gating + eyestrain follow-ons
+  verified implemented; K8b/K8c dead-code claim re-verified (base class absent, zero map refs); the
+  ochre/scw "out of scope" rationale corrected (records exist but are unplaced, not record-less). Test count
+  is now **606 green** (was 346 when this log was first written). The three low-confidence constants
+  (nav-mode speed, splash target-radius, charge-sound) were settled to match the original in PR #76.

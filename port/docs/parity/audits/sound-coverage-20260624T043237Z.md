@@ -1,5 +1,14 @@
 # Sound / Audio Coverage Audit — 20260624T043237Z
 
+> **STATUS (reconciled 2026-06-24): all 3 findings RESOLVED.**
+> - Dead music bundle (`merl2319_v1` / `final_stand_2_v1` / `the_ultimate_song_thing_v1`) — PRUNED. The music
+>   copy is now vocab-restricted (`build_assets.ts` `musicVocab`); the bundle ships 5 referenced tracks and
+>   none of those three.
+> - Swing-sound latent bug — FIXED. Melee now plays the resolved `AttackData.sound` (`control.ts`), with the
+>   sword/punch literal kept only as a fallback.
+> - Charge sound — DECIDED (match the original) in **PR #76**: the divergent `play("spell_charge")` on
+>   charge-start was removed; the original plays no charge sound (recorded as OGB-2 in `original-game-bugs.md`).
+
 Scope: the audio analog of `effect_liveness`. Two directions:
 - **A. Trigger coverage** (cast → port): every cast sound TRIGGER fires in the port at the right moment with the right name.
 - **B. Liveness** (bundle ↔ port): every bundled `sounds`/`music` entry is requested by some play path; conversely every cast sound name has a shipped file (or is a known data-vocab gap).
