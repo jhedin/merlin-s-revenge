@@ -111,8 +111,12 @@ export class RoomManager {
     this.activeSheet = this.sheetFor("#backgroundActive");
     this.foregroundSheet = this.sheetFor("#foregroundPassive");
 
-    // keep only the player; clear enemies/bullets from the previous room
-    game.entities = game.entities.filter((e) => e.type === "player");
+    // keep the player AND the player's still-charging spell orb — a held charge PERSISTS across a screen
+    // (objSpell rides with the caster); without this the orb was culled but its PlayerControl reference kept,
+    // so ensureSpell returned an orphaned (un-rendered, inert) orb and you "lost" your charged spell on cross.
+    // Everything else from the old room (enemies, bullets, released/flying spells) is dropped.
+    const pid = this.player.id;
+    game.entities = game.entities.filter((e) => e.type === "player" || e.send("heldCharge") === pid);
     // restore source: an explicit save-restore (restoreObjects) > a live pState snapshot (re-entry).
     const snapshot = restoreObjects ?? (this.restoring ? undefined : this.pState.get(this.room.num));
     if (snapshot) {

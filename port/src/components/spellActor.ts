@@ -41,7 +41,7 @@ export const SPELL_RADIAL_SCALE = MELEE_SCALE;
 const QUICK_FADE_TICKS = 10;
 
 export class SpellActor extends Component {
-  static handles = ["update", "getTeam", "getActorType", "isFinished", "isDead"];
+  static handles = ["update", "getTeam", "getActorType", "isFinished", "isDead", "heldCharge"];
 
   attack!: AttackData;
   charge = 0;             // pCurrentCharge
@@ -67,6 +67,9 @@ export class SpellActor extends Component {
   getActorType(): string { return "spell"; }     // a spell has no actor record; never snapshotted/respawned
   isFinished(): boolean { return this.done; }     // swept back to the pool when finished
   isDead(): boolean { return this.done; }
+  /** owner id of a still-charging (un-released) orb, else -1 — lets a room transition CARRY the player's held
+   *  charge across the screen (objSpell persists) instead of orphaning the orb when entities are culled. */
+  heldCharge(): number { return this.mode === "charge" && !this.done ? this.ownerId : -1; }
 
   // setup (objSpell.setSpellProperties + the charge-counter seed): arm a fresh charge-mode spell.
   configure(attack: AttackData, ownerId: number, team: string, hits: string[], allegiance: string): void {
