@@ -116,13 +116,16 @@ export class PlayerControl extends Component {
       // removing it). flagging "left" + starting the beam together; the cull keeps it until teleportOutDone.
       game.armyMaster.teleportOut(active); active.get(Anim).startTeleportOut(); active.flags.add("left"); wm.clearActive(); return;
     }
+    const base = wm.current();                   // selected wizard's base sym
     const typ = wm.currentActorType();           // "<wiz>InGame"
-    if (!typ) return;                            // no wizard found yet
+    if (!typ || !base) return;                   // no wizard found yet
     const team = this.entity.send("getTeam") as string;
     const raw = input.cursor() ?? this.entity.get(Movement);
     const at = clampToPlayArea(raw.x, raw.y);    // the cursor can be anywhere (incl. the HUD) — keep the wizard in-bounds
     let wiz = game.armyMaster.createUnit(team, typ, at.x, at.y); // re-field from the reserve when banked
-    if (!wiz && game.spawnUnit) {                                 // else summon a fresh copy of the found wizard
+    // else a fresh copy (port convenience) — UNLESS the wizard was already summoned and KILLED: a dead wizard
+    // is gone for good (the original has no banked record to withdraw), so it must not be re-summonable.
+    if (!wiz && game.spawnUnit && !wm.isLost(base)) {
       wiz = game.spawnUnit(typ.replace(/^#/, ""), at.x, at.y);
       wiz.get(Anim).startTeleportIn();                            // armyTeleportIn (#teleportInStretch)
       if (!game.entities.includes(wiz)) game.entities.push(wiz);

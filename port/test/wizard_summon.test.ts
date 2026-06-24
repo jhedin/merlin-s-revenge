@@ -5,6 +5,7 @@ import { game } from "@/game/context";
 import { CollisionGrid } from "@/world/collision";
 import { spawnPlayer, spawnUnit, spawnAlly } from "@/entities/archetypes";
 import { PlayerControl } from "@/components/control";
+import { Energy } from "@/components/combat";
 import { WizardMaster, baseWizardSym } from "@/systems/wizardMaster";
 
 function input(cursor: { x: number; y: number } | null) {
@@ -63,5 +64,27 @@ describe("wizard summon helper (modSummonWizard / wizardMaster)", () => {
     p.get(PlayerControl).summonWizard(input({ x: 100, y: 100 }));
     expect(game.wizardMaster.activeWizardId).toBe(-1);
     expect(game.entities.length).toBe(1);             // only the player
+  });
+
+  it("a wizard summoned and then KILLED cannot be re-summoned (no banked record for a dead wizard)", () => {
+    const p = spawnPlayer(50, 50); game.player = p; game.entities = [p];
+    spawnUnit("amotonlinInGame", 100, 100, { animChar: "amo" });    // meet -> found
+    game.entities = game.entities.filter((e) => e.type === "player");
+    const pc = p.get(PlayerControl);
+
+    pc.summonWizard(input({ x: 300, y: 200 }));                     // summon it onto the field
+    const wiz = game.entities.find((e) => e.id === game.wizardMaster.activeWizardId)!;
+    expect(wiz.type).toBe("ally");
+
+    // it dies in the field — the main loop marks it lost + clears the active slot (simulated here). The
+    // corpse stays in the world (it becomes a grave), so count allies BEFORE the re-summon attempt.
+    wiz.get(Energy).dead = true;
+    game.wizardMaster.markLost(baseWizardSym(wiz.send("getActorType") as string));
+    game.wizardMaster.clearActive();
+    const alliesAfterDeath = game.entities.filter((e) => e.type === "ally").length; // 1 (the corpse)
+
+    pc.summonWizard(input({ x: 300, y: 200 }));                     // Q again -> must NOT respawn it
+    expect(game.wizardMaster.activeWizardId).toBe(-1);
+    expect(game.entities.filter((e) => e.type === "ally").length).toBe(alliesAfterDeath); // no fresh copy
   });
 });
