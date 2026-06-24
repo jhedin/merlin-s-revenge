@@ -23,8 +23,9 @@ export class WizardMaster {
   private found: string[] = [];   // base wizard syms in discovery order (pWizardsFound)
   private selected = 0;           // pWizardToSummon (0-based here)
   private activeId = -1;          // the summoned wizard's entity id, or -1 (pWizard relation)
+  private lost = new Set<string>(); // wizards summoned then KILLED — gone for good (no banked record exists)
 
-  reset(): void { this.found = []; this.selected = 0; this.activeId = -1; }
+  reset(): void { this.found = []; this.selected = 0; this.activeId = -1; this.lost.clear(); }
 
   /** newWizardFound: register a wizard the first time its actor spawns. */
   register(actorType: string): void {
@@ -48,4 +49,9 @@ export class WizardMaster {
   get isSummoned(): boolean { return this.activeId >= 0; }
   setActive(id: number): void { this.activeId = id; }
   clearActive(): void { this.activeId = -1; }
+
+  /** mark a wizard KILLED in the field — the original never re-banks a dead wizard, so it can't be summoned
+   *  again (modSummonWizard skips a wizard with no army-details record). Guards the port's fresh-spawn path. */
+  markLost(base: string): void { this.lost.add(base); }
+  isLost(base: string): boolean { return this.lost.has(base); }
 }

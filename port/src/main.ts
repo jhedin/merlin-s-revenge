@@ -16,6 +16,7 @@ import { GameLoop } from "./engine/loop";
 import { parseMap, type GameMap, type Vec2i } from "./world/map";
 import { parseTileKey, tileSymbol, type TileKey } from "./data/tlk";
 import { RoomManager, type ExitArrowRect } from "./world/rooms";
+import { baseWizardSym } from "./systems/wizardMaster";
 import { registry } from "./game/data";
 import { resolveAttack } from "./components/weapon";
 import { game, initContext } from "./game/context";
@@ -342,6 +343,17 @@ async function main() {
           // no Anim, or whose beam is done, is removed now.
           const beaming = e.flags.has("left") && e.tryGet(Anim)?.isTeleportingOut() === true && !e.get(Anim).teleportOutDone();
           if ((e.type === "pickup" && e.send("isFinished")) || (e.flags.has("left") && !beaming)) game.entities.splice(i, 1);
+        }
+        // a summoned wizard that DIED (became a grave, not unsummoned) is gone for good — mark it lost so the
+        // summon path won't fresh-spawn it again (the original has no banked record for a killed wizard).
+        const awid = game.wizardMaster.activeWizardId;
+        if (awid >= 0) {
+          const w = game.entities.find((e) => e.id === awid);
+          if (!w) { game.wizardMaster.clearActive(); }
+          else if (w.send("isDead") === true) {
+            game.wizardMaster.markLost(baseWizardSym(w.send("getActorType") as string));
+            game.wizardMaster.clearActive();
+          }
         }
         game.effects.update(); // advance level-up star particles (modStarReleaser)
         rooms.update();
