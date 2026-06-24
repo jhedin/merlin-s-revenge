@@ -142,8 +142,18 @@ def decode_bitmap(data, ents, owner_to, owner):
     if w <= 0 or h <= 0 or 'BITD' not in owner_to.get(owner, {}):
         return None
     raw = chunk(data, ents, owner_to[owner]['BITD'])
+    # A BITD that's already >= the uncompressed size is stored RAW (PackBits would only shrink it). For
+    # 32-bit that raw form is INTERLEAVED (A,R,G,B per pixel); the PackBits-compressed form decompresses to
+    # PLANAR (A-row, R-row, G-row, B-row). Splitting interleaved data as planar yields rainbow garbage (it hit
+    # the 7x6 star_tiny + other small uncompressed 32-bit sprites). 1x1 swatches are identical either way.
+    uncompressed32 = depth == 32 and len(raw) >= pitch*h
     buf = unpackbits(raw, pitch*h)
     a = np.frombuffer(buf, dtype=np.uint8)[:pitch*h].reshape(h, pitch)
+    if depth == 32 and uncompressed32:
+        px = a[:, :4*w].reshape(h, w, 4)             # interleaved A,R,G,B
+        al, r, g, b = px[:, :, 0], px[:, :, 1], px[:, :, 2], px[:, :, 3]
+        img = np.dstack([r, g, b, al]).astype(np.uint8)
+        return Image.fromarray(img, 'RGBA')
     if depth == 32:
         al, r, g, b = a[:, 0:w], a[:, w:2*w], a[:, 2*w:3*w], a[:, 3*w:4*w]
         img = np.dstack([r, g, b, al]).astype(np.uint8)
