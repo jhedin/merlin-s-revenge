@@ -373,6 +373,7 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
     constrainToArea: d["collisionDetection"] === false || ghost, // autoConstrainToPlayArea: ghosts stay on-map
     // (#ghost is already passed below for the AI; Movement.init reads it for the takeHit amGhost gate)
     energy: num("energy", 100), // objCharacter.new seeds #energy=100 (was 40); actors w/o #energy inherit it
+    maxEnergy: typeof d["maxEnergy"] === "number" ? (d["maxEnergy"] as number) : undefined, // modEnergy #maxEnergy ceiling (hydra 1500); #auto default -> Energy falls back to energy
     strength: num("strength", 5),
     strengthIncLevel: num("strengthIncLevel", 0.1), // melee strength growth per level (CpuAI.levelUp)
     eyestrain: num("eyestrain", 0),                 // ranged/magic aim scatter (objAiAttack.modifyLocWithEyestrain)

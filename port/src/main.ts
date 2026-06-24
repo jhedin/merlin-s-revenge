@@ -722,7 +722,7 @@ function drawBullets(renderer: Renderer) {
     // a detonated splash bullet plays its <char>_explode burst (modExploder #explode), un-rotated and one-shot.
     if (proj.exploding) {
       drawBulletSprite(renderer, proj.char, m.x, m.y, 0, 0, proj.life, "_explode", false);
-    } else if (!drawBulletSprite(renderer, proj.char, m.x, m.y, m.vx, m.vy, proj.life)) {
+    } else if (!drawBulletSprite(renderer, proj.char, m.x, m.y, m.vx, m.vy, proj.life, "_fly", bulletRotates(proj.char))) {
       // objBullet sprite: the `<char>_fly` strip (archerArrow/gobarrow/axe/crossBolt…) rotated to the flight
       // direction. Falls back to a coloured dot only when the bullet has no sprite char or its art hasn't
       // lazy-loaded yet — so a thrown axe/arrow finally LOOKS like one (was a 3px dot).
@@ -735,6 +735,17 @@ function drawBullets(renderer: Renderer) {
 
 // render a bullet's `<char>_fly` frame, animated over its life and rotated to its velocity (GeomAngle).
 // Returns false (caller draws the dot) when there's no char or the art isn't loaded yet.
+// modRotational #rotational: most bullets rotate their sprite to the flight vector (cast default true), but
+// some declare #rotational:false and must NOT be transform-rotated — their strip self-animates (a thrown
+// axe/shuriken spins on its own) or they're radial (auras/smoke/mine). Memoized per char (resolveActor is
+// too heavy for the per-bullet render loop). Absent/true -> rotate (matches the cast default).
+const _bulletRotates = new Map<string, boolean>();
+function bulletRotates(char: string): boolean {
+  let r = _bulletRotates.get(char);
+  if (r === undefined) { r = (registry.resolveActor(char) as Record<string, any> | undefined)?.["rotational"] !== false; _bulletRotates.set(char, r); }
+  return r;
+}
+
 function drawBulletSprite(renderer: Renderer, char: string, x: number, y: number, vx: number, vy: number, life: number, suffix = "_fly", rotate = true): boolean {
   if (!char) return false;
   const anim = game.assets.index.anims[char + suffix];

@@ -20,7 +20,11 @@ export class Energy extends Component {
   private static readonly GLOW_RED_PCT = 50; // modEnergy.pGlowRedPercentage: glow red below 50% health
 
   override init(cfg: Record<string, any>): void {
-    this.baseEnergy = this.max = this.energy = typeof cfg["energy"] === "number" ? cfg["energy"] : 100;
+    this.baseEnergy = this.energy = typeof cfg["energy"] === "number" ? cfg["energy"] : 100;
+    // modEnergy #maxEnergy: #auto (default) -> max = starting energy; an explicit value sets a HIGHER ceiling
+    // (hydra bosses: maxEnergy 1500 with energy 500/1000), so the health bar reads energy/maxEnergy and the
+    // unit can heal/regen above its start. Was hardcoded max = energy, so hydras read 100% at a 33%/67% start.
+    this.max = typeof cfg["maxEnergy"] === "number" ? cfg["maxEnergy"] : this.baseEnergy;
     this.minEnergy = typeof cfg["minEnergy"] === "number" ? cfg["minEnergy"] : 0;
     this.incPct = typeof cfg["energyIncPercentage"] === "number" ? cfg["energyIncPercentage"] : 0;
     this.recoverDelay = typeof cfg["energyRecoverDelay"] === "number" ? cfg["energyRecoverDelay"] : 0;
