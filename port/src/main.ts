@@ -49,7 +49,13 @@ const flash = (m: string) => { flashMsg = m; flashUntil = Date.now() + 1200; };
 interface LoadedMap { meta: MapMeta; map: GameMap; activeKey: TileKey; objectsKey: TileKey; }
 
 async function loadMap(assets: Assets, id: string): Promise<LoadedMap> {
-  const meta = mapList.find((m) => m.id === id) ?? mapList.find((m) => m.id === assets.index.defaultMap) ?? mapList[0]!;
+  // match exact first, then case-insensitively (the ids are fiddly: Scarlet_Castle, works_mr4Demo,
+  // descent_into_darkness-megaman4ever) — only THEN fall back to the default, so a near-miss id still
+  // resolves instead of silently loading very_big_map.
+  const want = id.trim();
+  const meta = mapList.find((m) => m.id === want)
+    ?? mapList.find((m) => m.id.toLowerCase() === want.toLowerCase())
+    ?? mapList.find((m) => m.id === assets.index.defaultMap) ?? mapList[0]!;
   const tilesets = assets.index.tilesets;
   const tilePxFor = (sym: string) => tilesets[sym]?.tile;
 
@@ -92,8 +98,16 @@ async function loadMap(assets: Assets, id: string): Promise<LoadedMap> {
 async function main() {
   const canvas = document.getElementById("game") as HTMLCanvasElement;
   const assets = await Assets.load();
-  // dev map picker: ?map=<id> selects any of the 47 bundled maps; default is unchanged.
-  const wantMap = new URLSearchParams(location.search).get("map") ?? assets.index.defaultMap ?? "";
+  // dev map picker: ?map=<id> selects any of the 47 bundled maps (works the same on the hosted single-file
+  // build — every map is embedded). Matching is case-insensitive + trimmed; an UNRECOGNISED id warns loudly
+  // (with the full id list in the console) and shows an on-screen note, instead of silently using the default.
+  const mapParam = new URLSearchParams(location.search).get("map")?.trim() || "";
+  if (mapParam && !mapList.some((m) => m.id.toLowerCase() === mapParam.toLowerCase())) {
+    console.warn(`[map] "${mapParam}" is not a bundled map id — using the default "${assets.index.defaultMap}".\n` +
+      `Available map ids (case-insensitive):\n  ` + mapList.map((m) => m.id).sort().join("\n  "));
+    flashMsg = `unknown map "${mapParam}" — using default`; flashUntil = Date.now() + 8000;
+  }
+  const wantMap = mapParam || assets.index.defaultMap || "";
   const [loaded, introSrc, wastedSrc, completeSrc] = await Promise.all([
     loadMap(assets, wantMap),
     fetch("/assets/intro.txt").then((r) => r.text()),
