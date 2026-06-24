@@ -22,6 +22,18 @@ import type { AttackData } from "./weapon";
 import { spawnFromSymbol } from "../entities/actorSerial";
 import { Anim } from "./anim";
 
+// clampToPlayArea: keep a summon inside the walkable area (the room grid inset by the 2-tile solid border).
+// An out-of-bounds summon is the worst case: an out-of-bounds ENEMY stays alive-but-unreachable, so the room
+// never clears (enemiesAlive() never goes false) and you get LOCKED IN; an out-of-bounds ally/wizard lands
+// off in a "random" spot. Cursor-aimed summons (the cursor can be anywhere, incl. the HUD) need this most.
+export function clampToPlayArea(x: number, y: number): { x: number; y: number } {
+  const g = game.grid;
+  if (!g) return { x, y };
+  const m = 2 * g.tilePx;                                 // borderThickness=2 solid frame
+  const w = g.cols * g.tilePx, h = g.rows * g.tilePx;
+  return { x: Math.max(m, Math.min(w - m, x)), y: Math.max(m, Math.min(h - m, y)) };
+}
+
 // depositMines (modSpellMultistage.depositMines): an #explodeFunction:#depositMines spell (energyMines)
 // drops numMines = charge/chargePerUnit #energyMine actors, each scattered VarRoughly(loc, charge/2) around
 // the explode loc. The energyMine carries its own #team (#aldevar) so it triggers on the caster's enemies.
@@ -33,7 +45,8 @@ export function depositMines(attack: AttackData, charge: number, x: number, y: n
   const slack = Math.max(0, Math.floor(charge / 2));            // possibleDistance = charge/2
   const rough = (v: number): number => (slack > 0 ? v - slack + game.rng.int(2 * slack) : v); // VarRoughly
   for (let i = 0; i < numMines; i++) {
-    const mine = spawnFromSymbol("energyMine", rough(x), rough(y));
+    const p = clampToPlayArea(rough(x), rough(y));
+    const mine = spawnFromSymbol("energyMine", p.x, p.y);
     if (mine) game.entities.push(mine);
   }
 }
@@ -55,6 +68,7 @@ export function selectTier(charge: number, multistage: Array<{ type: string; cha
 // monster joins #monsterSummon (a player-side team that hates the real monsters), faithful to tem_*.
 export function summonUnit(attack: AttackData, charge: number, x: number, y: number, ownerId: number): Entity | null {
   if (attack.explodeFunction !== "summonUnit" && attack.explodeFunction !== "#summonUnit") return null;
+  ({ x, y } = clampToPlayArea(x, y)); // never summon a unit out of bounds (locked-room / random-place fix)
   const type = selectTier(charge, attack.multistage);
   if (!type) return null;
   const owner = game.entities.find((u) => u.id === ownerId);
