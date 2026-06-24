@@ -147,11 +147,12 @@ export class RoomManager {
   // infested rooms (getMiniMapStatus #inf): the current room while it still holds live hostiles, plus
   // any VISITED (pState-snapshotted) room that isn't cleared and recorded a live hostile when left.
   infestedRooms(): Set<number> {
+    // getMiniMapStatus over EVERY room (not just current + visited): an UNVISITED room that still holds
+    // hostiles must read #inf (red) on the minimap, not fall through to #clr (green). roomHasHostiles covers
+    // all three cases — cleared -> no; visited -> snapshot enemy; unvisited -> peek the #objects layer.
     const inf = new Set<number>();
-    if (this.room && !this.cleared.has(this.room.num) && this.enemiesAlive()) inf.add(this.room.num);
-    for (const [num, snap] of this.pState) {
-      if (this.cleared.has(num)) continue;
-      if (snap.some((s) => s.type === "enemy")) inf.add(num);
+    for (const room of this.map.rooms.values()) {
+      if (!this.cleared.has(room.num) && this.roomHasHostiles(room)) inf.add(room.num);
     }
     return inf;
   }

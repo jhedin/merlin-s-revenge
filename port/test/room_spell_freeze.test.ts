@@ -107,3 +107,26 @@ describe("room re-entry freeze: a live spell is not frozen into the snapshot", (
     expect(game.entities.includes(orb)).toBe(false);          // dropped on cross (only held charges persist)
   });
 });
+
+describe("minimap status: an UNVISITED hostile room reads as infested (red), not cleared (green)", () => {
+  beforeEach(setupWorld);
+
+  it("infestedRooms() flags an unvisited room that still holds enemies (via its #objects layer)", () => {
+    const rows = 6, cols = 6;
+    const rooms = new Map<number, Room>([
+      [1, mkRoom(1, grid(rows, cols))],                  // room 1: empty — the player starts here
+      [2, mkRoom(2, grid(rows, cols, [[3, 3, 2]]))],     // room 2: a #blackOrc tile, NEVER visited
+    ]);
+    const map: GameMap = {
+      mapSize: { x: 1, y: 2 }, roomSize: { x: cols, y: rows }, tilePx: TILE,
+      startRoom: { x: 1, y: 1 }, endRoom: undefined,
+      layerDefs: [{ name: "#backgroundActive", tileSet: "#a" }, { name: "#objects", tileSet: "#o" }],
+      rooms,
+      roomAt(loc) { if (loc.x !== 1 || loc.y < 1 || loc.y > 2) return undefined; return rooms.get((loc.y - 1) + loc.x); },
+    };
+    const player = spawnPlayer(viewW / 2, viewH / 2); game.player = player; game.entities = [player];
+    const rm = new RoomManager(map, game.assets, activeKey, objectsKey, viewW, viewH, player, () => {});
+    rm.enter({ x: 1, y: 1 });                            // enter room 1 only — room 2 stays unvisited
+    expect(rm.infestedRooms().has(2)).toBe(true);        // its hostiles still count -> #inf, not the #clr fallback
+  });
+});
