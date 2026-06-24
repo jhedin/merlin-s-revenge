@@ -61,8 +61,10 @@ export class SceneManager {
   /** K12: an in-game chatter cutscene is playing over the live game (combat paused, no screen change). */
   isInGameCutscene(): boolean { return this.inGameCut !== null; }
   activeCutScene(): CutScene | null { return this.inGameCut ?? this.cutscenePlaying; }
-  // combat is suspended while the menu is open OR an in-game cutscene plays.
-  isPaused(): boolean { return this.overlay === "ingameMenu" || this.inGameCut !== null; }
+  // combat is suspended whenever ANY overlay is up (the in-game menu OR a K18 sub-screen: showArmy /
+  // keyConfig / instructions) OR an in-game cutscene plays — the cast freezes the whole menu stack. Gating
+  // only on "ingameMenu" left combat running LIVE under the sub-screens and made their input handler dead.
+  isPaused(): boolean { return this.overlay !== null || this.inGameCut !== null; }
 
   // goScreen(sym, action?): transition to a screen, then run the on-screen action.
   // movieMaster.goScreen -> startTransition -> onScreen -> goScreenFinished -> goScreenAction.

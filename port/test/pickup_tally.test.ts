@@ -30,6 +30,12 @@ describe("potion tally is gated to objPotion (speed + mana potions)", () => {
     expect(game.potionMaster.totalCollected()).toBe(1);
   });
 
+  it("the speed potion adds the cast's +0.075 to maxSpeed (incWalkSpeedPotion), not an 8x over-boost", () => {
+    const before = game.player!.get(Movement).maxSpeed;
+    collect("speed");
+    expect(game.player!.get(Movement).maxSpeed).toBeCloseTo(before + 0.075, 5);
+  });
+
   it("a medikit / scroll does NOT bump the tally", () => {
     collect("heal");      // objMedikit
     collect("spell");     // objScroll (energyBlast)
