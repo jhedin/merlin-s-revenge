@@ -4,13 +4,18 @@
 
 import { Component, type NextFn } from "../engine/dispatch";
 import { ColourTransform } from "./colourTransform";
+import { Movement } from "./movement";
 import { game } from "../game/context";
 
 export class Hurt extends Component {
   static handles = ["update", "takeHit", "isInvince", "isHurt", "isReelProof", "animAction", "grantInvince"];
   invinceFrames = 0; // >0 for the player; enemies flash but take continuous damage
   reelProof = false; // #reelProof: knockback/reel-immune (skelitonHead) — still takes damage, no reel
-  private flashT = 0;
+  private flashT = 0;            // white flash / hit tint window (modFlasher) — brief, cosmetic
+  private reeling = false;       // modReel #reel: dazed/staggering while the knockback slide is still moving
+  private reelT = 0;             // frames in the current reel (safety cap counter)
+  private static readonly REEL_STALL = 0.6; // knockback speed (px/tick) below which the slide has "stalled" (pStallSpeed)
+  private static readonly REEL_CAP = 30;    // hard cap so a reel can't hang if knockback never quite settles
   private invinceT = 0;
   private pulsing = false; // modInvince.invinceOn->pulseWhite: the temp-invince white pulse is active
   private takeHitSound = ""; // #takeHitSound (modEnergy.loseEnergy:206 playSound): the sound a unit makes when hit
@@ -23,13 +28,21 @@ export class Hurt extends Component {
     this.takeHitVolume = typeof cfg["takeHitVolume"] === "number" ? Math.max(0, Math.min(1, cfg["takeHitVolume"] / 255)) : 0.5;
     this.flashT = 0; this.invinceT = 0; this.pulsing = false;
   }
-  override reset(): void { this.flashT = 0; this.invinceT = 0; this.pulsing = false; }
+  override reset(): void { this.flashT = 0; this.invinceT = 0; this.pulsing = false; this.reeling = false; this.reelT = 0; }
 
   update(next: NextFn): void {
-    if (this.flashT > 0) {
-      this.flashT--;
-      // reel cleared this tick: tell the brain to leave #dazed (characterModeChanged otherwise)
-      if (this.flashT === 0 && !this.entity.send("isDead")) this.entity.send("characterModeChanged", "#walk");
+    if (this.flashT > 0) this.flashT--; // white flash / hit tint (cosmetic, brief)
+    if (this.reeling) {
+      // modReel.updateReel = getStalled(): the reel/dazed ends when the knockback SLIDE stalls — so a heavy
+      // unit (frictionReel high -> fast knockback decay) snaps back in a frame or two, while a hard-hit light
+      // unit staggers the full slide. Was a flat 6 frames for everyone, dropping the per-actor reel spread.
+      this.reelT++;
+      const m = this.entity.tryGet(Movement);
+      const stalled = !m || Math.hypot(m.kvx, m.kvy) <= Hurt.REEL_STALL;
+      if (stalled || this.reelT >= Hurt.REEL_CAP) {
+        this.reeling = false;
+        if (!this.entity.send("isDead")) this.entity.send("characterModeChanged", "#walk");
+      }
     }
     if (this.invinceT > 0) this.invinceT--;
     // invinceOff (modInvince): when the temp-invince window ends, stop the white pulse.
@@ -47,7 +60,8 @@ export class Hurt extends Component {
       // #reelProof (skelitonHead): immune to the reel/recoil feedback (still takes damage; a lethal hit
       // still notifies #die so the brain stops). A reel-proof unit shows no white flash / reel strip.
       if (!this.reelProof || dead) {
-        this.flashT = 6;
+        this.flashT = 6;                       // brief flash/tint
+        this.reeling = true; this.reelT = 0;   // reel/dazed runs until the knockback slide stalls (below)
         if (this.invinceFrames > 0) this.invinceT = this.invinceFrames;
         // modEnergy.loseEnergy 203: a non-lethal hit plays the real flickWhite (white->black, speed 33)
         // instead of the binary flash. ColourTransform plays it; isHurt still gates the reel anim.
@@ -74,8 +88,9 @@ export class Hurt extends Component {
 
   isInvince(): boolean { return this.invinceT > 0; }
   isHurt(): boolean { return this.flashT > 0; }
+  isReeling(): boolean { return this.reeling; } // in the reel/dazed window (until the knockback slide stalls)
   isReelProof(): boolean { return this.reelProof; } // gates the reel STAGGER only — the knockback still lands
 
-  // brief "reel" override (modReel) — falls back to stand for chars with no reel strip
-  animAction(next: NextFn): any { return this.flashT > 0 ? "reel" : next(); }
+  // "reel" override (modReel) for the whole reel/dazed window — falls back to stand for chars with no reel strip
+  animAction(next: NextFn): any { return this.reeling ? "reel" : next(); }
 }
