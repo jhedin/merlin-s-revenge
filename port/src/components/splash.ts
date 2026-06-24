@@ -42,9 +42,19 @@ export function applyPayload(payload: string[], victim: Entity, vx: number, vy: 
 //  - #explode  : radius = explodeCharge/2 ; hit if dist² < (radius+targetRadius)² ; vector =
 //                direction self->victim with magnitude speed = (hitRange−dist)·power (calcCollisionVectSpell).
 //  - splash    : radius = power ; hit if dist² < power² ; vector = CollisionCalcVect(victim, bullet, power).
-// targetRadius is a fixed unit half-extent (the port has no per-actor getRadius at this layer; B1's box ≈
-// 14 px => radius ≈ 12, matching the melee/bullet collision half-extents already used).
-const TARGET_RADIUS = 12;
+//                (calcAttackHitSplash ignores targetRadius — the bullet's power alone bounds the disc.)
+// targetRadius is the VICTIM's own half-extent (objGameObject.getRadius = getWidth()/2), per-actor: a big
+// golem catches a blast a small gremlin slips. Read from the victim's Anim (current sprite half-width); a
+// unit with no sprite strip (synthetic/test actors) falls back to TARGET_RADIUS_DEFAULT (B1's box ≈ 14px =>
+// ≈ 12, the old fixed value). TARGET_RADIUS_MAX bounds the broad-phase search so a large victim centred just
+// outside `radius` is still VISITED (then the exact per-victim hitRange below decides the hit).
+const TARGET_RADIUS_DEFAULT = 12;
+const TARGET_RADIUS_MAX = 48; // ≥ the largest live unit half-width (max stand strip ~96px) — search margin only
+
+function victimRadius(v: Entity): number {
+  const r = v.send("getRadius");
+  return typeof r === "number" && r > 0 ? r : TARGET_RADIUS_DEFAULT;
+}
 
 export function resolveSplash(
   attacker: Entity, attack: AttackData, cx: number, cy: number, attackerId: number,
@@ -53,14 +63,16 @@ export function resolveSplash(
   const explode = attack.attackType === "#explode";
   const radius = explode ? attack.explodeCharge / 2 : attack.powerScalar; // power radius for splash bullets
   if (radius <= 0) return;
-  // the disc the team-search must cover: explode hits out to radius+targetRadius, splash out to power.
-  const searchRadius = explode ? radius + TARGET_RADIUS : radius;
+  // the disc the team-search must cover: explode reaches out to radius + the victim's own radius, so the
+  // broad phase searches radius + the MAX plausible victim radius (the exact per-victim hitRange gates the
+  // hit). Splash uses power directly (no targetRadius — calcAttackHitSplash).
+  const searchRadius = explode ? radius + TARGET_RADIUS_MAX : radius;
   game.teamMaster.impactAreaAttack(attacker, cx, cy, searchRadius, hits, allegiance, (v) => {
     const p = v.send("getPos") as { x: number; y: number };
     const dist = Math.hypot(p.x - cx, p.y - cy);
     let vec: { x: number; y: number };
     if (explode) {
-      const hitRange = radius + TARGET_RADIUS;
+      const hitRange = radius + victimRadius(v);          // myRadius (charge/2) + targetRadius (getRadius)
       if (dist * dist >= hitRange * hitRange) return;     // calcAttackHitMagic disc test
       const speed = (hitRange - dist) * attack.powerScalar; // calcCollisionVectSpell radial falloff
       if (speed <= 0) return;
