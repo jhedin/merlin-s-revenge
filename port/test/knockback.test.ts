@@ -4,6 +4,7 @@ import { CollisionGrid } from "@/world/collision";
 import { spawnEnemy, spawnPlayer } from "@/entities/archetypes";
 import { Energy } from "@/components/combat";
 import { Movement } from "@/components/movement";
+import { Hurt } from "@/components/hurt";
 import { aimedVect } from "@/engine/math";
 
 // Keystone A1: takeHit carries a collision VECTOR. damage = (|vx|+|vy|)*mult (modEnergy); the same
@@ -186,5 +187,34 @@ describe("ghost damage immunity (#ghost amGhost gate)", () => {
     const ge = grey.get(Energy); const gh0 = ge.energy;
     grey.send("takeHit", 5, 0, 42, 1);                 // collisionDetection:false but NOT #ghost -> damageable
     expect(ge.energy).toBeLessThan(gh0);
+  });
+});
+
+// modReel.updateReel = getStalled(): the reel/dazed window ends when the knockback SLIDE stalls — so its
+// length scales with the hit's force (and per-actor frictionReel), instead of a flat 6 frames for everyone.
+describe("reel/dazed ends on knockback-stall (modReel), not a flat 6", () => {
+  beforeEach(() => {
+    game.grid = new CollisionGrid(40, 40, 32);
+    game.entities = [];
+    game.assets = { index: { anims: {} }, img: () => null } as any;
+    game.input = { moveVector: () => ({ x: 0, y: 0 }), cursor: () => null, mouseDown: () => false,
+      mousePressed: () => false, mouseReleased: () => false, held: () => false, pressed: () => false, endTick() {} } as any;
+  });
+
+  function reelFrames(knock: number): number {
+    game.entities = [];
+    const e = spawnEnemy("swordOrc", 500, 500, { animChar: "swordOrc" });
+    e.get(Movement).inertia = 0; game.entities = [e];   // undamped: the full collision vector becomes knockback
+    e.send("takeHit", knock, 0, -1, 1);
+    let n = 0;
+    while (e.get(Hurt).isReeling() && n < 60) { e.send("update"); n++; }
+    return n;
+  }
+
+  it("a harder hit staggers longer than a soft one (reel scales with the slide)", () => {
+    const soft = reelFrames(2);                 // a small shove settles fast
+    const hard = reelFrames(60);                // a big shove (clamped to KNOCK_MAX) slides longer
+    expect(hard).toBeGreaterThan(soft);         // dynamic — NOT a flat 6 for both
+    expect(soft).toBeGreaterThan(0);
   });
 });
