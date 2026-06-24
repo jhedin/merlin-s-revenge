@@ -135,6 +135,22 @@ describe("C2 — SplashDamage (#explode + #splashDamageOn) hits all in disc, rad
     expect(dmg).toBeGreaterThanOrEqual(85);   // centre-hit floor (hitRange·power·mult)
     expect(dmg).toBeLessThan(330);            // not over-lethal vs the single-target band (<= ~325)
   });
+
+  // objGameObject.getRadius = getWidth()/2: the explode disc's targetRadius is PER-VICTIM (sprite half-width),
+  // not a fixed 12 — a big unit catches a blast that a small one slips at the same range.
+  it("#explode targetRadius is the victim's getRadius (per-actor), not a fixed 12", () => {
+    const patchRadius = (e: Entity, r: number) => {
+      const s = e.send.bind(e);
+      (e as any).send = (m: string, ...args: any[]) => (m === "getRadius" ? r : s(m, ...args));
+    };
+    const a = atkOf("energyPulse");                 // radius = explodeCharge/2 = 5
+    const big = spawn("#aldevar", 40, 0); patchRadius(big, 40);   // hitRange 5+40=45 > dist 40 -> hit
+    const small = spawn("#aldevar", 14, 0); patchRadius(small, 2); // hitRange 5+2=7 < dist 14 -> spared
+    const e0big = (big.get(Energy) as any).energy, e0small = (small.get(Energy) as any).energy;
+    resolveSplash(attacker, a, 0, 0, 999, a.hits, "#enemy");
+    expect((big.get(Energy) as any).energy).toBeLessThan(e0big);  // hit BEYOND the old fixed 5+12=17 ring
+    expect((small.get(Energy) as any).energy).toBe(e0small);      // spared INSIDE the old fixed ring
+  });
 });
 
 // ───────────────────────────── C2 payload dispatch (list runs both) ───────────────────────────────

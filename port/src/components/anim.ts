@@ -58,7 +58,7 @@ const ONE_SHOT_FALLBACK = new Set([
 ]);
 
 export class Anim extends Component {
-  static handles = ["update", "syncAnimAfterRestore"];
+  static handles = ["update", "syncAnimAfterRestore", "getRadius"];
   char = "mer";
   private action = "stand";
   private frame = 0;
@@ -110,6 +110,15 @@ export class Anim extends Component {
 
   /** does this actor's char ship a `<char>_<action>` strip? — lets a controller only force a state it can draw. */
   hasAction(action: string): boolean { return !!game.assets.index.anims[`${this.char}_${action}`]; }
+
+  // getRadius (objGameObject.getRadius = getWidth()/2): the actor's CURRENT sprite half-width, the per-actor
+  // target radius the magic/explode disc test uses (modAttack.calcAttackHitMagic / calcCollisionVectSpell
+  // targetRadius). Reads the live frame so a big unit reads big; falls back when the strip isn't loaded.
+  getRadius(): number {
+    const anim = this.animFor(this.action);
+    const f = anim?.frames[this.frame % anim.frames.length];
+    return f && f.w > 0 ? f.w / 2 : 12;
+  }
 
   // restart the current action strip from frame 0 (ensureMode re-entry): a NEW attack/swing replays its
   // one-shot strip even though the action STRING is unchanged across consecutive swings — without this the

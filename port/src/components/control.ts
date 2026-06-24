@@ -249,7 +249,9 @@ export class PlayerControl extends Component {
     const magicReady = magic ? wm.cooldownFinFor(magic.name) : false;
     if (magic && primary && magicReady) {
       if (!this.charging) {
-        this.charge = chargeStartOf(magic, mana, gmg); game.audio?.play("spell_charge");
+        // NB: no charge sound — objSpell plays only releaseSound (on fire) and explodeSound (on impact);
+        // the original triggers NO sound on charge-start (the spell_charge member is the orb ANIMATION).
+        this.charge = chargeStartOf(magic, mana, gmg);
         // calcAttackChargeMax fires ONCE per cast → bake the (possibly #randomSummon-wobbled) ceiling now.
         this.chargeCeil = chargeMaxOf(magic, mana, game.rng, gmg);
       }

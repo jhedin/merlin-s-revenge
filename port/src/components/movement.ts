@@ -16,10 +16,13 @@ const KNOCK_SCALE = 0.4;    // px-scale factor on the (damped) collision vector 
                             // knockback). Big spells/heavy hits clamp at KNOCK_MAX so units aren't flung.
 const KNOCK_MAX = 5;        // clamp a single hit's shove so big spells don't fling units
 const KNOCK_FRICTION = 0.78; // per-tick decay of the knockback impulse
-// nav-mode speed multiplier: objRoom.goNavMode swaps the player's walkAcceleration 2->6 (pNavModeAcceleration)
-// in a cleared room. With friction applied every tick the original terminal velocity scales with accel, so
-// nav ≈ 3x combat speed (the tile-size move cap ~31px/tick never binds). The port applies it as a maxSpeed x3.
-const NAV_SPEED_MULT = 3;
+// nav-mode top speed: objRoom.goNavMode swaps the player's walkAcceleration 0.5->6 (pNavModeAcceleration) in
+// a cleared room. With friction 0.125 applied every tick (objMoveXY: lostSpeed = 12.5% of speed) the terminal
+// velocity is accel/0.125: combat 0.5/0.125 = 4 (== walkSpeed), nav 6/0.125 = 48 px/tick. But 48 OVERSHOOTS
+// the global per-tick move cap gMoveSpeedLimit = inflate(rect(±tileSize),-1,-1) = ±(tileSize-1)px
+// (modCollisionDetection.setMoveSpeedLimit / objMoveXY PointConstrainToRect). So the move cap BINDS and nav
+// top speed = tileSize-1 — a FIXED limit, independent of the walk-speed cap (was modelled as a maxSpeed ×3,
+// which capped nav at 12, well under the real ~31). Combat (4) stays far under the cap, unmodified.
 
 export class Movement extends Component {
   static handles = ["update", "takeHit", "getPos", "levelUp", "addSaveData", "restoreFromSave"];
@@ -147,11 +150,13 @@ export class Movement extends Component {
     this.vy += this.intentY * this.accel;
     if (this.intentX === 0) this.vx *= this.friction;
     if (this.intentY === 0) this.vy *= this.friction;
-    // nav mode (objRoom.goNavMode, gNavMode=1): in a CLEARED room the player accelerates at 6 vs combat 2 —
-    // ~3x faster. The port's hard-cap model folds this into a maxSpeed multiplier, player-only (goNavMode
-    // only swaps the player's walkAcceleration). Combat (uncleared room) is unchanged.
-    const nav = this.entity.type === "player" && game.navMode ? NAV_SPEED_MULT : 1;
-    const cap = this.maxSpeed * nav * (this.entity.send("freezeFactor") as number ?? 1); // modFreeze (0.5x frozen)
+    // nav mode (objRoom.goNavMode, gNavMode=1): in a CLEARED room the player's nav terminal (48) overshoots
+    // the per-tick move cap, so its top speed is the move cap itself = tileSize-1 px (a fixed limit, NOT a
+    // multiple of walkSpeed). Player-only (goNavMode only swaps the player's acceleration). Combat (uncleared
+    // room, terminal 4) stays under the cap, unchanged.
+    const navCapped = this.entity.type === "player" && game.navMode;
+    const baseCap = navCapped ? game.grid.tilePx - 1 : this.maxSpeed;        // gMoveSpeedLimit in nav mode
+    const cap = baseCap * (this.entity.send("freezeFactor") as number ?? 1); // modFreeze (0.5x frozen)
     const sp = Math.hypot(this.vx, this.vy);
     if (sp > cap) { this.vx = (this.vx / sp) * cap; this.vy = (this.vy / sp) * cap; }
     if (Math.abs(this.vx) < 0.05) this.vx = 0;
