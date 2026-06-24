@@ -20,5 +20,24 @@ and how to fix it IF we choose to depart from the original.
 
 ---
 
+## OGB-2 — `spell_charge` SFX ships but is never played (dead asset in the original)
+
+- **Intended (apparent):** the cast bundles a `spell_charge` wav (`002_spell_chargeC.wav`) alongside the
+  `spell_release` / `spell_explode` SFX, implying a sound when a spell starts charging.
+- **Bug / quirk:** no Lingo path ever plays it. `objSpell` plays a sound only on RELEASE (`releaseSound`,
+  `objSpell.txt:225`) and on EXPLODE (`explodeSound`, `:155`); there is no `chargeSound` field on any
+  `act_*Blast` record, and nothing calls `playSound` on charge-start. `spell_charge` exists only as the orb
+  **animation** member (`act_spell` `#character:#spell`), not as a sound cue. So the wav is a dead asset.
+- **Shipped (= port reproduces):** charging a spell is SILENT. The port matches this after **PR #76** —
+  the divergent `play("spell_charge")` on charge-start was removed (`control.ts:252`). The wav is still
+  bundled for completeness (the original ships it too) and is recorded as an original-dead asset in
+  `test/sound_liveness.test.ts` (`ORIGINAL_DEAD` allowlist) so the liveness guard doesn't flag it.
+- **Fix later (if departing from original):** if a charge sound is *desired* as an enhancement, re-add a
+  `play("spell_charge")` on the `!this.charging` charge-start branch (`control.ts`), ideally looped/volume-
+  ramped via the `chargeVolumeMap`. This is an ADDITION the original never had, not a parity fix.
+- Source: `sound-coverage-20260624T043237Z.md` (charge-sound decision); resolved to match the original in PR #76.
+
+---
+
 _Add new entries as the per-actor sweep finds more original-game quirks. Keep the verdict in the
 per-actor doc as WONTFIX (faithful) and cross-reference it here._

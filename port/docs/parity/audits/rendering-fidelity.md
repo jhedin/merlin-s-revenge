@@ -13,9 +13,14 @@
 >   (`axe_fly`/`gobarrow_fly`); both ARE bundled, so neither was a dot ✓
 > - GAP 8 (pickup draw order) — resolved by GAP 1 (pickups now in the z-sorted band) ✓
 > - GAP 10 (charge ring) — removed; the head charge orb is the real feedback ✓
-> - **GAP 9 (title background) — DEFERRED:** the bundled `background` member is 64×10 (a bar
->   background, not a title screen); no large title-screen bitmap is reliably identifiable in
->   `extracted/` (only a mangled `0N_A` 576×288 candidate). Left procedural until the art is confirmed.
+> - **GAP 9 (title background) — RESOLVED (update 2026-06-24):** the title is NOT one big bitmap — it is a
+>   composite recovered from the Director Score frame 30 (`dump_score.py` → `extracted/engine/title.json` →
+>   the `title` array in `assets.json`). `drawTitle` (`main.ts:478-485`) composites the MERLIN'S/REVENGE
+>   letter glyphs + the two `background`/`background02` backdrop tiles (the 64×10 bars **stretched** to their
+>   84×72 / 90×72 sprite rects — `s.w !== s.img.width` branch) + the scatter of decorative army sprites, at
+>   their recovered stage positions. See `title-screen-composition.md`. Remaining unknown is purely
+>   VISUAL-CORRECTNESS (does each decoded tile/glyph match the original on screen) — a ground-truth eyeball
+>   check, not a missing code path.
 
 **Scope:** Every draw call in `port/src/main.ts` and `port/src/render/*.ts` compared to the
 original Shockwave/Lingo game in `casts/` and `extracted/engine/scripts/`.
