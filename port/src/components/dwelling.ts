@@ -7,7 +7,7 @@
 
 import { Component, type NextFn } from "../engine/dispatch";
 import { Movement } from "./movement";
-import { spriteCharOr } from "./anim";
+import { spriteCharOr, Anim } from "./anim";
 import { game } from "../game/context";
 import { registry } from "../game/data";
 import type { Entity } from "../engine/dispatch";
@@ -15,7 +15,7 @@ import type { Entity } from "../engine/dispatch";
 interface ResidentGroup { typ: string; buildTime: [number, number]; groupSize: [number, number]; releaseInterval: [number, number]; }
 
 export class Dwelling extends Component {
-  static handles = ["update"];
+  static handles = ["update", "animAction"];
   groups: ResidentGroup[] = [];
   budget = 10;               // lifetime residents remaining (#totalResidents)
   private aliveCap = 6;      // soft concurrent cap (reservationsMaster stand-in)
@@ -53,6 +53,16 @@ export class Dwelling extends Component {
     this.groupLeft = Math.min(this.rnd(this.group.groupSize), this.budget);
     this.timer = this.groupLeft * this.rnd(this.group.buildTime); // productionTime
     this.mode = "produce";
+  }
+
+  // animAction (objDwelling/modAnimSet getAnimSym): show the under-construction art while a modBuilder CPU is
+  // raising this building (#beBuilt, underConstruction flag), and the spawning-a-wave art while producing
+  // (#produceGroup, fangBunnyPortal). Only force a state the char actually ships; else fall through to stand.
+  animAction(next: NextFn): unknown {
+    const a = this.entity.tryGet(Anim);
+    if (this.entity.flags.has("underConstruction") && a?.hasAction("beBuilt")) return "beBuilt";
+    if (this.mode === "produce" && a?.hasAction("produceGroup")) return "produceGroup";
+    return next();
   }
 
   update(next: NextFn): void {

@@ -108,6 +108,9 @@ export class Anim extends Component {
   /** any teleport beam (in or out) currently playing — the in-beam clears itself when complete. */
   isTeleporting(): boolean { return this.teleport !== null; }
 
+  /** does this actor's char ship a `<char>_<action>` strip? — lets a controller only force a state it can draw. */
+  hasAction(action: string): boolean { return !!game.assets.index.anims[`${this.char}_${action}`]; }
+
   // restart the current action strip from frame 0 (ensureMode re-entry): a NEW attack/swing replays its
   // one-shot strip even though the action STRING is unchanged across consecutive swings — without this the
   // strip plays once then holds its last frame for every following swing (the "stuck on the last frame" bug).

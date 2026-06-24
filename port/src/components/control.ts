@@ -65,6 +65,7 @@ export class PlayerControl extends Component {
   private meleeT = 0;          // in-swing window (in-melee flag + safety budget); the strip is the real clock
   private aimLeft = false;
   private usingSword = false; // most-recent melee swing used #merlinSword (anim/sound)
+  private swingMagicMelee = false; // most-recent swing was #magicMelee (energyPunch) -> the mer_magicMelee strip
   // animation-driven swing state (mirrors CpuAI): the hit fires per #animframe crossing of the swing strip.
   private swingFrames: number[] = [];   // the melee weapon's #animframe firing frames (1-based)
   private swingAnimates = false;        // the swing strip has >1 frame, so the animation drives the hit
@@ -85,7 +86,7 @@ export class PlayerControl extends Component {
   override init(cfg: Record<string, any>): void {
     this.strength = typeof cfg["strength"] === "number" ? cfg["strength"] : 8;
     this.strengthInc = typeof cfg["strengthIncLevel"] === "number" ? cfg["strengthIncLevel"] : 0.1;
-    this.charge = 0; this.charging = false; this.chargeCeil = 0; this.releaseT = this.meleeT = 0; this.usingSword = false;
+    this.charge = 0; this.charging = false; this.chargeCeil = 0; this.releaseT = this.meleeT = 0; this.usingSword = false; this.swingMagicMelee = false;
     this.gmgCollected_ = false; this.gmgOn = false; this.stream = null; this.spell = null;
   }
 
@@ -371,10 +372,12 @@ export class PlayerControl extends Component {
     if (this.meleeT > 0 || !wm.cooldownFinFor(attack.name)) return;
     m.facingLeft = this.aimLeft;                                 // facing locked for the whole swing
     this.usingSword = attack.type === "melee" && attack.animType === "#weaponMelee";
+    // energyPunch (#magicMelee) plays its own swing strip (mer_magicMelee) when bundled — else the generic punch.
+    this.swingMagicMelee = attack.animType === "#magicMelee" && this.entity.tryGet(Anim)?.hasAction("magicMelee") === true;
     this.swingAttack = attack;
     this.swingFrames = attack.animFrame ?? [];
     this.swingFired = false;
-    const action = this.usingSword ? "weaponMelee" : "naturalMelee";
+    const action = this.swingMagicMelee ? "magicMelee" : this.usingSword ? "weaponMelee" : "naturalMelee";
     const strip = game.assets.index.anims[`mer_${action}`];
     this.swingAnimates = !!strip && strip.frames.length > 1;
     this.meleeT = this.swingTicks(attack) + 2;                   // window + safety (the strip is the real clock)
@@ -415,7 +418,7 @@ export class PlayerControl extends Component {
   animAction(): string | null {
     if (this.entity.send("isDead")) return null;
     const moving = this.entity.get(Movement).moving();
-    if (this.meleeT > 0) return this.usingSword ? "weaponMelee" : "naturalMelee";
+    if (this.meleeT > 0) return this.swingMagicMelee ? "magicMelee" : this.usingSword ? "weaponMelee" : "naturalMelee";
     if (this.releaseT > 0) return moving ? "releasewalk" : "release";
     if (this.charging) return moving ? "chargewalk" : "charge";
     return null;
