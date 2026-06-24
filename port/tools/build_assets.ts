@@ -186,9 +186,13 @@ for (let i = 1; i <= 10; i++) {
 // A wav whose de-mangled name lands in the vocabulary keys off that name; misses are warned, not
 // silently mangled. This replaces the lossy regex with a verifiable map + a build-time report.
 const dataVocab = new Set<string>();
+// closed set of MUSIC names the game can request (#musicName in data) ∪ the src hardcodes — the music copy
+// is restricted to these so build doesn't bundle dead tracks (build used to copy every .mp3 indiscriminately).
+const musicVocab = new Set<string>(["baroque_rock_v1", "electronic_merlin_v1_02", "last_stand_v4"]);
 for (const file of readdirSync(DATA).filter((f) => f.endsWith(".txt"))) {
   const src = readFileSync(join(DATA, file), "utf8");
   for (const m of src.matchAll(/#(?:sound|collectSound|dieSound):\s*"([^"]+)"/g)) dataVocab.add(m[1]!);
+  for (const m of src.matchAll(/#musicName:\s*[#"]?([A-Za-z0-9_]+)/g)) musicVocab.add(m[1]!);
 }
 const ENGINE_EFFECTS = [
   "spell_release", "spell_explode", "spell_charge", "heal_spell_release", "heal_spell_explode",
@@ -221,6 +225,7 @@ const MUS_SRC = join(EXTRACTED, "music"), MUS_OUT = join(OUT_ASSETS, "music");
 if (existsSync(MUS_SRC)) {
   mkdirSync(MUS_OUT, { recursive: true });
   for (const f of readdirSync(MUS_SRC).filter((f) => f.endsWith(".mp3"))) {
+    if (!musicVocab.has(basename(f, ".mp3"))) continue; // skip tracks the game never requests (dead bundle)
     copyFileSync(join(MUS_SRC, f), join(MUS_OUT, f));
     music[basename(f, ".mp3")] = `music/${f}`;
   }

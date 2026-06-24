@@ -383,7 +383,7 @@ export class PlayerControl extends Component {
     this.meleeT = this.swingTicks(attack) + 2;                   // window + safety (the strip is the real clock)
     this.entity.tryGet(Anim)?.restart();                        // play the swing from frame 0
     wm.resetCooldownFor(attack.name);                           // cooldown recovers DURING the swing
-    game.audio?.play(this.usingSword ? "skeleton_fire" : "wizard_punch"); // #attack.sound: merlinSword / #punch
+    game.audio?.play(this.swingAttack?.sound || (this.usingSword ? "skeleton_fire" : "wizard_punch")); // #attack.sound (data-driven; literal fallback)
   }
 
   // drive an in-progress swing each tick: fire the hit on each FRESH #animframe crossing of the swing strip,
