@@ -21,6 +21,7 @@ export class Projectile extends Component {
   // STALL_SPEED for STALL_FRAMES, the bullet has come to a natural halt — splash detonates / plain lands.
   friction = 0;
   exploding = false;        // modExploder.goMode(#explode): playing the <char>_explode burst strip in place before retiring
+  landing = false;          // objBullet.goMode(#land): a stalled plain bullet plays its <char>_land strip in place before dying
   private stallCtr = 0;
   private static readonly STALL_SPEED = 0.2;  // pStallSpeed
   private static readonly STALL_FRAMES = 10;  // pStallCount.tim = [1,10]
@@ -70,7 +71,7 @@ export class Projectile extends Component {
     this.beam = true; this.beamDist = dist; this.beamAngle = angle; this.beamCasterX = casterX; this.beamCasterY = casterY;
     this.beamLife = 4; // a few frames so the line is visible before it sweeps out
   }
-  override reset(): void { this.done = false; this.life = 0; this.ownerId = -1; this.freeze = 0; this.mult = 1; this.splash = null; this.payload = null; this.beam = false; this.reincarnateAs = []; this.char = ""; this.friction = 0; this.stallCtr = 0; this.exploding = false; }
+  override reset(): void { this.done = false; this.life = 0; this.ownerId = -1; this.freeze = 0; this.mult = 1; this.splash = null; this.payload = null; this.beam = false; this.reincarnateAs = []; this.char = ""; this.friction = 0; this.stallCtr = 0; this.exploding = false; this.landing = false; }
   isFinished(): boolean { return this.done; }
   // a splash/beam bullet IS the attacker passed to resolveSplash; expose its owner team so the area
   // search resolves the right hostile teams (calcTargetTeams reads attacker.getTeam). objBullet.setTeam.
@@ -86,6 +87,21 @@ export class Projectile extends Component {
     if (strip && strip.frames.length > 0) {
       this.exploding = true; this.life = 0;
       const m = this.entity.get(Movement); m.vx = 0; m.vy = 0; m.x = x; m.y = y;
+    } else {
+      this.finish(x, y);
+    }
+  }
+
+  // objBullet.goMode(#land): a plain bullet that has STALLED (or run out its life) plays its <char>_land strip
+  // in place before dying — the arrow/needle/axe/spear sticking where it fell. A char with no _land strip just
+  // dies, as before. (A direct target hit goes through finish(), not land — only a missed/fallen bullet lands.)
+  private land(x: number, y: number): void {
+    const strip = this.char ? game.assets.index.anims[`${this.char}_land`] : undefined;
+    if (strip && strip.frames.length > 0) {
+      this.landing = true; this.life = 0;
+      // keep the (decayed) velocity so the _land frame still rotates to the heading it was travelling; the
+      // landing branch in update() doesn't integrate movement, so the bullet stays put at the land loc.
+      const m = this.entity.get(Movement); m.x = x; m.y = y;
     } else {
       this.finish(x, y);
     }
@@ -134,9 +150,16 @@ export class Projectile extends Component {
       if (++this.life >= total) this.finish(m.x, m.y);
       return next();
     }
+    // objBullet #land: a stalled plain bullet plays its <char>_land strip in place (one-shot), then dies.
+    if (this.landing) {
+      const strip = game.assets.index.anims[`${this.char}_land`];
+      const total = strip ? strip.frames.reduce((s, f) => s + Math.max(1, f.dela ?? strip.delay ?? 1), 0) : 6;
+      if (++this.life >= total) this.finish(m.x, m.y);
+      return next();
+    }
     // objBullet does NOT collide with terrain (passThrough) — a bullet flies through walls and dies on a
     // target hit, when it STALLS (friction decay below pStallSpeed), or when its maxLife backstop expires.
-    if (++this.life > this.maxLife) { if (this.splash) this.detonate(m.x, m.y); else this.finish(m.x, m.y); return next(); }
+    if (++this.life > this.maxLife) { if (this.splash) this.detonate(m.x, m.y); else this.land(m.x, m.y); return next(); }
     // objMoveXY friction: lose `friction`% of the speed each frame (exponential decay, scaled by gGameSpeed),
     // and when the bullet slows below pStallSpeed for STALL_FRAMES it has come to a natural halt — a splash
     // bullet detonates where it landed (bomb/rock lob), a plain bullet lands. Beams (friction 0) never decay.
@@ -144,7 +167,7 @@ export class Projectile extends Component {
       const speed = Math.abs(m.vx) + Math.abs(m.vy);
       if (speed <= Projectile.STALL_SPEED) {
         if (++this.stallCtr >= Projectile.STALL_FRAMES) {
-          if (this.splash) this.detonate(m.x, m.y); else this.finish(m.x, m.y);
+          if (this.splash) this.detonate(m.x, m.y); else this.land(m.x, m.y);
           return next();
         }
       } else {

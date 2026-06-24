@@ -70,6 +70,9 @@ export class Movement extends Component {
     this.walkSpeedIncLevel = typeof cfg["walkSpeedIncLevel"] === "number" ? cfg["walkSpeedIncLevel"] : 0;
     this.constrainToArea = cfg["constrainToArea"] === true;
     this.ghost = cfg["ghost"] === true;
+    // #initFaceDir (objGameObject): -1 spawns the actor facing LEFT (else right). Cutscene wizards/king face
+    // left on entry; without this they spawn facing right for a frame before walkTo/turnToFace corrects them.
+    this.facingLeft = cfg["initFaceDir"] === -1;
     this.damageSpeed = typeof cfg["damageSpeed"] === "number" ? cfg["damageSpeed"] : 5;
     this.frictionReel = typeof cfg["frictionReel"] === "number" ? cfg["frictionReel"] : 10;
     // default 10 -> the tuned global 0.78; a stiffer frictionReel decays the shove proportionally faster.

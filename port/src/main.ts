@@ -731,8 +731,13 @@ function drawBullets(renderer: Renderer) {
       ctx.restore();
       continue;
     }
-    // a detonated splash bullet plays its <char>_explode burst (modExploder #explode), un-rotated and one-shot.
-    if (proj.exploding) {
+    // a stalled plain bullet plays its <char>_land strip in place (objBullet #land), one-shot — the arrow/
+    // needle/axe sticking where it fell. Rotated to its final heading (saved on the Movement) so it points
+    // the way it was travelling, like the _fly frames.
+    if (proj.landing) {
+      drawBulletSprite(renderer, proj.char, m.x, m.y, m.vx, m.vy, proj.life, "_land", bulletRotates(proj.char));
+    } else if (proj.exploding) {
+      // a detonated splash bullet plays its <char>_explode burst (modExploder #explode), un-rotated and one-shot.
       drawBulletSprite(renderer, proj.char, m.x, m.y, 0, 0, proj.life, "_explode", false);
     } else if (!drawBulletSprite(renderer, proj.char, m.x, m.y, m.vx, m.vy, proj.life, "_fly", bulletRotates(proj.char))) {
       // objBullet sprite: the `<char>_fly` strip (archerArrow/gobarrow/axe/crossBolt…) rotated to the flight
