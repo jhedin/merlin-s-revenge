@@ -105,18 +105,35 @@ def mac_palette():
     MAC_SYS = pal
     return pal
 
+def _clut_from_chunk(data, ents, cid):
+    raw = chunk(data, ents, cid)
+    # CLUT entries are 6 bytes: R,R,G,G,B,B (16-bit per channel, big-endian)
+    n = len(raw) // 6
+    pal = [(raw[i*6], raw[i*6+2], raw[i*6+4]) for i in range(n)]
+    return (pal + [(0,0,0)]*256)[:256]
+
+def bmp_palette_ref(data, ents, owner):
+    """The palette cast-member the bitmap references (specLen>=28: s16 at sp[26]). Negative = a built-in
+    system palette (#systemMac -1 / #systemWin -101 / ...); positive = a custom CLUT cast member."""
+    b = chunk(data, ents, owner)
+    _, infoLen, specLen = struct.unpack('>III', b[0:12])
+    sp = b[12+infoLen:12+infoLen+specLen]
+    return struct.unpack('>h', sp[26:28])[0] if specLen >= 28 else None
+
+# 8-bit cast bitmaps name their palette by cast-member ref, but the dump has no member->CLUT cross-reference
+# for these (the CLUT chunks are owned by the palette members, whose ids don't match the ref numbering). Map
+# the verified refs to their CLUT chunk. ref 37 = the title-letter palette (the blue 3D-bevel "MERLIN'S
+# REVENGE" glyphs) -> CLUT@456350; without this they fell back to mac_palette() and rendered as rainbow bands.
+PALETTE_REF_CLUT = {37: 456350}
+
 def get_clut(data, ents, owner_to, owner):
     ch = owner_to.get(owner, {})
     if 'CLUT' in ch:
-        raw = chunk(data, ents, ch['CLUT'])
-        # CLUT entries are 6 bytes: R,R,G,G,B,B (16-bit per channel, big-endian)
-        n = len(raw) // 6
-        pal = []
-        for i in range(n):
-            r = raw[i*6]; g = raw[i*6+2]; b = raw[i*6+4]
-            pal.append((r, g, b))
-        pal = (pal + [(0,0,0)]*256)[:256]
-        return pal
+        return _clut_from_chunk(data, ents, ch['CLUT'])
+    ref = bmp_palette_ref(data, ents, owner)
+    cid = PALETTE_REF_CLUT.get(ref)
+    if cid is not None and cid in ents:
+        return _clut_from_chunk(data, ents, cid)
     return mac_palette()
 
 def decode_bitmap(data, ents, owner_to, owner):
