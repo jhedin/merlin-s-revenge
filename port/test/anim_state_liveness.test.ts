@@ -11,12 +11,13 @@ const LIVE = new Set([
   "stand", "walk", "grave", "reel", "charge", "chargewalk", "release", "releasewalk",
   "naturalmelee", "weaponmelee", "weaponranged", "naturalranged", "build", "primed", "explode", "fly",
   "land", // objBullet #land: a stalled plain bullet plays <char>_land before dying (projectile.ts + drawBullets)
+  "bebuilt", // Dwelling.animAction: under-construction building art (underConstruction flag)
+  "producegroup", // Dwelling.animAction: a portal/dwelling spawning a wave (#produceGroup, mode==="produce")
+  "magicmelee", // PlayerControl: energyPunch swing strip (mer_magicMelee), not the generic punch
   "armysummon", "goblinsummon", "monstersummon", "scsummon", "skelitonsummon", "undeadsummon", "firebullets",
 ]);
-// real gaps the anim-state audit found, not yet wired — tracked here so they can't be forgotten, and so a
-// BRAND-NEW dead family still fails. (anim-state-liveness audit: beBuilt = buildings show finished art during
-// construction; produceGroup = fangBunnyPortal produce mode; magicMelee = energyPunch swing maps to naturalMelee.)
-const DEFERRED = new Set(["bebuilt", "producegroup", "magicmelee"]);
+// real gaps the audit finds but that aren't wired yet go here (tracked, not hidden) — empty today, all wired.
+const DEFERRED = new Set<string>([]);
 // art with no cast driver / intentionally superseded (player stretchDeath supersedes die; band/king cutscene
 // art with no driver; side-scroll heritage) — faithful to drop.
 const NA = new Set(["die", "weaponmagic", "weaponmagicwalk", "mosh", "strum", "rock", "play", "altstand", "sidestand", "02"]);
