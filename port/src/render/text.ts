@@ -21,7 +21,7 @@ export interface TextOpts {
 
 // route digits (and any glyph the primary face lacks) through #numbers; everything else through `face`.
 function pickFaces(assets: Assets, face: string): { primary?: BitmapFont; numbers?: BitmapFont } {
-  return { primary: assets.font(face), numbers: assets.font("numbers") };
+  return { primary: assets.font?.(face), numbers: assets.font?.("numbers") };
 }
 
 /** measure a string as it WOULD be laid out by drawText (mixed primary/numbers runs), in px. Falls back

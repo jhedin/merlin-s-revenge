@@ -163,7 +163,10 @@ if (!maps.some((m) => m.id === DEFAULT_MAP)) console.warn("default map missing:"
 // game-complete script. All are real shipped scr_*/cut_scene scripts the Thespian engine plays (H1/H2).
 const OUT_CUT = join(OUT_ASSETS, "cutscenes");
 mkdirSync(OUT_CUT, { recursive: true });
-copyFileSync(join(DATA, "scr_demo_001.txt"), join(OUT_ASSETS, "intro.txt"));
+// Intro: match the original-as-shipped, which plays cut_scene_to_play/demo001Intro.txt (grey stage
+// rgb(220,220,220), tv/merlin/ulin, the "Baywatch / cast spells in cutscenes" script) — NOT the
+// casts/data scr_demo_001 draft (green stage, adds #berlin, the "out of shape / training run" script).
+copyFileSync(join(REPO, "cut_scenes/demo001Intro.txt"), join(OUT_ASSETS, "intro.txt"));
 copyFileSync(join(DATA, "scr_cut_scene_to_play_when_wasted.txt"), join(OUT_ASSETS, "wasted.txt"));
 copyFileSync(join(REPO, "cut_scenes/mr4Complete.txt"), join(OUT_ASSETS, "complete.txt"));
 
@@ -188,7 +191,7 @@ for (let i = 1; i <= 10; i++) {
 const dataVocab = new Set<string>();
 // closed set of MUSIC names the game can request (#musicName in data) ∪ the src hardcodes — the music copy
 // is restricted to these so build doesn't bundle dead tracks (build used to copy every .mp3 indiscriminately).
-const musicVocab = new Set<string>(["baroque_rock_v1", "electronic_merlin_v1_02", "last_stand_v4"]);
+const musicVocab = new Set<string>(["baroque_rock_v1", "electronic_merlin_v1_02", "last_stand_v4", "the_ultimate_song_thing_v1", "final_stand_2_v1"]);
 for (const file of readdirSync(DATA).filter((f) => f.endsWith(".txt"))) {
   const src = readFileSync(join(DATA, file), "utf8");
   for (const m of src.matchAll(/#(?:sound|collectSound|dieSound):\s*"([^"]+)"/g)) dataVocab.add(m[1]!);
@@ -322,8 +325,8 @@ const MEMBER_NAMES = [
   "miniInfested", "miniCurrent", "miniClear", "miniSpecial", "miniFriendly",
   // rollover level stars (objMoveableLevelBar)
   "star_tiny", "star_medium", "star_large",
-  // HUD: health-bar surround + medikit display icons
-  "health_bar_surround", "medikit_on", "medikit_off",
+  // HUD: health-bar surround + the "health" label (health_grey) + medikit display icons + the "? F2" help button
+  "health_bar_surround", "health_grey", "medikit_on", "medikit_off", "help_locz151I",
   // SS-hud F2: GMG toggle HUD icon (objGmgDisplayer on/off member).
   "gmg_off", "gmg_on",
   // SS-hud F3: wizard summon portrait bar — yellow selection marker (wizard_on=wizard_onLq) + each found

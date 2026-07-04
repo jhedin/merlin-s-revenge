@@ -52,11 +52,11 @@ describe("F1 pipeline: completeness counts (cross-checked vs source)", () => {
     // ids are unique (folder-qualified on stem collision)
     expect(new Set(maps.map((m) => m.id)).size).toBe(47);
   });
-  it("bundles 29 SFX + 5 music (3 of the 8 .mp3 are unreferenced -> not bundled)", () => {
+  it("bundles 29 SFX + 7 music (1 of the 8 .mp3 is unreferenced -> not bundled)", () => {
     expect(srcWavs.length).toBe(29);
     expect(srcMp3.length).toBe(8);                        // 8 .mp3 exist in extracted/music
     expect(Object.keys(assets.sounds).length).toBe(29);
-    expect(Object.keys(assets.music).length).toBe(5);     // only #musicName-referenced tracks are copied
+    expect(Object.keys(assets.music).length).toBe(7);     // only #musicName-referenced tracks are copied
   });
   it("keeps the default map present and resolvable", () => {
     expect(assets.defaultMap).toBe("very_big_map"); // the large 225-room playtest map

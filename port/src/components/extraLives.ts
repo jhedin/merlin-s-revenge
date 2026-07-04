@@ -5,13 +5,18 @@
 //   else          -> gameOver=true   (-> gameMaster.gameOver -> wasted cutscene -> reload save)
 // (modExtraLives.txt:59-93). The shipped config banks 0 extra lives by default, so the common path is
 // straight to game-over — matching the original.
+//
+// NOT persisted (deliberately, faithfully): `modExtraLives.txt` has NO addSaveData/restoreFromSave at
+// all — extra lives are a mechanic carried over from a sibling game on this shared engine (Rapunzel's
+// Escape) and the shipped Merlin's Revenge config never expects them to survive a save/load. A restored
+// player re-runs init() with the same config, resetting to the default (0 unless data-driven). An earlier
+// port version added addSaveData/restoreFromSave here — a port-only addition diverging from the original.
 
 import { Component, type NextFn } from "../engine/dispatch";
 import { Movement } from "./movement";
 
 export class ExtraLives extends Component {
-  static handles = ["recordRespawnPoint", "attemptRespawn", "respawn", "getExtraLives", "addExtraLife",
-    "addSaveData", "restoreFromSave"];
+  static handles = ["recordRespawnPoint", "attemptRespawn", "respawn", "getExtraLives", "addExtraLife"];
   private lives = 0;
   private respawnX = 0;
   private respawnY = 0;
@@ -44,13 +49,4 @@ export class ExtraLives extends Component {
 
   getExtraLives(): number { return this.lives; }
   addExtraLife(next: NextFn): void { this.lives++; next(); }
-
-  addSaveData(next: NextFn, sd: Record<string, any>): Record<string, any> {
-    sd["lives"] = { lives: this.lives };
-    return next(sd);
-  }
-  restoreFromSave(next: NextFn, sd: Record<string, any>): Record<string, any> {
-    const s = sd["lives"]; if (s) this.lives = s.lives;
-    return next(sd);
-  }
 }

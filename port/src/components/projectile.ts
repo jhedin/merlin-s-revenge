@@ -180,7 +180,12 @@ export class Projectile extends Component {
       if (e.id === this.ownerId || (e.type !== "player" && e.type !== "enemy" && e.type !== "ally")) continue;
       if (e.send("isDead") || !this.isTarget(e)) continue;
       const p = e.send("getPos") as { x: number; y: number };
-      if (Math.abs(p.x - m.x) < 12 && Math.abs(p.y - m.y) < 12) {
+      // Target half-extent from the live sprite (getRadius = getWidth()/2), not the fixed ~14px box — so
+      // bullets register against the OUTER edges of large units/dwellings, like the original collisionRect.
+      const tr = e.send("getRadius") as number;
+      const th = (typeof tr === "number" && tr > 0) ? tr : (e.tryGet(Movement)?.box ?? 12) / 2;
+      const limit = Math.max(12, m.box / 2 + th);
+      if (Math.abs(p.x - m.x) < limit && Math.abs(p.y - m.y) < limit) {
         if (this.splash) { this.detonate(m.x, m.y); break; } // explode/splash on collide -> hit the disc
         const v = aimedVect(m.vx, m.vy, this.power);
         if (this.payload) {

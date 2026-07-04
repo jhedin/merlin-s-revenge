@@ -160,10 +160,13 @@ def get_clut(data, ents, owner_to, owner):
     if 'CLUT' in ch:
         return _clut_from_chunk(data, ents, ch['CLUT'])
     ref = bmp_palette_ref(data, ents, owner)
-    if ref is not None and ref > 0:                       # custom palette member (negatives = system palettes)
-        cid = _resolve_palette_clut(data, ents, owner_to, owner, ref)
-        if cid is not None and cid in ents:
-            return _clut_from_chunk(data, ents, cid)
+    if ref is not None:
+        if ref > 0:                       # custom palette member (negatives = system palettes)
+            cid = _resolve_palette_clut(data, ents, owner_to, owner, ref)
+            if cid is not None and cid in ents:
+                return _clut_from_chunk(data, ents, cid)
+        elif ref in (-2, -102):            # Windows System or Grayscale -> Grayscale palette
+            return [(i, i, i) for i in range(256)]
     return mac_palette()
 
 def decode_bitmap(data, ents, owner_to, owner):

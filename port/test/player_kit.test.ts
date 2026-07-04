@@ -103,6 +103,32 @@ describe("Merlin's charged-magic + punch kit", () => {
     expect(hit).toBe(true); // the swing animation reached #animframe 3 and the area hit landed
   });
 
+  it("melee is STATIONARY-ONLY: pending while walking, lands the instant you stop (no mer_*MeleeWalk strip)", () => {
+    // ORIGINAL: melee has no moving (*Walk) animation and no getAnimSym moving-branch, so a WALKING player
+    // stays on the walk strip and the swing's #animframe (the sole hit trigger) never fires. The swing is
+    // deferred; the hit lands the moment movement stops. (charge/release DO have *Walk variants — melee alone.)
+    const anims = { ...punchAnims, mer_walk: { delay: 1, frames: [{}, {}, {}, {}] } };
+    game.assets = { index: { anims }, img: () => null } as any;
+    let mv = { x: 0, y: 0 }, md = false;
+    game.input = { moveVector: () => mv, cursor: () => null, mouseDown: () => md, mousePressed: () => false,
+      mouseReleased: () => false, held: () => false, pressed: () => false, endTick: () => {} } as any;
+    const p = spawnPlayer(100, 100); game.entities = [p];
+    const ctrl = p.get(PlayerControl);
+    let hits = 0;
+    const orig = (ctrl as unknown as { performMeleeHit: (m: unknown) => void }).performMeleeHit.bind(ctrl);
+    (ctrl as unknown as { performMeleeHit: (m: unknown) => void }).performMeleeHit = (m) => { hits++; return orig(m); };
+
+    mv = { x: 1, y: 0 };                                  // walk up to real speed first (no fire)
+    for (let i = 0; i < 6; i++) p.send("update");
+    expect(p.get(Movement).moving()).toBe(true);
+    md = true;                                            // HOLD fire WHILE walking
+    for (let i = 0; i < 15; i++) p.send("update");
+    expect(hits).toBe(0);                                 // no melee-walk strip -> no #animframe -> no hit
+    mv = { x: 0, y: 0 };                                  // STOP — the deferred swing plays + lands
+    for (let i = 0; i < 12; i++) p.send("update");
+    expect(hits).toBeGreaterThan(0);                      // "the punch comes out the moment you stop"
+  });
+
   it("ONE swing = ONE hit — fires once per #animframe crossing, not every frame", () => {
     // animation-driven: the hit fires only when the swing strip reaches #punch's #animframe (3), once per
     // swing — not every tick the player holds fire (the 'orcs die in one hit' per-frame multi-hit bug).
@@ -179,8 +205,8 @@ describe("Merlin's charged-magic + punch kit", () => {
 
   it("toggling GMG mid-charge releases the held spell (objAiPlayer internalEvent #gmgTurnedOn/Off)", () => {
     const inp = fakeInput({ mouseDown: true, cursor: { x: 400, y: 100 } }) as any;
-    let gPressed = false;
-    inp.pressed = (k: string) => (k === "g" ? gPressed : false);
+    let gmgPressed = false;
+    inp.pressed = (k: string) => (k === "e" ? gmgPressed : false); // original Show Keys: E = GMG toggle
     game.input = inp;
     const p = spawnPlayer(100, 100); grantSpell(p);
     const pc = p.get(PlayerControl);
@@ -192,7 +218,7 @@ describe("Merlin's charged-magic + punch kit", () => {
     const spell = game.entities.find((e) => e.type === "spell")!;
     expect(spell).toBeDefined();
 
-    gPressed = true; p.send("update"); gPressed = false; // tap G -> #gmgTurnedOn -> release the held charge
+    gmgPressed = true; p.send("update"); gmgPressed = false; // tap E -> #gmgTurnedOn -> release the held charge
     expect(p.send("chargeFrac")).toBe(0);               // the charge was fired, not carried across the toggle
     const x0 = (spell.send("getPos") as { x: number }).x;
     for (let i = 0; i < 5; i++) spell.send("update");   // the released spell flies toward the cursor (right)

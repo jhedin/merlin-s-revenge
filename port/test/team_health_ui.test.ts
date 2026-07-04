@@ -1,8 +1,9 @@
-// Team-colour energy UI: the rollover + the always-on enemy bars fill in the unit's TEAM colour
-// (objMoveableEnergyBar / enemyEnergyMaster), shown only once a unit is DAMAGED.
+// Team-colour energy UI: the on-hover rollover uses the unit's TEAM colour (objMoveableEnergyBar).
+// Merlin's Revenge does NOT run an always-on enemy-bar system (enemyEnergyMaster/gEnemyEnergyMasterOn=0,
+// per this game's own GameSpecific.ls `on GameInitGlobals` — see render/rollover.ts's header).
 import { describe, it, expect, beforeEach } from "vitest";
 import { teamColour, clearTeamColourCache } from "@/render/teamColour";
-import { drawEnemyEnergyBars } from "@/render/rollover";
+import { HealthRollover } from "@/render/rollover";
 import { drawMinimap, type MinimapInputs } from "@/render/minimap";
 import { spawnEnemy, spawnUnit, spawnAlly } from "@/entities/archetypes";
 import { Energy } from "@/components/combat";
@@ -32,36 +33,27 @@ function recordingRenderer() {
   return { rects, renderer: { ctx } as any };
 }
 
-describe("drawEnemyEnergyBars (enemyEnergyMaster): team-colour, damaged-only", () => {
+// Regression guard for the removed `drawEnemyEnergyBars`: actorMaster.start() only calls
+// `g.enemyEnergyMaster.start()` `if gEnemyEnergyMasterOn = true`, and this game's own GameSpecific.ls sets
+// it to 0 (only gCharacterEnergyRolloverOn=1 is on) — so a damaged, un-hovered enemy must show NOTHING.
+describe("no always-on enemy health bars (enemyEnergyMaster is OFF in this game)", () => {
   beforeEach(() => {
     game.grid = new CollisionGrid(20, 20, 32);
     game.entities = [];
+    game.assets = { index: { anims: {} }, img: () => null } as any;
     game.teamMaster.reset(); game.teamMaster.unitMap.configure(32, 0, 0);
     game.spawnUnit = spawnUnit; game.spawnAlly = spawnAlly;
     clearTeamColourCache();
   });
 
-  it("draws a team-colour bar over a DAMAGED enemy, nothing over a full-health one", () => {
+  it("a damaged, un-hovered enemy draws no bar at all via the health rollover", () => {
     const hurt = spawnEnemy("goblinWarrior", 100, 100);
-    const full = spawnEnemy("goblinWarrior", 200, 100);
-    game.entities = [hurt, full];
+    game.entities = [hurt];
     hurt.get(Energy).energy = Math.round(hurt.get(Energy).max * 0.4); // wound to 40%
-
+    const roll = new HealthRollover();
+    roll.update(null, game.entities); // no cursor at all — never hovered
     const { rects, renderer } = recordingRenderer();
-    drawEnemyEnergyBars(renderer, game.entities);
-
-    // exactly one unit drew (the damaged one): a dark surround + a team-colour fill = 2 rects.
-    expect(rects.length).toBe(2);
-    const fill = rects[1]!;
-    expect(fill.style).toBe("rgb(0,255,0)");          // goblins team colour
-    expect(fill.w).toBeGreaterThan(0); expect(fill.w).toBeLessThan(20); // partial width (40% HP)
-  });
-
-  it("draws nothing for a dead unit", () => {
-    const dead = spawnEnemy("goblinWarrior", 100, 100); dead.get(Energy).dead = true;
-    game.entities = [dead];
-    const { rects, renderer } = recordingRenderer();
-    drawEnemyEnergyBars(renderer, game.entities);
+    roll.draw(renderer, undefined);
     expect(rects.length).toBe(0);
   });
 });

@@ -59,7 +59,7 @@ describe("experience: XP + leveling (faithful curve)", () => {
 });
 
 // modMoveToLoc.incWalkSpeedLevel (internalEvent #levelUp): every character's walk-speed cap grows by
-// #walkSpeedIncLevel (engine 0.075) per level. Port: player 1:1 (+0.075), enemy ×0.6 (+0.045).
+// #walkSpeedIncLevel (engine 0.075) per level. Port: player AND enemy both ×0.6 slice scale (+0.045).
 describe("walk-speed grows with level (modMoveToLoc.incWalkSpeedLevel)", () => {
   beforeEach(() => {
     game.grid = new CollisionGrid(20, 20, 32);
@@ -95,11 +95,11 @@ describe("walk-speed grows with level (modMoveToLoc.incWalkSpeedLevel)", () => {
     expect(m.maxSpeed).toBeCloseTo(base + 0.09, 5);
   });
 
-  it("the player's maxSpeed rises 0.075 per level", () => {
+  it("the player's maxSpeed rises 0.045 per level (slice-scaled, like enemies)", () => {
     const p = spawnPlayer(100, 100); game.player = p;
     const m = p.get(Movement); const base = m.maxSpeed;
     p.send("forceLevelUp");
-    expect(m.maxSpeed).toBeCloseTo(base + 0.075, 5);
+    expect(m.maxSpeed).toBeCloseTo(base + 0.045, 5);
   });
 });
 

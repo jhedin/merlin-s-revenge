@@ -120,6 +120,21 @@ export class Anim extends Component {
     return f && f.w > 0 ? f.w / 2 : 12;
   }
 
+  // getWorldBounds (objGameObject.calcEnergyRectBottom/displayAboveTarget): the on-screen rect of a sprite
+  // frame, world-space, using the renderer's own (x-regX, y-regY) top-left convention. useStand=true always
+  // reads the STAND strip's frame 1 — the original pins the rollover bars/stars to the STAND pose
+  // specifically so they don't jitter with whatever attack/swing frame is currently playing; useStand=false
+  // (default) reads the LIVE current frame (objGameObject.getSpriteRect, the mouse hit-test rect, which DOES
+  // track the current pose). Returns null when the relevant strip isn't loaded.
+  getWorldBounds(useStand = false): { left: number; top: number; right: number; bottom: number } | null {
+    const anim = useStand ? game.assets.index.anims[`${this.char}_stand`] : this.animFor(this.action);
+    if (!anim || anim.frames.length === 0) return null;
+    const f = useStand ? anim.frames[0]! : anim.frames[this.frame % anim.frames.length]!;
+    const m = this.entity.get(Movement);
+    const left = m.x - f.reg[0], top = m.y - f.reg[1];
+    return { left, top, right: left + f.w, bottom: top + f.h };
+  }
+
   // restart the current action strip from frame 0 (ensureMode re-entry): a NEW attack/swing replays its
   // one-shot strip even though the action STRING is unchanged across consecutive swings — without this the
   // strip plays once then holds its last frame for every following swing (the "stuck on the last frame" bug).

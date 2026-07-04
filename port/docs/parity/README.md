@@ -707,3 +707,160 @@ Status: ☐ not started · ◐ in progress · ☑ done
   `objAICPUWeaponSeek` needs is unused. Evidence-backed dead engine code — left unbuilt (per the plan §g).
   tsc clean; **324 tests** (+36: K3–K8a per-behavior). Room-1 no-regression: `playthrough_smoke` ends
   `enemies:0, exitsOpen:true, errors:none`. K2 (spell-actor lifecycle) stays for a later pass.
+
+### Phase L — re-audit findings (charter failure-mode #3: re-examine "CLEAN" verdicts as suspects)
+- ☑ **L1. `characterEnergyRollOverMaster` — sticky targeting + wrong layout.** A from-scratch re-read of the
+  full original (`characterEnergyRollOverMaster.txt` + `objMoveableEnergyBar/LevelBar/ExperienceBar.txt`)
+  against `render/rollover.ts` found TWO real divergences the prior per-method pass missed:
+  (1) **Targeting is a STICKY single-slot lock, not per-frame hover.** The original's `update()` only
+  (re)acquires when the mouse is literally inside the nearest-to-cursor char's sprite rect
+  (`checkMouseOverObj`); if the nearest candidate ISN'T under the cursor, the CURRENT target is left alone
+  — it only clears when the target dies or zero hoverable chars exist anywhere. The port cleared instantly
+  the moment the cursor left a fixed body-box, every frame, with no memory. Replaced the stateless
+  `pickHoveredUnit` free function with a stateful `HealthRollover` class driving the exact FSM (kept
+  `pickHoveredUnit` as the equivalent one-shot/no-memory query for simple callers).
+  (2) **Layout was one combined black box floating above the unit; the original has no shared panel.**
+  `objMoveableLevelBar.displayAboveTarget` floats the (background-less) star row above the STAND pose
+  (top − 4px gap); `objMoveableEnergyBar`/`ExperienceBar.calcEnergyRectBottom` sit the energy bar directly
+  BELOW the STAND pose (full sprite width, 4px tall), with the XP bar 3px further below — and the XP bar is
+  **hidden entirely** (not drawn empty) when the unit has 0 accumulated XP. Both bars key off the STAND
+  strip specifically (frame 1), not whatever's currently animating, so the UI doesn't jitter with the
+  attack/swing pose. Added `Anim.getWorldBounds(useStand)` (objGameObject.calcEnergyRectBottom's exact
+  `loc − reg` formula, matching the renderer's own draw convention) to get real per-actor sprite bounds for
+  both the hit-test (live pose) and the bar/star positioning (pinned to stand pose); falls back to the old
+  fixed box when a strip isn't loaded. Rewrote `drawUnitRollover` to the below/above split, dropped the
+  shared background panel. tsc clean; **696 tests** (+10: 5 sticky-FSM cases, 3 layout/xp-visibility cases,
+  2 `getWorldBounds` cases against both the fallback and a real mocked stand/attack strip pair). Verified
+  live in-browser (`?map=very_big_map`): hovering the player draws a team-colour bar directly under the
+  sprite (not a box above it) that **persists after the cursor moves away** — confirmed both the layout and
+  the stickiness against the actual running game, not just the unit tests.
+- ☑ **L2. Removed `drawEnemyEnergyBars` — a phantom always-on enemy health bar the original never shows.**
+  While fixing L1, `rollover.ts`'s own header already correctly noted "Merlin's Revenge has NO always-on
+  bars (gEnemyEnergyMasterOn=0)" — but a `drawEnemyEnergyBars` function lower in the SAME FILE (called every
+  frame from `main.ts`, drawing a team-colour bar over every damaged enemy/ally regardless of the mouse)
+  carried the opposite, uninvestigated claim: "gEnemyEnergyMasterOn=1, the shipped main.ls config." Traced
+  the flag to its source: `actorMaster.start()` only calls `g.enemyEnergyMaster.start()` `if
+  gEnemyEnergyMasterOn = true`, and Merlin's Revenge's own per-game override
+  (`extracted/engine/scripts/MovieScript 1 - GameSpecific.ls`, `on GameInitGlobals` — confirmed as THIS
+  game's config via `gGameName = #merlin_3`, `gGameSaveFile = "mr4_saveGame_0_03.txt"`, `gKeySetFileName =
+  "MerlinsRevengeKeys.txt"`, and `gMaxEnemies/gMaxFriends = 16/12` matching values already cross-referenced
+  elsewhere in this tracker) sets `gEnemyEnergyMasterOn = 0` (only `gCharacterEnergyRolloverOn = 1` is on).
+  So `enemyEnergyMaster` never starts, `objCPUCharacter.initEnergyBar`'s `requestEnergyBar` call has no live
+  master, and no enemy ever shows a health bar without being hovered — the on-hover rollover (L1) is the
+  ONLY per-unit health UI. Deleted `drawEnemyEnergyBars` and its `main.ts` call site (which sat directly
+  below a comment already stating the bars shouldn't exist); replaced the test that had encoded the phantom
+  feature as correct with a regression guard asserting a damaged, never-hovered unit draws nothing. tsc
+  clean; **695 tests** (net −1: removed 2 stale, added 1 regression guard). Verified live in-browser
+  (`?map=very_big_map`): a damaged enemy shows no bar while the cursor is elsewhere.
+- **Iter 15 — 4 parallel re-audits (wizard HUD, remaining GameSpecific.ls flags, showArmy, save/load) +
+  fixes.** Dispatched agents at the wizard displayer, the 14 still-unchecked `GameSpecific.ls` globals, the
+  Show Army screen, and full save/load completeness (superseding the stale ~15% snapshot). Findings + fixes:
+  - ☑ **L3. Wizard HUD portrait shown too early (found ≠ shown).** `objWizardDisplayer`'s auto-show-on-
+    first-find branch (`wizardMaster.newWizardFound`, gated on `pSummonMod <> #none`) is DEAD in the shipped
+    game — `registerMod` (the only thing that ever sets `pSummonMod`) is never called anywhere in the
+    decompiled corpus. So the original shows NOTHING when a wizard is first met; the portrait only appears
+    once the player explicitly cycles selection (`selectNextWizard`/Tab, which calls `setWizard`
+    unconditionally) or a save with `pWizards.count <> 0` is restored (`restoreFromSave` also calls
+    `setWizard` unconditionally). The port showed the portrait the instant a wizard was found. **Per this
+    project's convention of reproducing shipped bugs faithfully** (`docs/parity/audits/original-game-bugs.md`),
+    fixed the port to match what SHIPS: added a `hasSelected` gate to `WizardMaster`, exposed as a new
+    `displayedWizard()` accessor used ONLY by the HUD draw call site (`main.ts`). Critically, `current()`/
+    `currentActorType()` (which `summonWizard`/Q ALSO reads) stay UNGATED — `modSummonWizard.summonWizard`
+    reads `pWizardToSummon` directly (defaults to slot 1) and does NOT require the portrait to have ever
+    been shown, so gating those too would have broken Q-summon for a freshly-met, never-Tab'd wizard (a
+    regression, caught by the existing `wizard_summon.test.ts` suite failing 3 tests on the first pass).
+  - ☑ **L4. `WizardMaster` had zero save/restore — found/selected/active wizard forgotten every save/load.**
+    Added `addSaveData`/`restoreFromSave` (found list, selection, active id, lost set) mirroring
+    `modSummonWizard`'s `pWizardOn/pWizardToSummon/pWizard/pWizards`; restore unconditionally reveals the
+    portrait when any wizard is known (`this.hasSelected = this.found.length > 0`), faithful to
+    `restoreFromSave`'s own unconditional `setWizard` call. Wired into `SaveDataV3.wizard?` (an optional
+    field, following the `sound?` precedent for additions within v3) and `main.ts`'s `doLoad`.
+  - ☑ **L5. `armyMaster.getReserveArmy` re-sorted (alphabetical+level) — the original never sorts.**
+    `armyMaster.txt`'s banking handler does `pReserveArmy[team][actorType].append(armyDetails)` — a
+    dict-of-append-only-lists — and `showArmyMaster.setupDisplay`'s display loop (`repeat with unitList in
+    army / repeat with unit in unitList`) walks it as-is, no sort. Order is "by actor type, in the order
+    that type was FIRST banked; chronological (banking order) within a type." Removed the port's `.sort()`
+    — `this.reserve` (`Map<team, Map<typ, ArmyDetails[]>>`, built via `ensureLists` + `.push()`) already
+    preserves this exact order natively (JS Map/Array insertion order), so deleting the sort was sufficient.
+  - ☑ **L6. Show Army used a fixed 40×40 grid — the original does a dynamic size-aware reflow.**
+    `objUnitDisplayer.calcBoundingRect` sizes each unit's cell from its REAL stand-sprite + level-stars
+    dimensions (stars stacked above the sprite, 4px internal gap); `showArmyMaster.setupDisplay` wraps units
+    into rows by actual accumulated width (`pXGap=4` between units) and rows into pages by actual
+    accumulated height (`pYGap=8` between rows) — a page break can even happen MID-ROW if one very tall
+    unit's own bounding rect alone overflows the display rect's bottom (replicated faithfully, not guarded
+    against, matching the literal Lingo). Extracted the algorithm into a new pure, asset-free
+    `scenes/armyLayout.ts` (`layoutArmy`, unit-tested with synthetic sizes — row wrap, dynamic cell width,
+    row-floor accumulation, ordinary + mid-row page breaks, 8 tests) and rewired `screens.ts`'s
+    `renderShowArmy`/`drawUnitCell` to size cells from the real bundled stand-frame + `starRow()` (reusing
+    L1's star-row helper) dimensions, falling back to a 16×16 placeholder pre-load exactly like the
+    pre-existing `drawUnitFrame` did. tsc clean; **709 tests** (+9: L5 sort-order regression test in
+    `phase_k_shell.test.ts`, L6's 8 `army_layout.test.ts` cases). Verified live in-browser
+    (`?map=very_big_map`, reserve seeded via the `armyMaster.restoreFromSave` debug path): real level-star
+    rows correctly sized/positioned above each unit, real stand-sprite portraits below them, a
+    dynamically-larger cell for a bigger unit (confirmed via an unregistered test-data type correctly
+    falling back to `blackOrc`'s larger bundled sprite and sizing its cell accordingly) — the pre-existing
+    `blackOrc` fallback in the unit-frame lookup was preserved verbatim, not part of this fix.
+  - **Investigated, NOT changed — menu selection highlight colour.** The flags sweep flagged
+    `port/src/scenes/menu.ts`'s selected-item colour (`#dd0` yellow) against `gButtonHiColour`/
+    `gMenuHiColour = rgb(255,255,255)` (white), citing `objButton`/`objMenu`'s mouse-rollover fade-to-white.
+    Live screenshots of the actual running original (fresh title screen, then after a keyboard Down-arrow
+    press) showed NEITHER colour — the idle/no-interaction state renders every enabled item in plain black,
+    with no visible default highlight at all, and keyboard input produced no visible change (this engine's
+    menu highlight may be strictly mouse-hover-only, or the sandbox's synthetic key events aren't reaching
+    it). Given (a) the tooling available has no dedicated mouse-hover-without-click primitive to test the
+    real trigger, (b) clicking risks navigating away in a shared/expensive-to-relaunch sandbox session, and
+    (c) the port's current yellow/flush-left/no-cursor-glyph menu styling was a DELIBERATE prior decision
+    made by comparing against real screenshots (see the menu.ts history) — did not change this on
+    inconclusive evidence. Flagged here for a future pass with better hover-testing tooling.
+  - **Other flags/items checked and confirmed faithful (no action):** `gBulletsCollideWithBackground=0`
+    (bullets already `passThrough` terrain — `projectile.ts` comment already correct), `gMapBoundary=128`
+    (a Director-only edge-mask rendering hack, moot — canvas clips naturally), `gNavMode=1` (already
+    wired via `objRoom`'s `goNavMode`/port's `navmode.test.ts`), `gMaxEnemies/gMaxFriends=16/12` (dead/
+    superseded globals from `old_reservationsMaster.txt` — the LIVE `reservationsMaster.txt` uses only the
+    data-driven per-team `#maxMembers`, matching `teams.ts atCapacity` exactly), `gGameCompleteScript/
+    Sound`, `gGameOverScript`, `gGameView`, `g3DMode`, `gPlayerHair`, `gExitArrows`, `gButtonPulse/
+    gMenuPulse` all MATCH or are genuinely N/A (dead `#sideOn`/3D branches unreachable in the shipped
+    game). Save/load: everything else checked (player energy/xp/mana/weapons/medikit, current map/room,
+    full per-room pState for already-visited rooms, army reserve, potions, sound mute) is SAVED-FAITHFULLY
+    and tested; `pKills` (a kill counter) is not persisted (`experience.ts`) — low-impact, not shown in any
+    save-relevant UI, left as a known minor gap.
+  - ☑ **L7. `ExtraLives` persisted lives across save/load — the original never does.** Per the owner: extra
+    lives is a mechanic carried over from a sibling game on this shared engine (Rapunzel's Escape), not
+    central to Merlin's Revenge — confirming `modExtraLives.txt` having NO `addSaveData`/`restoreFromSave`
+    at all is deliberate, not an oversight to "fix." Removed the port's `addSaveData`/`restoreFromSave` from
+    `ExtraLives` (a pre-existing, untested port-only addition): a restored player's lives now come only from
+    its own `init()` default, never from the save blob, matching the original exactly. Updated
+    `death.test.ts`'s round-trip test to assert the faithful behavior (the save blob carries no `lives` key
+    at all; a restore leaves lives at the init default) instead of the old test, which had encoded the
+    over-implementation as correct.
+- **Iter 16 — 3 more parallel re-audits (starMaster, magicLimitMaster/GMG, potionMaster visual layout).**
+  - **starMaster (XP pop-up star effect) — CLEAN, already faithful.** `render/effects.ts`'s `StarParticle`
+    matches `act_experienceStar` (friction, 30-frame life, upward drift, z-order behind actors) and
+    `experience.ts`'s `attemptLevelUp` fires it for every unit's level-up, matching `modExperience.levelUp`'s
+    unconditional `releaseStar()`. One low-impact, NOT fixed nuance: the original staggers stars from a
+    multi-level kill one per 10 frames (`modStarReleaser`'s cooldown queue); the port spawns them all in the
+    same tick. Only visible on a rare multi-level-in-one-kill; skipped — the fix needs a new stateful
+    queue+timer component for a barely-visible edge case, not worth the added machinery right now.
+  - **magicLimitMaster / GMG — CLEAN, already faithful.** `magicLimitMaster` is a pure numeric room-scoped
+    value (no displayer of its own); `charge.ts`'s `chargeMaxOf`/`chargeStartOf` reproduce
+    `calcAttackChargeMax`/`calcAttackChargeStart` line-for-line (including a documented original bug, K11,
+    correctly preserved). The separate GMG collect/toggle/charge-swap mechanic also matches
+    `modGoldenMachineGun` exactly. One UNCONFIRMED (not a bug, flagged for future verification): the GMG
+    on/off icon's hardcoded HUD position `(90,0)` in `main.ts` has no corroborating real-screenshot evidence
+    (unlike the medikit `(32,0)`/wizard `(72,0)` positions, which `compare/FINDINGS.md` confirms were
+    measured against an actual gameplay capture) — GMG was never collected in that capture. Needs a fresh
+    sandbox screenshot with GMG actually collected to confirm or correct.
+  - ☑ **L8. potionMaster "POTIONS DRUNK" row: no zero-padding, variable-width slot, wrong font, artificial
+    gaps.** `objDisplayCounter` (`pNumDigits=2`) zero-pads every count to 2 digits ("01","07") and reserves a
+    FIXED-width slot (`getDisplayWidth = charWidth*pNumDigits`) so the row never shifts as a tally crosses
+    the 9→10 digit boundary; `displayAlignRight` places icon/counter/title/next-pair with ZERO gap between
+    them. The port showed the bare un-padded number, measured the ACTUAL string width with a live canvas
+    font (`"bold 9px monospace"`, not the bitmap `#numbers` face the rest of the HUD uses — contrast the
+    medikit/lives counters), and inserted artificial 1-2px gaps. Fixed: `countStr.padStart(2,"0")`, a fixed
+    `counterSlotWidth()` from the `#numbers` bitmap face's monospace `charW*2` (falling back to a `"00"`
+    canvas measurement when the face isn't loaded), routed through `drawText(..., "numbers", ...)` for
+    glyph-parity with the rest of the HUD, and removed the icon/title spacing additions. tsc clean; 709
+    tests unchanged (no dedicated unit test existed for this draw-only HUD function, matching the pattern of
+    other `main.ts` draw sites — verified instead via a live in-browser capture: `?map=very_big_map` with 7
+    speed potions seeded showed "...DRUNK [icon]**07**" — correctly zero-padded, bitmap-font glyphs, tight
+    spacing, no regression to the adjacent "NEXT" army-reserve strip).

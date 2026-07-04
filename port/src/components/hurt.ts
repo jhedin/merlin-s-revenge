@@ -14,7 +14,7 @@ export class Hurt extends Component {
   private flashT = 0;            // white flash / hit tint window (modFlasher) — brief, cosmetic
   private reeling = false;       // modReel #reel: dazed/staggering while the knockback slide is still moving
   private reelT = 0;             // frames in the current reel (safety cap counter)
-  private static readonly REEL_STALL = 0.6; // knockback speed (px/tick) below which the slide has "stalled" (pStallSpeed)
+  private static readonly REEL_STALL = 0.2; // knockback speed (px/tick) below which the slide has "stalled" (objMoveXY pStallSpeed = 0.2)
   private static readonly REEL_CAP = 30;    // hard cap so a reel can't hang if knockback never quite settles
   private invinceT = 0;
   private pulsing = false; // modInvince.invinceOn->pulseWhite: the temp-invince white pulse is active

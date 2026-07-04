@@ -23,14 +23,16 @@ describe("#depositMines — energyMines drops energyMine actors (modSpellMultist
     return resolveAttack(rec["attack"] as Record<string, any>, rec);
   };
 
-  it("deposits floor(charge / chargePerUnit) energyMine actors (chargePerUnit 10)", () => {
+  it("deposits floor(charge / chargePerUnit) energyMine actors (chargePerUnit 10) with ownerId", () => {
     const a = energyMinesAttack();
     expect(a.explodeFunction.toLowerCase()).toContain("depositmines");
     expect(a.chargePerUnit).toBe(10);
-    depositMines(a, 35, 200, 200);                 // 35/10 = 3 mines
+    depositMines(a, 35, 200, 200, 42);                 // 35/10 = 3 mines, owner 42
     const mines = game.entities.filter((e) => e.type === "mine");
     expect(mines.length).toBe(3);
     expect(mines.every((m) => m.send("getTeam") === "#aldevar")).toBe(true); // hits the caster's enemies
+    const mineComp = (mines[0] as any).comps.find((c: any) => "ownerId" in c);
+    expect(mineComp.ownerId).toBe(42);
   });
 
   it("a non-depositMines attack deposits nothing", () => {

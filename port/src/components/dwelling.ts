@@ -15,10 +15,10 @@ import type { Entity } from "../engine/dispatch";
 interface ResidentGroup { typ: string; buildTime: [number, number]; groupSize: [number, number]; releaseInterval: [number, number]; }
 
 export class Dwelling extends Component {
-  static handles = ["update", "animAction"];
+  static handles = ["update", "animAction", "getLevel"];
+  getLevel(): number { return this.level; }
   groups: ResidentGroup[] = [];
   budget = 10;               // lifetime residents remaining (#totalResidents)
-  private aliveCap = 6;      // soft concurrent cap (reservationsMaster stand-in)
   private mode: "produce" | "release" | "empty" = "empty";
   private timer = 0;
   private group: ResidentGroup | null = null;
@@ -76,9 +76,11 @@ export class Dwelling extends Component {
       // reservationsMaster.getPermissionToRelease: hold if my own wave cap is hit OR the resident's TEAM is
       // already at its global concurrent cap (gMaxEnemies 16 / gMaxFriends 12). The latter is the faithful
       // per-team headcount that stops multiple dwellings from flooding a team past the original's limit.
+      // The ONLY release gate is the faithful per-team headcount (reservationsMaster.getPermissionToRelease
+      // → team.maxMembers). modResidents has NO per-dwelling concurrent cap, so a lone dwelling can field up
+      // to its whole team cap (monsters 10 / orcs 11 / goblins 16) — an extra aliveCap would under-populate.
       const resTeam = registry.resolveActor(this.group!.typ)?.["team"];
-      if (this.residents.length >= this.aliveCap ||
-        (typeof resTeam === "string" && game.teamMaster.atCapacity(resTeam))) {
+      if (typeof resTeam === "string" && game.teamMaster.atCapacity(resTeam)) {
         this.timer = this.rnd(this.group!.releaseInterval); return next(); // await permission
       }
       this.releaseOne();

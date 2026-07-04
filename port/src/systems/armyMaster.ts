@@ -127,14 +127,19 @@ export class ArmyMaster {
   }
 
   // getReserveArmy (showArmyMaster.start -> armyMaster.getReserveArmy): the displayable reserve roster for
-  // a team (default the player team #aldevar) — a flat list of banked units (one entry per record) sorted
-  // by type then level, for the showArmy paginated grid (K18). Each entry is the unit's display info.
+  // a team (default the player team #aldevar). armyMaster.txt's own banking handler does
+  // `pReserveArmy[team][actorType].append(armyDetails)` — a dict-of-lists keyed by actor type, each an
+  // APPEND-ONLY list — and showArmyMaster.start's display loop (`repeat with unitList in army / repeat with
+  // unit in unitList`) just walks it as-is: NO sort. So the display order is "by actor type, in the order
+  // that type was FIRST banked; within a type, banking (chronological) order" — never alphabetical, never
+  // level-sorted. `this.reserve` is a `Map<team, Map<typ, ArmyDetails[]>>` built via `ensureLists` (creates
+  // a type's Map entry on first encounter) + `.push()` (append) — JS Map/Array both preserve insertion
+  // order, so a straight walk with NO re-sort already reproduces the original's order exactly.
   getReserveArmy(team = "#aldevar"): { typ: string; team: string; level: number }[] {
     const byTyp = this.reserve.get(team);
     if (!byTyp) return [];
     const out: { typ: string; team: string; level: number }[] = [];
     for (const [typ, list] of byTyp) for (const d of list) out.push({ typ, team, level: d.level });
-    out.sort((a, b) => a.typ === b.typ ? b.level - a.level : a.typ.localeCompare(b.typ));
     return out;
   }
 

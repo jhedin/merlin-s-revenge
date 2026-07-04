@@ -66,6 +66,65 @@ describe("wizard summon helper (modSummonWizard / wizardMaster)", () => {
     expect(game.entities.length).toBe(1);             // only the player
   });
 
+  // HUD-portrait timing: a faithfully-reproduced original bug (objWizardDisplayer's auto-show-on-first-find
+  // branch is dead code in the shipped game — `registerMod`/`pSummonMod` are never set). Finding a wizard
+  // shows nothing; the portrait only appears once selectNext() (Tab) or a save-restore has actually run.
+  it("displayedWizard() is null when found but never selected; selectNext() reveals it", () => {
+    const wm = new WizardMaster();
+    expect(wm.displayedWizard()).toBeNull();
+    wm.register("amotonlinInGame");
+    expect(wm.hasWizards).toBe(true);
+    expect(wm.displayedWizard()).toBeNull(); // found ≠ shown
+    wm.selectNext();
+    expect(wm.displayedWizard()).toBe("amotonlin"); // Tab reveals it
+  });
+
+  it("Q summons a found-but-never-selected wizard (the summon target is UNGATED, unlike the HUD portrait)", () => {
+    const p = spawnPlayer(50, 50); game.player = p; game.entities = [p];
+    spawnUnit("amotonlinInGame", 100, 100, { animChar: "amo" }); // meet a wizard -> found, never Tab'd
+    game.entities = game.entities.filter((e) => e.type === "player");
+    expect(game.wizardMaster.displayedWizard()).toBeNull(); // HUD would show nothing yet
+
+    const pc = p.get(PlayerControl);
+    pc.summonWizard(input({ x: 300, y: 200 }));
+    const wiz = game.entities.find((e) => e.id === game.wizardMaster.activeWizardId);
+    expect(wiz).toBeDefined(); // Q still works — the original's summonWizard reads pWizardToSummon directly
+  });
+
+  it("addSaveData/restoreFromSave round-trips found/selected/active/lost, and restore reveals the portrait", () => {
+    const wm = new WizardMaster();
+    wm.register("amotonlinInGame"); wm.register("verdanlinInGame");
+    wm.setActive(42); wm.markLost("verdanlin");
+    // never called selectNext() — displayedWizard() is null pre-save, matching a found-not-yet-shown wizard.
+    expect(wm.displayedWizard()).toBeNull();
+    const sd = wm.addSaveData({});
+
+    const restored = new WizardMaster();
+    restored.restoreFromSave(sd);
+    expect(restored.foundList).toEqual(["amotonlin", "verdanlin"]);
+    expect(restored.activeWizardId).toBe(42);
+    expect(restored.isLost("verdanlin")).toBe(true);
+    expect(restored.isLost("amotonlin")).toBe(false);
+    // modSummonWizard.restoreFromSave unconditionally calls setWizard when pWizards.count <> 0 — so a
+    // restore reveals the portrait even though it was never shown before saving.
+    expect(restored.displayedWizard()).toBe("amotonlin");
+  });
+
+  it("restoreFromSave with no found wizards leaves the portrait hidden", () => {
+    const wm = new WizardMaster();
+    const restored = new WizardMaster();
+    restored.restoreFromSave(wm.addSaveData({}));
+    expect(restored.foundList).toEqual([]);
+    expect(restored.displayedWizard()).toBeNull();
+  });
+
+  it("restoreFromSave(undefined) is a no-op (fresh state)", () => {
+    const wm = new WizardMaster();
+    wm.restoreFromSave(undefined);
+    expect(wm.foundList).toEqual([]);
+    expect(wm.activeWizardId).toBe(-1);
+  });
+
   it("a wizard summoned and then KILLED cannot be re-summoned (no banked record for a dead wizard)", () => {
     const p = spawnPlayer(50, 50); game.player = p; game.entities = [p];
     spawnUnit("amotonlinInGame", 100, 100, { animChar: "amo" });    // meet -> found

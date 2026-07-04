@@ -140,15 +140,36 @@ export class PlayerControl extends Component {
     const team = this.entity.send("getTeam") as string;
     const raw = input.cursor() ?? this.entity.get(Movement);
     const at = clampToPlayArea(raw.x, raw.y);
-    // summonArmy fields the battalion only — wizards are summoned SEPARATELY via summonWizard (#wizard/Q).
-    // Re-fielding a banked wizard here (untracked by wizardMaster) would let a later Q spawn a second copy.
-    const types = game.armyMaster.reserveTypes(team).filter((t) => registry.resolveActor(t.replace(/^#/, ""))?.["wizard"] !== true);
-    let i = 0;
-    for (const typ of types) {
-      if (game.teamMaster.atCapacity(team)) break;
-      const ang = (i++ / Math.max(1, types.length)) * Math.PI * 2;
-      const p = clampToPlayArea(at.x + Math.cos(ang) * 20, at.y + Math.sin(ang) * 20);
-      game.armyMaster.createUnit(team, typ, p.x, p.y);
+    // modAutoSummon.summonArmy: field the battalion from the FIXED roster #armyMembers (act_player),
+    // dividing the available slots by the roster size. When slots are tight (< roster size) divide by
+    // (size-2) instead — this drains the slots on the LOWER units so the 2 HIGHER units (dwarf, king) get
+    // dropped. Iterate the roster IN ORDER (not the reserve's arbitrary key set). Roster has no wizards
+    // (they're summoned separately via #wizard/Q), so no wizard filtering is needed.
+    const roster = (registry.resolveActor("player")?.["armyMembers"] as string[] | undefined)
+      ?? ["#warrior", "#archer", "#monk", "#dwarf", "#kingInGame"];
+    const membersNum = roster.length;
+
+    let availableSlots = 0;
+    while (!game.teamMaster.atCapacity(team, availableSlots + 1)) availableSlots++;
+    if (availableSlots === 0) return;
+
+    let slotsPerUnit = Math.floor(availableSlots / (availableSlots >= membersNum ? membersNum : Math.max(1, membersNum - 2)));
+    if (slotsPerUnit < 1) slotsPerUnit = 1;
+
+    for (const typ of roster) {
+      if (availableSlots === 0) break;
+      let unitsAvailable = game.armyMaster.reserveCount(team, typ);
+      // The original `exit`s (returns from the whole handler) on the FIRST un-banked roster type, so the
+      // army is fielded only as a CONTIGUOUS banked prefix of the roster — not skipping gaps.
+      if (unitsAvailable === 0) return;
+      const slotsForTyp = Math.min(slotsPerUnit, unitsAvailable, availableSlots);
+      for (let i = 0; i < slotsForTyp; i++) {
+        if (availableSlots === 0 || unitsAvailable === 0) break;
+        // original jitters Y only (startLoc.locv + random(30)-15); X stays at the cursor's column.
+        const p = clampToPlayArea(at.x, at.y + (Math.floor(game.rng.next() * 30) - 15));
+        if (!game.armyMaster.createUnit(team, typ, p.x, p.y)) return; // original `exit`s on a failed createUnit
+        availableSlots--; unitsAvailable--;
+      }
     }
   }
 
@@ -197,9 +218,10 @@ export class PlayerControl extends Component {
     const mv = input.moveVector();
     m.intentX = mv.x; m.intentY = mv.y;
 
-    // G key (objAiPlayer.interpretGameKeys -> setGmg): toggle the Golden Machine Gun on/off (edge).
+    // E key (objAiPlayer.interpretGameKeys -> setGmg): toggle the Golden Machine Gun on/off (edge).
+    // Original keyset (Show Keys screen): E = Golden Machine Gun On/Off.
     const gmgBefore = this.gmgOn;
-    if (input.pressed("g")) this.setGmg();
+    if (input.pressed("e")) this.setGmg();
     const gmgToggled = this.gmgOn !== gmgBefore;
 
     // #spell1..#spell9 hotkeys (objAiPlayer:157-187 -> selectSpell(n)): number keys 1-9 switch the current
@@ -207,23 +229,25 @@ export class PlayerControl extends Component {
     // spell. selectSpell is 0-indexed, so #spellN -> n-1. (Save/load moved off 1/2 to F5/F9 in main.ts.)
     for (let n = 1; n <= 9; n++) if (input.pressed(String(n))) this.wm().selectSpell(n - 1);
 
-    // #weaponSelector (objAiPlayer.interpretGameKeys -> displayWeaponSelector): the E key opens the weapon
+    // #weaponSelector (objAiPlayer.interpretGameKeys -> displayWeaponSelector): the Q key opens the weapon
     // palette; while it's up, a click picks a weapon (so the primary fire is suppressed, below).
-    if (input.pressed("e")) game.weaponPalette?.open(this.entity);
+    // Original keyset (Show Keys screen): Q = Select Weapon.
+    if (input.pressed("q")) game.weaponPalette?.open(this.entity);
     if (game.weaponPalette?.displaying) game.weaponPalette.tick(input, this.entity);
 
-    // the summon-helper system (modSummonWizard / modAutoSummon): Q summons/unsummons the selected found
-    // wizard at the cursor, Tab cycles which wizard, C summons a battalion from the reserve.
-    if (input.pressed("q")) this.summonWizard(input);
-    if (input.pressed("tab")) game.wizardMaster.selectNext();
+    // the summon-helper system (modSummonWizard / modAutoSummon): F summons/unsummons the selected found
+    // wizard at the cursor, R (or Tab) cycles which wizard, C summons a battalion from the reserve.
+    // Original keyset (Show Keys screen): F = Summon a Wizard, R = Select Wizard, C = Summon a Battalion.
+    if (input.pressed("f")) this.summonWizard(input);
+    if (input.pressed("r") || input.pressed("tab")) game.wizardMaster.selectNext();
     if (input.pressed("c")) this.summonArmy(input);
 
-    // aim point: the cursor in world space, else the auto-acquired target (teamMaster.findTarget over
-    // data allegiance/roles — same logic every unit uses), else current facing
+    // objAiPlayer.interpretMouse: the player's attacks are MOUSE-AIMED (toward the cursor) and never
+    // auto-targeted. Aim at the cursor; with no cursor (keyboard-only play) aim along the current facing.
+    // The old auto-target fallback (findTarget → nearest enemy) snapped Merlin's swing/cast onto units he
+    // walked past, so he "auto-punched while walking" — which the mouse-aimed original never does.
     const cur = input.cursor();
-    const target = game.teamMaster.findTarget(this.entity).obj;
-    const aim = cur ?? (target ? target.send("getPos") as { x: number; y: number }
-      : { x: m.x + (m.facingLeft ? -100 : 100), y: m.y });
+    const aim = cur ?? { x: m.x + (m.facingLeft ? -100 : 100), y: m.y };
     this.aimLeft = aim.x < m.x;
 
     const wm = this.wm();
@@ -287,6 +311,18 @@ export class PlayerControl extends Component {
   private tickStream(): void {
     const s = this.stream!;
     const m = this.entity.get(Movement);
+    const cur = game.input.cursor();
+    if (cur) {
+      s.aimX = cur.x;
+      s.aimY = cur.y;
+    } else {
+      const target = game.teamMaster.findTarget(this.entity).obj;
+      if (target) {
+        const tp = target.send("getPos") as { x: number; y: number };
+        s.aimX = tp.x;
+        s.aimY = tp.y;
+      }
+    }
     // emit as many shots as fall due this tick (fireDelay==0 -> drain the whole stream in one tick).
     let guard = 0;
     while (s.counter <= 0 && guard++ < 10000) {
@@ -389,8 +425,14 @@ export class PlayerControl extends Component {
   }
 
   // drive an in-progress swing each tick: fire the hit on each FRESH #animframe crossing of the swing strip,
-  // and end the swing when the strip completes (looped). The player may keep moving during the swing.
+  // and end the swing when the strip completes (looped).
+  // ORIGINAL: melee is a STATIONARY-only action — there is no mer_naturalMeleeWalk/weaponMeleeWalk strip and
+  // no getAnimSym moving-branch for melee (unlike charge/release/magic which have *Walk variants). So a MOVING
+  // player stays on the walk strip and the swing's #animframe (the sole hit trigger) never fires; the swing is
+  // PENDING. The instant movement stops, getAnimSym yields the melee strip, it plays from frame 0, and the hit
+  // lands — "the punch comes out the moment you stop." Mirror that: pause the swing entirely while moving.
   private driveSwing(m: Movement): void {
+    if (m.moving()) return; // pending: don't advance/fire/expire the swing while walking (no melee-walk strip)
     const an = this.entity.tryGet(Anim);
     if (this.swingAnimates && an) {
       if (an.frameFresh() && this.swingFrames.includes(an.attackFrame())) this.performMeleeHit(m);
@@ -420,7 +462,9 @@ export class PlayerControl extends Component {
   animAction(): string | null {
     if (this.entity.send("isDead")) return null;
     const moving = this.entity.get(Movement).moving();
-    if (this.meleeT > 0) return this.swingMagicMelee ? "magicMelee" : this.usingSword ? "weaponMelee" : "naturalMelee";
+    // melee has NO moving (*Walk) strip in the original — a moving player stays on the walk strip and the
+    // swing is deferred. So only show the melee strip when stationary; while moving fall through to walk.
+    if (this.meleeT > 0 && !moving) return this.swingMagicMelee ? "magicMelee" : this.usingSword ? "weaponMelee" : "naturalMelee";
     if (this.releaseT > 0) return moving ? "releasewalk" : "release";
     if (this.charging) return moving ? "chargewalk" : "charge";
     return null;
@@ -748,7 +792,39 @@ export class CpuAI extends Component {
       : Math.max(16, Math.min(90, ca.reach));
   }
 
-  private targetInReach(d: number): boolean { return d <= (this.ranged ? this.reachRanged : this.reach); }
+  private targetInReach(d: number): boolean {
+    if (this.ranged) {
+      return d <= this.reachRanged;
+    }
+    // Melee target reach: check if strikePointLeft or strikePointRight falls inside targetRect,
+    // matching original Lingo objAiCPU.targetInReachMelee behavior.
+    const target = this.target;
+    if (!target) return false;
+    const vm = target.tryGet(Movement);
+    if (!vm) return d <= this.reach;
+    const m = this.entity.tryGet(Movement);
+    if (!m) return d <= this.reach;
+    const ca = this.entity.tryGet(WeaponManager)?.getCurrentAttack();
+    const cl = ca?.collisionLoc ?? { x: 18, y: 0 };
+
+    const slx = m.x + cl.x * -1;
+    const sly = m.y + cl.y;
+    const srx = m.x + cl.x * 1;
+    const sry = m.y + cl.y;
+
+    // victim half-extent from the live sprite (getRadius = getWidth()/2), not the fixed box — so a CPU unit
+    // counts a big target as "in reach" at its edge, matching the original getRect, and doesn't path into it.
+    const vr = target.send("getRadius") as number;
+    const half = (typeof vr === "number" && vr > 0) ? vr : vm.box / 2;
+    const left = vm.x - half;
+    const right = vm.x + half;
+    const top = vm.y - half;
+    const bottom = vm.y + half;
+
+    const leftInside = slx >= left && slx <= right && sly >= top && sly <= bottom;
+    const rightInside = srx >= left && srx <= right && sry >= top && sry <= bottom;
+    return leftInside || rightInside;
+  }
 
   // updateRunReload (kite): back away from the target until the shot has cooled, then re-engage.
   private updateRunReload(m: Movement): void {
@@ -887,6 +963,12 @@ export class CpuAI extends Component {
   // the whole stream in one tick (guarded). Mirrors PlayerControl.tickStream exactly (same counter model).
   private updateCpuStream(m: Movement): void {
     const s = this.cpuStream!;
+    const target = this.target;
+    if (target && !target.send("isDead")) {
+      const tp = target.send("getPos") as { x: number; y: number };
+      s.aimX = tp.x;
+      s.aimY = tp.y;
+    }
     let guard = 0;
     while (s.counter <= 0 && guard++ < 10000) {
       s.charge -= s.attack.chargePerUnit;          // reduce charge (modFireBullets.fireBullet)
@@ -992,7 +1074,7 @@ export class CpuAI extends Component {
         } else if (ca && ca.type === "magic" && (ca.explodeFunction === "#depositMines" || ca.explodeFunction === "depositMines")) {
           // verdanlinInGame energyMines: deposit charge/chargePerUnit #energyMine actors at the target loc
           // (the spell's would-be landing point). The mines carry #aldevar so they hit the caster's enemies.
-          depositMines(ca, chargeMaxOf(ca, this.entity.get(Mana)), m.x + dx, m.y + dy);
+          depositMines(ca, chargeMaxOf(ca, this.entity.get(Mana)), m.x + dx, m.y + dy, this.entity.id);
         } else if (ca && ca.type === "magic" && ca.payloadFunction.includes("takeHeal")) {
           const tgc = this.entity.send("getTargeting") as { hits: string[]; allegiance: string } | undefined;
           fireBulletPayload(this.entity.id, mz.x, mz.y, dx, dy, ca.spellSpeed / 6,

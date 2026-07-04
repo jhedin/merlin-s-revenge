@@ -25,6 +25,10 @@ export class CutscenePlayer {
   // modThespian pSkipCounter: an #ingame dialogue can only be walked/clicked away AFTER skipDuration
   // frames (i[#skipDuration]=30) — so brushing a movement key as the scene opens doesn't instantly skip it.
   private skipGrace = 30;
+  // the intro cutscene shows [Start] / [Back to Title Screen] controls (set by main.ts). `aborted` is set
+  // when the player clicks [Back to Title Screen] so the host returns to the title instead of starting.
+  intro = false;
+  aborted = false;
 
   constructor(cut: Cutscene, private assets: Assets, private viewW: number, private viewH: number,
     host: Partial<ThespianHost> = {}) {
@@ -38,6 +42,12 @@ export class CutscenePlayer {
     if (this.skipGrace > 0) this.skipGrace--;
     // ESC / space / enter always cancel the whole scene.
     let skip = input.pressed("escape") || input.pressed(" ") || input.pressed("enter");
+    // intro controls: clicking [Start] begins the game (= skip); [Back to Title Screen] aborts to title.
+    if (this.intro && input.mousePressed()) {
+      const c = input.cursor(); const bandBot = this.thespian.bandBot; // cutscene is inset like the play area
+      if (c && c.y >= bandBot + 42 && c.y <= bandBot + 60) { this.aborted = true; skip = true; }
+      else if (c && c.y >= bandBot + 20 && c.y <= bandBot + 40) skip = true; // [Start]
+    }
     // objAiPlayer.interpretMoveKeys/interpretMouse -> modThespian.AIisTryingToMove: in an #ingame dialogue,
     // once the skip grace has elapsed, TRYING TO MOVE or CLICK cancels the script (scriptCancelled).
     if (this.ingame && this.skipGrace === 0) {
@@ -81,8 +91,12 @@ export class CutscenePlayer {
     const ctx = renderer.ctx;
     const { viewW, viewH } = this;
     const t = this.thespian;
-    ctx.fillStyle = `rgb(${Math.round(t.bg.r)},${Math.round(t.bg.g)},${Math.round(t.bg.b)})`;
+    // The original cutscene stage is a horizontal BAND coloured by backgroundColour, with the rest of the
+    // screen BLACK (speech sits on the black above; the [Start]/[Back] controls on the black below).
+    ctx.fillStyle = "#000";
     ctx.fillRect(0, 0, viewW, viewH);
+    ctx.fillStyle = `rgb(${Math.round(t.bg.r)},${Math.round(t.bg.g)},${Math.round(t.bg.b)})`;
+    ctx.fillRect(0, t.bandTop, viewW, t.bandBot - t.bandTop);
 
     // actors (scaled 2x, anchored at the ground line) — drawn from each entity's OWN Anim sprite.
     const scale = 2;
@@ -118,19 +132,25 @@ export class CutscenePlayer {
       ctx.textAlign = "left"; ctx.restore();
     }
 
-    // modThespian.displaySpeechCutScene: BARE text floating just above the SPEAKER's head — no caption bar,
-    // no "speaker:" prefix (that bottom VN bar was a port invention). Centre-wrapped over the speaker.
+    // modThespian.displaySpeechCutScene: BLUE speech at the TOP-centre, on the black ABOVE the stage band
+    // (the original floats it across the top of the screen — not over the speaker's head).
     const speech = t.getSpeech();
     if (speech) {
-      const pos = t.speakerPos(speech.alias);
-      const cx = pos ? Math.round(pos.x) : viewW / 2;
-      // anchor above the 2×-scaled actor's head (feet at pos.y; ~55px sprite ×2 ≈ 110px tall).
-      const topY = Math.max(12, (pos ? Math.round(pos.y) - 124 : 24));
-      ctx.fillStyle = "#fff"; ctx.textAlign = "center";
-      wrapCentered(ctx, this.assets, speech.text, cx, topY, Math.min(viewW - 16, 260), 11);
+      ctx.textAlign = "center";
+      wrapCentered(ctx, this.assets, speech.text, viewW / 2, t.bandTop - 42, Math.min(viewW - 16, 360), 12, "#3838ff");
       ctx.textAlign = "left";
     }
-    ctx.fillStyle = "#445"; drawText(ctx, this.assets, "small", "esc/space: skip", 12, 14, { fallbackFont: "8px monospace" });
+    // controls on the black BELOW the band: the intro offers [Start] / [Back to Title Screen]; other
+    // full cutscenes just show a skip hint.
+    if (this.intro) {
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#cfcfcf"; ctx.font = "bold 11px serif";
+      ctx.fillText("[Start]", viewW / 2, t.bandBot + 30);
+      ctx.fillText("[Back to Title Screen]", viewW / 2, t.bandBot + 50);
+      ctx.textAlign = "left";
+    } else {
+      ctx.fillStyle = "#445"; drawText(ctx, this.assets, "small", "esc/space: skip", 12, 14, { fallbackFont: "8px monospace" });
+    }
   }
 
   /** debug: visible cutscene actors' x positions (used by the H verification tool). */
@@ -186,7 +206,7 @@ function wrap(ctx: CanvasRenderingContext2D, assets: Assets, text: string, x: nu
 }
 
 // like wrap() but each line is CENTRED on cx (cutscene speech floats centred above the speaker's head).
-function wrapCentered(ctx: CanvasRenderingContext2D, assets: Assets, text: string, cx: number, y: number, maxW: number, lh: number): void {
+function wrapCentered(ctx: CanvasRenderingContext2D, assets: Assets, text: string, cx: number, y: number, maxW: number, lh: number, colour = "#fff"): void {
   const M = (s: string) => measureText(ctx, assets, "small", s);
   const words = text.split(" ");
   const lines: string[] = []; let line = "";
@@ -196,5 +216,5 @@ function wrapCentered(ctx: CanvasRenderingContext2D, assets: Assets, text: strin
   }
   if (line) lines.push(line);
   let yy = y;
-  for (const ln of lines) { drawText(ctx, assets, "small", ln, cx, yy, { align: "center", colour: "#fff", fallbackFont: "10px monospace" }); yy += lh; }
+  for (const ln of lines) { drawText(ctx, assets, "small", ln, cx, yy, { align: "center", colour, fallbackFont: "10px monospace" }); yy += lh; }
 }

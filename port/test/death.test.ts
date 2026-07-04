@@ -54,14 +54,18 @@ describe("H2: death flow (modExtraLives.attemptRespawn vs gameOver)", () => {
     expect(p.send("getExtraLives")).toBe(1);
   });
 
-  it("extra-lives round-trips through the save chain", () => {
+  // modExtraLives.txt has NO addSaveData/restoreFromSave at all — extra lives are a mechanic carried over
+  // from a sibling game on this shared engine (Rapunzel's Escape); Merlin's Revenge never expects them to
+  // survive a save/load. Faithful behavior: the save chain doesn't even record a "lives" key, and a
+  // restored player's lives come only from its own init default, never from the save blob.
+  it("extra lives do NOT round-trip through the save chain (not saved in the original either)", () => {
     const p = spawnPlayer(0, 0);
     p.send("addExtraLife"); p.send("addExtraLife");
     const sd: Record<string, any> = {}; p.send("addSaveData", sd);
-    expect(sd["lives"].lives).toBe(2);
+    expect(sd["lives"]).toBeUndefined(); // ExtraLives contributes nothing to the save blob
     const p2 = spawnPlayer(0, 0);
     p2.send("restoreFromSave", sd);
-    expect(p2.send("getExtraLives")).toBe(2);
+    expect(p2.send("getExtraLives")).toBe(0); // restore leaves it at its own init default, unaffected
   });
 });
 

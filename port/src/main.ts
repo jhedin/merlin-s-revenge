@@ -3,13 +3,13 @@
 // 30 Hz fixed-timestep loop: data -> world -> entities/dispatch -> render -> input -> combat.
 
 import { Assets, mapList, type MapMeta } from "./render/assets";
-import { drawText } from "./render/text";
+import { drawText, measureText } from "./render/text";
 import { Renderer, type Sprite } from "./render/renderer";
 import { buildSpellSprites, spellFaceTier } from "./render/spellSprites";
 import { medikitLayout } from "./render/hudLayout";
 import { drawMinimap } from "./render/minimap";
 import { healthBarColour } from "./render/healthBar";
-import { drawHealthRollover, drawEnemyEnergyBars } from "./render/rollover";
+import { HealthRollover, starRow } from "./render/rollover";
 import { Input } from "./systems/input";
 import { AudioSystem } from "./systems/audio";
 import { GameLoop } from "./engine/loop";
@@ -17,7 +17,7 @@ import { parseMap, type GameMap, type Vec2i } from "./world/map";
 import { parseTileKey, tileSymbol, type TileKey } from "./data/tlk";
 import { RoomManager, type ExitArrowRect } from "./world/rooms";
 import { baseWizardSym } from "./systems/wizardMaster";
-import { registry } from "./game/data";
+import { registry, rawData } from "./game/data";
 import { resolveAttack } from "./components/weapon";
 import { game, initContext } from "./game/context";
 import { spawnPlayer, spawnEnemy, spawnUnit, spawnAlly } from "./entities/archetypes";
@@ -125,11 +125,33 @@ async function main() {
   }
   const { map, activeKey, objectsKey } = loaded;
   const tile = map.tilePx;
-  const viewW = map.roomSize.x * tile, viewH = map.roomSize.y * tile;
-  const renderer = new Renderer(canvas, viewW, viewH, 2);
+  // Stage width/height (faithful to the original Director Stage resolution, e.g. 576x288).
+  // This prevents HUD squeezing, title screen offsets, and aspect ratio distortion on maps
+  // with custom roomSizes (like Roads to Aldevar's 16x9).
+  const viewW = 576, viewH = 288;
+  // The original Director Stage is 640x320 (DRCF stage rect): the 576x288 play area inset by symmetric black
+  // HUD margins (32px left/right, 16px top/bottom) that carry the HUD (potions/medikit/wizard/gmg top, health
+  // bottom, army right strip). The canvas IS that stage; the world renders inset, the HUD on the margins.
+  const MARGIN_X = 32, MARGIN_Y = 16;
+  const renderer = new Renderer(canvas, viewW, viewH, 2, MARGIN_X, MARGIN_Y);
+  // characterEnergyRollOverMaster: one sticky-target singleton for the game's lifetime (matches the
+  // original's single global instance — the lock persists across ticks, see render/rollover.ts).
+  const healthRollover = new HealthRollover();
+  const stageW = renderer.stageW, stageH = renderer.stageH; // 640x320
+  // Fit the canvas to the browser viewport (aspect-preserving) so the whole STAGE (play area + HUD margins)
+  // fills the window like the original's native window. Internal resolution stays the stage size (crisp);
+  // only the CSS display size scales. Mouse mapping uses getBoundingClientRect so any display scale is fine.
+  const fitCanvas = () => {
+    const s = Math.max(1, Math.min(window.innerWidth / stageW, window.innerHeight / stageH));
+    canvas.style.width = `${Math.round(stageW * s)}px`;
+    canvas.style.height = `${Math.round(stageH * s)}px`;
+  };
+  fitCanvas();
+  window.addEventListener("resize", fitCanvas);
 
   const input = new Input();
   input.attachMouse(canvas); // objAiPlayer aims charged magic at the cursor
+  input.setViewOffset(MARGIN_X, MARGIN_Y); // play area is inset by the HUD margins → cursor() returns world coords
   const audio = new AudioSystem(assets.index);
   audio.preload();
   // browsers block audio until a user gesture — resume on the first key/click, then play title music
@@ -183,6 +205,7 @@ async function main() {
     if (s.map !== loaded.meta.id) { flash("save is for a different map"); return false; }
     game.armyMaster.restoreFromSave(s.army);
     game.potionMaster.restoreFromSave(s.potions);
+    game.wizardMaster.restoreFromSave(s.wizard); // modSummonWizard.restoreFromSave (found/selected/active/lost)
     if (s.sound) audio.setMuted(!!s.sound.muted); // soundMaster.restoreFromSave: restore the mute state
     rooms.restoreCleared(s.rooms.filter((r) => r.cleared).map((r) => r.num));
     rooms.restorePState(pStateFromSave(s));            // every visited room's exact state (H3)
@@ -239,6 +262,7 @@ async function main() {
         cutscene = CutscenePlayer.withBound(completeScript, assets, viewW, viewH, cutHost, { m: player });
       } else if (s === "intro") {
         cutscene = new CutscenePlayer(intro, assets, viewW, viewH, cutHost);
+        cutscene.intro = true; // shows [Start] / [Back to Title Screen] controls
       } else {
         // no script available (e.g. no wasted asset): finish immediately so the FSM advances.
         cutscene = null; queueMicrotask(() => scene.cutSceneFinished(s));
@@ -247,7 +271,7 @@ async function main() {
     loadGame: () => doLoad(),
     pause: () => { /* simulation is gated on scene.isPaused() in the loop */ },
     resume: () => { /* resume handled by the loop reading scene state */ },
-    onTitle: () => audio.playMusic("baroque_rock_v1"),
+    onTitle: () => audio.playMusic(rawData["dd_playMusic_titleMusic"]?.data || "baroque_rock_v1"),
     // K12: play a chatter stone's #scriptToPerform over the LIVE game (the live Merlin bound as `m`,
     // ulin spawned). loadCutscene fetches+parses+caches the bundled scr_stonesN script on first trigger.
     playInGameCutScene: (name: string) => {
@@ -262,35 +286,38 @@ async function main() {
   // expose the cutscene trigger to the Chatter overlap FSM (minimal surface; avoids an import cycle).
   game.scene = { playInGameCutScene: (n) => scene.playInGameCutScene(n), isInGameCutscene: () => scene.isInGameCutscene() };
 
-  // title + controls menus (data-driven objMenu)
-  const mainTitleMenu = new Menu("", [
-    { label: "Start Game", action: () => scene.startGameFromTitle() },
-    { label: "Controls", action: () => { titleMenu = controlsMenu; } },
-  ]);
-  const setScheme = (n: "both" | "arrows" | "wasd" | "zqsd") => () => { input.setScheme(n); flash("controls: " + n); titleMenu = mainTitleMenu; };
-  const controlsMenu = new Menu("CONTROLS", [
-    { label: "Arrows", action: setScheme("arrows") },
-    { label: "WASD", action: setScheme("wasd") },
-    { label: "ZQSD", action: setScheme("zqsd") },
-    { label: "WASD + Arrows", action: setScheme("both") },
-    { label: "Back", action: () => { titleMenu = mainTitleMenu; } },
-  ]);
-  let titleMenu: Menu = mainTitleMenu;
-
-  // open a K18 overlay screen FROM the pause menu (gameMaster.menuOptionSelected -> screenOn). The base
-  // stays paused; the overlay screen draws + handles input until it closes back to the ingame menu.
+  // open a K18 overlay screen FROM the menu.
   const openScreen = (overlay: "showArmy" | "instructions" | "keyConfig") => () => {
     screens.open(overlay); scene.screenOn(overlay);
   };
-  // in-game pause menu (objMenu): Save is SHADOWED while a cutscene plays (gameMaster.isMenuItemShadowed).
-  const pauseMenu = new Menu("PAUSED", [
-    { label: "Resume", action: () => scene.closeOverlay() },
-    { label: "Save game", action: () => { doSave(); flash("game saved"); scene.closeOverlay(); }, shadowed: () => scene.isCutscene() },
-    { label: "Load game", action: () => { if (doLoad()) flash("game loaded"); scene.closeOverlay(); }, shadowed: () => !hasSave() },
-    { label: "Show army", action: openScreen("showArmy") },
+
+  // title screen menu (dd_menu_title): Start Game, Load Game, Show Keys, Instructions, View Credits.
+  // NOTE: the #chooseKeys action is labelled "Show Keys" HERE (per dd_menu_title) but "Choose Keys"
+  // in the in-game pause menu (per dd_menu_game) — same action, two different labels in the originals.
+  const mainTitleMenu = new Menu("", [
+    { label: "Start Game", action: () => scene.startGameFromTitle() },
+    { label: "Load Game", action: () => scene.goScreen("game", "loadGame"), shadowed: () => !hasSave() },
+    { label: "Show Keys", action: openScreen("keyConfig") },
     { label: "Instructions", action: openScreen("instructions") },
-    { label: "Choose keys", action: openScreen("keyConfig") },
-    { label: "Return to title", action: () => scene.toTitle() },
+    { label: "View Credits", action: () => { screens.openCredits(); scene.goScreen("victory"); } },
+  ]);
+  let titleMenu: Menu = mainTitleMenu;
+
+  // in-game pause menu (dd_menu_game): Game Menu title
+  const pauseMenu = new Menu("Game Menu", [
+    { label: "Instructions", action: openScreen("instructions") },
+    { label: "Choose Keys", action: openScreen("keyConfig") },
+    { label: "Show Army", action: openScreen("showArmy"), shadowed: () => !game.armyMaster || (game.armyMaster.getReserveArmy("#aldevar")?.length ?? 0) === 0 },
+    { label: "Sound On", action: () => { audio.toggleMute(); flash("sound on"); }, shadowed: () => !game.audio?.muted },
+    { label: "Sound Off", action: () => { audio.toggleMute(); flash("sound off"); }, shadowed: () => !!game.audio?.muted },
+    { label: "-", action: () => {} },
+    { label: "Save Game", action: () => { doSave(); flash("game saved"); scene.closeOverlay(); }, shadowed: () => scene.isCutscene() },
+    { label: "-", action: () => {} },
+    { label: "Load Game", action: () => { if (doLoad()) flash("game loaded"); scene.closeOverlay(); }, shadowed: () => !hasSave() },
+    { label: "-", action: () => {} },
+    { label: "Resume Game", action: () => scene.closeOverlay() },
+    { label: "-", action: () => {} },
+    { label: "Quit Game", action: () => scene.toTitle() },
   ]);
 
   // death pathway (objPlayerMerlinCharacter.takeHit -> #die -> attemptRespawn / gameOver). The die anim
@@ -308,17 +335,31 @@ async function main() {
       // K19: an inter-screen transition tween is running — advance it (the goScreen action fires at its end)
       // and swallow this frame's input while it plays (no scene logic mid-transition).
       if (scene.isTransitioning()) { scene.tickTransition(); input.endTick(); return; }
+      // K18 overlay screens: handle input globally (both on title screen and in-game)
+      const ov = scene.currentOverlay();
+      if (ov) {
+        if (ov === "ingameMenu") {
+          if (input.pressed("escape")) scene.escapePressed(); else pauseMenu.tick(input);
+        } else {
+          if (screens.handleInput(ov, input)) {
+            if (scene.current() === "title") scene.backAScreen();
+            else scene.screenOn("ingameMenu");
+          }
+        }
+        input.endTick(); return;
+      }
+
       const s = scene.current();
       if (s === "title") {
         titleMenu.tick(input);
-      } else if (s === "controls") {
-        controlsMenu.tick(input);
       } else if (scene.isCutscene()) {
         // intro / wasted / gameComplete: a Thespian cutscene drives real actors; on finish, route by script.
         if (!cutscene || cutscene.tick(input)) {
           const which = scene.activeCutScene();
+          const aborted = cutscene?.aborted; // intro: [Back to Title Screen] was clicked
           cutscene = null;
-          if (which) scene.cutSceneFinished(which);
+          if (aborted) scene.toTitle();
+          else if (which) scene.cutSceneFinished(which);
         }
       } else if (s === "game") {
         // K12: a chatter stones cutscene plays over the live game (combat paused). Tick it; on finish (or
@@ -331,13 +372,6 @@ async function main() {
           input.endTick(); return;
         }
         if (scene.isPaused()) {
-          const ov = scene.currentOverlay();
-          if (ov === "ingameMenu") {
-            if (input.pressed("escape")) scene.escapePressed(); else pauseMenu.tick(input);
-          } else if (ov) {
-            // a K18 overlay screen (showArmy / instructions / key-config): on close, pop back to the menu.
-            if (screens.handleInput(ov, input)) scene.screenOn("ingameMenu");
-          }
           input.endTick(); return;
         }
         if (input.pressed("escape")) { scene.escapePressed(); input.endTick(); return; }
@@ -380,7 +414,11 @@ async function main() {
       } else if (s === "victory") {
         // K18: the game-complete cutscene routes to the CREDITS screen (creditsMaster) — scroll to the end,
         // then to the title. Space/enter skips. (movieMaster: gGameCompleteScript -> #creditsScreen -> title.)
-        if (!victoryCredits) { victoryCredits = true; screens.openCredits(); }
+        if (!victoryCredits) {
+          victoryCredits = true;
+          screens.openCredits();
+          audio.playMusic(rawData["dd_playMusic_creditsMusic"]?.data || "final_stand_2_v1");
+        }
         const done = screens.tickCredits();
         if (done || input.pressed(" ") || input.pressed("enter")) { victoryCredits = false; scene.toTitle(); }
       }
@@ -395,18 +433,28 @@ async function main() {
         const prog = scene.transitionProgress();                 // 0..1 across off+on
         const a = 1 - Math.abs(prog - 0.5) * 2;                   // triangle: 0 -> 1 (mid) -> 0
         renderer.ctx.fillStyle = `rgba(0,0,0,${a.toFixed(3)})`;
-        renderer.ctx.fillRect(0, 0, viewW, viewH);
+        renderer.ctx.fillRect(0, 0, stageW, stageH);
       }
     },
   );
 
   function renderScene() {
       const s = scene.current();
-      if (s === "title") { drawTitle(renderer, viewW, viewH); titleMenu.render(renderer, viewW, viewH, false); return; }
-      if (s === "controls") { drawTitle(renderer, viewW, viewH); controlsMenu.render(renderer, viewW, viewH, false); return; }
-      if (scene.isCutscene() && cutscene) { cutscene.render(renderer); return; }
-      if (s === "victory") { screens.renderCredits(renderer); return; } // K18: game-complete -> credits scroll
-      if (!rooms) { drawTitle(renderer, viewW, viewH); return; }
+      // Full-screen scenes (title/menus/cutscene/credits) fill the whole 640x320 stage; only the GAMEPLAY play
+      // area is inset by the HUD margins via renderer.beginWorld()/endWorld(). The title art is ~640-wide so it
+      // fills the stage and its right edge clips like the original (REVENGE's final letters run off the edge).
+      if (s === "title") {
+        const ov = scene.currentOverlay();
+        drawTitle(renderer, stageW, stageH);
+        if (ov) { renderer.beginWorld(); screens.render(renderer, ov); renderer.endWorld(); } // sub-screen, centred
+        else titleMenu.render(renderer, stageW, stageH, false);
+        return;
+      }
+      if (scene.isCutscene() && cutscene) { renderer.beginWorld(); cutscene.render(renderer); renderer.endWorld(); return; }
+      if (s === "victory") { renderer.beginWorld(); screens.renderCredits(renderer); renderer.endWorld(); return; } // credits scroll
+      if (!rooms) { drawTitle(renderer, stageW, stageH); return; }
+      // ── GAMEPLAY: the 576x288 play area, inset by the HUD margins ───────────────────────────────────
+      renderer.beginWorld();
       const passive = rooms.room.layer("#backgroundPassive");
       const active = rooms.room.layer("#backgroundActive");
       if (passive && rooms.passiveSheet) renderer.drawTileLayer(passive, rooms.passiveSheet);
@@ -437,25 +485,24 @@ async function main() {
       if (fg && rooms.foregroundSheet) renderer.drawTileLayer(fg, rooms.foregroundSheet, 0, 0, 0.5);
       // The freeze visual is the entity's OWN teal-tinted sprite (modFreeze.glowTeal -> modColourTransform,
       // carried through Anim.sprite()'s tint), NOT a separate overlay — so no box is drawn here (the original
-      // has no freeze-overlay object). Merlin's Revenge also has NO always-on health bars (gEnemyEnergyMasterOn
-      // =0); health/level/XP show only on mouse-hover (rollover, below).
-      drawEnemyEnergyBars(renderer, game.entities); // enemyEnergyMaster: team-colour bar over each DAMAGED CPU unit
-      drawHealthRollover(renderer, game.input.cursor(), game.entities, assets); // characterEnergyRollOverMaster (gCharacterEnergyRolloverOn=1)
+      // has no freeze-overlay object). Merlin's Revenge has NO always-on health bars (gEnemyEnergyMasterOn=0,
+      // confirmed in this game's own GameSpecific.ls — enemyEnergyMaster never starts); health/level/XP show
+      // only on mouse-hover (rollover, below).
+      healthRollover.tick(renderer, game.input.cursor(), game.entities, assets); // characterEnergyRollOverMaster (gCharacterEnergyRolloverOn=1), sticky-target
       weaponPalette.render(renderer, player, assets); // modWeaponSelector palette (over the world, under the HUD)
-      drawHud(renderer, player, assets);
-      // 5-state minimap (modMiniMap): #cur/#clr/#inf (+ data #fre/#spe) with a proximity distance blend.
-      // modMiniMap is OFF by default (pShowMiniMap=false); goNavMode shows it, leaveNavMode hides it — so it
-      // appears ONLY once the room is cleared (nav mode), as a "room safe" cue, not during combat.
+      // 5-state minimap (modMiniMap): appears only in nav mode (cleared room) — drawn inside the play area.
       const pm = player.get(Movement);
       if (game.navMode) drawMinimap(renderer, {
         map, loc: rooms.loc, cleared: rooms.clearedSet(), infested: rooms.infestedRooms(),
         playerPx: { x: pm.x, y: pm.y }, cursorPx: game.input.cursor(),
       }, viewW, viewH, assets);
-      // K12: overlay the in-game chatter cutscene (spawned ulin + speech bubble) over the live game.
+      // K12: the in-game chatter cutscene OR a sub-screen overlay — both draw over the live (inset) game.
       if (scene.isInGameCutscene() && inGameCut) inGameCut.renderInGame(renderer);
-      // K18 overlays (showArmy / instructions / key-config) draw over the live game via the screens host.
       else if (scene.currentOverlay() && scene.currentOverlay() !== "ingameMenu") screens.render(renderer, scene.currentOverlay()!);
-      if (scene.currentOverlay() === "ingameMenu") pauseMenu.render(renderer, viewW, viewH);
+      renderer.endWorld();
+      // ── HUD on the black margins (stage coords, NOT inset) ──────────────────────────────────────────
+      drawHud(renderer, player, assets);
+      if (scene.currentOverlay() === "ingameMenu") pauseMenu.render(renderer, stageW, stageH); // pause menu fills the stage
   }
   loop.start();
   (window as any).__game = game;
@@ -482,7 +529,7 @@ async function main() {
 
 function drawTitle(renderer: Renderer, w: number, h: number) {
   const ctx = renderer.ctx;
-  ctx.fillStyle = "#0a1020"; ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = "#000"; ctx.fillRect(0, 0, w, h);
   const a = game.assets;
   // Faithful title composite: the recovered Director Score frame-30 (titleScreen) sprite layout —
   // backdrop bar-tiles (stretched to their sprite rect), the MERLIN'S/REVENGE letter glyphs, and the
@@ -492,20 +539,54 @@ function drawTitle(renderer: Renderer, w: number, h: number) {
   const sprites = a.titleSprites();
   if (sprites.length) {
     for (const s of sprites) {
-      const x = s.locH - s.reg[0], y = s.locV - s.reg[1];
-      const stretch = (s.w !== s.img.width || s.h !== s.img.height);
-      if (stretch) ctx.drawImage(s.img, x, y, s.w, s.h);
-      else ctx.drawImage(s.img, x, y);
+      // top-left = loc - registration, but the reg is in BITMAP px; for a STRETCHED sprite (the grass
+      // patches are 64×10 masks blown up to ~90×72) the reg must scale by the stretch factor too, else
+      // the patch lands low/right of the units that stand on it. (Unstretched letters/units: factor 1.)
+      const bw = (s.img as { width: number }).width, bh = (s.img as { height: number }).height;
+      const sx = bw ? s.w / bw : 1, sy = bh ? s.h / bh : 1;
+      const x = s.locH - s.reg[0] * sx, y = s.locV - s.reg[1] * sy;
+      if (s.name === "background" || s.name === "background02") {
+        // The #background / #background02 sprites are tiny 1-bit grass-texture masks tinted at draw time
+        // (the bitmap itself is black). In the ORIGINAL both the left (players) and right (monsters)
+        // clusters sit on the SAME solid GREEN grass patch — fill green for BOTH (not red on the right).
+        const grad = ctx.createLinearGradient(x, y, x, y + s.h);
+        grad.addColorStop(0, "rgb(70, 175, 45)");
+        grad.addColorStop(1, "rgb(28, 110, 24)");
+        ctx.fillStyle = grad;
+        ctx.fillRect(x, y, s.w, s.h);
+      } else {
+        const stretch = (s.w !== s.img.width || s.h !== s.img.height);
+        if (stretch) ctx.drawImage(s.img, x, y, s.w, s.h);
+        else ctx.drawImage(s.img, x, y);
+      }
     }
   } else {
     // Fallback (title art not bundled/loaded): the #menu bitmap face scaled ×2, then system fonts.
     ctx.fillStyle = "#fc4";
     drawText(ctx, a, "menu", "MERLIN'S REVENGE", w / 2, h / 2 - 48, { align: "center", scale: 2, fallbackFont: "bold 26px serif" });
   }
-  // Control hints (port help text, not part of the original Score) via the #small bitmap face.
-  ctx.fillStyle = "#566";
-  drawText(ctx, a, "small", "move: WASD/arrows   aim: mouse   hold to charge magic, release to cast   punch: auto", w / 2, h - 26, { align: "center", fallbackFont: "8px monospace" });
-  drawText(ctx, a, "small", "spells: 1-9   save/load: F5/F9   pause: Esc   mute: M", w / 2, h - 14, { align: "center", fallbackFont: "8px monospace" });
+  // Title text members (Director text FIELDS, recovered as title.json.textMembers — they carry no
+  // bitmap, so build_assets can't bundle them). Rendered with the system font to match the original's
+  // native-font look (and so '–'/'·' render — the #small bitmap face lacks them). Version =
+  // lower-right (orig members 36/39 @ ~(554,161)/(546,175)); copyright footer = bottom edge (orig
+  // members 56/57 @ y=303). Re-spun for the web port; attribution unchanged (still Steve Riddett).
+  ctx.save();
+  ctx.textBaseline = "alphabetic";
+  ctx.fillStyle = "#b9c2d0";
+  ctx.textAlign = "right";
+  ctx.font = "bold 9px 'Segoe UI', sans-serif";
+  ctx.fillText("Merlin Engine", w - 6, 169);
+  ctx.fillText("Web Port · v5.01", w - 6, 181);
+  ctx.fillStyle = "#868e9c";
+  ctx.font = "9px 'Segoe UI', sans-serif";
+  ctx.textAlign = "left";
+  ctx.fillText("© 2000–2026 Steve Riddett of The Metal Box", 6, h - 3);
+  ctx.textAlign = "right";
+  ctx.fillText("Visit Us: themetalbox.com", w - 6, h - 3);
+  ctx.restore();
+  // NB: the original title shows NO control hints (its bottom band is the copyright, added above) — so
+  // the port's old WASD/spells hint lines were removed here to match. (Controls live on the Instructions
+  // and Show Keys screens.)
   ctx.textAlign = "left";
 }
 
@@ -520,65 +601,196 @@ function drawHud(renderer: Renderer, player: import("./engine/dispatch").Entity,
   // ON TOP of it, width-clipped to health % and inset by the 2px bar border — matching the original's
   // surround(locZ) + colour-dot(locZ+1, barBorder-inset) composite. (The surround interior is opaque, so
   // drawing it over the fill — as before — produced a flat blank bar.)
+  // BOTTOM of the screen, like the original: the "health" label (health_grey) at the far left, then the
+  // surround frame STRETCHED into a wide bar across the rest of the width, filled red→yellow→green by HP
+  // (objMulticolourEnergyBar). The surround sprite in the Score is stretched wide — not drawn at member size.
+  // The HUD draws on the STAGE (the black margins around the inset play area), not the play area: health on the
+  // bottom margin, potions/medikit/wizard on the top margin, right-aligned army strip — at the original coords.
+  const W = renderer.stageW, Hgt = renderer.stageH;
+  const label = assets.member("health_grey");
   const surround = assets.member("health_bar_surround");
+  // health_grey label at its Score mark (32, 306); health_bar_surround at x=104, stretched to ~51% across (x329).
+  if (label) ctx.drawImage(label.img, 32, Hgt - 14);
+  else { ctx.fillStyle = "#b9c2d0"; drawText(ctx, assets, "small", "health", 32, Hgt - 4, { fallbackFont: "8px monospace" }); }
+  const barX = 104, barY = Hgt - 15, barH = 14, barW = Math.round(W * 0.51) - barX;
   if (surround) {
     const b = 2; // barBorder (HUD)
-    ctx.drawImage(surround.img, 8, 6);
+    ctx.drawImage(surround.img, barX, barY, barW, barH);
     ctx.fillStyle = healthBarColour(hp);
-    ctx.fillRect(8 + b, 6 + b, Math.round((surround.w - 2 * b) * hp), surround.h - 2 * b); // energy fill, on top
+    ctx.fillRect(barX + b, barY + b, Math.round((barW - 2 * b) * hp), barH - 2 * b); // energy fill, on top
   } else {
-    ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(6, 6, 104, 24);
-    ctx.fillStyle = healthBarColour(hp); ctx.fillRect(8, 8, 100 * hp, 6);
+    ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(barX, barY, barW, barH);
+    ctx.fillStyle = healthBarColour(hp); ctx.fillRect(barX + 2, barY + 2, (barW - 4) * hp, barH - 4);
   }
-  const xp = player.get(Experience);
-  ctx.fillStyle = "#fc4"; ctx.fillRect(8, 22, 100 * Math.min(1, xp.frac()), 4);   // experience
-  // no mana bar: magic has no pool (charge is shown by the orb over the head); flag once acquired
-  // SS-1: "Lv" label via #small, the level number via #numbers (drawText routes the digit run). The ✦
-  // magic-acquired glyph isn't in any font key → kept as a procedural fillText icon.
-  ctx.fillStyle = "#fff";
-  drawText(ctx, assets, "small", "Lv " + xp.level, 114, 24, { fallbackFont: "8px monospace" });
-  if (hasSpell) { ctx.fillStyle = "#fc8"; ctx.font = "8px monospace"; ctx.fillText("✦", 114, 13); } // magic acquired (icon, not a font glyph)
-  // medikit display (objMedikitDisplayer): a horizontal composite — [on/off icon][green vertical energy bar
-  // = active kit's remaining HP][numeric banked count] — NOT a row of icons (the old port layout overlapped
-  // 16px icons at a 10px step). Positions from medikitLayout (the cast's displayer arithmetic).
+  // ── TOP MARGIN HUD at the original Score mark coords: medikit (32,0), wizard slot (72,0), GMG (90,0). ──
+  const TOP_Y = 0;
+  // the "? F2" help button (help_locz151): a STATIC Score sprite, so Director lands its registration point at
+  // the mark loc (16,14) — unlike the DISPLAYER icons, whose displayImageAtLoc forces regPoint #topLeft. Its
+  // reg is centred ([14,13]), so the true top-left = loc − reg ≈ (2,1). Subtract the reg to match the original.
+  const helpImg = assets.member("help_locz151I");
+  if (helpImg) ctx.drawImage(helpImg.img, 16 - helpImg.reg[0], 14 - helpImg.reg[1]);
+  // medikit display (objMedikitDisplayer): [on/off icon][green vertical kit-HP bar][banked count], at x=32.
   const kits = (player.send("getNumOfMedikits") as number) || 0;
   const onImg = assets.member("medikit_on"), offImg = assets.member("medikit_off");
   if (onImg && offImg) {
-    const L = medikitLayout(8, 30, onImg.img.width || 16, onImg.img.height || 16);
+    const L = medikitLayout(32, TOP_Y, onImg.img.width || 16, onImg.img.height || 16);
     ctx.drawImage(((player.send("getMedikitActive") as boolean) ? onImg : offImg).img, L.icon.x, L.icon.y);
     const frac = (player.send("getMedikitFrac") as number) || 0;        // objEnergyBar #vertical, rgb(0,200,0)
     ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.fillRect(L.bar.x, L.bar.y, L.bar.w, L.bar.h);
     const fh = Math.round(L.bar.h * frac);
     ctx.fillStyle = "rgb(0,200,0)"; ctx.fillRect(L.bar.x, L.bar.y + (L.bar.h - fh), L.bar.w, fh); // fill bottom-up
-    drawText(ctx, assets, "numbers", String(kits), L.counter.x, L.counter.y, { fallbackFont: "8px monospace" });
-  } else if (kits > 0) { ctx.fillStyle = "#f88"; drawText(ctx, assets, "small", "Kits " + kits, 8, 38, { fallbackFont: "8px monospace" }); }
-  // extra lives (modExtraLives): no extraLives_text bitmap shipped, so a plain counter. The ♥ glyph
-  // isn't in any font key → kept as a procedural icon; the count routes through #numbers via drawText.
-  const lives = (player.send("getExtraLives") as number) || 0;
-  if (lives > 0) { ctx.fillStyle = "#fff"; ctx.font = "8px monospace"; ctx.fillText("♥", 8, 50); drawText(ctx, assets, "numbers", String(lives), 18, 50, { fallbackFont: "8px monospace" }); }
-  // SS-hud F2: GMG toggle icon (objGmgDisplayer.updateActive) — drawn only once collected; on/off mirrors
-  // the live getGmgOn toggle. The port HUD has its own layout, so it sits right of the medikit kit row.
+    // objDisplayCounter pNumDigits=2: zero-pad ("01" not "1") — same bitmap-counter semantics as the
+    // potions-drunk row (L8). counter.x here is a fixed absolute position (icon+bar+spacers), not derived
+    // from the text's own width, so no separate fixed-slot-width mechanism is needed — only the padding.
+    ctx.fillStyle = "#fff"; drawText(ctx, assets, "numbers", String(kits).padStart(2, "0"), L.counter.x, L.counter.y, { fallbackFont: "8px monospace" });
+  } else if (kits > 0) { ctx.fillStyle = "#f88"; drawText(ctx, assets, "small", "Kits " + kits, 32, TOP_Y + 10, { fallbackFont: "8px monospace" }); }
+  // wizard summon slot (objWizardDisplayer): the SELECTED wizard's 16x16 portrait, or a framed "?" when none
+  // found yet OR found-but-never-selected (see wizardMaster's HUD-portrait-timing note — a faithfully
+  // reproduced original bug: finding a wizard alone never reveals the portrait); yellow marker (wizard_on)
+  // when one is currently on the field.
+  const wsym = game.wizardMaster.displayedWizard();
+  if (wsym) {
+    const portrait = assets.member(wsym + "_off");
+    if (portrait) ctx.drawImage(portrait.img, 72, TOP_Y);
+    else { ctx.fillStyle = "#8cf"; drawText(ctx, assets, "small", wsym, 72, TOP_Y + 10, { fallbackFont: "8px monospace" }); }
+    if (game.wizardMaster.isSummoned) {
+      const mark = assets.member("wizard_on");
+      if (mark) ctx.drawImage(mark.img, 72, TOP_Y); else { ctx.strokeStyle = "#ff0"; ctx.strokeRect(72, TOP_Y, 16, 16); }
+    }
+  } else {
+    // empty wizard slot — a subtle frame (NO "?": the real "? F2" help button is its own sprite, drawn below).
+    ctx.fillStyle = "rgba(0,0,48,0.45)"; ctx.fillRect(72, TOP_Y, 16, 16);
+    ctx.strokeStyle = "#69c"; ctx.strokeRect(72.5, TOP_Y + 0.5, 15, 15);
+  }
+  // GMG toggle icon (objGmgDisplayer) at x=90 — once collected.
   if (player.send("getGmgCollected") as boolean) {
     const lit = player.send("getGmgOn") as boolean;
     const gimg = assets.member(lit ? "gmg_on" : "gmg_off");
-    if (gimg) ctx.drawImage(gimg.img, 70, 30);
-    else { ctx.fillStyle = lit ? "#ff4" : "#666"; drawText(ctx, assets, "small", "GMG", 70, 38, { fallbackFont: "8px monospace" }); }
+    if (gimg) ctx.drawImage(gimg.img, 90, TOP_Y);
+    else { ctx.fillStyle = lit ? "#ff4" : "#666"; drawText(ctx, assets, "small", "GMG", 90, TOP_Y + 10, { fallbackFont: "8px monospace" }); }
   }
-  // SS-hud F3: wizard summon portrait (objWizardDisplayer) — the SELECTED found wizard's bar portrait
-  // (<sym>_off), with the yellow 16×16 wizard_on marker overlaid when one is currently summoned on the
-  // field. Placed in the right HUD column below the GMG icon (the left column holds lives/flash).
-  const wsym = game.wizardMaster.current();
-  if (wsym) {
-    const portrait = assets.member(wsym + "_off");
-    if (portrait) ctx.drawImage(portrait.img, 70, 48);
-    else { ctx.fillStyle = "#8cf"; drawText(ctx, assets, "small", wsym, 70, 56, { fallbackFont: "8px monospace" }); }
-    if (game.wizardMaster.isSummoned) {
-      const mark = assets.member("wizard_on");
-      if (mark) ctx.drawImage(mark.img, 70, 48);
-      else { ctx.strokeStyle = "#ff0"; ctx.strokeRect(70, 48, 16, 16); }
+  // The original HUD has NO Lv/XP readout (level shows via the rollover stars) — dropped. Extra lives (♥N) and
+  // the transient flash message are port-only conveniences, kept minimal on the BOTTOM margin (right of the bar).
+  const lives = (player.send("getExtraLives") as number) || 0;
+  if (lives > 0) { ctx.fillStyle = "#fff"; ctx.font = "10px monospace"; ctx.fillText("♥", 556, Hgt - 4); drawText(ctx, assets, "numbers", String(lives), 568, Hgt - 13, { fallbackFont: "8px monospace" }); }
+  if (Date.now() < flashUntil) { ctx.fillStyle = "#ff4"; drawText(ctx, assets, "small", flashMsg, 360, Hgt - 13, { fallbackFont: "8px monospace" }); }
+  drawPotionsDrunk(ctx, assets, W);
+  drawArmyReserve(ctx, assets);
+}
+
+// potionMaster.displayAlignRight (casts/master_objects/potionMaster.txt): "POTIONS DRUNK" title + a per-type
+// [icon][count] pair, RIGHT-aligned at the top of the screen, walking the collected list right-to-left. The
+// count is tinted the potion's #counterColour (act_<potion> in the casts); the icon is the potion's gfx member.
+// pTextVSpace=3 (counter drop), pTitleVSpace=5 (title drop). objDisplayCounter: pNumDigits=2 — the count is
+// ZERO-PADDED ("01","07") and occupies a FIXED-WIDTH slot (getDisplayWidth = charWidth*pNumDigits) so the
+// row doesn't shift when a tally crosses the 9->10 boundary; icon/counter/title/next-pair all sit with NO
+// gap between them (displayAlignRight never adds spacing) — the port previously measured the raw un-padded
+// string with a live canvas font (jittering the row) and inserted artificial 1-2px gaps.
+const POTION_COUNTER_COLOR: Record<string, string> = {
+  speed: "rgb(0,200,0)", manaCapacity: "rgb(255,0,0)", manaFlow: "rgb(100,100,255)", manaBurst: "rgb(255,0,255)",
+};
+// fixed 2-digit slot width, from the #numbers bitmap face's own monospace cell (falls back to the live
+// canvas font's "00" measurement when the face isn't loaded, so layout stays stable either way).
+function counterSlotWidth(ctx: CanvasRenderingContext2D, assets: Assets): number {
+  const f = assets.font?.("numbers");
+  if (f) return f.charW * 2;
+  ctx.save(); ctx.font = "bold 9px monospace"; const w = Math.ceil(ctx.measureText("00").width); ctx.restore(); return w;
+}
+function drawPotionsDrunk(ctx: CanvasRenderingContext2D, assets: Assets, W: number): void {
+  const recs = game.potionMaster?.records() ?? [];
+  if (recs.length === 0) return;                       // "don't display if there are no potions"
+  const yTop = 6, TEXT_VSPACE = 3, TITLE_VSPACE = 5;
+  // pDisplayRect.right from the prg_potionmaster Score mark (recovered from the .dir): the mark sits at
+  // locH=470 w=138 in the original 640-wide stage, so its right edge = 608 — i.e. 32px in from the right
+  // (the army reserve strip occupies 608->640). Hold that 32px gap so the row tracks the view's right edge.
+  let xPos = W - 32;                                    // pDisplayRect.right; lay out right-to-left
+  const slotW = counterSlotWidth(ctx, assets);
+  for (let i = recs.length - 1; i >= 0; i--) {
+    const ch = recs[i]!.character;
+    const colour = POTION_COUNTER_COLOR[ch] ?? "#fff";
+    const countStr = String(recs[i]!.numCollected).padStart(2, "0"); // objDisplayCounter pNumDigits=2
+    xPos -= slotW;
+    ctx.fillStyle = colour;
+    drawText(ctx, assets, "numbers", countStr, Math.round(xPos), yTop + TEXT_VSPACE, { top: true, fallbackFont: "bold 9px monospace" });
+    const icon = assets.member(PICKUP_MEMBER[ch] ?? "");
+    let iconW = 14, iconH = 14;
+    if (icon) { const sc = Math.min(1, 18 / icon.h); iconW = Math.round(icon.w * sc); iconH = Math.round(icon.h * sc); }
+    xPos -= iconW; // displayAlignRight: no gap between the icon and the counter
+    if (icon) ctx.drawImage(icon.img, Math.round(xPos), yTop, iconW, iconH);
+    else { ctx.fillStyle = colour; ctx.fillRect(Math.round(xPos), yTop, 12, 12); }
+  }
+  const title = "POTIONS DRUNK";
+  xPos -= Math.ceil(measureText(ctx, assets, "small", title)); // no gap before the title either
+  drawText(ctx, assets, "small", title, Math.round(xPos), yTop + TITLE_VSPACE, { fallbackFont: "8px monospace" });
+}
+
+// armyMaster.displayNextSummons (armyMaster.txt line 151): the RIGHT MARGIN strip (32px wide, pDisplayRect
+// rect(608,16,640,304)) showing NEXT-SUMMONS for team #aldevar. One record per banked unit TYPE (the
+// highest-level instance). Layout: title "NEXT" (smallgrey, centred) → per-type: star row (centred) →
+// stand-frame image (centred, flipped left per setSpriteFlipFromDir(-1)) → gap pYGap=4.
+// pLevelBar.getYGap() = pGapY = 4 (objMoveableLevelBar.txt line 18).
+function drawArmyReserve(ctx: CanvasRenderingContext2D, assets: Assets): void {
+  if (!game.armyMaster) return;
+  const LEFT = 608, TOP = 16, RIGHT = 640;          // pDisplayRect (RectCalcFromMark, prg_armyMaster)
+  const CENTER_X = (LEFT + RIGHT) / 2;               // 624 — the strip's horizontal centre
+  const Y_GAP = 4;                                   // pYGap (armyMaster.txt line 29)
+
+  let yLoc = TOP;                                    // yLoc = pDisplayRect.top
+
+  // displayTitle (line 208): "NEXT" centred, #smallgrey font, rgb(0,0,0) → grey glyph on black margin.
+  const titleFont = assets.font("smallgrey");
+  const titleH = titleFont?.cellH ?? 10;
+  drawText(ctx, assets, "smallgrey", "NEXT", CENTER_X, yLoc, { top: true, align: "center", fallbackFont: "bold 8px monospace" });
+  yLoc += titleH + Y_GAP;                            // yLoc + pTitle.getImageHeight() + pYGap
+
+  // pReserveArmy iteration: one entry per unit type, highest-level record (ListGetPosOfMaxByProp).
+  // getReserveArmy sorts level-desc within each type, so the first occurrence per type is the best.
+  const reserve = game.armyMaster.getReserveArmy("#aldevar");
+  const seen = new Set<string>();
+  const display: { typ: string; level: number }[] = [];
+  for (const u of reserve) {
+    if (!seen.has(u.typ)) { seen.add(u.typ); display.push(u); }
+  }
+
+  const anims = assets.index.anims;
+  for (const { typ, level } of display) {
+    if (yLoc >= 304) break;                          // bottom of pDisplayRect
+
+    // line 179-186: stars image (drawStarsImage), centred, gap pLevelBar.getYGap()=4 after.
+    const starNames = starRow(level);
+    const starImgs = starNames.map((n) => assets.member(n)).filter((m): m is NonNullable<typeof m> => !!m);
+    if (starImgs.length > 0) {
+      const starsW = starImgs.reduce((s, m) => s + m.w, 0);
+      const starsH = starImgs.reduce((h, m) => Math.max(h, m.h), 0);
+      let sx = Math.round(CENTER_X - starsW / 2);
+      for (const m of starImgs) {
+        ctx.drawImage(m.img, sx, yLoc + Math.round((starsH - m.h) / 2));
+        sx += m.w;
+      }
+      yLoc += starsH + 4;                           // starsImage.height + pLevelBar.getYGap() (pGapY=4)
+    }
+
+    // line 190-204: unit stand frame (getAnimMemberFromStrip(#stand)), centred, flipped left.
+    const standAnim = anims[`${typ}_stand`] ?? anims["blackOrc_stand"];
+    const frame = standAnim?.frames[0];
+    if (frame) {
+      const fw = frame.w, fh = frame.h;
+      if (assets.images.has(frame.file)) {
+        const img = assets.img(frame.file) as CanvasImageSource;
+        const dx = Math.round(CENTER_X - fw / 2);
+        ctx.save();
+        ctx.scale(-1, 1);                            // setSpriteFlipFromDir(-1): face left
+        ctx.drawImage(img, -(dx + fw), yLoc, fw, fh);
+        ctx.restore();
+        yLoc += fh + Y_GAP;                          // unitToDisplay.height + pYGap
+      } else {
+        void assets.ensureChar(typ);                 // kick off the lazy load; placeholder this frame
+        ctx.fillStyle = "#46c";
+        ctx.fillRect(Math.round(CENTER_X - 8), yLoc, 16, 18);
+        yLoc += 18 + Y_GAP;
+      }
     }
   }
-  if (Date.now() < flashUntil) { ctx.fillStyle = "#ff4"; drawText(ctx, assets, "small", flashMsg, 8, 62, { fallbackFont: "8px monospace" }); }
 }
 
 // pickup effect -> its static gfx member (objPotion/objMedikit #member: "<x>_potion"; objScroll #member:

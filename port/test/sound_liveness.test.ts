@@ -28,12 +28,15 @@ function allSrc(): string {
 const referenced = new Set<string>();
 const src = allSrc();
 for (const m of src.matchAll(/\b(?:play|playMusic)\(\s*"([^"]+)"/g)) referenced.add(m[1]!);
-const walkData = (o: unknown): void => {
-  if (Array.isArray(o)) { o.forEach(walkData); return; }
+const walkData = (o: unknown, parentKey = ""): void => {
+  if (Array.isArray(o)) { o.forEach((x) => walkData(x, parentKey)); return; }
   if (o && typeof o === "object") {
     for (const [k, v] of Object.entries(o as Record<string, unknown>)) {
-      if (typeof v === "string" && /sound|music/i.test(k)) referenced.add(v.replace(/^#/, ""));
-      else walkData(v);
+      if (typeof v === "string" && (/sound|music/i.test(k) || /sound|music/i.test(parentKey))) {
+        referenced.add(v.replace(/^#/, ""));
+      } else {
+        walkData(v, k);
+      }
     }
   }
 };

@@ -25,9 +25,11 @@ describe("input control schemes", () => {
     expect(inp.keyForControl("#spell1")).toBe("1");
     expect(inp.keyForControl("#spell2")).toBe("2");
     expect(inp.keyForControl("#spell9")).toBe("9");
-    expect(inp.keyForControl("#weaponSelector")).toBe("E");
+    expect(inp.keyForControl("#weaponSelector")).toBe("Q"); // original Show Keys: Q = Select Weapon
     expect(inp.keyForControl("#army")).toBe("C");
-    expect(inp.keyForControl("#gmg")).toBe("G");
+    expect(inp.keyForControl("#gmg")).toBe("E");            // original Show Keys: E = Golden Machine Gun
+    expect(inp.keyForControl("#wizard")).toBe("F");          // original Show Keys: F = Summon a Wizard
+    expect(inp.keyForControl("#wizardSelector")).toBe("R");  // original Show Keys: R = Select Wizard
     // none of these may leak the lowercased control name through the default branch
     for (const c of ["spell1", "weaponselector", "army", "gmg"])
       expect(inp.keyForControl("#" + c).toLowerCase()).not.toBe(c);

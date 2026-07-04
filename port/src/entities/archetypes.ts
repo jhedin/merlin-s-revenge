@@ -164,8 +164,9 @@ export function spawnPlayer(x: number, y: number): Entity {
   const punch = resolveAttack(d["attack"] as Record<string, any> | undefined);
   return e.build({
     x, y,
-    walkSpeed: num(md, "walkSpeed", 4),
-    walkSpeedIncLevel: 0.075, // modMoveToLoc.incWalkSpeedLevel: the player's walk cap grows 0.075/level (1:1)
+    walkSpeed: num(md, "walkSpeed", 4) * 0.6, // engine walk units -> px/tick SLICE scale (same ×0.6 as spawnEnemy);
+    // the player was the only actor left at 1:1, so Merlin walked ~67% too fast vs the ×0.6 world (the "scale" issue).
+    walkSpeedIncLevel: 0.075 * 0.6, // modMoveToLoc.incWalkSpeedLevel, slice-scaled to match enemies (revert 0.4 over-boost)
     energy: num(d, "energy", 200),
     strength: num(d, "strength", 8),
     attack: punch, agility: num(d, "agility", 1), dexterity: num(d, "dexterity", 0.2),
@@ -278,9 +279,10 @@ export function spawnEnemy(actorName: string, x: number, y: number, opts: { anim
   // K6: a multiAttack actor's natural attack IS its ranged weapon 1 — force its type so getCurrentAttack()
   // and setMultiAttack's ranged/melee branch are correct (the global animType map keeps it "melee" for scope).
   if (isMulti && (animType === "#naturalRanged" || animType === "#weaponRanged")) (enemyAttack as any).type = "ranged";
-  // FSM configuration from #AiType: spellcasters/flying-bombers kite (runReload after a shot); the
-  // ghost keeps the drift approximation (possession is out of scope). Bombers now run a normal attack
-  // loop (no suicide). aiKind/targetTypes are gone — allegiance is data-driven via Targeting.
+  // FSM configuration from #AiType: spellcasters/flying-bombers kite (runReload after a shot); the ghost
+  // drifts looking for a #monk to possess (K5: objAiCPUGhost, real attemptPossess in control.ts, not an
+  // approximation). Bombers now run a normal attack loop (no suicide). aiKind/targetTypes are gone —
+  // allegiance is data-driven via Targeting.
   const ghost = aiType === "#objAiCPUGhost";
   // runReload (objCPUCharacter pRunReload, default false): kite away after a shot. The ORIGINAL gates this
   // purely on the #runReload data property (getRunReload). bat/caveBat/evilTv/vultureGuard set it true and

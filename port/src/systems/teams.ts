@@ -6,6 +6,8 @@ import type { Entity } from "../engine/dispatch";
 import { registry } from "../game/data";
 import { UnitMap } from "./unitMap";
 import { aimedVect } from "../engine/math";
+import { Movement } from "../components/movement";
+import { WeaponManager } from "../components/weapon";
 
 export interface TargetConfig {
   allegiance: string;        // "#enemy" | "#friendly"
@@ -297,11 +299,36 @@ export class TeamMaster {
 
   // impactMeleeAttack: the melee special case of impactAreaAttack (radius=reach, centered on attacker).
   // teamMaster decides WHO; A1 (the hitFn) decides what the hit does.
+  // Audited directly against ParentScript 5 - modAttack.ls / ParentScript 11 - modCollisionRect.ls
+  // to ensure melee swings are directional and check the weapon's strike point overlap.
   impactMeleeAttack(attacker: Entity, hitFn: (victim: Entity) => void): void {
     const tg = attacker.send("getTargeting") as TargetConfig | undefined;
     if (!tg) return;
-    const pos = attacker.send("getPos") as { x: number; y: number };
-    this.impactAreaAttack(attacker, pos.x, pos.y, tg.reach, tg.hits, tg.allegiance, hitFn);
+    const m = attacker.tryGet(Movement);
+    if (!m) return;
+    const ca = attacker.tryGet(WeaponManager)?.getCurrentAttack();
+    const cl = ca?.collisionLoc ?? { x: 18, y: 0 };
+    const dir = m.facingLeft ? -1 : 1;
+    const ax = m.x + cl.x * dir;
+    const ay = m.y + cl.y;
+
+    // Search around the strike point; use 48px to cover any large unit box centered near it
+    this.impactAreaAttack(attacker, ax, ay, 48, tg.hits, tg.allegiance, (v) => {
+      const vm = v.tryGet(Movement);
+      if (!vm) return;
+      // The original tests the strike point against the victim's FULL sprite rect (objGameObject.getRect),
+      // so a wide golem/boulder/dwelling can be struck anywhere in its footprint — not just a ±7px box at
+      // its centre. Use the live sprite half-extent (getRadius = getWidth()/2), falling back to box/2.
+      const vr = v.send("getRadius") as number;
+      const half = (typeof vr === "number" && vr > 0) ? vr : vm.box / 2;
+      const left = vm.x - half;
+      const right = vm.x + half;
+      const top = vm.y - half;
+      const bottom = vm.y + half;
+      if (ax >= left && ax <= right && ay >= top && ay <= bottom) {
+        hitFn(v);
+      }
+    });
   }
 }
 

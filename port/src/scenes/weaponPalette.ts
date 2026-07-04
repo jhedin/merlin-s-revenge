@@ -14,6 +14,7 @@ import type { Assets } from "../render/assets";
 import { drawText } from "../render/text";
 import { WeaponManager } from "../components/weapon";
 import { Movement } from "../components/movement";
+import { game } from "../game/context";
 
 const ICON_W = 18, ICON_H = 16, GAP = 2; // pPaletteDefinitionStart tileSize point(18,16)
 const DISPLAY_FRAMES = 60;               // pTimer.tim[2] = 60 (2 secs @ 30Hz)
@@ -28,12 +29,19 @@ export class WeaponPalette {
   private idle = 0;
   private syms: { type: "magic" | "nonMagic"; list: string[] }[] = [];
   private rects: { sym: string; x: number; y: number }[] = [];
+  // displayWeaponSelector anchors the palette at the MOUSE loc + the per-type offset (objWeaponSelector:152
+  // `g.mouseMaster.getMouseLoc() + getPaletteOffset`), NOT the player. Snapshot the cursor at open time.
+  private baseX = 0; private baseY = 0;
 
   /** displayWeaponSelector: snapshot the owned weapons by type and show the palette. */
   open(player: Entity): void {
     const wm = player.get(WeaponManager);
     this.syms = ROWS.map((r) => ({ type: r.type, list: wm.weaponsOfType(r.type) }));
     if (this.syms.every((r) => r.list.length === 0)) return; // nothing to choose
+    const c = game.input?.cursor?.();
+    const m = player.get(Movement);
+    this.baseX = c ? c.x : m.x; // original anchors at the mouse; fall back to the player if no cursor yet
+    this.baseY = c ? c.y : m.y;
     this.displaying = true;
     this.idle = DISPLAY_FRAMES;
   }
@@ -55,15 +63,14 @@ export class WeaponPalette {
     if (--this.idle <= 0) this.displaying = false;
   }
 
-  private layout(player: Entity): void {
-    const m = player.get(Movement);
+  private layout(_player: Entity): void {
     this.rects = [];
     for (const row of this.syms) {
       if (row.list.length === 0) continue;
       const off = ROWS.find((r) => r.type === row.type)!.offsetY;
       const total = row.list.length * (ICON_W + GAP) - GAP;
-      let x = Math.round(m.x - total / 2);
-      const y = Math.round(m.y + off - ICON_H);
+      let x = Math.round(this.baseX - total / 2);          // anchored at the cursor (snapshot at open)
+      const y = Math.round(this.baseY + off - ICON_H);
       for (const sym of row.list) { this.rects.push({ sym, x, y }); x += ICON_W + GAP; }
     }
   }

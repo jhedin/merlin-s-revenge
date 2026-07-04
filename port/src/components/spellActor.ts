@@ -150,7 +150,7 @@ export class SpellActor extends Component {
       summonUnit(this.attack, preCharge, m.x, m.y, this.ownerId);
     } else if (this.attack.explodeFunction === "#depositMines" || this.attack.explodeFunction === "depositMines") {
       // energyMines: drop charge/chargePerUnit #energyMine actors scattered around the landing loc.
-      depositMines(this.attack, preCharge, m.x, m.y);
+      depositMines(this.attack, preCharge, m.x, m.y, this.ownerId);
     }
 
     // the radial area hit: reuse resolveSplash's #explode shape with the GROWN charge as the radius source
