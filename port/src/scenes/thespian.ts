@@ -133,12 +133,18 @@ export class Thespian {
   private readonly stageLeft: number;
   private readonly stageRight: number;
   readonly ingame: boolean;
+  // full-cutscene stage is a horizontal BAND (the backgroundColour fills it; the rest of the screen is
+  // black) — measured from the original intro at stage y 104..188 of 288 ≈ 0.36..0.65 of the height.
+  readonly bandTop: number;
+  readonly bandBot: number;
 
   constructor(private cut: Cutscene, private host: ThespianHost) {
     this.ingame = host.ingame === true;
-    // getStageFloor: the original ground line is stageRect.bottom - 16 (actors stand near the bottom edge).
-    // The in-game path keeps actors at their world y, so the floor only matters for the full-cutscene stage.
-    this.floor = this.ingame ? Math.round(host.viewH * 0.6) : host.viewH - 16;
+    this.bandTop = Math.round(host.viewH * 0.36);
+    this.bandBot = Math.round(host.viewH * 0.65);
+    // getStageFloor: the original ground line is the stage BAND's bottom - 16 (actors stand near the band's
+    // lower edge). The in-game path keeps actors at their world y, so the floor only matters for the band.
+    this.floor = this.ingame ? Math.round(host.viewH * 0.6) : this.bandBot - 16;
     this.stageLeft = 24; this.stageRight = host.viewW - 24;
     this.acquirePlayers();
   }

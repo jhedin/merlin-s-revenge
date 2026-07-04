@@ -67,8 +67,8 @@ describe("TeamMaster (allegiance, roster, findTarget, impactMeleeAttack)", () =>
 
   it("impactMeleeAttack hits EVERY hostile in reach (area), reusing A1's vector takeHit", () => {
     const orc = spawn("#orcs", 100, 100, { targetReach: 30 });
-    const a = spawn("#aldevar", 110, 100); // in reach
-    const b = spawn("#aldevar", 100, 120); // in reach
+    const a = spawn("#aldevar", 118, 100); // overlaps the strike point (118, 100)
+    const b = spawn("#aldevar", 120, 100); // overlaps the strike point (118, 100)
     const c = spawn("#aldevar", 200, 100); // out of reach
     const e = [a, b, c].map((u) => (u.get(Energy) as any).energy);
     tm.impactMeleeAttack(orc, meleeHitFn(orc, orc.id, 12, 1)); // dmg 12 each

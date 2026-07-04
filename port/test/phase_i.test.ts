@@ -405,6 +405,7 @@ describe("I8 — beams: streaming release + energyBeam render", () => {
   });
 
   it("energyBeam: performBeamAttack spawns a bullet AT the target with a stretched/rotated sprite", () => {
+    game.input = fakeInput({ mouseDown: true, cursor: { x: 300, y: 100 } });
     const player = spawnPlayer(100, 100); game.entities.push(player); game.player = player;
     const beam = atkOf("energyBeamSpell"); // beam:true, bullet:#energyBeam
     const pc = pcOf(player) as any;
@@ -423,6 +424,7 @@ describe("I8 — beams: streaming release + energyBeam render", () => {
   });
 
   it("energyBeam detonates its explode #attack at the target on the first frame (damages a hostile there)", () => {
+    game.input = fakeInput({ mouseDown: true, cursor: { x: 300, y: 100 } });
     const player = spawnPlayer(100, 100); game.entities.push(player); game.player = player;
     // a hostile sitting at the target loc
     const foe = spawnEnemy("swordOrc", 300, 100, { animChar: "swordOrc" });

@@ -116,7 +116,10 @@ export class Movement extends Component {
     // arm the wall-slam damage (objCPUCharacter only — the player has no collisionWall handler). If this
     // knockback carries the CPU unit into a wall before it decays, it takes (|dv| − damageSpeed) bonus on
     // that axis. Tracks X/Y separately to match collisionWall (vectX) vs collisionVertical (vectY).
-    if (this.entity.type !== "player") {
+    // ...but the wall-slam DAMAGE fires only in a reel mode (objCPUCharacter.collisionVertical/Wall:
+    // `case getMode() of #reel,#reel_fly,#reel_land`). A #reelProof unit never enters reel, so it's shoved
+    // but takes NO slam damage — gate the damage arming on !reelProof (the shove above already applied).
+    if (this.entity.type !== "player" && this.entity.send("isReelProof") !== true) {
       this.knockDmgX = Math.abs(dvx); this.knockDmgY = Math.abs(dvy); this.knockAttacker = attackerId;
     }
     return next(dvx, dvy, attackerId, mult);          // damped vector -> Energy/Freeze/Heal (the coupling)
@@ -205,7 +208,7 @@ export class Movement extends Component {
     if (inBounds && this.knockDmgX > this.damageSpeed && ((r.events.wallRight && knx > 0) || (r.events.wallLeft && knx < 0))) {
       this.entity.send("loseEnergy", this.knockDmgX - this.damageSpeed, this.knockAttacker); this.knockDmgX = 0;
     }
-    if (inBounds && this.knockDmgY > this.damageSpeed && r.events.ceiling && kny < 0) {
+    if (inBounds && this.knockDmgY > this.damageSpeed && ((r.events.ceiling && kny < 0) || (r.events.platform && kny > 0))) {
       this.entity.send("loseEnergy", this.knockDmgY - this.damageSpeed, this.knockAttacker); this.knockDmgY = 0;
     }
     if (r.hitX) { this.vx = 0; this.kvx = 0; }

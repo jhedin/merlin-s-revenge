@@ -289,8 +289,10 @@ export class CollisionGrid {
           let blocked = Math.floor((tryY + h - 1) / t);
           for (let r = Math.floor((y + h) / t); r <= blocked; r++) { if (this.rowSolid(r, c0, c1)) { blocked = r; break; } }
           ny = blocked * t - h;
-          // a solid tile blocking a downward move is NOT a platform-land in the original (only #platform
-          // tiles fire collisionPlatform); solid grids therefore emit no platform/noPlatform events.
+          // objCollisionMap.checkCollisions is geometric/type-agnostic: a DOWNWARD block fires
+          // collisionPlatform for ANY solid tile (its top edge is solid), exactly mirroring the upward
+          // collisionCeiling. Emitting this makes movement.ts floor-slam damage work on solid grids too.
+          events.platform = true;
         } else {
           let blocked = Math.floor(tryY / t);
           for (let r = Math.floor((y + h - 1) / t); r >= blocked; r--) { if (this.rowSolid(r, c0, c1)) { blocked = r; break; } }

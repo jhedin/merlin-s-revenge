@@ -21,6 +21,8 @@ export class PotionMaster {
 
   getCount(character: string): number { return this.potions.get(character)?.numCollected ?? 0; }
   totalCollected(): number { let n = 0; for (const r of this.potions.values()) n += r.numCollected; return n; }
+  // pPotionsCollected in collection order — the display (displayAlignRight) walks it right-to-left.
+  records(): PotionRecord[] { return [...this.potions.values()]; }
 
   // addSaveData (43-57): the stripped list {character, numCollected} per record.
   addSaveData(sd: Record<string, any> = {}): Record<string, any> {

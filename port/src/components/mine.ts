@@ -27,6 +27,7 @@ export class Mine extends Component {
   static handles = ["update", "getMineMode", "getExplosions", "animAction"];
   // Note: detonation kills via the Energy chain (takeHit 999999) — the mine carries Energy so it's a
   // real targetable actor (objMine is an objGameObject), matching dwelling self-destruct.
+  ownerId = -1;
   private attack!: AttackData;
   private triggerRadius = 20;      // pTriggerRadius (px)
   private dieOnExplode = true;     // pDieOnExplode
@@ -39,6 +40,7 @@ export class Mine extends Component {
   private explodeT = 0;            // ticks remaining in the #explode strip replay before re-arm/die
 
   override init(cfg: Record<string, any>): void {
+    this.ownerId = typeof cfg["ownerId"] === "number" ? cfg["ownerId"] : -1;
     this.attack = cfg["attack"] as AttackData;
     this.triggerRadius = typeof cfg["triggerRadius"] === "number" ? cfg["triggerRadius"] : 20;
     // objMine default i[#dieOnExplode] = true (single-shot, e.g. energyMine). Only the re-arming mines
@@ -113,7 +115,8 @@ export class Mine extends Component {
     const hits = this.attack.hits.length ? this.attack.hits : ["#teamMembers"];
     // resolveSplash runs the #explode disc (damage for fire/pit; #takeFreeze for the auras) — same engine
     // as every bullet/spell explode. Allegiance #enemy resolves the mine team's #hates (team-gated).
-    resolveSplash(this.entity, this.attack, m.x, m.y, this.entity.id, hits, "#enemy");
+    const attackerId = this.ownerId >= 0 ? this.ownerId : this.entity.id;
+    resolveSplash(this.entity, this.attack, m.x, m.y, attackerId, hits, "#enemy");
     if (this.explodeSound) game.audio?.play(this.explodeSound, 0.5);
     this.mode = "explode";              // play the _explode burst; explodeFin gates on its completion
     this.explodeT = this.explodeTicks();
@@ -121,14 +124,15 @@ export class Mine extends Component {
 
   // #explodeFin (modExploder): the burst strip finished — die (single-shot) or re-arm (re-priming mines).
   private explodeFin(): void {
+    const attackerId = this.ownerId >= 0 ? this.ownerId : this.entity.id;
     if (this.dieOnExplode) {
-      this.entity.send("takeHit", 999999, 0, this.entity.id); // setDead (self-detonate kill)
+      this.entity.send("takeHit", 999999, 0, attackerId); // setDead (self-detonate kill)
       return;
     }
     this.resetMine();
     this.explosions++;
     if (this.dieOnExplodeNumber !== 0 && this.explosions >= this.dieOnExplodeNumber) {
-      this.entity.send("takeHit", 999999, 0, this.entity.id); // setDead (self-detonate kill)
+      this.entity.send("takeHit", 999999, 0, attackerId); // setDead (self-detonate kill)
     }
   }
 }

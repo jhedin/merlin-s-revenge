@@ -21,6 +21,7 @@ import { game } from "../game/context";
 import type { AttackData } from "./weapon";
 import { spawnFromSymbol } from "../entities/actorSerial";
 import { Anim } from "./anim";
+import { Mine } from "./mine";
 
 // clampToPlayArea: keep a summon inside the walkable area (the room grid inset by the 2-tile solid border).
 // An out-of-bounds summon is the worst case: an out-of-bounds ENEMY stays alive-but-unreachable, so the room
@@ -38,7 +39,7 @@ export function clampToPlayArea(x: number, y: number): { x: number; y: number } 
 // drops numMines = charge/chargePerUnit #energyMine actors, each scattered VarRoughly(loc, charge/2) around
 // the explode loc. The energyMine carries its own #team (#aldevar) so it triggers on the caster's enemies.
 // Used by the player energyMines spell (spellActor.explode) AND CPU mine-casters (verdanlinInGame).
-export function depositMines(attack: AttackData, charge: number, x: number, y: number): void {
+export function depositMines(attack: AttackData, charge: number, x: number, y: number, ownerId = -1): void {
   if (attack.explodeFunction !== "depositMines" && attack.explodeFunction !== "#depositMines") return;
   const perUnit = attack.chargePerUnit > 0 ? attack.chargePerUnit : 5;
   const numMines = Math.floor(charge / perUnit);
@@ -47,7 +48,11 @@ export function depositMines(attack: AttackData, charge: number, x: number, y: n
   for (let i = 0; i < numMines; i++) {
     const p = clampToPlayArea(rough(x), rough(y));
     const mine = spawnFromSymbol("energyMine", p.x, p.y);
-    if (mine) game.entities.push(mine);
+    if (mine) {
+      const mc = mine.tryGet(Mine);
+      if (mc) mc.ownerId = ownerId;
+      game.entities.push(mine);
+    }
   }
 }
 

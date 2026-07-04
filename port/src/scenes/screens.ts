@@ -7,14 +7,17 @@
 //   keyConfig    (keyChooseMaster): choose among the shipped input schemes via the control->key table
 //                                   (keyForControl); the active scheme is persisted (Input.setScheme).
 //
-// profileMaster is a DEV profiler (not a player screen) — out of scope (plan §g).
+// profileMaster is a DEV profiler (not a player screen) — out of scope (plan §g)
 
 import type { Renderer } from "../render/renderer";
 import type { Input } from "../systems/input";
 import type { Assets } from "../render/assets";
 import type { SchemeName } from "../systems/input";
 import { game } from "../game/context";
-import { drawText } from "../render/text";
+import { drawText, measureText } from "../render/text";
+import { drawScrollBox } from "../render/menuBackground";
+import { starRow } from "../render/rollover";
+import { layoutArmy, type ArmyUnit, type PlacedUnit } from "./armyLayout";
 
 // The control rows shown in key-config (keyChooseMaster.pKeyDescriptions): control name -> description.
 const KEY_DESCRIPTIONS: { control: string; desc: string }[] = [
@@ -22,9 +25,12 @@ const KEY_DESCRIPTIONS: { control: string; desc: string }[] = [
   { control: "down", desc: "Move Down" },
   { control: "left", desc: "Move Left" },
   { control: "right", desc: "Move Right" },
-  { control: "fire", desc: "Attack / Cast" },
-  { control: "wizard", desc: "Summon Wizard" },
+  { control: "wizard", desc: "Summon a Wizard" },
   { control: "wizardSelector", desc: "Select Wizard" },
+  { control: "weaponSelector", desc: "Select Weapon" },
+  { control: "gmg", desc: "Golden Machine Gun On/Off" },
+  { control: "army", desc: "Summon a Battalion" },
+  { control: "fire", desc: "Attack / Cast" },
 ];
 const SCHEMES: SchemeName[] = ["both", "arrows", "wasd", "zqsd"];
 const SCHEME_LABEL: Record<SchemeName, string> = {
@@ -37,31 +43,60 @@ const INSTRUCTIONS = [
   "Move with WASD or the arrow keys.",
   "Hold the mouse / space to charge magic; release to cast.",
   "Punching is automatic when an enemy is in reach.",
-  "1-9 pick a spell; E opens the weapon palette.",
-  "Q summons a found wizard ally (Tab cycles); C summons your army.",
+  "1-6 pick a spell; Q selects your weapon.",
+  "F summons a found wizard (R or Tab cycles); C summons a battalion.",
+  "E toggles the Golden Machine Gun.",
   "Clear every room (or reach the end room) to win.",
   "Walk onto a glowing stone to hear its tale.",
   "",
   "F5 / F9 save & load   Esc pause   M mute",
 ];
 
-// the shipped credits text (creditsMaster falls back to the local txt_credits member; the net path is
-// out of scope, plan §g). The exact roster is the best-available content (residual content gap, not flow).
+// The original credits text — verbatim from the txt_credits cast member in merlin_engine_76_speed.dir
+// (creditsMaster), with a "Porting Support" line added for the web port. Drawn as a vertically-scrolling
+// block (objTransTextScroll). "always pick the original": this replaced the port's own blurb.
 const CREDITS = [
-  "MERLIN'S REVENGE",
+  "Merlin's Revenge 4",
   "",
-  "A faithful TypeScript / HTML5 port",
-  "of the Director / Lingo original.",
+  "Credits",
   "",
-  "Original game by the Merlin's Revenge team.",
+  "Programming, GFX, SFX, Design",
+  "Steve Riddett",
   "",
-  "Engine, combat, AI, economy,",
-  "world, render, scenes & audio",
-  "reimplemented on the component-dispatch kernel.",
+  "Porting Support",
+  "Claude & Gemini",
   "",
-  "Thanks for playing!",
+  "Graphics",
+  "Sketch",
   "",
+  "Music",
+  "Micheal Sartin-Tarm (evilishies)",
+  "Noam Bergman",
   "",
+  "Bug Manager",
+  "Carefree_Butterfly",
+  "",
+  "Suggestion Geniuses",
+  "Eric9000",
+  "midget mage",
+  "",
+  "Bugtester Heroes",
+  "...to come...",
+  "",
+  "Who Suggested What",
+  "",
+  "credit improvement",
+  "Suggested by midget mage",
+  "",
+  "Skeleton Archer",
+  "Suggested by Eric9000",
+  "",
+  "Thanks Everybody!",
+  "",
+  "And Thanks to all The Metal Box's dedicated fans",
+  "and to everybody who made suggestions!",
+  "",
+  "It wouldn't have been possible without you.",
 ];
 
 export class Screens {
@@ -94,15 +129,16 @@ export class Screens {
   }
   renderCredits(renderer: Renderer): void {
     const ctx = renderer.ctx;
-    ctx.fillStyle = "#0a1020"; ctx.fillRect(0, 0, this.viewW, this.viewH);
+    // original creditsMaster: bold white text on a BLACK stage, scrolling upward.
+    ctx.fillStyle = "#000"; ctx.fillRect(0, 0, this.viewW, this.viewH);
     ctx.textAlign = "center";
     const lineH = 16;
     let y = this.viewH - this.creditsScroll;
     CREDITS.forEach((line, i) => {
       const yy = y + i * lineH;
       if (yy < -lineH || yy > this.viewH + lineH) return;
-      ctx.fillStyle = i === 0 ? "#fc4" : "#9cf";
-      ctx.font = i === 0 ? "bold 18px serif" : "11px serif";
+      ctx.fillStyle = "#fff";
+      ctx.font = i === 0 ? "bold 16px serif" : "bold 11px serif";
       ctx.fillText(line, this.viewW / 2, yy);
     });
     ctx.textAlign = "left";
@@ -112,7 +148,7 @@ export class Screens {
   handleInput(overlay: string, input: Input): boolean {
     switch (overlay) {
       case "showArmy": {
-        const pages = this.armyPages();
+        const pages = this.layoutArmyPages().length;
         if (input.pressed("arrowright") || input.pressed("d")) { if (this.armyPage < pages - 1) this.armyPage++; }
         if (input.pressed("arrowleft") || input.pressed("a")) { if (this.armyPage > 0) this.armyPage--; }
         if (input.pressed("escape") || input.pressed(" ") || input.pressed("enter")) return true;
@@ -139,103 +175,165 @@ export class Screens {
     }
   }
 
-  // ── showArmy: a paginated grid of the reserve army, each unit drawn as its stand frame + level.
+  // ── showArmy (showArmyMaster.setupDisplay): a DYNAMIC reflow of the reserve army — each unit's cell is
+  // sized from its real stand-sprite + level-stars dimensions (objUnitDisplayer.calcBoundingRect), wrapped
+  // into rows/pages by armyLayout.layoutArmy. Order is the reserve's own banking order (armyMaster's own
+  // dict-of-append-only-lists — getReserveArmy does NOT sort).
   private reserve() { return game.armyMaster.getReserveArmy(game.teamMaster ? "#aldevar" : "#aldevar"); }
-  private readonly cell = 40; // per-unit cell (stand frame + level label)
-  private cols(): number { return Math.max(1, Math.floor((this.viewW - 24) / this.cell)); }
-  private rowsPerPage(): number { return Math.max(1, Math.floor((this.viewH - 80) / this.cell)); }
-  private perPage(): number { return this.cols() * this.rowsPerPage(); }
-  private armyPages(): number { return Math.max(1, Math.ceil(this.reserve().length / this.perPage())); }
+  private readonly displayBox = { x: 35, y: 48, rightMargin: 20, bottomMargin: 30 }; // within the 310×240 scroll box
+
+  /** real per-unit cell size for the layout: stand-sprite dims + level-stars dims (0×0 when unloaded). */
+  private unitSizeOf = (u: ArmyUnit): { unitW: number; unitH: number; starsW: number; starsH: number } => {
+    const idx = this.assets.index.anims;
+    const frame = (idx[`${u.typ}_stand`] ?? idx[`blackOrc_stand`])?.frames[0];
+    const loaded = frame && this.assets.images.has(frame.file);
+    const unitW = loaded ? frame!.w : 16, unitH = loaded ? frame!.h : 16; // 16×16 fallback box pre-load
+    if (frame && !loaded) void this.assets.ensureChar(u.typ); // kick off the load for next frame
+    const stars = starRow(u.level).map((n) => this.assets.member(n)).filter((m): m is NonNullable<typeof m> => !!m);
+    const starsW = stars.reduce((s, m) => s + m.w, 0), starsH = stars.reduce((h, m) => Math.max(h, m.h), 0);
+    return { unitW, unitH, starsW, starsH };
+  };
+
+  private layoutArmyPages(): PlacedUnit[][] {
+    const b = this.displayBox;
+    // box coords are only known at render time (centred on the view), but the box is fixed-size (310×240)
+    // and centred, so its origin is derivable without re-drawing: box.x = viewW/2 - 155, box.y = viewH/2 - 120.
+    const boxX = this.viewW / 2 - 155, boxY = this.viewH / 2 - 120;
+    const rect = { left: boxX + b.x, top: boxY + b.y, right: boxX + 310 - b.rightMargin, bottom: boxY + 240 - b.bottomMargin };
+    return layoutArmy(this.reserve(), rect, this.unitSizeOf);
+  }
 
   private renderShowArmy(renderer: Renderer): void {
     const ctx = renderer.ctx;
-    ctx.fillStyle = "rgba(6,12,24,0.92)"; ctx.fillRect(0, 0, this.viewW, this.viewH);
+    ctx.fillStyle = "rgba(0,0,0,0.4)"; ctx.fillRect(0, 0, this.viewW, this.viewH);
     ctx.textAlign = "center";
-    ctx.fillStyle = "#fc4"; ctx.font = "bold 14px serif";
-    ctx.fillText("RESERVE ARMY", this.viewW / 2, 22);
+
+    // Draw the authentic 310x240 scroll box
+    const box = drawScrollBox(renderer, this.assets, this.viewW / 2, this.viewH / 2, 310, 240, true);
+
+    ctx.fillStyle = "#000";
+    drawText(ctx, this.assets, "menu", "RESERVE ARMY", this.viewW / 2, box.y + 16, { top: true, align: "center", fallbackFont: "bold 14px serif" });
+
     const army = this.reserve();
-    const pages = this.armyPages();
-    if (this.armyPage >= pages) this.armyPage = pages - 1;
+    const pages = this.layoutArmyPages();
+    if (this.armyPage >= pages.length) this.armyPage = pages.length - 1;
     if (army.length === 0) {
-      ctx.fillStyle = "#9ab"; ctx.font = "11px monospace";
-      ctx.fillText("(no units banked — summon and re-field allies to build a reserve)", this.viewW / 2, this.viewH / 2);
+      ctx.fillStyle = "#555";
+      drawText(ctx, this.assets, "small", "(no units banked — summon and re-field allies)", this.viewW / 2, this.viewH / 2, { align: "center", fallbackFont: "11px monospace" });
     } else {
-      const start = this.armyPage * this.perPage();
-      const slice = army.slice(start, start + this.perPage());
-      const cols = this.cols();
-      const x0 = 12, y0 = 40;
       ctx.textAlign = "center";
-      slice.forEach((u, i) => {
-        const cx = x0 + (i % cols) * this.cell + this.cell / 2;
-        const cy = y0 + Math.floor(i / cols) * this.cell + this.cell / 2;
-        this.drawUnitFrame(ctx, u.typ, cx, cy);
-        ctx.fillStyle = "#cde"; ctx.font = "8px monospace";
-        ctx.fillText("L" + u.level, cx, cy + this.cell / 2 - 2);
-      });
+      for (const p of pages[this.armyPage] ?? []) {
+        const cx = p.x + p.w / 2;
+        this.drawUnitCell(ctx, p);
+        ctx.fillStyle = "#000";
+        drawText(ctx, this.assets, "small", "L" + p.unit.level, cx, p.y + p.h - 2, { align: "center", fallbackFont: "8px monospace" });
+      }
     }
-    ctx.fillStyle = "#9ab"; ctx.font = "9px monospace"; ctx.textAlign = "center";
-    ctx.fillText(`page ${this.armyPage + 1}/${pages}   ←/→ page   esc/space: back`, this.viewW / 2, this.viewH - 10);
+
+    ctx.fillStyle = "#555";
+    drawText(ctx, this.assets, "small", `page ${this.armyPage + 1}/${pages.length}   <-/-> page   esc/space: back`, this.viewW / 2, box.y + box.h - 14, { align: "center", fallbackFont: "9px monospace" });
     ctx.textAlign = "left";
   }
 
-  // draw a unit's stand frame (objUnitDisplayer art: the actor's #stand frame) centered at (cx,cy).
-  private drawUnitFrame(ctx: CanvasRenderingContext2D, typ: string, cx: number, cy: number): void {
+  // draw a placed unit cell: level stars ABOVE (objMoveableLevelBar-style row, real star images when
+  // loaded), the unit's stand frame BELOW that (objUnitDisplayer.displayUnit's stacking), both centred
+  // within the cell's real bounding width.
+  private drawUnitCell(ctx: CanvasRenderingContext2D, p: PlacedUnit): void {
+    const cx = p.x + p.w / 2;
+    const stars = starRow(p.unit.level).map((n) => this.assets.member(n)).filter((m): m is NonNullable<typeof m> => !!m);
+    if (stars.length) {
+      const starsW = stars.reduce((s, m) => s + m.w, 0);
+      let sx = Math.round(cx - starsW / 2);
+      for (const m of stars) { ctx.drawImage(m.img, sx, p.y); sx += m.w; }
+    }
     const idx = this.assets.index.anims;
-    const anim = idx[`${typ}_stand`] ?? idx[`blackOrc_stand`];
+    const anim = idx[`${p.unit.typ}_stand`] ?? idx[`blackOrc_stand`];
     const frame = anim?.frames[0];
+    const unitTop = p.y + p.starsH + 4; // objUnitDisplayer: stars height + STARS_GAP(4), then the sprite
     if (frame && this.assets.images.has(frame.file)) {
       const img = this.assets.img(frame.file) as CanvasImageSource;
-      const w = (img as HTMLImageElement).width, h = (img as HTMLImageElement).height;
-      ctx.drawImage(img, Math.round(cx - w / 2), Math.round(cy - h / 2 - 4));
+      const w = (img as HTMLImageElement).width;
+      ctx.drawImage(img, Math.round(cx - w / 2), unitTop);
     } else {
-      if (frame) void this.assets.ensureChar(typ); // kick off the load; draw a placeholder this frame
-      ctx.fillStyle = "#46c"; ctx.fillRect(cx - 8, cy - 12, 16, 18);
+      if (frame) void this.assets.ensureChar(p.unit.typ); // kick off the load; draw a placeholder this frame
+      ctx.fillStyle = "#46c"; ctx.fillRect(cx - 8, unitTop, 16, 18);
     }
   }
 
   private renderInstructions(renderer: Renderer): void {
     const ctx = renderer.ctx;
-    ctx.fillStyle = "rgba(6,12,24,0.92)"; ctx.fillRect(0, 0, this.viewW, this.viewH);
+    ctx.fillStyle = "rgba(0,0,0,0.4)"; ctx.fillRect(0, 0, this.viewW, this.viewH);
     ctx.textAlign = "center";
+
+    let maxW = 0;
+    for (const line of INSTRUCTIONS) {
+      const w = measureText(ctx, this.assets, "small", line);
+      if (w > maxW) maxW = w;
+    }
+    const boxW = Math.max(280, Math.ceil((maxW + 48) / 16) * 16);
+    const boxH = Math.ceil((48 + INSTRUCTIONS.length * 14) / 16) * 16;
+
+    const box = drawScrollBox(renderer, this.assets, this.viewW / 2, this.viewH / 2 - 8, boxW, boxH, true);
+
     INSTRUCTIONS.forEach((line, i) => {
-      ctx.fillStyle = i === 0 ? "#fc4" : "#cde";
-      ctx.font = i === 0 ? "bold 15px serif" : "11px monospace";
-      ctx.fillText(line, this.viewW / 2, 40 + i * 18);
+      ctx.fillStyle = i === 0 ? "#000" : "#000";
+      if (i === 0) {
+        drawText(ctx, this.assets, "menu", line, this.viewW / 2, box.y + 16, { top: true, align: "center", fallbackFont: "bold 15px serif" });
+      } else {
+        drawText(ctx, this.assets, "small", line, this.viewW / 2, box.y + 40 + (i - 1) * 14, { top: true, align: "center", fallbackFont: "11px monospace" });
+      }
     });
-    ctx.fillStyle = "#9ab"; ctx.font = "9px monospace";
-    ctx.fillText("esc/space: back", this.viewW / 2, this.viewH - 10);
+
+    ctx.fillStyle = "#555";
+    drawText(ctx, this.assets, "small", "esc/space: back", this.viewW / 2, box.y + box.h - 14, { align: "center", fallbackFont: "9px monospace" });
     ctx.textAlign = "left";
   }
 
   private renderKeyConfig(renderer: Renderer): void {
     const ctx = renderer.ctx;
     const input = game.input;
-    ctx.fillStyle = "rgba(6,12,24,0.94)"; ctx.fillRect(0, 0, this.viewW, this.viewH);
+    ctx.fillStyle = "rgba(0,0,0,0.4)"; ctx.fillRect(0, 0, this.viewW, this.viewH);
     ctx.textAlign = "center";
-    ctx.fillStyle = "#fc4"; ctx.font = "bold 14px serif";
-    ctx.fillText("CHOOSE KEYS", this.viewW / 2, 22);
+
+    let maxW = measureText(ctx, this.assets, "small", "The Current Keys are:");
+    SCHEMES.forEach((sc) => {
+      const w = measureText(ctx, this.assets, "small", "▶ " + SCHEME_LABEL[sc] + "  (active)");
+      if (w > maxW) maxW = w;
+    });
+    KEY_DESCRIPTIONS.forEach((row) => {
+      const key = input.keyForControlInScheme(row.control, SCHEMES[this.keyIndex]!).toUpperCase();
+      const w = measureText(ctx, this.assets, "small", key.padEnd(6) + " - " + row.desc);
+      if (w > maxW) maxW = w;
+    });
+    const boxW = Math.max(260, Math.ceil((maxW + 48) / 16) * 16);
+    const boxH = Math.ceil((48 + SCHEMES.length * 16 + 24 + KEY_DESCRIPTIONS.length * 14 + 16) / 16) * 16;
+
+    const box = drawScrollBox(renderer, this.assets, this.viewW / 2, this.viewH / 2, boxW, boxH, true);
+
+    ctx.fillStyle = "#000";
+    drawText(ctx, this.assets, "menu", "CHOOSE KEYS", this.viewW / 2, box.y + 16, { top: true, align: "center", fallbackFont: "bold 14px serif" });
+
     // the scheme chooser (pKeyMenu): pick the active key-set.
-    ctx.font = "11px monospace";
     SCHEMES.forEach((sc, i) => {
       const sel = i === this.keyIndex;
       const active = sc === input.schemeName;
-      ctx.fillStyle = sel ? "#fff" : active ? "#9cf" : "#89a";
-      ctx.fillText((sel ? "▶ " : "  ") + SCHEME_LABEL[sc] + (active ? "  (active)" : ""), this.viewW / 2, 44 + i * 16);
+      ctx.fillStyle = sel ? "#c00" : active ? "#009" : "#000"; // Red selected, Blue active, Black normal
+      drawText(ctx, this.assets, "small", (sel ? "▶ " : "  ") + SCHEME_LABEL[sc] + (active ? "  (active)" : ""), this.viewW / 2, box.y + 44 + i * 16, { top: true, align: "center", fallbackFont: "11px monospace" });
     });
-    // the control->key table for the HIGHLIGHTED scheme (keyChooseMaster.displayCurrentKeySet) — previewed
-    // WITHOUT mutating the live scheme (only #ok commits via setScheme on space).
+
     const preview = SCHEMES[this.keyIndex]!;
-    const tableY = 44 + SCHEMES.length * 16 + 12;
-    ctx.font = "10px monospace";
-    ctx.fillStyle = "#cde";
-    ctx.fillText("The Current Keys are:", this.viewW / 2, tableY);
+    const tableY = box.y + 44 + SCHEMES.length * 16 + 12;
+    ctx.fillStyle = "#000";
+    drawText(ctx, this.assets, "small", "The Current Keys are:", this.viewW / 2, tableY, { top: true, align: "center", fallbackFont: "10px monospace" });
+
     KEY_DESCRIPTIONS.forEach((row, i) => {
       const key = input.keyForControlInScheme(row.control, preview).toUpperCase();
-      ctx.fillStyle = "#bcd";
-      ctx.fillText(key.padEnd(6) + " - " + row.desc, this.viewW / 2, tableY + 16 + i * 14);
+      ctx.fillStyle = "#333";
+      drawText(ctx, this.assets, "small", key.padEnd(6) + " - " + row.desc, this.viewW / 2, tableY + 16 + i * 14, { top: true, align: "center", fallbackFont: "10px monospace" });
     });
-    ctx.fillStyle = "#9ab"; ctx.font = "9px monospace";
-    ctx.fillText("↑/↓ choose   space: OK   esc: cancel", this.viewW / 2, this.viewH - 10);
+
+    ctx.fillStyle = "#555";
+    drawText(ctx, this.assets, "small", "↑/↓ choose   space: OK   esc: cancel", this.viewW / 2, box.y + box.h - 14, { align: "center", fallbackFont: "9px monospace" });
     ctx.textAlign = "left";
   }
 }

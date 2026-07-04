@@ -85,10 +85,11 @@ export class Pickup extends Component {
       // maxikit (objPlayerMerlinCharacter.medikitCollected #maxikit branch): an INSTANT FULL heal
       // (increaseEnergy(maxEnergy-energy)) — NOT a banked gradual kit, and NOT the +25 bonus.
       case "maxikit": player.send("increaseEnergy", 1e9); break; // full top-up via increaseEnergy (NO gold glow)
-      // incWalkSpeedPotion: +pWalkSpeedInc = 0.075 (modMoveToLoc #walkSpeedInc). walkSpeed is 1:1 with the
-      // cast (merlin = 4), so the bump is +0.075 (~+1.9%), NOT +0.6 — that was an 8× over-boost (a mistaken
-      // reuse of the enemy ×0.6 px-conversion, which doesn't apply to the player).
-      case "speed": player.get(Movement).maxSpeed += 0.075; break;
+      // The PLAYER's speed potion is NOT modMoveToLoc #walkSpeedInc (0.075 — that's the CPU path). Merlin
+      // routes #walkSpeed → incWalkAcceleration(#potion) = +pPotionAccelerationInc 0.3 to walk ACCELERATION
+      // (objPlayerMerlinCharacter.potionCollected → modNavMode). Terminal velocity = accel/0.125, so +0.3
+      // accel ⇒ +2.4 on the combat speed cap (the 0.075 was the wrong constant from the wrong path, ~32× low).
+      case "speed": player.get(Movement).maxSpeed += 2.4; break;
       case "sword": player.get(PlayerControl).equipSword(scrollAttack("sword")); break; // merlinSword: addWeapon
       // energyPunch (I4): a #magicMelee melee-weapon scroll (newScrollCollected -> addWeapon). Granted
       // as a melee weapon via the SAME equipSword path (addWeapon + widen the melee sweep). Fires through

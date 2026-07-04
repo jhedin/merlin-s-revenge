@@ -155,7 +155,7 @@ describe("C2 — SplashDamage (#explode + #splashDamageOn) hits all in disc, rad
 
 // ───────────────────────────── C2 payload dispatch (list runs both) ───────────────────────────────
 describe("C2 — applyPayload (CallPayloadFunction symbol|list)", () => {
-  const Unit = new Archetype("u", [Movement, Freeze, Team, Targeting, Energy],
+  const Unit = new Archetype("u", [Movement, Freeze, Team, Targeting, Energy, Experience],
     { defaults: { isDead: false, isInvince: false, isFrozen: false, freezeFactor: 1 } });
   const mk = (energy = 200): Entity => Unit.create(1).build({ x: 0, y: 0, team: "#aldevar", energy });
 
@@ -170,6 +170,13 @@ describe("C2 — applyPayload (CallPayloadFunction symbol|list)", () => {
     const v = mk(100); (v.get(Energy) as any).max = 200;
     applyPayload(["takeHeal"], v, 5, 5, atkOf("healBlast"), -1); // (5+5)*2 = 20
     expect((v.get(Energy) as any).energy).toBe(120);
+  });
+  it("#takeHeal awards experience to the healer", () => {
+    const healer = Unit.create(999).build({ x: 0, y: 0, team: "#aldevar", energy: 200 });
+    const v = mk(100); (v.get(Energy) as any).max = 200;
+    game.entities = [healer, v];
+    applyPayload(["takeHeal"], v, 5, 5, atkOf("healBlast"), 999);
+    expect((healer.get(Experience) as any).xp).toBe(10); // healer gains vx+vy = 10 XP
   });
   it("#armyTeleportOut is a no-op (G2), unknown ignored", () => {
     const v = mk(200);

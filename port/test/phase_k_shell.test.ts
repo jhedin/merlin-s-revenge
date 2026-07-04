@@ -17,7 +17,7 @@ function setupWorld(): void {
   game.assets = { index: { anims: {
     mer_stand: { frames: [{}], delay: 4 }, uli_stand: { frames: [{}, {}], delay: 4 },
     stones1_stand: { frames: [{}], delay: 4 }, blackOrc_stand: { frames: [{}], delay: 4 },
-  }, cutscenes: { stones1: "cutscenes/stones1.txt" } }, images: new Map(), ensureChar: () => {}, img: () => null } as any;
+  }, cutscenes: { stones1: "cutscenes/stones1.txt" } }, images: new Map(), ensureChar: () => {}, img: () => null, member: () => null } as any;
   game.teamMaster.reset(); game.teamMaster.unitMap.configure(32, 0, 0);
   clearCutsceneCache();
   game.scene = undefined;
@@ -82,7 +82,7 @@ describe("K12 chatter cutscenes", () => {
     const cut = parseCutscene(`characters\n#ulin - u\nlines\nu: Press #key #wizard to summon\n`);
     const t = new Thespian(cut, { ...host, keyForControl: (c) => input.keyForControl(c) });
     t.tick();
-    expect(t.getSpeech()?.text).toContain("Q"); // #wizard -> "Q"
+    expect(t.getSpeech()?.text).toContain("F"); // #wizard -> "F" (original Show Keys: F = Summon a Wizard)
   });
 
   it("loadCutscene fetches + parses + caches by name", async () => {
@@ -248,6 +248,21 @@ describe("K18 screen content overlays", () => {
     s.render(renderer, "showArmy");
     expect(calls.text.join(" ")).toMatch(/RESERVE ARMY/);
     expect(calls.text.join(" ")).toMatch(/page 1\//); // the page indicator
+  });
+
+  // showArmyMaster's display loop (`repeat with unitList in army / repeat with unit in unitList`) walks
+  // `pReserveArmy[team][actorType]` as-is — a dict-of-append-only-lists, NO sort. So the display order is
+  // "by type, in first-banked order; chronological (banking order) within a type" — never alphabetical or
+  // level-sorted. getReserveArmy must reproduce this exactly (a prior version incorrectly re-sorted).
+  it("getReserveArmy shows units by first-banked type order, chronological within a type — NOT sorted", () => {
+    game.armyMaster.reset();
+    // bank "zebra" before "apple" (reverse-alphabetical) — a sort would flip this; insertion order must not.
+    game.armyMaster.restoreFromSave({ pReserveArmy: { "#aldevar": {
+      zebra: [{ typ: "zebra", team: "#aldevar", level: 1 }, { typ: "zebra", team: "#aldevar", level: 9 }],
+      apple: [{ typ: "apple", team: "#aldevar", level: 5 }],
+    } } });
+    const reserve = game.armyMaster.getReserveArmy();
+    expect(reserve.map((r) => `${r.typ}:${r.level}`)).toEqual(["zebra:1", "zebra:9", "apple:5"]);
   });
 
   it("showArmy nextPage is shadowed (stays on page 1) when there is only one page", () => {

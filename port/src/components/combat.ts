@@ -7,7 +7,7 @@ import { game } from "../game/context";
 import { ColourTransform } from "./colourTransform";
 
 export class Energy extends Component {
-  static handles = ["takeHit", "takeHeal", "increaseEnergy", "loseEnergy", "update", "levelUp", "isDead", "getKilledInAction", "energyFrac", "glowGold", "restoreEnergy", "reviveFull", "colourTransformFin", "addSaveData", "restoreFromSave"];
+  static handles = ["takeHit", "takeHeal", "increaseEnergy", "loseEnergy", "loseAllEnergy", "update", "levelUp", "isDead", "getKilledInAction", "energyFrac", "glowGold", "restoreEnergy", "reviveFull", "colourTransformFin", "addSaveData", "restoreFromSave"];
   private ct(): ColourTransform | undefined { return this.entity.tryGet(ColourTransform); }
   energy = 100; max = 100; dead = false; dieSound = "";
   goldGlow = 0;               // glowGold() frames (cosmetic, rendered as a gold tint)
@@ -67,7 +67,7 @@ export class Energy extends Component {
   // modEnergy.takeHeal: healAmount = (|vx|+|vy|)·2 (same L1-of-vector shape as damage, ×2), clamp to
   // max, gold glow. Friendly — no i-frames. The vector is the SAME radial collision vector the splash
   // resolver builds, so a friendly nearer the heal-blast centre heals more (cite modEnergy.txt 256-265).
-  takeHeal(next: NextFn, vx = 0, vy = 0, _healerId = -1): void {
+  takeHeal(next: NextFn, vx = 0, vy = 0, healerId = -1): void {
     if (this.dead) return;
     const healAmount = (Math.abs(vx) + Math.abs(vy)) * 2;
     if (healAmount > 0) {
@@ -76,8 +76,13 @@ export class Energy extends Component {
       // increaseEnergy 142-144: stop the low-health red glow once back above the threshold.
       if (this.max > 0 && (this.energy / this.max) * 100 >= Energy.GLOW_RED_PCT) this.ct()?.stopGlowRed();
       this.goldGlow = 12;
+
+      if (healerId >= 0) {
+        const healer = game.entities.find((e) => e.id === healerId);
+        healer?.send("gainXp", Math.abs(vx) + Math.abs(vy));
+      }
     }
-    next(vx, vy, _healerId);
+    next(vx, vy, healerId);
   }
   // glowGold (modEnergy.glowGold): plays the gold->fadeGoldBlack heal tint via ColourTransform.
   glowGold(next: NextFn): void { this.goldGlow = 12; this.ct()?.glowGold(); return next(); }
@@ -87,7 +92,7 @@ export class Energy extends Component {
   // spawns children — all driven off isDead). Unlike takeHit this carries NO collision vector: no knockback,
   // no reel. Used for ENVIRONMENTAL damage (a reeling unit slammed into a wall — objCPUCharacter.collisionWall).
   loseEnergy(next: NextFn, amount = 0, attackerId = -1): any {
-    if (this.dead || amount <= 0) return next(amount);
+    if (this.dead || amount <= 0 || this.entity.send("isInvince")) return next(amount);
     this.energy -= amount;
     if (this.energy <= this.minEnergy) {
       this.energy = this.minEnergy; this.dead = true; this.killedInAction = true;
@@ -101,6 +106,9 @@ export class Energy extends Component {
       this.glowRedOnLowHealth();
     }
     return next(amount);
+  }
+  loseAllEnergy(next: NextFn, attackerId = -1): void {
+    this.loseEnergy(next, this.max, attackerId);
   }
   // modEnergy.increaseEnergy (133-147): add `amount` to energy (capped at max), and stop the low-health red
   // glow once back above the threshold. Crucially NO gold glow — that belongs to takeHeal (heal-SPELL

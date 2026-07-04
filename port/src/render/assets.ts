@@ -102,6 +102,16 @@ function keyOutMatte(img: HTMLImageElement, mode: "flood" | "global" | "dark"): 
       const x = p % w, y = (p / w) | 0;
       push(x + 1, y); push(x - 1, y); push(x, y + 1); push(x, y - 1);
     }
+    // The border flood misses matte that is ENCLOSED by sprite pixels (gaps between a golem's arms/rocks,
+    // holes in concave sprites) — those stayed opaque white. Director's #backgroundTransparent ink keys the
+    // matte colour EVERYWHERE, so also cut any remaining EXACT-pure matte pixel (255,255,255 / 255,0,255)
+    // globally. Pure-255 is always matte here (sprites are hard-edged; highlights are off-white), so this
+    // is safe and faithful, and fixes the leftover white blobs port-wide.
+    for (let i = 0; i < px.length; i += 4) {
+      if (px[i + 3] === 0) continue;
+      const r = px[i]!, g = px[i + 1]!, b = px[i + 2]!;
+      if ((r === 255 && g === 255 && b === 255) || (r === 255 && g === 0 && b === 255)) px[i + 3] = 0;
+    }
   }
   ctx.putImageData(data, 0, 0);
   return c;
@@ -129,8 +139,12 @@ export class Assets {
     // keyed like the other gfx so their backgrounds drop out.
     await Promise.all(Object.values(index.members ?? {}).map((m) => a.loadFile(m.file, "flood")));
     // titleScreen composition sprites (logo glyphs / backdrop tiles / decorative army sprites): small,
-    // loaded up front, white-matte flood-keyed like the other gfx so their backgrounds drop out.
-    await Promise.all((index.title ?? []).map((t) => a.loadFile(t.file, "flood")));
+    // loaded up front. Letter glyphs are globally keyed so their interior holes (like in R, E) are transparent;
+    // other sprites are flood-keyed to preserve white details.
+    await Promise.all((index.title ?? []).map((t) => {
+      const isLetter = t.name.length === 1 || t.name === "kL";
+      return a.loadFile(t.file, isLetter ? "global" : "flood");
+    }));
     // SS-1 bitmap fonts: 4 tiny glyph sheets, loaded up front. White-matte faces (numbers/small/menu)
     // key like the tile sheets (per-cell interior matte → "global"); smallgrey keys its dark matte.
     await Promise.all(Object.values(index.fonts ?? {}).map((f) => a.loadFile(f.file, f.matte === "dark" ? "dark" : "global")));

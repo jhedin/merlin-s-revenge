@@ -19,8 +19,11 @@ export class Input {
   private pressedThisTick = new Set<string>();
   private keys: MoveKeys;
   schemeName: SchemeName;
-  // mouse (objAiPlayer aims magic at the cursor): view-space cursor + left-button edges
+  // mouse (objAiPlayer aims magic at the cursor): STAGE-space cursor + left-button edges
   mouseX = 0; mouseY = 0; private hasMouse = false;
+  // the play area is inset by the HUD margins; cursor() subtracts this so gameplay gets WORLD coords, while
+  // stageCursor() keeps raw stage coords (full-screen scenes like the cutscene aren't inset).
+  private viewOffsetX = 0; private viewOffsetY = 0;
   private mouseHeld = false;
   private mousePressedTick = false; private mouseReleasedTick = false;
 
@@ -51,8 +54,12 @@ export class Input {
     canvas.addEventListener("contextmenu", (e) => e.preventDefault());
   }
 
-  /** view-space cursor, or null if the mouse has never moved over the canvas */
-  cursor(): { x: number; y: number } | null { return this.hasMouse ? { x: this.mouseX, y: this.mouseY } : null; }
+  /** the play-area inset (HUD margins), so cursor() returns WORLD coords. */
+  setViewOffset(x: number, y: number): void { this.viewOffsetX = x; this.viewOffsetY = y; }
+  /** WORLD-space cursor (stage cursor minus the play-area inset), or null if the mouse hasn't moved over the canvas */
+  cursor(): { x: number; y: number } | null { return this.hasMouse ? { x: this.mouseX - this.viewOffsetX, y: this.mouseY - this.viewOffsetY } : null; }
+  /** raw STAGE-space cursor (no inset) — for full-screen scenes (cutscene) that aren't inset into the play area */
+  stageCursor(): { x: number; y: number } | null { return this.hasMouse ? { x: this.mouseX, y: this.mouseY } : null; }
   mouseDown(): boolean { return this.mouseHeld; }
   mousePressed(): boolean { return this.mousePressedTick; }
   mouseReleased(): boolean { return this.mouseReleasedTick; }
@@ -95,15 +102,16 @@ export class Input {
       case "left": return first(keys.left);
       case "right": return first(keys.right);
       case "fire": case "attack": case "magic": case "charge": return "mouse"; // hold-to-charge on the mouse/space
-      // summon controls (the stones cutscene interpolates `#key #wizard` / `#key #wizardSelector`):
-      case "wizard": return "Q";          // summon the selected wizard (the documented summon key)
-      case "wizardselector": return "Tab"; // cycle the wizard to summon
+      // summon controls (the stones cutscene interpolates `#key #wizard` / `#key #wizardSelector`).
+      // Keys mirror the original's Show Keys screen (qwerty/WASD keyset): F summon, R select wizard.
+      case "wizard": return "F";           // summon the selected wizard
+      case "wizardselector": return "R";   // cycle the wizard to summon (Tab also works)
       // action controls referenced by the magic-tutorial cutscenes (scr_stones6..10 `#key` interpolation).
-      // spell1..9 are wired to the number keys in the port (control.ts); the rest mirror the original
-      // WASD bindings (keyMaster: #weaponSelector=Q key12, #army=C key8, #gmg=G key14) for faithful display.
-      case "gmg": return "G";
+      // spell1..9 are wired to the number keys in the port (control.ts); the rest match the original's
+      // Show Keys screen: Q = Select Weapon, E = Golden Machine Gun On/Off, C = Summon a Battalion.
+      case "gmg": return "E";
       case "army": return "C";
-      case "weaponselector": return "E"; // the port binds the weapon palette to E (Q is the wizard-summon key)
+      case "weaponselector": return "Q";
       default: {
         const sp = /^spell([1-9])$/.exec(c);
         if (sp) return sp[1]!;            // #spell1..#spell9 -> "1".."9"

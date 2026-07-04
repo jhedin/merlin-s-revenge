@@ -25,10 +25,12 @@ export interface SaveDataV3 {
   currentRoom: Vec2i;          // pCurrentRoomLoc
   currentRoomNum: number;      // the room whose live objects are entered on load
   rooms: RoomSave[];           // cleared flag per room (+ EACH room's frozen objects, H3 full pState)
-  player: Record<string, any>; // the player's component chain (energy/xp/mana/weaponMgr/medikit/lives)
+  player: Record<string, any>; // the player's component chain (energy/xp/mana/weaponMgr/medikit — NOT extra
+                                // lives: modExtraLives has no addSaveData either, faithfully unsaved)
   potions: Record<string, any>;// g_potionMaster slice (G3b)
   army: Record<string, any>;   // g_armyMaster slice (G2)
   sound?: { muted: boolean };  // g_soundMaster.pActive (saveMaster saves the sound state too)
+  wizard?: Record<string, any>; // modSummonWizard #pWizards/#pWizardToSummon/#pWizard slice
 }
 // back-compat alias for callers that import the type name
 export type SaveDataV2 = SaveDataV3;
@@ -65,6 +67,7 @@ export function buildSave(args: {
     potions: game.potionMaster ? game.potionMaster.addSaveData({}) : {},
     army: game.armyMaster ? game.armyMaster.addSaveData({}) : {},
     sound: { muted: !!game.audio?.muted }, // soundMaster.addSaveData: persist the mute state across save/load
+    wizard: game.wizardMaster ? game.wizardMaster.addSaveData({}) : {},
   };
 }
 

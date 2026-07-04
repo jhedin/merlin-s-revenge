@@ -31,7 +31,7 @@ function setupWorld() {
   game.entities = [];
   game.assets = { index: { anims: {} }, img: () => null } as any;
   game.spawnEnemy = spawnEnemy; game.spawnUnit = spawnUnit; game.spawnAlly = spawnAlly;
-  game.teamMaster.reset(); game.armyMaster.reset(); game.potionMaster.reset();
+  game.teamMaster.reset(); game.armyMaster.reset(); game.potionMaster.reset(); game.wizardMaster.reset();
   game.teamMaster.unitMap.configure(32, 0, 0);
 }
 
@@ -289,6 +289,7 @@ describe("G1b/H3: save tree v3 (full per-room pState) + version gate", () => {
     game.entities = [player, orc];                  // ally already banked below
     game.armyMaster.teleportOut(ally);
     game.potionMaster.potionCollected("manaFlow");
+    game.wizardMaster.register("amotonlinInGame"); game.wizardMaster.setActive(77);
 
     const currentObjects = game.entities.filter((e) => e.type !== "player").map(serializeActor);
     const blob = buildSave({
@@ -316,6 +317,9 @@ describe("G1b/H3: save tree v3 (full per-room pState) + version gate", () => {
     expect(s.army.pReserveArmy["#aldevar"].warrior.length).toBe(1);
     expect(s.army.pReserveArmy["#aldevar"].warrior[0].level).toBe(4);
     expect(s.potions.pPotionsCollected.find((r: any) => r.character === "manaFlow").numCollected).toBe(1);
+    // wizardMaster (found/active) round-trips too — previously silently forgotten on save/load.
+    expect(s.wizard!["found"]).toEqual(["amotonlin"]);
+    expect(s.wizard!["activeId"]).toBe(77);
   });
 
   it("persists the sound mute state (soundMaster slice)", () => {

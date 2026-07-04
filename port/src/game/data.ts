@@ -4,3 +4,5 @@ import dataJson from "../generated/data.json";
 import { Registry, type DataFileLike } from "../data/registry";
 
 export const registry = new Registry(dataJson as unknown as Record<string, DataFileLike>);
+export const rawData = dataJson as any;
+

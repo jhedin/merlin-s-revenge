@@ -32,17 +32,32 @@ export class Renderer {
   // cache of tinted results keyed by (image, quantized colour, quantized strength, additive). Bounded.
   private tintCache = new Map<string, HTMLCanvasElement>();
   private static readonly TINT_CACHE_MAX = 64;
-  constructor(readonly canvas: HTMLCanvasElement, readonly viewW: number, readonly viewH: number, readonly scale = 2) {
-    canvas.width = viewW; canvas.height = viewH;
-    canvas.style.width = `${viewW * scale}px`;
-    canvas.style.height = `${viewH * scale}px`;
+  // The original frames the 576x288 play area inside a 640x320 stage (DRCF stage rect): symmetric black HUD
+  // margins (32px left/right, 16px top/bottom) carry the medikit/wizard/gmg/potions (top), health (bottom) and
+  // army (right strip). So the CANVAS is the stage; the WORLD is rendered inset by (marginX, marginY) and the
+  // HUD draws on the margins at stage coords.
+  readonly stageW: number;
+  readonly stageH: number;
+  constructor(readonly canvas: HTMLCanvasElement, readonly viewW: number, readonly viewH: number, readonly scale = 2,
+              readonly marginX = 0, readonly marginY = 0) {
+    this.stageW = viewW + 2 * marginX;
+    this.stageH = viewH + 2 * marginY;
+    canvas.width = this.stageW; canvas.height = this.stageH;
+    canvas.style.width = `${this.stageW * scale}px`;
+    canvas.style.height = `${this.stageH * scale}px`;
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("no 2d context");
     ctx.imageSmoothingEnabled = false;
     this.ctx = ctx;
   }
 
-  clear(): void { this.ctx.clearRect(0, 0, this.viewW, this.viewH); }
+  clear(): void { this.ctx.clearRect(0, 0, this.stageW, this.stageH); }
+
+  /** Inset WORLD drawing by the HUD margins so the play area sits in the middle of the stage; restore with
+   *  endWorld(). Everything between draws in room/view coords (0,0 = top-left of the play area). The HUD and
+   *  full-screen scenes (title/menu/cutscene) draw OUTSIDE this, at stage coords. */
+  beginWorld(): void { this.ctx.save(); this.ctx.translate(this.marginX, this.marginY); }
+  endWorld(): void { this.ctx.restore(); }
 
   /** Blit one tile layer at origin (ox,oy). Tile 0 = empty. Optional alpha for blended layers. */
   drawTileLayer(layer: Layer, sheet: TileSheet, ox = 0, oy = 0, alpha = 1): void {
@@ -76,10 +91,22 @@ export class Renderer {
       // registration point so the beam pivots at the caster-facing anchor and stretches along its axis.
       if (s.rotation || s.scaleX !== undefined || s.scaleY !== undefined) {
         ctx.save();
-        ctx.translate(x, y);
-        if (s.rotation) ctx.rotate(s.rotation);
-        ctx.scale((s.flip ? -1 : 1) * (s.scaleX ?? 1), s.scaleY ?? 1);
-        ctx.drawImage(img, -s.regX, -s.regY);
+        if (s.scaleY !== undefined && s.scaleX === undefined && !s.rotation) {
+          // Anchored vertical stretch (teleport / death stretch): anchor at the bottom edge of the sprite
+          // (feet). ONLY a pure vertical stretch (scaleX undefined) — the spell charge orb / summon face
+          // set BOTH scaleX+scaleY (centred scaling) and must NOT be bottom-anchored, or they render below
+          // the caster instead of centred over it.
+          const Y_bottom = y + s.regY;
+          const height = (img as HTMLImageElement).height || (s.regY * 2);
+          ctx.translate(x, Y_bottom);
+          ctx.scale((s.flip ? -1 : 1) * (s.scaleX ?? 1), s.scaleY);
+          ctx.drawImage(img, -s.regX, -height);
+        } else {
+          ctx.translate(x, y);
+          if (s.rotation) ctx.rotate(s.rotation);
+          ctx.scale((s.flip ? -1 : 1) * (s.scaleX ?? 1), s.scaleY ?? 1);
+          ctx.drawImage(img, -s.regX, -s.regY);
+        }
         ctx.restore();
         if (alpha !== 1) ctx.globalAlpha = 1;
         continue;
